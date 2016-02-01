@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_moving_avg" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Computes the moving average operation on each element of the measure array. 
+Integer values will be automatically converted to real values. 
+NaN values in the input array will be ignored.
+Available operations are:
+- Simple Moving Average (SMA) which computes the mean on the previous K elements using the following:
+ m[i] = (e[i] + e[i-1] + ... + e[i-(k-1)])/k
+ NOTE: the first k-1 elements will be set to NaN.
+- Exponentially Weighted Moving average (EWMA) which computes the exponential mean using the following:
+ m[i] = (1-alfa) * m[i-1] + (alfa) * e[i], with m[0] = e[0]
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- average parameter: it defines the K parameter for SMA (integer K &gt;= 1) 
+                     and the alfa parameter for EWMA (real 0 &lt;= alfa &lt;= 1). 
+                     Default value for both is 1.
+- operation: moving average operation
+                            -- OPH_SMA: simple moving average (default)
+                            -- OPH_EWMA: exponentially weighted moving average  
+
+[Return type]
+Binary-array.
+
+[Examples]
+Compute SMA of each measure.
+oph_moving_avg(&apos;OPH_DOUBLE&apos;, &apos;OPH_DOUBLE&apos;,measure, 2, &apos;OPH_SMA&apos;)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>17/02/2014</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+        <argument type="double" mandatory="no" default="1">average parameter</argument>
+        <argument type="string" mandatory="no" default="'oph_sma'" values="'oph_sma'|'oph_ewma'">operation</argument>
+    </args>
+</primitive>

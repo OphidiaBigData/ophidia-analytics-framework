@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_find2" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Finds the number of occurences into measure array that are inside the interval [value-distance;value+distance] (optimized version of find).
+        
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : not used.
+- measure : input measure.
+- value : center of the interval.
+- distance : half-width of the interval.
+                 
+[Return type]
+Long-long.
+        
+[Examples]
+Finds the number of occurences into measure array that are inside the interval [5;15]
+oph_find2(&apos;OPH_DOUBLE&apos;,&apos;&apos;,measure,10,5)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="long-long" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+        <argument type="double" mandatory="yes">value</argument>
+        <argument type="long-long" mandatory="no" default="0">distance</argument>
+    </args>
+</primitive>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_id3" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Convert a dimension index into a table id.
+        
+[Parameters]
+- id : dimension id.
+- binary count list : binary array of long long counters representing block dimensions.
+- block size : product of the dimensions that vary more quickly than the dimension to be reduced.
+
+[Return type]
+Long-long.
+        
+[Examples]
+Convert index of the most inner dimension into the related id_dim; &apos;size&apos; is a binary long long paramter set to dimension size.
+oph_id3(index,&apos;size&apos;,1)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>15/10/2014</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="long-long" />
+	<operation type="id"/>
+    </info>
+    <args>
+	<argument type="long-long" mandatory="yes">id</argument>
+        <argument type="binary-array" mandatory="yes">binary count list</argument>
+        <argument type="long-long" mandatory="yes" minvalue="1" maxvalue="array length">block size</argument>
+    </args>
+</primitive>

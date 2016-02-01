@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_CUBESCHEMA" version="1.0">
+    <info>
+        <abstract>[Type]
+Metadata Access.
+
+[Behaviour]
+It shows metadata information about a datacube and the dimensions related to it.
+
+[Parameters]
+- cube : name of the input datacube. The name must be in PID format.
+
+- level : level of information shown.
+		  -- 0 : shows only metadata (default)			
+		  -- 1 : shows only dimension values
+		  -- 2 : shows metadata and dimension values 
+- dim : names of dimensions to show. Only valid with level bigger than 0. 
+                Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
+			    If not specified all dimension are shown.
+- show_index : if &quot;no&quot; (default), it won't show dimension ids.
+			   With &quot;yes&quot;, it will also show the dimension id next to the value.
+- show_time : if &quot;no&quot; (default), the values of time dimension are shown as numbers.
+			With &quot;yes&quot;, the values are converted as a string with date and time.
+
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+		          cubeschema_cubeinfo : show cube information as grid.
+              cubeschema_morecubeinfo : show more cube information as grid.
+                  cubeschema_diminfo : show the list of cube dimensions as grid.
+		          cubeschema_dimvalues : show the values of cube dimensions as grid.
+
+[Examples]
+Show metadata information about the datacube identified by the PID &quot;http://www.example.com/1/1&quot; :
+OPH_TERM: oph_cubeschema cube=http://www.example.com/1/1;
+SUBMISSION STRING: &quot;operator=oph_cubeschema;cube=http://www.example.com/1/1;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+        <argument type="string" mandatory="yes">cube</argument>
+        <argument type="int" mandatory="no" default="0"  minvalue="0" maxvalue="2" values="0|1|2">level</argument>
+        <argument type="string" mandatory="no" default="all">dim</argument>
+        <argument type="string" mandatory="no" default="no" values="yes|no">show_index</argument>
+	<argument type="string" mandatory="no" default="no" values="yes|no">show_time</argument>
+	<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+        <argument type="string" mandatory="no" default="null">sessionid</argument>
+        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+	<argument type="string" mandatory="no" default="all" values="all|none|cubeschema_cubeinfo|cubeschema_morecubeinfo|cubeschema_diminfo|cubeschema_dimvalues">objkey_filter</argument>
+    </args>
+</operator>

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_get_subarray" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Extracts a subset of &apos;count&apos; elements of an array starting from &apos;start&apos;.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- start : start index, from 1 to array length.
+- count : number of elements to extract.
+
+[Return type]
+Binary-array.
+
+[Examples]
+Extract 20 measures starting at index 30.
+oph_get_subarray(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,30,20)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="long-long" mandatory="no" default="1">start</argument>
+	<argument type="long-long" mandatory="no" default="array length">count</argument>
+    </args>
+</primitive>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_PRIMITIVES_LIST" version="1.0">
+    <info>
+        <abstract>[Type]
+Metadata Access.
+
+[Behaviour]
+It shows a list with info about active Ophidia Primitives loaded into a specific DBMS instance.
+
+[Parameters]
+- level : level of verbosity.
+          -- 1 : show the primitive's name
+          -- 2 : show also the type of the returned value, array or number
+          -- 3 : show also the name of the related dynamic library
+          -- 4 : show also the type of the primitive, simple or aggregate
+          -- 5 : show also the related DBMS id.
+- dbms_filter : id of the specific DBMS instance to look up.
+                If no values is specified then DBMS used will be the first available.
+- return_type : optional filter on the type of the returned value.
+                Possible values are &quot;array&quot; for a set of data and
+                &quot;number&quot; for a singleton.
+                Mute this filter with the default value &quot;all&quot;.
+- primitive_type : optional filter on the type of the primitive.
+                   Possible values are &quot;simple&quot; for row-based functions and
+                   &quot;aggregate&quot; for column-based aggregate functions.
+                   Mute this filter with the default value &quot;all&quot;.
+- primitive_filter : optional filter on the name of the displayed primitives,
+                     with pattern *filter*.
+- limit_filter : optional filter on the maximum number of displayed primitives.
+                 Default value is 0, used to show all primitives.
+
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  primitives_list_list : show the list of primitives as a grid;
+                  primitives_list_tip : show the operator help message as text.
+
+[Examples]
+Get at most 10 primitives related to dbms instance 1 :
+OPH_TERM: oph_primitives_list level=5;dbms_filter=1;return_type=all;primitive_type=all;primitive_filter=oph;limit_filter=10;
+SUBMISSION STRING: &quot;operator=oph_primitives_list;level=5;dbms_filter=1;return_type=all;primitive_type=all;primitive_filter=oph;limit_filter=10;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="5" values="1|2|3|4|5">level</argument>
+        <argument type="int" mandatory="no" default="-" minvalue="1">dbms_filter</argument>
+        <argument type="string" mandatory="no" default="all" values="all|array|number">return_type</argument>
+        <argument type="string" mandatory="no" default="all" values="all|simple|aggregate">primitive_type</argument>
+        <argument type="string" mandatory="no" default="">primitive_filter</argument>
+        <argument type="int" mandatory="no" default="0" minvalue="0">limit_filter</argument>
+        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+        <argument type="string" mandatory="no" default="null">sessionid</argument>
+        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+        <argument type="string" mandatory="no" default="all" values="all|none|primitives_list_list|primitives_list_tip">objkey_filter</argument>
+    </args>
+</operator>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_gsl_histogram" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Estimate the empiric distribution of a sample of measures contained in the array with n bins.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : not used.
+- measure : input measure.
+- bin number : number of equally spaced intervals in which the interval [min,max] will be subdivided,
+               with min and max representing the minimum and the maximum values in the array.
+- mode : type of requested output
+         -- &apos;RANGES&apos;: get only interval ranges;
+         -- &apos;FREQS&apos;: get only the values of each bin;
+         -- &apos;ALL&apos; : get ranges and frequencies (default).
+                           In this case the format will be:
+                           &lt;range[0],bin[0],range[1],bin[1],…,range[nbin-1],bin[nbin-1],range[nbin]&gt;
+- flag : type of returned frequencies
+         -- &apos;ABS&apos;: get the absolute frequencies for each bin (default);
+         -- &apos;PDF&apos;: get the normalized frequencies with respect to the total number of samples, that is the pdf;
+         -- &apos;CDF&apos;: get the normalized and cumulative frequencies with respect to the total number of samples, that is the cdf.                        
+
+[Return type]
+Binary-array.
+
+[Examples]
+Estimate the empiric distribution of a set of oph_double with 10 bins. Return ranges and absolute frequencies.
+oph_gsl_histogram(&apos;OPH_DOUBLE&apos;,&apos;&apos;,measure,10)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="reduce"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="int" mandatory="yes">bin number</argument>
+	<argument type="string" mandatory="no" default="'ALL'" values="'RANGES'|'FREQS|'ALL'">mode</argument>
+	<argument type="string" mandatory="no" default="'ABS'" values="'ABS'|'PDF'|'CDF'">flag</argument>
+    </args>
+</primitive>

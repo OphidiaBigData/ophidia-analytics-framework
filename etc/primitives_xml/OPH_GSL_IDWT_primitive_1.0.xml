@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_gsl_idwt" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Compute the Inverse Discrete Wavelet Transform of a measure array.
+Measures must be OPH_DOUBLE with the output format of oph_gsl_dwt, that is:
+(s_{-1,0}, d_{0,0}, d_{1,0}, d_{1,1}, d_{2,0}, ...,
+d_{j,k}, ..., d_{J-1,2^{J-1}-1})
+where the first element is the smoothing coefficient s_{-1,0}, followed by the detail coefficients d_{j,k} 
+for all levels j=0,…,(log2n) – 1 and for all k=0,…,(2^j)-1  (J=log2n).
+Considering the DWT as a bank of cascading filters, the last output level corresponds to the &apos;Level 1&apos; containing 
+a number of coefficients equal to half of the input dimension and is related to the sub-band fn/2 – fn.
+The second-last one corresponds to the &apos;Level 2&apos; with one fourth of the coefficients and related to the sub-band fn/4 – fn/2 and so on.
+The smoothing coefficient corresponds to the same level of the second output coefficient. If this level is, for example, the number 5, then the second coefficient 
+is the detail coefficient of level 5 (obtained with a high-pass filter) and the first one is the approximation coefficient (obtained with a low-pass filter).
+
+[Parameters]
+- input measure type : Ophidia typing. Supported type is &apos;oph_double&apos;.
+- input measure type : Ophidia typing. Supported type is &apos;oph_double&apos;.
+- measure : input measure.
+- wavelet family : family of the mother wavelet
+                   -- &apos;DAUBECHIES&apos; : Daubechies wavelet (default);
+                   -- &apos;DAUBECHIES_C&apos; : centered version of the Daubechies wavelet (sub-bands aligned at edges);
+                   -- &apos;HAAR&apos; : Haar wavelet;
+                   -- &apos;HAAR_C&apos; : centered version of the Haar wavelet (sub-bands aligned at edges);
+                   -- &apos;BSPLINE&apos; : the biorthogonal B-spline wavelet family of order (i,j);
+                   -- &apos;BSPLINE_C&apos; : centered version of the biorthogonal B-spline wavelet family of order (i,j) (sub-bands aligned at edges);
+- wavelet member : particular instance of the mother wavelet family (k)
+                   -- In case of DAUBECHIES, k=4 (default), 6, ..., 20, with k even.
+                   -- In case of HAAR, k=2 (default).
+                   -- In case of BSPLINE, k = 100*i+j = 103 (default), 105, 202, 204, 206, 208, 301, 303, 305 307, 309.
+
+[Return type]
+Binary-array.
+
+[Examples]
+Compute the original signal from the input coefficients through the IDWT with the Daubechies mother wavelet with 2 vanishing moments.
+oph_gsl_idwt(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;DAUBECHIES&apos;,4)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="string" mandatory="no" default="'DAUBECHIES'" values="'DAUBECHIES'|'DAUBECHIES_C'|'HAAR'|'HAAR_C'|'BSPLINE'|'BSPLINE_C'">wavelet family</argument>
+	<argument type="long-long" mandatory="no" default="4">wavelet member</argument>
+    </args>
+</primitive>

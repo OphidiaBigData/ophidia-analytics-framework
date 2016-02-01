@@ -1,0 +1,24 @@
+<!-- DTD for Ophidia operators -->
+
+<!ELEMENT operator (info,args)>
+<!ATTLIST operator name CDATA #REQUIRED>
+<!ATTLIST operator version CDATA #REQUIRED>
+
+<!ELEMENT info (abstract,author,creationdate?,license?,permission?)>
+
+<!ELEMENT abstract (#PCDATA)>
+<!ELEMENT author (#PCDATA)>
+<!ELEMENT creationdate (#PCDATA)>
+<!ELEMENT license (#PCDATA)>
+<!ATTLIST license url CDATA #REQUIRED>
+<!ELEMENT permission (#PCDATA)>
+
+<!ELEMENT args (argument*)>
+
+<!ELEMENT argument (#PCDATA)>
+<!ATTLIST argument type (char|string|int|real|date) #REQUIRED>
+<!ATTLIST argument minvalue CDATA #IMPLIED>
+<!ATTLIST argument maxvalue CDATA #IMPLIED>
+<!ATTLIST argument default CDATA #IMPLIED>
+<!ATTLIST argument values CDATA #IMPLIED>
+<!ATTLIST argument mandatory (yes|no) "yes">

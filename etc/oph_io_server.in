@@ -1,0 +1,4 @@
+[mysql]
+@IOSERVER_PATH@/libmysql_ioserver.so
+LIB	@MYSQL_LDFLAGS@
+

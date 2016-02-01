@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_mul_scalar2" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Multiplies each element of the measure array by a scalar value. It can operate also with complex numbers.
+In case of real numbers, it multiplies each element in the input array by scalar value (real) if specified (default is 1).
+In case of complex numbers, it multiplies each element in the input array by the complex number with real part equal to scalar value (real) and imaginary part equal to scalar value (imaginary) if available (default is 0).
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;
+					&apos;oph_complex_double&apos;;
+					&apos;oph_complex_float&apos;;
+					&apos;oph_complex_int&apos;;
+					&apos;oph_complex_long&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;
+					&apos;oph_complex_double&apos;;
+					&apos;oph_complex_float&apos;;
+					&apos;oph_complex_int&apos;;
+					&apos;oph_complex_long&apos;.
+- measure : input measure.
+- scalar value (real) : in case of real numbers, it is the number to be multiplied by each element of the input measure.
+                        In case of complex numbers, it is the real part of the complex number to be multiplied by each element of the input measure.
+                        Default is 1.
+- scalar value (imaginary) : considered only in case of complex numbers, it is the imaginary part of the complex number to be multiplied by each element of the input measure.
+                             Default is 0.
+
+[Return type]
+Binary-array.
+
+[Examples]
+Multiply by 2+2i each element of the input array.
+oph_mul_scalar2(&apos;OPH_COMPLEX_DOUBLE&apos;,&apos;OPH_COMPLEX_DOUBLE&apos;,measure,2,2)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="double" mandatory="no" default="1">scalar value (real)</argument>
+	<argument type="double" mandatory="no" default="0">scalar value (imaginary)</argument>
+    </args>
+</primitive>

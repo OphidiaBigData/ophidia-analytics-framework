@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_OPERATORS_LIST" version="1.0">
+    <info>
+        <abstract>[Type]
+Metadata Access.
+
+[Behaviour]
+It shows the list of all active operators.
+
+[Parameters]
+- operator_filter : optional filter on the name of the displayed operators,
+                    with pattern *filter*.                
+- limit_filter : optional filter on the maximum number of displayed operators.
+                 Default value is 0, used to show all operators.
+
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  operators_list_list : show the operators list.
+		  operators_list_tip: show a help message.
+
+[Examples]
+Get at most 10 operators with names containing the word &quot;list&quot; :
+OPH_TERM: oph_operators_list operator_filter=list;limit_filter=10;
+SUBMISSION STRING: &quot;operator=oph_operators_list;operator_filter=list;limit_filter=10;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+        <argument type="string" mandatory="no" default="">operator_filter</argument>
+        <argument type="int" mandatory="no" default="0" minvalue="0">limit_filter</argument>
+        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+        <argument type="string" mandatory="no" default="null">sessionid</argument>
+        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+	<argument type="string" mandatory="no" default="all" values="all|none|operators_list_list|operators_list_tip">objkey_filter</argument>
+    </args>
+</operator>

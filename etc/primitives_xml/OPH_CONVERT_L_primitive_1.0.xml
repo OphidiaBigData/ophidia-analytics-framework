@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_convert_l" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Converts a binary element in an integer value.
+        
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+                 &apos;oph_long&apos;;
+                 &apos;oph_int&apos;;
+                 &apos;oph_short&apos;;
+                 &apos;oph_byte&apos;.
+- output measure type : not used.
+- measure : input measure.
+        
+[Return type]
+Long
+        
+[Examples]
+oph_convert_l(&apos;OPH_LONG&apos;,&apos;&apos;measure)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>24/03/2014</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="long-long" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" default="'oph_long'" values="'oph_long'|'oph_int'|'oph_short'|'oph_byte'">input measure type</argument>
+        <argument type="oph_type" mandatory="yes">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+    </args>
+</primitive>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_FOR" version="1.0">
+    <info>
+        <abstract>[Type]
+Flow control.
+
+[Behaviour]
+Implement a loop &quot;for&quot;.
+      
+[Parameters]
+- name : name of the counter. It should comply with IEEE Std 1003.1-2001 conventions, unless brackets {} are adopted to refer it.
+- values : list of the string values (labels) of the counter.
+           Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided.
+           Current value can be accessed with @name or @{name}.
+- counter : subset string of the values to be assigned to the counter.
+            Current value can be accessed with &amp;name or &amp;{name}.
+- parallel : set to &quot;yes&quot; in case of parallel processing; sequential processing is the default.
+
+At least one of arguments &quot;values&quot; or &quot;counter&quot; has to be set.
+By default &quot;counter&quot; will be set to &quot;1&quot; in case &quot;values&quot; is not provided.
+</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>20/08/2015</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+	<argument type="string" mandatory="yes">name</argument>
+	<argument type="string" mandatory="no" default="-">values</argument>
+	<argument type="string" mandatory="no" default="-">counter</argument>
+	<argument type="string" mandatory="no" default="no" values="no|yes">parallel</argument>
+    </args>
+</operator>

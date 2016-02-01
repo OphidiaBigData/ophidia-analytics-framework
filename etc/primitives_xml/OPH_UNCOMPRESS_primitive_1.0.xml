@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_uncompress" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Uncompresses the input array using ZLIB library (Same method used by MySQL). 
+
+[Parameters]
+- input measure type : not used.
+- output measure type : not used.
+- measure : compressed input measure.
+
+[Return type]
+Binary-array.
+
+[Examples]
+Uncompress input measures.
+oph_uncompress(&apos;&apos;,&apos;&apos;,measure)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes">input measure type</argument>
+        <argument type="oph_type" mandatory="yes">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+    </args>
+</primitive>

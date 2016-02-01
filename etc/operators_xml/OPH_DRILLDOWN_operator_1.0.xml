@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_DRILLDOWN" version="1.0">
+    <info>
+        <abstract>[Type]
+Data Process.
+
+[Behaviour]
+It performs a drill-down operation on a datacube, i.e. it transforms dimensions from implicit to explicit.
+
+[Parameters]
+- cube : name of the input datacube. The name must be in PID format.
+- schedule : scheduling algorithm. The only possible value is 0,
+		     for a static linear block distribution of resources.		   
+- ndim : number of implicit dimensions that will be transformed in explicit dimensions.
+		 Default value is &apos;1&apos;.
+- container: name of the container to be used to store the output cube; by default it is the input container.
+
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).       
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  drilldown : show operator's output PID as text.
+
+[Examples]       
+Execute drill-down operation on datacube identified by the PID &quot;http://www.example.com/1/1&quot; on 1 implicit dimension:
+OPH_TERM: oph_drilldown cube=http://www.example.com/1/1;
+SUBMISSION STRING: &quot;operator=oph_drilldown;cube=http://www.example.com/1/1;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>write</permission>
+    </info>
+    <args>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="yes">cube</argument>
+		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">ndim</argument>
+		<argument type="string" mandatory="no" default="-">container</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|drilldown">objkey_filter</argument>
+    </args>
+</operator>

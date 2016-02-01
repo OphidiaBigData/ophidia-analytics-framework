@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_math" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Execute a scalar mathematical operation on each element of the measure array.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;
+					&apos;oph_complex_double&apos;;
+					&apos;oph_complex_float&apos;;
+					&apos;oph_complex_int&apos;;
+					&apos;oph_complex_long&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;
+					&apos;oph_complex_double&apos;;
+					&apos;oph_complex_float&apos;;
+					&apos;oph_complex_int&apos;;
+					&apos;oph_complex_long&apos;.
+- measure : input measure.
+- mathematical operator : Operators for real numbers:
+                            -- OPH_MATH_ABS
+                            -- OPH_MATH_ACOS 
+                            -- OPH_MATH_ASIN
+                            -- OPH_MATH_ATAN
+                            -- OPH_MATH_CEIL
+                            -- OPH_MATH_COS
+                            -- OPH_MATH_COT
+                            -- OPH_MATH_DEGREES
+                            -- OPH_MATH_EXP 
+                            -- OPH_MATH_FLOOR 
+                            -- OPH_MATH_LN
+                            -- OPH_MATH_LOG10
+                            -- OPH_MATH_LOG2
+                            -- OPH_MATH_RADIANS
+                            -- OPH_MATH_RAND
+                            -- OPH_MATH_ROUND
+                            -- OPH_MATH_SIGN
+                            -- OPH_MATH_SIN
+                            -- OPH_MATH_SQRT
+                            -- OPH_MATH_TAN
+                          Operators for complex numbers:
+                            -- OPH_MATH_GSL_COMPLEX_CONJUGATE
+                            -- OPH_MATH_GSL_COMPLEX_INVERSE
+                            -- OPH_MATH_GSL_COMPLEX_NEGATIVE
+                            -- OPH_MATH_GSL_COMPLEX_SQRT
+                            -- OPH_MATH_GSL_COMPLEX_EXP
+                            -- OPH_MATH_GSL_COMPLEX_LOG
+                            -- OPH_MATH_GSL_COMPLEX_LOG10
+                            -- OPH_MATH_GSL_COMPLEX_SIN 
+                            -- OPH_MATH_GSL_COMPLEX_COS
+                            -- OPH_MATH_GSL_COMPLEX_TAN
+                            -- OPH_MATH_GSL_COMPLEX_SEC
+                            -- OPH_MATH_GSL_COMPLEX_CSC
+                            -- OPH_MATH_GSL_COMPLEX_COT
+                            -- OPH_MATH_GSL_COMPLEX_ASIN
+                            -- OPH_MATH_GSL_COMPLEX_ACOS
+                            -- OPH_MATH_GSL_COMPLEX_ATAN
+                            -- OPH_MATH_GSL_COMPLEX_ASEC
+                            -- OPH_MATH_GSL_COMPLEX_ACSC
+                            -- OPH_MATH_GSL_COMPLEX_ACOT
+                            -- OPH_MATH_GSL_COMPLEX_SINH
+                            -- OPH_MATH_GSL_COMPLEX_COSH
+                            -- OPH_MATH_GSL_COMPLEX_TANH
+                            -- OPH_MATH_GSL_COMPLEX_SECH
+                            -- OPH_MATH_GSL_COMPLEX_CSCH
+                            -- OPH_MATH_GSL_COMPLEX_COTH
+                            -- OPH_MATH_GSL_COMPLEX_ASINH 
+                            -- OPH_MATH_GSL_COMPLEX_ACOSH
+                            -- OPH_MATH_GSL_COMPLEX_ATANH 
+                            -- OPH_MATH_GSL_COMPLEX_ASECH
+                            -- OPH_MATH_GSL_COMPLEX_ACSCH
+                            -- OPH_MATH_GSL_COMPLEX_ACOTH
+
+[Return type]
+Binary-array.
+
+[Examples]
+Compute base-10 logarithm of each measure.
+oph_math(&apos;OPH_COMPLEX_DOUBLE&apos;,&apos;OPH_COMPLEX_DOUBLE&apos;,measure,&apos;OPH_MATH_GSL_COMPLEX_LOG10&apos;)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+        <argument type="string" mandatory="yes">mathematical operator</argument>
+    </args>
+</primitive>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_gsl_quantile" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Computes the Pearson coefficient of two measure arrays.
+NOTE: the two measures must have the same type and length.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- measure2 : second input measure.
+
+[Return type]
+Binary-array.
+
+[Examples]
+Compute correlation of the two measures.
+oph_gsl_correlation(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,a.measure,b.measure)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>10/04/2015</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="reduce"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="binary-array" mandatory="yes">measure2</argument>
+    </args>
+</primitive>

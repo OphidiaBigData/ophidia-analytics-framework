@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_get_subarray3" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Extract a subset of a measures array. If size-i params are defined then the array is considered multidimensional 
+with i implicit dimensions, each of size-i. The subset can also be applied on multpile dimensions.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- subset : enumeration of comma-separated elementary filters (1 series of filters for each dimension). Possible filter forms:
+            -- start_index : select a single value, specified by its index
+            -- start_index:stop_index : select elements from start_index to stop_index
+            -- start_index:stride:stop_index : select elements from start_index to stop_index with a step of stride
+            Indexes are integers from 1 to the dimension size and it can be used &quot;end&quot; to specify
+            the index of the last element.
+- block size : product of slowly changing dimensions.
+- size : size of the dimension on which subsetting is done.
+
+[Return type]
+Binary-array.
+
+[Examples]
+Extract elements 1 and 2 with block size 360 and size 100.
+oph_get_subarray3(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;1,2&apos;,360,100)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>01/10/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<multi-argument type="string" mandatory="no" default="1:end" mintimes="0">subset</multi-argument>
+	<multi-argument type="long-long" mandatory="no" default="1" mintimes="0">block size</multi-argument>
+	<multi-argument type="long-long" mandatory="no" default="0" mintimes="0">size</multi-argument>
+    </args>
+</primitive>

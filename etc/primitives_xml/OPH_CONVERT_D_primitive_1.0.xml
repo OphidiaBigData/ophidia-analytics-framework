@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_convert_d" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Converts a binary element in a real value.
+        
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+                 &apos;oph_double&apos;;
+                 &apos;oph_float&apos;.
+- output measure type : not used.
+- measure : input measure.
+        
+[Return type]
+Double.
+        
+[Examples]
+oph_convert_d(&apos;OPH_DOUBLE&apos;,&apos;&apos;,measure)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="double" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'">input measure type</argument>
+        <argument type="oph_type" mandatory="yes">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+    </args>
+</primitive>

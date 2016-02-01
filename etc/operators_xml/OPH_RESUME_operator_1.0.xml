@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_RESUME" version="1.0">
+    <info>
+        <abstract>[Type]
+Data and Metadata Access
+
+[Behaviour]
+Request the list of the commands submitted within a session or the output of a command.
+
+[Parameters]
+- session       : identifier of the intended session, by default it is the working session.
+- id            : identifier of the intended workflow or marker, by default no filter is applied.
+- id_type       : use &quot;workflow&quot; (default) or &quot;marker&quot; to set the filter &quot;id&quot;.
+- document_type : document type, &quot;request&quot; or &quot;response&quot;.
+- level         : use level &quot;1&quot; to ask for submitted commands (short version) or workflow output;
+                  use level &quot;2&quot; to ask for submitted commands (extended version) or the list of workflow tasks;
+                  use level &quot;3&quot; to ask for JSON Requests or the list of workflow task outputs;
+                  use level &quot;4&quot; to ask for the list of commands associated to tasks of a workflow; valid only for a specific workflow;
+                  use level &quot;5&quot; to ask for original JSON Request; valid only for a specific workflow.
+- user          : filter by name of the submitter, by default no filter is applied; valid only for workflow list (&quot;id&quot;=0).
+
+[System parameters]
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  resume : show output.
+- save : used to save session identifier on server.
+
+[Examples]
+Get the list of the commands submmitted within the working session:
+OPH_TERM: oph_resume
+SUBMISSION STRING: &quot;operator=oph_resume;&quot;
+Get the first command of the working session:
+OPH_TERM: oph_resume id=1;
+SUBMISSION STRING: &quot;operator=oph_resume;id=1;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>11/07/2014</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+	<argument type="string" mandatory="no" default="this">session</argument>
+	<argument type="int" mandatory="no" default="0" minvalue="0">id</argument>
+	<argument type="string" mandatory="no" default="workflow" values="workflow|marker">id_type</argument>
+	<argument type="string" mandatory="no" default="response" values="request|response">document_type</argument>
+	<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="5">level</argument>
+	<argument type="string" mandatory="no" default="">user</argument>
+	<argument type="string" mandatory="no" default="no" values="yes|no">save</argument>
+	<argument type="string" mandatory="no" default="null">sessionid</argument>
+	<argument type="string" mandatory="no" default="all" values="all|none|resume">objkey_filter</argument>
+    </args>
+</operator>

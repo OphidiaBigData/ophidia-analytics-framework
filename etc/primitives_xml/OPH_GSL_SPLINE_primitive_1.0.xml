@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_gsl_spline" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Computes the interpolation based on cubic splines.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- old_dim : input dimension; data type must be &apos;oph_double&apos;.
+- new_dim : new values for dimension; data type must be &apos;oph_double&apos;.
+
+[Return type]
+Binary-array.
+
+[Examples]
+Compute the interpolation from dimension &apos;x1&apos; to &apos;x2&apos;.
+oph_gsl_spline(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,x1,x2)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>16/07/2015</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="binary-array" mandatory="yes">old_dim</argument>
+	<argument type="binary-array" mandatory="yes">new_dim</argument>
+    </args>
+</primitive>

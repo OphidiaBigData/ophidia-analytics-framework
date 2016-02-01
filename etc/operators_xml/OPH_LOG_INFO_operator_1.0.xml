@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_LOG_INFO" version="1.0">
+    <info>
+        <abstract>[Type]
+Metadata Access.
+
+[Behaviour]
+It reads the last lines from the server log or from a specific container log.
+This operator requires administrator privileges.
+
+[Parameters]
+- log_type : type of log to be read.
+             Possible values are &quot;server&quot;, &quot;container&quot; and &quot;ioserver&quot;.
+             If not specified it will be used its default value &quot;server&quot;
+- container_id : id of the container related to the requested log,
+                 valid only when requested log type is &quot;container&quot;.
+- ioserver : type of the ioserver related to the requested log,
+                 valid only when requested log type is &quot;ioserver&quot;.
+- nlines : maximum number of lines to be displayed,
+                 starting from the end of the log.
+                 Default value is &quot;10&quot;.
+        
+[System parameters]
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  log_info : show log data as text.
+        
+[Examples]
+Read the last 10 lines of the log file related to the container with id 3 :
+OPH_TERM: oph_log_info log_type=container;container_id=3;nlines=10;
+SUBMISSION STRING: &quot;operator=oph_log_info;log_type=container;container_id=3;nlines=10;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+        <argument type="string" mandatory="no" default="server" values="server|container|ioserver">log_type</argument>
+        <argument type="int" mandatory="no" minvalue="0" default="0">container_id</argument>
+	<argument type="string" mandatory="no" default="mysql" values="mysql">ioserver</argument>
+        <argument type="int" mandatory="no" default="10" minvalue="1" maxvalue="10000">nlines</argument>
+        <argument type="string" mandatory="no" default="sync" values="async|sync">exec_mode</argument>
+        <argument type="string" mandatory="no" default="null">sessionid</argument>
+        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+	<argument type="string" mandatory="no" default="all" values="all|none|log_info">objkey_filter</argument>
+    </args>
+</operator>

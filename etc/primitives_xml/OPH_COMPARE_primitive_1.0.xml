@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_compare" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Return 0 if the two input measures are equal.
+
+[Parameters]
+- input measure type : not used.
+- output measure type : not used.
+- measure a : first input measure.
+- measure b : second input measure.
+
+[Return type]
+Long-long.
+        
+[Examples]
+oph_compare(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure_a,measure_b)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>24/09/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="long-long" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<multi-argument type="oph_type" mandatory="yes">input measure type</multi-argument>
+        <argument type="oph_type" mandatory="yes">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure a</argument>
+	<argument type="binary-array" mandatory="yes">measure b</argument>
+    </args>
+</primitive>

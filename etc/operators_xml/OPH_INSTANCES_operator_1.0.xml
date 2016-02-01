@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_INSTANCES" version="1.0">
+    <info>
+        <abstract>[Type]
+Metadata Access.
+
+[Behaviour]
+It shows information about host partitions, hosts and dbms instances.
+
+[Parameters]
+- level : show hosts with "1", DBMS instances with "2" or host partitions with "3".
+- host_filter : optional filter on host name. Used only with level 2.
+- host_partition : optional filter on host partition name. Used only with level 3.
+				       If no partition is specified, then the list of all partitions is shown.
+- filesystem_filter : optional filter on the type of filesystem used. Used only with level 2:
+				       &quot;local&quot; for local disks only,
+				       &quot;global&quot; for GPFS disks only,
+				       &quot;all&quot; (default) for all disks.
+- ioserver_filter : optional filter on the type of I/O server used. Used only with level 2:
+				       &quot;mysql_table&quot; for MySQL I/O servers only,
+				       &quot;all&quot; (default) for all disks.
+- host_status : optional filter on the status of I/O nodes:
+				       &quot;up&quot; for up hosts only,
+				       &quot;down&quot; for down hosts only,
+				       &quot;all&quot; (default) for all hosts.
+- dbms_status : optional filter on the status of dbms instances. Used only with level 2:
+				       &quot;up&quot; for up instances only,
+				       &quot;down&quot; for down instances only,
+				       &quot;all&quot; (default) for all instances.
+
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  instances : show operator's output table.
+
+[Examples]
+Show all information about hosts and dbms instances :
+OPH_TERM: oph_instances level=2;host_filter=all;storage_filter=all;
+SUBMISSION STRING: &quot;operator=oph_instances;level=2;host_filter=all;storage_filter=all;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+        <argument type="int" mandatory="no" minvalue="1" maxvalue="3" values="1|2|3" default="1">level</argument>
+        <argument type="string" mandatory="no" default="all">host_filter</argument>
+        <argument type="string" mandatory="no" default="all">host_partition</argument>
+		<argument type="string" mandatory="no" default="all" values="local|global|all">filesystem_filter</argument>
+		<argument type="string" mandatory="no" default="all" values="mysql_table|all">ioserver_filter</argument>
+		<argument type="string" mandatory="no" default="all" values="up|down|all">host_status</argument>
+		<argument type="string" mandatory="no" default="all" values="up|down|all">dbms_status</argument>
+        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+        <argument type="string" mandatory="no" default="null">sessionid</argument>
+        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+        <argument type="string" mandatory="no" default="all" values="all|none|instances">objkey_filter</argument>
+    </args>
+</operator>

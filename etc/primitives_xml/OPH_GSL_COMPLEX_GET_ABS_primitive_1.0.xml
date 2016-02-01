@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_gsl_complex_get_abs" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Computes the absolute values of a binary array of complex numbers.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+                         &apos;oph_complex_double&apos;;
+                         &apos;oph_complex_float&apos;;
+                         &apos;oph_complex_int&apos;;
+                         &apos;oph_complex_long&apos;.
+- output measure type : Ophidia typing. Supported types are:
+                         &apos;oph_double&apos;;
+                         &apos;oph_float&apos;;
+                         &apos;oph_int&apos;;
+                         &apos;oph_long&apos;;
+                         &apos;oph_short&apos;;
+                         &apos;oph_byte&apos;.
+- measure : input measure.
+
+[Return type]
+Binary-array.
+
+[Examples]
+Extract absolute values from an array of complex numbers.
+oph_gsl_complex_get_abs(&apos;OPH_COMPlEX_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+    </args>
+</primitive>

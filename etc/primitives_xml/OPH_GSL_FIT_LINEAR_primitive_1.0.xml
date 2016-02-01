@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_gsl_fit_linear" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Computes the linerar regression.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- dimension : input dimension; data type must be &apos;oph_double&apos;.
+- x : points in which the values of regression line have to be evaluated; data type must be &apos;oph_double&apos;.
+
+[Return type]
+Binary-array.
+
+[Examples]
+Compute the values of regression line in points &apos;x&apos; given the dimension &apos;dimension&apos;.
+oph_gsl_fit_linear(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,dimension,x)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>16/07/2015</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="binary-array" mandatory="yes">dimension</argument>
+	<argument type="binary-array" mandatory="yes">x</argument>
+    </args>
+</primitive>

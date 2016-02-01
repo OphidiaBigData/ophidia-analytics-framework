@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_TASKS" version="1.0">
+    <info>
+        <abstract>[Type]
+Metadata Access.
+
+[Behaviour]
+It shows information about executed tasks. 
+Default arguments allow to show all the tasks executed. 
+If a container is given, then only tasks that involve the container are shown.
+Optional filters on operation and datacube PID can also be used.
+Any filter can use SQL wildcards (%, _, etc.)
+
+[Parameters]
+- cube_filter : optional filter on the name of input/output datacubes. The name must be in PID format.
+				Default value is &quot;all&quot;.		
+- operator_filter : optional filter on the name of the operators implied in tasks.
+				    Default value is &quot;all&quot;.
+- path : optional filter on absolute/relative path. Path is expanded so it can also contain 
+		 &apos;.&apos; and &apos;..&apos;  
+ 		 It is only considered when container_filter is specified.
+- cwd : absolute path corresponding to the current working directory,
+         necessary to correctly parse paths.
+         All resolved paths must be associated to the calling session,
+         so they should contain &quot;/&lt;session-code&gt;&quot;.
+		It is only considered when container_filter is specified.
+- container: optional filter on containers. The argument is considered only inside 
+			the specified path. Default is &quot;all&quot;.
+
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  tasks : show a list of tasks submitted previously.
+
+[Examples]
+Show information about all tasks :
+OPH_TERM: oph_tasks cube_filter=all;operator_filter=all;
+SUBMISSION STRING: &quot;operator=oph_tasks;cube_filter=all;operator_filter=all;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+        <argument type="string" mandatory="no" default="all">cube_filter</argument>
+        <argument type="string" mandatory="no" default="all">operator_filter</argument>
+        <argument type="string" mandatory="no" default="-">path</argument>
+        <argument type="string" mandatory="yes">cwd</argument>
+		<argument type="string" mandatory="no" default="all">container</argument>
+        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+        <argument type="string" mandatory="no" default="null">sessionid</argument>
+        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+	<argument type="string" mandatory="no" default="all" values="all|none|tasks">objkey_filter</argument>
+    </args>
+</operator>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_aggregate_stats_final" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Computes statistical indexes based on mask value working vertically on the columns of
+arrays of partial results obtained from a merge of fragments on which oph_aggregate_stats_partial has been applied.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input partial results.
+- mask : 7-bit mask
+         -- 0000000  : invalid
+         -- 1xxxxxx  : mean
+         -- x1xxxxx  : variance
+         -- xx1xxxx  : std dev
+         -- xxx1xxx  : skew
+         -- xxxx1xx  : excess kurtosis
+         -- xxxxx1x  : max
+         -- xxxxxx1  : min
+         -- 1111111  : all (default)
+         -- 101      : mean + std dev
+         -- ...
+
+[Return type]
+Binary-array.
+
+[Examples]
+Compute mean, maximum and minimum of a set of time series from partial results.
+oph_aggregate_stats_final(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;1000011&apos;)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>16/06/2014</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="aggregate"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input data type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output data type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="string" mandatory="no" default="1111111">mask</argument>
+    </args>
+</primitive>

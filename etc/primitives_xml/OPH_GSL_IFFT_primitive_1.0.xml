@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_gsl_ifft" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Compute the inverse Fast Fourier Transform of a measure array.
+Measures must be OPH_COMPLEX_DOUBLEs as returned by oph_gsl_fft.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported type is &apos;oph_complex_double&apos;.
+- output measure type : Ophidia typing. Supported type is &apos;oph_complex_double&apos;.
+- measure : input measure.
+
+[Return type]
+Binary-array.
+
+[Examples]
+Compute the original signal through the IFFT of the input coefficients.
+oph_gsl_ifft(&apos;OPH_COMPLEX_DOUBLE&apos;,&apos;OPH_COMPLEX_DOUBLE&apos;,measure)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_complex_double'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_complex_double'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+    </args>
+</primitive>

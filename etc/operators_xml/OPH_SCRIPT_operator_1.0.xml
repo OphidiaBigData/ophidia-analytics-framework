@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_SCRIPT" version="1.0">
+    <info>
+        <abstract>[Type]
+General.
+
+[Behaviour]
+It executes a bash script. The script can eventually use the env var OPH_SCRIPT_SESSION_PATH passed by the operator and pointing to &lt;oph_web_server_location&gt;/sessions/&lt;session_code&gt;/export/misc.
+
+[Parameters]
+- script : name of the script to be executed (when requested &quot;./&quot; has to be included)
+- args : list of pipe-separated arguments to be passed to the script
+- stdout : file where stdout will be redirected (appended) or &quot;stdout&quot; for no redirection
+- stderr : file where stderr will be redirected (appended) or &quot;stderr&quot; for no redirection
+        
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  script : show the full command that was launched.
+        
+[Examples]
+Execute the script &quot;./test.sh var1 var2&quot; without redirecting stdout and stderr:
+OPH_TERM: oph_script script=./test.sh;args=var1|var2;
+SUBMISSION STRING: &quot;operator=oph_script;script=./test.sh;args=var1|var2;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>10/08/2014</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>execute</permission>
+    </info>
+    <args>
+        <argument type="string" mandatory="yes">script</argument>
+        <argument type="string" mandatory="no" default=" ">args</argument>
+        <argument type="string" mandatory="no" default="stdout">stdout</argument>
+        <argument type="string" mandatory="no" default="stderr">stderr</argument>
+        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+        <argument type="string" mandatory="no" default="null">sessionid</argument>
+        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+	    <argument type="string" mandatory="no" default="all" values="all|none|script">objkey_filter</argument>
+    </args>
+</operator>

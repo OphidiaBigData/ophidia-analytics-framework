@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_cast" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Converts the measure array value type from input to output type.
+Possible conversions are:
+    (oph_byte, oph_short, oph_int, oph_long, oph_float, oph_double) &lt;-&gt; (oph_byte, oph_short, oph_int, oph_long, oph_float, oph_double)
+    (oph_byte, oph_short, oph_int, oph_long, oph_float, oph_double) -&gt; (oph_complex_int, oph_complex_long, oph_complex_float, oph_complex_double)
+    (oph_complex_int, oph_complex_long, oph_complex_float, oph_complex_double) -&gt; (oph_complex_int, oph_complex_long, oph_complex_float, oph_complex_double)
+With conversion from real to complex numbers it adds imaginary parts as 0, while in case of complex numbers -&gt; real numbers it returns an error.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+                       &apos;oph_double&apos;
+                       &apos;oph_float&apos;
+                       &apos;oph_int&apos;
+                       &apos;oph_long&apos;
+                       &apos;oph_short&apos;
+                       &apos;oph_byte&apos;
+                       &apos;oph_complex_double&apos;
+                       &apos;oph_complex_float&apos;
+                       &apos;oph_complex_int&apos;
+                       &apos;oph_complex_long&apos;.
+- output measure type : Ophidia typing. Supported types are:
+                        &apos;oph_double&apos;
+                        &apos;oph_float&apos;
+                        &apos;oph_int&apos;
+                        &apos;oph_long&apos;
+                        &apos;oph_short&apos;
+                        &apos;oph_byte&apos;
+                        &apos;oph_complex_double&apos;
+                        &apos;oph_complex_float&apos;
+                        &apos;oph_complex_int&apos;
+                        &apos;oph_complex_long&apos;.
+- measure : input measure.
+                        
+[Return type]
+Binary-array.
+
+[Examples]
+Cast an array of measures from oph_double to oph_complex_int.
+oph_cast(&apos;OPH_DOUBLE&apos;,&apos;OPH_COMPLEX_INT&apos;,measure)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+        <argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_byte'|'oph_short'|'oph_long'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">input measure type</argument>
+        <argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_byte'|'oph_short'|'oph_long'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+    </args>
+</primitive>

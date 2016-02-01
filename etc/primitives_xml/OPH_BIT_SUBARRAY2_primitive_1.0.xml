@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_bit_subarray2" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Extracts a subset of a bit array. It extracts a subset of bits given a &apos;subset string&apos;.
+
+[Parameters]
+- input data type : not used.
+- output data type : not used.
+- measure : input measure.
+- subset : enumeration of comma-separated elementary filters (1 series of filters for each dimension). Possible filter forms:
+           -- start_index : select a single value, specified by its index
+           -- start_index:stop_index : select elements from start_index to stop_index
+           -- start_index:stride:stop_index : select elements from start_index to stop_index with a step of stride
+           Indexes are integers from 1 to the dimension size and it can be used &quot;end&quot; to specify
+           the index of the last element.
+- size : size of the dimensions on which subsetting is done.
+
+[Return type]
+Bit-array.
+        
+[Examples]
+Get the first 3 elements of a dimension with 100 total elements.
+oph_bit_subarray2(&apos;&apos;,&apos;&apos;,measure,&apos;1:3&apos;,100)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>17/09/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="bit-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes">input data type</argument>
+	<argument type="oph_type" mandatory="yes">output data type</argument>
+	<argument type="bit-array" mandatory="yes">measure</argument>
+	<argument type="string" mandatory="yes">subset</argument>
+	<multi-argument type="long-long" mandatory="no" mintimes="0">size</multi-argument>
+    </args>
+</primitive>

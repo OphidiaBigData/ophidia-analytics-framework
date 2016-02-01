@@ -1,0 +1,13 @@
+<!-- DTD for Ophidia hierarchies -->
+
+<!ELEMENT hierarchy ( attribute+ ) >
+<!ATTLIST hierarchy name CDATA #REQUIRED >
+<!ATTLIST hierarchy version CDATA #REQUIRED>
+
+<!ELEMENT attribute EMPTY >
+<!ATTLIST attribute long_name NMTOKEN #REQUIRED >
+<!ATTLIST attribute short_name NMTOKEN #REQUIRED >
+<!ATTLIST attribute aggregate_field NMTOKEN #REQUIRED >
+<!ATTLIST attribute aggregate_set NMTOKEN #REQUIRED >
+<!ATTLIST attribute aggregate_op CDATA #IMPLIED >
+

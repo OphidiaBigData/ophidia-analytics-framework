@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_shift" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Shifts the values inside a measure array by &apos;offset&apos; positions using the &apos;filling&apos; value.
+        
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- offset : number of movements of 1 measure.
+           If &gt;0, the shift will be to the right.
+           If &lt;0, the shift will be to the left.
+           With 0, there will be no shift.
+- filling : number used to fill empty elements during the shift.
+
+[Return type]
+Binary-array.
+        
+[Examples]
+Shifts to the left the values inside a measure array by 2 positions using 0 as filling value.
+oph_shift(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,-2,0)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+        <argument type="long-long" mandatory="no" default="0">offset</argument>
+        <argument type="double" mandatory="no" default="0">filling</argument>
+    </args>
+</primitive>

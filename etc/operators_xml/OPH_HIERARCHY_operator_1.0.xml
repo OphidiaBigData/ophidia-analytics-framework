@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_HIERARCHY" version="1.0">
+    <info>
+        <abstract>[Type]
+Metadata Access.
+
+[Behaviour]
+It shows the list of the hierarchies or the description of a specified hierarchy.
+
+[Parameters]
+- hierarchy : name of the requested hierarchy. If the value &quot;all&quot; is
+           specified than the list of all hierarchies is shown.
+- hierarchy_version : version of the requested hierarchy.
+                     If not specified it will be used its default value &quot;latest&quot;
+                     in order to get info about the latest version of the hierarchy.
+
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  hierarchy_list : show operator's output table;
+                  hierarchy_tip : show operator's output help message;
+                  hierarchy_attrs : show hierarchy attribute table;
+                  hierarchy_function : show hierarchy name and version.
+
+[Examples]
+Get the description of &quot;oph_time&quot; hierarchy :
+OPH_TERM: oph_hierarchy hierarchy=oph_time;
+SUBMISSION STRING: &quot;operator=oph_hierarchy;hierarchy=oph_time;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>02/11/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+        <argument type="string" mandatory="no" default="all">hierarchy</argument>
+        <argument type="string" mandatory="no" default="latest">hierarchy_version</argument>
+        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+        <argument type="string" mandatory="no" default="null">sessionid</argument>
+        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+        <argument type="string" mandatory="no" default="all" values="all|none|hierarchy_list|hierarchy_tip|hierarchy_attrs|hierarchy_function">objkey_filter</argument>
+    </args>
+</operator>

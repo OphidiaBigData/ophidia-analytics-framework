@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_APPLY" version="1.0">
+    <info>
+        <abstract>[Type]
+Data Process.
+
+[Behaviour]
+It executes a query on a datacube.
+The SQL query must contain only the needed primitive (or nested primitives) without
+SQL clauses like SELECT or FROM. All the examples provided in the primitives manual report the SQL query
+that could be used when directly connected to the database. 
+In order to properly use them in the Ophidia analytics framework, the user must extract only the SELECT filters, between SELECT and FROM.
+The result of the query execution will be saved in a new datacube.
+The type of the resulting measure must be equal to the input measure one.
+In case of inequalities, it is necessary to call the primitive &quot;oph_cast&quot; in order to save the results with the appropriate type.
+      
+[Parameters]
+- cube : name of the input datacube. The name must be in PID format.
+- query : user-defined SQL query. It may use Ophidia primitives, even nested. Use the reserved keyword &quot;measure&quot; to refer to time series.
+          Use the keyword &quot;dimension&quot; to refer to the input dimension array (only if one dimension of input cube is implicit).
+- dim_query : user-defined SQL query to be applied to dimension values. It may use Ophidia primitives.
+              Use the keyword &quot;dimension&quot; to refer to the input dimension array.
+              In case the size of original array decreases, by default, values are set as incremental indexes: 1, 2, 3, ...
+- measure : name of the new measure resulting from the specified operation.
+- measure_type : if &quot;auto&quot; measure type will be set automatically to that of input datacube; the related primitive arguments have to be omitted in &quot;query&quot;,
+                 if &quot;manual&quot; (default) measure type and the related primitive arguments have to be set in &quot;query&quot;.
+- dim_type : if &quot;auto&quot; dimension type will be set automatically to that of input datacube, the related primitive arguments have to be omitted in &quot;dim_query&quot;;
+             if &quot;manual&quot; (default) dimension type and the related primitive arguments have to be set in &quot;dim_query&quot;.
+- check_type : if &quot;yes&quot; the agreement between input and output data types of nested primitives will be checked,
+               if &quot;no&quot; data type will be not checked (valid only for &quot;manual&quot; setting of &quot;measure_type&quot; and &quot;dim_type&quot;).
+- compressed : if &quot;auto&quot; (default) new data wil be compressed according to compression status of input datacube,
+               if &quot;yes&quot; new data will be compressed,
+               if &quot;no&quot; data will be inserted without compression.
+- schedule : scheduling algorithm. The only possible value is 0,
+		   for a static linear block distribution of resources.
+- container: name of the container to be used to store the output cube; by default it is the input container.
+        
+[System parameters]      
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).      
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  apply : show operator's output PID as text.
+        
+[Examples]
+- Use primitive &quot;oph_reduce&quot; on datacube identified by the PID &quot;http://www.example.com/1/1&quot; with oph_double input data:
+OPH_TERM:: oph_apply cube=http://www.example.com/1/1;query=oph_reduce(measure,&apos;OPH_AVG&apos;,25);
+SUBMISSION STRING: &quot;operator=oph_apply;cube=http://www.example.com/1/1;query=oph_reduce(measure,&apos;OPH_AVG&apos;,25);&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>write</permission>
+    </info>
+    <args>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="yes">cube</argument>
+		<argument type="string" mandatory="yes">query</argument>
+		<argument type="string" mandatory="no" default="null">dim_query</argument>
+		<argument type="string" mandatory="no" default="null">measure</argument>
+		<argument type="string" mandatory="no" default="manual" values="auto|manual">measure_type</argument>
+		<argument type="string" mandatory="no" default="manual" values="auto|manual">dim_type</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">check_type</argument>
+		<argument type="string" mandatory="no" default="auto" values="yes|no|auto">compressed</argument>
+		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
+		<argument type="string" mandatory="no" default="-">container</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|apply">objkey_filter</argument>
+    </args>
+</operator>

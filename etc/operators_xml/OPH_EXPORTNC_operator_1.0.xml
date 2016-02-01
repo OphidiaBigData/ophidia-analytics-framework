@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_EXPORTNC" version="1.0">
+    <info>
+        <abstract>[Type]
+Data Process.
+
+[Behaviour]
+It exports data of a datacube into multiple NetCDF files.
+
+[Parameters]
+- cube : name of the input datacube. The name must be in PID format.
+- schedule : scheduling algorithm. The only possible value is 0,
+             for a static linear block distribution of resources.
+- misc : if &quot;yes&quot; data are saved in session folder called &quot;export/misc&quot;;
+         if &quot;no&quot; data are saved within &quot;export/nc&quot; in a subfolder associated with the PID of the cube (default).
+- output_path : absolute path of the NetCDF output files. In case of default value, all files will be saved in the appropriate
+                directory corresponding to the related container and cube in the nc folder at the framework installation directory.
+- output_name : filename of the NetCDF output files. In case of multiple fragments, filenames will be &quot;output_name0.nc&quot;, &quot;output_name1.nc&quot;, etc.
+                The default value is the measure name of input datacube.
+- force : flag used to force file creation. An existant file is overwritten with &quot;yes&quot; whereas
+          the file is created only if it does not exist with &quot;no&quot; (default).
+- export_metadata: imports also metadata with &quot;yes&quot; (default)
+                   or only data with &quot;no&quot;.
+
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+		exportnc : no output.
+        
+[Examples] 
+Export data of the datacube identified by the PID &quot;http://www.example.com/1/1&quot; :
+OPH_TERM: oph_exportnc cube=http://www.example.com/1/1;
+SUBMISSION STRING: &quot;operator=oph_exportnc;cube=http://www.example.com/1/1;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>write</permission>
+    </info>
+    <args>
+		<argument type="string" mandatory="yes">cube</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">misc</argument>
+		<argument type="string" mandatory="no" default="default">output_path</argument>
+		<argument type="string" mandatory="no" default="default">output_name</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">export_metadata</argument>
+		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|exportnc">objkey_filter</argument>
+    </args>
+</operator>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_ccluster_kcluster" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Compute clusters from input data through the use of k-means or k-medians algorithms.
+        
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measures.
+- k : number of requested clusters.
+- method : clustering algorithm. Supported algorithms are:
+					-- &apos;KMEANS&apos; (default);
+					-- &apos;KMEDIANS&apos;.
+- level : type of output. Supported outputs are:
+                    -- &apos;CENTROIDS&apos; : only centroid values for each cluster (spatial information is lost) (output is oph_double);
+                    -- &apos;LABELS&apos; : returns an integer between 0 and k-1 for each point according to found clusters (output is oph_int);
+                    -- &apos;ALL&apos; (default) : returns the centroid value of the corresponding cluster for each point (output is oph_double).
+- npass : number of iterations for the EM algorithm. At each iteration means or medians are computed and there is
+          a new cluster assignment. With more iterations results are more accurate. Default value is 1.
+
+[Return type]
+Binary-array.
+        
+[Examples]
+Group data into 2 clusters, with 10 EM iterations, and return the centroid value for each input point.
+oph_ccluster_kcluster(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,2,&apos;KMEANS&apos;,10,&apos;ALL&apos;)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>17/06/2014</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="reduce"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">input measure type</argument>
+        <argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="int" mandatory="yes">k</argument>
+	<argument type="string" mandatory="no" default="'kmeans'" values="'kmeans'|'kmedians'">method</argument>
+	<argument type="string" mandatory="no" default="'all'" values="'centroids'|'labels'|'all'">level</argument>
+	<argument type="int" mandatory="no" default="1">npass</argument>
+    </args>
+</primitive>

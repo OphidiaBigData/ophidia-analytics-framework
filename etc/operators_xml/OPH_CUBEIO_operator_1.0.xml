@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_CUBEIO" version="1.0">
+    <info>
+        <abstract>[Type]
+Metadata Access.
+
+[Behaviour]
+It shows the hierarchy of all datacubes used to generate the input datacube and of those derived from it.
+
+[Parameters]
+- cube : name of the input datacube. The name must be in PID format.
+- branch : view all datacubes with &quot;all&quot;, only the parent branch with &quot;parent&quot;
+		   and only the children branch with &quot;children&quot;.
+        
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  cubeio : show cube provenance as a grid;
+                  cubeio_graph : show cube provenance as a directed graph.
+        
+[Examples]
+Show the hierarchy of all datacubes used to generate the datacube &quot;http://www.example.com/1/1&quot; and of those derived from it :
+OPH_TERM: oph_cubeio cube=http://www.example.com/1/1;branch=all;
+SUBMISSION STRING: &quot;operator=oph_cubeio;cube=http://www.example.com/1/1;branch=all;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+        <argument type="string" mandatory="yes">cube</argument>
+		<argument type="string" mandatory="no" default="all" values="parent|children|all">branch</argument>
+        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+        <argument type="string" mandatory="no" default="null">sessionid</argument>
+        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+        <argument type="string" mandatory="no" default="all" values="all|none|cubeio|cubeio_graph">objkey_filter</argument>
+    </args>
+</operator>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_gsl_fit_linear_coeff" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Computes the linerar regression coefficients.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- dimension : input dimension; data type must be &apos;oph_double&apos;; by deafult it is set to 1:(array length).
+- mask : indicates the best-fit linear regression coefficients to be extracted. Possible configurations are:
+         -- 000000 : invalid;
+         -- 1xxxxx : intercept (&apos;c0&apos;);
+         -- x1xxxx : slope (&apos;c1&apos;) (default);
+         -- xx1xxx : term &apos;cov00&apos; of covariance matrix;
+         -- xxx1xx : term &apos;cov01&apos; of covariance matrix;
+         -- xxxx1x : term &apos;cov11&apos; of covariance matrix;
+         -- xxxxx1 : sum of squares of the residuals (&apos;sumsq&apos;).
+
+[Return type]
+Binary-array.
+
+[Examples]
+Compute the slope of a time series.
+oph_gsl_fit_linear_coeff(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,dimension)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>31/07/2015</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="reduce"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="binary-array" mandatory="no" default="1:array length">dimension</argument>
+	<argument type="string" mandatory="no" default="010000">mask</argument>
+    </args>
+</primitive>

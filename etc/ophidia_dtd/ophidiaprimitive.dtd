@@ -1,0 +1,37 @@
+<!-- DTD for Ophidia primitives -->
+
+<!ELEMENT primitive (info,args)>
+<!ATTLIST primitive name CDATA #REQUIRED>
+<!ATTLIST primitive version CDATA #REQUIRED>
+
+<!ELEMENT info (abstract,author,creationdate?,license?,return,operation?)>
+
+<!ELEMENT abstract (#PCDATA)>
+<!ELEMENT author (#PCDATA)>
+<!ELEMENT creationdate (#PCDATA)>
+<!ELEMENT license (#PCDATA)>
+<!ATTLIST license url CDATA #REQUIRED>
+<!ELEMENT return EMPTY>
+<!ATTLIST return type (binary-array|bit-array|string|int|long|long-long|float|double|void) #REQUIRED>
+<!ELEMENT operation EMPTY>
+<!ATTLIST operation type (id|simple|reduce|aggregate) #REQUIRED>
+
+<!ELEMENT args (argument* | multi-argument*)*>
+
+<!ELEMENT argument (#PCDATA)>
+<!ATTLIST argument type (binary-array|bit-array|string|int|long-long|float|double|oph_type|oph_complex_type|oph_operator|numeric|long|bit|bool|oph_bit_op) #REQUIRED>
+<!ATTLIST argument minvalue CDATA #IMPLIED>
+<!ATTLIST argument maxvalue CDATA #IMPLIED>
+<!ATTLIST argument default CDATA #IMPLIED>
+<!ATTLIST argument values CDATA #IMPLIED>
+<!ATTLIST argument mandatory (yes|no) "yes">
+
+<!ELEMENT multi-argument (#PCDATA)>
+<!ATTLIST multi-argument type (string|binary-array|long-long|double|oph_type|oph_complex_type|oph_operator|numeric|int|long|bit|bool|oph_bit_op|bit-array) #REQUIRED>
+<!ATTLIST multi-argument minvalue CDATA #IMPLIED>
+<!ATTLIST multi-argument maxvalue CDATA #IMPLIED>
+<!ATTLIST multi-argument mintimes CDATA #IMPLIED>
+<!ATTLIST multi-argument maxtimes CDATA #IMPLIED>
+<!ATTLIST multi-argument default CDATA #IMPLIED>
+<!ATTLIST multi-argument values CDATA #IMPLIED>
+<!ATTLIST multi-argument mandatory (yes|no) "yes">

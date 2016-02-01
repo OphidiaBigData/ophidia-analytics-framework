@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_EXPLORECUBE" version="1.0">
+    <info>
+        <abstract>[Type]
+Data Process.
+
+[Behaviour]
+It prints the data stored into a datacube, possibly subset along its dimensions.
+Dimension values are used as input filters for subsetting.
+
+[Parameters]
+- cube : name of the input datacube. The name must be in PID format.
+- schedule : scheduling algorithm. The only possible value is 0,
+			for a static linear block distribution of resources.	   
+- subset_dims : dimension names of the datacube used for the subsetting.
+			Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
+			Must be the same number of &quot;subset_filter&quot; 
+- subset_filter : enumeration of comma-separated elementary filters (1 series of filters for each dimension):
+			-- value : select a specific value;
+			-- start_value:stop_value : select elements from start_value to stop_value; return an error if this set is empty.
+     			Values should be numbers. Example: subset_dims=lat|lon;subset_filter=35:45|15:20;
+			For time dimensions the option &quot;time_filter&quot; can be enabled, so that the following date formats can be also used:
+				-- yyyy
+				-- yyyy-mm
+				-- yyyy-mm-dd
+				-- yyyy-mm-dd hh
+				-- yyyy-mm-dd hh:mm
+				-- yyyy-mm-dd hh:mm:ss
+			In this case, interval bounds must be separated with &quot;_&quot;.
+			Multiple-value field: list of filters separated by &quot;|&quot; can be provided;
+				it must be the same number of &quot;subset_dims&quot;
+- time_filter : enable filters using dates for time dimensions; enabled by default.
+- limit_filter : optional filter on the maximum number of rows.
+- show_id : if &quot;no&quot; (default), it won't show fragment row ID.
+			With &quot;yes&quot;, it will also show the fragment row ID.
+- show_index : if &quot;no&quot; (default), it won't show dimension ids.
+			With &quot;yes&quot;, it will also show the dimension id next to the value.
+- show_time : if &quot;no&quot; (default), the values of time dimension are shown as numbers.
+			With &quot;yes&quot;, the values are converted as a string with date and time.
+- level : with 1 (default) only measure values are shown, if it is set to &quot;2&quot; the dimension values are also returned.
+- output_path : absolute path of the JSON Response. By default JSON Response is saved in core environment.
+- output_name : filename of the JSON Response. The default value is the PID of the input datacube.
+                File is saved provided that &quot;output_path&quot; is set.
+
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (it must be 1).
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+		  explorecube_data : show the content of a cube.
+		  explorecube_summary : show the number of rows to be extracted.
+		  explorecube_dimvalues : show the values of the dimensions of output cube.
+
+[Examples]       
+Print the subset consisting of values 1 through 10 of dimension &quot;lat&quot; and 20 through 30 of dimension &quot;lon&quot; :
+OPH_TERM: oph_explorecube cube=http://www.example.com/1/1;subset_dims=lat|lon;subset_filter=1:10|20:30;
+SUBMISSION STRING: &quot;operator=oph_explorecube;cube=http://www.example.com/1/1;subset_dims=lat|lon;subset_filter=1:10|20:30;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/02/2014</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+		<argument type="string" mandatory="yes">cube</argument>
+		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
+		<argument type="int" mandatory="no" default="100" minvalue="1" maxvalue="10000">limit_filter</argument>
+		<argument type="string" mandatory="no" default="none">subset_dims</argument>
+		<argument type="string" mandatory="no" default="all">subset_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">time_filter</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">show_index</argument>
+        	<argument type="string" mandatory="no" default="no" values="yes|no">show_id</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">show_time</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="2">level</argument>
+		<argument type="string" mandatory="no" default="default">output_path</argument>
+		<argument type="string" mandatory="no" default="default">output_name</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|explorecube_data|explorecube_summary|explorecube_dimvalues">objkey_filter</argument>
+    </args>
+</operator>

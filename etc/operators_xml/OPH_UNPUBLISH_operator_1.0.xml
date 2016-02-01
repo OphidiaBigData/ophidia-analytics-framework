@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_UNPUBLISH" version="1.0">
+    <info>
+        <abstract>[Type]
+Data Access.
+
+[Behaviour]
+It removes the HTML pages created by the PUBLISH2 operator.
+NOTE: it doesn't remove the container folder.
+
+[Parameters]
+- cube : name of the datacube previously published in HTML format.  
+				   The name must be in PID format.
+ 
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+		unpublish : no output.
+ 
+[Examples] 
+Unpublish data of the datacube &quot;http://www.example.com/1/1&quot; :
+OPH_TERM: oph_unpublish cube=http://www.example.com/1/1;
+SUBMISSION STRING: &quot;operator=oph_unpublish;cube=http://www.example.com/1/1;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>write</permission>
+    </info>
+    <args>
+        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+        <argument type="string" mandatory="no" default="null">sessionid</argument>
+        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+	<argument type="string" mandatory="yes">cube</argument>
+	<argument type="string" mandatory="no" default="all" values="all|none|unpublish">objkey_filter</argument>
+    </args>
+</operator>

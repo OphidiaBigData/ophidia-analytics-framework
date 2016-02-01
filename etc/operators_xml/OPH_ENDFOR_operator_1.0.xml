@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_ENDFOR" version="1.0">
+    <info>
+        <abstract>[Type]
+Flow control.
+
+[Behaviour]
+Close a loop &quot;for&quot;.
+      
+</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>20/08/2015</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+    </args>
+</operator>

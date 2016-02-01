@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_count_array" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Counts the number of elements into an array.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+                 &apos;oph_double&apos;;
+                 &apos;oph_float&apos;;
+                 &apos;oph_int&apos;;
+		 &apos;oph_long&apos;;
+                 &apos;oph_short&apos;;
+		 &apos;oph_byte&apos;.
+- output measure type : not used.
+- measure : first input measure.
+- missing values : use '1' (default) to include missing values, use '0' to exclude them.
+
+[Return type]
+Long-long.
+        
+[Examples]
+oph_count_array(&apos;OPH_FLOAT&apos;,&apos;&apos;,measure)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="long-long"/>
+	<operation type="reduce"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="bool" mandatory="no" default="1" values="0|1">missing values</argument>
+    </args>
+
+</primitive>

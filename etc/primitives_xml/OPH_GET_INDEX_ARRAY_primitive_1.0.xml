@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_get_index_array" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Return a binary array with values from &apos;start value&apos; from to &apos;stop value&apos;.
+       
+[Parameters]
+- input measure type : not used.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- start value : first value.
+- stop value : max value; it cannot be lower than start value.
+- stride : step; it is set to 1 by default.
+                 
+[Return type]
+Binary-array.
+        
+[Examples]
+Build an array of integers from 1 to 5:
+oph_get_index_array(&apos;&apos;,&apos;OPH_LONG&apos;,1,5)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>13/07/2015</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="int" mandatory="yes" minvalue="1">start value</argument>
+	<argument type="int" mandatory="yes" minvalue="1">stop value</argument>
+	<argument type="int" mandatory="no" default="1" minvalue="1">stride</argument>
+    </args>
+</primitive>

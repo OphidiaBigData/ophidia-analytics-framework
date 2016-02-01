@@ -1,0 +1,147 @@
+[OPH_EXPLORENC]
+@DRIVER_PATH@/liboph_explorencoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_EXPLORECUBE]
+@DRIVER_PATH@/liboph_explorecubeoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_PERMUTE]
+@DRIVER_PATH@/liboph_permuteoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_SUBSET]
+@DRIVER_PATH@/liboph_subsetoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_SUBSET2]
+@DRIVER_PATH@/liboph_subset2operator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_REDUCE]
+@DRIVER_PATH@/liboph_reduceoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_REDUCE2]
+@DRIVER_PATH@/liboph_reduce2operator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_AGGREGATE]
+@DRIVER_PATH@/liboph_aggregateoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_AGGREGATE2]
+@DRIVER_PATH@/liboph_aggregate2operator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_INTERCOMPARISON]
+@DRIVER_PATH@/liboph_intercomparisonoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_DRILLDOWN]
+@DRIVER_PATH@/liboph_drilldownoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_ROLLUP]
+@DRIVER_PATH@/liboph_rollupoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_DUPLICATE]
+@DRIVER_PATH@/liboph_duplicateoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_APPLY]
+@DRIVER_PATH@/liboph_applyoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_RANDCUBE]
+@DRIVER_PATH@/liboph_randcubeoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_DELETE]
+@DRIVER_PATH@/liboph_deleteoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_LIST]
+@DRIVER_PATH@/liboph_listoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_UNPUBLISH]
+@DRIVER_PATH@/liboph_unpublishoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_CUBEELEMENTS]
+@DRIVER_PATH@/liboph_cubeelementsoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_CUBESIZE]
+@DRIVER_PATH@/liboph_cubesizeoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_DELETECONTAINER]
+@DRIVER_PATH@/liboph_deletecontaineroperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_SPLIT]
+@DRIVER_PATH@/liboph_splitoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_MERGE]
+@DRIVER_PATH@/liboph_mergeoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_CUBESCHEMA]
+@DRIVER_PATH@/liboph_cubeschemaoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_INSTANCES]
+@DRIVER_PATH@/liboph_instancesoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_CUBEIO]
+@DRIVER_PATH@/liboph_cubeiooperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_TASKS]
+@DRIVER_PATH@/liboph_tasksoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_IMPORTNC]
+@DRIVER_PATH@/liboph_importncoperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_IMPORTNC2]
+@DRIVER_PATH@/liboph_importnc2operator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_IMPORTNC3]
+@DRIVER_PATH@/liboph_importnc3operator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_EXPORTNC]
+@DRIVER_PATH@/liboph_exportncoperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_EXPORTNC2]
+@DRIVER_PATH@/liboph_exportnc2operator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_OPERATORS_LIST]
+@DRIVER_PATH@/liboph_operators_listoperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_PRIMITIVES_LIST]
+@DRIVER_PATH@/liboph_primitives_listoperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_LOG_INFO]
+@DRIVER_PATH@/liboph_log_infooperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_PUBLISH]
+@DRIVER_PATH@/liboph_publishoperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_LOGGINGBK]
+@DRIVER_PATH@/liboph_loggingbkoperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_MAN]
+@DRIVER_PATH@/liboph_manoperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_CREATECONTAINER]
+@DRIVER_PATH@/liboph_createcontaineroperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_HIERARCHY]
+@DRIVER_PATH@/liboph_hierarchyoperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_FOLDER]
+@DRIVER_PATH@/liboph_folderoperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_SEARCH]
+@DRIVER_PATH@/liboph_searchoperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_RESTORECONTAINER]
+@DRIVER_PATH@/liboph_restorecontaineroperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_MOVECONTAINER]
+@DRIVER_PATH@/liboph_movecontaineroperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_SHOWGRID]
+@DRIVER_PATH@/liboph_showgridoperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_METADATA]
+@DRIVER_PATH@/liboph_metadataoperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_INTERCUBE]
+@DRIVER_PATH@/liboph_intercubeoperator.so
+LIB @MYSQL_LDFLAGS@
+[OPH_MERGECUBES]
+@DRIVER_PATH@/liboph_mergecubesoperator.so
+LIB @MYSQL_LDFLAGS@
+[OPH_SCRIPT]
+@DRIVER_PATH@/liboph_scriptoperator.so
+LIB @MYSQL_LDFLAGS@

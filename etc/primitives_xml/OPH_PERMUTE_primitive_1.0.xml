@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_permute" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Executes a permutation of the implicit dimension order. It requires at least two dimensions,
+otherwise it returns the original measure.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- permutation : string representing the permutation, i.e. a comma-separated list of new levels
+		of implicit dimensions, from the outermost to the innermost.
+- size : sizes of at least 2 implicit dimensions. The order must be the order of implicit dimensions
+		before the permutation, from the innermost to the outermost.
+
+[Return type]
+Binary-array.
+
+[Examples]
+Swap the first implicit dimension with the second one.
+oph_permute(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;2,1&apos;,&apos;oph_double&apos;,360,100)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="string" mandatory="yes">permutation</argument>
+	<multi-argument type="long-long" mandatory="no" default="0" mintimes="2">size</multi-argument>
+    </args>
+</primitive>

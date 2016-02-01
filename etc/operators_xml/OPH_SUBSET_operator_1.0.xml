@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_SUBSET" version="1.0">
+    <info>
+        <abstract>[Type]
+Data Process.
+
+[Behaviour]
+It performs a subsetting operation along dimensions of a datacube. Dimension indexes are used as input filters.
+
+[Parameters]
+- cube : name of the input datacube. The name must be in PID format.
+- schedule : scheduling algorithm. The only possible value is 0,
+		     for a static linear block distribution of resources.		   
+- subset_dims : dimension names of the datacube used for the subsetting.
+			    Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
+			    Must be the same number of &quot;subset_filter&quot; 
+- subset_filter : enumeration of comma-separated elementary filters (1 series of filters for each dimension):
+					-- start_index : select a single value, specified by its index
+					-- start_index:stop_index : select elements from start_index to stop_index
+					-- start_index:stride:stop_index : select elements from start_index to stop_index with a step of stride
+				  Indexes are integers from 1 to the dimension size. It can be also used &quot;end&quot; to specify
+				  the index of the last element.
+				  Example:
+					subset_dims=lat|lon;subset_filter=1:10|20:end;
+			      Multiple-value field: list of filters separated by &quot;|&quot; can be provided  
+			      Must be the same number of &quot;subset_dims&quot; 
+- grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
+             or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
+- container: name of the container to be used to store the output cube; by default it is the input container.
+
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  subset : show operator's output PID as text.
+
+[Examples]       
+Extract the subset consisting of values 1 through 10 of dimension &quot;lat&quot; and 20 through 30 of dimension &quot;lon&quot; :
+OPH_TERM: oph_subset cube=http://www.example.com/1/1;subset_dims=lat|lon;subset_filter=1:10|20:30;grid=new_grid;
+SUBMISSION STRING: &quot;operator=oph_subset;cube=http://www.example.com/1/1;subset_dims=lat|lon;subset_filter=1:10|20:30;grid=new_grid;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>01/10/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>write</permission>
+    </info>
+    <args>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="yes">cube</argument>
+		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
+		<argument type="string" mandatory="no" default="none">subset_dims</argument>
+		<argument type="string" mandatory="no" default="all">subset_filter</argument>
+		<argument type="string" mandatory="no" default="-">grid</argument>
+		<argument type="string" mandatory="no" default="-">container</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|subset">objkey_filter</argument>
+    </args>
+</operator>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_fdi_ifi" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Compute the IFI fire danger index. Input measure is expected to follow the format:
+- the time series is expressed in days;
+- for each day there must be a group of 8 ordered values: radiation_mean (W m-2),radiation_max (W m-2),temperature_mean (C),
+temperature_max (C),total_precipitation (mm),wind_speed_mean (km h-1),relative_humidity_mean (%),relative_humidity_min (%);
+- all inputs must be of the same oph_type.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measures.
+- index : name of the requested index.
+					&apos;DC&apos; : drought code;
+					&apos;MC&apos; : meteorological code;
+					&apos;R&apos; : R coefficient;
+					&apos;FC&apos; : fuel code;
+					&apos;IFI&apos; : integrated fire danger index (default).
+
+[Return type]
+Binary-array.
+        
+[Examples]
+Compute the IFI index from oph_doubles.
+oph_fdi_ifi(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>01/08/2014</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="string" mandatory="no" default="'ifi'" values="'dc'|'mc'|'r'|'fc'|'ifi'">index</argument>
+    </args>
+</primitive>

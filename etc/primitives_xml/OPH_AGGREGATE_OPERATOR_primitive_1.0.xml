@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_aggregate_operator" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Aggregates different measure arrays performing the specified operation on each column of array elements.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- operator name : type of aggregation.
+                -- &apos;oph_max&apos; : compute the maximum (default);
+                -- &apos;oph_min&apos; : compute the minimum;
+                -- &apos;oph_avg&apos; : compute the mean;
+                -- &apos;oph_sum&apos; : compute the sum.
+
+[Return type]
+Binary-array.
+
+[Examples]
+Compute the mean value.
+oph_aggregate_operator(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;OPH_AVG&apos;)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="aggregate"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input data type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output data type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="oph_operator" mandatory="no" default="'oph_max'" values="'oph_max'|'oph_min'|'oph_avg'|'oph_sum'">operator name</argument>
+    </args>
+</primitive>

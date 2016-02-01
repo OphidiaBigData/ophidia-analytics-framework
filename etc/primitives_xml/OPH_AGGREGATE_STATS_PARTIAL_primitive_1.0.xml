@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_aggregate_stats_partial" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Computes partial results useful to compute a statistical index based on mask value working vertically on the columns of arrays of measures.
+The partial results, after a merge, can be treated as input to oph_aggregate_stats_final primitive to compute the final results for the requested indexes.
+Possible partial results, depending on the requested indexes, are:
+- sum{i} : number of operands;
+- sum{x_i} : sum of operands;
+- sum{x_i^2} : sum of squared operands;
+- sum{x_i^3} : sum of operands raised to 3;
+- sum{x_i^4} : sum of operands raised to 4;
+- max{x_i} : maximum value between operands;
+- min{x_i} : minimum value between operands.
+For example, in case the 3-order moment (skew) is requested, the output will contain sum{i},sum{x_i},sum{x_i^2} and sum{x_i^3}.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- mask : 7-bit mask
+         -- 0000000  : invalid
+         -- 1xxxxxx  : mean
+         -- x1xxxxx  : variance
+         -- xx1xxxx  : std dev
+         -- xxx1xxx  : skew
+         -- xxxx1xx  : excess kurtosis
+         -- xxxxx1x  : max
+         -- xxxxxx1  : min
+         -- 1111111  : all (default)
+         -- 101      : mean + std dev
+         -- ...
+
+[Return type]
+Binary-array.
+
+[Examples]
+Compute partial results for mean, maximum and minimum of a set of time series.
+oph_aggregate_stats_partial(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;1000011&apos;)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>16/06/2014</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="aggregate"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input data type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output data type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="string" mandatory="no" default="1111111">mask</argument>
+    </args>
+</primitive>

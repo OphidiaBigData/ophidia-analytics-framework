@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_SERVICE" version="1.0">
+    <info>
+        <abstract>[Type]
+Metadata Access
+
+[Behaviour]
+Request or set the service status.
+
+[Parameters]
+- status : new service status, 'up' or 'down'.
+
+[System parameters]
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  service : show result data as text.
+        
+[Examples]       
+Enable the service:
+OPH_TERM: oph_service status=up;
+SUBMISSION STRING: &quot;operator=oph_service;status=up;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>22/07/2014</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+		<argument type="string" mandatory="no" default="" values="up|down">status</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|service">objkey_filter</argument>
+    </args>
+</operator>

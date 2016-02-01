@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_EXPLORENC" version="1.0">
+    <info>
+        <abstract>[Type]
+Data Process.
+
+[Behaviour]
+It read a NetCDF file (both measure and dimensions).
+WARNING: It handles only mono-dimensional coordinate variables. 
+
+[Parameters]
+- schedule : scheduling algorithm. The only possible value is 0,
+		     for a static linear block distribution of resources.
+- measure : name of the measure related to the NetCDF file.
+- src_path : path or OPeNDAP URL of the NetCDF file.
+- exp_dim : names of explicit dimensions.
+				 Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
+				 It implicitly defines explicit dimension number and level (order). 
+- imp_dim : names of implicit dimensions.
+            Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided 
+            It implicitly defines implicit dimension number and level (order).  
+            Must be the same number of &quot;imp_concept_level&quot; 
+- subset_dims : dimension names used for the subsetting.
+                Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
+                Must be the same number of &quot;subset_filter&quot; 
+- subset_filter : enumeration of comma-separated elementary filters (1 series of filters for each dimension). Possible forms are:
+                  -- start_value : single value specifying the start index of the subset
+                  -- start_value:stop_value : select elements from start_index to stop_index
+                  Values should be numbers. Example: subset_dims=lat|lon;subset_filter=35:45|15:20;
+		  Multiple-value field: list of filters separated by &quot;|&quot; can be provided  
+		  Must be the same number of &quot;subset_dims&quot;
+- subset_type : if set to &quot;index&quot; (default), the subset_filter is considered on dimension index. 
+                With &quot;coord&quot;, filter is considered on dimension values.
+- limit_filter : optional filter on the maximum number of rows.
+- show_id : if &quot;no&quot; (default), it won't show fragment row ID.
+            With &quot;yes&quot;, it will also show the fragment row ID.
+- show_index : if &quot;no&quot; (default), it won't show dimension ids.
+               With &quot;yes&quot;, it will also show the dimension id next to the value.
+- show_time : if &quot;no&quot; (default), the values of time dimension are shown as numbers.
+              With &quot;yes&quot;, the values are converted as a string with date and time.
+- show_stats : if one of the following mask is set a list of statistics is returned for each time series;
+               output data type always is &quot;oph_double&quot;.
+               It can be adopted only in case only one implicit dimension exists.
+               -- 00000000000000 : no statistics (default)
+               -- 1xxxxxxxxxxxxx : mean
+               -- x1xxxxxxxxxxxx : variance
+               -- xx1xxxxxxxxxxx : std dev
+               -- xxx1xxxxxxxxxx : abs dev
+               -- xxxx1xxxxxxxxx : skew
+               -- xxxxx1xxxxxxxx : kurtosis
+               -- xxxxxx1xxxxxxx : autocorrelation
+               -- xxxxxxx1xxxxxx : max
+               -- xxxxxxxx1xxxxx : min
+               -- xxxxxxxxx1xxxx : 0.05 quantile
+               -- xxxxxxxxxx1xxx : 0.25 quantile ->Q1
+               -- xxxxxxxxxxx1xx : 0.5  quantile ->Q2 (median)
+               -- xxxxxxxxxxxx1x : 0.75 quantile ->Q3
+               -- xxxxxxxxxxxxx1 : 0.95 quantile
+- show_fit : if &quot;yes&quot; linear regression of each time serie is returned.
+             It can be adopted only in case only one implicit dimension exists.
+             With &quot;no&quot; (default) linear regression is not evaluated (default).
+- level : with &quot;1&quot; (default) only measure values are shown, if it is set to &quot;2&quot; the dimension values are also returned.
+- imp_num_points : indicates the number of points which measure values must be distribuited along by interpolation.
+                   if &quot;imp_num_points&quot; is higher than the number of actual points then interpolation is evaluated;
+                   otherwise &quot;operation&quot; is applied.
+                   It can be adopted only in case only one implicit dimension exists.
+                   With &quot;0&quot; no interpolation/reduction is applied (default).
+- offset : relative offset to be used to set reduction interval bounds (percentage).
+           By default it is set to &quot;50&quot; i.e. new values will be the centroids of reduction intervals.
+- operation : operation to be applied in case of reduction of the number of points. Possible values are:
+              &quot;max&quot; to evaluate the maximum value;
+              &quot;min&quot; to evaluate the minimum value;
+              &quot;avg&quot; to evaluate the mean value (default);
+              &quot;sum&quot; to evaluate the sum.
+- wavelet : used to apply wavelet filter provided &quot;wavelet_points&quot; is set. Possible values are:
+            -- &quot;yes&quot; original data and filtered data are returned;
+            -- &quot;only&quot; only filtered data are returned;
+            -- &quot;no&quot; only original data are returned (deafult).
+- wavelet_ratio : is the fraction of wavelet transform coefficients that are cleared by the filter (percentage).
+                  It can be adopted only in case only one implicit dimension exists.
+                  With &quot;0&quot; no compression is applied (default).
+- wavelet_coeff : if &quot;yes&quot; wavelet coefficients are also shown;
+                  output data type always is &quot;oph_double&quot;; if necessary, their number is expanded to the first power of 2.
+                  It can be adopted only in case only one implicit dimension exists.
+        
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (it must be 1).
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  importnc : show operator's output PID as text.
+
+[Examples] 
+Read the NetCDF file /path/of/ncfile.nc:
+OPH_TERM: oph_explorenc measure=pressure;src_path=/path/of/ncfile.nc;exp_dim=lon|lat;imp_dim=time;
+SUBMISSION STRING: &quot;operator=oph_explorenc;measure=pressure;src_path=/path/of/ncfile.nc;exp_dim=lon|lat;imp_dim=time;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>02/07/2015</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>write</permission>
+    </info>
+    <args>  
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
+		<argument type="string" mandatory="yes">measure</argument>
+		<argument type="string" mandatory="yes">src_path</argument>
+		<argument type="string" mandatory="yes">exp_dim</argument>
+		<argument type="string" mandatory="yes">imp_dim</argument>
+		<argument type="string" mandatory="no" default="none">subset_dims</argument>
+		<argument type="string" mandatory="no" default="index" values="index|coord">subset_type</argument>
+		<argument type="string" mandatory="no" default="all">subset_filter</argument>
+		<argument type="int" mandatory="no" default="100" minvalue="1" maxvalue="10000">limit_filter</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">show_index</argument>
+        	<argument type="string" mandatory="no" default="no" values="yes|no">show_id</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">show_time</argument>
+		<argument type="string" mandatory="no" default="00000000000000">show_stats</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">show_fit</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="2">level</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0">imp_num_points</argument>
+		<argument type="real" mandatory="no" default="50" minvalue="0" maxvalue="100">offset</argument>
+		<argument type="string" mandatory="no" default="avg" values="max|min|avg|sum">operation</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no|only">wavelet</argument>
+		<argument type="real" mandatory="no" default="0" minvalue="0" maxvalue="100">wavelet_ratio</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">wavelet_coeff</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|explorenc">objkey_filter</argument>
+    </args>
+</operator>

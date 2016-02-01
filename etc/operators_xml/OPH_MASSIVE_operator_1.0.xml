@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_MASSIVE" version="1.0">
+    <info>
+        <abstract>[Type]
+Data Process.
+
+[Behaviour]
+It executes the same operation over a set of datacubes (massive operation).
+
+[Parameters]
+- level : level associated to the datacubes to be extracted.
+- measure : name of the measure associated to the datacubes to be extracted.
+- parent_cube : PID of the datacube used as input to create the datacubes which the operation has to be applied to.
+- container : name of the container of the datacubes which the operation has to be applied to.
+- container_pid : PID of the container of the datacubes which the operation has to be applied to. It overrides the filter on &quot;container name&quot;.
+- cube_filter : subset string to filter cubes by their identifier.
+- metadata_key : key of a metadata associated to datacubes which the operation has to be applied to.
+- metadata_value : value of the metadata specified with the parameter 'metadata_key'.
+- path : path of the target datacubes or files to be imported; by default it is the current working directory.
+- file : pattern for file names (used only for import operations).
+- recursive : set to &quot;yes&quot; in case sub-folders has to explored.
+- convention : used in case measure name has to be extracted from file name in import operations
+- run : set to &quot;yes&quot; in case massive operation has to be executed; set to &quot;no&quot; in case only the list of target datacubes is wanted.
+- depth : set to the maximum folder depth has to be explored in case of recursion; level &quot;1&quot; corresponds to &quot;no recursion&quot;; by default no limit is applied.
+
+[System parameters]
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  massive_list : show sub-task list.
+                  massive_summary : show a summary as text.
+
+[Examples]
+Not given</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>08/11/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+		<argument type="int" mandatory="no" default="" minvalue="0">level</argument>
+		<argument type="string" mandatory="no" default="">measure</argument>
+		<argument type="string" mandatory="no" default="">parent_cube</argument>
+		<argument type="string" mandatory="no" default="">container</argument>
+		<argument type="string" mandatory="no" default="">container_pid</argument>
+		<argument type="string" mandatory="no" default="">cube_filter</argument>
+		<argument type="string" mandatory="no" default="">metadata_key</argument>
+		<argument type="string" mandatory="no" default="">metadata_value</argument>
+		<argument type="string" mandatory="no" default="">path</argument>
+		<argument type="string" mandatory="no" default="">file</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">recursive</argument>
+		<argument type="string" mandatory="no" default="no" values="cmip5|no">convention</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0">depth</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|massive_list|massive_summary">objkey_filter</argument>
+    </args>
+</operator>

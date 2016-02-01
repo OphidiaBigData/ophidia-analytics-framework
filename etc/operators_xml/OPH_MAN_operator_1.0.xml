@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_MAN" version="1.0">
+    <info>
+        <abstract>[Type]
+Metadata Access.
+
+[Behaviour]
+It shows a description of the behaviour of an operator/primitive.
+
+[Parameters]
+- function : name of the requested operator/primitive
+- function_version : version of the requested operator/primitive.
+                     If not specified it will be used its default value &quot;latest&quot;
+                     in order to get info about the latest version of the operator.
+- function_type: type of function to describe; it can be operator or primitive.
+                 If not specified it will be used its default value &quot;operator&quot;
+
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  man_info : show info section as a grid;
+                  man_args : show arguments section as a grid;
+                  man_function : show function name and version as text;
+                  man_multiargs : show multi-arguments for primitives as grid.
+
+[Examples]
+Get the description of the operator &quot;oph_list&quot; :
+OPH_TERM: oph_man function=oph_list;function_version=latest;
+SUBMISSION STRING: &quot;operator=oph_man;function=oph_list;function_version=latest;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+        <argument type="string" mandatory="yes">function</argument>
+        <argument type="string" mandatory="no" default="latest">function_version</argument>
+        <argument type="string" mandatory="no" default="operator" values="operator|primitive">function_type</argument>
+        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+        <argument type="string" mandatory="no" default="null">sessionid</argument>
+        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+        <argument type="string" mandatory="no" default="all" values="all|none|man_info|man_args|man_function|man_multiargs">objkey_filter</argument>
+    </args>
+</operator>

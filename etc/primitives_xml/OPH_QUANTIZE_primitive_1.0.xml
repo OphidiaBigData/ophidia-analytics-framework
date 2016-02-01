@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_quantize" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Quantize an array according to a binary list of quantization level and a binary list of quantization values (expressed as doubles).
+Let the quantization levels be l_1,l_2,...,l_k and the quantization values v_1,v_2,...,v_s.
+Let measures be m_1,m_2,...,m_q.
+The implemented function operates in this way:
+ for m in {m_1,...,m_q}
+    if m &lt;= l_1 then m = v_1
+    if l_1 &lt; m &lt;= l_2 then m = v_2
+    ...
+    if l_(k-1) &lt; m &lt;= l_k then m = v_(s-1)
+    if m &gt; l_k then m = v_s
+So it has to be s=k+1.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- binary quantization levels : binary array of doubles representing quantization levels.
+- binary quantization values : binary array of doubles representing quantization values.
+
+[Return type]
+Binary-array.
+        
+[Examples]
+Assign 0 to all elements &lt;= 5, 1 to all elements &gt; 10 and 0.5 to all the others.
+oph_quantize(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,oph_to_bin(&apos;&apos;,&apos;OPH_DOUBLE&apos;,&apos;5,10&apos;),oph_to_bin(&apos;&apos;,&apos;OPH_DOUBLE&apos;,&apos;0,0.5,1&apos;))</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/01/2015</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="binary-array" mandatory="yes">binary quantization levels</argument>
+	<argument type="binary-array" mandatory="yes">binary quantization values</argument>
+    </args>
+</primitive>

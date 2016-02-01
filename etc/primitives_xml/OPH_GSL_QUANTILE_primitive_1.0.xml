@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_gsl_quantile" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Computes the quantile(s) specified as q1,q2,... on the elements of the measure array ordered in an ascending way.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- q1 : order of one mandatory quantile.
+- q : one or more orders of one or more quantiles.
+- order safe flag :     
+      -- with ORDER_SAFE_FLAG_SET (default) the input will be ordered,
+      -- with ORDER_SAFE_FLAG_UNSET the input is considered already ordered in ascending way.
+
+[Return type]
+Binary-array.
+
+[Examples]
+Compute quantiles of order 0.10, 0.60 and 0.80.
+oph_gsl_quantile(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,0.10,0.60,0.80)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="reduce"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="double" mandatory="yes">q1</argument>
+	<multi-argument type="double" mandatory="no" mintimes="0">q</multi-argument>
+	<argument type="string" mandatory="no" default="'ORDER_SAFE_FLAG_SET'" values="'ORDER_SAFE_FLAG_SET'|'ORDER_SAFE_FLAG_UNSET'">order safe flag</argument>
+    </args>
+</primitive>

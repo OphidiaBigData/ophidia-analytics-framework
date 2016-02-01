@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_operator_array" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Applies an operation between the value of measure array b and the value in the same position in measure array a.
+        
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure a : first input measure.
+- measure b : second input measure.
+- operation name : type of operation
+                    -- &apos;oph_max&apos; : compute the maximum (as oph_max_array);
+                    -- &apos;oph_min&apos; : compute the minimum (as oph_min_array);
+                    -- &apos;oph_sum&apos; : compute the sum (as oph_sum_array);
+                    -- &apos;oph_sub&apos; : compute the difference (as oph_sum_array);
+                    -- &apos;oph_mul&apos; : compute the product (as oph_mul_array);
+                    -- &apos;oph_div&apos; : compute the division (as oph_div_array);
+                    -- &apos;oph_abs&apos; : compute the modulus (as oph_abs_array);
+                    -- &apos;oph_arg&apos; : compute the phase (as oph_arg_array);
+                    -- &apos;oph_mask&apos; : use measure b as a mask for measure a (as oph_mask_array).
+
+[Return type]
+Binary-array.
+        
+[Examples]
+oph_operator_array(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure_a,measure_b,&apos;OPH_MAX&apos;)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>29/09/2014</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<multi-argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</multi-argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure a</argument>
+	<argument type="binary-array" mandatory="yes">measure b</argument>
+	<argument type="oph_operator" mandatory="yes" values="'oph_max'|'oph_min'|'oph_sum'|'oph_sub'|'oph_mul'|'oph_div'|'oph_abs'|'oph_arg'|'oph_mask'">operator name</argument>
+    </args>
+</primitive>

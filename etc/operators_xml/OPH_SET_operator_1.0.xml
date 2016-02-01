@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_SET" version="1.0">
+    <info>
+        <abstract>[Type]
+Metadata access.
+
+[Behaviour]
+Set a parameter in the workflow environment.
+      
+[Parameters]
+- name : name of the parameter. It should comply with IEEE Std 1003.1-2001 conventions, unless brackets {} are adopted to refer it.
+- value : value of the parameter. By default it will se to &quot;1&quot;. It can be accessed with @name or @{name}.
+
+[Examples]
+Set the parameter &quot;var&quot; to &quot;10&quot;:
+OPH_TERM: oph_set name=var;value=10;
+SUBMISSION STRING: &quot;operator=oph_set;name=var;value=10;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>31/10/2015</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+	<argument type="string" mandatory="yes">name</argument>
+	<argument type="string" mandatory="no" default="-">value</argument>
+    </args>
+</operator>
