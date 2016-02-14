@@ -28,7 +28,7 @@ This product includes software developed by the OpenSSL Project for use in the O
 
 ### How to Install
 
-If you are building from git, you also need automake, autoconf, libtool and libtool-ltdl packages. To prepare the code for building run:
+If you are building from git, you also need automake, autoconf, libtool, libtool-ltdl and libtool-ltdl-devel packages. To prepare the code for building run:
 
 ```
 $ ./bootstrap 
@@ -37,7 +37,7 @@ $ ./bootstrap
 The source code has been packaged with GNU Autotools, so to install simply type:
 
 ```
-$ ./configure
+$ ./configure --prefix=prefix
 $ make
 $ make install
 ```
@@ -48,8 +48,9 @@ Type:
 $ ./configure --help
 ```
 
-to see all available options, like --prefix for explicitly specifying the installation base directory.</br>
-If you want to use the program system-wide, remember to add its installation directory to your PATH.</br>
+to see all available options.
+
+If you want to use the program system-wide, remember to add its installation directory to your PATH.
 
 ### How to Launch
 
