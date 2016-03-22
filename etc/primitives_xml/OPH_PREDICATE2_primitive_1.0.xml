@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_predicate2" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Evaluates a predicate2. If &apos;expression0&apos; satisfies &apos;comparison&apos; then &apos;expression1&apos; is executed, else &apos;expression2&apos; is executed.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- expression 0 : first expression.
+- comparison : condition to be verified.
+- expression 1 : expression executed if expression 0 satisfies comparison.
+- expression 2 : expression executed if expression 0 does not satisfy comparison.
+- occurrence : if is set to a number &apos;n&apos; then expression 1 is evaluated only for the &apos;n&apos;-th of the condition; otherwise the expression 2 is evaluated.
+               Use &apos;first&apos; or &apos;begin&apos; for the first occurrence.
+               Use &apos;last&apos; or &apos;end&apos; for the last occurrence.
+               Use &apos;all&apos; to skip this check (defualt).
+                 
+[Return type]
+Binary-array.
+
+[Examples]
+Extract measures with temperature values greater than 300 K.
+oph_predicate2(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;x-300&apos;,&apos;>0&apos;,&apos;1&apos;,&apos;0&apos;)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>12/02/2016</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="string" mandatory="yes">expression 0</argument>
+	<argument type="string" mandatory="yes">comparison</argument>
+	<argument type="string" mandatory="yes">expression 1</argument>
+	<argument type="string" mandatory="yes">expression 2</argument>
+	<argument type="string" mandatory="no" default="all">occurrence</argument>
+    </args>
+</primitive>
