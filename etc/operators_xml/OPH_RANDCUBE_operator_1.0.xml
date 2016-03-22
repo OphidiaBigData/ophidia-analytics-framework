@@ -44,6 +44,7 @@ It creates a new datacube with random data and dimensions.
 			 With &quot;no&quot;, data will be inserted without compression.
 - grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
              or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
+- description : additional description to be associated with the output cube.
         
 [System parameters]
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -90,6 +91,7 @@ SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;cwd=/session
 		<argument type="string" mandatory="yes">dim_size</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">compressed</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
+		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|randcube">objkey_filter</argument>
     </args>
 </operator>

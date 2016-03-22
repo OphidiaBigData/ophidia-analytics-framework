@@ -437,7 +437,7 @@ int _oph_list_recursive_list_folders(ophidiadb *oDB, int level, int folder_id, i
 				  }
 
 				  //ADD ROW TO JSON
-				  num_fields = 3;
+				  num_fields = 4;
 				  if (oph_json_is_objkey_printable(objkeys,objkeys_num,OPH_JSON_OBJKEY_LIST)) {
 					  my_row = (char **)malloc(sizeof(char *)*num_fields);
 					  if (!my_row) {
@@ -474,6 +474,18 @@ int _oph_list_recursive_list_folders(ophidiadb *oDB, int level, int folder_id, i
 					  }
 					  jjj++;
 					  my_row[jjj] = strdup((pid ? pid : ""));
+					  if (!my_row[jjj]) {
+						  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+						  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "row value" );
+						  if(recursive_search) mysql_free_result(tmp_info_list);
+						  mysql_free_result(info_list);
+						  if(pid) free(pid);
+						  for (iii = 0; iii < jjj; iii++) if (my_row[iii]) free(my_row[iii]);
+						  if (my_row) free(my_row);
+						  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+					  }
+					  jjj++;
+					  my_row[jjj] = strdup(row[4] ? row[4] : "");
 					  if (!my_row[jjj]) {
 						  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 						  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "row value" );
@@ -710,14 +722,14 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb *oDB, int folder_id, int
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	  }
 	  char **my_row = NULL;
-	  int num_fields = 0;
+	  int num_fields = 7;
 	  //Empty set
 	  if((num_rows = mysql_num_rows(info_list))){
 		  MYSQL_ROW row;
 		  //For each ROW
 		  while((row = mysql_fetch_row(info_list))){
-				  if(row[4])
-					tmp_level = (int)strtol(row[4], NULL, 10);
+				  if(row[5])
+					tmp_level = (int)strtol(row[5], NULL, 10);
 
 				  if(row[2] &&  row[3]) {
 					//retrieve input datacube
@@ -730,12 +742,12 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb *oDB, int folder_id, int
 						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
 				  }
-				  if(row[2] &&  row[7]) {
-					if(strncmp(row[7], OPH_LIST_TASK_MULTIPLE_INPUT,strlen(OPH_LIST_TASK_MULTIPLE_INPUT)) == 0)
+				  if(row[2] &&  row[8]) {
+					if(strncmp(row[8], OPH_LIST_TASK_MULTIPLE_INPUT,strlen(OPH_LIST_TASK_MULTIPLE_INPUT)) == 0)
 						pid2 = (char *)strndup("...",strlen("..."));
 					else{
 						//retrieve input datacube
-						if(oph_pid_create_pid(tmp_uri, (int)strtol(row[2], NULL, 10), (int)strtol(row[7], NULL, 10), &pid2)){
+						if(oph_pid_create_pid(tmp_uri, (int)strtol(row[2], NULL, 10), (int)strtol(row[8], NULL, 10), &pid2)){
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create PID string\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_PID_CREATE_ERROR );
 							if(recursive_search) mysql_free_result(tmp_info_list);
@@ -746,9 +758,9 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb *oDB, int folder_id, int
 						}
 					}
 				  }
-				  else if(!row[7] && tmp_level > 0 && !row[6])
+				  else if(!row[8] && tmp_level > 0 && !row[7])
 					pid2 = (char *)strndup(OPH_LIST_TASK_MISSING_INPUT,strlen(OPH_LIST_TASK_MISSING_INPUT));
-				  else if(!row[7] && tmp_level == 0 && !row[6])
+				  else if(!row[8] && tmp_level == 0 && !row[7])
 					pid2 = (char *)strndup(OPH_LIST_TASK_RANDOM_INPUT,strlen(OPH_LIST_TASK_RANDOM_INPUT));
 
 				  if(recursive_search && !first_time)
@@ -768,9 +780,8 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb *oDB, int folder_id, int
 				  }
 
 					//Create source field
-				  if(!row[6] && !pid2){
+				  if(!row[7] && !pid2){
 					  //ADD ROW TO JSON
-					  num_fields = 6;
 					  if (oph_json_is_objkey_printable(objkeys,objkeys_num,OPH_JSON_OBJKEY_LIST)) {
 						  my_row = (char **)malloc(sizeof(char *)*num_fields);
 						  if (!my_row) {
@@ -822,7 +833,7 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb *oDB, int folder_id, int
 							  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 						  }
 						  jjj++;
-						  my_row[jjj] = strdup((row[5] ? row[5] : ""));
+						  my_row[jjj] = strdup(row[4] ? row[4] : "");
 						  if (!my_row[jjj]) {
 							  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 							  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "row value" );
@@ -835,7 +846,20 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb *oDB, int folder_id, int
 							  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 						  }
 						  jjj++;
-						  my_row[jjj] = strdup((row[4] ? row[4] : ""));
+						  my_row[jjj] = strdup((row[6] ? row[6] : ""));
+						  if (!my_row[jjj]) {
+							  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+							  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "row value" );
+							  if(recursive_search) mysql_free_result(tmp_info_list);
+							  mysql_free_result(info_list);
+							  if(pid) free(pid);
+							  if(pid2) free(pid2);
+							  for (iii = 0; iii < jjj; iii++) if (my_row[iii]) free(my_row[iii]);
+							  if (my_row) free(my_row);
+							  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+						  }
+						  jjj++;
+						  my_row[jjj] = strdup((row[5] ? row[5] : ""));
 						  if (!my_row[jjj]) {
 							  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 							  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "row value" );
@@ -877,19 +901,19 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb *oDB, int folder_id, int
 						  if (my_row) free(my_row);
 					  }
 					  //ADD ROW TO JSON
-					printf("| %-1s | %-18s | %-40s | %-20s | %-5s | %-45s |\n", ( !strcmp(row[1], "1") ? "f" : "c" ), new_leaf_folder2, (pid ? pid : ""), (row[5] ? row[5] : ""), (row[4] ? row[4] : ""), "");			
+					printf("| %-1s | %-18s | %-40s | %-20s | %-5s | %-45s |\n", ( !strcmp(row[1], "1") ? "f" : "c" ), new_leaf_folder2, (pid ? pid : ""), (row[6] ? row[6] : ""), (row[5] ? row[5] : ""), "");			
 				  }		
 				  else{
-					if(row[6]){
+					if(row[7]){
 						int residual_len = 0;
 						int source_len = 0;
 						if(pid2){
-							snprintf(source_buffer, OPH_COMMON_BUFFER_LEN, OPH_LIST_TASK_FILE_INPUT" %s"OPH_LIST_TASK_DATACUBE_INPUT" %s", row[6], pid2);
-							source_len = strlen(row[6]) + strlen(OPH_LIST_TASK_FILE_INPUT) + 1;	
+							snprintf(source_buffer, OPH_COMMON_BUFFER_LEN, OPH_LIST_TASK_FILE_INPUT" %s"OPH_LIST_TASK_DATACUBE_INPUT" %s", row[7], pid2);
+							source_len = strlen(row[7]) + strlen(OPH_LIST_TASK_FILE_INPUT) + 1;	
 						}
 						else{
-							snprintf(source_buffer, OPH_COMMON_BUFFER_LEN, "%s", row[6]);
-							source_len = strlen(row[6]);
+							snprintf(source_buffer, OPH_COMMON_BUFFER_LEN, "%s", row[7]);
+							source_len = strlen(row[7]);
 						}
 						int len = strlen(source_buffer);
 						if(len > 45){
@@ -906,17 +930,16 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb *oDB, int folder_id, int
 								tmp_buffer[residual_len] = 0;
 							  	tmp+=residual_len;	
 								if(ii==0)
-									printf("| %-1s | %-18s | %-40s | %-20s | %-5s | %-45s |\n", ( !strcmp(row[1], "1") ? "f" : "c" ), new_leaf_folder2, (pid ? pid : ""), (row[5] ? row[5] : ""), (row[4] ? row[4] : ""), tmp_buffer);					
+									printf("| %-1s | %-18s | %-40s | %-20s | %-5s | %-45s |\n", ( !strcmp(row[1], "1") ? "f" : "c" ), new_leaf_folder2, (pid ? pid : ""), (row[6] ? row[6] : ""), (row[5] ? row[5] : ""), tmp_buffer);					
 								else
 									printf("| %-1s | %-18s | %-40s | %-20s | %-5s | %-45s |\n", "", "", "", "","", tmp_buffer);					
 							}
 						}
 						else
 						{
-							printf("| %-1s | %-18s | %-40s | %-20s | %-5s | %-45s |\n", ( !strcmp(row[1], "1") ? "f" : "c" ), new_leaf_folder2, (pid ? pid : ""), (row[5] ? row[5] : ""), (row[4] ? row[4] : ""),  source_buffer);
+							printf("| %-1s | %-18s | %-40s | %-20s | %-5s | %-45s |\n", ( !strcmp(row[1], "1") ? "f" : "c" ), new_leaf_folder2, (pid ? pid : ""), (row[6] ? row[6] : ""), (row[5] ? row[5] : ""),  source_buffer);
 						}
 						//ADD ROW TO JSON
-						num_fields = 6;
 						if (oph_json_is_objkey_printable(objkeys,objkeys_num,OPH_JSON_OBJKEY_LIST)) {
 							my_row = (char **)malloc(sizeof(char *)*num_fields);
 							if (!my_row) {
@@ -968,7 +991,7 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb *oDB, int folder_id, int
 								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 							}
 							jjj++;
-							my_row[jjj] = strdup((row[5] ? row[5] : ""));
+							my_row[jjj] = strdup(row[4] ? row[4] : "");
 							if (!my_row[jjj]) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "row value" );
@@ -981,7 +1004,20 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb *oDB, int folder_id, int
 								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 							}
 							jjj++;
-							my_row[jjj] = strdup((row[4] ? row[4] : ""));
+							my_row[jjj] = strdup((row[6] ? row[6] : ""));
+							if (!my_row[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "row value" );
+								if(recursive_search) mysql_free_result(tmp_info_list);
+								mysql_free_result(info_list);
+								if(pid) free(pid);
+								if(pid2) free(pid2);
+								for (iii = 0; iii < jjj; iii++) if (my_row[iii]) free(my_row[iii]);
+								if (my_row) free(my_row);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							my_row[jjj] = strdup((row[5] ? row[5] : ""));
 							if (!my_row[jjj]) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "row value" );
@@ -1026,9 +1062,8 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb *oDB, int folder_id, int
 					}
 					else
 					{
-						printf("| %-1s | %-18s | %-40s | %-20s | %-5s | %-45s |\n", ( !strcmp(row[1], "1") ? "f" : "c" ), new_leaf_folder2, (pid ? pid : ""), (row[5] ? row[5] : ""), (row[4] ? row[4] : ""), (pid2 ? pid2 : ""));
+						printf("| %-1s | %-18s | %-40s | %-20s | %-5s | %-45s |\n", ( !strcmp(row[1], "1") ? "f" : "c" ), new_leaf_folder2, (pid ? pid : ""), (row[6] ? row[6] : ""), (row[5] ? row[5] : ""), (pid2 ? pid2 : ""));
 						//ADD ROW TO JSON
-						num_fields = 6;
 						if (oph_json_is_objkey_printable(objkeys,objkeys_num,OPH_JSON_OBJKEY_LIST)) {
 							my_row = (char **)malloc(sizeof(char *)*num_fields);
 							if (!my_row) {
@@ -1080,7 +1115,7 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb *oDB, int folder_id, int
 								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 							}
 							jjj++;
-							my_row[jjj] = strdup((row[5] ? row[5] : ""));
+							my_row[jjj] = strdup(row[4] ? row[4] : "");
 							if (!my_row[jjj]) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "row value" );
@@ -1093,7 +1128,20 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb *oDB, int folder_id, int
 								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 							}
 							jjj++;
-							my_row[jjj] = strdup((row[4] ? row[4] : ""));
+							my_row[jjj] = strdup((row[6] ? row[6] : ""));
+							if (!my_row[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "row value" );
+								if(recursive_search) mysql_free_result(tmp_info_list);
+								mysql_free_result(info_list);
+								if(pid) free(pid);
+								if(pid2) free(pid2);
+								for (iii = 0; iii < jjj; iii++) if (my_row[iii]) free(my_row[iii]);
+								if (my_row) free(my_row);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							my_row[jjj] = strdup((row[5] ? row[5] : ""));
 							if (!my_row[jjj]) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "row value" );
@@ -2015,7 +2063,7 @@ int task_execute(oph_operator_struct *handle)
 	  printf("| %-1s | %-18s | %-40s | %-20s | %-5s | %-45s |\n", "T", "PATH", "DATACUBE PID", "MEASURE", "LEVEL", "SOURCE"); 
 	  printf("+---+--------------------+------------------------------------------+----------------------+-------+-----------------------------------------------+\n");
 	  //ALLOC/SET VALUES FOR JSON START
-	  num_fields = 6;
+	  num_fields = 7;
 	  if (oph_json_is_objkey_printable(objkeys,objkeys_num,OPH_JSON_OBJKEY_LIST)) {
 		  int iii,jjj=0,kkk=0;
 		  keys = (char **)malloc(sizeof(char *)*num_fields);
@@ -2070,6 +2118,18 @@ int task_execute(oph_operator_struct *handle)
 			  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		  }
 		  jjj++;
+		  keys[jjj] = strdup("DESCRIPTION");
+		  if (!keys[jjj]) {
+			  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "key" );
+			  mysql_free_result(info_list);
+			  for (iii = 0; iii < jjj; iii++) if (keys[iii]) free(keys[iii]);
+			  if (keys) free(keys);
+			  for (iii = 0; iii < kkk; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
+			  if (fieldtypes) free(fieldtypes);
+			  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		  }
+		  jjj++;
 		  keys[jjj] = strdup("MEASURE");
 		  if (!keys[jjj]) {
 			  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -2107,6 +2167,18 @@ int task_execute(oph_operator_struct *handle)
 		  }
 		  jjj++;
 		  //alloc fieldtypes
+		  fieldtypes[kkk] = strdup(OPH_JSON_STRING);
+		  if (!fieldtypes[kkk]) {
+			  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "fieldtype" );
+			  mysql_free_result(info_list);
+			  for (iii = 0; iii < jjj; iii++) if (keys[iii]) free(keys[iii]);
+			  if (keys) free(keys);
+			  for (iii = 0; iii < kkk; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
+			  if (fieldtypes) free(fieldtypes);
+			  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		  }
+		  kkk++;
 		  fieldtypes[kkk] = strdup(OPH_JSON_STRING);
 		  if (!fieldtypes[kkk]) {
 			  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -2219,7 +2291,7 @@ int task_execute(oph_operator_struct *handle)
 	  printf("| %-1s | %-70s | %-40s |\n", "T", "PATH", "DATACUBE PID"); 
 	  printf("+---+------------------------------------------------------------------------+------------------------------------------+\n");
 	  //ALLOC/SET VALUES FOR JSON START
-	  num_fields = 3;
+	  num_fields = 4;
 	  if (oph_json_is_objkey_printable(objkeys,objkeys_num,OPH_JSON_OBJKEY_LIST)) {
 		  int iii,jjj=0,kkk=0;
 		  keys = (char **)malloc(sizeof(char *)*num_fields);
@@ -2274,7 +2346,31 @@ int task_execute(oph_operator_struct *handle)
 			  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		  }
 		  jjj++;
+		  keys[jjj] = strdup("DESCRIPTION");
+		  if (!keys[jjj]) {
+			  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "key" );
+			  mysql_free_result(info_list);
+			  for (iii = 0; iii < jjj; iii++) if (keys[iii]) free(keys[iii]);
+			  if (keys) free(keys);
+			  for (iii = 0; iii < kkk; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
+			  if (fieldtypes) free(fieldtypes);
+			  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		  }
+		  jjj++;
 		  //alloc fieldtypes
+		  fieldtypes[kkk] = strdup(OPH_JSON_STRING);
+		  if (!fieldtypes[kkk]) {
+			  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "fieldtype" );
+			  mysql_free_result(info_list);
+			  for (iii = 0; iii < jjj; iii++) if (keys[iii]) free(keys[iii]);
+			  if (keys) free(keys);
+			  for (iii = 0; iii < kkk; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
+			  if (fieldtypes) free(fieldtypes);
+			  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		  }
+		  kkk++;
 		  fieldtypes[kkk] = strdup(OPH_JSON_STRING);
 		  if (!fieldtypes[kkk]) {
 			  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");

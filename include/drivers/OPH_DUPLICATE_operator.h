@@ -42,6 +42,7 @@
  * \param server Pointer to I/O server handler
  * \param sessionid SessionID
  * \param id_user ID of submitter
+ * \param description Free description to be associated with output cube
  */
 struct _OPH_DUPLICATE_operator_handle
 {
@@ -60,6 +61,7 @@ struct _OPH_DUPLICATE_operator_handle
   oph_ioserver_handler *server;
   char *sessionid;
   int id_user;
+  char* description;
 };
 typedef struct _OPH_DUPLICATE_operator_handle OPH_DUPLICATE_operator_handle;
 

@@ -830,7 +830,7 @@ int oph_odb_fs_find_fs_objects(ophidiadb *oDB, int level, int id_folder, int hid
 	//Execute query
 	if (mysql_query(oDB->conn, query)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-        return OPH_ODB_MYSQL_ERROR;
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	// Init res

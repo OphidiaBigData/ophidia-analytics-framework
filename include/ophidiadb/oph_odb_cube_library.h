@@ -34,6 +34,8 @@
 
 #define OPH_ODB_CUBE_SOURCE_URI_SIZE 512
 
+#define OPH_ODB_CUBE_DESCRIPTION_SIZE 2048
+
 /**
  * \brief Structure that contains a task table row
  * \param id_outputcube id of the newly generated datacube
@@ -87,6 +89,7 @@ typedef struct
 	int compressed;
 	int level;
 	int id_source;
+	char description[OPH_ODB_CUBE_DESCRIPTION_SIZE];
 } oph_odb_datacube;
 
 

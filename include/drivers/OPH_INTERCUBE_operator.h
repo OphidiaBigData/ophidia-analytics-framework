@@ -129,6 +129,7 @@
  * \param operation Type of operation to be executed
  * \param sessionid SessionID
  * \param id_user ID of submitter
+ * \param description Free description to be associated with output cube
  */
 struct _OPH_INTERCUBE_operator_handle
 {
@@ -151,6 +152,7 @@ struct _OPH_INTERCUBE_operator_handle
   char *operation;
   char *sessionid;
   int id_user;
+  char* description;
 };
 typedef struct _OPH_INTERCUBE_operator_handle OPH_INTERCUBE_operator_handle;
 

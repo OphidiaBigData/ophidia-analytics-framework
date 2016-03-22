@@ -83,6 +83,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   ((OPH_AGGREGATE2_operator_handle*)handle->operator_handle)->sessionid = NULL;
   ((OPH_AGGREGATE2_operator_handle*)handle->operator_handle)->midnight = 1;
   ((OPH_AGGREGATE2_operator_handle*)handle->operator_handle)->id_user = 0;
+  ((OPH_AGGREGATE2_operator_handle*)handle->operator_handle)->description = NULL;
 
   char *datacube_in;
   char *value;
@@ -319,6 +320,20 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	((OPH_AGGREGATE2_operator_handle*)handle->operator_handle)->id_job = 0;	
   else
 	((OPH_AGGREGATE2_operator_handle*)handle->operator_handle)->id_job = (int)strtol(value, NULL, 10);
+
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_DESCRIPTION);
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DESCRIPTION);
+	logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DESCRIPTION );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  if (strncmp(value,OPH_COMMON_DEFAULT_EMPTY_VALUE,OPH_TP_TASKLEN)){
+	if(!(((OPH_AGGREGATE2_operator_handle*)handle->operator_handle)->description = (char *) strndup (value, OPH_TP_TASKLEN))){
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_AGGREGATE_MEMORY_ERROR_INPUT, "description" );
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+  }
 
   return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -632,6 +647,8 @@ int task_init (oph_operator_struct *handle)
 	  //New fields
 	  cube.id_source = 0;
 	  cube.level++;
+	  if (((OPH_AGGREGATE2_operator_handle*)handle->operator_handle)->description) snprintf(cube.description,OPH_ODB_CUBE_DESCRIPTION_SIZE,"%s",((OPH_AGGREGATE2_operator_handle*)handle->operator_handle)->description);
+	  else *cube.description = 0;
 
 	  //Insert new datacube
 	  if(oph_odb_cube_insert_into_datacube_partitioned_tables(oDB, &cube, &(((OPH_AGGREGATE2_operator_handle*)handle->operator_handle)->id_output_datacube))){
@@ -1469,6 +1486,10 @@ int env_unset(oph_operator_struct *handle)
   if(((OPH_AGGREGATE2_operator_handle*)handle->operator_handle)->sessionid){
 	  free((char *)((OPH_AGGREGATE2_operator_handle*)handle->operator_handle)->sessionid);
 	  ((OPH_AGGREGATE2_operator_handle*)handle->operator_handle)->sessionid = NULL;
+  }
+  if(((OPH_AGGREGATE2_operator_handle*)handle->operator_handle)->description){
+	  free((char *)((OPH_AGGREGATE2_operator_handle*)handle->operator_handle)->description);
+	  ((OPH_AGGREGATE2_operator_handle*)handle->operator_handle)->description = NULL;
   }
   free((OPH_AGGREGATE2_operator_handle*)handle->operator_handle);
   handle->operator_handle = NULL;

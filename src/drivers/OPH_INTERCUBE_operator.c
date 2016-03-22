@@ -79,6 +79,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   ((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->operation = NULL;
   ((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->sessionid = NULL;
   ((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->id_user = 0;
+  ((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->description = NULL;
 
   char *datacube_in[2];
   char *value;
@@ -327,7 +328,20 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->id_job = 0;
   else
 	((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->id_job = (int)strtol(value, NULL, 10);
-  
+
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_DESCRIPTION);
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DESCRIPTION);
+	logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[2], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DESCRIPTION );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  if (strncmp(value,OPH_COMMON_DEFAULT_EMPTY_VALUE,OPH_TP_TASKLEN)){
+	if(!(((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->description = (char *) strndup (value, OPH_TP_TASKLEN))){
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[2], OPH_LOG_OPH_INTERCUBE_MEMORY_ERROR_INPUT, "description" );
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+  }
 
   return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -484,8 +498,9 @@ int task_init (oph_operator_struct *handle)
 	  //New fields
 	  cube.id_source = 0;
 	  cube.level++;
-	  memset(cube.measure, 0, OPH_ODB_CUBE_MEASURE_SIZE);
-	  strncpy(cube.measure,((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->output_measure,OPH_ODB_CUBE_MEASURE_SIZE);
+	  snprintf(cube.measure,OPH_ODB_CUBE_MEASURE_SIZE,"%s",((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->output_measure);
+	  if (((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->description) snprintf(cube.description,OPH_ODB_CUBE_DESCRIPTION_SIZE,"%s",((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->description);
+	  else *cube.description = 0;
 
 	  //Insert new datacube
 	  if(oph_odb_cube_insert_into_datacube_partitioned_tables(oDB, &cube, &(((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->id_output_datacube))){
@@ -1253,6 +1268,10 @@ int env_unset(oph_operator_struct *handle)
   if(((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->sessionid){
 	  free((char *)((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->sessionid);
 	  ((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->sessionid = NULL;
+  }
+  if(((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->description){
+	  free((char *)((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->description);
+	  ((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->description = NULL;
   }
   free((OPH_INTERCUBE_operator_handle*)handle->operator_handle);
   handle->operator_handle = NULL;

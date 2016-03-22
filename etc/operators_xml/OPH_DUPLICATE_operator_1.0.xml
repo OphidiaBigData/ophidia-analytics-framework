@@ -12,7 +12,8 @@ It duplicates a datacube creating an exact copy of the input one.
 - cube : name of the input datacube. The name must be in PID format.
 - schedule : scheduling algorithm. The only possible value is 0,
 		   for a static linear block distribution of resources.
-- container: name of the container to be used to store the output cube; by default it is the input container.
+- container : name of the container to be used to store the output cube; by default it is the input container.
+- description : additional description to be associated with the output cube.
 
 [System parameters]
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -40,6 +41,7 @@ SUBMISSION STRING: &quot;operator=oph_duplicate;cube=http://www.example.com/1/1;
 		<argument type="string" mandatory="yes">cube</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
+		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|duplicate">objkey_filter</argument>
     </args>
 </operator>

@@ -52,6 +52,7 @@
  * \param midnight Flag related to mode for edge aggregation
  * \param id_user ID of submitter
  * \param order Order to be used in case of evaluation of the moments
+ * \param description Free description to be associated with output cube
  */
 struct _OPH_REDUCE2_operator_handle
 {
@@ -82,6 +83,7 @@ struct _OPH_REDUCE2_operator_handle
   int midnight;
   int id_user;
   double order;
+  char* description;
 };
 typedef struct _OPH_REDUCE2_operator_handle OPH_REDUCE2_operator_handle;
 

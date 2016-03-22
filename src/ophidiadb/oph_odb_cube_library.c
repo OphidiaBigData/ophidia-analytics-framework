@@ -824,9 +824,15 @@ int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb *oDB, oph_odb
 	char insertQuery[MYSQL_BUFLEN];
 	int n;
 	if(cube->id_source)
-		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE, cube->id_container, cube->hostxdatacube, cube->dbmsxhost, cube->dbxdbms, cube->fragmentxdb, cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level, cube->id_source);
+	{
+		if (strlen(cube->description)) n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_2, cube->id_container, cube->hostxdatacube, cube->dbmsxhost, cube->dbxdbms, cube->fragmentxdb, cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level, cube->id_source, cube->description);
+		else n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE, cube->id_container, cube->hostxdatacube, cube->dbmsxhost, cube->dbxdbms, cube->fragmentxdb, cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level, cube->id_source);
+	}
 	else
-		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_1, cube->id_container, cube->hostxdatacube, cube->dbmsxhost, cube->dbxdbms, cube->fragmentxdb, cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level);
+	{
+		if (strlen(cube->description)) n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_3, cube->id_container, cube->hostxdatacube, cube->dbmsxhost, cube->dbxdbms, cube->fragmentxdb, cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level, cube->description);
+		else n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_1, cube->id_container, cube->hostxdatacube, cube->dbmsxhost, cube->dbxdbms, cube->fragmentxdb, cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level);
+	}
 	if(n >= MYSQL_BUFLEN){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -837,7 +843,7 @@ int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb *oDB, oph_odb
         return OPH_ODB_MYSQL_ERROR;
 	}
 
-    if(!(cube->id_datacube = mysql_insert_id(oDB->conn))){
+	if(!(cube->id_datacube = mysql_insert_id(oDB->conn))){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted datacube id\n");
 		return OPH_ODB_TOO_MANY_ROWS;
 	}

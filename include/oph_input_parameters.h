@@ -160,6 +160,7 @@
 #define OPH_IN_PARAM_ORDER					"order"
 #define OPH_IN_PARAM_OFFSET					"offset"
 #define OPH_IN_PARAM_MISC					"misc"
+#define OPH_IN_PARAM_DESCRIPTION			"description"
 
 #define OPH_IN_PARAM_SCRIPT					 "script"
 #define OPH_IN_PARAM_ARGS					 "args"

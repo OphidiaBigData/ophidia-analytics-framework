@@ -66,9 +66,10 @@
 
 #define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_SOURCE "INSERT INTO `source` (`uri`) VALUES ('%s')"
 
-#define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE "INSERT INTO `datacube` (`idcontainer`, `hostxdatacube`, `dbmsxhost`, `dbxdbms`, `fragmentxdb`, `tuplexfragment`, `measure`, `measuretype`, `fragrelativeindexset`, `compress`, `level`, `idsource` ) VALUES (%d, %d, %d, %d, %d, %d, '%s', '%s', '%s', %d,  %d, %d );"
-
+#define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE "INSERT INTO `datacube` (`idcontainer`, `hostxdatacube`, `dbmsxhost`, `dbxdbms`, `fragmentxdb`, `tuplexfragment`, `measure`, `measuretype`, `fragrelativeindexset`, `compress`, `level`, `idsource` ) VALUES (%d, %d, %d, %d, %d, %d, '%s', '%s', '%s', %d, %d, %d );"
 #define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_1 "INSERT INTO `datacube` (`idcontainer`, `hostxdatacube`, `dbmsxhost`, `dbxdbms`, `fragmentxdb`, `tuplexfragment`, `measure`, `measuretype`, `fragrelativeindexset`, `compress`, `level` ) VALUES (%d, %d, %d, %d, %d, %d, '%s', '%s', '%s', %d, %d );"
+#define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_2 "INSERT INTO `datacube` (`idcontainer`, `hostxdatacube`, `dbmsxhost`, `dbxdbms`, `fragmentxdb`, `tuplexfragment`, `measure`, `measuretype`, `fragrelativeindexset`, `compress`, `level`, `idsource`, `description` ) VALUES (%d, %d, %d, %d, %d, %d, '%s', '%s', '%s', %d, %d, %d, '%s' );"
+#define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_3 "INSERT INTO `datacube` (`idcontainer`, `hostxdatacube`, `dbmsxhost`, `dbxdbms`, `fragmentxdb`, `tuplexfragment`, `measure`, `measuretype`, `fragrelativeindexset`, `compress`, `level`, `description` ) VALUES (%d, %d, %d, %d, %d, %d, '%s', '%s', '%s', %d, %d, '%s' );"
 
 #define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_TASK_1 "INSERT INTO `task` (`idoutputcube`, `operation`, `inputnumber`) VALUES (%d, '%s', %d)"
 

@@ -58,6 +58,7 @@
  * \param id_user ID of submitter
  * \param num_reference_to_dim Number of references to keyword 'dimension' in main query
  * \param array_values Pointer to value of main implicit dimension of input cube
+ * \param description Free description to be associated with output cube
  */
 struct _OPH_APPLY_operator_handle
 {
@@ -93,6 +94,7 @@ struct _OPH_APPLY_operator_handle
   int num_reference_to_dim;
   char* array_values;
   long long array_length;
+  char* description;
 };
 typedef struct _OPH_APPLY_operator_handle OPH_APPLY_operator_handle;
 

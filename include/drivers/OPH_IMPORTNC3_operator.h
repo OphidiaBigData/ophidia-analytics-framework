@@ -73,6 +73,7 @@
  * \param leap_year Value of the first leap year
  * \param leap_month Value of the leap month
  * \param memory_size Maximum amount of memory available
+ * \param description Free description to be associated with output cube
  */
 struct _OPH_IMPORTNC3_operator_handle
 {
@@ -117,6 +118,7 @@ struct _OPH_IMPORTNC3_operator_handle
   int leap_year;
   int leap_month;
   long long memory_size;
+  char* description;
 };
 typedef struct _OPH_IMPORTNC3_operator_handle OPH_IMPORTNC3_operator_handle;
 

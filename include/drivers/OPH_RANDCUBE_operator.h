@@ -58,6 +58,7 @@
  * \param objkeys_num Number of objkeys.
  * \param server Pointer to I/O server handler
  * \param sessionid SessionID
+ * \param description Free description to be associated with output cube
  */
 struct _OPH_RANDCUBE_operator_handle
 {
@@ -93,6 +94,7 @@ struct _OPH_RANDCUBE_operator_handle
   int objkeys_num;
   oph_ioserver_handler *server;
   char *sessionid;
+  char* description;
 };
 typedef struct _OPH_RANDCUBE_operator_handle OPH_RANDCUBE_operator_handle;
 

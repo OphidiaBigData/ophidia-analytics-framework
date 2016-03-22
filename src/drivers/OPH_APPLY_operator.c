@@ -785,6 +785,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   ((OPH_APPLY_operator_handle*)handle->operator_handle)->num_reference_to_dim = 0;
   ((OPH_APPLY_operator_handle*)handle->operator_handle)->array_values = NULL;
   ((OPH_APPLY_operator_handle*)handle->operator_handle)->array_length = 0;
+  ((OPH_APPLY_operator_handle*)handle->operator_handle)->description = NULL;
 
   //3 - Fill struct with the correct data
   char *datacube_in;
@@ -1031,6 +1032,20 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 
   value = hashtbl_get(task_tbl, OPH_ARG_IDJOB);
   ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_job = value ? (int)strtol(value, NULL, 10) : 0;
+  
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_DESCRIPTION);
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DESCRIPTION);
+	logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DESCRIPTION );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  if (strncmp(value,OPH_COMMON_DEFAULT_EMPTY_VALUE,OPH_TP_TASKLEN)){
+	if(!(((OPH_APPLY_operator_handle*)handle->operator_handle)->description = (char *) strndup (value, OPH_TP_TASKLEN))){
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_MEMORY_ERROR_INPUT, "description" );
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+  }
 
   return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -1147,6 +1162,8 @@ int task_init (oph_operator_struct *handle)
 	  //New fields
 	  cube.id_source = 0;
 	  cube.level++;
+	  if (((OPH_APPLY_operator_handle*)handle->operator_handle)->description) snprintf(cube.description,OPH_ODB_CUBE_DESCRIPTION_SIZE,"%s",((OPH_APPLY_operator_handle*)handle->operator_handle)->description);
+	  else *cube.description = 0;
 
 	  //Insert new datacube
 	  if(oph_odb_cube_insert_into_datacube_partitioned_tables(oDB, &cube, &(((OPH_APPLY_operator_handle*)handle->operator_handle)->id_output_datacube))){
@@ -2145,6 +2162,10 @@ int env_unset(oph_operator_struct *handle)
   if(((OPH_APPLY_operator_handle*)handle->operator_handle)->sessionid){
 	  free((char *)((OPH_APPLY_operator_handle*)handle->operator_handle)->sessionid);
 	  ((OPH_APPLY_operator_handle*)handle->operator_handle)->sessionid = NULL;
+  }
+  if(((OPH_APPLY_operator_handle*)handle->operator_handle)->description){
+	  free((char *)((OPH_APPLY_operator_handle*)handle->operator_handle)->description);
+	  ((OPH_APPLY_operator_handle*)handle->operator_handle)->description = NULL;
   }
   free((OPH_APPLY_operator_handle*)handle->operator_handle);
   handle->operator_handle = NULL;

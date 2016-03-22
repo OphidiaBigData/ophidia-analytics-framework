@@ -217,6 +217,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   ((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->server = NULL;
   ((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->sessionid = NULL;
   ((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->id_user = 0;
+  ((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->description = NULL;
 
   char **datacube_in;
   char *value;
@@ -458,7 +459,20 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->id_job = 0;	
   else
 	((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->id_job = (int)strtol(value, NULL, 10);
-  
+
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_DESCRIPTION);
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DESCRIPTION);
+	logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[0], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DESCRIPTION );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  if (strncmp(value,OPH_COMMON_DEFAULT_EMPTY_VALUE,OPH_TP_TASKLEN)){
+	if(!(((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->description = (char *) strndup (value, OPH_TP_TASKLEN))){
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[0], OPH_LOG_OPH_MERGECUBES_MEMORY_ERROR_INPUT, "description" );
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+  }
 
   return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -634,6 +648,8 @@ int task_init (oph_operator_struct *handle)
 	  //New fields
 	  cube[0].id_source = 0;
 	  cube[0].level++;
+	  if (((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->description) snprintf(cube[0].description,OPH_ODB_CUBE_DESCRIPTION_SIZE,"%s",((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->description);
+	  else *cube[0].description = 0;
 
     //Update type and measures
     int measure_len, measure_type_len;
@@ -1386,6 +1402,10 @@ int env_unset(oph_operator_struct *handle)
   if(((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->sessionid){
 	  free((char *)((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->sessionid);
 	  ((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->sessionid = NULL;
+  }
+  if(((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->description){
+	  free((char *)((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->description);
+	  ((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->description = NULL;
   }
   free((OPH_MERGECUBES_operator_handle*)handle->operator_handle);
   handle->operator_handle = NULL;

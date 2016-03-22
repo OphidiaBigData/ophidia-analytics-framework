@@ -87,6 +87,7 @@ WARNING: It imports only mono-dimensional coordinate variables.
                  There must be 12 positive integers separated by commas. Default is &apos;31,28,31,30,31,30,31,31,30,31,30,31&apos;.
 - leap_year: in case of time dimension and user-defined calendar, it indicates the first leap year. By default it is set to 0.
 - leap_month: in case of time dimension and user-defined calendar, it indicates the leap month. By default it is set to 2 (i.e. February).
+- description : additional description to be associated with the output cube.
         
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -143,6 +144,7 @@ SUBMISSION STRING: &quot;operator=oph_importnc2;cwd=/session-code1;container=con
 		<argument type="string" mandatory="no" default="31,28,31,30,31,30,31,31,30,31,30,31">month_lengths</argument>
 		<argument type="int" mandatory="no" default="0" minvalue="0">leap_year</argument>
 		<argument type="int" mandatory="no" default="2" minvalue="1" maxvalue="12">leap_month</argument>
+		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|importnc">objkey_filter</argument>
     </args>
 </operator>

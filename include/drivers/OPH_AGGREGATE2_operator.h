@@ -52,6 +52,7 @@
  * \param sessionid SessionID
  * \param midnight Flag related to mode for edge aggregation
  * \param id_user ID of submitter
+ * \param description Free description to be associated with output cube
  */
 struct _OPH_AGGREGATE2_operator_handle
 {
@@ -81,6 +82,7 @@ struct _OPH_AGGREGATE2_operator_handle
   char *sessionid;
   int midnight;
   int id_user;
+  char* description;
 };
 typedef struct _OPH_AGGREGATE2_operator_handle OPH_AGGREGATE2_operator_handle;
 
