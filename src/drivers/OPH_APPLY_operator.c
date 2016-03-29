@@ -1271,7 +1271,7 @@ int task_init (oph_operator_struct *handle)
 				goto __OPH_EXIT_1;
 			}
 		}
-		else // if (use_dim)
+		if (use_dim)
 		{
 			oph_odb_db_instance db_;
 			oph_odb_db_instance *db = &db_;
