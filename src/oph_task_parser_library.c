@@ -28,6 +28,8 @@
 #include <ctype.h>
 
 #include <dirent.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include <libxml/parser.h>
 #include <libxml/valid.h>
@@ -46,6 +48,8 @@ int oph_tp_retrieve_function_xml_file(const char *function_name, const char *fun
     struct dirent *ent;
     int found = 0;
     char folder[OPH_TP_BUFLEN];
+    char full_filename[OPH_TP_BUFLEN];
+    struct stat file_stat;
 
     if ( function_type_code == OPH_TP_XML_PRIMITIVE_TYPE_CODE)   
         snprintf(folder, OPH_TP_BUFLEN, OPH_FRAMEWORK_PRIMITIVE_XML_FOLDER_PATH, OPH_ANALYTICS_LOCATION);
@@ -73,7 +77,11 @@ int oph_tp_retrieve_function_xml_file(const char *function_name, const char *fun
                 snprintf(*xml_filename,OPH_TP_BUFLEN,"%s_"OPH_TP_XML_OPERATOR_TYPE"_",function_name);
     
             while ((ent = readdir (dir)) != NULL) {
-		if ((ent->d_type != DT_REG) && (ent->d_type != DT_LNK)) continue;
+ 	        
+		snprintf(full_filename, OPH_TP_BUFLEN, "%s/%s", folder, ent->d_name);
+	        lstat(full_filename, &file_stat);
+
+		if(!S_ISLNK(file_stat.st_mode) && !S_ISREG(file_stat.st_mode)) continue;
                 ptr1 = strrchr(ent->d_name,'_');
                 ptr2 = strrchr(ent->d_name,OPH_TP_VERSION_SEPARATOR);
                 if (!ptr1 || !ptr2)
@@ -167,7 +175,11 @@ int oph_tp_retrieve_function_xml_file(const char *function_name, const char *fun
             int val;
             if ((dir = opendir (folder)) != NULL) {
                 while ((ent = readdir (dir)) != NULL) {
-                    if ((ent->d_type != DT_REG) && (ent->d_type != DT_LNK)) continue;
+
+		    snprintf(full_filename, OPH_TP_BUFLEN, "%s/%s", folder, ent->d_name);
+		    lstat(full_filename, &file_stat);
+
+		    if(!S_ISLNK(file_stat.st_mode) && !S_ISREG(file_stat.st_mode)) continue;
                     ptr1 = strrchr(ent->d_name,'_');
                     ptr2 = strrchr(ent->d_name,OPH_TP_VERSION_SEPARATOR);
                     if (!ptr1 || !ptr2)
