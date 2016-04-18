@@ -16,11 +16,13 @@ Aggregates different measure arrays performing the specified operation on each c
 - output measure type : Ophidia typing. Supported types are:
 					&apos;oph_double&apos;;
 					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
 					&apos;oph_int&apos;;
 					&apos;oph_short&apos;;
 					&apos;oph_byte&apos;.
 - measure : input measure.
 - operator name : type of aggregation.
+                -- &apos;oph_count&apos; : compute the number of elements;
                 -- &apos;oph_max&apos; : compute the maximum (default);
                 -- &apos;oph_min&apos; : compute the minimum;
                 -- &apos;oph_avg&apos; : compute the mean;
@@ -42,6 +44,6 @@ oph_aggregate_operator(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&ap
 	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input data type</argument>
 	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output data type</argument>
 	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="oph_operator" mandatory="no" default="'oph_max'" values="'oph_max'|'oph_min'|'oph_avg'|'oph_sum'">operator name</argument>
+	<argument type="oph_operator" mandatory="no" default="'oph_max'" values="'oph_count'|'oph_max'|'oph_min'|'oph_avg'|'oph_sum'">operator name</argument>
     </args>
 </primitive>

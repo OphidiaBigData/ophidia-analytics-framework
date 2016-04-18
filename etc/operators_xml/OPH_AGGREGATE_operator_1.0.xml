@@ -14,7 +14,7 @@ It executes an aggregation function on a datacube with respect to explicit dimen
 		     for a static linear block distribution of resources.
 - group_size : number of tuples per group to consider in the aggregation function. If set to &quot;all&quot;
 	     the aggregation will occur on all tuples of the table.
-- operation : aggregate function among max, min, avg, or sum.
+- operation : reduction function. Possible values are &quot;count&quot;, &quot;max&quot;, &quot;min&quot;, &quot;avg&quot; and &quot;sum&quot;.
 - grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
              or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
 - container : name of the container to be used to store the output cube; by default it is the input container.
@@ -46,7 +46,7 @@ SUBMISSION STRING: &quot;operator=oph_aggregate;operation=max;group_size=10;cube
 		<argument type="string" mandatory="yes">cube</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" minvalue="1" default="all">group_size</argument>
-		<argument type="string" mandatory="yes" values="max|min|avg|sum">operation</argument>
+		<argument type="string" mandatory="yes" values="count|max|min|avg|sum">operation</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
