@@ -401,15 +401,16 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 
   //1 - Set up struct to empty values
   ((OPH_EXPLORENC_operator_handle*)handle->operator_handle)->nc_file_path = NULL;
-  ((NETCDF_var)(   ((OPH_EXPLORENC_operator_handle*)handle->operator_handle)->measure   )).dims_name = NULL;
-  ((NETCDF_var)(   ((OPH_EXPLORENC_operator_handle*)handle->operator_handle)->measure   )).dims_id = NULL;
-  ((NETCDF_var)(   ((OPH_EXPLORENC_operator_handle*)handle->operator_handle)->measure   )).dims_unlim = NULL;
-  ((NETCDF_var)(   ((OPH_EXPLORENC_operator_handle*)handle->operator_handle)->measure   )).dims_length = NULL;
-  ((NETCDF_var)(   ((OPH_EXPLORENC_operator_handle*)handle->operator_handle)->measure   )).dims_type = NULL;
-  ((NETCDF_var)(   ((OPH_EXPLORENC_operator_handle*)handle->operator_handle)->measure   )).dims_oph_level = NULL;
-  ((NETCDF_var)(   ((OPH_EXPLORENC_operator_handle*)handle->operator_handle)->measure   )).dims_start_index = NULL;
-  ((NETCDF_var)(   ((OPH_EXPLORENC_operator_handle*)handle->operator_handle)->measure   )).dims_end_index = NULL;
-  ((NETCDF_var)(   ((OPH_EXPLORENC_operator_handle*)handle->operator_handle)->measure   )).dims_order = NULL;
+  NETCDF_var *nc_measure = &(((OPH_EXPLORENC_operator_handle*)handle->operator_handle)->measure);
+  nc_measure->dims_name = NULL;
+  nc_measure->dims_id = NULL;
+  nc_measure->dims_unlim = NULL;
+  nc_measure->dims_length = NULL;
+  nc_measure->dims_type = NULL;
+  nc_measure->dims_oph_level = NULL;
+  nc_measure->dims_start_index = NULL;
+  nc_measure->dims_end_index = NULL;
+  nc_measure->dims_order = NULL;
   ((OPH_EXPLORENC_operator_handle*)handle->operator_handle)->limit = 0;
   ((OPH_EXPLORENC_operator_handle*)handle->operator_handle)->show_id = 0;
   ((OPH_EXPLORENC_operator_handle*)handle->operator_handle)->show_index = 0;
