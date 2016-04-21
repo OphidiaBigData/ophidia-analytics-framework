@@ -76,7 +76,7 @@ liboph_binary_io_la_LIBADD = -lz -lm @LIBLTDL@ -L. -ldebug
 liboph_analytics_operator_la_SOURCES = oph_analytics_operator_library.c
 liboph_analytics_operator_la_CFLAGS= -prefer-pic -I../include @INCLTDL@ ${lib_CFLAGS}
 liboph_analytics_operator_la_LDFLAGS = -shared 
-liboph_analytics_operator_la_LIBADD = @LIBLTDL@ -L. -ldebug
+liboph_analytics_operator_la_LIBADD = @LIBLTDL@ -L. -ldebug -lhashtbl
 
 liboph_ioserver_la_SOURCES = oph_ioserver/oph_ioserver_library.c
 liboph_ioserver_la_CFLAGS= -prefer-pic -I../include/oph_ioserver -I../include @INCLTDL@ ${lib_CFLAGS}
