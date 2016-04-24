@@ -17,6 +17,7 @@ implicit dimensions, each of size-i. The subset cannot be applied on multpile di
 - output measure type : Ophidia typing. Supported types are:
 					&apos;oph_double&apos;;
 					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
 					&apos;oph_int&apos;;
 					&apos;oph_short&apos;;
 					&apos;oph_byte&apos;.

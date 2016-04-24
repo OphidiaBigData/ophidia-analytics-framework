@@ -17,6 +17,7 @@ NOTE: the two measures must have the same type and length.
 - output measure type : Ophidia typing. Supported types are:
 					&apos;oph_double&apos;;
 					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
 					&apos;oph_int&apos;;
 					&apos;oph_short&apos;;
 					&apos;oph_byte&apos;.
@@ -28,7 +29,7 @@ Binary-array.
 
 [Examples]
 Compute correlation of the two measures.
-oph_gsl_correlation(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,a.measure,b.measure)</abstract>
+oph_gsl_correlation(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,a.measure,b.measure)</abstract>
         <author>CMCC Foundation</author>
         <creationdate>10/04/2015</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
-<primitive name="oph_sum_array" version="1.0">
+<primitive name="oph_extend" version="1.0">
     <info>
         <abstract>[Behaviour]
-Sums each value of measure array b to the value in the same position in measure array a.
-        
+Return an array obtained by concatenating inptu array more times.
+
 [Parameters]
 - input measure type : Ophidia typing. Supported types are:
 					&apos;oph_double&apos;;
@@ -20,14 +20,15 @@ Sums each value of measure array b to the value in the same position in measure 
 					&apos;oph_int&apos;;
 					&apos;oph_short&apos;;
 					&apos;oph_byte&apos;.
-- measure a : first input measure.
-- measure b : second input measure.
+- measure : list of input measure.
+- number : number of replies.
 
 [Return type]
 Binary-array.
-        
+
 [Examples]
-oph_sum_array(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure_a,measure_b)</abstract>
+Concatenate input array four times.
+oph_extend(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,4)</abstract>
         <author>CMCC Foundation</author>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
@@ -35,9 +36,9 @@ oph_sum_array(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure_a
 	<operation type="simple"/>
     </info>
     <args>
-	<multi-argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</multi-argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure a</argument>
-	<argument type="binary-array" mandatory="yes">measure b</argument>
+        <argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+        <argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="int" mandatory="no" default="1">number</argument>
     </args>
 </primitive>

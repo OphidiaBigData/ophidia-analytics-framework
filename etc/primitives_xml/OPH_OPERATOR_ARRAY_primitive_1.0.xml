@@ -16,6 +16,7 @@ Applies an operation between the value of measure array b and the value in the s
 - output measure type : Ophidia typing. Supported types are:
 					&apos;oph_double&apos;;
 					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
 					&apos;oph_int&apos;;
 					&apos;oph_short&apos;;
 					&apos;oph_byte&apos;.

@@ -20,6 +20,7 @@ temperature_max (C),total_precipitation (mm),wind_speed_mean (km h-1),relative_h
 - output measure type : Ophidia typing. Supported types are:
 					&apos;oph_double&apos;;
 					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
 					&apos;oph_int&apos;;
 					&apos;oph_short&apos;;
 					&apos;oph_byte&apos;.
