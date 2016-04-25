@@ -36,6 +36,7 @@ It provides CRUD operations (Create, Read, Update and Delete) on OphidiaDB metad
                 To change the type of already-inserted metadata, use a combination of a deletion and an insertion.
                 Default value is &quot;text&quot; but other values include &quot;image&quot;,
                 &quot;video&quot;,&quot;audio&quot; and &quot;url&quot;, even if all contents will be saved as strings.
+                Numerical data types are also available as well.
 - metadata_value : string value to be assigned to specified metadata.
                  Valid only in insert or update modes.
                  In insert mode more values can be listed by using &quot;|&quot; as separator.
@@ -81,7 +82,7 @@ SUBMISSION STRING: &quot;operator=oph_metadata;mode=insert;cube=http://www.examp
         <argument type="string" mandatory="no" default="all">metadata_key</argument>
         <argument type="string" mandatory="no" default="global">variable</argument>
         <argument type="int" mandatory="no" default="0" minvalue="0">metadata_id</argument>
-        <argument type="string" mandatory="no" default="text" values="text|image|video|audio|url">metadata_type</argument>
+        <argument type="string" mandatory="no" default="text" values="text|image|video|audio|url|double|float|long|int|short">metadata_type</argument>
         <argument type="string" mandatory="no" default="-">metadata_value</argument>
         <argument type="string" mandatory="no" default="all">metadata_type_filter</argument>
         <argument type="string" mandatory="no" default="all">metadata_value_filter</argument>

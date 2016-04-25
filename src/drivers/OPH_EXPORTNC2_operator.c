@@ -450,8 +450,8 @@ int task_init (oph_operator_struct *handle)
 	//If dir already exists then exit
 	else{
 		if (!((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->force && !(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->output_path_user_defined)) {
-			pmesg(LOG_WARNING, __FILE__, __LINE__, "NC cuboid has been already exported %s\n", path);
-			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_DATACUBE_EXPORTED, path );	
+			pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_DATACUBE_EXPORTED );
+			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_DATACUBE_EXPORTED );	
 			id_string[0][0] = -1;
 			free(stream_broad);
 			goto __OPH_EXIT_1;
