@@ -3,7 +3,7 @@
 <primitive name="oph_extend" version="1.0">
     <info>
         <abstract>[Behaviour]
-Return an array obtained by concatenating inptu array more times.
+Return an array obtained by concatenating input array more times.
 
 [Parameters]
 - input measure type : Ophidia typing. Supported types are:

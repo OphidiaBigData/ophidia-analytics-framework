@@ -6,7 +6,12 @@
 General.
 
 [Behaviour]
-It executes a bash script. The script can eventually use the env var OPH_SCRIPT_SESSION_PATH passed by the operator and pointing to &lt;oph_web_server_location&gt;/sessions/&lt;session_code&gt;/export/misc.
+It executes a bash script.
+The script can eventually process some environmental variables passed by the operator:
+- OPH_SCRIPT_SESSION_PATH : points to &lt;oph_web_server_location&gt;/sessions/&lt;session_code&gt;/export/misc
+- OPH_SCRIPT_SESSION_URL : oints to &lt;oph_web_server&gt;/sessions/&lt;session_code&gt;/export/misc
+- OPH_SCRIPT_WORKFLOW_ID : workflow identifier
+- OPH_SCRIPT_MARKER_ID : marker identifier associated with the job
 
 [Parameters]
 - script : name of the script to be executed (when requested &quot;./&quot; has to be included)
