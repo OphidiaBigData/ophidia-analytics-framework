@@ -45,6 +45,8 @@
 #define OPH_ODB_TIME_LEAP_YEAR "time:leap_year"
 #define OPH_ODB_TIME_LEAP_MONTH "time:leap_month"
 
+#define OPH_DIM_INDEX_DATA_TYPE	OPH_COMMON_LONG_TYPE
+
 #define OPH_DIM_TIME_UNITS_SECONDS "seconds"
 #define OPH_DIM_TIME_UNITS_HOURS "hours"
 #define OPH_DIM_TIME_UNITS_DAYS "days"

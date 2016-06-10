@@ -27,7 +27,6 @@
 
 #define OPH_DIM_TABLE_NAME_MACRO 	"container_%d"
 #define OPH_DIM_TABLE_LABEL_MACRO	"container_%d_label"
-#define OPH_DIM_INDEX_DATA_TYPE		OPH_COMMON_LONG_TYPE
 
 #define OPH_DIM_SUCCESS 		0
 #define OPH_DIM_NULL_PARAM 		1

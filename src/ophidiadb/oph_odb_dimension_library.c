@@ -89,8 +89,6 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb *oDB, int id_dimensionins
 		if(row[5])
 			strncpy(dim->dimension_name,row[5],OPH_ODB_DIM_DIMENSION_SIZE);
   		memset(&(dim->dimension_type), 0, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
-		if(row[6])
-			strncpy(dim->dimension_type,row[6],OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
 		dim->id_hierarchy=(row[0] ? (int)strtol(row[0], NULL, 10) : 0);
 		dim_inst->id_dimensioninst=(row[7] ? (int)strtol(row[7], NULL, 10) : 0);
 		dim_inst->id_dimension=(row[3] ? (int)strtol(row[3], NULL, 10) : 0);
@@ -98,6 +96,11 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb *oDB, int id_dimensionins
 		dim_inst->fk_id_dimension_index=(row[9] ? (int)strtol(row[9], NULL, 10) : 0);
 		dim_inst->concept_level = row[10] ? (char)row[10][0] : OPH_COMMON_CONCEPT_LEVEL_UNKNOWN;
 		dim_inst->fk_id_dimension_label=(row[11] ? (int)strtol(row[11], NULL, 10) : 0);
+		if(row[6])
+		{
+			if (dim_inst->fk_id_dimension_label) strncpy(dim->dimension_type,row[6],OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
+			else strncpy(dim->dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE); // A reduced dimension is handled by indexes
+		}
 		dim_inst->id_grid = dim_grid->id_grid = row[12] ? (int)strtol(row[12], NULL, 10) : 0;
 		dim_inst->unlimited = row[20] ? (char)row[20][0] : 0;
   		memset(&(dim_grid->grid_name), 0, OPH_ODB_DIM_GRID_SIZE);
