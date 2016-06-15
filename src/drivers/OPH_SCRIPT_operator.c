@@ -148,8 +148,14 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   }
   
   char session_code[OPH_COMMON_BUFFER_LEN];
-  char buff[OPH_COMMON_BUFFER_LEN];
   oph_pid_get_session_code(hashtbl_get(task_tbl,OPH_ARG_SESSIONID),session_code);
+  if(!(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_code = (char *) strdup (session_code))){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+ 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_INPUT, "session code" );
+	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+  }
+
+  char buff[OPH_COMMON_BUFFER_LEN];
   snprintf(buff,OPH_COMMON_BUFFER_LEN,OPH_FRAMEWORK_MISCELLANEA_FILES_PATH,oph_pid_path()?oph_pid_path():OPH_PREFIX_CLUSTER,session_code);
   if(!(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_path = (char *) strdup (buff))){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -225,6 +231,7 @@ int task_execute(oph_operator_struct *handle)
   memset(command,0,OPH_COMMON_BUFFER_LEN);
   n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_SESSION_PATH='%s' ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_path);
   n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_SESSION_URL='%s' ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_url);
+  n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_SESSION_CODE='%s' ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_code);
   n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_WORKFLOW_ID=%s ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id ? ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id : 0);
   n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_MARKER_ID=%s ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->marker_id ? ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->marker_id : 0);
   n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"%s ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script);
@@ -357,6 +364,10 @@ int env_unset(oph_operator_struct *handle)
   if(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_url){
     free((char *)((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_url);
     ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_url = NULL;
+  }
+  if(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_code){
+    free((char *)((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_code);
+    ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_code = NULL;
   }
   if(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id){
     free((char *)((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id);

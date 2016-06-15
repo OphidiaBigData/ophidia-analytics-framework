@@ -46,6 +46,7 @@ struct _OPH_SCRIPT_operator_handle
   int objkeys_num;
   char *session_path;
   char *session_url;
+  char *session_code;
   char *workflow_id;
   char *marker_id;
 };
