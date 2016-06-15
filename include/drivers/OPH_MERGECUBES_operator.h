@@ -76,6 +76,7 @@
  * \param sessionid SessionID
  * \param id_user ID of submitter
  * \param description Free description to be associated with output cube
+ * \param dim_name Name of new dimension to be created
  */
 struct _OPH_MERGECUBES_operator_handle
 {
@@ -98,6 +99,7 @@ struct _OPH_MERGECUBES_operator_handle
   char *sessionid;
   int id_user;
   char* description;
+  char* dim_name;
 };
 typedef struct _OPH_MERGECUBES_operator_handle OPH_MERGECUBES_operator_handle;
 

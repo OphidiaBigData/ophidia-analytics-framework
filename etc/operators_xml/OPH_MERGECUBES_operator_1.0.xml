@@ -17,6 +17,7 @@ data cubes can be merged.
 - schedule : scheduling algorithm. The only possible value is 0,
          for a static linear block distribution of resources.
 - container : name of the container to be used to store the output cube; by default it is the input container.
+- dim : name of the new dimension to be created; by default a unique random name is chosen.
 - description : additional description to be associated with the output cube.
         
 [System parameters]    
@@ -45,6 +46,7 @@ SUBMISSION STRING: &quot;operator=oph_mergecubes;cubes=http://www.example.com/1/
 		<argument type="string" mandatory="yes">cubes</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
+		<argument type="string" mandatory="no" default="-">dim</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|mergecubes">objkey_filter</argument>
     </args>
