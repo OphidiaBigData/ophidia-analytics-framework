@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OPH_MERGECUBES_OPERATOR_H
-#define __OPH_MERGECUBES_OPERATOR_H
+#ifndef __OPH_MERGECUBES2_OPERATOR_H
+#define __OPH_MERGECUBES2_OPERATOR_H
 
 //Operator specific headers
 #include "oph_ophidiadb_main.h"
@@ -25,39 +25,39 @@
 #include "oph_ioserver_library.h"
 
 #ifdef OPH_DEBUG_MYSQL
-#define OPH_MERGECUBES_QUERY2_COMPR_MYSQL "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT %s.%s AS %s, oph_compress('','',oph_interlace('oph_%s|oph_%s','oph_%s,oph_%s',oph_uncompress('','',%s.%s),oph_uncompress('','',%s.%s))) AS %s FROM %s.%s, %s.%s WHERE %s.%s = %s.%s"
-#define OPH_MERGECUBES_QUERY2_MYSQL "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT %s.%s AS %s, oph_interlace('oph_%s|oph_%s','oph_%s,oph_%s',%s.%s,%s.%s) AS %s FROM %s.%s, %s.%s WHERE %s.%s = %s.%s"
+#define OPH_MERGECUBES2_QUERY2_COMPR_MYSQL "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT %s.%s AS %s, oph_compress('','',oph_interlace('oph_%s|oph_%s','oph_%s,oph_%s',oph_uncompress('','',%s.%s),oph_uncompress('','',%s.%s))) AS %s FROM %s.%s, %s.%s WHERE %s.%s = %s.%s"
+#define OPH_MERGECUBES2_QUERY2_MYSQL "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT %s.%s AS %s, oph_interlace('oph_%s|oph_%s','oph_%s,oph_%s',%s.%s,%s.%s) AS %s FROM %s.%s, %s.%s WHERE %s.%s = %s.%s"
 #endif
 
 //Define dynamic query building blocks
-#define OPH_MERGECUBES_QUERY_OPERATION OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "%s")
+#define OPH_MERGECUBES2_QUERY_OPERATION OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "%s")
 
-#define OPH_MERGECUBES_QUERY_SELECT  OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "%s")
-#define OPH_MERGECUBES_ARG_SELECT			"frag%d.%s|oph_interlace('%s','%s',%s)"
-#define OPH_MERGECUBES_ARG_SELECT_CMPR			"frag%d.%s|oph_compress('','',oph_interlace('%s','%s',%s))"
-#define OPH_MERGECUBES_ARG_SELECT_TYPE			"oph_%s"
-#define OPH_MERGECUBES_ARG_SELECT_PART			"frag%d.%s"
-#define OPH_MERGECUBES_ARG_SELECT_PART_CMPR		"oph_uncompress('','',frag%d.%s)"
-#define OPH_MERGECUBES_ARG_SELECT_SEPARATOR		","
-#define OPH_MERGECUBES_ARG_SELECT_INTYPE_SEPARATOR	"|"
-#define OPH_MERGECUBES_ARG_SELECT_OUTTYPE_SEPARATOR	","
+#define OPH_MERGECUBES2_QUERY_SELECT  OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "%s")
+#define OPH_MERGECUBES2_ARG_SELECT			"frag%d.%s|oph_interlace('%s','%s',%s)"
+#define OPH_MERGECUBES2_ARG_SELECT_CMPR			"frag%d.%s|oph_compress('','',oph_interlace('%s','%s',%s))"
+#define OPH_MERGECUBES2_ARG_SELECT_TYPE			"oph_%s"
+#define OPH_MERGECUBES2_ARG_SELECT_PART			"frag%d.%s"
+#define OPH_MERGECUBES2_ARG_SELECT_PART_CMPR		"oph_uncompress('','',frag%d.%s)"
+#define OPH_MERGECUBES2_ARG_SELECT_SEPARATOR		","
+#define OPH_MERGECUBES2_ARG_SELECT_INTYPE_SEPARATOR	"|"
+#define OPH_MERGECUBES2_ARG_SELECT_OUTTYPE_SEPARATOR	","
 
-#define OPH_MERGECUBES_QUERY_ALIAS OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s")
+#define OPH_MERGECUBES2_QUERY_ALIAS OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s")
 
-#define OPH_MERGECUBES_QUERY_FROM OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "%s")
-#define OPH_MERGECUBES_ARG_FROM_PART		"%s.%s"
-#define OPH_MERGECUBES_ARG_FROM_SEPARATOR	"|"
+#define OPH_MERGECUBES2_QUERY_FROM OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "%s")
+#define OPH_MERGECUBES2_ARG_FROM_PART		"%s.%s"
+#define OPH_MERGECUBES2_ARG_FROM_SEPARATOR	"|"
 
-#define OPH_MERGECUBES_QUERY_FROM_ALIAS OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM_ALIAS, "%s")
-#define OPH_MERGECUBES_ARG_FROM_ALIAS_PART	"frag%d"
-#define OPH_MERGECUBES_ARG_FROM_ALIAS_SEPARATOR	"|"
+#define OPH_MERGECUBES2_QUERY_FROM_ALIAS OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM_ALIAS, "%s")
+#define OPH_MERGECUBES2_ARG_FROM_ALIAS_PART	"frag%d"
+#define OPH_MERGECUBES2_ARG_FROM_ALIAS_SEPARATOR	"|"
 
-#define OPH_MERGECUBES_QUERY_WHERE OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "%s")
-#define OPH_MERGECUBES_ARG_WHERE_PART		"frag%d.%s = frag%d.%s"
-#define OPH_MERGECUBES_ARG_WHERE_SEPARATOR	" AND "
+#define OPH_MERGECUBES2_QUERY_WHERE OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "%s")
+#define OPH_MERGECUBES2_ARG_WHERE_PART		"frag%d.%s = frag%d.%s"
+#define OPH_MERGECUBES2_ARG_WHERE_SEPARATOR	" AND "
 
 /**
- * \brief Structure of parameters needed by the operator OPH_MERGECUBES. It merges n cubes materializing a new datacube
+ * \brief Structure of parameters needed by the operator OPH_MERGECUBES2. It merges n cubes materializing a new datacube
  * \param oDB Contains the parameters and the connection to OphidiaDB
  * \param id_input_datacube IDs of the input datacubes to operate on
  * \param id_input_container IDs of the output container to operate on
@@ -76,8 +76,9 @@
  * \param sessionid SessionID
  * \param id_user ID of submitter
  * \param description Free description to be associated with output cube
+ * \param dim_name Name of new dimension to be created
  */
-struct _OPH_MERGECUBES_operator_handle
+struct _OPH_MERGECUBES2_operator_handle
 {
   ophidiadb oDB;
   int *id_input_datacube;
@@ -98,7 +99,8 @@ struct _OPH_MERGECUBES_operator_handle
   char *sessionid;
   int id_user;
   char* description;
+  char* dim_name;
 };
-typedef struct _OPH_MERGECUBES_operator_handle OPH_MERGECUBES_operator_handle;
+typedef struct _OPH_MERGECUBES2_operator_handle OPH_MERGECUBES2_operator_handle;
 
-#endif  //__OPH_MERGECUBES_OPERATOR_H
+#endif  //__OPH_MERGECUBES2_OPERATOR_H

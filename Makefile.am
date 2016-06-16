@@ -69,6 +69,7 @@ OPERATOR_XML+=etc/operators_xml/OPH_MANAGE_SESSION_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_MAN_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_MASSIVE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_MERGECUBES_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_MERGECUBES2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_MERGE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_METADATA_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_MOVECONTAINER_operator_1.0.xml
