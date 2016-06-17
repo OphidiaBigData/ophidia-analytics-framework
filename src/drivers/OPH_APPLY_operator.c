@@ -1686,9 +1686,9 @@ int task_execute(oph_operator_struct *handle)
 						break;
 					}
 				}
-				else if (((OPH_APPLY_operator_handle*)handle->operator_handle)->expl_size != new_expl_size)
+				else if (((OPH_APPLY_operator_handle*)handle->operator_handle)->expl_size < new_expl_size)
 				{
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Metadata are corrupted: expl_size %lld is not equal to expected value %d\n",new_expl_size,((OPH_APPLY_operator_handle*)handle->operator_handle)->expl_size);
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Metadata are corrupted: expl_size %lld is greater than the expected value %d\n",new_expl_size,((OPH_APPLY_operator_handle*)handle->operator_handle)->expl_size);
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_METADATA_SET_ERROR);
 					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					break;
