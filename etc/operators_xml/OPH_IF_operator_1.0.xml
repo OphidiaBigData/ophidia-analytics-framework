@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_IF" version="1.0">
+    <info>
+        <abstract>[Type]
+Flow control.
+
+[Behaviour]
+Open a selection block &quot;if&quot; and start the first selection sub-block.
+
+[Parameters]
+- condition : boolean expression to be checked:
+              if true, the tasks depending on OPH_IF are executed, whereas the tasks OPH_ELSEIFs and OPH_ELSE associated with the following selection sub-blocks are skipped;
+              if false, the tasks depending on OPH_IF are skipped, whereas the task OPH_ELSEIF or OPH_ELSE associated with the following selection sub-block is executed.
+</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>20/06/2016</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+	<argument type="string" mandatory="no" default="true">condition</argument>
+    </args>
+</operator>
