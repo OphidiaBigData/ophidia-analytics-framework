@@ -404,14 +404,13 @@ int task_execute (oph_operator_struct *handle)
   char stream[stream_max_size];
   memset(stream, 0, sizeof(stream));
   *stream = 0;
-  char *id_string[3], *data_type, *params, *params2;
 
-  pointer=0; id_string[0]=stream+pointer;
-  pointer+=1+OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE; id_string[1]=stream+pointer;
-  pointer+=1+sizeof(int); id_string[2]=stream+pointer;
-  pointer+=1+sizeof(int); data_type=stream+pointer;
-  pointer+=1+OPH_ODB_CUBE_MEASURE_TYPE_SIZE; params=stream+pointer;
-  pointer+=1+OPH_TP_TASKLEN; params2=stream+pointer;
+  pointer=0;
+  pointer+=1+OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE;
+  pointer+=1+sizeof(int);
+  pointer+=1+sizeof(int);
+  pointer+=1+OPH_ODB_CUBE_MEASURE_TYPE_SIZE;
+  pointer+=1+OPH_TP_TASKLEN;
 
 	  ophidiadb *oDB = &((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->oDB;
 	  oph_odb_datacube cube;

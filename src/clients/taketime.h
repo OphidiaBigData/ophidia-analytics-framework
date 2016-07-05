@@ -47,7 +47,7 @@ static int timeval_subtract (result, x, y)
   return x->tv_sec < y->tv_sec;
 }
 
-
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 static int timeval_add (res, x, y)
   struct timeval *res, *x, *y;
 {
@@ -59,5 +59,6 @@ static int timeval_add (res, x, y)
         }
         return 0;
 }
+#endif
 
 #endif /* TAKETIME_H_ */

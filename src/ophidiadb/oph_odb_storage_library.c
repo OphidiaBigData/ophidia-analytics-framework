@@ -1834,8 +1834,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb *oDB, int fs_type, char
 	MYSQL_RES *res;
 	MYSQL_ROW row;
 	res = mysql_store_result(oDB->conn);
-	int rows;
-    rows = mysql_num_rows(res);
+
     if(mysql_num_rows(res) < 1){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "No rows found by query\n");
 		mysql_free_result(res);

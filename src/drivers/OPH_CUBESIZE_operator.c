@@ -446,10 +446,7 @@ int task_distribute(oph_operator_struct *handle)
   int dbmsxproc_quotient = total_dbms/handle->proc_number;
   int dbmsxproc_remainder = total_dbms%handle->proc_number;
 
-  int i;
-  int number_of_procs_on_dbms[total_dbms];
-  number_of_procs_on_dbms[0] = 0;
-  int number_of_dbms_by_proc = 0;
+  int i, number_of_dbms_by_proc = 0;
 
     //Every process must process at least dbmsxprox_quotient
 	number_of_dbms_by_proc = dbmsxproc_quotient;
@@ -526,7 +523,6 @@ int task_execute(oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
   }
 
-  int n;
   long long total_size = 0;
   long long partial_elements;
 
@@ -634,7 +630,7 @@ int task_execute(oph_operator_struct *handle)
 		}
 		frag_name = tmp_names;
 		tmp_names = NULL;
-  		n = snprintf(frag_name + tmp_counter, buffer_length +1, " '%s' ,", row[0]);
+  		snprintf(frag_name + tmp_counter, buffer_length +1, " '%s' ,", row[0]);
 		tmp_counter +=  (strlen(row[0]) + 5);
 	}
 	mysql_free_result(frag_list);
