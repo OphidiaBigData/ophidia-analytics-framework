@@ -651,10 +651,11 @@ int task_init (oph_operator_struct *handle)
 	  if (((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->description) snprintf(cube[0].description,OPH_ODB_CUBE_DESCRIPTION_SIZE,"%s",((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->description);
 	  else *cube[0].description = 0;
 
-    //Update type and measures
+#ifdef STRUCT_DATA_TYPE    //Update type and measures
     int measure_len, measure_type_len;
     measure_len = strlen(cube[0].measure);
     measure_type_len = strlen(cube[0].measure_type);
+#endif
 
     for(cc = 1; cc < ((OPH_MERGECUBES_operator_handle*)handle->operator_handle)->input_datacube_num; cc++)
     {

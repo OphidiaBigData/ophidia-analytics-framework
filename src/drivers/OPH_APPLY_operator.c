@@ -481,6 +481,7 @@ int oph_apply_parse_query(oph_operator_struct *handle, char* data_type, const ch
 	int j, l=strlen(array_operation), bcount=0, pcount=0, comma_up=0, scount=0;
 	char array_operation2[l+1];
 	char special_char_stack[2];
+	special_char_stack[0] = special_char_stack[1] = 0;
 	for (i=0,j=0;i<l;++i)
 	{
 		if ((array_operation[i]==OPH_APPLY_CHAR_APOS) || (array_operation[i]==OPH_APPLY_CHAR_QUOT))
@@ -1785,7 +1786,7 @@ int task_reduce(oph_operator_struct *handle)
 	int datacube_id = ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_datacube;
 
 	oph_odb_cubehasdim *cubedims = NULL;
-	int l, number_of_dimensions = 0, last_insertd_id = 0, first=-1, reduced_impl_dim=-1, reduced_expl_dim=-1, reduction = 0;;
+	int l, number_of_dimensions = 0, last_insertd_id = 0, first=-1, reduced_impl_dim=-1, reduced_expl_dim=-1;
 	int size = ((OPH_APPLY_operator_handle*)handle->operator_handle)->impl_size, residual_size = ((OPH_APPLY_operator_handle*)handle->operator_handle)->expl_size;
 
 	//Read old cube - dimension relation rows
@@ -1873,7 +1874,6 @@ int task_reduce(oph_operator_struct *handle)
 							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						}
 						reduced_expl_dim = l;
-						reduction = residual_size;
 						cubedims[l].size /= residual_size;
 						dim_inst[l].concept_level = OPH_COMMON_CONCEPT_LEVEL_UNKNOWN;
 						break;

@@ -672,21 +672,26 @@ int oph_odb_cube_find_datacube_hierarchy(ophidiadb *oDB, int direction, int id_d
 
 	if( oph_odb_check_connection_to_ophidiadb(oDB)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
-        return OPH_ODB_MYSQL_ERROR;
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
-	char query[MYSQL_BUFLEN];
 	int n;
+	char query[MYSQL_BUFLEN];
 
 	if(!direction)
 		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_RETRIEVE_DATACUBE_CHILDREN, id_datacube);
 	else
 		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_RETRIEVE_DATACUBE_PARENTS, id_datacube);
 
+	if(n >= MYSQL_BUFLEN){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
 	//Execute query
 	if (mysql_query(oDB->conn, query)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-        return OPH_ODB_MYSQL_ERROR;
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	// Init res

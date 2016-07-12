@@ -1086,7 +1086,7 @@ int task_execute(oph_operator_struct *handle)
 			if(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->export_metadata) // Add metadata
 			{
 				int varidp, msize, msizetype, mbuffer;
-				char *mvariable, *mkey, *mtype, *mvalue, *buffer = NULL;
+				char *mvariable = NULL, *mkey = NULL, *mtype, *mvalue, *buffer = NULL;
 				if (handle->proc_rank) // Slave
 				{
 					while(1)
@@ -1255,8 +1255,8 @@ int task_execute(oph_operator_struct *handle)
 				}
 				if (retval)
 				{
-					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable?mvariable:"", mkey, nc_strerror(retval));
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable?mvariable:"", mkey, nc_strerror(retval));
+					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable?mvariable:"", mkey?mkey:"", nc_strerror(retval));
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable?mvariable:"", mkey?mkey:"", nc_strerror(retval));
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
