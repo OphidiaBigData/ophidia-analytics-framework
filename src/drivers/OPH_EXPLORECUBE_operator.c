@@ -38,6 +38,7 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 #include "oph_datacube2_library.h"
+#include "oph_utility_library.h"
 
 int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 {
@@ -78,6 +79,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->sessionid = NULL;
   ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->level = 1;
   ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->time_filter = 1;
+  ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64 = 0;
 
   int i,j;
   for (i=0;i<OPH_SUBSET_LIB_MAX_DIM;++i) ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[i] = ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->dim_task[i] = NULL;
@@ -265,6 +267,14 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 		  }
 	  }
   }
+
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_BASE64); 
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_BASE64);
+	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_BASE64 );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  if( strcmp(value,OPH_COMMON_YES_VALUE) == 0) ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64 = 1;
 
 //Only master process has to initialize and open connection to management OphidiaDB
   ophidiadb *oDB = &((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->oDB;
@@ -1253,13 +1263,13 @@ int task_execute (oph_operator_struct *handle)
 
 			if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->apply_clause && strlen(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->apply_clause))
 			{
-				if (compressed) n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN_COMPR2,cube.measure_type, cube.measure_type, cube.measure_type, MYSQL_FRAG_MEASURE, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->apply_clause);
-				else n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN2, cube.measure_type, cube.measure_type, cube.measure_type, MYSQL_FRAG_MEASURE, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->apply_clause);
+				if (compressed) n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN_COMPR2,cube.measure_type, cube.measure_type, cube.measure_type, MYSQL_FRAG_MEASURE, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->apply_clause, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64 ? OPH_EXPLORECUBE_BASE64 : OPH_EXPLORECUBE_DECIMAL);
+				else n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN2, cube.measure_type, cube.measure_type, cube.measure_type, MYSQL_FRAG_MEASURE, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->apply_clause, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64 ? OPH_EXPLORECUBE_BASE64 : OPH_EXPLORECUBE_DECIMAL);
 			}
 			else
 			{
-				if (compressed) n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN_COMPR3, cube.measure_type, MYSQL_FRAG_MEASURE);
-				else n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN3, cube.measure_type, MYSQL_FRAG_MEASURE);
+				if (compressed) n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN_COMPR3, cube.measure_type, MYSQL_FRAG_MEASURE, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64 ? OPH_EXPLORECUBE_BASE64 : OPH_EXPLORECUBE_DECIMAL);
+				else n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN3, cube.measure_type, MYSQL_FRAG_MEASURE, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64 ? OPH_EXPLORECUBE_BASE64 : OPH_EXPLORECUBE_DECIMAL);
 			}
 			if(n >= OPH_COMMON_BUFFER_LEN)
 			{
@@ -1553,7 +1563,13 @@ int task_execute (oph_operator_struct *handle)
 							  jjj++;
 						  }
 						  if (result != OPH_ANALYTICS_OPERATOR_SUCCESS) break;
-						  fieldtypes[jjj] = strdup(OPH_JSON_STRING); // Array is a string in any case
+						  if(!strncasecmp(cube.measure_type, OPH_COMMON_INT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_INT);
+						  else if(!strncasecmp(cube.measure_type, OPH_COMMON_LONG_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_LONG);
+						  else if(!strncasecmp(cube.measure_type, OPH_COMMON_SHORT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_SHORT);
+						  else if(!strncasecmp(cube.measure_type, OPH_COMMON_BYTE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_BYTE);
+						  else if(!strncasecmp(cube.measure_type, OPH_COMMON_FLOAT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_FLOAT);
+						  else if(!strncasecmp(cube.measure_type, OPH_COMMON_DOUBLE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_DOUBLE);
+						  else fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 						  if (!fieldtypes[jjj]) {
 							  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 							  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "fieldtype" );
@@ -1642,7 +1658,15 @@ int task_execute (oph_operator_struct *handle)
 										printf("| (%s) %-*d", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_i);
 									else
 										printf("| %-*d",(int)frag_rows->max_field_length[jj]+1, *dim_i);
-									if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_i);
+									if (is_objkey_printable)
+									{
+										if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+										{
+											memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+											oph_utl_base64encode(dim_i, sizeof(int), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+										}
+										else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_i);
+									}
 								}
 								else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_LONG_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
 									dim_l = (long long*) (dim_rows[kk] + index_dim*sizeof(long long));
@@ -1650,7 +1674,15 @@ int task_execute (oph_operator_struct *handle)
 										printf("| (%s) %-*lld", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_l);
 									else
 										printf("| %-*lld",(int)frag_rows->max_field_length[jj]+1, *dim_l);
-									if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%lld",*dim_l);
+									if (is_objkey_printable)
+									{
+										if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+										{
+											memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+											oph_utl_base64encode(dim_l, sizeof(long long), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+										}
+										else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%lld",*dim_l);
+									}
 								}
 								else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_SHORT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
 									dim_s = (short*) (dim_rows[kk] + index_dim*sizeof(short));
@@ -1658,7 +1690,15 @@ int task_execute (oph_operator_struct *handle)
 										printf("| (%s) %-*d", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_s);
 									else
 										printf("| %-*d",(int)frag_rows->max_field_length[jj]+1, *dim_s);
-									if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_s);
+									if (is_objkey_printable)
+									{
+										if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+										{
+											memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+											oph_utl_base64encode(dim_s, sizeof(short), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+										}
+										else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_s);
+									}
 								}
 								else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_BYTE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
 									dim_b = (char*) (dim_rows[kk] + index_dim*sizeof(char));
@@ -1666,7 +1706,15 @@ int task_execute (oph_operator_struct *handle)
 										printf("| (%s) %-*d", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_b);
 									else
 										printf("| %-*d",(int)frag_rows->max_field_length[jj]+1, *dim_b);
-									if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_b);
+									if (is_objkey_printable)
+									{
+										if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+										{
+											memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+											oph_utl_base64encode(dim_b, sizeof(char), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+										}
+										else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_b);
+									}
 								}
 								else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_FLOAT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
 									dim_f = (float*) (dim_rows[kk] + index_dim*sizeof(float));
@@ -1674,7 +1722,15 @@ int task_execute (oph_operator_struct *handle)
 										printf("| (%s) %-*f", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_f);
 									else
 										printf("| %-*f",(int)frag_rows->max_field_length[jj]+1, *dim_f);
-									if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_f);
+									if (is_objkey_printable)
+									{
+										if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+										{
+											memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+											oph_utl_base64encode(dim_f, sizeof(float), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+										}
+										else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_f);
+									}
 								}
 								else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_DOUBLE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
 									dim_d = (double*) (dim_rows[kk] + index_dim*sizeof(double));
@@ -1682,7 +1738,15 @@ int task_execute (oph_operator_struct *handle)
 										printf("| (%s) %-*f", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_d);
 									else
 										printf("| %-*f",(int)frag_rows->max_field_length[jj]+1, *dim_d);
-									if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_d);
+									if (is_objkey_printable)
+									{
+										if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+										{
+											memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+											oph_utl_base64encode(dim_d, sizeof(double), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+										}
+										else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_d);
+									}
 								}
 								else {
 									pmesg(LOG_ERROR, __FILE__, __LINE__, "Type not supported.\n");

@@ -21,6 +21,8 @@
 
 #include "oph_common.h"
 
+#include <stdlib.h>
+
 #define OPH_UTL_ERROR   1
 #define OPH_UTL_SUCCESS 0
 
@@ -84,5 +86,23 @@ int oph_utl_unit_to_str(int unit_value, char (*unit_str)[OPH_UTL_UNIT_SIZE]);
  * \return 0 if successfull, N otherwise
  */
 int oph_utl_unit_to_value(char unit_str[OPH_UTL_UNIT_SIZE], int *unit_value);
+
+/** 
+ * \brief Function to encode binary data using base64 code
+ * \param data_buf Input buffer with data to be coded
+ * \param dataLength Input buffer length
+ * \param result Output buffer
+ * \param resultSize Output buffer maximum size
+ * \return 0 if successfull, N otherwise
+ */
+int oph_utl_base64encode(const void* data_buf, size_t dataLength, char* result, size_t resultSize);
+
+/** 
+ * \brief Function to decode base64 data into binary data
+ * \param data_buf Input buffer terminating with a '\0'
+ * \param result Pointer to decoded data; it has to be freed
+ * \return 0 if successfull, N otherwise
+ */
+int oph_utl_base64decode(const char* data_buf, char** result);
 
 #endif //__OPH_UTILITY_H

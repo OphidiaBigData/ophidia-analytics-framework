@@ -156,7 +156,7 @@ liboph_duplicateoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_dat
 liboph_explorecubeoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} 
 liboph_explorecubeoperator_la_SOURCES = OPH_EXPLORECUBE_operator.c
 liboph_explorecubeoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_explorecubeoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube2 -loph_ioserver -loph_dimension -loph_subset
+liboph_explorecubeoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube2 -loph_ioserver -loph_dimension -loph_subset -loph_utility
 
 liboph_folderoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_folderoperator_la_SOURCES = OPH_FOLDER_operator.c

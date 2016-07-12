@@ -42,6 +42,8 @@ Dimension values are used as input filters for subsetting.
 - output_path : absolute path of the JSON Response. By default JSON Response is saved in core environment.
 - output_name : filename of the JSON Response. The default value is the PID of the input datacube.
                 File is saved provided that &quot;output_path&quot; is set.
+- base64 : if &quot;no&quot; (default), dimension values are returned as strings (with possible trucantion errors).
+			With &quot;yes&quot;, raw dimension values are returned as base64-coded strings.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -77,6 +79,7 @@ SUBMISSION STRING: &quot;operator=oph_explorecube;cube=http://www.example.com/1/
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="2">level</argument>
 		<argument type="string" mandatory="no" default="default">output_path</argument>
 		<argument type="string" mandatory="no" default="default">output_name</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">base64</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
