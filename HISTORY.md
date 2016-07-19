@@ -1,4 +1,22 @@
 
+## v0.10.2 - 2016-07-19
+
+### Fixed
+
+- Bug in export metadata when more cores are used in OPH_EXPORTNC2
+- Several warnings when building
+
+### Added:
+
+- Support for base64 encoding in OPH_CUBESCHEMA and OPH_EXPLORECUBE
+- Support for selection statement
+
+## v0.10.1 - 2016-06-27
+
+### Fixed:
+ 
+- Version number in files
+
 ## v0.10.0 - 2016-06-23
 
 ### Fixed:

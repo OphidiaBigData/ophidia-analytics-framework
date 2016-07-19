@@ -17,7 +17,7 @@
 #
 
 AC_PREREQ([2.60])
-AC_INIT([ophidia-analytics-framework], [0.10.1], [ophidia-info@lists.cmcc.it])
+AC_INIT([ophidia-analytics-framework], [0.10.2], [ophidia-info@lists.cmcc.it])
 
 AC_CONFIG_AUX_DIR([config])
 
