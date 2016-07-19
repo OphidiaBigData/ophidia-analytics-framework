@@ -77,6 +77,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   ((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->objkeys = NULL;
   ((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->objkeys_num = -1;
   ((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->sessionid = NULL;
+  ((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->base64 = 0;
 
   ophidiadb *oDB = &((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->oDB;
 
@@ -229,6 +230,14 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
   if( strcmp(value,OPH_COMMON_YES_VALUE) == 0) ((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->show_time = 1;
+
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_BASE64); 
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_BASE64);
+	logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_BASE64 );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  if( strcmp(value,OPH_COMMON_YES_VALUE) == 0) ((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->base64 = 1;
 
   if(!(((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->datacube_name = (char *) strndup (datacube_name, OPH_TP_TASKLEN))){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -873,7 +882,7 @@ int task_execute(oph_operator_struct *handle)
 				  free(cubedims);
 				  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 			  }
-        jjj=0;
+			  jjj=0;
 			  jsonkeys[jjj] = strdup("DESCRIPTION");
 			  if (!jsonkeys[jjj]) {
 				  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -2197,7 +2206,15 @@ int task_execute(oph_operator_struct *handle)
 						len += snprintf(tmp_row + len, buff_size - len, "%-d [%d]", *dim_i, j+1);
 					else
 						len += snprintf(tmp_row + len, buff_size - len, "%-d", *dim_i);
-					if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_i);
+					if (is_objkey_printable)
+					{
+						if (((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_i, sizeof(int), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_i);
+					}
 				}
 				else if(!strncasecmp(dim.dimension_type, OPH_COMMON_LONG_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
 					if(dim_row_index){
@@ -2211,7 +2228,15 @@ int task_execute(oph_operator_struct *handle)
 						len += snprintf(tmp_row + len, buff_size - len, "%-lld [%d]", *dim_l, j+1);
 					else
 						len += snprintf(tmp_row + len, buff_size - len, "%-lld", *dim_l);
-					if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%lld",*dim_l);
+					if (is_objkey_printable)
+					{
+						if (((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_l, sizeof(long long), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%lld",*dim_l);
+					}
 				}
 				else if(!strncasecmp(dim.dimension_type, OPH_COMMON_SHORT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
 					if(dim_row_index){
@@ -2225,7 +2250,15 @@ int task_execute(oph_operator_struct *handle)
 						len += snprintf(tmp_row + len, buff_size - len, "%-d [%d]", *dim_s, j+1);
 					else
 						len += snprintf(tmp_row + len, buff_size - len, "%-d", *dim_s);
-					if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_s);
+					if (is_objkey_printable)
+					{
+						if (((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_s, sizeof(short), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_s);
+					}
 				}
 				else if(!strncasecmp(dim.dimension_type, OPH_COMMON_BYTE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
 					if(dim_row_index){
@@ -2239,7 +2272,15 @@ int task_execute(oph_operator_struct *handle)
 						len += snprintf(tmp_row + len, buff_size - len, "%-d [%d]", *dim_b, j+1);
 					else
 						len += snprintf(tmp_row + len, buff_size - len, "%-d", *dim_b);
-					if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_b);
+					if (is_objkey_printable)
+					{
+						if (((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_b, sizeof(char), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_b);
+					}
 				}
 				else if(!strncasecmp(dim.dimension_type, OPH_COMMON_FLOAT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
 					if(dim_row_index){
@@ -2253,7 +2294,15 @@ int task_execute(oph_operator_struct *handle)
 						len += snprintf(tmp_row + len, buff_size - len, "%-f [%d]", *dim_f, j+1);
 					else
 						len += snprintf(tmp_row + len, buff_size - len, "%-f", *dim_f);
-					if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_f);
+					if (is_objkey_printable)
+					{
+						if (((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_f, sizeof(float), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_f);
+					}
 				}
 				else if(!strncasecmp(dim.dimension_type, OPH_COMMON_DOUBLE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
 					if(dim_row_index){
@@ -2267,7 +2316,15 @@ int task_execute(oph_operator_struct *handle)
 						len += snprintf(tmp_row + len, buff_size - len, "%-f [%d]", *dim_d, j+1);
 					else
 						len += snprintf(tmp_row + len, buff_size - len, "%-f", *dim_d);
-					if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_d);
+					if (is_objkey_printable)
+					{
+						if (((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_d, sizeof(double), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_d);
+					}
 				}
 				else {
 					pmesg(LOG_WARNING, __FILE__, __LINE__, "Type not supported.\n");

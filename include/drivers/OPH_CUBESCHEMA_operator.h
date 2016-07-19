@@ -37,6 +37,7 @@
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
+ * \param base64 Flag used in representation of output data
  */
 struct _OPH_CUBESCHEMA_operator_handle
 {
@@ -52,6 +53,7 @@ struct _OPH_CUBESCHEMA_operator_handle
   char **objkeys;
   int objkeys_num;
   char *sessionid;
+  int base64;
 };
 typedef struct _OPH_CUBESCHEMA_operator_handle OPH_CUBESCHEMA_operator_handle;
 

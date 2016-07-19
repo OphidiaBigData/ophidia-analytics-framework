@@ -1085,7 +1085,7 @@ int task_execute(oph_operator_struct *handle)
 
 			if(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->export_metadata) // Add metadata
 			{
-				int varidp, msize, msizetype, mbuffer;
+				int varidp, msize, mbuffer;
 				char *mvariable = NULL, *mkey = NULL, *mtype, *mvalue, *buffer = NULL;
 				if (handle->proc_rank) // Slave
 				{
@@ -1108,12 +1108,7 @@ int task_execute(oph_operator_struct *handle)
 							retval = NC_EBADTYPE;
 							if (mvariable && ((retval = nc_inq_varid(ncid, mvariable, &varidp))))
 							{
-								if (retval == NC_ENOTVAR)
-								{
-									pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable?mvariable:"", mkey, nc_strerror(retval));
-									logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable?mvariable:"", mkey, nc_strerror(retval));
-									retval = 0;
-								}
+								if (retval == NC_ENOTVAR) retval = NC_NOERR; // Skip metadata associated with collapsed variables
 							}
 							else if (!strcmp(mtype,OPH_COMMON_METADATA_TYPE_TEXT)) retval = nc_put_att_text(ncid, mvariable ? varidp : NC_GLOBAL, mkey, strlen(mvalue), mvalue);
 							else if (!strcmp(mtype,OPH_COMMON_BYTE_TYPE))
@@ -1143,7 +1138,7 @@ int task_execute(oph_operator_struct *handle)
 							}
 							else if (!strcmp(mtype,OPH_COMMON_DOUBLE_TYPE))
 							{
-								double svalue = (double)strtof(mvalue,NULL);
+								double svalue = (double)strtod(mvalue,NULL);
 								retval = nc_put_att_double(ncid, mvariable ? varidp : NC_GLOBAL, mkey, NC_DOUBLE, 1, &svalue);
 							}
 						}
@@ -1169,35 +1164,24 @@ int task_execute(oph_operator_struct *handle)
 						mtype = row[3];
 						mvalue = row[4];
 
-						if (!strcmp(mtype,OPH_COMMON_METADATA_TYPE_TEXT)) msizetype = 1+strlen(mvalue);
-						else if (!strcmp(mtype,OPH_COMMON_BYTE_TYPE)) msizetype = sizeof(char);
-						else if (!strcmp(mtype,OPH_COMMON_SHORT_TYPE)) msizetype = sizeof(short);
-						else if (!strcmp(mtype,OPH_COMMON_INT_TYPE)) msizetype = sizeof(int);
-						else if (!strcmp(mtype,OPH_COMMON_LONG_TYPE)) msizetype = sizeof(long long);
-						else if (!strcmp(mtype,OPH_COMMON_FLOAT_TYPE)) msizetype = sizeof(float);
-						else if (!strcmp(mtype,OPH_COMMON_DOUBLE_TYPE)) msizetype = sizeof(double);
-						else
-						{
-							retval = NC_EBADTYPE;
-							break;
-						}
 						mbuffer = 0;
-						buffer = (char*)malloc((mvariable?strlen(mvariable):0)+strlen(mkey)+strlen(mtype)+msizetype+3);
+						buffer = (char*)malloc((mvariable?strlen(mvariable):0)+strlen(mkey)+strlen(mtype)+strlen(mvalue)+4);
 
-						msize = mvariable?strlen(mvariable):0;
-						memcpy(buffer+mbuffer,mvariable?mvariable:"",msize+1);
-						mbuffer += msize+1;
+						msize = (mvariable?strlen(mvariable):0) + 1;
+						memcpy(buffer+mbuffer,mvariable?mvariable:"",msize);
+						mbuffer += msize;
 
-						msize = strlen(mkey);
-						memcpy(buffer+mbuffer,mkey,msize+1);
-						mbuffer += msize+1;
+						msize = strlen(mkey) + 1;
+						memcpy(buffer+mbuffer,mkey,msize);
+						mbuffer += msize;
 
-						msize = strlen(mtype);
-						memcpy(buffer+mbuffer,mtype,msize+1);
-						mbuffer += msize+1;
+						msize = strlen(mtype) + 1;
+						memcpy(buffer+mbuffer,mtype,msize);
+						mbuffer += msize;
 
-						memcpy(buffer+mbuffer,mvalue,msizetype);
-						mbuffer += msizetype;
+						msize = strlen(mvalue) + 1;
+						memcpy(buffer+mbuffer,mvalue,msize);
+						mbuffer += msize;
 
 						MPI_Bcast(&mbuffer,1,MPI_INT,0,scomm); // Buffer size
 						MPI_Bcast(buffer,mbuffer,MPI_CHAR,0,scomm); // Buffer
@@ -1208,12 +1192,7 @@ int task_execute(oph_operator_struct *handle)
 						retval = NC_EBADTYPE;
 						if (mvariable && ((retval = nc_inq_varid(ncid, mvariable, &varidp))))
 						{
-							if (retval == NC_ENOTVAR) // Skip metadata associated with collapsed variables
-							{
-								pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable?mvariable:"", mkey, nc_strerror(retval));
-								logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable?mvariable:"", mkey, nc_strerror(retval));
-								retval = NC_NOERR;
-							}
+							if (retval == NC_ENOTVAR) retval = NC_NOERR; // Skip metadata associated with collapsed variables
 						}
 						else if (!strcmp(mtype,OPH_COMMON_METADATA_TYPE_TEXT)) retval = nc_put_att_text(ncid, mvariable ? varidp : NC_GLOBAL, mkey, strlen(mvalue), mvalue);
 						else if (!strcmp(mtype,OPH_COMMON_BYTE_TYPE))
@@ -1243,7 +1222,7 @@ int task_execute(oph_operator_struct *handle)
 						}
 						else if (!strcmp(mtype,OPH_COMMON_DOUBLE_TYPE))
 						{
-							double svalue = (double)strtof(mvalue,NULL);
+							double svalue = (double)strtod(mvalue,NULL);
 							retval = nc_put_att_double(ncid, mvariable ? varidp : NC_GLOBAL, mkey, NC_DOUBLE, 1, &svalue);
 						}
 						if (retval) break;
