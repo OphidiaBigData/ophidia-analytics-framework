@@ -496,6 +496,7 @@ int task_init (oph_operator_struct *handle)
 	  free(cubedims2);
 
 	  //New fields
+	  char *old_measure = strdup(cube.measure);
 	  cube.id_source = 0;
 	  cube.level++;
 	  snprintf(cube.measure,OPH_ODB_CUBE_MEASURE_SIZE,"%s",((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->output_measure);
@@ -688,6 +689,18 @@ int task_init (oph_operator_struct *handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to copy metadata.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_METADATA_COPY_ERROR );
 		goto __OPH_EXIT_1;
+	  }
+
+	  if (old_measure)
+	  {
+		if (oph_odb_meta_update_metadatakeys(oDB, ((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->id_output_datacube, old_measure, ((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->output_measure))
+		{
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to copy metadata.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_INTERCUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_METADATA_COPY_ERROR );
+			goto __OPH_EXIT_1;
+		}
+		free(old_measure);
+		old_measure = NULL;
 	  }
 
 	  last_insertd_id = 0;
