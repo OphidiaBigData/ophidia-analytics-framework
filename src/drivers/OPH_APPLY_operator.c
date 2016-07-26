@@ -1103,8 +1103,12 @@ int task_init (oph_operator_struct *handle)
 	  cube.id_container = ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_output_container;
 
 	  // If given, change the measure name
+	  char *old_measure = NULL;
 	  if (strncasecmp(((OPH_APPLY_operator_handle*)handle->operator_handle)->measure,OPH_COMMON_NULL_VALUE,OPH_TP_TASKLEN))
+	  {
+		old_measure = strdup(cube.measure);
 		strncpy(cube.measure, ((OPH_APPLY_operator_handle*)handle->operator_handle)->measure, OPH_ODB_CUBE_MEASURE_SIZE);
+	  }
 
 	  // Save some parameters
 	  ((OPH_APPLY_operator_handle*)handle->operator_handle)->expl_size = cube.tuplexfragment;
@@ -1361,6 +1365,18 @@ int task_init (oph_operator_struct *handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to copy metadata.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_METADATA_COPY_ERROR );
 		goto __OPH_EXIT_1;
+	  }
+
+	  if (old_measure)
+	  {
+		if (oph_odb_meta_update_metadatakeys(oDB, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_output_datacube, old_measure, ((OPH_APPLY_operator_handle*)handle->operator_handle)->measure))
+		{
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to copy metadata.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_METADATA_COPY_ERROR );
+			goto __OPH_EXIT_1;
+		}
+		free(old_measure);
+		old_measure = NULL;
 	  }
 
 	  last_insertd_id = 0;

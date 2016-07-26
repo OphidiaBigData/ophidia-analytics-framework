@@ -47,5 +47,7 @@ WHERE metadatainstance.iddatacube=%d AND metadatainstance.idmetadatainstance LIK
 #define MYSQL_QUERY_META_DELETE_KEYS				"DELETE FROM metadatakey WHERE idvocabulary IS NULL AND idkey IN (SELECT idkey FROM metadatainstance WHERE iddatacube = %d AND idkey IN (SELECT idkey FROM metadatainstance GROUP BY idkey HAVING COUNT(*)=1));"
 #define MYSQL_QUERY_META_CHECK_VOCABULARY		"SELECT idvocabulary FROM metadatakey INNER JOIN metadatainstance ON metadatakey.idkey = metadatainstance.idkey WHERE idvocabulary IS NOT NULL AND metadatainstance.idmetadatainstance=%d;"
 #define MYSQL_QUERY_META_CHECK_VOCABULARIES		"SELECT idvocabulary FROM metadatakey INNER JOIN metadatainstance ON metadatakey.idkey = metadatainstance.idkey WHERE idvocabulary IS NOT NULL AND metadatainstance.iddatacube=%d %s;"
+#define MYSQL_QUERY_META_RETRIEVE_KEY_OF_INSTANCE	"SELECT idmetadatainstance, label FROM metadatainstance INNER JOIN metadatakey ON metadatainstance.idkey = metadatakey.idkey WHERE iddatacube = %d AND variable = '%s';"
+#define MYSQL_QUERY_META_UPDATE_KEY_OF_INSTANCE		"UPDATE metadatainstance SET idkey = %d WHERE idmetadatainstance = %d;"
 
 #endif /* __OPH_ODB_META_QUERY_H__ */
