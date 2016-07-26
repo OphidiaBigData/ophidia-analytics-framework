@@ -1,4 +1,10 @@
 
+## v0.10.3 - 2016-07-26
+
+### Fixed
+
+- Bug in setting metadata keys when measure is changed by the operator
+
 ## v0.10.2 - 2016-07-19
 
 ### Fixed
