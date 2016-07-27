@@ -19,7 +19,7 @@ WARNING: It imports only mono-dimensional coordinate variables.
                Possible values are &quot;local&quot;, &quot;global&quot; or &quot;auto&quot; (default).
                In the last case the first filesystem available will be used. 
 - ioserver : type of I/O server used to store data.
-			Possible values are: &quot;mysql_table&quot; (default)
+			Possible values are: &quot;ophidiaio_memory&quot; or &quot;mysql_table&quot; (default)
 - import_metadata: imports also metadata with &quot;yes&quot; (default)
 			       or only data with &quot;no&quot;.
 - check_compliance: checks if all the metadata registered for reference vocabulary are available; no check is done by default.
@@ -115,7 +115,7 @@ SUBMISSION STRING: &quot;operator=oph_importnc;cwd=/session-code1;container=cont
 		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="no" default="auto">host_partition</argument>
 		<argument type="string" mandatory="no" default="auto" values="auto|local|global">filesystem</argument>
-		<argument type="string" mandatory="no" default="mysql_table" values="mysql_table">ioserver</argument>
+		<argument type="string" mandatory="no" default="mysql_table" values="mysql_table|ophidiaio_memory">ioserver</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">import_metadata</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">check_compliance</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>

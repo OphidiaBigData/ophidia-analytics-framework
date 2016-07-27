@@ -44,7 +44,7 @@ SUBMISSION STRING: &quot;operator=oph_log_info;log_type=container;container_id=3
     <args>
         <argument type="string" mandatory="no" default="server" values="server|container|ioserver">log_type</argument>
         <argument type="int" mandatory="no" minvalue="0" default="0">container_id</argument>
-	<argument type="string" mandatory="no" default="mysql" values="mysql">ioserver</argument>
+	<argument type="string" mandatory="no" default="mysql" values="mysql|ophidiaio">ioserver</argument>
         <argument type="int" mandatory="no" default="10" minvalue="1" maxvalue="10000">nlines</argument>
         <argument type="string" mandatory="no" default="sync" values="async|sync">exec_mode</argument>
         <argument type="string" mandatory="no" default="null">sessionid</argument>
