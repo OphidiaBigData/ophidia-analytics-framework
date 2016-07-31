@@ -49,6 +49,7 @@
 #define OPH_FRAMEWORK_OPHIDIADB_CONF_FILE_PATH          	"%s/etc/oph_configuration"
 #define OPH_FRAMEWORK_DIMENSION_CONF_FILE_PATH          	"%s/etc/oph_dim_configuration"
 #define OPH_FRAMEWORK_SOAP_CONF_FILE_PATH			"%s/etc/oph_soap_configuration"
+#define OPH_FRAMEWORK_SCRIPT_CONF_FILE_PATH			"%s/etc/oph_script_configuration"
 
 #define OPH_FRAMEWORK_JSON_GENERIC_PATH				"%s/%s.json"
 #define OPH_FRAMEWORK_JSON_PATH					"%s/sessions/%s/json/response/%s.json"

@@ -45,9 +45,6 @@
 #define OPH_NC_ERROR 1
 #define OPH_NC_SUCCESS 0
 
-#define OPH_NC_BUFFER_SIZE 256
-#define OPH_NC_MEMORY "MEMORY"
-
 //Structure used by OPH_EXPORTNC operator
 struct _NETCDF_dim
 {
@@ -90,14 +87,7 @@ struct _NETCDF_var
 };
 typedef struct _NETCDF_var NETCDF_var;
 
-// Auxiliary function
-
-/**
- * \brief Function used to compute dimension ID from tuple ID
- * \param memory_size Value of maximum memory available, read from the configuration file
- * \return 0 if successfull
- */
-int oph_nc_load_data(long long *memory_size);
+// Auxiliary functions
 
 /**
  * \brief Internal recursive function used to compute dimension ID from tuple ID

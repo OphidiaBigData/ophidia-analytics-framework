@@ -53,19 +53,19 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   }
 
   if (!task_tbl){
-	  pmesg(LOG_ERROR, __FILE__, __LINE__, "Null operator string\n");
-      return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null operator string\n");
+	return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
   }
 
   if (handle->operator_handle){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator handle already initialized\n");
-    return OPH_ANALYTICS_OPERATOR_NOT_NULL_OPERATOR_HANDLE;
+	return OPH_ANALYTICS_OPERATOR_NOT_NULL_OPERATOR_HANDLE;
   }
 
   if (!(handle->operator_handle = (OPH_SCRIPT_operator_handle *) calloc (1, sizeof (OPH_SCRIPT_operator_handle)))){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_HANDLE );
-    return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_HANDLE );
+	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
   }
 
   //1 - Set up struct to empty values
@@ -80,6 +80,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_url = NULL;
   ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id = NULL;
   ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->marker_id = NULL;
+  ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->list = 0;
 
   //3 - Fill struct with the correct data
   char *value;
@@ -87,15 +88,15 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   // retrieve objkeys
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_OBJKEY_FILTER);
   if(!value){
-    pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OBJKEY_FILTER);
-    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OBJKEY_FILTER );
-    return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OBJKEY_FILTER);
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OBJKEY_FILTER );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
   if(oph_tp_parse_multiple_value_param(value, &((OPH_SCRIPT_operator_handle*)handle->operator_handle)->objkeys, &((OPH_SCRIPT_operator_handle*)handle->operator_handle)->objkeys_num)){
-    pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
-    oph_tp_free_multiple_value_param_list(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->objkeys, ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->objkeys_num);
-    return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
+	oph_tp_free_multiple_value_param_list(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->objkeys, ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->objkeys_num);
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
 
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_SCRIPT);
@@ -112,15 +113,15 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_ARGS);
   if(!value){
-    pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_ARGS);
-    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_ARGS );
-    return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_ARGS);
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_ARGS );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
   if(oph_tp_parse_multiple_value_param(value, &((OPH_SCRIPT_operator_handle*)handle->operator_handle)->args, &((OPH_SCRIPT_operator_handle*)handle->operator_handle)->args_num)){
-    pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
-    oph_tp_free_multiple_value_param_list(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->args, ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->args_num);
-    return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
+	oph_tp_free_multiple_value_param_list(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->args, ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->args_num);
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
 
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_STDOUT);
@@ -145,6 +146,16 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_INPUT, "stderr" );
 	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+  }
+
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_LIST);
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_LIST);
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_LIST);
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  if(strncmp(value,OPH_COMMON_YES_VALUE,OPH_TP_TASKLEN) == 0){
+        ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->list = 1;
   }
   
   char session_code[OPH_COMMON_BUFFER_LEN];
@@ -188,66 +199,265 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 
 int task_execute(oph_operator_struct *handle)
 {
-  if (!handle || !handle->operator_handle){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_NULL_OPERATOR_HANDLE );
-	return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
-  }
+	if (!handle || !handle->operator_handle){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_NULL_OPERATOR_HANDLE );
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	if (((OPH_SCRIPT_operator_handle*)handle->operator_handle)->list && oph_json_is_objkey_printable(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->objkeys,((OPH_SCRIPT_operator_handle*)handle->operator_handle)->objkeys_num,OPH_JSON_OBJKEY_SCRIPT))
+	{
+		char config[OPH_COMMON_BUFFER_LEN];
+		snprintf(config, OPH_COMMON_BUFFER_LEN, OPH_FRAMEWORK_SCRIPT_CONF_FILE_PATH, OPH_ANALYTICS_LOCATION);
+		FILE *file = fopen(config, "r");
+		if (!file)
+		{
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "%s: no such file\n", config);
+			logging(LOG_ERROR, __FILE__, __LINE__, 0, "%s: no such file\n", config );
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+
+		char **jsonkeys = NULL, **fieldtypes = NULL;
+		int num_fields = 1, iii,jjj=0;
+#if defined(OPH_DEBUG_LEVEL_1) || defined(OPH_DEBUG_LEVEL_2)
+		num_fields = 2;
+#endif
+		jsonkeys = (char **)malloc(sizeof(char *)*num_fields);
+		if (!jsonkeys) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_INPUT, "keys" );
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		jsonkeys[jjj] = strdup("SCRIPT");
+		if (!jsonkeys[jjj]) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_INPUT, "key" );
+			for (iii=0;iii<jjj;iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
+			if (jsonkeys) free(jsonkeys);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+#if defined(OPH_DEBUG_LEVEL_1) || defined(OPH_DEBUG_LEVEL_2)
+		jjj++;
+		jsonkeys[jjj] = strdup("COMMAND");
+		if (!jsonkeys[jjj]) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_INPUT, "key" );
+			for (iii=0;iii<jjj;iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
+			if (jsonkeys) free(jsonkeys);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+#endif
+		jjj = 0;
+		fieldtypes = (char **)malloc(sizeof(char *)*num_fields);
+		if (!fieldtypes) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_INPUT, "fieldtypes" );
+			for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
+			if (jsonkeys) free(jsonkeys);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+		if (!fieldtypes[jjj]) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_INPUT, "fieldtype" );
+			for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
+			if (jsonkeys) free(jsonkeys);
+			for (iii = 0; iii < jjj; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
+			if (fieldtypes) free(fieldtypes);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+#if defined(OPH_DEBUG_LEVEL_1) || defined(OPH_DEBUG_LEVEL_2)
+		jjj++;
+		fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+		if (!fieldtypes[jjj]) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_INPUT, "fieldtype" );
+			for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
+			if (jsonkeys) free(jsonkeys);
+			for (iii = 0; iii < jjj; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
+			if (fieldtypes) free(fieldtypes);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+#endif
+		jjj++;
+		if (oph_json_add_grid(handle->operator_json,OPH_JSON_OBJKEY_SCRIPT,"Available scripts",NULL,jsonkeys,num_fields,fieldtypes,num_fields)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
+			logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD GRID error\n");
+			for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
+			if (jsonkeys) free(jsonkeys);
+			for (iii = 0; iii < num_fields; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
+			if (fieldtypes) free(fieldtypes);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
+		if (jsonkeys) free(jsonkeys);
+		for (iii = 0; iii < num_fields; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
+		if (fieldtypes) free(fieldtypes);
+
+		char script[OPH_COMMON_BUFFER_LEN], *pch, *save_pointer, *key, *value, **jsonvalues;
+		while (fgets(script, OPH_COMMON_BUFFER_LEN, file))
+		{
+			save_pointer = NULL;
+			key = NULL;
+			value = NULL;
+			for (pch = strtok_r(script, OPH_SCRIPT_NOP, &save_pointer); pch; pch = strtok_r(NULL, OPH_SCRIPT_NOP, &save_pointer))
+			{
+				if (!key) key = pch;
+				else if (!value) value = pch;
+				else break;
+			}
+			if (!key || !strlen(key) || !value || !strlen(value)) continue;
+			if (value[strlen(value)-1] == '\n') value[strlen(value)-1]=0;
+			if (!strlen(value)) continue;
+
+			jjj = 0;
+			jsonvalues = (char **)calloc(num_fields,sizeof(char *));
+			if (!jsonvalues) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_INPUT, "values" );
+				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+			}
+			jsonvalues[jjj] = strdup(key);
+			if (!jsonvalues[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_INPUT, "value" );
+				for (iii = 0; iii < jjj; iii++) if (jsonvalues[iii]) free(jsonvalues[iii]);
+				if (jsonvalues) free(jsonvalues);
+				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+			}
+#if defined(OPH_DEBUG_LEVEL_1) || defined(OPH_DEBUG_LEVEL_2)
+			jjj++;
+			jsonvalues[jjj] = strdup(value);
+			if (!jsonvalues[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_INPUT, "value" );
+				for (iii = 0; iii < jjj; iii++) if (jsonvalues[iii]) free(jsonvalues[iii]);
+				if (jsonvalues) free(jsonvalues);
+				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+			}
+#endif
+			jjj++;
+			if (oph_json_add_grid_row(handle->operator_json,OPH_JSON_OBJKEY_SCRIPT,jsonvalues)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
+				logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD GRID ROW error\n");
+				for (iii = 0; iii < num_fields; iii++) if (jsonvalues[iii]) free(jsonvalues[iii]);
+				if (jsonvalues) free(jsonvalues);
+				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+			}
+			for (iii = 0; iii < num_fields; iii++) if (jsonvalues[iii]) free(jsonvalues[iii]);
+			if (jsonvalues) free(jsonvalues);
+		}
+		fclose(file);
+
+		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+	}
 
 	//Create dir if not exist
-  struct stat st;
+	struct stat st;
 	if(stat(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_path,&st)){
 		if(oph_dir_r_mkdir(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_path)){
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create dir %s\n", ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_path);
 			logging(LOG_ERROR, __FILE__, __LINE__, 0, OPH_LOG_GENERIC_DIR_CREATION_ERROR, ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_path );
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-	} //If dir already exists then exit
-
-	//If script is not a regular file then error
-	if(stat(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script,&st)){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "%s: no such file\n", ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script);
-		logging(LOG_ERROR, __FILE__, __LINE__, 0, "%s: no such file\n", ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script );
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
-	char *ptr = realpath(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script, NULL);
-	if(!ptr){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to resolve path\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, 0, "Unable to resolve path\n");
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
-	if(!strncmp(ptr,"/bin/",5) || !strncmp(ptr,"/sbin/",6) || !strncmp(ptr,"/usr/bin/",9) || !strncmp(ptr,"/usr/sbin/",10)){
+	if (strcmp(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script,OPH_SCRIPT_NOP))
+	{
+		// Check for registered scripts
+		char config[OPH_COMMON_BUFFER_LEN];
+		snprintf(config, OPH_COMMON_BUFFER_LEN, OPH_FRAMEWORK_SCRIPT_CONF_FILE_PATH, OPH_ANALYTICS_LOCATION);
+		FILE *file = fopen(config, "r");
+		if (!file)
+		{
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "%s: no such file\n", config);
+			logging(LOG_ERROR, __FILE__, __LINE__, 0, "%s: no such file\n", config );
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		int found = 0;
+		char script[OPH_COMMON_BUFFER_LEN], *pch, *save_pointer, *key, *value;
+		while (fgets(script, OPH_COMMON_BUFFER_LEN, file))
+		{
+			save_pointer = NULL;
+			key = NULL;
+			value = NULL;
+			for (pch = strtok_r(script, OPH_SCRIPT_NOP, &save_pointer); pch; pch = strtok_r(NULL, OPH_SCRIPT_NOP, &save_pointer))
+			{
+				if (!key) key = pch;
+				else if (!value) value = pch;
+				else break;
+			}
+			if (!key || !strlen(key) || !value || !strlen(value)) continue;
+			if (value[strlen(value)-1] == '\n') value[strlen(value)-1]=0;
+			if (!strlen(value)) continue;
+			if (!strcmp(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script, key))
+			{
+				free(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script);
+				((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script = strdup(value);
+				found = 1;
+				break;
+			}
+		}
+		fclose(file);
+
+		if (!found) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "%s: no such script\n", ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script);
+			logging(LOG_ERROR, __FILE__, __LINE__, 0, "%s: no such script\n", ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script );
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+
+		//If script is not a regular file then error
+		if(stat(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script,&st)){
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "%s: no such file\n", ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script);
+			logging(LOG_ERROR, __FILE__, __LINE__, 0, "%s: no such file\n", ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script );
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		char *ptr = realpath(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script, NULL);
+		if(!ptr){
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to resolve path\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, 0, "Unable to resolve path\n");
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		if(!strncmp(ptr,"/bin/",5) || !strncmp(ptr,"/sbin/",6) || !strncmp(ptr,"/usr/bin/",9) || !strncmp(ptr,"/usr/sbin/",10)){
+			free(ptr);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Permission denied\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, 0, "Permission denied\n");
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
 		free(ptr);
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Permission denied\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, 0, "Permission denied\n");
+	}
+
+	char* base_src_path = NULL;
+	if (oph_pid_get_base_src_path(&base_src_path))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, 0, "Unable to read OphidiaDB configuration\n");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-	free(ptr);
 
-  int error=0,n=0,i;
-  char command[OPH_COMMON_BUFFER_LEN];
+	int error=0, n=0, i;
+	char command[OPH_COMMON_BUFFER_LEN];
+	memset(command,0,OPH_COMMON_BUFFER_LEN);
+	n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_DATA_PATH='%s' ",base_src_path ? base_src_path : "");
+	n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_SESSION_PATH='%s' ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_path);
+	n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_SESSION_URL='%s' ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_url);
+	n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_SESSION_CODE='%s' ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_code);
+	n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_WORKFLOW_ID=%s ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id ? ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id : 0);
+	n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_MARKER_ID=%s ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->marker_id ? ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->marker_id : 0);
+	n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"%s ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script);
 
-  memset(command,0,OPH_COMMON_BUFFER_LEN);
-  n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_SESSION_PATH='%s' ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_path);
-  n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_SESSION_URL='%s' ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_url);
-  n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_SESSION_CODE='%s' ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_code);
-  n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_WORKFLOW_ID=%s ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id ? ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id : 0);
-  n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_MARKER_ID=%s ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->marker_id ? ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->marker_id : 0);
-  n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"%s ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script);
+	for (i = 0; i < ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->args_num; i++) {
+		n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"%s ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->args[i]);
+	}
 
-  for (i = 0; i < ((OPH_SCRIPT_operator_handle*)handle->operator_handle)->args_num; i++) {
-	  n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"%s ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->args[i]);
-  }
+	if (strcmp(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->out_redir,"stdout")) {
+		n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"1>>%s ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->out_redir);
+	}
+	if (strcmp(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->err_redir,"stderr")) {
+		n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"2>>%s",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->err_redir);
+	}
 
-  if (strcmp(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->out_redir,"stdout")) {
-	  n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"1>>%s ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->out_redir);
-  }
-  if (strcmp(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->err_redir,"stderr")) {
-	  n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"2>>%s",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->err_redir);
-  }
-
-  // Dynamic creation of the folders
+	// Dynamic creation of the folders
 	char dirname[OPH_COMMON_BUFFER_LEN];
 	snprintf(dirname,OPH_COMMON_BUFFER_LEN,"%s/%s",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_path,((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id);
 	struct stat ss;
@@ -266,35 +476,35 @@ int task_execute(oph_operator_struct *handle)
 		mkdir(dirname, 0755);
 	}
 
-  char system_output[MAX_OUT_LEN];
-  memset(system_output,0,MAX_OUT_LEN);
-  char line[OPH_COMMON_BUFFER_LEN];
-  snprintf(system_output, MAX_OUT_LEN, "Command: %s\n\n",command);
+	char system_output[MAX_OUT_LEN];
+	memset(system_output,0,MAX_OUT_LEN);
+	char line[OPH_COMMON_BUFFER_LEN];
+	snprintf(system_output, MAX_OUT_LEN, "Command: %s\n\n",command);
 
-  int s=0;
-  FILE* fp = popen(command,"r");
-  if (!fp) error = -1;
-  else
-  {
-	while (fgets(line, OPH_COMMON_BUFFER_LEN, fp)) if ((s=MAX_OUT_LEN-strlen(system_output))>1) strncat(system_output,line,s);
-	error = pclose(fp);
-  }
+	int s=0;
+	FILE* fp = popen(command,"r");
+	if (!fp) error = -1;
+	else
+	{
+		while (fgets(line, OPH_COMMON_BUFFER_LEN, fp)) if ((s=MAX_OUT_LEN-strlen(system_output))>1) strncat(system_output,line,s);
+		error = pclose(fp);
+	}
 
 	// ADD COMMAND TO JSON AS TEXT
-	if ((s=oph_json_is_objkey_printable(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->objkeys,((OPH_SCRIPT_operator_handle*)handle->operator_handle)->objkeys_num,OPH_JSON_OBJKEY_SCRIPT)))
+	s = oph_json_is_objkey_printable(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->objkeys,((OPH_SCRIPT_operator_handle*)handle->operator_handle)->objkeys_num,OPH_JSON_OBJKEY_SCRIPT);
+#if defined(OPH_DEBUG_LEVEL_1) || defined(OPH_DEBUG_LEVEL_2)
+	if (s && oph_json_add_text(handle->operator_json,OPH_JSON_OBJKEY_SCRIPT,"System output",system_output))
 	{
-		if (oph_json_add_text(handle->operator_json,OPH_JSON_OBJKEY_SCRIPT,"Launched command",system_output))
-		{
-			pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
-			logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD TEXT error\n");
-		}
-		if (((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id) snprintf(system_output,MAX_OUT_LEN,"%s/%s",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_url,((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id);
-		else snprintf(system_output,MAX_OUT_LEN,"%s",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_url);
-		if (oph_json_add_text(handle->operator_json,OPH_JSON_OBJKEY_SCRIPT,"Output URL",system_output))
-		{
-			pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
-			logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD TEXT error\n");
-		}
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
+		logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD TEXT error\n");
+	}
+#endif
+	if (((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id) snprintf(system_output,MAX_OUT_LEN,"%s/%s",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_url,((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id);
+	else snprintf(system_output,MAX_OUT_LEN,"%s",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_url);
+	if (s && oph_json_add_text(handle->operator_json,OPH_JSON_OBJKEY_SCRIPT,"Output URL",system_output))
+	{
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
+		logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD TEXT error\n");
 	}
 
 	// ADD OUTPUT PID TO NOTIFICATION STRING
@@ -307,22 +517,22 @@ int task_execute(oph_operator_struct *handle)
 	}
 	handle->output_string = strdup(tmp_string);
 
-  if(error == -1){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "System command failed\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_COMMAND_FAILED );
-	return OPH_ANALYTICS_OPERATOR_COMMAND_ERROR;
-  }
-  else if (WEXITSTATUS(error) == 127){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "System command cannot be executed\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_COMMAND_NOT_EXECUTED );
-	return OPH_ANALYTICS_OPERATOR_COMMAND_ERROR;  
-  }
-  else if(WEXITSTATUS(error) != 0){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Command failed with code %d\n",WEXITSTATUS(error));
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Command failed with code %d\n",WEXITSTATUS(error) );
-	return OPH_ANALYTICS_OPERATOR_COMMAND_ERROR;
-  }
-  else return OPH_ANALYTICS_OPERATOR_SUCCESS;
+	if(error == -1){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "System command failed\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_COMMAND_FAILED );
+		return OPH_ANALYTICS_OPERATOR_COMMAND_ERROR;
+	}
+	else if (WEXITSTATUS(error) == 127){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "System command cannot be executed\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_COMMAND_NOT_EXECUTED );
+		return OPH_ANALYTICS_OPERATOR_COMMAND_ERROR;  
+	}
+	else if(WEXITSTATUS(error) != 0){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Command failed with code %d\n",WEXITSTATUS(error));
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Command failed with code %d\n",WEXITSTATUS(error) );
+		return OPH_ANALYTICS_OPERATOR_COMMAND_ERROR;
+	}
+	else return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
 int task_reduce(oph_operator_struct *handle)

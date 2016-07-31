@@ -174,6 +174,36 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
   }
 
+	if (strstr(((OPH_IMPORTNC3_operator_handle*)handle->operator_handle)->nc_file_path,"..")) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strstr(((OPH_IMPORTNC3_operator_handle*)handle->operator_handle)->nc_file_path,"http"))
+	{
+		if (oph_pid_get_base_src_path(&value)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONFIGURATION_FILE, container_name );
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		if (value)
+		{
+			if (*(((OPH_IMPORTNC3_operator_handle*)handle->operator_handle)->nc_file_path) != '/')
+			{
+				char tmp[OPH_COMMON_BUFFER_LEN];
+				snprintf(tmp,OPH_COMMON_BUFFER_LEN,"%s/%s",value,((OPH_IMPORTNC3_operator_handle*)handle->operator_handle)->nc_file_path);
+				free(((OPH_IMPORTNC3_operator_handle*)handle->operator_handle)->nc_file_path);
+				((OPH_IMPORTNC3_operator_handle*)handle->operator_handle)->nc_file_path = strdup(tmp);
+			}
+			free(value);
+		}
+	}
+	if (oph_pid_get_memory_size(&(((OPH_IMPORTNC3_operator_handle*)handle->operator_handle)->memory_size))) {
+  		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONFIGURATION_FILE, container_name );
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_CWD);
   if(!value){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CWD);
@@ -1418,13 +1448,6 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
   ((OPH_IMPORTNC3_operator_handle*)handle->operator_handle)->leap_month = (int)strtol(value, NULL, 10);
-
-  //Read MEMORY from configuration file
-	if(oph_nc_load_data(&(((OPH_IMPORTNC3_operator_handle*)handle->operator_handle)->memory_size))){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONFIGURATION_FILE, container_name );
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
 
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_DESCRIPTION);
   if(!value){
