@@ -219,7 +219,7 @@ int task_execute(oph_operator_struct *handle)
 
 		char **jsonkeys = NULL, **fieldtypes = NULL;
 		int num_fields = 1, iii,jjj=0;
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
+#if defined(OPH_DEBUG_LEVEL_1) || defined(OPH_DEBUG_LEVEL_2)
 		num_fields = 2;
 #endif
 		jsonkeys = (char **)malloc(sizeof(char *)*num_fields);
@@ -236,7 +236,7 @@ int task_execute(oph_operator_struct *handle)
 			if (jsonkeys) free(jsonkeys);
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
+#if defined(OPH_DEBUG_LEVEL_1) || defined(OPH_DEBUG_LEVEL_2)
 		jjj++;
 		jsonkeys[jjj] = strdup("COMMAND");
 		if (!jsonkeys[jjj]) {
@@ -266,7 +266,7 @@ int task_execute(oph_operator_struct *handle)
 			if (fieldtypes) free(fieldtypes);
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
+#if defined(OPH_DEBUG_LEVEL_1) || defined(OPH_DEBUG_LEVEL_2)
 		jjj++;
 		fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 		if (!fieldtypes[jjj]) {
@@ -306,7 +306,9 @@ int task_execute(oph_operator_struct *handle)
 				else if (!value) value = pch;
 				else break;
 			}
-			if (!key || !value) continue;
+			if (!key || !strlen(key) || !value || !strlen(value)) continue;
+			if (value[strlen(value)-1] == '\n') value[strlen(value)-1]=0;
+			if (!strlen(value)) continue;
 
 			jjj = 0;
 			jsonvalues = (char **)calloc(num_fields,sizeof(char *));
@@ -323,7 +325,7 @@ int task_execute(oph_operator_struct *handle)
 				if (jsonvalues) free(jsonvalues);
 				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 			}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
+#if defined(OPH_DEBUG_LEVEL_1) || defined(OPH_DEBUG_LEVEL_2)
 			jjj++;
 			jsonvalues[jjj] = strdup(value);
 			if (!jsonvalues[jjj]) {
@@ -425,10 +427,18 @@ int task_execute(oph_operator_struct *handle)
 		free(ptr);
 	}
 
-	int error=0,n=0,i;
-	char command[OPH_COMMON_BUFFER_LEN];
+	char* base_src_path = NULL;
+	if (oph_pid_get_base_src_path(&base_src_path))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, 0, "Unable to read OphidiaDB configuration\n");
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
 
+	int error=0, n=0, i;
+	char command[OPH_COMMON_BUFFER_LEN];
 	memset(command,0,OPH_COMMON_BUFFER_LEN);
+	n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_DATA_PATH='%s' ",base_src_path ? base_src_path : "");
 	n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_SESSION_PATH='%s' ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_path);
 	n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_SESSION_URL='%s' ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_url);
 	n += snprintf(command+n,OPH_COMMON_BUFFER_LEN-n,"OPH_SCRIPT_SESSION_CODE='%s' ",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_code);
@@ -481,22 +491,20 @@ int task_execute(oph_operator_struct *handle)
 	}
 
 	// ADD COMMAND TO JSON AS TEXT
-	if ((s=oph_json_is_objkey_printable(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->objkeys,((OPH_SCRIPT_operator_handle*)handle->operator_handle)->objkeys_num,OPH_JSON_OBJKEY_SCRIPT)))
+	s = oph_json_is_objkey_printable(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->objkeys,((OPH_SCRIPT_operator_handle*)handle->operator_handle)->objkeys_num,OPH_JSON_OBJKEY_SCRIPT);
+#if defined(OPH_DEBUG_LEVEL_1) || defined(OPH_DEBUG_LEVEL_2)
+	if (s && oph_json_add_text(handle->operator_json,OPH_JSON_OBJKEY_SCRIPT,"System output",system_output))
 	{
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
-		if (oph_json_add_text(handle->operator_json,OPH_JSON_OBJKEY_SCRIPT,"Launched command",system_output))
-		{
-			pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
-			logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD TEXT error\n");
-		}
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
+		logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD TEXT error\n");
+	}
 #endif
-		if (((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id) snprintf(system_output,MAX_OUT_LEN,"%s/%s",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_url,((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id);
-		else snprintf(system_output,MAX_OUT_LEN,"%s",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_url);
-		if (oph_json_add_text(handle->operator_json,OPH_JSON_OBJKEY_SCRIPT,"Output URL",system_output))
-		{
-			pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
-			logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD TEXT error\n");
-		}
+	if (((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id) snprintf(system_output,MAX_OUT_LEN,"%s/%s",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_url,((OPH_SCRIPT_operator_handle*)handle->operator_handle)->workflow_id);
+	else snprintf(system_output,MAX_OUT_LEN,"%s",((OPH_SCRIPT_operator_handle*)handle->operator_handle)->session_url);
+	if (s && oph_json_add_text(handle->operator_json,OPH_JSON_OBJKEY_SCRIPT,"Output URL",system_output))
+	{
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
+		logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD TEXT error\n");
 	}
 
 	// ADD OUTPUT PID TO NOTIFICATION STRING

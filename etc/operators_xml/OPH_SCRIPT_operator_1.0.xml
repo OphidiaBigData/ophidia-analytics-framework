@@ -8,6 +8,7 @@ General.
 [Behaviour]
 It executes a bash script.
 The script can eventually process some environmental variables passed by the operator:
+- OPH_SCRIPT_DATA_PATH : points to base folder of data repository on server (if available)
 - OPH_SCRIPT_SESSION_PATH : points to &lt;oph_web_server_location&gt;/sessions/&lt;session_code&gt;/export/misc
 - OPH_SCRIPT_SESSION_URL : points to &lt;oph_web_server&gt;/sessions/&lt;session_code&gt;/export/misc
 - OPH_SCRIPT_SESSION_CODE : is the &lt;session_code&gt;

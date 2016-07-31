@@ -19,10 +19,10 @@
 AM_CFLAGS = $(OPT) -I../../include -Wall -Wextra -Wformat
 
 if DEBUG_1
-driver_CFLAGS = -I../../include -I../../include/oph_ioserver $(OPT)
+driver_CFLAGS = -I../../include -I../../include/oph_ioserver $(OPT) -DOPH_DEBUG_LEVEL_1
 else
 if DEBUG_2
-driver_CFLAGS = -I../../include -I../../include/oph_ioserver $(OPT) -DOPH_DEBUG_MYSQL
+driver_CFLAGS = -I../../include -I../../include/oph_ioserver $(OPT) -DOPH_DEBUG_LEVEL_2 -DOPH_DEBUG_MYSQL
 else
 driver_CFLAGS = -I../../include -I../../include/oph_ioserver $(OPT) 
 endif
