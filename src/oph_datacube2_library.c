@@ -1730,9 +1730,9 @@ int oph_dc2_get_total_number_of_elements_in_fragment(oph_ioserver_handler *serve
 	return OPH_DC2_SUCCESS;
 }
 
-int oph_dc2_get_total_number_of_rows_in_fragment(oph_ioserver_handler *server, oph_odb_fragment *frag, long long *count)
+int oph_dc2_get_total_number_of_rows_in_fragment(oph_ioserver_handler *server, oph_odb_fragment *frag, char *data_type, long long *count)
 {
-	if(!frag || !count|| !server){	
+	if(!frag || !data_type || !count|| !server){	
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");		
 		return OPH_DC2_NULL_PARAM;
 	}
@@ -1746,7 +1746,7 @@ int oph_dc2_get_total_number_of_rows_in_fragment(oph_ioserver_handler *server, o
 	int n;
 
 	char select_query[QUERY_BUFLEN];
-	n =  snprintf(select_query, QUERY_BUFLEN, OPH_DC_SQ_COUNT_ROWS_FRAG, frag->fragment_name);
+	n =  snprintf(select_query, QUERY_BUFLEN, OPH_DC_SQ_COUNT_ROWS_FRAG, data_type, frag->fragment_name);
 	if(n >= QUERY_BUFLEN)
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");

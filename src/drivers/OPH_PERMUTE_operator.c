@@ -136,12 +136,12 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   value = hashtbl_get(task_tbl, OPH_ARG_SESSIONID);
   if(!value){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_SESSIONID);
-    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_ARG_SESSIONID);
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_ARG_SESSIONID);
 	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
   if(!(((OPH_PERMUTE_operator_handle*)handle->operator_handle)->sessionid = (char *) strndup (value, OPH_TP_TASKLEN))){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "sessionid" );
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "sessionid" );
 	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
   }
 
@@ -151,7 +151,6 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   if(!value){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DATACUBE_INPUT);
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PERMUTE_MISSING_INPUT_PARAMETER,  OPH_IN_PARAM_DATACUBE_INPUT );
-	
 	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
 
@@ -160,9 +159,9 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 
   value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
   if(!value){
-    pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
-    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PERMUTE_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME );
-    return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PERMUTE_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
   char *username = value;
 
@@ -193,14 +192,14 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	  int folder_id = 0;
 	  int permission = 0;
 	  if(oph_pid_parse_pid(datacube_in, &id_datacube_in[1], &id_datacube_in[0], &uri)){
-        pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse the PID string\n");
-        logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_PID_ERROR, datacube_in );
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse the PID string\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_PID_ERROR, datacube_in );
 		id_datacube_in[0] = 0;
 		id_datacube_in[1] = 0;
 	  }
 	  else if((oph_odb_cube_check_if_datacube_not_present_by_pid(oDB, uri, id_datacube_in[1], id_datacube_in[0], &exists)) || !exists){
-        pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container - datacube combination\n");
-        logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_NO_INPUT_DATACUBE, datacube_in );
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container - datacube combination\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_NO_INPUT_DATACUBE, datacube_in );
 		id_datacube_in[0] = 0;
 		id_datacube_in[1] = 0;
 	  }
@@ -260,18 +259,16 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 
   //Check if sequential part has been completed
   if (id_datacube_in[0] == 0){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");		
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_NO_INPUT_DATACUBE, datacube_in );
-		
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");		
+	logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_NO_INPUT_DATACUBE, datacube_in );
+	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
   }
   ((OPH_PERMUTE_operator_handle*)handle->operator_handle)->id_input_datacube = id_datacube_in[0];
 
   if (id_datacube_in[1] == 0){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");		
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_NO_INPUT_CONTAINER, datacube_in );
-		
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");		
+	logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_NO_INPUT_CONTAINER, datacube_in );
+	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
   }
   ((OPH_PERMUTE_operator_handle*)handle->operator_handle)->id_input_container = id_datacube_in[1];
   ((OPH_PERMUTE_operator_handle*)handle->operator_handle)->id_output_container = id_datacube_in[2];
@@ -279,24 +276,39 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_SCHEDULE_ALGORITHM);
   if(!value){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SCHEDULE_ALGORITHM);
-    logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SCHEDULE_ALGORITHM );
-	
-    return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SCHEDULE_ALGORITHM );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
   ((OPH_PERMUTE_operator_handle*)handle->operator_handle)->schedule_algo = (int)strtol(value, NULL, 10);
 
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_IMPLICIT_PERMUTATION_ORDER);
   if(!value){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IMPLICIT_PERMUTATION_ORDER);
-    logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_MISSING_INPUT_PARAMETER,  OPH_IN_PARAM_IMPLICIT_PERMUTATION_ORDER );
-	
-    return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_MISSING_INPUT_PARAMETER,  OPH_IN_PARAM_IMPLICIT_PERMUTATION_ORDER );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
   if(!(((OPH_PERMUTE_operator_handle*)handle->operator_handle)->imppermutation = (char *) strndup (value, OPH_TP_TASKLEN))){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 	logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_MEMORY_ERROR_INPUT, "imppermutation"  );
-	
-    return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+  }
+  if (!(value = strchr(((OPH_PERMUTE_operator_handle*)handle->operator_handle)->imppermutation,','))){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong input parameter %s: at least 2 implicit dimensions must be given\n", OPH_IN_PARAM_IMPLICIT_PERMUTATION_ORDER);
+	logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_MISSING_INPUT_PARAMETER,  OPH_IN_PARAM_IMPLICIT_PERMUTATION_ORDER );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  char tmp[OPH_TP_TASKLEN], *save_pointer = NULL;
+  int pos, found = 0;
+  strcpy(tmp,((OPH_PERMUTE_operator_handle*)handle->operator_handle)->imppermutation);
+  for (value = strtok_r(tmp,",",&save_pointer); value; value = strtok_r(NULL,",",&save_pointer)){
+	pos = (int)strtol(value, NULL, 10);
+	if (pos < 1) break;
+	found++;
+  }
+  if (value || (found < 2)){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong input parameter %s: at least the indexes of 2 implicit dimensions must be given\n", OPH_IN_PARAM_IMPLICIT_PERMUTATION_ORDER);
+	logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_MISSING_INPUT_PARAMETER,  OPH_IN_PARAM_IMPLICIT_PERMUTATION_ORDER );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
 
   value = hashtbl_get(task_tbl, OPH_ARG_IDJOB);
@@ -313,8 +325,8 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   }
   if (strncmp(value,OPH_COMMON_DEFAULT_EMPTY_VALUE,OPH_TP_TASKLEN)){
 	if(!(((OPH_PERMUTE_operator_handle*)handle->operator_handle)->description = (char *) strndup (value, OPH_TP_TASKLEN))){
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_MEMORY_ERROR_INPUT, "description" );
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_MEMORY_ERROR_INPUT, "description" );
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
   }

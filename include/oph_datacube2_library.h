@@ -277,10 +277,11 @@ int oph_dc2_get_total_number_of_elements_in_fragment(oph_ioserver_handler *serve
  * \brief Function to count the number of rows in the fragment
  * \param server Pointer to I/O server structure
  * \param frag Pointer to fragment to read
+ * \param data_type Type of data to be inserted INT, FLOAT, DOUBLE (default DOUBLE)
  * \param count Pointer to integer containing the number of elements
  * \return 0 if successfull, N otherwise
  */
-int oph_dc2_get_total_number_of_rows_in_fragment(oph_ioserver_handler *server, oph_odb_fragment *frag, long long *count);
+int oph_dc2_get_total_number_of_rows_in_fragment(oph_ioserver_handler *server, oph_odb_fragment *frag, char* data_type, long long *count);
 
 /** 
  * \brief Function to count the number of elements in a single row of the fragment

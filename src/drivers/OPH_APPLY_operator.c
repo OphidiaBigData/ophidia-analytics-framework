@@ -1686,7 +1686,7 @@ int task_execute(oph_operator_struct *handle)
 				}
 
 				long long new_expl_size=0;
-				if (oph_dc2_get_total_number_of_rows_in_fragment(((OPH_APPLY_operator_handle*)handle->operator_handle)->server, &(frags.value[k]), &new_expl_size) || !new_expl_size)
+				if (oph_dc2_get_total_number_of_rows_in_fragment(((OPH_APPLY_operator_handle*)handle->operator_handle)->server, &(frags.value[k]), ((OPH_APPLY_operator_handle*)handle->operator_handle)->measure_type, &new_expl_size) || !new_expl_size)
 				{
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to extract the number of rows of resulting fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_FRAGMENT_READ_ERROR);
