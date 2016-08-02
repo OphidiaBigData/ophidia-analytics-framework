@@ -20,7 +20,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = . libltdl src 
 
-sysconf_DATA = etc/oph_analytics_driver etc/oph_io_server etc/oph_configuration etc/oph_dim_configuration etc/ophidiadb.sql etc/oph_soap_configuration
+sysconf_DATA = etc/oph_analytics_driver etc/oph_io_server etc/oph_configuration etc/oph_dim_configuration etc/ophidiadb.sql etc/oph_soap_configuration etc/oph_script_configuration
  
 logdir = $(prefix)/log/
 dist_log_DATA =

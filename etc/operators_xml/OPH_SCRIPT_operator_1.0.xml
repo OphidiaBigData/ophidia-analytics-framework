@@ -8,18 +8,21 @@ General.
 [Behaviour]
 It executes a bash script.
 The script can eventually process some environmental variables passed by the operator:
+- OPH_SCRIPT_DATA_PATH : points to base folder of data repository on server (if available)
 - OPH_SCRIPT_SESSION_PATH : points to &lt;oph_web_server_location&gt;/sessions/&lt;session_code&gt;/export/misc
-- OPH_SCRIPT_SESSION_URL : oints to &lt;oph_web_server&gt;/sessions/&lt;session_code&gt;/export/misc
-- OPH_SCRIPT_WORKFLOW_ID : workflow identifier
-- OPH_SCRIPT_MARKER_ID : marker identifier associated with the job
+- OPH_SCRIPT_SESSION_URL : points to &lt;oph_web_server&gt;/sessions/&lt;session_code&gt;/export/misc
+- OPH_SCRIPT_SESSION_CODE : is the &lt;session_code&gt;
+- OPH_SCRIPT_WORKFLOW_ID : is the workflow identifier
+- OPH_SCRIPT_MARKER_ID : is the marker identifier associated with the job
 
 [Parameters]
-- script : name of the script to be executed (when requested &quot;./&quot; has to be included)
+- script : name of the script to be executed; by default no operation is performed
 - args : list of pipe-separated arguments to be passed to the script
 - stdout : file where stdout will be redirected (appended) or &quot;stdout&quot; for no redirection
 - stderr : file where stderr will be redirected (appended) or &quot;stderr&quot; for no redirection
-        
-[System parameters]    
+- list : get the available scripts
+
+[System parameters]
 - exec_mode : operator execution mode. Possible values are async (default) for
               asynchronous mode, sync for synchronous mode with json-compliant output.
 - ncores : number of parallel processes to be used (min. 1).
@@ -40,13 +43,14 @@ SUBMISSION STRING: &quot;operator=oph_script;script=./test.sh;args=var1|var2;&qu
 	<permission>execute</permission>
     </info>
     <args>
-        <argument type="string" mandatory="yes">script</argument>
+        <argument type="string" mandatory="no" default=":">script</argument>
         <argument type="string" mandatory="no" default=" ">args</argument>
         <argument type="string" mandatory="no" default="stdout">stdout</argument>
         <argument type="string" mandatory="no" default="stderr">stderr</argument>
+        <argument type="string" mandatory="no" default="no" values="yes|no">list</argument>
         <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
         <argument type="string" mandatory="no" default="null">sessionid</argument>
         <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-	    <argument type="string" mandatory="no" default="all" values="all|none|script">objkey_filter</argument>
+	<argument type="string" mandatory="no" default="all" values="all|none|script">objkey_filter</argument>
     </args>
 </operator>

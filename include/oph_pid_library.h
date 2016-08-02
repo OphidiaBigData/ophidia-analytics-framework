@@ -27,6 +27,8 @@
 
 #define OPH_PID_WEBSERVER_NAME "WEB_SERVER"
 #define OPH_PID_WEBSERVER_LOCATION "WEB_SERVER_LOCATION"
+#define OPH_PID_MEMORY "MEMORY"
+#define OPH_PID_BASE_SRC_PATH "BASE_SRC_PATH"
 
 #define OPH_PID_SLASH "/"
 
@@ -38,6 +40,20 @@
 #define OPH_PID_SIZE        512
 
 #define OPH_PID_BUFFER_SIZE 256
+
+/** 
+ * \brief Function to load configuration data
+ * \brief memory_size Pointer to the memory area where memory size will be written
+ * \return 0 if successfull, N otherwise
+ */
+int oph_pid_get_memory_size(long long *memory_size);
+
+/** 
+ * \brief Function to load configuration data
+ * \brief base_src_path Pointer to the memory area where base_src_path will be written; it has to be freed
+ * \return 0 if successfull, N otherwise
+ */
+int oph_pid_get_base_src_path(char** base_src_path);
 
 /** 
  * \brief Function to create a new pid given container and datacube id

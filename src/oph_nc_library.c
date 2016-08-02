@@ -38,53 +38,6 @@
 
 extern int msglevel;
 
-
-int oph_nc_load_data(long long *memory_size)
-{
-	if(!memory_size){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return OPH_NC_ERROR;
-	}
-
-  *memory_size = 0;
-	char config[OPH_FRAMEWORK_CONF_PATH_SIZE];
-	snprintf(config, sizeof(config), OPH_FRAMEWORK_OPHIDIADB_CONF_FILE_PATH, OPH_ANALYTICS_LOCATION);
-
-	FILE *file = fopen(config, "r");
-	if(file == NULL)
-	{
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Configuration file not found\n");		
-		return OPH_NC_ERROR;
-	}
-
-	char buffer[OPH_NC_BUFFER_SIZE];
-	char *position;
-
-	while( fscanf(file, "%s", buffer) != EOF)
-	{
-		position = strchr(buffer, '=');
-		if(position != NULL)
-		{
-			*position = '\0';
-			if(!strncmp(buffer, OPH_NC_MEMORY, strlen(OPH_NC_MEMORY)) && !strncmp(buffer, OPH_NC_MEMORY, strlen(buffer)))
-			{
-        *memory_size = (long long)strtoll(position+1,NULL,10);
-			}
-		}
-	}
-
-	if(*memory_size == 0)
-	{
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Bad argument for %s in %s configuration file\n", OPH_NC_MEMORY, config);		
-		fclose(file);
-		return OPH_NC_ERROR;
-	}
-
-	fclose(file);
-	return OPH_NC_SUCCESS;
-}
-
-
 int _oph_nc_cache_to_buffer(short int tot_dim_number, short int curr_dim, unsigned int *counters, unsigned int *limits, unsigned int *products, long long *index, char *binary_cache, char * binary_insert, size_t sizeof_var){
   int i = 0;
   long long addr = 0;
@@ -134,7 +87,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragm
 	}
 
 	char type_flag = '\0';
-    switch( measure->vartype ){
+	switch( measure->vartype ){
 	    case NC_BYTE:
 	    case NC_CHAR:
 		type_flag = OPH_NC_BYTE_FLAG;
@@ -246,12 +199,12 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragm
   }
   args[c_arg -1] = NULL;
 
-  args[0]->arg_length = sizeof(unsigned long long);
+	args[0]->arg_length = sizeof(unsigned long long);
 	args[0]->arg_type = OPH_IOSERVER_TYPE_LONGLONG;
 	args[0]->arg_is_null = 0;    
 	args[0]->arg = (unsigned long long*)(&idDim);
 
-  args[1]->arg_length = sizeof_var;
+	args[1]->arg_length = sizeof_var;
 	args[1]->arg_type = OPH_IOSERVER_TYPE_BLOB;
 	args[1]->arg_is_null = 0;  
 	args[1]->arg = (char*)(binary);
@@ -300,9 +253,9 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragm
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "ARRAY_LENGTH = %d, TOTAL = %d\n", array_length, total);
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array creation: %d\n", res);
 		free(binary);
-    for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
-    free(args);
-    oph_ioserver_free_query(server, query);
+		for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
+		free(args);
+		oph_ioserver_free_query(server, query);
 		free(start);
 		free(count);
 		free(start_pointer);
@@ -329,10 +282,10 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragm
 		}
 		if(!flag){
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid explicit dimensions in task string \n");
-		  free(binary);
-      for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
-      free(args);
-      oph_ioserver_free_query(server, query);
+			free(binary);
+			for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
+			free(args);
+			oph_ioserver_free_query(server, query);
 			free(start);
 			free(count);
 			free(start_pointer);
@@ -389,7 +342,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragm
 		  free(count);
 		  free(start_pointer);
 		  free(sizemax);
-      if(binary_tmp) free(binary_tmp);
+		  if(binary_tmp) free(binary_tmp);
 		  return OPH_NC_ERROR;
 	  }
 
@@ -435,11 +388,11 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragm
 				  free(count);
 				  free(start_pointer);
 				  free(sizemax);
-          if(binary_tmp) free(binary_tmp);
-          free(counters);
-          free(file_indexes);
-          free(products);
-          free(limits);
+				if(binary_tmp) free(binary_tmp);
+				free(counters);
+				free(file_indexes);
+				free(products);
+				free(limits);
 			    return OPH_NC_ERROR;
 		    }
       }
@@ -473,10 +426,10 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragm
 				free(count);
 				free(start_pointer);
 				free(sizemax);
-        if(binary_tmp) free(binary_tmp);
-        if(counters) free(counters);
-        if(products) free(products);
-        if(limits) free(limits);
+				if(binary_tmp) free(binary_tmp);
+				if(counters) free(counters);
+				if(products) free(products);
+				if(limits) free(limits);
 				return OPH_NC_ERROR;
 			}
 		}
@@ -492,10 +445,10 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragm
 				free(count);
 				free(start_pointer);
 				free(sizemax);
-        if(binary_tmp) free(binary_tmp);
-        if(counters) free(counters);
-        if(products) free(products);
-        if(limits) free(limits);
+				if(binary_tmp) free(binary_tmp);
+				if(counters) free(counters);
+				if(products) free(products);
+				if(limits) free(limits);
 				return OPH_NC_ERROR;
 			}
 		}
@@ -511,10 +464,10 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragm
 				free(count);
 				free(start_pointer);
 				free(sizemax);
-        if(binary_tmp) free(binary_tmp);
-        if(counters) free(counters);
-        if(products) free(products);
-        if(limits) free(limits);
+				if(binary_tmp) free(binary_tmp);
+				if(counters) free(counters);
+				if(products) free(products);
+				if(limits) free(limits);
 				return OPH_NC_ERROR;
 			}
 		}
@@ -530,10 +483,10 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragm
 				free(count);
 				free(start_pointer);
 				free(sizemax);
-        if(binary_tmp) free(binary_tmp);
-        if(counters) free(counters);
-        if(products) free(products);
-        if(limits) free(limits);
+				if(binary_tmp) free(binary_tmp);
+				if(counters) free(counters);
+				if(products) free(products);
+				if(limits) free(limits);
 				return OPH_NC_ERROR;
 			}
 		}
@@ -549,10 +502,10 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragm
 				free(count);
 				free(start_pointer);
 				free(sizemax);
-        if(binary_tmp) free(binary_tmp);
-        if(counters) free(counters);
-        if(products) free(products);
-        if(limits) free(limits);
+				if(binary_tmp) free(binary_tmp);
+				if(counters) free(counters);
+				if(products) free(products);
+				if(limits) free(limits);
 				return OPH_NC_ERROR;
 			}
 		}
@@ -568,10 +521,10 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragm
 				free(count);
 				free(start_pointer);
 				free(sizemax);
-        if(binary_tmp) free(binary_tmp);
-        if(counters) free(counters);
-        if(products) free(products);
-        if(limits) free(limits);
+				if(binary_tmp) free(binary_tmp);
+				if(counters) free(counters);
+				if(products) free(products);
+				if(limits) free(limits);
 				return OPH_NC_ERROR;
 			}
 		}
@@ -579,60 +532,60 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragm
 			if((res = nc_get_vara_double(ncid, measure->varid, start, count, (double*)binary))){
                                	OPH_NC_ERR(res);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
-		    free(binary);
-        for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
-        free(args);
-        oph_ioserver_free_query(server, query);
+				free(binary);
+				for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
+				free(args);
+				oph_ioserver_free_query(server, query);
 				free(start);
 				free(count);
 				free(start_pointer);
 				free(sizemax);
-        if(binary_tmp) free(binary_tmp);
-        if(counters) free(counters);
-        if(products) free(products);
-        if(limits) free(limits);
+				if(binary_tmp) free(binary_tmp);
+				if(counters) free(counters);
+				if(products) free(products);
+				if(limits) free(limits);
 				return OPH_NC_ERROR;
 			}
 		}
 
-    if(!imp_dim_ordered){
-      //Implicit dimensions are not orderer, hence we must rearrange binary.
-      memset(counters, 0, measure->nimp);
-      oph_nc_cache_to_buffer(measure->nimp, counters, limits, products, binary, binary_tmp, sizeof_type);
-      //Move from tmp to input buffer
-      memcpy (binary, binary_tmp, sizeof_var);
-    }
+		if(!imp_dim_ordered){
+			//Implicit dimensions are not orderer, hence we must rearrange binary.
+			memset(counters, 0, measure->nimp);
+			oph_nc_cache_to_buffer(measure->nimp, counters, limits, products, binary, binary_tmp, sizeof_type);
+			//Move from tmp to input buffer
+			memcpy (binary, binary_tmp, sizeof_var);
+		}
 
 		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)){
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 	    free(binary);
-      for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
-      free(args);
-      oph_ioserver_free_query(server, query);
+			for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
+			free(args);
+			oph_ioserver_free_query(server, query);
 			free(start);
 			free(count);
 			free(start_pointer);
 			free(sizemax);
-      if(binary_tmp) free(binary_tmp);
-      if(counters) free(counters);
-      if(products) free(products);
-      if(limits) free(limits);
+			if(binary_tmp) free(binary_tmp);
+			if(counters) free(counters);
+			if(products) free(products);
+			if(limits) free(limits);
 			return OPH_NC_ERROR;
 		}
 		idDim++;
 	}
-  free(binary);
-  for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
-  free(args);
-  oph_ioserver_free_query(server, query);
+	free(binary);
+	for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
+	free(args);
+	oph_ioserver_free_query(server, query);
 	free(start);
 	free(count);
 	free(start_pointer);
 	free(sizemax);
-  if(binary_tmp) free(binary_tmp);
-  if(counters) free(counters);
-  if(products) free(products);
-  if(limits) free(limits);
+	if(binary_tmp) free(binary_tmp);
+	if(counters) free(counters);
+	if(products) free(products);
+	if(limits) free(limits);
 
 	return OPH_NC_SUCCESS;
 }
@@ -650,7 +603,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler *server, oph_odb_frag
 	}
 
 	char type_flag = '\0';
-    switch( measure->vartype ){
+	switch( measure->vartype ){
 	    case NC_BYTE:
 	    case NC_CHAR:
 		type_flag = OPH_NC_BYTE_FLAG;
