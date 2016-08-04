@@ -16,7 +16,7 @@ The script can eventually process some environmental variables passed by the ope
 - OPH_SCRIPT_MARKER_ID : is the marker identifier associated with the job
 
 [Parameters]
-- script : name of the script to be executed; by default no operation is performed
+- script : name of the script to be executed; by default no operation is performed. The script has to be registered at server side.
 - args : list of pipe-separated arguments to be passed to the script
 - stdout : file where stdout will be redirected (appended) or &quot;stdout&quot; for no redirection
 - stderr : file where stderr will be redirected (appended) or &quot;stderr&quot; for no redirection

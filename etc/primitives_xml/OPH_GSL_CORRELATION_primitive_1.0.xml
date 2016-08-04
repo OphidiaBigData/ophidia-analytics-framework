@@ -7,7 +7,7 @@ Computes the Pearson coefficient of two measure arrays.
 NOTE: the two measures must have the same type and length.
 
 [Parameters]
-- input measure type : Ophidia typing. Supported types are:
+- input measure type : Ophidia typing. Supported types are pairs of:
 					&apos;oph_double&apos;;
 					&apos;oph_float&apos;;
 					&apos;oph_long&apos;;
