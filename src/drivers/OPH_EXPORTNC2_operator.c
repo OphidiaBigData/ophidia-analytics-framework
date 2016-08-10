@@ -1025,7 +1025,7 @@ int task_execute(oph_operator_struct *handle)
 				logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->id_input_container, "Support for unlimited dimensions is not provided. '%s' will be stored as a limited dimension\n", dims[inc].dimname);
 			}
 		}
-		for(inc = 0; inc < num_of_dims; inc++)
+		for (inc = 0; inc < num_of_dims; inc++)
 		{
 			if((retval = nc_def_dim(ncid, dims[inc].dimname, dims[inc].dimunlimited ? NC_UNLIMITED : dims[inc].dimsize, &dimids[inc]))){
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to define dimensions %s: %s\n", dims[inc].dimname, nc_strerror(retval));
@@ -1322,6 +1322,7 @@ int task_execute(oph_operator_struct *handle)
 				oph_odb_stge_free_fragment_list(&frags);
 				oph_odb_stge_free_db_list(&dbs);
 				oph_odb_stge_free_dbms_list(&dbmss);
+				nc_close(ncid);
 				for(l = 0; l < num_of_dims; l++){
 					if(dim_rows[l]){ 
 						free(dim_rows[l]);
@@ -1329,7 +1330,6 @@ int task_execute(oph_operator_struct *handle)
 					}
 				}
 				free(dim_rows);
-				nc_close(ncid);
 				result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				goto __OPH_EXIT_2;
 			}
@@ -1349,6 +1349,7 @@ int task_execute(oph_operator_struct *handle)
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
+					nc_close(ncid);
 					for(l = 0; l < num_of_dims; l++){
 						if(dim_rows[l]){ 
 							free(dim_rows[l]);
@@ -1356,7 +1357,6 @@ int task_execute(oph_operator_struct *handle)
 						}
 					}
 					free(dim_rows);
-					nc_close(ncid);
 					result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 					goto __OPH_EXIT_2;
 				}
@@ -1508,7 +1508,6 @@ int task_execute(oph_operator_struct *handle)
 					if(frag_rows->num_rows < 1)
 					{
 						oph_ioserver_free_result(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->server, frag_rows);
-						nc_close(ncid);
 						frag_count++;
 						continue;
 					}
@@ -1522,6 +1521,7 @@ int task_execute(oph_operator_struct *handle)
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
+						nc_close(ncid);
 						for(l = 0; l < num_of_dims; l++){
 							if(dim_rows[l]){ 
 								free(dim_rows[l]);
@@ -1529,7 +1529,6 @@ int task_execute(oph_operator_struct *handle)
 							}
 						}
 						free(dim_rows);
-						nc_close(ncid);
 						result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 						goto __OPH_EXIT_2;
 					}
