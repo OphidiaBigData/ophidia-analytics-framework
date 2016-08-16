@@ -246,7 +246,6 @@ int oph_unset_env(oph_operator_struct* handle)
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "lt_dlclose error: %s\n", lt_dlerror());
 	return OPH_ANALYTICS_OPERATOR_DLCLOSE_ERR;
   }
-  handle->dlh = NULL;
 #endif
   return res;
 }
