@@ -249,7 +249,7 @@ int oph_af_create_job(ophidiadb *oDB, char* task_string, HASHTBL *task_tbl, int*
 
 int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, int task_number, int task_rank)
 {
-  int res = 0, idjob = 0;
+  int res = 0, idjob = 0, exit_task = 0;
   ophidiadb oDB;
   oph_json *oper_json = NULL;
 
@@ -862,9 +862,10 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 	if ((res = oph_set_env (task_tbl, handle)))
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Process initilization failed [Code: %d]!\n", res);
+		exit_task = handle->dlh;
 		oph_unset_env (handle);
 		oph_tp_end_xml_parser();
-		oph_exit_task();
+		if (exit_task) oph_exit_task();
 		hashtbl_destroy(task_tbl);
 		if (!task_rank)
 		{
@@ -922,9 +923,10 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 	if ((res = oph_init_task (handle)))
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task initilization failed [Code: %d]!\n", res);
+		exit_task = handle->dlh;
 		oph_unset_env (handle);
 		oph_tp_end_xml_parser();
-		oph_exit_task();
+		if (exit_task) oph_exit_task();
 		if (!task_rank)
 		{
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_INIT_ERROR);
@@ -980,9 +982,10 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 	if ((res = oph_distribute_task (handle)))
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task distribution failed [Code: %d]!\n", res);
+		exit_task = handle->dlh;
 		oph_unset_env (handle);
 		oph_tp_end_xml_parser();
-		oph_exit_task();
+		if (exit_task) oph_exit_task();
 		if (!task_rank)
 		{
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DISTRIBUTE_ERROR);
@@ -1038,9 +1041,10 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 	if ((res = oph_execute_task (handle)))
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task execution failed [Code: %d]!\n", res);
+		exit_task = handle->dlh;
 		oph_unset_env (handle);
 		oph_tp_end_xml_parser();
-		oph_exit_task();
+		if (exit_task) oph_exit_task();
 		if (!task_rank)
 		{
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_EXECUTE_ERROR);
@@ -1096,9 +1100,10 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 	if ((res = oph_reduce_task (handle)))
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task reduction failed [Code: %d]!\n", res);
+		exit_task = handle->dlh;
 		oph_unset_env (handle);
 		oph_tp_end_xml_parser();
-		oph_exit_task();
+		if (exit_task) oph_exit_task();
 		if (!task_rank)
 		{
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_REDUCE_ERROR);
@@ -1154,9 +1159,10 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 	if ((res = oph_destroy_task (handle)))
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task destroy failed [Code: %d]!\n", res);
+		exit_task = handle->dlh;
 		oph_unset_env (handle);
 		oph_tp_end_xml_parser();
-		oph_exit_task();
+		if (exit_task) oph_exit_task();
 		if (!task_rank)
 		{
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DESTROY_ERROR);
@@ -1208,12 +1214,14 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 
 	if (!task_rank) oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_UNSET_ENV);
 
+	exit_task = handle->dlh;
+
 	//Release task and dynamic library resources
 	if ((res = oph_unset_env (handle)))
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Process deinit failed [Code: %d]!\n", res);
 		oph_tp_end_xml_parser();
-		oph_exit_task();
+		if (exit_task) oph_exit_task();
 		if (!task_rank)
 		{
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_UNSET_ENV_ERROR);
@@ -1272,7 +1280,7 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 
   //Release environment resources
   oph_tp_end_xml_parser();
-  oph_exit_task();
+  if (exit_task) oph_exit_task();
 
   int return_code=0;
   if (!task_rank)

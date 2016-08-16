@@ -59,12 +59,12 @@ int oph_set_env(HASHTBL *task_tbl, oph_operator_struct* handle)
 
   if (!handle){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-    return OPH_ANALYTICS_OPERATOR_NULL_HANDLE;
+	return OPH_ANALYTICS_OPERATOR_NULL_HANDLE;
   }
 
   if (!task_tbl){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null operator string\n");
-    return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+	return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
   }
 
   //If already executed don't procede further
@@ -74,31 +74,30 @@ int oph_set_env(HASHTBL *task_tbl, oph_operator_struct* handle)
   char *value = hashtbl_get(task_tbl, OPH_IN_PARAM_OPERATOR_NAME);
   if(!value){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OPERATOR_NAME);
-    return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
 
   //Set operator type
   if(!(handle->operator_type = (char *) strndup (value, OPH_TP_TASKLEN))){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Memory allocation error\n");
-    return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
   }
 
   lt_dlinit ();
 
   if (oph_find_operator_library (handle->operator_type, &handle->lib)){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Driver library not found\n");
-    return OPH_ANALYTICS_OPERATOR_LIB_NOT_FOUND;
+	return OPH_ANALYTICS_OPERATOR_LIB_NOT_FOUND;
   }
 
-  if (!(handle->dlh = (lt_dlhandle) lt_dlopen (handle->lib)))
-  {
+  if (!(handle->dlh = (lt_dlhandle) lt_dlopen (handle->lib))) {
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "lt_dlopen error: %s\n", lt_dlerror());
-    return OPH_ANALYTICS_OPERATOR_DLOPEN_ERR;
+	return OPH_ANALYTICS_OPERATOR_DLOPEN_ERR;
   }
 
   if (!(_oph_set_env = (int (*)(HASHTBL *, oph_operator_struct *)) lt_dlsym (handle->dlh, OPH_ANALYTICS_OPERATOR_ENV_SET_FUNC))){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to load driver function\n");
-    return OPH_ANALYTICS_OPERATOR_DLSYM_ERR;
+	return OPH_ANALYTICS_OPERATOR_DLSYM_ERR;
   }
 
   return _oph_set_env (task_tbl, handle);
@@ -110,12 +109,12 @@ int oph_init_task(oph_operator_struct* handle)
 
   if (!handle){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-    return OPH_ANALYTICS_OPERATOR_NULL_HANDLE;
+	return OPH_ANALYTICS_OPERATOR_NULL_HANDLE;
   }
 
   if (!handle->dlh){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Driver not properly loaded\n");
-    return OPH_ANALYTICS_OPERATOR_DLOPEN_ERR;
+	return OPH_ANALYTICS_OPERATOR_DLOPEN_ERR;
   }
 
   if (!(_oph_init_task = (int (*)(oph_operator_struct *)) lt_dlsym (handle->dlh, OPH_ANALYTICS_OPERATOR_TASK_INIT_FUNC)))
@@ -130,12 +129,12 @@ int oph_distribute_task(oph_operator_struct* handle)
 
   if (!handle){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-    return OPH_ANALYTICS_OPERATOR_NULL_HANDLE;
+	return OPH_ANALYTICS_OPERATOR_NULL_HANDLE;
   }
 
   if (!handle->dlh){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Driver not properly loaded\n");
-    return OPH_ANALYTICS_OPERATOR_DLOPEN_ERR;
+	return OPH_ANALYTICS_OPERATOR_DLOPEN_ERR;
   }
 
   if (!(_oph_distribute_task = (int (*)(oph_operator_struct *)) lt_dlsym (handle->dlh, OPH_ANALYTICS_OPERATOR_TASK_DISTRIBUTE_FUNC)))
@@ -150,17 +149,17 @@ int oph_execute_task(oph_operator_struct* handle)
 
   if (!handle){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-    return OPH_ANALYTICS_OPERATOR_NULL_HANDLE;
+	return OPH_ANALYTICS_OPERATOR_NULL_HANDLE;
   }
 
   if (!handle->dlh){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Driver not properly loaded\n");
-    return OPH_ANALYTICS_OPERATOR_DLOPEN_ERR;
+	return OPH_ANALYTICS_OPERATOR_DLOPEN_ERR;
   }
 
   if (!(_oph_execute_task = (int (*)(oph_operator_struct *)) lt_dlsym (handle->dlh, OPH_ANALYTICS_OPERATOR_TASK_EXECUTE_FUNC))){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to load driver function\n");
-    return OPH_ANALYTICS_OPERATOR_DLSYM_ERR;
+	return OPH_ANALYTICS_OPERATOR_DLSYM_ERR;
   }
 
   return _oph_execute_task (handle);
@@ -172,12 +171,12 @@ int oph_reduce_task(oph_operator_struct* handle)
 
   if (!handle){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-    return OPH_ANALYTICS_OPERATOR_NULL_HANDLE;
+	return OPH_ANALYTICS_OPERATOR_NULL_HANDLE;
   }
 
   if (!handle->dlh){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Driver not properly loaded\n");
-    return OPH_ANALYTICS_OPERATOR_DLOPEN_ERR;
+	return OPH_ANALYTICS_OPERATOR_DLOPEN_ERR;
   }
 
   if (!(_oph_reduce_task = (int (*)(oph_operator_struct *)) lt_dlsym (handle->dlh, OPH_ANALYTICS_OPERATOR_TASK_REDUCE_FUNC)))
@@ -192,12 +191,12 @@ int oph_destroy_task(oph_operator_struct* handle)
 
   if (!handle){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-    return OPH_ANALYTICS_OPERATOR_NULL_HANDLE;
+	return OPH_ANALYTICS_OPERATOR_NULL_HANDLE;
   }
 
   if (!handle->dlh){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Driver not properly loaded\n");
-    return OPH_ANALYTICS_OPERATOR_DLOPEN_ERR;
+	return OPH_ANALYTICS_OPERATOR_DLOPEN_ERR;
   }
 
   if (!(_oph_destroy_task = (int (*)(oph_operator_struct *)) lt_dlsym (handle->dlh, OPH_ANALYTICS_OPERATOR_TASK_DESTROY_FUNC)))
@@ -212,24 +211,24 @@ int oph_unset_env(oph_operator_struct* handle)
 
   if (!handle){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-    return OPH_ANALYTICS_OPERATOR_NULL_HANDLE;
+	return OPH_ANALYTICS_OPERATOR_NULL_HANDLE;
   }
 
   if (!handle->dlh){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Driver not properly loaded\n");
-    return OPH_ANALYTICS_OPERATOR_DLOPEN_ERR;
+	return OPH_ANALYTICS_OPERATOR_DLOPEN_ERR;
   }
 
   if (!(_oph_unset_env = (int (*)(oph_operator_struct *)) lt_dlsym (handle->dlh, OPH_ANALYTICS_OPERATOR_ENV_UNSET_FUNC))){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to load driver function\n");
-    return OPH_ANALYTICS_OPERATOR_DLSYM_ERR;
+	return OPH_ANALYTICS_OPERATOR_DLSYM_ERR;
   }
 
   //Release operator resources
   int res;
   if((res = _oph_unset_env (handle))){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to release resources\n");
-    return res;
+	return res;
   }
 
   //Release handle resources
@@ -243,8 +242,7 @@ int oph_unset_env(oph_operator_struct* handle)
 	}
 
 #ifndef OPH_WITH_VALGRIND
-  if ((lt_dlclose(handle->dlh)))
-  {
+  if (handle->dlh && (lt_dlclose(handle->dlh))) {
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "lt_dlclose error: %s\n", lt_dlerror());
 	return OPH_ANALYTICS_OPERATOR_DLCLOSE_ERR;
   }
@@ -256,9 +254,9 @@ int oph_unset_env(oph_operator_struct* handle)
 int oph_exit_task()
 {
 #ifndef OPH_WITH_VALGRIND
-  if (lt_dlexit()){
+  if (lt_dlexit()) {
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while executing lt_dlexit\n");
-    return OPH_ANALYTICS_OPERATOR_DLEXIT_ERR;
+	return OPH_ANALYTICS_OPERATOR_DLEXIT_ERR;
   }
 #endif
   return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -274,7 +272,7 @@ static int oph_find_operator_library (char *operator_type, char **dyn_lib)
 
   if (!operator_type || !dyn_lib){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter\n");
-    return -1;
+	return -1;
   }
 
   snprintf(dyn_lib_str, sizeof(dyn_lib_str), OPH_ANALYTICS_DYNAMIC_LIBRARY_FILE_PATH, OPH_ANALYTICS_LOCATION);
@@ -282,17 +280,16 @@ static int oph_find_operator_library (char *operator_type, char **dyn_lib)
   fp = fopen (dyn_lib_str, "r");
   if (!fp){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Driver file not found %s\n", dyn_lib_str);
-    return -1;  // driver not found
+	return -1;  // driver not found
   }
 
   while (!feof (fp))
   {
     res_string = fgets (line, OPH_ANALYTICS_OPERATOR_BUFLEN, fp);
-    if (!res_string)
-    {
-      fclose (fp);
-	  pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read file line\n");
-      return -1;
+    if (!res_string) {
+	fclose (fp);
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read file line\n");
+	return -1;
     }
     sscanf (line, "[%[^]]", value);
     if (!strcasecmp (value, operator_type))
@@ -301,17 +298,17 @@ static int oph_find_operator_library (char *operator_type, char **dyn_lib)
       res_string = fgets (line, OPH_ANALYTICS_OPERATOR_BUFLEN, fp);
       if (!res_string)
       {
-        fclose (fp);
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read file line\n");
-        return -1;
+	fclose (fp);
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read file line\n");
+	return -1;
       }
       sscanf (line, "%[^\n]", value);
       *dyn_lib = (char *) strndup (value,OPH_ANALYTICS_OPERATOR_BUFLEN);
       if (!*dyn_lib)
       {
-        fclose (fp);
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Memory allocation error\n");
-        return -2;
+	fclose (fp);
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Memory allocation error\n");
+	return -2;
       }
       fclose(fp);
       return 0;

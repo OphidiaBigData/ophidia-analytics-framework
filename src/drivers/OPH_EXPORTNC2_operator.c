@@ -645,16 +645,15 @@ int task_execute(oph_operator_struct *handle)
 
 	//I need to split the communicator to select task with no frags 
 	MPI_Comm scomm;
-	int color = 1; 
+	int color = 0; 
 	if (handle->proc_rank && (((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->fragment_id_start_position < 0)) color = MPI_UNDEFINED;
 	if (MPI_Comm_split( MPI_COMM_WORLD, color, handle->proc_rank, &scomm ) != MPI_SUCCESS)
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create parallel nc communicator\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_NULL_OPERATOR_HANDLE);    
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->id_input_container, "Unable to create parallel nc communicator\n");    
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
-	if (color == MPI_UNDEFINED) return OPH_ANALYTICS_OPERATOR_SUCCESS;
-	else
+	if (!color)
 	{
 		  int i, j, k, inc;
 
@@ -1700,13 +1699,15 @@ int task_execute(oph_operator_struct *handle)
 			handle->output_string = strdup(tmp_string);
 		  }
 	}
+	else return OPH_ANALYTICS_OPERATOR_SUCCESS;
+
 __OPH_EXIT_2:
 
 	if( MPI_Comm_free( &scomm ) != MPI_SUCCESS )
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to destroy parallel nc communicator\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_NULL_OPERATOR_HANDLE);    
-		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->id_input_container, "Unable to destroy parallel nc communicator\n");    
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}  
 
 	return result;
@@ -1787,6 +1788,8 @@ int env_unset(oph_operator_struct *handle)
   }
   free((OPH_EXPORTNC2_operator_handle*)handle->operator_handle);
   handle->operator_handle = NULL;
+
+  handle->dlh = NULL; // some MPI data have to be freed before dlclosing... skip dlclosing
   
   return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
