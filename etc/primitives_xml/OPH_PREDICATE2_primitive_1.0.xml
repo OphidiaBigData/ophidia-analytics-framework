@@ -28,7 +28,7 @@ Evaluates a predicate2. If &apos;expression0&apos; satisfies &apos;comparison&ap
 - occurrence : if is set to a number &apos;n&apos; then expression 1 is evaluated only for the &apos;n&apos;-th of the condition; otherwise the expression 2 is evaluated.
                Use &apos;first&apos; or &apos;begin&apos; for the first occurrence.
                Use &apos;last&apos; or &apos;end&apos; for the last occurrence.
-               Use &apos;all&apos; to skip this check (defualt).
+               Use &apos;all&apos; to skip this check (default).
                  
 [Return type]
 Binary-array.

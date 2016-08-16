@@ -8,7 +8,7 @@ For each element of measure b not equal to 1 do not take the corresponding eleme
 with oph_int or oph_long, the output element will be 0; with oph_float or oph_double, the output element will be a NaN.
         
 [Parameters]
-- input measure type : Ophidia typing. Supported types are:
+- input measure type : Ophidia typing. Supported types are pairs of:
 					&apos;oph_double&apos;;
 					&apos;oph_float&apos;;
 					&apos;oph_long&apos;;

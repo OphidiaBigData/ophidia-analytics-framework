@@ -830,13 +830,13 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
   }
 
 #ifdef BENCHMARK
-  struct timeval stime_bench, etime_bench, ttime_bench;
+	struct timeval stime_bench, etime_bench, ttime_bench;
 
 	if(task_rank == 0)
 		gettimeofday(&stime_bench, NULL);
 #endif
   
-  if (!task_rank) handle->operator_json = oper_json;
+	if (!task_rank) handle->operator_json = oper_json;
 
 #ifdef OPH_TIME_DEBUG_1
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -856,15 +856,15 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 	gettimeofday(&stime, NULL);
 #endif
 
-  if (!task_rank) oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_SET_ENV);
+	if (!task_rank) oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_SET_ENV);
 
-  //Initialize all processes handles
-  if ((res = oph_set_env (task_tbl, handle)))
-  {
+	//Initialize all processes handles
+	if ((res = oph_set_env (task_tbl, handle)))
+	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Process initilization failed [Code: %d]!\n", res);
 		oph_unset_env (handle);
 		oph_tp_end_xml_parser();
-		oph_exit_task();
+		if (handle->dlh) oph_exit_task();
 		hashtbl_destroy(task_tbl);
 		if (!task_rank)
 		{
@@ -895,8 +895,8 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 		}
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
-  hashtbl_destroy(task_tbl);
+	}
+	hashtbl_destroy(task_tbl);
 
 #ifdef OPH_TIME_DEBUG_1
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -916,15 +916,15 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 	gettimeofday(&stime, NULL);
 #endif
 
-  if (!task_rank) oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_INIT);
+	if (!task_rank) oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_INIT);
 
-  //Perform task initializazion procedures (optional)
-  if ((res = oph_init_task (handle)))
-  {
+	//Perform task initializazion procedures (optional)
+	if ((res = oph_init_task (handle)))
+	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task initilization failed [Code: %d]!\n", res);
 		oph_unset_env (handle);
 		oph_tp_end_xml_parser();
-		oph_exit_task();
+		if (handle->dlh) oph_exit_task();
 		if (!task_rank)
 		{
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_INIT_ERROR);
@@ -954,7 +954,7 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 		}
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
+	}
 
 #ifdef OPH_TIME_DEBUG_1
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -974,15 +974,15 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 	gettimeofday(&stime, NULL);
 #endif
 
-  if (!task_rank) oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DISTRIBUTE);
+	if (!task_rank) oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DISTRIBUTE);
 
-  //Perform workload distribution activities (optional)
-  if ((res = oph_distribute_task (handle)))
-  {
+	//Perform workload distribution activities (optional)
+	if ((res = oph_distribute_task (handle)))
+	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task distribution failed [Code: %d]!\n", res);
 		oph_unset_env (handle);
 		oph_tp_end_xml_parser();
-		oph_exit_task();
+		if (handle->dlh) oph_exit_task();
 		if (!task_rank)
 		{
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DISTRIBUTE_ERROR);
@@ -1012,7 +1012,7 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 		}
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
+	}
 
 #ifdef OPH_TIME_DEBUG_1
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -1032,15 +1032,15 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 	gettimeofday(&stime, NULL);
 #endif
 
-  if (!task_rank) oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_EXECUTE);
+	if (!task_rank) oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_EXECUTE);
 
-  //Perform distributive part of task
-  if ((res = oph_execute_task (handle)))
-  {
+	//Perform distributive part of task
+	if ((res = oph_execute_task (handle)))
+	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task execution failed [Code: %d]!\n", res);
 		oph_unset_env (handle);
 		oph_tp_end_xml_parser();
-		oph_exit_task();
+		if (handle->dlh) oph_exit_task();
 		if (!task_rank)
 		{
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_EXECUTE_ERROR);
@@ -1070,7 +1070,7 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 		}
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
+	}
 
 #ifdef OPH_TIME_DEBUG_1
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -1090,15 +1090,15 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 	gettimeofday(&stime, NULL);
 #endif
 
-  if (!task_rank) oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_REDUCE);
+	if (!task_rank) oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_REDUCE);
 
-  //Perform reduction of results
-  if ((res = oph_reduce_task (handle)))
-  {
+	//Perform reduction of results
+	if ((res = oph_reduce_task (handle)))
+	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task reduction failed [Code: %d]!\n", res);
 		oph_unset_env (handle);
 		oph_tp_end_xml_parser();
-		oph_exit_task();
+		if (handle->dlh) oph_exit_task();
 		if (!task_rank)
 		{
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_REDUCE_ERROR);
@@ -1128,7 +1128,7 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 		}
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
+	}
 
 #ifdef OPH_TIME_DEBUG_1
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -1148,15 +1148,15 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 	gettimeofday(&stime, NULL);
 #endif
 
-  if (!task_rank) oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DESTROY);
+	if (!task_rank) oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DESTROY);
 
-  //Reset task specific initialization procedures
-  if ((res = oph_destroy_task (handle)))
-  {
+	//Reset task specific initialization procedures
+	if ((res = oph_destroy_task (handle)))
+	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task destroy failed [Code: %d]!\n", res);
 		oph_unset_env (handle);
 		oph_tp_end_xml_parser();
-		oph_exit_task();
+		if (handle->dlh) oph_exit_task();
 		if (!task_rank)
 		{
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DESTROY_ERROR);
@@ -1186,7 +1186,7 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 		}
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
+	}
 
 #ifdef OPH_TIME_DEBUG_1
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -1206,14 +1206,14 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 	gettimeofday(&stime, NULL);
 #endif
 
-  if (!task_rank) oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_UNSET_ENV);
+	if (!task_rank) oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_UNSET_ENV);
 
-  //Release task and dynamic library resources
-  if ((res = oph_unset_env (handle)))
-  {
+	//Release task and dynamic library resources
+	if ((res = oph_unset_env (handle)))
+	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Process deinit failed [Code: %d]!\n", res);
 		oph_tp_end_xml_parser();
-		oph_exit_task();
+		if (handle->dlh) oph_exit_task();
 		if (!task_rank)
 		{
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_UNSET_ENV_ERROR);
@@ -1243,7 +1243,7 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 		}
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
+	}
 
 #ifdef OPH_TIME_DEBUG_1
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -1261,8 +1261,6 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 	printf("Proc %d: Unset env:\t Time %d,%06d sec\n", task_rank, (int)ttime.tv_sec, (int)ttime.tv_usec);
 
 	gettimeofday(&stime, NULL);
-#else
-	MPI_Barrier(MPI_COMM_WORLD); //Barrier synchronization before successful notification
 #endif
 
 #ifdef BENCHMARK
@@ -1274,12 +1272,11 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 
   //Release environment resources
   oph_tp_end_xml_parser();
-  oph_exit_task();
+  if (handle->dlh) oph_exit_task();
 
+  int return_code=0;
   if (!task_rank)
   {
-	int return_code=0;
-
 	oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_COMPLETED);
 	oph_odb_free_ophidiadb(&oDB);
 
@@ -1300,48 +1297,48 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 	  }
 #endif
 	  else if (oph_af_write_json(oper_json,&handle->output_json,backtrace,notify_sessionid,marker_id)) return_code = -1;
+  }
+
 #ifndef OPH_STANDALONE_MODE
 /* gSOAP notification start */
-	if (have_soap)
+  MPI_Barrier(MPI_COMM_WORLD); //Barrier synchronization before successful notification
+  if (!task_rank && have_soap)
+  {
+	snprintf(notify_message, OPH_COMMON_BUFFER_LEN, "%s=%d;%s=%s;%s=%s;%s=%s;%s=%s;",OPH_ARG_STATUS,OPH_ODB_JOB_STATUS_COMPLETED,OPH_ARG_IDJOB,notify_jobid,OPH_ARG_PARENTID,notify_parent_jobid,OPH_ARG_TASKINDEX,notify_task_index,OPH_ARG_LIGHTTASKINDEX,notify_light_task_index);
+	if (handle->output_string)
 	{
-		snprintf(notify_message, OPH_COMMON_BUFFER_LEN, "%s=%d;%s=%s;%s=%s;%s=%s;%s=%s;",OPH_ARG_STATUS,OPH_ODB_JOB_STATUS_COMPLETED,OPH_ARG_IDJOB,notify_jobid,OPH_ARG_PARENTID,notify_parent_jobid,OPH_ARG_TASKINDEX,notify_task_index,OPH_ARG_LIGHTTASKINDEX,notify_light_task_index);
-		if (handle->output_string)
-		{
-			strncat(notify_message, handle->output_string, OPH_TP_TASKLEN-strlen(notify_message));
+		strncat(notify_message, handle->output_string, OPH_TP_TASKLEN-strlen(notify_message));
 
-			snprintf(notify_jobid,OPH_TP_TASKLEN,"%s=",OPH_IN_PARAM_DATACUBE_INPUT);
-			if (strstr(handle->output_string,notify_jobid)) *notify_cube=0;
-			snprintf(notify_jobid,OPH_TP_TASKLEN,"%s=",OPH_IN_PARAM_CWD);
-			if (strstr(handle->output_string,notify_jobid)) *notify_cwd=0;
-		}
-		if (strlen(notify_cube))
+		snprintf(notify_jobid,OPH_TP_TASKLEN,"%s=",OPH_IN_PARAM_DATACUBE_INPUT);
+		if (strstr(handle->output_string,notify_jobid)) *notify_cube=0;
+		snprintf(notify_jobid,OPH_TP_TASKLEN,"%s=",OPH_IN_PARAM_CWD);
+		if (strstr(handle->output_string,notify_jobid)) *notify_cwd=0;
+	}
+	if (strlen(notify_cube))
+	{
+		snprintf(notify_jobid,OPH_TP_TASKLEN,"%s=%s;",OPH_IN_PARAM_DATACUBE_INPUT,notify_cube);
+		strncat(notify_message, notify_jobid, OPH_TP_TASKLEN-strlen(notify_message));
+	}
+	if (strlen(notify_cwd) && strlen(notify_sessionid))
+	{
+		char* new_folder_to_be_printed = NULL;
+		if (!oph_pid_drop_session_prefix(notify_cwd, notify_sessionid, &new_folder_to_be_printed))
 		{
-			snprintf(notify_jobid,OPH_TP_TASKLEN,"%s=%s;",OPH_IN_PARAM_DATACUBE_INPUT,notify_cube);
+			snprintf(notify_jobid,OPH_TP_TASKLEN,"%s=%s;",OPH_IN_PARAM_CWD,new_folder_to_be_printed);
 			strncat(notify_message, notify_jobid, OPH_TP_TASKLEN-strlen(notify_message));
 		}
-		if (strlen(notify_cwd) && strlen(notify_sessionid))
-		{
-			char* new_folder_to_be_printed = NULL;
-			if (!oph_pid_drop_session_prefix(notify_cwd, notify_sessionid, &new_folder_to_be_printed))
-			{
-				snprintf(notify_jobid,OPH_TP_TASKLEN,"%s=%s;",OPH_IN_PARAM_CWD,new_folder_to_be_printed);
-				strncat(notify_message, notify_jobid, OPH_TP_TASKLEN-strlen(notify_message));
-			}
-			if (new_folder_to_be_printed) free(new_folder_to_be_printed);
-		}
-		if (oph_notify(&soap, &data, notify_message, handle->output_json, &response)) pmesg(LOG_WARNING, __FILE__, __LINE__, "SOAP connection refused.\n");
-		else if (response) pmesg(LOG_WARNING, __FILE__, __LINE__, "Error %d in sending SOAP notification.\n",response);
-		oph_soap_cleanup(&soap, &data);
+		if (new_folder_to_be_printed) free(new_folder_to_be_printed);
 	}
+	if (oph_notify(&soap, &data, notify_message, handle->output_json, &response)) pmesg(LOG_WARNING, __FILE__, __LINE__, "SOAP connection refused.\n");
+	else if (response) pmesg(LOG_WARNING, __FILE__, __LINE__, "Error %d in sending SOAP notification.\n",response);
+	oph_soap_cleanup(&soap, &data);
+  }
 /* gSOAP notification end */
 #endif
 
-	if (return_code)
-	{
-		oph_pid_free();
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
-  }
+  oph_pid_free();
+
+  if (return_code) return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 
 #ifdef OPH_TIME_DEBUG_1
 	MPI_Barrier(MPI_COMM_WORLD);
@@ -1356,7 +1353,6 @@ int _oph_af_execute_framework(oph_operator_struct* handle, char *task_string, in
 	printf("Proc %d: Unload task:\t Time %d,%06d sec\n", task_rank, (int)ttime.tv_sec, (int)ttime.tv_usec);
 #endif
 
-  oph_pid_free();
   return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 

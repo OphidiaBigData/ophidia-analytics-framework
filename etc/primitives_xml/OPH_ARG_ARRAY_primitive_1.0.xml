@@ -6,7 +6,7 @@
 Compute the phase of each value of measure array b and the value in the same position in measure array a.
         
 [Parameters]
-- input measure type : Ophidia typing. Supported types are:
+- input measure type : Ophidia typing. Supported types are pairs of:
 					&apos;oph_double&apos;;
 					&apos;oph_float&apos;;
 					&apos;oph_long&apos;;
