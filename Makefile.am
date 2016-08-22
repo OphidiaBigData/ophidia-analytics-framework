@@ -111,3 +111,6 @@ dist_img_DATA = etc/img/*.png
 xmlwebdir = @OPH_WEB_SERVER_LOCATION@/operators_xml/
 dist_xmlweb_DATA = $(OPERATOR_XML)
 
+scriptdir = $(prefix)/etc/script/
+dist_script_DATA =
+
