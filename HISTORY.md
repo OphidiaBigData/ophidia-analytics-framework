@@ -1,4 +1,15 @@
 
+## v0.10.4 - 2016-08-22
+
+### Added:
+
+- Add BASE_SRC_PATH to configuration parameters
+
+### Changed:
+
+- Pre-processing of src_path of OPH_IMPORTNCx
+- OPH_SCRIPT in order to execute only pre-registered scripts
+
 ## v0.10.3 - 2016-07-26
 
 ### Fixed
