@@ -6,7 +6,7 @@
 Interlaces multiple input measures into a single output measure. It requires at least two measures, otherwise it returns an error. For each measure an input type should be specified. Given two input arrays A(a1, a2, ..., an) and B(b1, b2, ..., bn), the resulting array will be C(a1, b1, a2, b2, ..., an, bn).
 
 [Parameters]
-- input measure type : Ophidia typing. Supported types are:
+- input measure type : Ophidia typing. Supported types are enumerations of:
 					&apos;oph_double&apos;;
 					&apos;oph_float&apos;;
 					&apos;oph_long&apos;;

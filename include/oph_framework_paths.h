@@ -32,6 +32,7 @@
 #define OPH_FRAMEWORK_OPERATOR_XML_FOLDER_PATH                  "%s/etc/operators_xml"
 #define OPH_FRAMEWORK_PRIMITIVE_XML_FOLDER_PATH                 "%s/etc/primitives_xml"
 #define OPH_FRAMEWORK_HIERARCHY_XML_FOLDER_PATH                 "%s/etc/hierarchies_xml"
+#define OPH_FRAMEWORK_SCRIPT_FOLDER_PATH			"%s/etc/script"
 #define OPH_FRAMEWORK_OPERATOR_XML_FILE_PATH_DESC               "%s/etc/operators_xml/%s"
 #define OPH_FRAMEWORK_PRIMITIVE_XML_FILE_PATH_DESC              "%s/etc/primitives_xml/%s"
 #define OPH_FRAMEWORK_HIERARCHY_XML_FILE_PATH_DESC              "%s/etc/hierarchies_xml/%s"

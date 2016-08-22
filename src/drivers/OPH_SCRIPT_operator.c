@@ -393,6 +393,16 @@ int task_execute(oph_operator_struct *handle)
 			if (!strcmp(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script, key))
 			{
 				free(((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script);
+				
+				pch = value;
+				while (pch && (*pch == ' ')) pch++;
+				if (!pch || !*pch) continue;
+				else if (*pch != '/')
+				{
+					snprintf(config, OPH_COMMON_BUFFER_LEN, OPH_FRAMEWORK_SCRIPT_FOLDER_PATH"/%s", OPH_ANALYTICS_LOCATION, value);
+					value = config;
+				}
+				
 				((OPH_SCRIPT_operator_handle*)handle->operator_handle)->script = strdup(value);
 				found = 1;
 				break;
