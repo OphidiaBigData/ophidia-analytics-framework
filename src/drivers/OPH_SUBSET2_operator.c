@@ -679,6 +679,18 @@ int task_init (oph_operator_struct *handle)
 		}
 		if (dim_row) free(dim_row);
 
+		if (!strlen(temp)) // Empty set
+		{
+			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_SUBSET2_EMPTY_DATACUBE);
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET2_EMPTY_DATACUBE);
+			oph_subset_vector_free(subset_struct,((OPH_SUBSET2_operator_handle*)handle->operator_handle)->number_of_dim);
+			oph_odb_cube_free_datacube(&cube);
+			free(cubedims);
+			oph_dim_disconnect_from_dbms(db->dbms_instance);
+			oph_dim_unload_dim_dbinstance(db);
+			goto __OPH_EXIT_1;
+		}
+
 		if(((OPH_SUBSET2_operator_handle*)handle->operator_handle)->task[d])
 		{
 			free((char *)((OPH_SUBSET2_operator_handle*)handle->operator_handle)->task[d]);
