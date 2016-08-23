@@ -498,19 +498,15 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 	oph_subset* subset;
 	oph_subset_init(&subset);
 	subset->number = subset_double->number;
-	subset->type = (oph_subset_type*)malloc(subset->number*sizeof(oph_subset_type));
-	subset->start = (unsigned long long*)malloc(subset->number*sizeof(unsigned long long));
-	subset->end = (unsigned long long*)malloc(subset->number*sizeof(unsigned long long));
-	subset->stride = (unsigned long long*)malloc(subset->number*sizeof(unsigned long long));
-	subset->count = (unsigned long long*)malloc(subset->number*sizeof(unsigned long long));
+	subset->type = (oph_subset_type*)calloc(subset->number,sizeof(oph_subset_type));
+	subset->start = (unsigned long long*)calloc(subset->number,sizeof(unsigned long long));
+	subset->end = (unsigned long long*)calloc(subset->number,sizeof(unsigned long long));
+	subset->stride = (unsigned long long*)calloc(subset->number,sizeof(unsigned long long));
+	subset->count = (unsigned long long*)calloc(subset->number,sizeof(unsigned long long));
 	subset->total = 0;
 
 	int i, j;
-	for (i=0;i<(int)subset->number;++i)
-	{
-		subset->count[i] = 0;
-		subset->stride[i] = 1;
-	}
+	for (i=0;i<(int)subset->number;++i) subset->stride[i] = 1;
 
 	if (!strncasecmp(data_type,OPH_SUBSET_LIB_DOUBLE_TYPE,OPH_SUBSET_LIB_MAX_TYPE_LENGTH))
 	{
@@ -555,7 +551,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							subset->start[i] = j+1; // Non 'C'-like indexing
 							if (*((double*)data+j) > subset_double->end[i]) // Empty set
 							{
-								pmesg(LOG_WARNING, __FILE__, __LINE__, " Subset cube is empty\n");
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
 								subset->end[i] = subset->start[i]; // Non 'C'-like indexing
 								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
 								continue;
@@ -585,7 +581,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							subset->end[i] = j+1; // Non 'C'-like indexing
 							if (*((double*)data+j) > subset_double->end[i]) // Empty set
 							{
-								pmesg(LOG_WARNING, __FILE__, __LINE__, " Subset cube is empty\n");
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
 								subset->start[i] = subset->end[i]; // Non 'C'-like indexing
 								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
 								continue;
@@ -650,7 +646,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							subset->start[i] = j+1; // Non 'C'-like indexing
 							if (*((float*)data+j) > subset_double->end[i]) // Empty set
 							{
-								pmesg(LOG_WARNING, __FILE__, __LINE__, " Subset cube is empty\n");
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
 								subset->end[i] = subset->start[i]; // Non 'C'-like indexing
 								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
 								continue;
@@ -680,7 +676,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							subset->end[i] = j+1; // Non 'C'-like indexing
 							if (*((float*)data+j) > subset_double->end[i]) // Empty set
 							{
-								pmesg(LOG_WARNING, __FILE__, __LINE__, " Subset cube is empty\n");
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
 								subset->start[i] = subset->end[i]; // Non 'C'-like indexing
 								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
 								continue;
@@ -745,7 +741,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							subset->start[i] = j+1; // Non 'C'-like indexing
 							if (*((char*)data+j) > subset_double->end[i]) // Empty set
 							{
-								pmesg(LOG_WARNING, __FILE__, __LINE__, " Subset cube is empty\n");
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
 								subset->end[i] = subset->start[i]; // Non 'C'-like indexing
 								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
 								continue;
@@ -775,7 +771,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							subset->end[i] = j+1; // Non 'C'-like indexing
 							if (*((char*)data+j) > subset_double->end[i]) // Empty set
 							{
-								pmesg(LOG_WARNING, __FILE__, __LINE__, " Subset cube is empty\n");
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
 								subset->start[i] = subset->end[i]; // Non 'C'-like indexing
 								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
 								continue;
@@ -840,7 +836,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							subset->start[i] = j+1; // Non 'C'-like indexing
 							if (*((short*)data+j) > subset_double->end[i]) // Empty set
 							{
-								pmesg(LOG_WARNING, __FILE__, __LINE__, " Subset cube is empty\n");
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
 								subset->end[i] = subset->start[i]; // Non 'C'-like indexing
 								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
 								continue;
@@ -870,7 +866,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							subset->end[i] = j+1; // Non 'C'-like indexing
 							if (*((short*)data+j) > subset_double->end[i]) // Empty set
 							{
-								pmesg(LOG_WARNING, __FILE__, __LINE__, " Subset cube is empty\n");
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
 								subset->start[i] = subset->end[i]; // Non 'C'-like indexing
 								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
 								continue;
@@ -935,7 +931,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							subset->start[i] = j+1; // Non 'C'-like indexing
 							if (*((int*)data+j) > subset_double->end[i]) // Empty set
 							{
-								pmesg(LOG_WARNING, __FILE__, __LINE__, " Subset cube is empty\n");
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
 								subset->end[i] = subset->start[i];
 								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
 								continue;
@@ -965,7 +961,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							subset->end[i] = j+1; // Non 'C'-like indexing
 							if (*((int*)data+j) > subset_double->end[i]) // Empty set
 							{
-								pmesg(LOG_WARNING, __FILE__, __LINE__, " Subset cube is empty\n");
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
 								subset->start[i] = subset->end[i]; // Non 'C'-like indexing
 								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
 								continue;
