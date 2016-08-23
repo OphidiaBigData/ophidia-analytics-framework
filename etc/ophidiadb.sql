@@ -156,7 +156,8 @@ CREATE TABLE `host` (
   `hostname` varchar(256) NOT NULL,
   `cores` int(10) unsigned DEFAULT NULL,
   `memory` int(10) unsigned DEFAULT NULL,
-  `status`  varchar(4) NOT NULL DEFAULT "up",
+  `status` varchar(4) NOT NULL DEFAULT "up",
+  `priority` int(10) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`idhost`),
   KEY `idhost` (`idhost`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
