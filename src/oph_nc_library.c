@@ -685,11 +685,12 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler *server, oph_odb_frag
 
   //Alloc query String
   long long query_size = 0;
+  char *insert_query = (remainder_rows > 0 ? OPH_DC_SQ_MULTI_INSERT_FRAG : OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL);
   if(compressed == 1){
-    query_size = snprintf(NULL, 0, OPH_DC_SQ_MULTI_INSERT_FRAG, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW)*regular_rows + 1;
+    query_size = snprintf(NULL, 0, insert_query, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW)*regular_rows + 1;
   }
   else{
-    query_size = snprintf(NULL, 0, OPH_DC_SQ_MULTI_INSERT_FRAG, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_ROW)*regular_rows + 1;
+    query_size = snprintf(NULL, 0, insert_query, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_ROW)*regular_rows + 1;
   }
 
   char *query_string = (char*)malloc(query_size*sizeof(char)); 
@@ -701,7 +702,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler *server, oph_odb_frag
   int j = 0;
 	int n;
 
-  n = snprintf(query_string, query_size, OPH_DC_SQ_MULTI_INSERT_FRAG, frag->fragment_name) - 1;
+  n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
   if(compressed == 1){
 #ifdef OPH_DEBUG_MYSQL
     printf("ORIGINAL QUERY: "MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG"\n", frag->fragment_name);
@@ -1096,12 +1097,39 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler *server, oph_odb_frag
 	}
 
   oph_ioserver_free_query(server, query);
+  free(query_string);
+  query_string = NULL;
 
 
-  if(remainder_rows > 0)
-  {
+	if(remainder_rows > 0)
+	{
+		if(compressed == 1){
+			query_size = snprintf(NULL, 0, OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW)*regular_rows + 1;
+		}
+		else{
+			query_size = snprintf(NULL, 0, OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_ROW)*regular_rows + 1;
+		}
+
+		query_string = (char*)malloc(query_size*sizeof(char)); 
+		if(!(query_string)){
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			free(idDim);
+			free(binary);
+			if(binary_tmp) free(binary_tmp);
+			for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
+			free(args);
+			free(start);
+			free(count);
+			free(start_pointer);
+			free(sizemax);
+			if(counters) free(counters);
+			if(products) free(products);
+			if(limits) free(limits);
+			return OPH_NC_ERROR;
+		}  
+
     query = NULL;
-    n = snprintf(query_string, query_size, OPH_DC_SQ_MULTI_INSERT_FRAG, frag->fragment_name) - 1;
+    n = snprintf(query_string, query_size, OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL, frag->fragment_name) - 1;
     if(compressed == 1){
 #ifdef OPH_DEBUG_MYSQL
       printf("ORIGINAL QUERY: "MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG"\n", frag->fragment_name);
@@ -1393,11 +1421,12 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler *server, oph_odb_frag
 
   //Alloc query String
   long long query_size = 0;
+  char *insert_query = (remainder_rows > 0 ? OPH_DC_SQ_MULTI_INSERT_FRAG : OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL);
   if(compressed == 1){
-    query_size = snprintf(NULL, 0, OPH_DC_SQ_MULTI_INSERT_FRAG, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW)*regular_rows + 1;
+    query_size = snprintf(NULL, 0, insert_query, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW)*regular_rows + 1;
   }
   else{
-    query_size = snprintf(NULL, 0, OPH_DC_SQ_MULTI_INSERT_FRAG, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_ROW)*regular_rows + 1;
+    query_size = snprintf(NULL, 0, insert_query, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_ROW)*regular_rows + 1;
   }
 
   char *query_string = (char*)malloc(query_size*sizeof(char)); 
@@ -1409,7 +1438,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler *server, oph_odb_frag
   int j = 0;
 	int n;
 
-  n = snprintf(query_string, query_size, OPH_DC_SQ_MULTI_INSERT_FRAG, frag->fragment_name) - 1;
+  n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
   if(compressed == 1){
 #ifdef OPH_DEBUG_MYSQL
     printf("ORIGINAL QUERY: "MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG"\n", frag->fragment_name);
@@ -1809,11 +1838,34 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler *server, oph_odb_frag
     }
 	}
   oph_ioserver_free_query(server, query);
+	free(query_string);
+	query_string = NULL;
 
   if(remainder_rows > 0)
   {
+		if(compressed == 1){
+			query_size = snprintf(NULL, 0, OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW)*regular_rows + 1;
+		}
+		else{
+			query_size = snprintf(NULL, 0, OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_ROW)*regular_rows + 1;
+		}
+
+		query_string = (char*)malloc(query_size*sizeof(char)); 
+		if(!(query_string)){
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			free(idDim);
+			free(binary_cache);
+			free(binary_insert);
+			for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
+			free(args);
+			free(counters);
+			free(products);
+			free(limits);
+			return OPH_NC_ERROR;
+		}  
+
     query = NULL;
-    n = snprintf(query_string, query_size, OPH_DC_SQ_MULTI_INSERT_FRAG, frag->fragment_name) - 1;
+    n = snprintf(query_string, query_size, OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL, frag->fragment_name) - 1;
     if(compressed == 1){
 #ifdef OPH_DEBUG_MYSQL
       printf("ORIGINAL QUERY: "MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG"\n", frag->fragment_name);

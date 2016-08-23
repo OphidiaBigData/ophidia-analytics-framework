@@ -46,6 +46,7 @@
 
 //*****************Query arguments***************//
 
+#define OPH_IOSERVER_SQ_ARG_FINAL_STATEMENT "final_statement"
 #define OPH_IOSERVER_SQ_ARG_FRAG "frag_name"
 #define OPH_IOSERVER_SQ_ARG_COLUMN_NAME "column_name"
 #define OPH_IOSERVER_SQ_ARG_COLUMN_TYPE "column_type"
@@ -65,6 +66,11 @@
 #define OPH_IOSERVER_SQ_ARG_VALUE "value"
 #define OPH_IOSERVER_SQ_ARG_FUNC "func_name"
 #define OPH_IOSERVER_SQ_ARG_ARG "arg"
+
+//*****************Query values***************//
+
+#define OPH_IOSERVER_SQ_VAL_YES "yes"
+#define OPH_IOSERVER_SQ_VAL_NO 	"no"
 
 //*****************Keywords***************//
 
