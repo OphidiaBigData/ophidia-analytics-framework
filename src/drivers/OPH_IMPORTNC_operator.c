@@ -285,10 +285,10 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   strncpy(measure->varname, value, strlen(value));
 
   int i;
-  char **exp_dim_names;
-  char **imp_dim_names;
-  char **exp_dim_clevels;
-  char **imp_dim_clevels;
+  char **exp_dim_names = NULL;
+  char **imp_dim_names = NULL;
+  char **exp_dim_clevels = NULL;
+  char **imp_dim_clevels = NULL;
   int exp_number_of_dim_names = 0;
   int imp_number_of_dim_names = 0;
   int imp_number_of_dim_clevels = 0;
@@ -329,44 +329,42 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   if(!value){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IMPLICIT_DIMENSION_NAME);
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IMPLICIT_DIMENSION_NAME);
-	  oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-    return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
 
   if(strncmp(value, OPH_IMPORTNC_DIMENSION_DEFAULT, strlen(value)) || strncmp(value, OPH_IMPORTNC_DIMENSION_DEFAULT, strlen(OPH_IMPORTNC_DIMENSION_DEFAULT))){
     //If implicit is differen't from auto use standard approach
     if( oph_tp_parse_multiple_value_param (value, &imp_dim_names, &imp_number_of_dim_names) ){
-	  pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-	  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
-	  oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-      return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
+	oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
     }
     measure->nimp = imp_number_of_dim_names;
 
     if(measure->nimp > ndims){
-    	pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong number of dimensions provided in task string\n");
-	    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_WRONG_DIM_NUMBER_NO_CONTAINER, container_name, ndims);
-	    oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-    	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong number of dimensions provided in task string\n");
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_WRONG_DIM_NUMBER_NO_CONTAINER, container_name, ndims);
+	oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
     }
 
     value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
     if(!value){
-    pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
-    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
-	    oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-	    oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-      return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
+	oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
     }
 
     if(strncmp(value, OPH_IMPORTNC_DIMENSION_DEFAULT, strlen(value)) || strncmp(value, OPH_IMPORTNC_DIMENSION_DEFAULT, strlen(OPH_IMPORTNC_DIMENSION_DEFAULT))){
       //Explicit is not auto, use standard approach
       if( oph_tp_parse_multiple_value_param (value, &exp_dim_names, &exp_number_of_dim_names) ){
-	    pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-	    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
-	    oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-	    oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-        return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
+	oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+	oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
       }
       measure->nexp = exp_number_of_dim_names; 
     }

@@ -34,6 +34,17 @@
 
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 #include "clients/taketime.h"
+static int timeval_add (res, x, y)
+  struct timeval *res, *x, *y;
+{
+        res->tv_sec = x->tv_sec + y->tv_sec;
+        res->tv_usec = x->tv_usec + y->tv_usec;
+        while (res->tv_usec > MILLION) {
+                res->tv_usec -= MILLION;
+                res->tv_sec++;
+        }
+        return 0;
+}
 #endif
 
 extern int msglevel;

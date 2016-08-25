@@ -597,7 +597,7 @@ int renderXML(const char *xmlfilename, short int function_type_code, oph_json *o
 		}
 
 		if (oph_json_is_objkey_printable(objkeys,objkeys_num,OPH_JSON_OBJKEY_MAN_INFO)) {
-			char *my_row[2] = {"Abstract",content};
+			char *my_row[2] = {"Abstract",(char*)content};
 			if (oph_json_add_grid_row(oper_json,OPH_JSON_OBJKEY_MAN_INFO,my_row)) {
 				fprintf(stderr,"ADD GRID ROW error\n");
 				xmlXPathFreeContext(xpathCtx);
@@ -677,7 +677,7 @@ int renderXML(const char *xmlfilename, short int function_type_code, oph_json *o
 		}
 
 		if (oph_json_is_objkey_printable(objkeys,objkeys_num,OPH_JSON_OBJKEY_MAN_INFO)) {
-			char *my_row[2] = {"Author",content};
+			char *my_row[2] = {"Author",(char*)content};
 			if (oph_json_add_grid_row(oper_json,OPH_JSON_OBJKEY_MAN_INFO,my_row)) {
 				fprintf(stderr,"ADD GRID ROW error\n");
 				xmlXPathFreeContext(xpathCtx);
@@ -749,7 +749,7 @@ int renderXML(const char *xmlfilename, short int function_type_code, oph_json *o
 			}
 
 			if (oph_json_is_objkey_printable(objkeys,objkeys_num,OPH_JSON_OBJKEY_MAN_INFO)) {
-				char *my_row[2] = {"Creation Date",content};
+				char *my_row[2] = {"Creation Date",(char*)content};
 				if (oph_json_add_grid_row(oper_json,OPH_JSON_OBJKEY_MAN_INFO,my_row)) {
 					fprintf(stderr,"ADD GRID ROW error\n");
 					xmlXPathFreeContext(xpathCtx);
@@ -943,7 +943,7 @@ int renderXML(const char *xmlfilename, short int function_type_code, oph_json *o
 				}
 
 				if (oph_json_is_objkey_printable(objkeys,objkeys_num,OPH_JSON_OBJKEY_MAN_INFO)) {
-					char *my_row[2] = {"Return Type",content};
+					char *my_row[2] = {"Return Type",(char*)content};
 					if (oph_json_add_grid_row(oper_json,OPH_JSON_OBJKEY_MAN_INFO,my_row)) {
 						fprintf(stderr,"ADD GRID ROW error\n");
 						xmlXPathFreeContext(xpathCtx);
