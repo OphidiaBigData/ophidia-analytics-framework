@@ -303,7 +303,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   //Open netcdf file
   int retval, j;
   if ((retval = nc_open(((OPH_IMPORTNC3_operator_handle*)handle->operator_handle)->nc_file_path, NC_NOWRITE, &(((OPH_IMPORTNC3_operator_handle*)handle->operator_handle)->ncid)))) {
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file: %s\n", nc_strerror(retval));
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTNC3_operator_handle*)handle->operator_handle)->nc_file_path, nc_strerror(retval));
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_OPEN_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
 	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
   }
@@ -634,15 +634,14 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
       int k = 0;
       for(i = 0; i < measure->ndims; i++){
         flag = 1;
-	      for(j = 0; j < measure->nimp; j++){
+	for(j = 0; j < measure->nimp; j++){
         	dimname = imp_dim_names[j];
-		      if(!strcmp(dimname, measure->dims_name[i])){
-            //Found implicit dimension  
-            flag = 0;
-			      break;
-		      }
-	      }
-
+		if(!strcmp(dimname, measure->dims_name[i])){
+			//Found implicit dimension
+			flag = 0;
+			break;
+		}
+	}
         if(flag){
           m2u[k]=i;
           measure->dims_oph_level[i] = level++;
@@ -783,7 +782,20 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
         return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
 
-//Check the sub_filters strings
+  //Check dimension names. TODO: translate time sub_filters strings
+  for (i = 0; i < number_of_sub_dims; i++) {
+	dimname = sub_dims[i];
+	for (j = 0; j < ndims; j++) if (!strcmp(dimname, measure->dims_name[j])) break;
+	if (j == ndims) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension %s related to variable %s in in nc file\n", dimname, measure->varname);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name,  dimname, measure->varname);
+        	oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+        	oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+ 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+  }
+
+  //Check the sub_filters strings
   for (i = 0; i < number_of_sub_dims; i++){
 	if (strchr(sub_filters[i], ':') != strrchr(sub_filters[i], ':')){
         	pmesg(LOG_ERROR, __FILE__, __LINE__, "Strided range are not supported\n");
@@ -794,8 +806,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	}
   }
 
-//Alloc space for subsetting parameters
-
+  //Alloc space for subsetting parameters
   if(!(measure->dims_start_index = (int*)malloc(measure->ndims*sizeof(int)))){
     	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_start_index");
@@ -810,26 +821,6 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
         oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
         oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-  }
-
-
-//Check if the provided dims for subsetting exist
-  for(i = 0; i < number_of_sub_dims; i++){
-	flag = 0;
-	dimname = sub_dims[i];
-	for(j = 0; j < ndims; j++){
-		if(!strcmp(dimname, measure->dims_name[j])){
-			flag = 1;
-			break;
-		}
-	}
-	if(!flag){
-        pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension %s related to variable %s in in nc file\n", dimname, measure->varname);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name,  dimname, measure->varname);
-        	oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-        	oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
- 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-        }
   }
 
   char *curfilter = NULL;
@@ -2348,7 +2339,7 @@ int task_init (oph_operator_struct *handle)
 				if (((OPH_IMPORTNC3_operator_handle*)handle->operator_handle)->import_metadata && (time_dimension<0) && !strcmp(hier.hierarchy_name,OPH_COMMON_TIME_HIERARCHY)) time_dimension = i;
 				else
 				{
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c'\n", measure->dims_concept_level[i]);
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c': check container specifications\n", measure->dims_concept_level[i]);
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_BAD2_PARAMETER, measure->dims_concept_level[i]);
 					free(tot_dims);
 					free(dims);
