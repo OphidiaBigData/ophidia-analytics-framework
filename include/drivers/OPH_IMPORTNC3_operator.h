@@ -74,6 +74,7 @@
  * \param leap_month Value of the leap month
  * \param memory_size Maximum amount of memory available
  * \param description Free description to be associated with output cube
+ * \param time_filter Flag used in case time filters are expressed as dates
  */
 struct _OPH_IMPORTNC3_operator_handle
 {
@@ -119,6 +120,7 @@ struct _OPH_IMPORTNC3_operator_handle
   int leap_month;
   long long memory_size;
   char* description;
+  int time_filter;
 };
 typedef struct _OPH_IMPORTNC3_operator_handle OPH_IMPORTNC3_operator_handle;
 

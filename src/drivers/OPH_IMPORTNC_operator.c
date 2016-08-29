@@ -42,6 +42,223 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
+int check_subset_string(char* curfilter, int i, NETCDF_var *measure, int is_index, int ncid) {
+
+	NETCDF_var tmp_var;
+	int ii, retval, dims_id[NC_MAX_VAR_DIMS];
+	char *endfilter = strchr(curfilter, OPH_DIM_SUBSET_SEPARATOR2);
+	if (!endfilter){
+		//Only single point
+		//Check curfilter
+		if(strlen(curfilter) < 1){
+        		pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
+        		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		if(is_index){
+			//Input filter is index
+			for (ii = 0; ii < (int)strlen(curfilter); ii++){
+				if(!isdigit(curfilter[ii])){
+        				pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter (only integer values allowed)\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
+        				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+			}
+			measure->dims_start_index[i] = (int)(strtol(curfilter, (char **) NULL, 10));
+			measure->dims_end_index[i] = measure->dims_start_index[i];
+		}
+		else{
+			//Input filter is value
+			for (ii = 0; ii < (int)strlen(curfilter); ii++){
+				if(ii == 0){
+					if(!isdigit(curfilter[ii]) && curfilter[ii] != '-'){
+        					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
+        					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					}
+				}
+				else{
+					if(!isdigit(curfilter[ii]) && curfilter[ii] != '.'){
+        					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
+                				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					}
+				}
+			}
+			//End of checking filter
+			
+			//Extract the index of the coord based on the value
+			if((retval = nc_inq_varid(ncid, measure->dims_name[i], &(tmp_var.varid)))){
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable informations: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+			/* Get all the information related to the dimension variable; we don't need name, since we already know it */
+			if((retval = nc_inq_var(ncid, tmp_var.varid, 0, &(tmp_var.vartype), &(tmp_var.ndims), dims_id, 0))){
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+
+			if(tmp_var.ndims != 1){
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+
+			int coord_index = -1;
+			int want_start = 1;	//Single point, it is the same
+			int order = 1;		//It will be changed by the following function (1 ascending, 0 descending)
+			//Extract index of the point given the dimension value
+			if(oph_nc_index_by_value(OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], curfilter, want_start, &order, &coord_index)){
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+			//Value not found
+			if(coord_index >= (int)measure->dims_length[i]){
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+
+			measure->dims_start_index[i] = coord_index;
+			measure->dims_end_index[i] = measure->dims_start_index[i];
+		}
+	}
+	else
+	{
+		//Start and end point
+		char *startfilter = curfilter;
+		*endfilter='\0';
+		endfilter++;
+
+		if(strlen(startfilter) < 1 || strlen(endfilter) < 1){
+        		pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
+        		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		if(is_index){
+			//Input filter is index		
+			for (ii = 0; ii < (int)strlen(startfilter); ii++){
+				if(!isdigit(startfilter[ii])){
+        				pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter (only integer value allowed)\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
+        				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+			}
+		
+			for (ii = 0; ii < (int)strlen(endfilter); ii++){
+				if(!isdigit(endfilter[ii])){
+        				pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter (only integer value allowed)\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
+	        			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+			}
+			measure->dims_start_index[i] = (int)(strtol(startfilter, (char **) NULL, 10));
+			measure->dims_end_index[i] = (int)(strtol(endfilter, (char **) NULL, 10));
+		}
+		else{
+			//Input filter is a value
+			for (ii = 0; ii < (int)strlen(startfilter); ii++){
+				if(ii == 0){
+					if(!isdigit(startfilter[ii]) && startfilter[ii] != '-'){
+        					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
+        					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					}
+				}
+				else{
+					if(!isdigit(startfilter[ii]) && startfilter[ii] != '.'){
+        					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
+                				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					}
+				}
+			}
+			for (ii = 0; ii < (int)strlen(endfilter); ii++){
+				if(ii == 0){
+					if(!isdigit(endfilter[ii]) && endfilter[ii] != '-'){
+        					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
+        					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					}
+				}
+				else{
+					if(!isdigit(endfilter[ii]) && endfilter[ii] != '.'){
+        					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
+                				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					}
+				}
+			}
+			//End of checking filter
+			
+			//Extract the index of the coord based on the value
+			if((retval = nc_inq_varid(ncid, measure->dims_name[i], &(tmp_var.varid)))){
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable informations: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+			/* Get all the information related to the dimension variable; we don't need name, since we already know it */
+			if((retval = nc_inq_var(ncid, tmp_var.varid, 0, &(tmp_var.vartype), &(tmp_var.ndims), dims_id, 0))){
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+
+			if(tmp_var.ndims != 1){
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+
+			int coord_index = -1;
+			int want_start = 1;
+			int order = 1;		//It will be changed by the following function (1 ascending, 0 descending)
+			//Extract index of the point given the dimension value
+			if(oph_nc_index_by_value(OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], startfilter, want_start, &order, &coord_index)){
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+			//Value too big
+			if(coord_index >= (int)measure->dims_length[i]){
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+			measure->dims_start_index[i] = coord_index;
+
+			coord_index = -1;
+			want_start = 0;
+			order = 1;		//It will be changed by the following function (1 ascending, 0 descending)
+			//Extract index of the point given the dimension value
+			if(oph_nc_index_by_value(OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], endfilter, want_start, &order, &coord_index)){
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+			if(coord_index >= (int)measure->dims_length[i]){
+        			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+			//oph_nc_index_by value returns the index I need considering the order of the dimension values (ascending/descending)
+			measure->dims_end_index[i] = coord_index;
+			//Descending order; I need to swap start and end index
+			if(!order){
+				int temp_ind = measure->dims_start_index[i];
+				measure->dims_start_index[i] = measure->dims_end_index[i];
+				measure->dims_end_index[i] = temp_ind;
+			}
+			
+		}
+	}
+
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+}
+
 int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 {
   if (!handle){
@@ -104,6 +321,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->leap_year = 0;
   ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->leap_month = 2;
   ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->description = NULL;
+  ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->time_filter = 1;
 
   char *value;
 
@@ -137,6 +355,92 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   char *container_name = (!hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT) ? "NO-CONTAINER" : hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT));
 
   //3 - Fill struct with the correct data
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_BASE_TIME);
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_BASE_TIME);
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_BASE_TIME );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  if(!(((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->base_time = (char *) strndup (value, OPH_TP_TASKLEN))){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_BASE_TIME );
+	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+  }
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_UNITS);
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_UNITS);
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_UNITS );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  if(!(((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->units = (char *) strndup (value, OPH_TP_TASKLEN))){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_UNITS );
+	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+  }
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_CALENDAR);
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CALENDAR);
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CALENDAR );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  if(!(((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->calendar = (char *) strndup (value, OPH_TP_TASKLEN))){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_CALENDAR );
+	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+  }
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_MONTH_LENGTHS);
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_MONTH_LENGTHS);
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_MONTH_LENGTHS );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  if(!(((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->month_lengths = (char *) strndup (value, OPH_TP_TASKLEN))){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_MONTH_LENGTHS );
+	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+  }
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_LEAP_YEAR);
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_LEAP_YEAR);
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_LEAP_YEAR );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->leap_year = (int)strtol(value, NULL, 10);
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_LEAP_MONTH);
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_LEAP_MONTH);
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_LEAP_MONTH );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->leap_month = (int)strtol(value, NULL, 10);
+
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_DESCRIPTION);
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DESCRIPTION);
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DESCRIPTION );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  if (strncmp(value,OPH_COMMON_DEFAULT_EMPTY_VALUE,OPH_TP_TASKLEN)){
+	if(!(((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->description = (char *) strndup (value, OPH_TP_TASKLEN))){
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT, "description" );
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+  }
+
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_TIME_FILTER);
+  if(value && !strcmp(value,OPH_COMMON_NO_VALUE)) ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->time_filter = 0;
+
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_IMPORT_METADATA);
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IMPORT_METADATA);
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IMPORT_METADATA );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  if(strncmp(value,OPH_COMMON_YES_VALUE,OPH_TP_TASKLEN) == 0){
+	  ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->import_metadata = 1;
+  }
+
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_SRC_FILE_PATH);
   if(!value){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SRC_FILE_PATH);
@@ -704,7 +1008,6 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   char **sub_filters = 0;
   int number_of_sub_dims = 0;
   int number_of_sub_filters = 0;
-  int is_index = 1;
 
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
   if(!value){
@@ -712,10 +1015,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
         logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SUBSET_FILTER_TYPE );
         return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
-
-  if(!strncmp(value, OPH_IMPORTNC_SUBSET_COORD, OPH_TP_TASKLEN)){
-	is_index = 0;
-  }
+  int is_index = strncmp(value, OPH_IMPORTNC_SUBSET_COORD, OPH_TP_TASKLEN);
 
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_DIMENSIONS);
   if(!value){
@@ -776,12 +1076,12 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
         return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
 
-  //Check dimension names. TODO: translate time sub_filters strings
+  //Check dimension names
   for (i = 0; i < number_of_sub_dims; i++) {
 	dimname = sub_dims[i];
 	for (j = 0; j < ndims; j++) if (!strcmp(dimname, measure->dims_name[j])) break;
 	if (j == ndims) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension %s related to variable %s in in nc file\n", dimname, measure->varname);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s' in in nc file\n", dimname, measure->varname);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name,  dimname, measure->varname);
         	oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
         	oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
@@ -790,14 +1090,181 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   }
 
   //Check the sub_filters strings
+  int tf = -1; // Id of time filter
   for (i = 0; i < number_of_sub_dims; i++){
-	if (strchr(sub_filters[i], ':') != strrchr(sub_filters[i], ':')){
+	if (((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->time_filter && strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR[1])) {
+		if (tf >= 0)
+		{
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Not more than one time dimension can be considered\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
+			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		tf = i;
+		dimname = sub_dims[i];
+		for (j = 0; j < ndims; j++) if (!strcmp(dimname, measure->dims_name[j])) break;
+	}
+	else if (strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2) != strrchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2)){
         	pmesg(LOG_ERROR, __FILE__, __LINE__, "Strided range are not supported\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
         	oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
         	oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-        	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+  }
+
+  if(handle->proc_rank == 0)
+  {
+  	  //Only master process has to initialize and open connection to management OphidiaDB
+	  ophidiadb *oDB = &((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->oDB;
+
+	  oph_odb_init_ophidiadb(oDB);
+
+	  if(oph_odb_read_ophidiadb_config_file(oDB)){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONFIGURATION_FILE, container_name );
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	  }
+
+	  if( oph_odb_connect_to_ophidiadb(oDB)){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONNECTION_ERROR, container_name );
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	  }
+
+	  value = hashtbl_get(task_tbl, OPH_IN_PARAM_VOCABULARY);
+	  if(!value){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_VOCABULARY);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_VOCABULARY );
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	  }
+	  if(strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)){
+		  if((oph_odb_meta_retrieve_vocabulary_id(oDB, value, &((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->id_vocabulary))){
+			  pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input vocabulary\n");
+			  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NO_VOCABULARY_NO_CONTAINER, container_name, value );
+			  return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		  }
+	  }
+  }
+
+  if (tf >= 0)
+  {
+	oph_odb_dimension dim;
+	oph_odb_dimension *time_dim = &dim, *tot_dims = NULL;
+
+	if (((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->create_container)
+	{
+		strncpy(dim.base_time,((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->base_time,OPH_ODB_DIM_TIME_SIZE);
+		dim.leap_year = ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->leap_year;
+		dim.leap_month = ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->leap_month;
+
+		NETCDF_var tmp_var;
+		tmp_var.dims_id = NULL;
+		tmp_var.dims_length = NULL;
+		if(oph_nc_get_nc_var(OPH_GENERIC_CONTAINER_ID, measure->dims_name[j], ncid, 1, &tmp_var))
+		{
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, nc_strerror(retval) );
+			if(tmp_var.dims_id) free(tmp_var.dims_id);
+			if(tmp_var.dims_length) free(tmp_var.dims_length);
+			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		free(tmp_var.dims_id);
+		free(tmp_var.dims_length);
+
+		if (oph_nc_get_c_type(tmp_var.vartype, dim.dimension_type))
+		{
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: type cannot be converted\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, "type cannot be converted" );
+			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+        		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		
+		j = 0;
+		strncpy(dim.units,((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->units,OPH_ODB_DIM_TIME_SIZE);
+		strncpy(dim.calendar,((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->calendar,OPH_ODB_DIM_TIME_SIZE);
+		char *tmp=NULL, *save_pointer=NULL, month_lengths[OPH_ODB_DIM_TIME_SIZE];
+		strncpy(month_lengths,((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->month_lengths,OPH_ODB_DIM_TIME_SIZE);
+		while ( (tmp = strtok_r(tmp ? NULL : month_lengths, ",", &save_pointer)) && (j<OPH_ODB_DIM_MONTH_NUMBER)) dim.month_lengths[j++] = (int)strtol(tmp,NULL,10);
+		while (j<OPH_ODB_DIM_MONTH_NUMBER) dim.month_lengths[j++] = OPH_ODB_DIM_DAY_NUMBER;
+	}
+	else {
+		size_t packet_size = sizeof(oph_odb_dimension);
+		char buffer[packet_size];
+
+		if(handle->proc_rank == 0)
+		{
+			int flag = 1, folder_id = 0, permission = 0, id_container_out = 0, number_of_dimensions_c = 0;
+			while (flag)
+			{
+				ophidiadb *oDB = &((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->oDB;
+
+				if((oph_odb_fs_path_parsing("", ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->cwd, &folder_id, NULL, oDB))) {				
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Path %s doesn't exists\n", ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->cwd);
+					logging(LOG_ERROR, __FILE__, __LINE__,  OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_CWD_ERROR, container_name, ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->cwd );
+					break;
+				}
+				if((oph_odb_fs_check_folder_session(folder_id, ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->sessionid, oDB, &permission)) || !permission){
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "User %s is not allowed to work in this folder\n", ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->user);
+					logging(LOG_ERROR, __FILE__, __LINE__,  OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DATACUBE_PERMISSION_ERROR, container_name, ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->user );
+					break;
+				}
+				if (oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, 0, &id_container_out) && !id_container_out) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container or it is hidden\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name );
+					break;
+				}
+				if(oph_odb_dim_retrieve_dimension_list_from_container(oDB, id_container_out, &tot_dims, &number_of_dimensions_c)){
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive dimensions .\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIMENSION_READ_ERROR);
+					break;
+				}
+
+				for (i=0; i<number_of_dimensions_c; ++i) if (!strncmp(tot_dims[i].dimension_name, measure->dims_name[j], OPH_ODB_DIM_DIMENSION_SIZE)) break;
+				if (i >= number_of_dimensions_c) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension %s not found for container %s\n", measure->dims_name[j], container_name);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_CONT_ERROR, measure->dims_name[j], container_name );
+					break;
+				}
+
+				time_dim = tot_dims + i;
+
+				flag = 0;
+			}
+			if (flag) time_dim->id_dimension = 0;
+
+			memcpy(buffer, time_dim, packet_size);
+			MPI_Bcast(buffer,packet_size,MPI_CHAR,0,MPI_COMM_WORLD);
+		}
+		else
+		{
+			MPI_Bcast(buffer,packet_size,MPI_CHAR,0,MPI_COMM_WORLD);
+			memcpy(time_dim, buffer, packet_size);
+		}
+
+		if (!time_dim->id_dimension)
+		{
+			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+	}
+
+	char temp[OPH_COMMON_BUFFER_LEN];
+	if (oph_dim_parse_time_subset(sub_filters[tf], time_dim, temp))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing time values '%s'\n", sub_filters[tf]);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	free(sub_filters[tf]);
+	sub_filters[tf] = strdup(temp);
   }
 
   //Alloc space for subsetting parameters
@@ -818,22 +1285,11 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   }
 
   char *curfilter = NULL;
-  char *startfilter = NULL;
-  char *endfilter = NULL;
   int ii;
-
-  NETCDF_var tmp_var;
-  tmp_var.dims_id = malloc( NC_MAX_VAR_DIMS * sizeof(int));
-  if(!(tmp_var.dims_id)){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
-	oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-	oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-  }
 
   //For each dimension, set the dim_start_index and dim_end_index
   for (i = 0; i < ndims; i++){
+	curfilter = NULL;
 	for(j = 0; j < number_of_sub_dims; j++){
 		dimname = sub_dims[j];
 		if(!strcmp(dimname, measure->dims_name[i])){
@@ -841,305 +1297,27 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 			break;
 		}
 	}
-	if(!curfilter){
+	if (!curfilter) {
 		//Dimension will not be subsetted
 		measure->dims_start_index[i] = 0;
 		measure->dims_end_index[i] = measure->dims_length[i] - 1;
 	}
-	else{
-		endfilter = strchr(curfilter, ':');
-		if(!endfilter){
-			//Only single point
-			//Check curfilter
-			if(strlen(curfilter) < 1){
-                		pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
-                		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-                		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-				free(tmp_var.dims_id);
-                		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-			if(is_index){
-				//Input filter is index
-				for (ii = 0; ii < (int)strlen(curfilter); ii++){
-					if(!isdigit(curfilter[ii])){
-                				pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter (only integer values allowed)\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
-                				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-                				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-						free(tmp_var.dims_id);
-                				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-					}
-				}
-				measure->dims_start_index[i] = (int)(strtol(curfilter, (char **) NULL, 10));
-				measure->dims_end_index[i] = measure->dims_start_index[i];
-			}
-			else{
-				//Input filter is value
-				for (ii = 0; ii < (int)strlen(curfilter); ii++){
-					if(ii == 0){
-						if(!isdigit(curfilter[ii]) && curfilter[ii] != '-'){
-                					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
-                					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-                					oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-							free(tmp_var.dims_id);
-                					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-						}
-					}
-					else{
-						if(!isdigit(curfilter[ii]) && curfilter[ii] != '.'){
-                					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
-	                				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-        	        				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-							free(tmp_var.dims_id);
-                					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-						}
-					}
-				}
-				//End of checking filter
-				
-				//Extract the index of the coord based on the value
-				if((retval = nc_inq_varid(ncid, measure->dims_name[i], &(tmp_var.varid)))){
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable informations: %s\n", nc_strerror(retval));
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-        	       			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					free(tmp_var.dims_id);
-               				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				/* Get all the information related to the dimension variable; we don't need name, since we already know it */
-				if((retval = nc_inq_var(ncid, tmp_var.varid, 0, &(tmp_var.vartype), &(tmp_var.ndims), tmp_var.dims_id, 0))){
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-       	        			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					free(tmp_var.dims_id);
-                			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-
-				if(tmp_var.ndims != 1){
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-       	        			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					free(tmp_var.dims_id);
-                			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-
-				int coord_index = -1;
-				int want_start = 1;	//Single point, it is the same
-				int order = 1;		//It will be changed by the following function (1 ascending, 0 descending)
-				//Extract index of the point given the dimension value
-				if(oph_nc_index_by_value(OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], curfilter, want_start, &order, &coord_index)){
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-       	        			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					free(tmp_var.dims_id);
-                			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				//Value not found
-				if(coord_index >= (int)measure->dims_length[i]){
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-       	        			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					free(tmp_var.dims_id);
-                			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-
-				measure->dims_start_index[i] = coord_index;
-				measure->dims_end_index[i] = measure->dims_start_index[i];
-			}//End of if(is_index)
-		}
-		else{
-			//Start and end point
-			*endfilter='\0';
-			startfilter=curfilter;
-			endfilter++;
-			if(strlen(startfilter) < 1 || strlen(endfilter) < 1){
-                		pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
-                		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-                		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-				free(tmp_var.dims_id);
-                		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-			if(is_index){
-				//Input filter is index		
-				for (ii = 0; ii < (int)strlen(startfilter); ii++){
-					if(!isdigit(startfilter[ii])){
-                				pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter (only integer value allowed)\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
-                				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-	                			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-						free(tmp_var.dims_id);
-        	        			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-					}
-				}
-			
-				for (ii = 0; ii < (int)strlen(endfilter); ii++){
-					if(!isdigit(endfilter[ii])){
-                				pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter (only integer value allowed)\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
-        	        			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-                				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-						free(tmp_var.dims_id);
-                				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-					}
-				}
-				measure->dims_start_index[i] = (int)(strtol(startfilter, (char **) NULL, 10));
-				measure->dims_end_index[i] = (int)(strtol(endfilter, (char **) NULL, 10));
-			}
-			else{
-				//Input filter is a value
-				for (ii = 0; ii < (int)strlen(startfilter); ii++){
-					if(ii == 0){
-						if(!isdigit(startfilter[ii]) && startfilter[ii] != '-'){
-                					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
-                					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-                					oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-							free(tmp_var.dims_id);
-                					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-						}
-					}
-					else{
-						if(!isdigit(startfilter[ii]) && startfilter[ii] != '.'){
-                					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
-	                				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-        	        				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-							free(tmp_var.dims_id);
-                					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-						}
-					}
-				}
-				for (ii = 0; ii < (int)strlen(endfilter); ii++){
-					if(ii == 0){
-						if(!isdigit(endfilter[ii]) && endfilter[ii] != '-'){
-                					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
-                					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-                					oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-							free(tmp_var.dims_id);
-                					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-						}
-					}
-					else{
-						if(!isdigit(endfilter[ii]) && endfilter[ii] != '.'){
-                					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
-	                				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-        	        				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-							free(tmp_var.dims_id);
-                					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-						}
-					}
-				}
-				//End of checking filter
-				
-				//Extract the index of the coord based on the value
-				if((retval = nc_inq_varid(ncid, measure->dims_name[i], &(tmp_var.varid)))){
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable informations: %s\n", nc_strerror(retval));
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-        	       			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					free(tmp_var.dims_id);
-               				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				/* Get all the information related to the dimension variable; we don't need name, since we already know it */
-				if((retval = nc_inq_var(ncid, tmp_var.varid, 0, &(tmp_var.vartype), &(tmp_var.ndims), tmp_var.dims_id, 0))){
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-       	        			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					free(tmp_var.dims_id);
-                			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-
-				if(tmp_var.ndims != 1){
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-       	        			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					free(tmp_var.dims_id);
-                			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-
-				int coord_index = -1;
-				int want_start = 1;
-				int order = 1;		//It will be changed by the following function (1 ascending, 0 descending)
-				//Extract index of the point given the dimension value
-				if(oph_nc_index_by_value(OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], startfilter, want_start, &order, &coord_index)){
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-       	        			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					free(tmp_var.dims_id);
-                			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				//Value too big
-				if(coord_index >= (int)measure->dims_length[i]){
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-       	        			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					free(tmp_var.dims_id);
-                			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				measure->dims_start_index[i] = coord_index;
-
-				coord_index = -1;
-				want_start = 0;
-				order = 1;		//It will be changed by the following function (1 ascending, 0 descending)
-				//Extract index of the point given the dimension value
-				if(oph_nc_index_by_value(OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], endfilter, want_start, &order, &coord_index)){
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-       	        			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					free(tmp_var.dims_id);
-                			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				if(coord_index >= (int)measure->dims_length[i]){
-                			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-       	        			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					free(tmp_var.dims_id);
-                			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				//oph_nc_index_by value returns the index I need considering the order of the dimension values (ascending/descending)
-				measure->dims_end_index[i] = coord_index;
-				//Descending order; I need to swap start and end index
-				if(!order){
-					int temp_ind = measure->dims_start_index[i];
-					measure->dims_start_index[i] = measure->dims_end_index[i];
-					measure->dims_end_index[i] = temp_ind;
-				}
-				
-			}//End of searching indexes by values
-		}//End of searching the indexex (by values of indexex)
-	}//End of if(!curfilter)
-	curfilter = NULL;
-	//Check
-	if (measure->dims_start_index[i] < 0 || measure->dims_end_index[i] < 0 || measure->dims_start_index[i] > measure->dims_end_index[i] || measure->dims_start_index[i] >= (int)measure->dims_length[i] || measure->dims_end_index[i] >= (int)measure->dims_length[i]){
+	else if ((ii = check_subset_string(curfilter, i, measure, is_index, ncid))) {
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+               	oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+		return ii;
+	}
+	else if (measure->dims_start_index[i] < 0 || measure->dims_end_index[i] < 0 || measure->dims_start_index[i] > measure->dims_end_index[i] || measure->dims_start_index[i] >= (int)measure->dims_length[i] || measure->dims_end_index[i] >= (int)measure->dims_length[i]){
                 pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
                	oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
                	oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
                	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	
-  }//End of loop on each dimension
+	}	
+  }
 
-  free(tmp_var.dims_id);
   oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
   oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-
 
   //Check explicit dimension oph levels (all values in interval [1 - nexp] should be supplied)
   int curr_lev;
@@ -1187,16 +1365,6 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   }
   if(strncmp(value,OPH_COMMON_NO_VALUE,OPH_TP_TASKLEN) == 0){
         ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->run = 0;
-  }
-
-  value = hashtbl_get(task_tbl, OPH_IN_PARAM_IMPORT_METADATA);
-  if(!value){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IMPORT_METADATA);
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IMPORT_METADATA );
-	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-  }
-  if(strncmp(value,OPH_COMMON_YES_VALUE,OPH_TP_TASKLEN) == 0){
-	  ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->import_metadata = 1;
   }
 
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_CHECK_COMPLIANCE);
@@ -1265,36 +1433,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 
   if(handle->proc_rank == 0)
   {
-  	  //Only master process has to initialize and open connection to management OphidiaDB
 	  ophidiadb *oDB = &((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->oDB;
-	  oph_odb_init_ophidiadb(oDB);
-
-	  if(oph_odb_read_ophidiadb_config_file(oDB)){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONFIGURATION_FILE, container_name );
-
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	  }
-
-	  if( oph_odb_connect_to_ophidiadb(oDB)){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONNECTION_ERROR, container_name );
-		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-	  }
-
-	  value = hashtbl_get(task_tbl, OPH_IN_PARAM_VOCABULARY);
-	  if(!value){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_VOCABULARY);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_VOCABULARY );
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	  }
-	  if(strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)){
-		  if((oph_odb_meta_retrieve_vocabulary_id(oDB, value, &((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->id_vocabulary))){
-			  pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input vocabulary\n");
-			  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NO_VOCABULARY_NO_CONTAINER, container_name, value );
-			  return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-		  }
-	  }
 
 	  value = hashtbl_get(task_tbl, OPH_IN_PARAM_HIERARCHY_NAME);
 	  if(!value){
@@ -1371,80 +1510,6 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 		}
 		for(i = 0; i < measure->ndims; i++) ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->id_dimension_hierarchy[i] = id_hierarchy;
 	  }
-  }
-
-
-  value = hashtbl_get(task_tbl, OPH_IN_PARAM_BASE_TIME);
-  if(!value){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_BASE_TIME);
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_BASE_TIME );
-	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-  }
-  if(!(((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->base_time = (char *) strndup (value, OPH_TP_TASKLEN))){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_BASE_TIME );
-	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-  }
-  value = hashtbl_get(task_tbl, OPH_IN_PARAM_UNITS);
-  if(!value){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_UNITS);
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_UNITS );
-	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-  }
-  if(!(((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->units = (char *) strndup (value, OPH_TP_TASKLEN))){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_UNITS );
-	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-  }
-  value = hashtbl_get(task_tbl, OPH_IN_PARAM_CALENDAR);
-  if(!value){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CALENDAR);
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CALENDAR );
-	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-  }
-  if(!(((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->calendar = (char *) strndup (value, OPH_TP_TASKLEN))){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_CALENDAR );
-	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-  }
-  value = hashtbl_get(task_tbl, OPH_IN_PARAM_MONTH_LENGTHS);
-  if(!value){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_MONTH_LENGTHS);
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_MONTH_LENGTHS );
-	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-  }
-  if(!(((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->month_lengths = (char *) strndup (value, OPH_TP_TASKLEN))){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_MONTH_LENGTHS );
-	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-  }
-  value = hashtbl_get(task_tbl, OPH_IN_PARAM_LEAP_YEAR);
-  if(!value){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_LEAP_YEAR);
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_LEAP_YEAR );
-	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-  }
-  ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->leap_year = (int)strtol(value, NULL, 10);
-  value = hashtbl_get(task_tbl, OPH_IN_PARAM_LEAP_MONTH);
-  if(!value){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_LEAP_MONTH);
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_LEAP_MONTH );
-	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-  }
-  ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->leap_month = (int)strtol(value, NULL, 10);
-
-  value = hashtbl_get(task_tbl, OPH_IN_PARAM_DESCRIPTION);
-  if(!value){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DESCRIPTION);
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DESCRIPTION );
-	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-  }
-  if (strncmp(value,OPH_COMMON_DEFAULT_EMPTY_VALUE,OPH_TP_TASKLEN)){
-	if(!(((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->description = (char *) strndup (value, OPH_TP_TASKLEN))){
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT, "description" );
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
   }
 
   return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -1848,14 +1913,14 @@ int task_init (oph_operator_struct *handle)
 		{
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Input container already exist\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OUTPUT_CONTAINER_EXIST_ERROR, container_name, container_name );
-			return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+			goto __OPH_EXIT_1;
 		}
 		else
 		{
 			if (!oph_odb_fs_is_allowed_name(container_name)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "%s not allowed for new folders/containers\n",container_name);
 				logging(LOG_ERROR,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,OPH_LOG_GENERIC_NAME_NOT_ALLOWED_ERROR,container_name);
-				return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+				goto __OPH_EXIT_1;
 			}
 			//Check if non-hidden container exists in folder
 			int container_unique = 0;
@@ -1863,13 +1928,13 @@ int task_init (oph_operator_struct *handle)
 			{
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check output container\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OUTPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name );
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				goto __OPH_EXIT_1;
 			}
 			if (!container_unique)
 			{
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Container '%s' already exists in this path or a folder has the same name\n", container_name);
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OUTPUT_CONTAINER_EXIST_ERROR, container_name, container_name );
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				goto __OPH_EXIT_1;
 			}
 		}
 
@@ -1884,7 +1949,7 @@ int task_init (oph_operator_struct *handle)
 		if(oph_odb_fs_insert_into_container_table(oDB, &cont, &id_container_out)){
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update container table\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INSERT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name );
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			goto __OPH_EXIT_1;
 		}
 		((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->id_input_container = id_container_out;
 
@@ -1892,7 +1957,7 @@ int task_init (oph_operator_struct *handle)
 		{
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update container table\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INSERT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name );
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			goto __OPH_EXIT_1;
 		}
 
 		//Create new dimensions
@@ -1913,7 +1978,7 @@ int task_init (oph_operator_struct *handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, nc_strerror(retval) );
 				if(tmp_var.dims_id) free(tmp_var.dims_id);
 				if(tmp_var.dims_length) free(tmp_var.dims_length);
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				goto __OPH_EXIT_1;
 			}
 			free(tmp_var.dims_id);
 			free(tmp_var.dims_length);
@@ -1924,7 +1989,7 @@ int task_init (oph_operator_struct *handle)
 			{
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: type cannot be converted\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, "type cannot be converted" );
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				goto __OPH_EXIT_1;
 			}
 			dim.id_hierarchy = ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->id_dimension_hierarchy[i];
 			if (dim.id_hierarchy >= 0) dim.units[0] = dim.calendar[0] = 0;
@@ -1943,10 +2008,9 @@ int task_init (oph_operator_struct *handle)
 			{
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert dimension.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_DIMENSION_ERROR);
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				goto __OPH_EXIT_1;
 			}
 		}
-
 
 		oph_odb_db_instance db_;
 		oph_odb_db_instance *db = &db_;
@@ -1955,7 +2019,7 @@ int task_init (oph_operator_struct *handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while loading dimension db paramters\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIM_LOAD );
 			oph_dim_unload_dim_dbinstance(db);
-			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			goto __OPH_EXIT_1;
 		}
 		if (oph_dim_connect_to_dbms(db->dbms_instance, 0))
 		{
@@ -1963,7 +2027,7 @@ int task_init (oph_operator_struct *handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIM_CONNECT );
 			oph_dim_disconnect_from_dbms(db->dbms_instance);
 			oph_dim_unload_dim_dbinstance(db);
-			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			goto __OPH_EXIT_1;
 		}
 
 		if (oph_dim_create_db(db))
@@ -1972,7 +2036,7 @@ int task_init (oph_operator_struct *handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DB_CREATION );
 			oph_dim_disconnect_from_dbms(db->dbms_instance);
 			oph_dim_unload_dim_dbinstance(db);
-			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			goto __OPH_EXIT_1;
 		}
 
 		if (oph_dim_use_db_of_dbms(db->dbms_instance, db))
@@ -1981,7 +2045,7 @@ int task_init (oph_operator_struct *handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIM_USE_DB );
 			oph_dim_disconnect_from_dbms(db->dbms_instance);
 			oph_dim_unload_dim_dbinstance(db);
-			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			goto __OPH_EXIT_1;
 		}
 
 		char dimension_table_name[OPH_COMMON_BUFFER_LEN];
@@ -1992,7 +2056,7 @@ int task_init (oph_operator_struct *handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_TABLE_CREATION_ERROR );
 			oph_dim_disconnect_from_dbms(db->dbms_instance);
 			oph_dim_unload_dim_dbinstance(db);
-			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			goto __OPH_EXIT_1;
 		}
 
 		snprintf(dimension_table_name,OPH_COMMON_BUFFER_LEN,OPH_DIM_TABLE_LABEL_MACRO,id_container_out);
@@ -2002,7 +2066,7 @@ int task_init (oph_operator_struct *handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_TABLE_CREATION_ERROR );
 			oph_dim_disconnect_from_dbms(db->dbms_instance);
 			oph_dim_unload_dim_dbinstance(db);
-			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			goto __OPH_EXIT_1;
 		}
 
 		oph_dim_disconnect_from_dbms(db->dbms_instance);
@@ -2525,6 +2589,7 @@ int task_init (oph_operator_struct *handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_CREATE_ID_STRING_ERROR);
 		free(dims);
 		free(dim_inst);
+		free(dimvar_ids);
 		goto __OPH_EXIT_1;
 	}
 	oph_odb_datacube cube;
@@ -2540,6 +2605,7 @@ int task_init (oph_operator_struct *handle)
 		oph_odb_cube_free_datacube(&cube);
 		free(dims);
 		free(dim_inst);
+		free(dimvar_ids);
 		goto __OPH_EXIT_1;
 	}
 
@@ -2557,6 +2623,7 @@ int task_init (oph_operator_struct *handle)
 		oph_odb_cube_free_datacube(&cube);
 		free(dims);
 		free(dim_inst);
+		free(dimvar_ids);
 		goto __OPH_EXIT_1;
 	}
 	strncpy(cube.frag_relative_index_set, id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
@@ -2585,6 +2652,7 @@ int task_init (oph_operator_struct *handle)
 			free(dims);
 			free(dim_inst);
 			free(cubedim);
+			free(dimvar_ids);
 			goto __OPH_EXIT_1;
 		}
 		cubedim[i].id_dimensioninst = dim_inst[j].id_dimensioninst;
@@ -2601,6 +2669,7 @@ int task_init (oph_operator_struct *handle)
 		free(dims);
 		free(dim_inst);
 		free(cubedim);
+		free(dimvar_ids);
 		goto __OPH_EXIT_1;
 	  }
 	  oph_odb_cube_free_datacube(&cube);
@@ -2613,6 +2682,7 @@ int task_init (oph_operator_struct *handle)
 			free(dims);
 			free(cubedim);
 			free(dim_inst);
+			free(dimvar_ids);
 			goto __OPH_EXIT_1;
 		}
 	  }
@@ -2691,8 +2761,8 @@ int task_init (oph_operator_struct *handle)
 				hashtbl_insert(key_tbl, key_and_variable, row[0]);
 				hashtbl_insert(required_tbl, key_and_variable, row[3]);
 			}
-			mysql_free_result(key_list);
 		}
+		mysql_free_result(key_list);
 
 		//Get global attributes from nc file
 		char key[OPH_COMMON_BUFFER_LEN], value[OPH_COMMON_BUFFER_LEN], svalue[OPH_COMMON_BUFFER_LEN];
