@@ -42,6 +42,147 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
+int update_dim_with_nc_metadata(ophidiadb* oDB, oph_odb_dimension* time_dim, int id_vocabulary, int id_container_out, int ncid) {
+
+	MYSQL_RES *key_list = NULL;
+	MYSQL_ROW row = NULL;
+
+	int num_rows = 0;
+	if(oph_odb_meta_find_metadatakey_list(oDB, id_vocabulary, &key_list)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive key list\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_READ_KEY_LIST);
+		if (key_list) mysql_free_result(key_list);
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+	num_rows = mysql_num_rows(key_list);
+
+	if (num_rows) // The vocabulary is not empty
+	{
+		int i, varid, num_attr = 0;
+		char *key, *variable, *template;
+		char value[OPH_COMMON_BUFFER_LEN], svalue[OPH_COMMON_BUFFER_LEN];
+		nc_type xtype;
+
+		char **keys = (char**)calloc(num_rows, sizeof(char*));
+		if (!keys) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to allocate key list\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_READ_KEY_LIST);
+			mysql_free_result(key_list);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		char **values = (char**)calloc(num_rows, sizeof(char*));
+		if (!values) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to allocate key list\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_READ_KEY_LIST);
+			mysql_free_result(key_list);
+			free(keys);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+
+		while((row = mysql_fetch_row(key_list)))
+		{
+			if (row[4]) // If a template is given
+			{
+				key = row[1];
+				variable = row[2];
+				template = row[4];
+				
+				memset(value,0,OPH_COMMON_BUFFER_LEN);
+				memset(svalue,0,OPH_COMMON_BUFFER_LEN);
+				
+				if (variable) {
+					if (nc_inq_varid(ncid, variable, &varid)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering the identifier of variable '%s' from file\n", variable);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_NC_ATTRIBUTE_ERROR);
+						break;
+					}
+				}
+				else varid = NC_GLOBAL;
+
+				if (nc_inq_atttype(ncid, varid, key, &xtype)) {
+					continue;
+				}
+				if (nc_get_att(ncid, varid, key, (void *)&value)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+					break;
+				}
+				switch (xtype) {
+					case NC_BYTE:
+						snprintf(svalue,OPH_COMMON_BUFFER_LEN,"%d",*((char*)value));
+						break;
+					case NC_UBYTE:
+						snprintf(svalue,OPH_COMMON_BUFFER_LEN,"%d",*((unsigned char*)value));
+						break;
+					case NC_SHORT:
+						snprintf(svalue,OPH_COMMON_BUFFER_LEN,"%d",*((short*)value));
+						break;
+					case NC_USHORT:
+						snprintf(svalue,OPH_COMMON_BUFFER_LEN,"%d",*((unsigned short*)value));
+						break;
+					case NC_INT:
+						snprintf(svalue,OPH_COMMON_BUFFER_LEN,"%d",*((int*)value));
+						break;
+					case NC_UINT:
+						snprintf(svalue,OPH_COMMON_BUFFER_LEN,"%d",*((unsigned int*)value));
+						break;
+					case NC_UINT64:
+						snprintf(svalue,OPH_COMMON_BUFFER_LEN,"%lld",*((unsigned long long*)value));
+						break;
+					case NC_INT64:
+						snprintf(svalue,OPH_COMMON_BUFFER_LEN,"%lld",*((long long*)value));
+						break;
+					case NC_FLOAT:
+						snprintf(svalue,OPH_COMMON_BUFFER_LEN,"%f",*((float*)value));
+						break;
+					case NC_DOUBLE:
+						snprintf(svalue,OPH_COMMON_BUFFER_LEN,"%f",*((double*)value));
+						break;
+					default:
+						strcpy(svalue,value);
+				}
+
+				keys[num_attr] = strdup(template);
+				values[num_attr++] = strdup(svalue);
+			}
+		}
+		if (row) {
+			mysql_free_result(key_list);
+			for (i = 0; i < num_attr; ++i) {
+				if (keys[i]) free(keys[i]);
+				if (values[i]) free(values[i]);
+			}
+			free(keys);
+			free(values);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+
+		if (oph_odb_dim_update_time_dimension(time_dim, keys, values, num_attr)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update dimension metadata\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_UPDATE_TIME_ERROR);
+			mysql_free_result(key_list);
+			for (i = 0; i < num_attr; ++i) {
+				if (keys[i]) free(keys[i]);
+				if (values[i]) free(values[i]);
+			}
+			free(keys);
+			free(values);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+
+		for (i = 0; i < num_attr; ++i) {
+			if (keys[i]) free(keys[i]);
+			if (values[i]) free(values[i]);
+		}
+		free(keys);
+		free(values);
+	}
+
+	mysql_free_result(key_list);
+
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+}
+
 int check_subset_string(char* curfilter, int i, NETCDF_var *measure, int is_index, int ncid) {
 
 	NETCDF_var tmp_var;
@@ -72,14 +213,14 @@ int check_subset_string(char* curfilter, int i, NETCDF_var *measure, int is_inde
 			for (ii = 0; ii < (int)strlen(curfilter); ii++){
 				if(ii == 0){
 					if(!isdigit(curfilter[ii]) && curfilter[ii] != '-'){
-        					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
+        					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter: %s\n", curfilter);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
         					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 					}
 				}
 				else{
 					if(!isdigit(curfilter[ii]) && curfilter[ii] != '.'){
-        					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
+        					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter: %s\n", curfilter);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
                 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 					}
@@ -214,7 +355,7 @@ int check_subset_string(char* curfilter, int i, NETCDF_var *measure, int is_inde
 			}
 
 			int coord_index = -1;
-			int want_start = 1;
+			int want_start = -1;
 			int order = 1;		//It will be changed by the following function (1 ascending, 0 descending)
 			//Extract index of the point given the dimension value
 			if(oph_nc_index_by_value(OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], startfilter, want_start, &order, &coord_index)){
@@ -1155,42 +1296,76 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 
 	if (((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->create_container)
 	{
-		strncpy(dim.base_time,((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->base_time,OPH_ODB_DIM_TIME_SIZE);
-		dim.leap_year = ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->leap_year;
-		dim.leap_month = ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->leap_month;
-
-		NETCDF_var tmp_var;
-		tmp_var.dims_id = NULL;
-		tmp_var.dims_length = NULL;
-		if(oph_nc_get_nc_var(OPH_GENERIC_CONTAINER_ID, measure->dims_name[j], ncid, 1, &tmp_var))
+		if(!((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->import_metadata || !handle->proc_rank)
 		{
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, nc_strerror(retval) );
-			if(tmp_var.dims_id) free(tmp_var.dims_id);
-			if(tmp_var.dims_length) free(tmp_var.dims_length);
-			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-		}
-		free(tmp_var.dims_id);
-		free(tmp_var.dims_length);
+			strncpy(dim.base_time,((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->base_time,OPH_ODB_DIM_TIME_SIZE);
+			dim.leap_year = ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->leap_year;
+			dim.leap_month = ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->leap_month;
 
-		if (oph_nc_get_c_type(tmp_var.vartype, dim.dimension_type))
-		{
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: type cannot be converted\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, "type cannot be converted" );
-			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-        		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-		}
+			NETCDF_var tmp_var;
+			tmp_var.dims_id = NULL;
+			tmp_var.dims_length = NULL;
+			if(oph_nc_get_nc_var(OPH_GENERIC_CONTAINER_ID, measure->dims_name[j], ncid, 1, &tmp_var))
+			{
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, nc_strerror(retval) );
+				if(tmp_var.dims_id) free(tmp_var.dims_id);
+				if(tmp_var.dims_length) free(tmp_var.dims_length);
+				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+			free(tmp_var.dims_id);
+			free(tmp_var.dims_length);
+
+			if (oph_nc_get_c_type(tmp_var.vartype, dim.dimension_type))
+			{
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: type cannot be converted\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, "type cannot be converted" );
+				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
 		
-		j = 0;
-		strncpy(dim.units,((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->units,OPH_ODB_DIM_TIME_SIZE);
-		strncpy(dim.calendar,((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->calendar,OPH_ODB_DIM_TIME_SIZE);
-		char *tmp=NULL, *save_pointer=NULL, month_lengths[OPH_ODB_DIM_TIME_SIZE];
-		strncpy(month_lengths,((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->month_lengths,OPH_ODB_DIM_TIME_SIZE);
-		while ( (tmp = strtok_r(tmp ? NULL : month_lengths, ",", &save_pointer)) && (j<OPH_ODB_DIM_MONTH_NUMBER)) dim.month_lengths[j++] = (int)strtol(tmp,NULL,10);
-		while (j<OPH_ODB_DIM_MONTH_NUMBER) dim.month_lengths[j++] = OPH_ODB_DIM_DAY_NUMBER;
+			j = 0;
+			strncpy(dim.units,((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->units,OPH_ODB_DIM_TIME_SIZE);
+			strncpy(dim.calendar,((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->calendar,OPH_ODB_DIM_TIME_SIZE);
+			char *tmp=NULL, *save_pointer=NULL, month_lengths[OPH_ODB_DIM_TIME_SIZE];
+			strncpy(month_lengths,((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->month_lengths,OPH_ODB_DIM_TIME_SIZE);
+			while ( (tmp = strtok_r(tmp ? NULL : month_lengths, ",", &save_pointer)) && (j<OPH_ODB_DIM_MONTH_NUMBER)) dim.month_lengths[j++] = (int)strtol(tmp,NULL,10);
+			while (j<OPH_ODB_DIM_MONTH_NUMBER) dim.month_lengths[j++] = OPH_ODB_DIM_DAY_NUMBER;
+		}
+
+		if(((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->import_metadata)
+		{
+			size_t packet_size = sizeof(oph_odb_dimension);
+			char buffer[packet_size];
+
+			if(handle->proc_rank == 0)
+			{
+				ophidiadb *oDB = &((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->oDB;
+
+				if (update_dim_with_nc_metadata(oDB, time_dim, ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->id_vocabulary, OPH_GENERIC_CONTAINER_ID, ncid))
+					time_dim->id_dimension = 0;
+				else
+					time_dim->id_dimension = -1;
+
+				memcpy(buffer, time_dim, packet_size);
+				MPI_Bcast(buffer,packet_size,MPI_CHAR,0,MPI_COMM_WORLD);
+			}
+			else
+			{
+				MPI_Bcast(buffer,packet_size,MPI_CHAR,0,MPI_COMM_WORLD);
+				memcpy(time_dim, buffer, packet_size);
+			}
+
+			if (!time_dim->id_dimension)
+			{
+				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+		}
 	}
 	else {
 		size_t packet_size = sizeof(oph_odb_dimension);
@@ -1232,6 +1407,18 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 				}
 
 				time_dim = tot_dims + i;
+
+				if(((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->import_metadata)
+				{
+					// Load the vocabulary associated with the container
+					if(!((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->id_vocabulary && oph_odb_meta_retrieve_vocabulary_id_from_container(oDB, id_container_out, &((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->id_vocabulary)){
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown vocabulary\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NO_VOCABULARY_NO_CONTAINER, container_name, "" );
+						break;
+					}
+
+					if (update_dim_with_nc_metadata(oDB, time_dim, ((OPH_IMPORTNC_operator_handle*)handle->operator_handle)->id_vocabulary, id_container_out, ncid)) break;
+				}
 
 				flag = 0;
 			}
@@ -1313,7 +1500,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
                	oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
                	oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
                	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}	
+	}
   }
 
   oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -2780,7 +2967,6 @@ int task_init (oph_operator_struct *handle)
 		}
 
 		nc_type xtype;
-		size_t xlen;
 
 		//For each global attribute find the corresponding key
 		for(i = 0; i < natts; i++)
@@ -2795,7 +2981,7 @@ int task_init (oph_operator_struct *handle)
 				goto __OPH_EXIT_1;
 			}
 
-			// Check for attribute type && len
+			// Check for attribute type
 			if (nc_inq_atttype(ncid, NC_GLOBAL, keyptr, &xtype)){
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering a global attribute\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_NC_ATTRIBUTE_ERROR);
@@ -2806,55 +2992,37 @@ int task_init (oph_operator_struct *handle)
 			}
 			if (xtype != NC_CHAR)
 			{
-				if (nc_inq_attlen(ncid, NC_GLOBAL, keyptr, &xlen)){ 
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering a global attribute\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_NC_ATTRIBUTE_ERROR);
-					hashtbl_destroy(key_tbl);
-					hashtbl_destroy(required_tbl);
-					free(dimvar_ids);
-					goto __OPH_EXIT_1;
-				}
 				switch (xtype)
 				{
 					case NC_BYTE:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_BYTE_TYPE);
-						xlen *= sizeof(char);
 						break;
 					case NC_UBYTE:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_BYTE_TYPE);
-						xlen *= sizeof(unsigned char);
 						break;
 					case NC_SHORT:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_SHORT_TYPE);
-						xlen *= sizeof(short);
 						break;
 					case NC_USHORT:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_SHORT_TYPE);
-						xlen *= sizeof(unsigned short);
 						break;
 					case NC_INT:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_INT_TYPE);
-						xlen *= sizeof(unsigned int);
 						break;
 					case NC_UINT:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_INT_TYPE);
-						xlen *= sizeof(int);
 						break;
 					case NC_UINT64:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_LONG_TYPE);
-						xlen *= sizeof(unsigned long long);
 						break;
 					case NC_INT64:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_LONG_TYPE);
-						xlen *= sizeof(long long);
 						break;
 					case NC_FLOAT:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_FLOAT_TYPE);
-						xlen *= sizeof(float);
 						break;
 					case NC_DOUBLE:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_DOUBLE_TYPE);
-						xlen *= sizeof(double);
 						break;
 				}
 				if(oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type))
@@ -2962,7 +3130,7 @@ int task_init (oph_operator_struct *handle)
 					goto __OPH_EXIT_1;
 				}
 
-				// Check for attribute type && len
+				// Check for attribute type
 				if (nc_inq_atttype(ncid, dimvar_ids[ii], keyptr, &xtype)){
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering a global attribute\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_NC_ATTRIBUTE_ERROR);
@@ -2973,55 +3141,37 @@ int task_init (oph_operator_struct *handle)
 				}
 				if (xtype != NC_CHAR)
 				{
-					if (nc_inq_attlen(ncid, dimvar_ids[ii], keyptr, &xlen)){ 
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering a global attribute\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_NC_ATTRIBUTE_ERROR);
-						hashtbl_destroy(key_tbl);
-						hashtbl_destroy(required_tbl);
-						free(dimvar_ids);
-						goto __OPH_EXIT_1;
-					}
 					switch (xtype)
 					{
 						case NC_BYTE:
 							snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_BYTE_TYPE);
-							xlen *= sizeof(char);
 							break;
 						case NC_UBYTE:
 							snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_BYTE_TYPE);
-							xlen *= sizeof(unsigned char);
 							break;
 						case NC_SHORT:
 							snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_SHORT_TYPE);
-							xlen *= sizeof(short);
 							break;
 						case NC_USHORT:
 							snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_SHORT_TYPE);
-							xlen *= sizeof(unsigned short);
 							break;
 						case NC_INT:
 							snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_INT_TYPE);
-							xlen *= sizeof(unsigned int);
 							break;
 						case NC_UINT:
 							snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_INT_TYPE);
-							xlen *= sizeof(int);
 							break;
 						case NC_UINT64:
 							snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_LONG_TYPE);
-							xlen *= sizeof(unsigned long long);
 							break;
 						case NC_INT64:
 							snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_LONG_TYPE);
-							xlen *= sizeof(long long);
 							break;
 						case NC_FLOAT:
 							snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_FLOAT_TYPE);
-							xlen *= sizeof(float);
 							break;
 						case NC_DOUBLE:
 							snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_DOUBLE_TYPE);
-							xlen *= sizeof(double);
 							break;
 					}
 					if(oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type))
@@ -3130,7 +3280,7 @@ int task_init (oph_operator_struct *handle)
 				goto __OPH_EXIT_1;
 			}
 
-			// Check for attribute type && len
+			// Check for attribute type
 			if (nc_inq_atttype(ncid, measure->varid, keyptr, &xtype)){
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering a global attribute\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_NC_ATTRIBUTE_ERROR);
@@ -3140,54 +3290,37 @@ int task_init (oph_operator_struct *handle)
 			}
 			if (xtype != NC_CHAR)
 			{
-				if (nc_inq_attlen(ncid, measure->varid, keyptr, &xlen)){ 
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering a global attribute\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_NC_ATTRIBUTE_ERROR);
-					hashtbl_destroy(key_tbl);
-					hashtbl_destroy(required_tbl);
-					goto __OPH_EXIT_1;
-				}
 				switch (xtype)
 				{
 					case NC_BYTE:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_BYTE_TYPE);
-						xlen *= sizeof(char);
 						break;
 					case NC_UBYTE:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_BYTE_TYPE);
-						xlen *= sizeof(unsigned char);
 						break;
 					case NC_SHORT:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_SHORT_TYPE);
-						xlen *= sizeof(short);
 						break;
 					case NC_USHORT:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_SHORT_TYPE);
-						xlen *= sizeof(unsigned short);
 						break;
 					case NC_INT:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_INT_TYPE);
-						xlen *= sizeof(unsigned int);
 						break;
 					case NC_UINT:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_INT_TYPE);
-						xlen *= sizeof(int);
 						break;
 					case NC_UINT64:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_LONG_TYPE);
-						xlen *= sizeof(unsigned long long);
 						break;
 					case NC_INT64:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_LONG_TYPE);
-						xlen *= sizeof(long long);
 						break;
 					case NC_FLOAT:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_FLOAT_TYPE);
-						xlen *= sizeof(float);
 						break;
 					case NC_DOUBLE:
 						snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_DOUBLE_TYPE);
-						xlen *= sizeof(double);
 						break;
 				}
 				if(oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type))

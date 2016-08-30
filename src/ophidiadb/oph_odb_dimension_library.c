@@ -1528,8 +1528,8 @@ int oph_odb_dim_set_time_dimension(ophidiadb *oDB, int id_datacube, char* dimens
 			!strncasecmp(value,OPH_DIM_TIME_UNITS_HOURS,ll=strlen(OPH_DIM_TIME_UNITS_HOURS)) ||
 			!strncasecmp(value,OPH_DIM_TIME_UNITS_DAYS,ll=strlen(OPH_DIM_TIME_UNITS_DAYS))	)
 		{
-			strncpy(dim.units,value,1);
-			dim.units[1]=0;
+			strncpy(dim.units,value,ll);
+			dim.units[ll]=0;
 			strcpy(dim.base_time,value+ll+strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR)+2);
 		}
 		else
@@ -1591,6 +1591,41 @@ int oph_odb_dim_set_time_dimension(ophidiadb *oDB, int id_datacube, char* dimens
 	if (mysql_query(oDB->conn, updateQuery)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_dim_update_time_dimension(oph_odb_dimension *dim, char **templates, char** values, int nattr)
+{
+	if(!dim || !templates || !values)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	int i;
+	size_t ll;
+	for (i = 0; i < nattr; ++i) {
+		if (!strcmp(templates[i], OPH_ODB_TIME_UNITS)) {
+			if (	!strncasecmp(values[i],OPH_DIM_TIME_UNITS_SECONDS,ll=strlen(OPH_DIM_TIME_UNITS_SECONDS)) ||
+				!strncasecmp(values[i],OPH_DIM_TIME_UNITS_HOURS,ll=strlen(OPH_DIM_TIME_UNITS_HOURS)) ||
+				!strncasecmp(values[i],OPH_DIM_TIME_UNITS_DAYS,ll=strlen(OPH_DIM_TIME_UNITS_DAYS))	)
+			{
+				strncpy(dim->units,values[i],ll);
+				dim->units[ll]=0;
+				strcpy(dim->base_time,values[i]+ll+strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR)+2);
+			}
+		}
+		else if (!strcmp(templates[i], OPH_ODB_TIME_CALENDAR)) {
+			strcpy(dim->calendar,values[i]);
+		}
+		else if (!strcmp(templates[i], OPH_ODB_TIME_LEAP_YEAR)) {
+			dim->leap_year = (int)strtol(values[i],NULL,10);
+		}
+		else if (!strcmp(templates[i], OPH_ODB_TIME_LEAP_MONTH)) {
+			dim->leap_month = (int)strtol(values[i],NULL,10);
+		}
 	}
 
 	return OPH_ODB_SUCCESS;
