@@ -3012,33 +3012,13 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 				// i is the index I need
 			}
 			else{
-				if (nearest_point)
-				{
+				if (nearest_point) {
 					if ((i>0) && ((i==dim_size) || (value_ - array_val[i-1] < array_val[i] - value_))) i--;
 				}
-				else if(want_start){
-					if(i == dim_size){
-						//Start value exceeds the max dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					// Ascending order, I want the start index
-					// Nothing to do
-					// i is the index I need
+				else if (want_start) {
+					if(i == dim_size) i--;
 				}
-				else{
-					if(i == 0){
-						//End value is smaller than the min dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					// Ascending order, I want the end index
-					// It isn't the exact value
-					// I need the previous one
-					i--;
-				}
+				else if (i) i--;
 			}
 		} //End if(order)
 		else{
@@ -3055,33 +3035,13 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 				// i is the index I need
 			}
 			else{
-				if (nearest_point)
-				{
+				if (nearest_point) {
 					if ((i<dim_size-1) && ((i<0) || (value_ - array_val[i+1] < array_val[i] - value_))) i++;
 				}
-				else if(want_start){
-					if(i < 0){
-						//Start value exceeds the max dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					// Descending order, I want the start index
-					// Nothing to do, beacuse of the inverted loop cycle
-					// i is the index I need
+				else if (want_start) {
+					if (i < 0) i = 0;
 				}
-				else{
-					if(i == dim_size-1){
-						//End value is smaller than the min dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					// Descending order, I want the end index
-					// It isn't the exact value
-					// I need the next one, beacuse of the inverted loop cycle
-					i++;
-				}
+				else if (i < dim_size-1) i++;
 			}
 		}//End else if(order)
 	}//End if(dim_type == NC_INT){
@@ -3112,33 +3072,13 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 				// i is the index I need
 			}
 			else{
-				if (nearest_point)
-				{
+				if (nearest_point) {
 					if ((i>0) && ((i==dim_size) || (value_ - array_val[i-1] < array_val[i] - value_))) i--;
 				}
-				else if(want_start){
-					if(i == dim_size){
-						//Start value exceeds the max dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					// Ascending order, I want the start index
-					// Nothing to do
-					// i is the index I need
+				else if (want_start) {
+					if(i == dim_size) i--;
 				}
-				else{
-					if(i == 0){
-						//End value is smaller than the min dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					// Ascending order, I want the end index
-					// It isn't the exact value
-					// I need the previous one
-					i--;
-				}
+				else if (i) i--;
 			}
 		} //End if(order)
 		else{
@@ -3155,33 +3095,13 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 				// i is the index I need
 			}
 			else{
-				if (nearest_point)
-				{
+				if (nearest_point) {
 					if ((i<dim_size-1) && ((i<0) || (value_ - array_val[i+1] < array_val[i] - value_))) i++;
 				}
-				else if(want_start){
-					if(i < 0){
-						//Start value exceeds the max dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					// Descending order, I want the start index
-					// Nothing to do, beacuse of the inverted loop cycle
-					// i is the index I need
+				else if (want_start) {
+					if (i < 0) i = 0;
 				}
-				else{
-					if(i == dim_size-1){
-						//End value is smaller than the min dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					// Descending order, I want the end index
-					// It isn't the exact value
-					// I need the next one, beacuse of the inverted loop cycle
-					i++;
-				}
+				else if (i < dim_size-1) i++;
 			}
 		}//End else if(order)
 	}//End if(dim_type == NC_BYTE){
@@ -3212,33 +3132,13 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 				// i is the index I need
 			}
 			else{
-				if (nearest_point)
-				{
+				if (nearest_point) {
 					if ((i>0) && ((i==dim_size) || (value_ - array_val[i-1] < array_val[i] - value_))) i--;
 				}
-				else if(want_start){
-					if(i == dim_size){
-						//Start value exceeds the max dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					// Ascending order, I want the start index
-					// Nothing to do
-					// i is the index I need
+				else if (want_start) {
+					if(i == dim_size) i--;
 				}
-				else{
-					if(i == 0){
-						//End value is smaller than the min dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					// Ascending order, I want the end index
-					// It isn't the exact value
-					// I need the previous one
-					i--;
-				}
+				else if (i) i--;
 			}
 		} //End if(order)
 		else{
@@ -3255,33 +3155,13 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 				// i is the index I need
 			}
 			else{
-				if (nearest_point)
-				{
+				if (nearest_point) {
 					if ((i<dim_size-1) && ((i<0) || (value_ - array_val[i+1] < array_val[i] - value_))) i++;
 				}
-				else if(want_start){
-					if(i < 0){
-						//Start value exceeds the max dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					// Descending order, I want the start index
-					// Nothing to do, beacuse of the inverted loop cycle
-					// i is the index I need
+				else if (want_start) {
+					if (i < 0) i = 0;
 				}
-				else{
-					if(i == dim_size-1){
-						//End value is smaller than the min dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					// Descending order, I want the end index
-					// It isn't the exact value
-					// I need the next one, beacuse of the inverted loop cycle
-					i++;
-				}
+				else if (i < dim_size-1) i++;
 			}
 		}//End else if(order)
 	}//End if(dim_type == NC_SHORT){
@@ -3310,27 +3190,13 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 			if(exact_value){
 			}
 			else{
-				if (nearest_point)
-				{
+				if (nearest_point) {
 					if ((i>0) && ((i==dim_size) || (value_ - array_val[i-1] < array_val[i] - value_))) i--;
 				}
-				else if(want_start){
-					if(i == dim_size){
-						//Start value exceeds the max dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
+				else if (want_start) {
+					if(i == dim_size) i--;
 				}
-				else{
-					if(i == 0){
-						//End value is smaller than the min dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					i--;
-				}
+				else if (i) i--;
 			}
 		} //End if(order)
 		else{
@@ -3345,27 +3211,13 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 			if(exact_value){
 			}
 			else{
-				if (nearest_point)
-				{
+				if (nearest_point) {
 					if ((i<dim_size-1) && ((i<0) || (value_ - array_val[i+1] < array_val[i] - value_))) i++;
 				}
-				else if(want_start){
-					if(i < 0){
-						//Start value exceeds the max dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
+				else if (want_start) {
+					if (i < 0) i = 0;
 				}
-				else{
-					if(i == dim_size-1){
-						//End value is smaller than the min dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					i++;
-				}
+				else if (i < dim_size-1) i++;
 			}
 		}//End else if(order)
 	}//End if(dim_type == NC_FLOAT){
@@ -3395,27 +3247,13 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 			if(exact_value){
 			}
 			else{
-				if (nearest_point)
-				{
+				if (nearest_point) {
 					if ((i>0) && ((i==dim_size) || (value_ - array_val[i-1] < array_val[i] - value_))) i--;
 				}
-				else if(want_start){
-					if(i == dim_size){
-						//Start value exceeds the max dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
+				else if (want_start) {
+					if(i == dim_size) i--;
 				}
-				else{
-					if(i == 0){
-						//End value is smaller than the min dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					i--;
-				}
+				else if (i) i--;
 			}
 		} //End if(order)
 		else{
@@ -3430,27 +3268,13 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 			if(exact_value){
 			}
 			else{
-				if (nearest_point)
-				{
+				if (nearest_point) {
 					if ((i<dim_size-1) && ((i<0) || (value_ - array_val[i+1] < array_val[i] - value_))) i++;
 				}
-				else if(want_start){
-					if(i < 0){
-						//Start value exceeds the max dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
+				else if (want_start) {
+					if (i < 0) i = 0;
 				}
-				else{
-					if(i == dim_size-1){
-						//End value is smaller than the min dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					i++;
-				}
+				else if (i < dim_size-1) i++;
 			}
 		}//End else if(order)
 	}//End if(dim_type == NC_DOUBLE){
@@ -3479,27 +3303,13 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 			if(exact_value){
 			}
 			else{
-				if (nearest_point)
-				{
+				if (nearest_point) {
 					if ((i>0) && ((i==dim_size) || (value_ - array_val[i-1] < array_val[i] - value_))) i--;
 				}
-				else if(want_start){
-					if(i == dim_size){
-						//Start value exceeds the max dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
+				else if (want_start) {
+					if(i == dim_size) i--;
 				}
-				else{
-					if(i == 0){
-						//End value is smaller than the min dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					i--;
-				}
+				else if (i) i--;
 			}
 		} //End if(order)
 		else{
@@ -3514,27 +3324,13 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 			if(exact_value){
 			}
 			else{
-				if (nearest_point)
-				{
+				if (nearest_point) {
 					if ((i<dim_size-1) && ((i<0) || (value_ - array_val[i+1] < array_val[i] - value_))) i++;
 				}
-				else if(want_start){
-					if(i < 0){
-						//Start value exceeds the max dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
+				else if (want_start) {
+					if (i < 0) i = 0;
 				}
-				else{
-					if(i == dim_size-1){
-						//End value is smaller than the min dimension value
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-						free(binary_dim);
-						return OPH_NC_ERROR;
-					}
-					i++;
-				}
+				else if (i < dim_size-1) i++;
 			}
 		}//End else if(order)
 	}//End if(dim_type == NC_INT64){
