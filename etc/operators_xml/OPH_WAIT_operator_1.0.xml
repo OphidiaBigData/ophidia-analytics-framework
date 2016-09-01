@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_WAIT" version="1.0">
+    <info>
+        <abstract>[Type]
+Flow control.
+
+[Behaviour]
+Wait until an event occurs.
+      
+[Parameters]
+- type : waiting type. Use:
+	&quot;clock&quot; for fixed time;
+	&quot;input&quot; to ask to input data and set a new &quot;value&quot; for &quot;key&quot;;
+	&quot;file&quot; to check the existence of a file.
+- timeout : according to the value of parameter &quot;timeout_type&quot;, it is the duration (in seconds) or the end instant of the waiting interval. By default the timeout is infinity.
+	In the second case use one of the following date formats:
+		-- yyyy
+		-- yyyy-mm
+		-- yyyy-mm-dd
+		-- yyyy-mm-dd hh
+		-- yyyy-mm-dd hh:mm
+		-- yyyy-mm-dd hh:mm:ss
+- timeout_type : meaning the value of &quot;timeout&quot;. Use:
+	&quot;duration&quot; to set the duration of waiting interval;
+	&quot;deadline&quot; to set the end time instant of waiting interval.
+- key : name of the parameter. It should comply with IEEE Std 1003.1-2001 conventions, unless brackets {} are adopted to refer it. More keys are allowed.
+- value : value of the parameter. It can be accessed with @key or @{key}. More values are allowed, one for each key.
+- filename : name of the file to be checked (only for type &quot;file&quot;).
+- message : this user-defined message is appended to response in order to notify the waiting reason.
+
+[Examples]
+Wait for 200 seconds:
+OPH_TERM: oph_wait timeout=200;
+SUBMISSION STRING: &quot;operator=oph_wait;timeout=200;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>01/09/2016</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+	<argument type="string" mandatory="no" default="clock" values="clock|input|file">type</argument>
+	<argument type="int" mandatory="no" default="0">timeout</argument>
+	<argument type="string" mandatory="no" default="duration" values="duration|deadline">timeout_type</argument>
+	<argument type="string" mandatory="no" default="-">key</argument>
+	<argument type="string" mandatory="no" default="-">value</argument>
+	<argument type="string" mandatory="no" default="-">filename</argument>
+	<argument type="string" mandatory="no" default="Waiting">message</argument>
+    </args>
+</operator>
