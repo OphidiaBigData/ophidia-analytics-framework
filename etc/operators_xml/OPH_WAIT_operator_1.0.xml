@@ -7,13 +7,14 @@ Flow control.
 
 [Behaviour]
 Wait until an event occurs.
+The task can be unlocked by means of the command &quot;OPH_INPUT&quot;.
       
 [Parameters]
 - type : waiting type. Use:
 	&quot;clock&quot; for fixed time;
 	&quot;input&quot; to ask to input data and set a new &quot;value&quot; for &quot;key&quot;;
 	&quot;file&quot; to check the existence of a file.
-- timeout : according to the value of parameter &quot;timeout_type&quot;, it is the duration (in seconds) or the end instant of the waiting interval. By default the timeout is infinity.
+- timeout : according to the value of parameter &quot;timeout_type&quot;, it is the duration (in seconds) or the end instant of the waiting interval.
 	In the second case use one of the following date formats:
 		-- yyyy
 		-- yyyy-mm
@@ -21,6 +22,8 @@ Wait until an event occurs.
 		-- yyyy-mm-dd hh
 		-- yyyy-mm-dd hh:mm
 		-- yyyy-mm-dd hh:mm:ss
+	The operator will convert the date into the number of seconds elapsed since the Epoch, 1970-01-01 00:00:00 +0000 (UTC).
+	If the value is negative then waiting time is infinity (default).
 - timeout_type : meaning the value of &quot;timeout&quot;. Use:
 	&quot;duration&quot; to set the duration of waiting interval;
 	&quot;deadline&quot; to set the end time instant of waiting interval.
@@ -40,11 +43,11 @@ SUBMISSION STRING: &quot;operator=oph_wait;timeout=200;&quot;</abstract>
     </info>
     <args>
 	<argument type="string" mandatory="no" default="clock" values="clock|input|file">type</argument>
-	<argument type="int" mandatory="no" default="0">timeout</argument>
+	<argument type="int" mandatory="no" default="-1">timeout</argument>
 	<argument type="string" mandatory="no" default="duration" values="duration|deadline">timeout_type</argument>
 	<argument type="string" mandatory="no" default="-">key</argument>
 	<argument type="string" mandatory="no" default="-">value</argument>
 	<argument type="string" mandatory="no" default="-">filename</argument>
-	<argument type="string" mandatory="no" default="Waiting">message</argument>
+	<argument type="string" mandatory="no" default="-">message</argument>
     </args>
 </operator>

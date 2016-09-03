@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_INPUT" version="1.0">
+    <info>
+        <abstract>[Type]
+Metadata access.
+
+[Behaviour]
+Send commands or data to an interactive task (&quot;OPH_WAIT&quot;). Set parameters in a workflow environment.
+      
+[Parameters]
+- id : workflow identifier. By default the hosting workflow is selected. The target workflow must have been submitted in the same session.
+- taskname : name of the intereactive task. By default it is set to &quot;Task 0&quot;.
+- action : name of the command to be sent to the interactive task. Use:
+	&quot;continue&quot; to unlock the task (default);
+	&quot;abort&quot; to abort the task;
+	&quot;wait&quot; in case of no action.
+- key : name of the parameter. It should comply with IEEE Std 1003.1-2001 conventions, unless brackets {} are adopted to refer it.
+- value : value of the parameter. By default it will se to 1. It can be accessed with @key or @{key}.
+
+[Examples]
+Set the parameter &quot;var&quot; to 10 for task &quot;example&quot; in workflow 1 and unblock the task:
+OPH_TERM: oph_input key=var;value=10;id=1;taskname=example;
+SUBMISSION STRING: &quot;operator=oph_input;key=var;value=10;id=1;taskname=example;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>02/09/2016</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>write</permission>
+    </info>
+    <args>
+	<argument type="int" mandatory="no" default="@OPH_WORKFLOW_ID" minvalue="1">id</argument>
+	<argument type="string" mandatory="yes">taskname</argument>
+	<argument type="string" mandatory="no" default="continue" values="continue|abort|wait">action</argument>
+	<argument type="string" mandatory="no" default="-">key</argument>
+	<argument type="string" mandatory="no" default="-">value</argument>
+    </args>
+</operator>

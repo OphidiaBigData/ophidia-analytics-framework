@@ -63,6 +63,7 @@ OPERATOR_XML+=etc/operators_xml/OPH_FOR_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_GET_CONFIG_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_HIERARCHY_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IF_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_INPUT_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INSTANCES_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INTERCOMPARISON_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INTERCUBE_operator_1.0.xml

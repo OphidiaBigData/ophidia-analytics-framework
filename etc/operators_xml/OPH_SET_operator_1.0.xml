@@ -6,23 +6,25 @@
 Metadata access.
 
 [Behaviour]
-Set a parameter in the workflow environment.
+Set parameters in a workflow environment.
       
 [Parameters]
 - key : name of the parameter. It should comply with IEEE Std 1003.1-2001 conventions, unless brackets {} are adopted to refer it.
-- value : value of the parameter. By default it will se to &quot;1&quot;. It can be accessed with @key or @{key}.
+- value : value of the parameter. By default it will se to 1. It can be accessed with @key or @{key}.
+- id : workflow identifier. By default the hosting workflow is selected. The target workflow must have been submitted in the same session.
 
 [Examples]
-Set the parameter &quot;var&quot; to &quot;10&quot;:
+Set the parameter &quot;var&quot; to 10:
 OPH_TERM: oph_set key=var;value=10;
 SUBMISSION STRING: &quot;operator=oph_set;key=var;value=10;&quot;</abstract>
         <author>CMCC Foundation</author>
         <creationdate>31/10/2015</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+	<permission>write</permission>
     </info>
     <args>
 	<argument type="string" mandatory="yes">key</argument>
 	<argument type="string" mandatory="no" default="-">value</argument>
+	<argument type="int" mandatory="no" default="@OPH_WORKFLOW_ID" minvalue="1">id</argument>
     </args>
 </operator>
