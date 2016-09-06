@@ -84,6 +84,8 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   ((OPH_SUBSET2_operator_handle*)handle->operator_handle)->id_user = 0;
   ((OPH_SUBSET2_operator_handle*)handle->operator_handle)->time_filter = 1;
   ((OPH_SUBSET2_operator_handle*)handle->operator_handle)->description = NULL;
+  ((OPH_SUBSET2_operator_handle*)handle->operator_handle)->offset = NULL;
+  ((OPH_SUBSET2_operator_handle*)handle->operator_handle)->offset_num = 0;
 
   int i,j;
   for (i=0;i<OPH_SUBSET_LIB_MAX_DIM;++i)
@@ -137,6 +139,33 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   int *id_dimension = data_on_ids+3;
   for (i=0;i<3+OPH_SUBSET_LIB_MAX_DIM;++i) data_on_ids[i]=0;
 
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_OFFSET);
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OFFSET);
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SUBSET2_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OFFSET);
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  char **s_offset = 0;
+  int s_offset_num = 0;
+  if (oph_tp_parse_multiple_value_param (value, &s_offset, &s_offset_num))
+  {
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING );
+        oph_tp_free_multiple_value_param_list(s_offset, s_offset_num);
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  if (s_offset_num > 0) {
+	((OPH_SUBSET2_operator_handle*)handle->operator_handle)->offset = (double*)calloc(s_offset_num, sizeof(double));
+	if (!((OPH_SUBSET2_operator_handle*)handle->operator_handle)->offset) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "offset" );
+		oph_tp_free_multiple_value_param_list(s_offset, s_offset_num);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+	((OPH_SUBSET2_operator_handle*)handle->operator_handle)->offset_num = s_offset_num;
+	for (i = 0; i < s_offset_num; ++i) ((OPH_SUBSET2_operator_handle*)handle->operator_handle)->offset[i] = (double)strtod(s_offset[i], NULL);
+	oph_tp_free_multiple_value_param_list(s_offset, s_offset_num);
+  }
 
   char **sub_dims = 0;
   char **sub_filters = 0;
@@ -665,7 +694,7 @@ int task_init (oph_operator_struct *handle)
 
 		// Real parsing
 		subset_struct[d]=0;
-		if (oph_subset_value_to_index(((OPH_SUBSET2_operator_handle*)handle->operator_handle)->task[d], dim_row, dim_size[d][dim_number[d]-1], dim[l].dimension_type, temp, &subset_struct[d]))
+		if (oph_subset_value_to_index(((OPH_SUBSET2_operator_handle*)handle->operator_handle)->task[d], dim_row, dim_size[d][dim_number[d]-1], dim[l].dimension_type, d < ((OPH_SUBSET2_operator_handle*)handle->operator_handle)->offset_num ? ((OPH_SUBSET2_operator_handle*)handle->operator_handle)->offset[d] : 0, temp, &subset_struct[d]))
 		{
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot convert the subset '%s' into a subset expressed as indexes.\n",((OPH_SUBSET2_operator_handle*)handle->operator_handle)->task[d]);
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET2_PARSE_ERROR, ((OPH_SUBSET2_operator_handle*)handle->operator_handle)->task[d]);
@@ -1965,6 +1994,10 @@ int env_unset(oph_operator_struct *handle)
   if(((OPH_SUBSET2_operator_handle*)handle->operator_handle)->description){
 	  free((char *)((OPH_SUBSET2_operator_handle*)handle->operator_handle)->description);
 	  ((OPH_SUBSET2_operator_handle*)handle->operator_handle)->description = NULL;
+  }
+  if(((OPH_SUBSET2_operator_handle*)handle->operator_handle)->offset){
+	  free((double *)((OPH_SUBSET2_operator_handle*)handle->operator_handle)->offset);
+	  ((OPH_SUBSET2_operator_handle*)handle->operator_handle)->offset = NULL;
   }
   free((OPH_SUBSET2_operator_handle*)handle->operator_handle);
   handle->operator_handle = NULL;

@@ -2729,7 +2729,7 @@ int oph_nc_get_dim_array2(int id_container ,int ncid, int dim_id, const char dim
 		binary_dim = (void*)malloc(sizeof(char)*dim_size);
 
 		if ((retval = nc_get_vara_uchar(ncid, dim_id, start, count, (unsigned char*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
@@ -2747,7 +2747,7 @@ int oph_nc_get_dim_array2(int id_container ,int ncid, int dim_id, const char dim
 		binary_dim = (void*)malloc(sizeof(short)*dim_size);
 
 		if ((retval = nc_get_vara_short(ncid, dim_id, start, count, (short*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
@@ -2765,7 +2765,7 @@ int oph_nc_get_dim_array2(int id_container ,int ncid, int dim_id, const char dim
 		binary_dim = (void*)malloc(sizeof(int)*dim_size);
 
 		if ((retval = nc_get_vara_int(ncid, dim_id, start, count, (int*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
@@ -2783,7 +2783,7 @@ int oph_nc_get_dim_array2(int id_container ,int ncid, int dim_id, const char dim
 		binary_dim = (void*)malloc(sizeof(float)*dim_size);
 
 		if ((retval = nc_get_vara_float(ncid, dim_id, start, count, (float*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
@@ -2800,7 +2800,7 @@ int oph_nc_get_dim_array2(int id_container ,int ncid, int dim_id, const char dim
 	else if(!strncasecmp(OPH_COMMON_DOUBLE_TYPE,dim_type,OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
 		binary_dim = (void*)malloc(sizeof(double)*dim_size);
 		if ((retval = nc_get_vara_double(ncid, dim_id, start, count, (double*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
@@ -2818,7 +2818,7 @@ int oph_nc_get_dim_array2(int id_container ,int ncid, int dim_id, const char dim
 		binary_dim = (void*)malloc(sizeof(long long)*dim_size);
 
 		if ((retval = nc_get_vara_longlong(ncid, dim_id, start, count, (long long*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
@@ -2854,7 +2854,7 @@ int oph_nc_get_dim_array(int id_container ,int ncid, int dim_id, const char dim_
 		binary_dim = (void*)malloc(sizeof(char)*dim_size);
 
 		if ((retval = nc_get_var_uchar(ncid, dim_id, (unsigned char*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
@@ -2872,7 +2872,7 @@ int oph_nc_get_dim_array(int id_container ,int ncid, int dim_id, const char dim_
 		binary_dim = (void*)malloc(sizeof(short)*dim_size);
 
 		if ((retval = nc_get_var_short(ncid, dim_id, (short*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
@@ -2890,7 +2890,7 @@ int oph_nc_get_dim_array(int id_container ,int ncid, int dim_id, const char dim_
 		binary_dim = (void*)malloc(sizeof(int)*dim_size);
 
 		if ((retval = nc_get_var_int(ncid, dim_id, (int*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
@@ -2908,7 +2908,7 @@ int oph_nc_get_dim_array(int id_container ,int ncid, int dim_id, const char dim_
 		binary_dim = (void*)malloc(sizeof(float)*dim_size);
 
 		if ((retval = nc_get_var_float(ncid, dim_id, (float*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
@@ -2926,7 +2926,7 @@ int oph_nc_get_dim_array(int id_container ,int ncid, int dim_id, const char dim_
 		binary_dim = (void*)malloc(sizeof(double)*dim_size);
 
 		if ((retval = nc_get_var_double(ncid, dim_id, (double*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
@@ -2944,7 +2944,7 @@ int oph_nc_get_dim_array(int id_container ,int ncid, int dim_id, const char dim_
 		binary_dim = (void*)malloc(sizeof(long long)*dim_size);
 
 		if ((retval = nc_get_var_longlong(ncid, dim_id, (long long*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
@@ -2972,7 +2972,7 @@ int oph_nc_get_dim_array(int id_container ,int ncid, int dim_id, const char dim_
 Original meaning of want_start was different: 0 for the end index, <>0 for the start index.
 Now it means: 0 for the end index, <0 for the start index, >0 for the nearest index.
 */
-int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_type, int dim_size, char *value, int want_start, int *valorder ,int *coord_index){
+int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_type, int dim_size, char *value, int want_start, double offset, int *valorder ,int *coord_index){
 	if(!ncid || !dim_size || !value || !coord_index || !valorder){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_NC_ERROR;
@@ -2989,12 +2989,14 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 		binary_dim = (void*)malloc(sizeof(int)*dim_size);
 
 		if ((retval = nc_get_var_int(ncid, dim_id, (int*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
 		}
 		int *array_val = binary_dim, value_ = (int)(strtol(value, (char **) NULL, 10));
+		if (offset)
+			value_ += (int)(want_start ? -offset : offset);
 		//Check order of dimension values
 		if(array_val[0] > array_val[dim_size-1])	//Descending
 			order = 0;
@@ -3049,12 +3051,14 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 		binary_dim = (void*)malloc(sizeof(char)*dim_size);
 
 		if ((retval = nc_get_var_uchar(ncid, dim_id, (unsigned char*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
 		}
 		char *array_val = binary_dim, value_ = (char)(strtol(value, (char **) NULL, 10));
+		if (offset)
+			value_ += (char)(want_start ? -offset : offset);
 		//Check order of dimension values
 		if(array_val[0] > array_val[dim_size-1])	//Descending
 			order = 0;
@@ -3109,12 +3113,14 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 		binary_dim = (void*)malloc(sizeof(short)*dim_size);
 
 		if ((retval = nc_get_var_short(ncid, dim_id, (short*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
 		}
 		short *array_val = binary_dim, value_ = (short)(strtol(value, (char **) NULL, 10));
+		if (offset)
+			value_ += (short)(want_start ? -offset : offset);
 		//Check order of dimension values
 		if(array_val[0] > array_val[dim_size-1])	//Descending
 			order = 0;
@@ -3169,12 +3175,14 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 		binary_dim = (void*)malloc(sizeof(float)*dim_size);
 
 		if ((retval = nc_get_var_float(ncid, dim_id, (float*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
 		}
 		float *array_val = binary_dim, value_ = (float) (strtof(value, NULL));
+		if (offset)
+			value_ += (float)(want_start ? -offset : offset);
 		//Check order of dimension values
 		if(array_val[0] > array_val[dim_size-1])	//Descending
 			order = 0;
@@ -3225,12 +3233,14 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 		binary_dim = (void*)malloc(sizeof(double)*dim_size);
 
 		if ((retval = nc_get_var_double(ncid, dim_id, (double*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
 		}
 		double *array_val = binary_dim, value_ = (double) (strtod(value, NULL));
+		if (offset)
+			value_ += want_start ? -offset : offset;
 		//Check order of dimension values
 		if(array_val[0] > array_val[dim_size-1])	//Descending
 			order = 0;
@@ -3282,12 +3292,14 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 		binary_dim = (void*)malloc(sizeof(long long)*dim_size);
 
 		if ((retval = nc_get_var_longlong(ncid, dim_id, (long long*)binary_dim))){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 			free(binary_dim);
 			return OPH_NC_ERROR;
 		}
 		long long *array_val = binary_dim, value_ = (long long) (strtoll(value, (char **) NULL, 10));
+		if (offset)
+			value_ += (long long)(want_start ? -offset : offset);
 		//Check order of dimension values
 		if(array_val[0] > array_val[dim_size-1])	//Descending
 			order = 0;
@@ -3402,19 +3414,19 @@ int oph_nc_get_nc_var(int id_container , const char var_name[OPH_ODB_CUBE_MEASUR
 
 	//Get id from dimension name
   	if((retval = nc_inq_varid(ncid, var_name, &(var->varid)))){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 		return OPH_NC_ERROR;
 	}
 
 	//Get information from id
 	if((retval = nc_inq_vartype(ncid, var->varid, &(var->vartype)))){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 		return OPH_NC_ERROR;
 	}
 	if((retval = nc_inq_varndims(ncid, var->varid, &(var->ndims)))){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 		return OPH_NC_ERROR;
 	}
@@ -3432,7 +3444,7 @@ int oph_nc_get_nc_var(int id_container , const char var_name[OPH_ODB_CUBE_MEASUR
 		return OPH_NC_ERROR;
   	}
 	if((retval = nc_inq_vardimid(ncid, var->varid, var->dims_id))){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 		return OPH_NC_ERROR;
 	}
@@ -3445,7 +3457,7 @@ int oph_nc_get_nc_var(int id_container , const char var_name[OPH_ODB_CUBE_MEASUR
   	}
 
 	if((retval = nc_inq_dimlen(ncid, var->dims_id[0], &(var->dims_length[0])))){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval) );
 		return OPH_NC_ERROR;
 	}

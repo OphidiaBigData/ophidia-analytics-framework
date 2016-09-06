@@ -10,7 +10,7 @@ Send commands or data to an interactive task (&quot;OPH_WAIT&quot;). Set paramet
       
 [Parameters]
 - id : workflow identifier. By default the hosting workflow is selected. The target workflow must have been submitted in the same session.
-- taskname : name of the intereactive task. By default it is set to &quot;Task 0&quot;.
+- taskname : name of the intereactive task. By default it is set to &quot;Task 0&quot; and it can be automatically set to the interactive task of target workflow if it unique.
 - action : name of the command to be sent to the interactive task. Use:
 	&quot;continue&quot; to unlock the task (default);
 	&quot;abort&quot; to abort the task;
@@ -29,7 +29,7 @@ SUBMISSION STRING: &quot;operator=oph_input;key=var;value=10;id=1;taskname=examp
     </info>
     <args>
 	<argument type="int" mandatory="no" default="@OPH_WORKFLOW_ID" minvalue="1">id</argument>
-	<argument type="string" mandatory="yes">taskname</argument>
+	<argument type="string" mandatory="no" default="Task 0">taskname</argument>
 	<argument type="string" mandatory="no" default="continue" values="continue|abort|wait">action</argument>
 	<argument type="string" mandatory="no" default="-">key</argument>
 	<argument type="string" mandatory="no" default="-">value</argument>

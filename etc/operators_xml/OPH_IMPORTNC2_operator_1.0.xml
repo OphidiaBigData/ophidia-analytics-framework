@@ -60,6 +60,7 @@ WARNING: It imports only mono-dimensional coordinate variables.
 - subset_type : if set to &quot;index&quot; (default), the subset_filter is considered on dimension index. 
                 With &quot;coord&quot;, filter is considered on dimension values.
 - time_filter : enable filters using dates for time dimensions; enabled by default.
+- offset : it is added to the bounds of subset intervals defined with &quot;subset_filter&quot; in case of &quot;coord&quot; filter type is used.
 - exp_concept_level: concept level short name (must be a single char) of explicit dimensions. Default value is &quot;c&quot;
 				  Multiple-value field: list of concept levels separated by &quot;|&quot; can be provided. 
 				  Must be the same number of &quot;exp_dim&quot;
@@ -134,6 +135,7 @@ SUBMISSION STRING: &quot;operator=oph_importnc2;cwd=/session-code1;container=con
 		<argument type="string" mandatory="no" default="index" values="index|coord">subset_type</argument>
 		<argument type="string" mandatory="no" default="all">subset_filter</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">time_filter</argument>
+		<argument type="real" mandatory="no" default="0">offset</argument>
 		<argument type="string" mandatory="no" default="c">exp_concept_level</argument>
 		<argument type="string" mandatory="no" default="c">imp_concept_level</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">compressed</argument>
