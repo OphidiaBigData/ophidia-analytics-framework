@@ -664,7 +664,7 @@ int task_execute (oph_operator_struct *handle)
 
 		// Real parsing
 		subset_struct[d]=0;
-		if (oph_subset_value_to_index(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d], dim_row, dim_size[d][dim_number[d]-1], dim[l].dimension_type, temp, &subset_struct[d]))
+		if (oph_subset_value_to_index(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d], dim_row, dim_size[d][dim_number[d]-1], dim[l].dimension_type, 0, temp, &subset_struct[d]))
 		{
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot convert the subset '%s' into a subset expressed as indexes.\n",((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d]);
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_PARSE_ERROR, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d]);

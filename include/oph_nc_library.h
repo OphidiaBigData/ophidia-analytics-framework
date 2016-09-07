@@ -233,11 +233,12 @@ int oph_nc_get_dim_array2(int id_container, int ncid, int dim_id, const char dim
  * \param dim_size Size of the dimension to consider
  * \param value String that contains the numeric value
  * \param want_start 1 if the value I'm searching for is the start index, 0 otherwise
+ * \param offset Added to bounds of subset intervals to extend them
  * \param order Return value containing 1 if the order of the dimension values is ascending, 0 otherwise
  * \param coord_index Index of the first value greater than "value"
  * \return 0 if successfull
  */
-int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_type, int dim_size, char *value, int want_start, int *order, int *coord_index);
+int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_type, int dim_size, char *value, int want_start, double offset, int *order, int *coord_index);
 
 /**
  * \brief Compare nc type with c type

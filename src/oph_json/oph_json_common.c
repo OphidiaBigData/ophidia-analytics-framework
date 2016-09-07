@@ -1722,6 +1722,7 @@ int _oph_json_to_json_file(oph_json *json, char *filename, char **jstring)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_IO_ERROR, filename);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_IO_ERROR, filename);
 		free(*jstring);
+		*jstring = NULL;
 		return OPH_JSON_IO_ERROR;
 	}
 	fprintf(fp,"%s\n",*jstring);

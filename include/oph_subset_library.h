@@ -87,7 +87,7 @@ unsigned long long oph_subset_id_to_index(unsigned long long id, unsigned long l
 unsigned long long oph_subset_id_to_index2(unsigned long long id, unsigned long long block_size, unsigned long long max);
 
 // Translate values to index for subset string
-int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long long data_size, char* data_type, char* out_cond, oph_subset** out_subset);
+int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long long data_size, char* data_type, double offset, char* out_cond, oph_subset** out_subset);
 
 #endif /* __OPH_SUBSET_H__*/
 

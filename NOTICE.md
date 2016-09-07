@@ -72,3 +72,10 @@ http://www.apache.org/licenses/
 <b>Note</b>:</br>
 This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit.
 
+=====================================================================
+
+<b>Acknowledgement</b>:</br>
+This software has been also supported by:
+
+- the Horizon 2020 Framework Programme through the INDIGO-DataCloud Project, RIA-653549
+

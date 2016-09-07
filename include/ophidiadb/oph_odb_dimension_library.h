@@ -323,4 +323,14 @@ int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb *oDB, in
  */
 int oph_odb_dim_set_time_dimension(ophidiadb *oDB, int id_datacube, char* dimension_name);
 
+/**
+ * \brief Function to update dimension data with time-specific attributes
+ * \brief dim Dimension structure to be updated
+ * \brief templates Attribute template
+ * \brief values Attribute values
+ * \brief nattr Number of attributes
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_dim_update_time_dimension(oph_odb_dimension *dim, char **templates, char** values, int nattr);
+
 #endif /* __OPH_ODB_DIM_H__ */

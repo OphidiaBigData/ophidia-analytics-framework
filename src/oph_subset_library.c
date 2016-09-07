@@ -57,7 +57,7 @@ int oph_subset_double_init(oph_subset_double** subset)
 	return OPH_SUBSET_LIB_OK;
 }
 
-int oph_subset_double_parse(const char* cond, unsigned long long len, oph_subset_double* subset, double min, double max)
+int oph_subset_double_parse(const char* cond, unsigned long long len, oph_subset_double* subset, double min, double max, double offset)
 {
 	char *result, *result2, temp0[OPH_SUBSET_LIB_MAX_STRING_LENGTH], temp1[OPH_SUBSET_LIB_MAX_STRING_LENGTH], temp2[OPH_SUBSET_LIB_MAX_STRING_LENGTH], *next, *temp, *savepointer = NULL;
 	unsigned int number;
@@ -133,6 +133,22 @@ int oph_subset_double_parse(const char* cond, unsigned long long len, oph_subset
 					else subset->end[i] = strtod(result2,NULL);
 					subset->start[i] = subset->end[i];
 					subset->type[i] = OPH_SUBSET_LIB_SINGLE;
+					if (offset)
+					{
+						subset->start[i] -= offset;
+						subset->end[i] += offset;
+						if (min)
+						{
+							if (subset->start[i] < min) subset->start[i] = min;
+							if (subset->end[i] < min) subset->end[i] = min;
+						}
+						if (max)
+						{
+							if (subset->start[i] > max) subset->start[i] = max;
+							if (subset->end[i] > max) subset->end[i] = max;
+						}
+						if (subset->start[i] != subset->end[i]) subset->type[i] = OPH_SUBSET_LIB_INTERVAL;
+					}
 					break;
 				case 1:
 					if (!strncasecmp(result2,OPH_SUBSET_LIB_PARAM_BEGIN,strlen(OPH_SUBSET_LIB_PARAM_BEGIN)))
@@ -151,6 +167,12 @@ int oph_subset_double_parse(const char* cond, unsigned long long len, oph_subset
 					}
 					else subset->end[i] = strtod(result2,NULL);
 					subset->type[i] = OPH_SUBSET_LIB_INTERVAL;
+					if (offset)
+					{
+						subset->end[i] += offset;
+						if (min && (subset->end[i] < min)) subset->end[i] = min;
+						if (max && (subset->end[i] > max)) subset->end[i] = max;
+					}
 					break;
 				default:
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong input data: too many '%s' in subset\n",OPH_SUBSET_LIB_PARAM_SEPARATOR);
@@ -443,7 +465,7 @@ int oph_subset_double_free(oph_subset_double* subset)
 	return OPH_SUBSET_LIB_OK;
 }
 
-int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long long data_size, char* data_type, char* out_cond, oph_subset** out_subset)
+int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long long data_size, char* data_type, double offset, char* out_cond, oph_subset** out_subset)
 {
 	if (!in_cond || !data || !data_size || !data_type || !out_cond)
 	{
@@ -493,7 +515,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 
 	oph_subset_double* subset_double;
 	if (oph_subset_double_init(&subset_double)) return OPH_SUBSET_LIB_SYSTEM_ERR;
-	if (oph_subset_double_parse(in_cond, strlen(in_cond), subset_double, min, max)) return OPH_SUBSET_LIB_DATA_ERR;
+	if (oph_subset_double_parse(in_cond, strlen(in_cond), subset_double, min, max, offset)) return OPH_SUBSET_LIB_DATA_ERR;
 	
 	oph_subset* subset;
 	oph_subset_init(&subset);

@@ -19,7 +19,7 @@
 #ifndef __OPH_ODB_META_QUERY_H__
 #define __OPH_ODB_META_QUERY_H__
 
-#define MYSQL_QUERY_META_RETRIEVE_METADATAKEY_LIST 			"SELECT idkey, label, variable, required FROM metadatakey WHERE idvocabulary=%d ORDER BY idkey ASC;"
+#define MYSQL_QUERY_META_RETRIEVE_METADATAKEY_LIST 			"SELECT idkey, label, variable, required, template FROM metadatakey WHERE idvocabulary=%d ORDER BY idkey ASC;"
 #define MYSQL_QUERY_META_RETRIEVE_METADATAINSTANCE			"SELECT idmetadatainstance FROM metadatainstance WHERE idmetadatainstance = %d AND iddatacube = %d;"
 #define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE 	"INSERT INTO `metadatainstance` (`iddatacube`, `idkey`, `idtype`, `value`) VALUES (%d, %d, %d, '%s')"
 #define MYSQL_QUERY_META_UPDATE_OPHIDIADB_MANAGE 			"INSERT INTO `manage` (`iduser`, `idmetadatainstance` ) VALUES (%d, %d)"

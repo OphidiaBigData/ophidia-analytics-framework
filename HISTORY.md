@@ -1,4 +1,33 @@
 
+## v0.10.5 - 2016-08-24
+
+### Fixed
+
+- OPH_SUBSET2 and OPH_EXPLORECUBE to handle empty cubes
+- Bug [#6](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/6)
+- Memory leak in OPH_EXPORTNC2
+- Bug in setting metadata keys when measure is changed by the operator
+- Bug in export metadata when more cores are used in OPH_EXPORTNC2
+- Several warnings when building
+
+### Added:
+
+- Priority field to select the hosts to be used for cube creation
+- base folder (BASE_SRC_PATH) for files admitted to be imported
+- Support for base64 encoding in OPH_CUBESCHEMA and OPH_EXPLORECUBE
+- Support for selection statement (INDIGO-DataCloud Project)
+
+### Changed:
+
+- Pre-processing of src_path of OPH_IMPORTNCx
+- OPH_SCRIPT in order to execute only pre-registered scripts
+
+## v0.10.1 - 2016-06-27
+
+### Fixed:
+ 
+- Version number in files
+
 ## v0.10.0 - 2016-06-23
 
 ### Fixed:

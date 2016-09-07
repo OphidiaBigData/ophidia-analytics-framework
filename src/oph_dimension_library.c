@@ -37,9 +37,6 @@
 #include <mysql.h>
 #include "debug.h"
 
-#define OPH_DIM_SUBSET_SEPARATOR ",_"
-#define OPH_DIM_SUBSET_SEPARATOR2 ':'
-
 extern int msglevel;
 
 char oph_dim_typeof(char* dimension_type)
@@ -185,7 +182,7 @@ int oph_date_to_day(int y, int m, int d, long long* g, oph_odb_dimension* dim)
 	}
 	else if (!strncmp(dim->calendar,OPH_DIM_TIME_CALENDAR_360_DAY,OPH_ODB_DIM_TIME_SIZE))
 	{
-		*g = 360L*y + 12L*( m - 1 ) + ( d - 1 );
+		*g = 360L*y + 30L*( m - 1 ) + ( d - 1 );
 	}
 	else if (!strncmp(dim->calendar,OPH_DIM_TIME_CALENDAR_NO_LEAP,OPH_ODB_DIM_TIME_SIZE))
 	{
@@ -650,7 +647,7 @@ int oph_dim_parse_time_subset(const char* subset_string, oph_odb_dimension* dim,
 		case 'h': scaling_factor *= 60.0;
 		case 'm': scaling_factor *= 60.0;
 		case 's': break;
-		default: pmesg(LOG_WARNING, __FILE__, __LINE__, "Unrecognized or unsupported units\n");
+		default: pmesg(LOG_WARNING, __FILE__, __LINE__, "Unrecognized or unsupported units in '%s'\n", dim->units);
 	}
 
 	int n,nn,nnn;

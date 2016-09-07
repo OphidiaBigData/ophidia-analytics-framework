@@ -30,62 +30,68 @@
 
 int msglevel = LOG_WARNING_T;
 
-int main (int argc, char *argv[])
-{
-  fprintf(stdout,"%s",OPH_VERSION);
-  fprintf(stdout,"%s",OPH_DISCLAIMER);
+int main (int argc, char *argv[]) {
 
-  if (argc != 2) {
-    printf("USAGE: ./oph_analytics_framework \"operator=value;param=value;...\"\n");
-    return 0;
-  }
+	//Initialize environment
+	int size, myrank, res = -1;
+	MPI_Init(&argc, &argv);
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
-  if (!strcmp(argv[1],"-v")) {
-    return 0;
-  }
+	if (!myrank) {
+		fprintf(stdout,"%s%s",OPH_VERSION,OPH_DISCLAIMER);
+	}
 
-  if (!strcmp(argv[1],"-x")) {
-    fprintf(stdout,"%s",OPH_WARRANTY);
-    return 0;
-  }
+	if (argc != 2) {
+		if (!myrank) fprintf(stdout, "USAGE: ./oph_analytics_framework \"operator=value;param=value;...\"\n");
+		res = 0;
+	}
 
-  if (!strcmp(argv[1],"-z")) {
-    fprintf(stdout,"%s",OPH_CONDITIONS);
-    return 0;
-  }
+	if (!strcmp(argv[1],"-v")) {
+		res = 0;
+	}
 
-  //Initialize environment
-  int size, myrank, res;
-  struct timeval start_time, end_time, total_time;
-  MPI_Init(&argc, &argv);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  MPI_Comm_rank(MPI_COMM_WORLD, &myrank);	
+	if (!strcmp(argv[1],"-x")) {
+		if (!myrank) fprintf(stdout,"%s",OPH_WARRANTY);
+		res = 0;
+	}
+
+	if (!strcmp(argv[1],"-z")) {
+		if (!myrank) fprintf(stdout,"%s",OPH_CONDITIONS);
+		res = 0;
+	}
+
+	if (res)
+	{
+		struct timeval start_time, end_time, total_time;
 
 #ifdef OPH_PARALLEL_LOCATION
-  char log_prefix[OPH_COMMON_BUFFER_LEN];
-  snprintf(log_prefix,OPH_COMMON_BUFFER_LEN, OPH_FRAMEWORK_LOG_PATH_PREFIX, OPH_PARALLEL_LOCATION);
-  set_log_prefix(log_prefix);
-  pmesg(LOG_DEBUG, __FILE__, __LINE__, "Set logging directory to '%s'\n",log_prefix);
+		char log_prefix[OPH_COMMON_BUFFER_LEN];
+		snprintf(log_prefix,OPH_COMMON_BUFFER_LEN, OPH_FRAMEWORK_LOG_PATH_PREFIX, OPH_PARALLEL_LOCATION);
+		set_log_prefix(log_prefix);
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "Set logging directory to '%s'\n",log_prefix);
 #endif
 
-  if(myrank == 0)
-    gettimeofday(&start_time, NULL);
-  
-  char task_string[OPH_COMMON_BUFFER_LEN];
-  strncpy(task_string,argv[1],OPH_COMMON_BUFFER_LEN);
+		if(!myrank)
+			gettimeofday(&start_time, NULL);
 
-  if((res = oph_af_execute_framework(task_string, size, myrank)))
-  {
-    pmesg(LOG_ERROR, __FILE__, __LINE__, "Framework execution failed! ERROR: %d\n",res);
-  }
+		char task_string[OPH_COMMON_BUFFER_LEN];
+		strncpy(task_string,argv[1],OPH_COMMON_BUFFER_LEN);
 
-  MPI_Barrier(MPI_COMM_WORLD);
-  if(myrank == 0){
-    gettimeofday(&end_time, NULL);
-    timeval_subtract(&total_time, &end_time, &start_time);
-    printf("Proc %d:  Total execution:\t Time %d,%06d sec\n", myrank, (int)total_time.tv_sec, (int)total_time.tv_usec);
-  }
+		if((res = oph_af_execute_framework(task_string, size, myrank))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Framework execution failed! ERROR: %d\n",res);
+		}
 
-  MPI_Finalize();
-  return 0;
-}  
+		MPI_Barrier(MPI_COMM_WORLD);
+		if(!myrank) {
+			gettimeofday(&end_time, NULL);
+			timeval_subtract(&total_time, &end_time, &start_time);
+			printf("Proc %d: Total execution:\t Time %d,%06d sec\n", myrank, (int)total_time.tv_sec, (int)total_time.tv_usec);
+		}
+	}
+
+	MPI_Finalize();
+
+	return 0;
+}
+
