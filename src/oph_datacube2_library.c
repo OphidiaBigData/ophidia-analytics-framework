@@ -1746,7 +1746,7 @@ int oph_dc2_get_total_number_of_rows_in_fragment(oph_ioserver_handler *server, o
 	int n;
 
 	char select_query[QUERY_BUFLEN];
-	n =  snprintf(select_query, QUERY_BUFLEN, OPH_DC_SQ_COUNT_ROWS_FRAG, data_type, frag->fragment_name);
+	n =  snprintf(select_query, QUERY_BUFLEN, OPH_DC_SQ_COUNT_ROWS_FRAG, frag->fragment_name);
 	if(n >= QUERY_BUFLEN)
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
