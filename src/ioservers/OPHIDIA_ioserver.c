@@ -48,7 +48,7 @@ int _ophidiaio_connect (oph_ioserver_handler *handle, oph_ioserver_params* conn_
 
 	char port[16];
 	sprintf(port,"%d",conn_params->port);
-	if (oph_io_client_connect(conn_params->host, port, (oph_io_client_connection **) connection)){
+	if (oph_io_client_connect(conn_params->host, port, conn_params->db_name, handle->server_subtype, (oph_io_client_connection **) connection)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_OPHIDIAIO_CONN_ERROR);
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_OPHIDIAIO_CONN_ERROR);
 		return OPHIDIAIO_IO_ERROR;
