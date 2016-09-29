@@ -1503,26 +1503,25 @@ int oph_dc2_read_fragment_data(oph_ioserver_handler *server, oph_odb_fragment *f
 	}
 	else if (!array_clause) // Real raw
 	{
-		if (data_type && !strcasecmp(data_type,  OPH_DC2_BIT_TYPE)){
-#ifdef OPH_DEBUG_MYSQL
-      printf("ORIGINAL QUERY: "MYSQL_DC_READ_RAW_FRAG2"\n", compressed ? "oph_bit_export('','OPH_INT',oph_uncompress('','',measure))" : "oph_bit_export('','OPH_INT',measure)", frag->fragment_name);
-#endif
+		if (data_type && !strcasecmp(data_type,  OPH_DC2_BIT_TYPE)) {
+			#ifdef OPH_DEBUG_MYSQL
+			printf("ORIGINAL QUERY: "MYSQL_DC_READ_RAW_FRAG2"\n", compressed ? "oph_bit_export('','OPH_INT',oph_uncompress('','',measure))" : "oph_bit_export('','OPH_INT',measure)", frag->fragment_name);
+			#endif
 			n =  snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_FRAG2"\n", compressed ? "oph_bit_export('','OPH_INT',oph_uncompress('','',measure))" : "oph_bit_export('','OPH_INT',measure)", frag->fragment_name);
-    }
-		else
-		{
+		}
+		else {
 			if(compressed){
-#ifdef OPH_DEBUG_MYSQL
-        printf("ORIGINAL QUERY: "MYSQL_DC_READ_RAW_COMPRESSED_FRAG"\n", frag->fragment_name);
-#endif
+				#ifdef OPH_DEBUG_MYSQL
+				printf("ORIGINAL QUERY: "MYSQL_DC_READ_RAW_COMPRESSED_FRAG"\n", frag->fragment_name);
+				#endif
 				n =  snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG, frag->fragment_name);
 			}
-      else{
-#ifdef OPH_DEBUG_MYSQL
-        printf("ORIGINAL QUERY: "MYSQL_DC_READ_RAW_FRAG"\n", frag->fragment_name);
-#endif
+			else{
+				#ifdef OPH_DEBUG_MYSQL
+				printf("ORIGINAL QUERY: "MYSQL_DC_READ_RAW_FRAG"\n", frag->fragment_name);
+				#endif
 				n =  snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_FRAG, frag->fragment_name);
-      }
+			}
 		}	
 	}
 	else // Raw adapted to inspect cube
