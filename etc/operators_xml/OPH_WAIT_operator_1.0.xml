@@ -31,6 +31,7 @@ The task can be unlocked by means of the command &quot;OPH_INPUT&quot;.
 - value : value of the parameter. It can be accessed with @key or @{key}. More values are allowed, one for each key.
 - filename : name of the file to be checked (only for type &quot;file&quot;).
 - message : this user-defined message is appended to response in order to notify the waiting reason.
+- run : set to yes (default) to wait effectively
 
 [Examples]
 Wait for 200 seconds:
@@ -49,5 +50,6 @@ SUBMISSION STRING: &quot;operator=oph_wait;timeout=200;&quot;</abstract>
 	<argument type="string" mandatory="no" default="-">value</argument>
 	<argument type="string" mandatory="no" default="-">filename</argument>
 	<argument type="string" mandatory="no" default="-">message</argument>
+	<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
     </args>
 </operator>
