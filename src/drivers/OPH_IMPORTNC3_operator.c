@@ -750,7 +750,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   int number_of_dim_clevels = 0;
 
   //Open netcdf file
-  int retval, j;
+  int retval, j = 0;
   if ((retval = nc_open(((OPH_IMPORTNC3_operator_handle*)handle->operator_handle)->nc_file_path, NC_NOWRITE, &(((OPH_IMPORTNC3_operator_handle*)handle->operator_handle)->ncid)))) {
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTNC3_operator_handle*)handle->operator_handle)->nc_file_path, nc_strerror(retval));
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_OPEN_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
