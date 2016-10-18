@@ -10,10 +10,14 @@ Stop the execution of a running workflow.
 
 [Parameters]
 - id : identifier of the workflow to be stopped.
+- type : use one of the following types:
+	&quot;kill&quot;: workflow and submitted tasks are aborted (default);
+	&quot;abort&quot;: workflow and pending tasks are aborted, running tasks continue;
+	&quot;stop&quot;: workflow is aborted, submitted tasks continue.
 
 [System parameters]
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
-                  service : show result data as text.
+                  cancel : show result data as text.
         
 [Examples]       
 Cancel the workflow 1:
@@ -26,6 +30,7 @@ SUBMISSION STRING: &quot;operator=oph_cancel;id=1;&quot;</abstract>
     </info>
     <args>
 	<argument type="int" mandatory="yes" minvalue="1">id</argument>
+	<argument type="string" mandatory="no" default="kill" values="kill|abort|stop">type</argument>
 	<argument type="string" mandatory="no" default="all" values="all|none|cancel">objkey_filter</argument>
     </args>
 </operator>

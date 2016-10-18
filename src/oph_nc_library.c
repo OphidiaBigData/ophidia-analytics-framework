@@ -1989,57 +1989,39 @@ int oph_nc_get_row_from_nc(int ncid, int array_length, NETCDF_var *measure, unsi
 	}
 	*row = NULL;
 
-	char type_flag = '\0';
-	unsigned long sizeof_var = 0;
+	int res;
+	char type_flag = '\0', *binary = NULL;
 	switch( measure->vartype )
 	{
 		case NC_BYTE:
 		case NC_CHAR:
 			type_flag = OPH_NC_BYTE_FLAG;
-			sizeof_var = (array_length)*sizeof(char);
+			res = oph_iob_bin_array_create_b(&binary, array_length);
 			break;
 		case NC_SHORT:
 			type_flag = OPH_NC_SHORT_FLAG;
-			sizeof_var = (array_length)*sizeof(short);
+			res = oph_iob_bin_array_create_s(&binary, array_length);
 			break;
 		case NC_INT:
 			type_flag = OPH_NC_INT_FLAG;
-			sizeof_var = (array_length)*sizeof(int);
+			res = oph_iob_bin_array_create_i(&binary, array_length);
 			break;
 		case NC_INT64:
 			type_flag = OPH_NC_LONG_FLAG;
-			sizeof_var = (array_length)*sizeof(long long);
+			res = oph_iob_bin_array_create_l(&binary, array_length);
 			break;
 		case NC_FLOAT:
 			type_flag = OPH_NC_FLOAT_FLAG;
-			sizeof_var = (array_length)*sizeof(float);
+			res = oph_iob_bin_array_create_f(&binary, array_length);
 			break;
 		case NC_DOUBLE:
 			type_flag = OPH_NC_DOUBLE_FLAG;
-			sizeof_var = (array_length)*sizeof(double);
+			res = oph_iob_bin_array_create_d(&binary, array_length);
 			break;
 		default:
 			type_flag = OPH_NC_DOUBLE_FLAG;
-			sizeof_var = (array_length)*sizeof(double);
+			res = oph_iob_bin_array_create_d(&binary, array_length);
 	}
-
-	//Create binary array
-	char* binary = 0;
-	int res;
-	if(type_flag == OPH_NC_BYTE_FLAG)
-		res = oph_iob_bin_array_create_b(&binary, array_length);
-	else if(type_flag == OPH_NC_SHORT_FLAG)
-		res = oph_iob_bin_array_create_s(&binary, array_length);
-	else if(type_flag == OPH_NC_INT_FLAG)
-		res = oph_iob_bin_array_create_i(&binary, array_length);
-	else if(type_flag == OPH_NC_LONG_FLAG)
-		res = oph_iob_bin_array_create_l(&binary, array_length);
-	else if(type_flag == OPH_NC_FLOAT_FLAG)
-		res = oph_iob_bin_array_create_f(&binary, array_length);
-	else if(type_flag == OPH_NC_DOUBLE_FLAG)
-		res = oph_iob_bin_array_create_d(&binary, array_length);
-	else
-		res = oph_iob_bin_array_create_d(&binary, array_length);
 	if(res){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array creation: %d\n", res);
 		free(binary);

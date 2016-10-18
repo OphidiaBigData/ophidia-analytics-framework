@@ -193,6 +193,15 @@ int oph_odb_cube_set_datacube_size(ophidiadb *oDB, int id_datacube, long long in
 int oph_odb_cube_retrieve_datacube(ophidiadb *oDB, int id_datacube, oph_odb_datacube *cube);
 
 /**
+ * \brief Function to retrieve datacube informations from OphidiaDB given the datacube name and container name
+ * \param oDB Pointer to the OphidiaDB
+ * \param id_datacube ID of the datacube to be found
+ * \param cube Pointer datacube to be filled
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_cube_retrieve_datacube_with_ordered_partitions(ophidiadb *oDB, int id_datacube, oph_odb_datacube *cube);
+
+/**
  * \brief Function to retrieve source informations from OphidiaDB given the src id
  * \param oDB Pointer to the OphidiaDB
  * \param id_src ID of the source to be found

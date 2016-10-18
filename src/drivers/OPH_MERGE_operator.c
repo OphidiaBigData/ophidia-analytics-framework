@@ -310,7 +310,7 @@ int task_init (oph_operator_struct *handle)
 	int datacube_id = ((OPH_MERGE_operator_handle*)handle->operator_handle)->id_input_datacube;
 
 	//retrieve input datacube
-	if(oph_odb_cube_retrieve_datacube(oDB, datacube_id, &cube)){
+	if(oph_odb_cube_retrieve_datacube_with_ordered_partitions(oDB, datacube_id, &cube)){
 		oph_odb_cube_free_datacube(&cube);
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_DATACUBE_READ_ERROR );		
