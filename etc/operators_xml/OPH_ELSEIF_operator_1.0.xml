@@ -6,7 +6,7 @@
 Flow control.
 
 [Behaviour]
-Start anew sub-block of a selection block &quot;if&quot;.
+Start a new sub-block of a selection block &quot;if&quot;.
 
 [Parameters]
 - condition : boolean expression to be checked:

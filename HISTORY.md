@@ -1,4 +1,24 @@
 
+## v0.10.6 - 2016-10-20
+
+### Fixed
+
+- Bug in OPH_MERGE operator
+- Warnings when building
+
+### Added:
+
+- Argument to define type of operation in OPH_CANCEL XML file
+- Argument to define subset offset in OPH_IMPORTNCx and OPH_SUBSETx operators 
+- XML files for: OPH_INPUT and OPH_WAIT (INDIGO-DataCloud Project)
+- Support for time-based subsetting in OPH_IMPORTNCx operators
+
+### Changed:
+
+- OPH_STATUS_START_ERROR to OPH_STATUS_RUNNING_ERROR
+- OPH_FOR and OPH_SET input parameter "name" to "key" 
+- Constraints on bounds when selecting part of a NC variable
+
 ## v0.10.5 - 2016-08-24
 
 ### Fixed

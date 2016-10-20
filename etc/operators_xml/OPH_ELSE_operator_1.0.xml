@@ -6,7 +6,7 @@
 Flow control.
 
 [Behaviour]
-Start the last sub-block of a selection block &quot;for&quot;.
+Start the last sub-block of a selection block &quot;if&quot;.
       
 </abstract>
         <author>CMCC Foundation</author>
