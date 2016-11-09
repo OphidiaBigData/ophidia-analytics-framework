@@ -321,6 +321,24 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MEMORY_ERROR_INPUT, "output path");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	  }
+		char *pointer = ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->output_path;
+		while (pointer && (*pointer == ' ')) pointer++;
+		if (pointer && (*pointer != '/'))
+		{
+			if (oph_pid_get_base_src_path(&value)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->id_input_container, "Unable to read base src_path\n" );
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			if (value)
+			{
+				char tmp[OPH_COMMON_BUFFER_LEN];
+				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value, pointer);
+				free(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->output_path);
+				((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->output_path = strdup(tmp);
+				free(value);
+			}
+		}
 	  ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->output_path_user_defined = 1;
   }
 

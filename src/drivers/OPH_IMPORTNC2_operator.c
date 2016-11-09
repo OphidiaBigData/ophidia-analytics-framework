@@ -629,21 +629,23 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	}
 	if (!strstr(((OPH_IMPORTNC2_operator_handle*)handle->operator_handle)->nc_file_path,"http"))
 	{
-		if (oph_pid_get_base_src_path(&value)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONFIGURATION_FILE, container_name );
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
-		if (value)
+		char *pointer = ((OPH_IMPORTNC2_operator_handle*)handle->operator_handle)->nc_file_path;
+		while (pointer && (*pointer == ' ')) pointer++;
+		if (pointer && (*pointer != '/'))
 		{
-			if (*(((OPH_IMPORTNC2_operator_handle*)handle->operator_handle)->nc_file_path) != '/')
+			if (oph_pid_get_base_src_path(&value)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n" );
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			if (value)
 			{
 				char tmp[OPH_COMMON_BUFFER_LEN];
-				snprintf(tmp,OPH_COMMON_BUFFER_LEN,"%s/%s",value,((OPH_IMPORTNC2_operator_handle*)handle->operator_handle)->nc_file_path);
+				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value, pointer);
 				free(((OPH_IMPORTNC2_operator_handle*)handle->operator_handle)->nc_file_path);
 				((OPH_IMPORTNC2_operator_handle*)handle->operator_handle)->nc_file_path = strdup(tmp);
+				free(value);
 			}
-			free(value);
 		}
 	}
 
