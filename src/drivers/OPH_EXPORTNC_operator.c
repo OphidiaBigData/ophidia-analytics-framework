@@ -1218,12 +1218,7 @@ int task_execute(oph_operator_struct *handle)
 					retval = NC_EBADTYPE;
 					if (mvariable && ((retval = nc_inq_varid(ncid, mvariable, &varidp))))
 					{
-						if (retval == NC_ENOTVAR) // Skip metadata associated with collapsed variables
-						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable?mvariable:"", mkey, nc_strerror(retval));
-							logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable?mvariable:"", mkey, nc_strerror(retval));
-							retval = NC_NOERR;
-						}
+						if (retval == NC_ENOTVAR) retval = NC_NOERR; // Skip metadata associated with collapsed variables
 					}
 					else if (!strcmp(mtype,OPH_COMMON_METADATA_TYPE_TEXT)) retval = nc_put_att_text(ncid, mvariable ? varidp : NC_GLOBAL, mkey, strlen(mvalue), mvalue);
 					else if (!strcmp(mtype,OPH_COMMON_BYTE_TYPE))
