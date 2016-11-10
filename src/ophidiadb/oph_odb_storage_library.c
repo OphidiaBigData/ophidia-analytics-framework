@@ -1369,6 +1369,7 @@ int oph_odb_stge_find_instances_information(ophidiadb *oDB, int level, char *hos
 		n += snprintf(where_clause + n, MYSQL_BUFLEN,"partitionname = '%s' ", p3);
 		if(p4)
 			n += snprintf(where_clause + n,MYSQL_BUFLEN,"AND host.status ='%s' ", p4);
+		n += snprintf(where_clause + n, MYSQL_BUFLEN,"AND hidden = 0 ");
 	}
 
 	switch(level){
@@ -1820,7 +1821,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb *oDB, int fs_type, char
 
 	char selectQuery[MYSQL_BUFLEN];
 	//Select all up host that have at least dbmsxhost_number
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST, fs_type, ioserver_type, host_partition, fs_type, ioserver_type, dbmsxhost_number);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST, host_partition, fs_type, ioserver_type, host_partition, fs_type, ioserver_type, dbmsxhost_number);
 	if(n >= MYSQL_BUFLEN){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
