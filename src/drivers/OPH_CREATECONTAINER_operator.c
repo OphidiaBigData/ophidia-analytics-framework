@@ -476,22 +476,22 @@ int task_distribute(oph_operator_struct *handle)
 
 int task_execute(oph_operator_struct *handle)
 {
-  if (!handle || !handle->operator_handle){
-  	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, OPH_LOG_OPH_CREATECONTAINER_NULL_OPERATOR_HANDLE);
-	return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
-  }
+	if (!handle || !handle->operator_handle){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, OPH_LOG_OPH_CREATECONTAINER_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
 
-  //Only master process has to continue
-  if (handle->proc_rank != 0)
-	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+	//Only master process has to continue
+	if (handle->proc_rank != 0)
+		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-  char *container_name = ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->container_output;
-  int i, id_container_out = 0, container_unique = 0, num_of_input_dim = ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->number_of_dimensions, last_insertd_id = 0;
-  ophidiadb *oDB = &((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->oDB;
-  char *cwd = ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->cwd;
-  char *user = ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->user;
-  int id_vocabulary = ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_vocabulary;
+	char *container_name = ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->container_output;
+	int i, id_container_out = 0, container_unique = 0, num_of_input_dim = ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->number_of_dimensions, last_insertd_id = 0;
+	ophidiadb *oDB = &((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->oDB;
+	char *cwd = ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->cwd;
+	char *user = ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->user;
+	int id_vocabulary = ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_vocabulary;
 
 	int permission = 0;
 	int folder_id = 0;
@@ -509,12 +509,12 @@ int task_execute(oph_operator_struct *handle)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
-    if (!oph_odb_fs_is_allowed_name(container_name)) {
-        pmesg(LOG_ERROR, __FILE__, __LINE__, "%s not allowed for new folders/containers\n",container_name);
-        logging(LOG_ERROR,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,OPH_LOG_GENERIC_NAME_NOT_ALLOWED_ERROR,container_name);
-        return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
-    }
-    //Check if non-hidden container exists in folder
+	if (!oph_odb_fs_is_allowed_name(container_name)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "%s not allowed for new folders/containers\n",container_name);
+		logging(LOG_ERROR,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,OPH_LOG_GENERIC_NAME_NOT_ALLOWED_ERROR,container_name);
+		return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+	}
+	//Check if non-hidden container exists in folder
 	if((oph_odb_fs_is_unique(folder_id, container_name, oDB, &container_unique)))
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check output container\n");
@@ -528,41 +528,41 @@ int task_execute(oph_operator_struct *handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
-  oph_odb_db_instance db_;
-  oph_odb_db_instance *db = &db_;
-  if (oph_dim_load_dim_dbinstance(db))
-  {
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while loading dimension db paramters\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, OPH_LOG_OPH_CREATECONTAINER_DIM_LOAD );
-	oph_dim_unload_dim_dbinstance(db);
-	return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-  }
-  if (oph_dim_connect_to_dbms(db->dbms_instance, 0))
-  {
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while connecting to dimension dbms\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, OPH_LOG_OPH_CREATECONTAINER_DIM_CONNECT );
-	oph_dim_disconnect_from_dbms(db->dbms_instance);
-	oph_dim_unload_dim_dbinstance(db);
-	return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-  }
+	oph_odb_db_instance db_;
+	oph_odb_db_instance *db = &db_;
+	if (oph_dim_load_dim_dbinstance(db))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while loading dimension db paramters\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, OPH_LOG_OPH_CREATECONTAINER_DIM_LOAD );
+		oph_dim_unload_dim_dbinstance(db);
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+	if (oph_dim_connect_to_dbms(db->dbms_instance, 0))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while connecting to dimension dbms\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, OPH_LOG_OPH_CREATECONTAINER_DIM_CONNECT );
+		oph_dim_disconnect_from_dbms(db->dbms_instance);
+		oph_dim_unload_dim_dbinstance(db);
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
 
-  if (oph_dim_create_db(db))
-  {
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating dimension db\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, OPH_LOG_OPH_CREATECONTAINER_DB_CREATION );
-	oph_dim_disconnect_from_dbms(db->dbms_instance);
-	oph_dim_unload_dim_dbinstance(db);
-	return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-  }
+	if (oph_dim_create_db(db))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating dimension db\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, OPH_LOG_OPH_CREATECONTAINER_DB_CREATION );
+		oph_dim_disconnect_from_dbms(db->dbms_instance);
+		oph_dim_unload_dim_dbinstance(db);
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
 
-  if (oph_dim_use_db_of_dbms(db->dbms_instance, db))
-  {
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while opening dimension db\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, OPH_LOG_OPH_CREATECONTAINER_DIM_USE_DB );
-	oph_dim_disconnect_from_dbms(db->dbms_instance);
-	oph_dim_unload_dim_dbinstance(db);
-	return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-  }
+	if (oph_dim_use_db_of_dbms(db->dbms_instance, db))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while opening dimension db\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, OPH_LOG_OPH_CREATECONTAINER_DIM_USE_DB );
+		oph_dim_disconnect_from_dbms(db->dbms_instance);
+		oph_dim_unload_dim_dbinstance(db);
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
 
 	//If it doesn't then create new container and get last id
 	oph_odb_container cont;
@@ -609,50 +609,51 @@ int task_execute(oph_operator_struct *handle)
 		{
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert dimension.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_CREATECONTAINER_INSERT_DIMENSION_ERROR);
+			oph_odb_fs_delete_from_container_table(oDB, id_container_out);
 			oph_dim_disconnect_from_dbms(db->dbms_instance);
 			oph_dim_unload_dim_dbinstance(db);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 	}
 
-  char dimension_table_name[OPH_COMMON_BUFFER_LEN];
+	char dimension_table_name[OPH_COMMON_BUFFER_LEN];
+	snprintf(dimension_table_name,OPH_COMMON_BUFFER_LEN,OPH_DIM_TABLE_NAME_MACRO,((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container);
+	if (oph_dim_create_empty_table(db, dimension_table_name))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating dimension table\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, OPH_LOG_OPH_CREATECONTAINER_DIM_TABLE_CREATION_ERROR );
+		oph_odb_fs_delete_from_container_table(oDB, id_container_out);
+		oph_dim_disconnect_from_dbms(db->dbms_instance);
+		oph_dim_unload_dim_dbinstance(db);
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+	snprintf(dimension_table_name,OPH_COMMON_BUFFER_LEN,OPH_DIM_TABLE_LABEL_MACRO,((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container);
+	if (oph_dim_create_empty_table(db, dimension_table_name))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating dimension table\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, OPH_LOG_OPH_CREATECONTAINER_DIM_TABLE_CREATION_ERROR );
+		oph_odb_fs_delete_from_container_table(oDB, id_container_out);
+		oph_dim_disconnect_from_dbms(db->dbms_instance);
+		oph_dim_unload_dim_dbinstance(db);
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
 
-  snprintf(dimension_table_name,OPH_COMMON_BUFFER_LEN,OPH_DIM_TABLE_NAME_MACRO,((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container);
-  if (oph_dim_create_empty_table(db, dimension_table_name))
-  {
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating dimension table\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, OPH_LOG_OPH_CREATECONTAINER_DIM_TABLE_CREATION_ERROR );
 	oph_dim_disconnect_from_dbms(db->dbms_instance);
 	oph_dim_unload_dim_dbinstance(db);
-	return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-  }
 
-  snprintf(dimension_table_name,OPH_COMMON_BUFFER_LEN,OPH_DIM_TABLE_LABEL_MACRO,((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container);
-  if (oph_dim_create_empty_table(db, dimension_table_name))
-  {
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating dimension table\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, OPH_LOG_OPH_CREATECONTAINER_DIM_TABLE_CREATION_ERROR );
-	oph_dim_disconnect_from_dbms(db->dbms_instance);
-	oph_dim_unload_dim_dbinstance(db);
-	return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-  }
-
-  oph_dim_disconnect_from_dbms(db->dbms_instance);
-  oph_dim_unload_dim_dbinstance(db);
-
-  if(handle->proc_rank == 0)
-  {
 	//Master process print output container PID
 	char *tmp_uri = NULL;
 	if (oph_pid_get_uri(&tmp_uri) ){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve web server URI.\n");
 		logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, OPH_LOG_OPH_CREATECONTAINER_PID_URI_ERROR );
+		oph_odb_fs_delete_from_container_table(oDB, id_container_out);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	if(oph_pid_show_pid(((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, 0, tmp_uri)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to print PID string\n");
 		logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_CREATECONTAINER_operator_handle*)handle->operator_handle)->id_output_container, OPH_LOG_OPH_CREATECONTAINER_PID_SHOW_ERROR );
 		free(tmp_uri);
+		oph_odb_fs_delete_from_container_table(oDB, id_container_out);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -666,6 +667,7 @@ int task_execute(oph_operator_struct *handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 			logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD TEXT error\n");
 			free(tmp_uri);
+			oph_odb_fs_delete_from_container_table(oDB, id_container_out);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 	}
@@ -681,9 +683,8 @@ int task_execute(oph_operator_struct *handle)
 	handle->output_string = strdup(tmp_string);
 
 	free(tmp_uri);
-  }
 
-  return OPH_ANALYTICS_OPERATOR_SUCCESS;
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
 int task_reduce(oph_operator_struct *handle)
