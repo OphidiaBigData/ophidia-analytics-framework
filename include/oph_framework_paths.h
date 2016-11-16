@@ -48,7 +48,7 @@
 #define OPH_FRAMEWORK_LOG_PATH_WITH_PREFIX                      "%s/container_%d.log"
 #define OPH_FRAMEWORK_LOG_PATH_PREFIX                           "%s/log"
 #define OPH_FRAMEWORK_OPHIDIADB_CONF_FILE_PATH          	"%s/etc/oph_configuration"
-#define OPH_FRAMEWORK_DIMENSION_CONF_FILE_PATH          	"%s/etc/oph_dim_configuration"
+#define OPH_FRAMEWORK_DIMENSION_CONF_FILE_PATH          	"%s/etc/oph_configuration"
 #define OPH_FRAMEWORK_SOAP_CONF_FILE_PATH			"%s/etc/oph_soap_configuration"
 #define OPH_FRAMEWORK_SCRIPT_CONF_FILE_PATH			"%s/etc/oph_script_configuration"
 

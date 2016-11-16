@@ -26,6 +26,7 @@
 #include <string.h>
 #include <strings.h>
 
+#include <ctype.h>
 #include <mysql.h>
 #include "debug.h"
 
@@ -40,97 +41,98 @@ int oph_odb_read_ophidiadb_config_file(ophidiadb *oDB)
 
 	char config[OPH_ODB_PATH_LEN];
   	snprintf(config, sizeof(config), OPH_ODB_DBMS_CONFIGURATION, OPH_ANALYTICS_LOCATION);
-    FILE *file = fopen(config, "r");
-    if(file == NULL)
-    {
-            pmesg(LOG_ERROR, __FILE__, __LINE__, "Configuration file not found\n");
+	FILE *file = fopen(config, "r");
+	if(file == NULL)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Configuration file not found\n");
+		return OPH_ODB_ERROR;
+	}
+
+	unsigned int i;
+	char *argument = NULL;
+	char *argument_value = NULL;
+	int argument_length = 0;
+	char *result = NULL;
+	char line[OPH_ODB_BUFFER_LEN] = {'\0'};
+	while (!feof (file))
+	{
+		result = fgets (line, OPH_ODB_BUFFER_LEN, file);
+		if (!result) {
+			if (ferror (file)) {
+				fclose (file);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read file line from %s\n", OPH_ODB_BUFFER_LEN );
+				return OPH_ODB_ERROR;
+			} else {
+				break;
+			}
+		}
+
+		/* Remove trailing newline */
+		if (line[strlen(line) - 1] == '\n')
+			line[strlen(line) - 1] = '\0';
+
+		/* Skip comment lines */
+		if (line[0] == '#') {
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Read comment line: %s\n", line );
+			continue;
+		}
+
+		/* Check if line contains only spaces */
+		for(i = 0; (i < strlen(line)) && (i < OPH_ODB_BUFFER_LEN); i++) {
+			if(!isspace((unsigned char)line[i]))
+			break;
+		}
+		if( i == strlen(line) || i == OPH_ODB_BUFFER_LEN) {
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Read empty or blank line\n" );
+			continue;
+		}
+
+		/* Split argument and value on '=' character */
+		for(i = 0; (i < strlen(line)) && (i < OPH_ODB_BUFFER_LEN); i++) {
+			if(line[i] == '=')
+				break;
+		}
+		if( (i == strlen(line)) || (i == OPH_ODB_BUFFER_LEN)) {
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Read invalid line: %s\n", line );
+			continue;
+		}
+
+		argument_length = strlen(line) - i - 1;
+
+		argument = (char *)strndup(line, sizeof(char) * i);
+		if (!argument) {
+			fclose (file);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to alloc memory for configuration argument\n" );
 			return OPH_ODB_ERROR;
-    }
-    else
-    {
-			char buffer[OPH_ODB_BUFFER_LEN];
-            char *position;
-            if( fscanf(file, "%s", buffer) == EOF)
-            {
-				    pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving data from configuration file\n");
-					fclose(file);
-					return OPH_ODB_ERROR;
-            }
+		}
 
-            position = strchr(buffer, '=');
-            if(position != NULL){
-				if(!(oDB->name=(char*)malloc((strlen(position+1)+1)*sizeof(char)))){
-		                pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		                fclose(file);
-						return OPH_ODB_MEMORY_ERROR;
-		        }
-                strncpy(oDB->name, position+1, strlen(position+1)+1);
-				oDB->name[strlen(position+1)] = '\0';
-			}
-            if( fscanf(file, "%s", buffer) == EOF)
-            {
-				    pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving data from configuration file\n");
-					fclose(file);
-					return OPH_ODB_ERROR;
-            }
+		argument_value = (char *)strndup(line + i + 1 , sizeof(char) * argument_length);
+		if (!argument_value) {
+			fclose (file);
+			free(argument);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to alloc memory for configuration argument\n" );
+			return OPH_ODB_ERROR;
+		}
 
-            position = strchr(buffer, '=');
-            if(position != NULL){
-				if(!(oDB->hostname=(char*)malloc((strlen(position+1)+1)*sizeof(char)))){
-		                pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		                fclose(file);
-						return OPH_ODB_MEMORY_ERROR;
-		        }
-                strncpy(oDB->hostname, position+1, strlen(position+1)+1);
-				oDB->hostname[strlen(position+1)] = '\0';
-			}
-			if( fscanf(file, "%s", buffer) == EOF)
-            {
-				    pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving data from configuration file\n");
-					fclose(file);
-					return OPH_ODB_ERROR;
-            }
+		if(!strncasecmp(argument, OPH_CONF_OPHDB_NAME, strlen(OPH_CONF_OPHDB_NAME))) {
+			oDB->name = argument_value;
+		} else if(!strncasecmp(argument, OPH_CONF_OPHDB_HOST, strlen(OPH_CONF_OPHDB_HOST))) {
+			oDB->hostname = argument_value;
+		} else if(!strncasecmp(argument, OPH_CONF_OPHDB_PORT, strlen(OPH_CONF_OPHDB_PORT))) {
+			oDB->server_port = (int)strtol(argument_value, NULL, 10);
+			free(argument_value);
+		} else if(!strncasecmp(argument, OPH_CONF_OPHDB_LOGIN, strlen(OPH_CONF_OPHDB_LOGIN))) {
+			oDB->username = argument_value;
+		} else if(!strncasecmp(argument, OPH_CONF_OPHDB_PWD, strlen(OPH_CONF_OPHDB_PWD))) {
+			oDB->pwd = argument_value;
+		} else {
+			free(argument_value);
+		}
 
-            position = strchr(buffer, '=');
-            if(position != NULL){
-                oDB->server_port = (int)strtol(position+1, NULL, 10);
-			}
-            if( fscanf(file, "%s", buffer) == EOF)
-            {
-				    pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving data from configuration file\n");
-					fclose(file);
-					return OPH_ODB_ERROR;
-            }
+		free(argument);
+	}
 
-            position = strchr(buffer, '=');
-            if(position != NULL){
-				if(!(oDB->username=(char*)malloc((strlen(position+1)+1)*sizeof(char)))){
-		                pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		                fclose(file);
-						return OPH_ODB_MEMORY_ERROR;
-		        }
-                strncpy(oDB->username, position+1, strlen(position+1)+1);
-				oDB->username[strlen(position+1)] = '\0';
-			}
-            if(fscanf(file, "%s", buffer) == EOF )
-            {
-				    pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving data from configuration file\n");
-					fclose(file);
-					return OPH_ODB_ERROR;
-            }
-
-            position = strchr(buffer, '=');
-            if(position != NULL){
-				if(!(oDB->pwd=(char*)malloc((strlen(position+1)+1)*sizeof(char)))){
-		                pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		                fclose(file);
-						return OPH_ODB_MEMORY_ERROR;
-		        }
-                strncpy(oDB->pwd, position+1, strlen(position+1)+1);
-				oDB->pwd[strlen(position+1)] = '\0';
-			}
-    }
-    fclose(file);
+	fclose(file);
 
 	return OPH_ODB_SUCCESS;
 }

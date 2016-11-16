@@ -34,6 +34,7 @@
 
 #include "query/oph_datacube_query.h"
 
+#include <ctype.h>
 #include <mysql.h>
 #include "debug.h"
 
@@ -722,77 +723,96 @@ int oph_dim_load_dim_dbinstance(oph_odb_db_instance *db)
 
 	char config[OPH_DIM_PATH_LEN];
   	snprintf(config, sizeof(config), OPH_FRAMEWORK_DIMENSION_CONF_FILE_PATH, OPH_ANALYTICS_LOCATION);
-    FILE *file = fopen(config, "r");
-    if(file == NULL)
-    {
-            pmesg(LOG_ERROR, __FILE__, __LINE__, "Configuration file not found\n");
+	FILE *file = fopen(config, "r");
+	if(file == NULL)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Configuration file not found\n");
+		return OPH_DIM_DATA_ERROR;
+	}
+
+	unsigned int i;
+	char *argument = NULL;
+	char *argument_value = NULL;
+	int argument_length = 0;
+	char *result = NULL;
+	char line[OPH_DIM_BUFFER_LEN] = {'\0'};
+	while (!feof (file))
+	{
+		result = fgets (line, OPH_DIM_BUFFER_LEN, file);
+		if (!result) {
+			if (ferror (file)) {
+				fclose (file);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read file line from %s\n", OPH_DIM_BUFFER_LEN );
+				return OPH_DIM_DATA_ERROR;
+			} else {
+				break;
+			}
+		}
+
+		/* Remove trailing newline */
+		if (line[strlen(line) - 1] == '\n')
+			line[strlen(line) - 1] = '\0';
+
+		/* Skip comment lines */
+		if (line[0] == '#') {
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Read comment line: %s\n", line );
+			continue;
+		}
+
+		/* Check if line contains only spaces */
+		for(i = 0; (i < strlen(line)) && (i < OPH_DIM_BUFFER_LEN); i++) {
+			if(!isspace((unsigned char)line[i]))
+			break;
+		}
+		if( i == strlen(line) || i == OPH_DIM_BUFFER_LEN) {
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Read empty or blank line\n" );
+			continue;
+		}
+
+		/* Split argument and value on '=' character */
+		for(i = 0; (i < strlen(line)) && (i < OPH_DIM_BUFFER_LEN); i++) {
+			if(line[i] == '=')
+				break;
+		}
+		if( (i == strlen(line)) || (i == OPH_DIM_BUFFER_LEN)) {
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Read invalid line: %s\n", line );
+			continue;
+		}
+
+		argument_length = strlen(line) - i - 1;
+
+		argument = (char *)strndup(line, sizeof(char) * i);
+		if (!argument) {
+			fclose (file);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to alloc memory for configuration argument\n" );
 			return OPH_DIM_DATA_ERROR;
-    }
-    else
-    {
-			char buffer[OPH_DIM_BUFFER_LEN];
-            char *position;
-            if( fscanf(file, "%s", buffer) == EOF)
-            {
-				    pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving data from configuration file\n");
-					fclose(file);
-					return OPH_DIM_DATA_ERROR;
-            }
+		}
 
-            position = strchr(buffer, '=');
-            if(position != NULL){
-				strncpy(db->db_name, position+1, strlen(position+1)+1);
-				db->db_name[strlen(position+1)] = '\0';
-			}
-            if( fscanf(file, "%s", buffer) == EOF)
-            {
-				    pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving data from configuration file\n");
-					fclose(file);
-					return OPH_DIM_DATA_ERROR;
-            }
+		argument_value = (char *)strndup(line + i + 1 , sizeof(char) * argument_length);
+		if (!argument_value) {
+			fclose (file);
+			free(argument);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to alloc memory for configuration argument\n" );
+			return OPH_DIM_DATA_ERROR;
+		}
 
-            position = strchr(buffer, '=');
-            if(position != NULL){
-                strncpy(db->dbms_instance->hostname, position+1, strlen(position+1)+1);
-				db->dbms_instance->hostname[strlen(position+1)] = '\0';
-			}
-			if( fscanf(file, "%s", buffer) == EOF)
-            {
-				    pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving data from configuration file\n");
-					fclose(file);
-					return OPH_DIM_DATA_ERROR;
-            }
+		if(!strncasecmp(argument, OPH_CONF_DIMDB_NAME, strlen(OPH_CONF_DIMDB_NAME))) {
+			snprintf(db->db_name, OPH_ODB_STGE_DB_NAME_SIZE, "%s", argument_value);
+		} else if(!strncasecmp(argument, OPH_CONF_DIMDB_HOST, strlen(OPH_CONF_DIMDB_HOST))) {
+			snprintf(db->dbms_instance->hostname, OPH_ODB_STGE_HOST_NAME_SIZE, "%s", argument_value);
+		} else if(!strncasecmp(argument, OPH_CONF_DIMDB_PORT, strlen(OPH_CONF_DIMDB_PORT))) {
+			db->dbms_instance->port = (int)strtol(argument_value, NULL, 10);
+		} else if(!strncasecmp(argument, OPH_CONF_DIMDB_LOGIN, strlen(OPH_CONF_DIMDB_LOGIN))) {
+			snprintf(db->dbms_instance->login, OPH_ODB_STGE_LOGIN_SIZE, "%s", argument_value);
+		} else if(!strncasecmp(argument, OPH_CONF_DIMDB_PWD, strlen(OPH_CONF_DIMDB_PWD))) {
+			snprintf(db->dbms_instance->pwd, OPH_ODB_STGE_PWD_SIZE, "%s", argument_value);
+		}
 
-            position = strchr(buffer, '=');
-            if(position != NULL){
-                db->dbms_instance->port = (int)strtol(position+1, NULL, 10);
-			}
-            if( fscanf(file, "%s", buffer) == EOF)
-            {
-				    pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving data from configuration file\n");
-					fclose(file);
-					return OPH_DIM_DATA_ERROR;
-            }
+		free(argument_value);
+		free(argument);
+	}
 
-            position = strchr(buffer, '=');
-            if(position != NULL){
-				strncpy(db->dbms_instance->login, position+1, strlen(position+1)+1);
-				db->dbms_instance->login[strlen(position+1)] = '\0';
-			}
-            if(fscanf(file, "%s", buffer) == EOF )
-            {
-				    pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving data from configuration file\n");
-					fclose(file);
-					return OPH_DIM_DATA_ERROR;
-            }
-
-            position = strchr(buffer, '=');
-            if(position != NULL){
-				strncpy(db->dbms_instance->pwd, position+1, strlen(position+1)+1);
-				db->dbms_instance->pwd[strlen(position+1)] = '\0';
-			}
-    }
-    fclose(file);
+	fclose(file);
 
 	return OPH_DIM_SUCCESS;
 }
