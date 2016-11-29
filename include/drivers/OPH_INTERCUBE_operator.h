@@ -110,6 +110,15 @@
 #define OPH_INTERCUBE_QUERY2_COMPR_CORR OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "%s.%s|oph_compress('','',oph_gsl_correlation('oph_%s|oph_%s','oph_%s',oph_uncompress('','',%s.%s),oph_uncompress('','',%s.%s)))") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "%s.%s|%s.%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "%s.%s = %s.%s")
 #define OPH_INTERCUBE_QUERY2_CORR OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "%s.%s|oph_gsl_correlation('oph_%s|oph_%s','oph_%s',%s.%s,%s.%s)") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "%s.%s|%s.%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "%s.%s = %s.%s")
 
+#define OPH_INTERCUBE_OP_SUM "oph_sum_array"
+#define OPH_INTERCUBE_OP_SUB "oph_sub_array"
+#define OPH_INTERCUBE_OP_MUL "oph_mul_array"
+#define OPH_INTERCUBE_OP_DIV "oph_div_array"
+#define OPH_INTERCUBE_OP_ABS "oph_abs_array"
+#define OPH_INTERCUBE_OP_ARG "oph_arg_array"
+#define OPH_INTERCUBE_OP_MASK "oph_mask_array"
+#define OPH_INTERCUBE_OP_CORR "oph_gsl_correlation"
+
 /**
  * \brief Structure of parameters needed by the operator OPH_INTERCUBE. It executes an operation on two cubes materializing a new datacube
  * \param oDB Contains the parameters and the connection to OphidiaDB
@@ -125,7 +134,7 @@
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
  * \param server Pointer to I/O server handler
- * \param output_measure Name of the resulting measure
+ * \param measure Name of the resulting measure
  * \param operation Type of operation to be executed
  * \param sessionid SessionID
  * \param id_user ID of submitter
@@ -148,7 +157,7 @@ struct _OPH_INTERCUBE_operator_handle
   char **objkeys;
   int objkeys_num;
   oph_ioserver_handler *server;
-  char *output_measure;
+  char *measure;
   char *operation;
   char *sessionid;
   int id_user;

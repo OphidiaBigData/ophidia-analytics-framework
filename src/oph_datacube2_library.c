@@ -120,14 +120,14 @@ int oph_dc2_use_db_of_dbms(oph_ioserver_handler *server, oph_odb_dbms_instance *
 		if(oph_ioserver_use_db(server, db->db_name, dbms->conn))
 		{
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set default database\n");
-	    return OPH_DC2_SERVER_ERROR;
+			return OPH_DC2_SERVER_ERROR;
 		}
 	}
 	else{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Server connection not established\n");
-    return OPH_DC2_SERVER_ERROR;
+		return OPH_DC2_SERVER_ERROR;
 	}
-  return OPH_DC2_SUCCESS;
+	return OPH_DC2_SUCCESS;
 
 }
 
@@ -306,6 +306,46 @@ int oph_dc2_create_empty_fragment(oph_ioserver_handler *server, oph_odb_fragment
 	}
 
   oph_ioserver_free_query(server, query);
+
+	return OPH_DC2_SUCCESS;
+}
+
+int oph_dc2_create_empty_fragment_from_name(oph_ioserver_handler *server, const char* frag_name, oph_odb_db_instance *db_instance)
+{
+	if(!frag_name || !server || !db_instance){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_DC2_NULL_PARAM;
+	}
+	if( oph_dc2_check_connection_to_db(server, db_instance->dbms_instance, db_instance, 0))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
+		return OPH_DC2_SERVER_ERROR;
+	}
+
+
+	char create_query[QUERY_BUFLEN];
+	int n = snprintf(create_query,QUERY_BUFLEN, OPH_DC_SQ_CREATE_FRAG, frag_name);
+	if(n >= QUERY_BUFLEN)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+	    return OPH_DC2_SERVER_ERROR;
+	}
+
+	oph_ioserver_query *query = NULL;
+	if (oph_ioserver_setup_query(server, db_instance->dbms_instance->conn, create_query, 1, NULL, &query))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
+		return OPH_DC2_SERVER_ERROR;
+	}
+
+	if (oph_ioserver_execute_query(server, db_instance->dbms_instance->conn, query))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
+		oph_ioserver_free_query(server, query);
+		return OPH_DC2_SERVER_ERROR;
+	}
+
+	oph_ioserver_free_query(server, query);
 
 	return OPH_DC2_SUCCESS;
 }
@@ -1367,6 +1407,324 @@ int oph_dc2_append_fragment_to_fragment(oph_ioserver_handler *server, unsigned l
 
 	*first_id = tmp_first_id;
 	*last_id = tmp_last_id;
+
+	return OPH_DC2_SUCCESS;
+}
+
+int oph_dc2_copy_and_process_fragment(oph_ioserver_handler *server, unsigned long long tot_rows, oph_odb_fragment *old_frag1, oph_odb_fragment *old_frag2, const char* frag_name, int compressed, const char* operation, const char* measure_type)
+{
+	if(!old_frag1 || !old_frag2 || !frag_name || !server || !operation || !measure_type)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");		
+		return OPH_DC2_NULL_PARAM;
+	}
+
+	oph_odb_fragment *new_frag = old_frag1;
+
+	char read_query[QUERY_BUFLEN];
+	unsigned long long sizeof_var = 0;	
+	int n;
+
+	// Init res 
+	oph_ioserver_result *old_result1 = NULL;
+	oph_ioserver_result *old_result2 = NULL;
+
+	//Check if connection to input fragments are set
+	if( oph_dc2_check_connection_to_db(server, old_frag1->db_instance->dbms_instance, old_frag1->db_instance, 0))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
+		return OPH_DC2_SERVER_ERROR;
+	}
+
+	//Read input fragment
+  	n =  snprintf(read_query, QUERY_BUFLEN, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag1->fragment_name);
+	if(n >= QUERY_BUFLEN)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_DC2_SERVER_ERROR;
+	}
+
+	oph_ioserver_query *query = NULL;
+	if (oph_ioserver_setup_query(server, old_frag1->db_instance->dbms_instance->conn, read_query, 1, NULL, &query))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
+		return OPH_DC2_SERVER_ERROR;
+	}
+
+	if (oph_ioserver_execute_query(server, old_frag1->db_instance->dbms_instance->conn, query))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
+    		oph_ioserver_free_query(server, query);
+		return OPH_DC2_SERVER_ERROR;
+	}
+	oph_ioserver_free_query(server, query);
+
+	if(oph_ioserver_get_result(server, old_frag1->db_instance->dbms_instance->conn, &old_result1))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store result.\n");
+		oph_ioserver_free_result(server, old_result1);
+		return OPH_DC2_SERVER_ERROR;
+	}
+	if(old_result1->num_fields != 2)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");		
+		oph_ioserver_free_result(server, old_result1);
+		return OPH_DC2_SERVER_ERROR;
+	}
+
+	unsigned long long l, rows = old_result1->num_rows;
+	sizeof_var = old_result1->max_field_length[old_result1->num_fields-1];
+	//Get max row length of input table
+	if(!sizeof_var)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Fragment is empty\n");
+		oph_ioserver_free_result(server, old_result1);
+		return OPH_DC2_SERVER_ERROR;
+	}
+
+	if( oph_dc2_check_connection_to_db(server, old_frag2->db_instance->dbms_instance, old_frag2->db_instance, 0))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
+		oph_ioserver_free_result(server, old_result1);
+		return OPH_DC2_SERVER_ERROR;
+	}
+
+	//Read input fragment
+  	n =  snprintf(read_query, QUERY_BUFLEN, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag2->fragment_name);
+	if(n >= QUERY_BUFLEN)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		oph_ioserver_free_result(server, old_result1);
+		return OPH_DC2_SERVER_ERROR;
+	}
+
+	query = NULL;
+	if (oph_ioserver_setup_query(server, old_frag2->db_instance->dbms_instance->conn, read_query, 1, NULL, &query))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
+		oph_ioserver_free_result(server, old_result1);
+		return OPH_DC2_SERVER_ERROR;
+	}
+
+	if (oph_ioserver_execute_query(server, old_frag2->db_instance->dbms_instance->conn, query))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
+		oph_ioserver_free_result(server, old_result1);
+    		oph_ioserver_free_query(server, query);
+		return OPH_DC2_SERVER_ERROR;
+	}
+	oph_ioserver_free_query(server, query);
+
+	if(oph_ioserver_get_result(server, old_frag2->db_instance->dbms_instance->conn, &old_result2))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store result.\n");
+		oph_ioserver_free_result(server, old_result1);
+		oph_ioserver_free_result(server, old_result2);
+		return OPH_DC2_SERVER_ERROR;
+	}
+	if(old_result2->num_fields != 2)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+		oph_ioserver_free_result(server, old_result1);	
+		oph_ioserver_free_result(server, old_result2);
+		return OPH_DC2_SERVER_ERROR;
+	}
+
+	if(sizeof_var != old_result2->max_field_length[old_result2->num_fields-1])
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Fragments are not comparable\n");
+		oph_ioserver_free_result(server, old_result1);
+		oph_ioserver_free_result(server, old_result2);
+		return OPH_DC2_SERVER_ERROR;
+	}
+
+	char insert_query[QUERY_BUFLEN];
+	unsigned long long actual_size = 0;
+	int c_arg = 4, ii;
+
+	//If first or only execution
+	n = snprintf(insert_query, QUERY_BUFLEN, compressed ? OPH_DC_SQ_INSERT_COMPRESSED_FRAG2 : OPH_DC_SQ_INSERT_FRAG2, frag_name, operation, measure_type, measure_type, measure_type);
+	if(n >= QUERY_BUFLEN)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		oph_ioserver_free_result(server, old_result1);
+		oph_ioserver_free_result(server, old_result2);
+		return OPH_DC2_SERVER_ERROR;
+	}
+
+	char *binary1 = (char*)calloc(sizeof_var, sizeof(char));
+	if(!binary1)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate data buffers\n");
+		oph_ioserver_free_result(server, old_result1);
+		oph_ioserver_free_result(server, old_result2);
+		return OPH_DC2_DATA_ERROR;
+	}
+	char *binary2 = (char*)calloc(sizeof_var, sizeof(char));
+	if(!binary2)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate data buffers\n");
+		free(binary1);
+		oph_ioserver_free_result(server, old_result1);
+		oph_ioserver_free_result(server, old_result2);
+		return OPH_DC2_DATA_ERROR;
+	}
+
+	unsigned long long *id_dim = (unsigned long long*)calloc(1, sizeof(unsigned long long));
+	if(!id_dim)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate data buffers\n");
+		free(binary1);
+		free(binary2);
+		oph_ioserver_free_result(server, old_result1);
+		oph_ioserver_free_result(server, old_result2);
+		return OPH_DC2_DATA_ERROR;
+	}
+
+	query = NULL;
+	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **)calloc(c_arg,sizeof(oph_ioserver_query_arg*)); 
+	if(!(args))
+	{
+		free(binary1);
+		free(binary2);
+		free(id_dim);
+		oph_ioserver_free_result(server, old_result1);
+		oph_ioserver_free_result(server, old_result2);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_DC2_DATA_ERROR;
+	}  
+
+	for(ii = 0; ii < c_arg -1; ii++)
+	{
+		args[ii] = (oph_ioserver_query_arg *)calloc(1, sizeof(oph_ioserver_query_arg));
+		if(!args[ii])
+		{
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate input arguments\n");
+			free(binary1);
+			free(binary2);
+			free(id_dim);
+			oph_ioserver_free_result(server, old_result1);
+			oph_ioserver_free_result(server, old_result2);
+			for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
+			free(args);
+			return OPH_DC2_DATA_ERROR;
+		} 
+	}
+	args[c_arg -1] = NULL;
+
+	args[0]->arg_length = sizeof(unsigned long long);
+	args[0]->arg_type = OPH_IOSERVER_TYPE_LONGLONG;
+	args[0]->arg_is_null = 0;
+	args[0]->arg = (unsigned long long*)(id_dim);    
+
+	args[1]->arg_length = sizeof_var;
+	args[1]->arg_type = OPH_IOSERVER_TYPE_BLOB;
+	args[1]->arg_is_null = 0;  
+	args[1]->arg = (char*)(binary1);
+
+	args[2]->arg_length = sizeof_var;
+	args[2]->arg_type = OPH_IOSERVER_TYPE_BLOB;
+	args[2]->arg_is_null = 0;  
+	args[2]->arg = (char*)(binary2);
+
+	if(oph_ioserver_setup_query(server, new_frag->db_instance->dbms_instance->conn, insert_query, tot_rows, args, &query))
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
+		oph_ioserver_free_result(server, old_result1);
+		oph_ioserver_free_result(server, old_result2);
+		for(ii = 0; ii < c_arg -1; ii++)
+		{     
+			if(args[ii])
+			{
+				if(args[ii]->arg) free(args[ii]->arg);
+				free(args[ii]); 
+			}
+		} 
+		free(args);
+		return OPH_DC2_SERVER_ERROR;
+	}
+
+	oph_ioserver_row *curr_row1 = NULL;
+	oph_ioserver_row *curr_row2 = NULL;
+	for(l=0; l < rows; l++)
+	{
+		//Read data
+		if(oph_ioserver_fetch_row(server, old_result1, &curr_row1))
+		{
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");		
+			oph_ioserver_free_result(server, old_result1);
+			oph_ioserver_free_result(server, old_result2);
+			oph_ioserver_free_query(server, query);
+			for(ii = 0; ii < c_arg -1; ii++)
+			{     
+				if(args[ii]){
+					if(args[ii]->arg) free(args[ii]->arg);
+					free(args[ii]); 
+				} 
+			} 
+			free(args);
+			return OPH_DC2_SERVER_ERROR;
+		}
+		if(oph_ioserver_fetch_row(server, old_result2, &curr_row2))
+		{
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");		
+			oph_ioserver_free_result(server, old_result1);
+			oph_ioserver_free_result(server, old_result2);
+			oph_ioserver_free_query(server, query);
+			for(ii = 0; ii < c_arg -1; ii++)
+			{     
+				if(args[ii]){
+					if(args[ii]->arg) free(args[ii]->arg);
+					free(args[ii]); 
+				} 
+			} 
+			free(args);
+			return OPH_DC2_SERVER_ERROR;
+		}
+
+		*id_dim = (unsigned long long)strtoll(curr_row1->row[0], NULL, 10);
+
+		actual_size = curr_row1->field_lengths[1];
+		memset(binary1, 0, sizeof_var);
+		memcpy(binary1, curr_row1->row[1], actual_size);
+
+		actual_size = curr_row2->field_lengths[1];
+		memset(binary2, 0, sizeof_var);
+		memcpy(binary2, curr_row2->row[1], actual_size);
+
+		if (oph_ioserver_execute_query(server, new_frag->db_instance->dbms_instance->conn, query))
+		{
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
+			oph_ioserver_free_result(server, old_result1);
+			oph_ioserver_free_result(server, old_result2);
+			oph_ioserver_free_query(server, query);
+			for(ii = 0; ii < c_arg -1; ii++)
+			{     
+				if(args[ii])
+				{
+					if(args[ii]->arg) free(args[ii]->arg);
+					free(args[ii]); 
+				} 
+			} 
+			free(args);
+			return OPH_DC2_SERVER_ERROR;
+		}
+	}
+
+	oph_ioserver_free_result(server, old_result1);
+	oph_ioserver_free_result(server, old_result2);
+
+	//If last or only one - clean 
+	for(ii = 0; ii < c_arg -1; ii++)
+	{     
+		if(args[ii])
+		{
+			if(args[ii]->arg) free(args[ii]->arg);
+			free(args[ii]); 
+		} 
+	} 
+	free(args);
+	oph_ioserver_free_query(server, query);
 
 	return OPH_DC2_SUCCESS;
 }

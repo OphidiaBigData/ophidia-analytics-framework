@@ -125,6 +125,15 @@ int oph_dc2_delete_db(oph_ioserver_handler *server, oph_odb_db_instance *m);
 int oph_dc2_create_empty_fragment(oph_ioserver_handler *server, oph_odb_fragment *m);
 
 /** 
+ * \brief Function to create an empty phisical table
+ * \param server Pointer to I/O server structure
+ * \param frag_name Name of new fragment
+ * \param db_instance Pointer to db descriptor
+ * \return 0 if successfull, N otherwise
+ */
+int oph_dc2_create_empty_fragment_from_name(oph_ioserver_handler *server, const char* frag_name, oph_odb_db_instance *db_instance);
+
+/** 
  * \brief Function to create a new fragment from old_frag applying the operation query
  * \param server Pointer to I/O server structure
  * \param m Pointer to fragment to copy
@@ -233,6 +242,20 @@ int oph_dc2_create_fragment_from_query_with_aggregation2(oph_ioserver_handler *s
  * \return 0 if successfull, N otherwise
  */
 int oph_dc2_append_fragment_to_fragment(oph_ioserver_handler *server, unsigned long long tot_rows, short int exec_flag, oph_odb_fragment *new_frag, oph_odb_fragment *old_frag, long long *first_id, long long *last_id,  oph_ioserver_query **exec_query, oph_ioserver_query_arg ***exec_args);
+
+/** 
+ * \brief Function to copy new_frag to old_frag and apply a binary primitive on the result
+ * \param server Pointer to I/O server structure
+ * \param tot_rows Number of rows that will be inserted into the fragment
+ * \param old_frag1 Pointer to first input fragment to be extended
+ * \param old_frag2 Pointer to second input fragment to be added
+ * \param frag_name Name of output fragment
+ * \param compressed Flag set in case input cubes are compressed; output cube will be compressed as well
+ * \param operation Operation to be applied
+ * \param measure_type Data type of input cubes
+ * \return 0 if successfull, N otherwise
+ */
+int oph_dc2_copy_and_process_fragment(oph_ioserver_handler *server, unsigned long long tot_rows, oph_odb_fragment *old_frag1, oph_odb_fragment *old_frag2, const char* frag_name, int compressed, const char* operation, const char* measure_type);
 
 /** 
  * \brief Function to populate a phisical table with random values [1;100)
