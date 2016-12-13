@@ -2063,21 +2063,8 @@ int task_execute(oph_operator_struct *handle)
 					  if(dim_row_index) free(dim_row_index); 
 					  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 				  }
-				  jsonkeys[jjj] = strdup("VALUE");
-				  if (!jsonkeys[jjj]) {
-					  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key" );
-					  for (iii=0;iii<jjj;iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
-					  if (jsonkeys) free(jsonkeys);
-					  free(dim_row);
-					  oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					  oph_dim_unload_dim_dbinstance(db_dimension);
-					  if(dim_row_index) free(dim_row_index); 
-					  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				  }
 				  if (((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->show_index)
 				  {
-					  jjj++;
 					  jsonkeys[jjj] = strdup("INDEX");
 					  if (!jsonkeys[jjj]) {
 						  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -2090,6 +2077,19 @@ int task_execute(oph_operator_struct *handle)
 						  if(dim_row_index) free(dim_row_index); 
 						  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 					  }
+					  jjj++;
+				  }
+				  jsonkeys[jjj] = strdup("VALUE");
+				  if (!jsonkeys[jjj]) {
+					  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key" );
+					  for (iii=0;iii<jjj;iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
+					  if (jsonkeys) free(jsonkeys);
+					  free(dim_row);
+					  oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+					  oph_dim_unload_dim_dbinstance(db_dimension);
+					  if(dim_row_index) free(dim_row_index); 
+					  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 				  }
 				  jjj = 0;
 				  fieldtypes = (char **)malloc(sizeof(char *)*num_fields);
@@ -2104,23 +2104,8 @@ int task_execute(oph_operator_struct *handle)
 					  if(dim_row_index) free(dim_row_index); 
 					  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 				  }
-				  fieldtypes[jjj] = strdup(tmp_type);
-				  if (!fieldtypes[jjj]) {
-					  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype" );
-					  for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
-					  if (jsonkeys) free(jsonkeys);
-					  for (iii = 0; iii < jjj; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
-					  if (fieldtypes) free(fieldtypes);
-					  free(dim_row);
-					  oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					  oph_dim_unload_dim_dbinstance(db_dimension);
-					  if(dim_row_index) free(dim_row_index); 
-					  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				  }
 				  if (((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->show_index)
 				  {
-					  jjj++;
 					  fieldtypes[jjj] = strdup(OPH_JSON_LONG);
 					  if (!fieldtypes[jjj]) {
 						  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -2135,6 +2120,21 @@ int task_execute(oph_operator_struct *handle)
 						  if(dim_row_index) free(dim_row_index); 
 						  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 					  }
+					  jjj++;
+				  }
+				  fieldtypes[jjj] = strdup(tmp_type);
+				  if (!fieldtypes[jjj]) {
+					  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype" );
+					  for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
+					  if (jsonkeys) free(jsonkeys);
+					  for (iii = 0; iii < jjj; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
+					  if (fieldtypes) free(fieldtypes);
+					  free(dim_row);
+					  oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+					  oph_dim_unload_dim_dbinstance(db_dimension);
+					  if(dim_row_index) free(dim_row_index); 
+					  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 				  }
 				  if (oph_json_add_grid(handle->operator_json,OPH_JSON_OBJKEY_CUBESCHEMA_DIMVALUES,dim.dimension_name,NULL,jsonkeys,num_fields,fieldtypes,num_fields)) {
 					  pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
@@ -2353,22 +2353,8 @@ int task_execute(oph_operator_struct *handle)
 						  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 					  }
 					  jjj=0;
-					  jsonvalues[jjj] = strdup(tmp_value);
-					  if (!jsonvalues[jjj]) {
-						  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value" );
-						  for (iii = 0; iii < jjj; iii++) if (jsonvalues[iii]) free(jsonvalues[iii]);
-						  if (jsonvalues) free(jsonvalues);
-						  free(tmp_row);
-						  free(dim_row);
-						  oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-						  oph_dim_unload_dim_dbinstance(db_dimension);
-						  if(dim_row_index) free(dim_row_index); 
-						  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					  }
 					  if (((OPH_CUBESCHEMA_operator_handle*)handle->operator_handle)->show_index)
 					  {
-						  jjj++;
 						  snprintf(tmp_index,OPH_COMMON_BUFFER_LEN,"%d",j+1);
 						  jsonvalues[jjj] = strdup(tmp_index);
 						  if (!jsonvalues[jjj]) {
@@ -2383,8 +2369,21 @@ int task_execute(oph_operator_struct *handle)
 							  if(dim_row_index) free(dim_row_index); 
 							  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 						  }
+						  jjj++;
 					  }
-					  jjj++;
+					  jsonvalues[jjj] = strdup(tmp_value);
+					  if (!jsonvalues[jjj]) {
+						  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+						  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value" );
+						  for (iii = 0; iii < jjj; iii++) if (jsonvalues[iii]) free(jsonvalues[iii]);
+						  if (jsonvalues) free(jsonvalues);
+						  free(tmp_row);
+						  free(dim_row);
+						  oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						  oph_dim_unload_dim_dbinstance(db_dimension);
+						  if(dim_row_index) free(dim_row_index); 
+						  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+					  }
 					  if (oph_json_add_grid_row(handle->operator_json,OPH_JSON_OBJKEY_CUBESCHEMA_DIMVALUES,jsonvalues)) {
 						  pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
 						  logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD GRID ROW error\n");

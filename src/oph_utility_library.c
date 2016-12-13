@@ -150,6 +150,10 @@ int oph_utl_unit_to_value(char unit_str[OPH_UTL_UNIT_SIZE], int *unit_value){
 	  return OPH_UTL_SUCCESS;
 }
 
+/*
+	Base64 encoding & decoding code
+	Retrieved from: https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64
+*/
 int oph_utl_base64encode(const void* data_buf, size_t dataLength, char* result, size_t resultSize)
 {
    const char base64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
