@@ -2085,32 +2085,67 @@ int task_execute (oph_operator_struct *handle)
 					else if(!strncasecmp(dim[l].dimension_type, OPH_COMMON_INT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
 					{
 						dim_i = (int*) (dim_rows_ + index_dim*sizeof(int));
-						snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_i);
+						if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_i, sizeof(int), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_i);
 					}
 					else if(!strncasecmp(dim[l].dimension_type, OPH_COMMON_LONG_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
 					{
 						dim_l = (long long*) (dim_rows_ + index_dim*sizeof(long long));
-						snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%lld",*dim_l);
+						if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_l, sizeof(long long), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%lld",*dim_l);
+
 					}
 					else if(!strncasecmp(dim[l].dimension_type, OPH_COMMON_SHORT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
 					{
 						dim_s = (short*) (dim_rows_ + index_dim*sizeof(short));
-						snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_s);
+						if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_s, sizeof(short), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_s);
+
 					}
 					else if(!strncasecmp(dim[l].dimension_type, OPH_COMMON_BYTE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
 					{
 						dim_b = (char*) (dim_rows_ + index_dim*sizeof(char));
-						snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_b);
+						if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_b, sizeof(char), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_b);
+
 					}
 					else if(!strncasecmp(dim[l].dimension_type, OPH_COMMON_FLOAT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
 					{
 						dim_f = (float*) (dim_rows_ + index_dim*sizeof(float));
-						snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_f);
+						if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_f, sizeof(float), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_f);
+
 					}
 					else if(!strncasecmp(dim[l].dimension_type, OPH_COMMON_DOUBLE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
 					{
 						dim_d = (double*) (dim_rows_ + index_dim*sizeof(double));
-						snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_d);
+						if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_d, sizeof(double), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_d);
+
 					}
 					else
 					{
