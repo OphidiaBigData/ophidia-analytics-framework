@@ -39,6 +39,7 @@ const char* oph_odb_job_convert_status_to_str(oph_odb_job_status status)
 	switch(status)
 	{
 		case OPH_ODB_JOB_STATUS_PENDING: return OPH_ODB_JOB_STATUS_PENDING_STR;
+		case OPH_ODB_JOB_STATUS_WAIT: return OPH_ODB_JOB_STATUS_WAIT_STR;
 		case OPH_ODB_JOB_STATUS_RUNNING: return OPH_ODB_JOB_STATUS_RUNNING_STR;
 		case OPH_ODB_JOB_STATUS_START: return OPH_ODB_JOB_STATUS_START_STR;
 		case OPH_ODB_JOB_STATUS_SET_ENV: return OPH_ODB_JOB_STATUS_SET_ENV_STR;
@@ -60,7 +61,11 @@ const char* oph_odb_job_convert_status_to_str(oph_odb_job_status status)
 		case OPH_ODB_JOB_STATUS_REDUCE_ERROR: return OPH_ODB_JOB_STATUS_REDUCE_ERROR_STR;
 		case OPH_ODB_JOB_STATUS_DESTROY_ERROR: return OPH_ODB_JOB_STATUS_DESTROY_ERROR_STR;
 		case OPH_ODB_JOB_STATUS_UNSET_ENV_ERROR: return OPH_ODB_JOB_STATUS_UNSET_ENV_ERROR_STR;
+		case OPH_ODB_JOB_STATUS_SKIPPED: return OPH_ODB_JOB_STATUS_SKIPPED_STR;
+		case OPH_ODB_JOB_STATUS_ABORTED: return OPH_ODB_JOB_STATUS_ABORTED_STR;
+		case OPH_ODB_JOB_STATUS_UNSELECTED: return OPH_ODB_JOB_STATUS_UNSELECTED_STR;
 		case OPH_ODB_JOB_STATUS_EXPIRED: return OPH_ODB_JOB_STATUS_EXPIRED_STR;
+		case OPH_ODB_JOB_STATUS_CLOSED: return OPH_ODB_JOB_STATUS_CLOSED_STR;
 		default: return OPH_ODB_JOB_STATUS_UNKNOWN_STR;
 	}
 	return OPH_ODB_JOB_STATUS_UNKNOWN_STR;
@@ -83,6 +88,7 @@ int oph_odb_job_set_job_status(ophidiadb *oDB, int id_job, oph_odb_job_status st
 
 	switch (status)
 	{
+		case OPH_ODB_JOB_STATUS_START:
 		case OPH_ODB_JOB_STATUS_SET_ENV:
 		case OPH_ODB_JOB_STATUS_INIT:
 		case OPH_ODB_JOB_STATUS_DISTRIBUTE:
@@ -92,7 +98,7 @@ int oph_odb_job_set_job_status(ophidiadb *oDB, int id_job, oph_odb_job_status st
 		case OPH_ODB_JOB_STATUS_UNSET_ENV:
 			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_JOB_UPDATE_JOB_STATUS_1, oph_odb_job_convert_status_to_str(status), id_job);
 			break;
-		case OPH_ODB_JOB_STATUS_START:
+		case OPH_ODB_JOB_STATUS_RUNNING:
 			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_JOB_UPDATE_JOB_STATUS_2, oph_odb_job_convert_status_to_str(status), id_job);
 			break;
 		default:

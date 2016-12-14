@@ -19,10 +19,10 @@
 AM_CFLAGS = $(OPT) -I../../include -Wall -Wextra -Wformat
 
 if DEBUG_1
-driver_CFLAGS = -I../../include -I../../include/oph_ioserver $(OPT)
+driver_CFLAGS = -I../../include -I../../include/oph_ioserver $(OPT) -DOPH_DEBUG_LEVEL_1
 else
 if DEBUG_2
-driver_CFLAGS = -I../../include -I../../include/oph_ioserver $(OPT) -DOPH_DEBUG_MYSQL
+driver_CFLAGS = -I../../include -I../../include/oph_ioserver $(OPT) -DOPH_DEBUG_LEVEL_2 -DOPH_DEBUG_MYSQL
 else
 driver_CFLAGS = -I../../include -I../../include/oph_ioserver $(OPT) 
 endif
@@ -58,6 +58,7 @@ DRIVER+=liboph_deletecontaineroperator.la
 DRIVER+=liboph_splitoperator.la
 DRIVER+=liboph_mergeoperator.la
 DRIVER+=liboph_mergecubesoperator.la
+DRIVER+=liboph_mergecubes2operator.la
 DRIVER+=liboph_cubeschemaoperator.la
 DRIVER+=liboph_instancesoperator.la
 DRIVER+=liboph_cubeiooperator.la
@@ -155,7 +156,7 @@ liboph_duplicateoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_dat
 liboph_explorecubeoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} 
 liboph_explorecubeoperator_la_SOURCES = OPH_EXPLORECUBE_operator.c
 liboph_explorecubeoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_explorecubeoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube2 -loph_ioserver -loph_dimension -loph_subset
+liboph_explorecubeoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube2 -loph_ioserver -loph_dimension -loph_subset -loph_utility
 
 liboph_folderoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_folderoperator_la_SOURCES = OPH_FOLDER_operator.c
@@ -243,6 +244,11 @@ liboph_mergecubesoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_mergecubesoperator_la_SOURCES = OPH_MERGECUBES_operator.c
 liboph_mergecubesoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_mergecubesoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube2 -loph_ioserver -loph_dimension
+
+liboph_mergecubes2operator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
+liboph_mergecubes2operator_la_SOURCES = OPH_MERGECUBES2_operator.c
+liboph_mergecubes2operator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_mergecubes2operator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube2 -loph_ioserver -loph_dimension
 
 liboph_metadataoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"
 liboph_metadataoperator_la_SOURCES = OPH_METADATA_operator.c

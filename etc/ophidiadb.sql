@@ -156,7 +156,8 @@ CREATE TABLE `host` (
   `hostname` varchar(256) NOT NULL,
   `cores` int(10) unsigned DEFAULT NULL,
   `memory` int(10) unsigned DEFAULT NULL,
-  `status`  varchar(4) NOT NULL DEFAULT "up",
+  `status` varchar(4) NOT NULL DEFAULT "up",
+  `priority` int(10) unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`idhost`),
   KEY `idhost` (`idhost`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -181,6 +182,7 @@ DROP TABLE IF EXISTS `hostpartition`;
 CREATE TABLE `hostpartition` (
   `idhostpartition` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `partitionname` varchar(64) NOT NULL,
+  `hidden` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`idhostpartition`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -204,6 +206,7 @@ DROP TABLE IF EXISTS `hashost`;
 CREATE TABLE `hashost` (
   `idhostpartition` int(10) unsigned NOT NULL,
   `idhost` int(10) unsigned NOT NULL,
+  `priority` int(10) unsigned NULL DEFAULT NULL,
   PRIMARY KEY (`idhostpartition`, `idhost`),
   CONSTRAINT `idhost_hh` FOREIGN KEY (`idhost`) REFERENCES `host` (`idhost`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `idhostpartition_hh` FOREIGN KEY (`idhostpartition`) REFERENCES `hostpartition` (`idhostpartition`) ON DELETE CASCADE ON UPDATE CASCADE

@@ -1369,6 +1369,7 @@ int oph_odb_stge_find_instances_information(ophidiadb *oDB, int level, char *hos
 		n += snprintf(where_clause + n, MYSQL_BUFLEN,"partitionname = '%s' ", p3);
 		if(p4)
 			n += snprintf(where_clause + n,MYSQL_BUFLEN,"AND host.status ='%s' ", p4);
+		n += snprintf(where_clause + n, MYSQL_BUFLEN,"AND hidden = 0 ");
 	}
 
 	switch(level){
@@ -1675,7 +1676,7 @@ int oph_odb_stge_retrieve_fragment_id(ophidiadb *oDB, char *frag_name, int *id_f
 
 	if( oph_odb_check_connection_to_ophidiadb(oDB)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
-        return OPH_ODB_MYSQL_ERROR;
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	char selectQuery[MYSQL_BUFLEN];
@@ -1687,18 +1688,18 @@ int oph_odb_stge_retrieve_fragment_id(ophidiadb *oDB, char *frag_name, int *id_f
 
 	if (mysql_query(oDB->conn, selectQuery)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-        return OPH_ODB_MYSQL_ERROR;
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	MYSQL_RES *res;
 	MYSQL_ROW row;
 	res = mysql_store_result(oDB->conn);
-    if(mysql_num_rows(res) != 1){
+	if(mysql_num_rows(res) != 1){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
-    if(mysql_field_count(oDB->conn) != 1){
+	if(mysql_field_count(oDB->conn) != 1){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
@@ -1719,7 +1720,7 @@ int oph_odb_stge_retrieve_dbinstance_id(ophidiadb *oDB, char *db_name, int *id_d
 
 	if( oph_odb_check_connection_to_ophidiadb(oDB)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
-        return OPH_ODB_MYSQL_ERROR;
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	char selectQuery[MYSQL_BUFLEN];
@@ -1732,18 +1733,18 @@ int oph_odb_stge_retrieve_dbinstance_id(ophidiadb *oDB, char *db_name, int *id_d
 
 	if (mysql_query(oDB->conn, selectQuery)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-        return OPH_ODB_MYSQL_ERROR;
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	MYSQL_RES *res;
 	MYSQL_ROW row;
 	res = mysql_store_result(oDB->conn);
-    if(mysql_num_rows(res) != 1){
+	if(mysql_num_rows(res) != 1){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
-    if(mysql_field_count(oDB->conn) != 1){
+	if(mysql_field_count(oDB->conn) != 1){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
@@ -1764,7 +1765,7 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb *oDB, int i
 
 	if( oph_odb_check_connection_to_ophidiadb(oDB)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
-        return OPH_ODB_MYSQL_ERROR;
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	char selectQuery[MYSQL_BUFLEN];
@@ -1776,21 +1777,21 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb *oDB, int i
 
 	if (mysql_query(oDB->conn, selectQuery)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-        return OPH_ODB_MYSQL_ERROR;
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	MYSQL_RES *res;
 	MYSQL_ROW row;
 	res = mysql_store_result(oDB->conn);
 	int rows;
-    rows = mysql_num_rows(res);
+	rows = mysql_num_rows(res);
 
 	if(!(*id_dbs = (int*)malloc(rows*sizeof(int)))){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		mysql_free_result(res);
 		return OPH_ODB_MEMORY_ERROR;
 	}
-    if(mysql_field_count(oDB->conn) != 1){
+	if(mysql_field_count(oDB->conn) != 1){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
@@ -1815,35 +1816,41 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb *oDB, int fs_type, char
 
 	if( oph_odb_check_connection_to_ophidiadb(oDB)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
-        return OPH_ODB_MYSQL_ERROR;
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	char selectQuery[MYSQL_BUFLEN];
 	//Select all up host that have at least dbmsxhost_number
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST, fs_type, ioserver_type, host_partition, fs_type, ioserver_type, dbmsxhost_number);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST, host_partition, fs_type, ioserver_type, host_partition, fs_type, ioserver_type, dbmsxhost_number);
 	if(n >= MYSQL_BUFLEN){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
+	if (mysql_autocommit(oDB->conn, 0)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
 	if (mysql_query(oDB->conn, selectQuery)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-        return OPH_ODB_MYSQL_ERROR;
+		mysql_autocommit(oDB->conn, 1);
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	MYSQL_RES *res;
 	MYSQL_ROW row;
 	res = mysql_store_result(oDB->conn);
-	int rows;
-    rows = mysql_num_rows(res);
-    if(mysql_num_rows(res) < 1){
+	if(mysql_num_rows(res) < 1){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "No rows found by query\n");
 		mysql_free_result(res);
-	    return OPH_ODB_MYSQL_ERROR;
+		mysql_autocommit(oDB->conn, 1);
+		return OPH_ODB_MYSQL_ERROR;
 	}
-    if(mysql_field_count(oDB->conn) != 2){
+	if(mysql_field_count(oDB->conn) != 2){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Too many fields found by query\n");
 		mysql_free_result(res);
+		mysql_autocommit(oDB->conn, 1);
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 
@@ -1851,6 +1858,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb *oDB, int fs_type, char
 	if(!(*id_dbmss = (int*)malloc((*size)*sizeof(int)))){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		mysql_free_result(res);
+		mysql_autocommit(oDB->conn, 1);
 		return OPH_ODB_MEMORY_ERROR;
 	}
 	memset(*id_dbmss, 0, (*size)*sizeof(int));
@@ -1858,21 +1866,55 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb *oDB, int fs_type, char
 	int counter=0;
 	int old_id = 0;
 	int i = 0;
+	char host_list[MYSQL_BUFLEN];
+	*host_list = 0;
+
 	//Get dbmsxhost_number of dbms for host_number times
 	while((row = mysql_fetch_row(res))){
 		if((int)strtol(row[0], NULL, 10) != old_id )
 			counter = 0;
-
-		if(counter < dbmsxhost_number ){
+		old_id = (int)strtol(row[0], NULL, 10);
+		if(counter < dbmsxhost_number ) {
+			if (!counter) {
+				snprintf(selectQuery, MYSQL_BUFLEN, "%s%d", i ? "," : "", old_id);
+				strncat(host_list, selectQuery, MYSQL_BUFLEN-strlen(host_list)-1);
+			}
 			(*id_dbmss)[i] = (int)strtol(row[1], NULL, 10);
 			i++;
 			counter++;
 		}
-		old_id = (int)strtol(row[0], NULL, 10) ;
 		if(i == *size) break;
 	}
-
 	mysql_free_result(res);
+
+	if (i < *size)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough hosts for the operation\n");
+		free(*id_dbmss);
+		*id_dbmss = NULL;
+		mysql_autocommit(oDB->conn, 1);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_UPDATE_HOST_COUNTER, 1, host_list);
+	if(n >= MYSQL_BUFLEN){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		mysql_autocommit(oDB->conn, 1);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+	if (mysql_query(oDB->conn, selectQuery)){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		mysql_autocommit(oDB->conn, 1);
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	mysql_commit(oDB->conn);
+
+	if(mysql_autocommit(oDB->conn, 1)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
 	return OPH_ODB_SUCCESS;
 }
 

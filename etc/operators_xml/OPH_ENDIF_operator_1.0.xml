@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_ENDIF" version="1.0">
+    <info>
+        <abstract>[Type]
+Flow control.
+
+[Behaviour]
+Close a selection block &quot;if&quot;.
+      
+</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>20/06/2016</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+    </args>
+</operator>

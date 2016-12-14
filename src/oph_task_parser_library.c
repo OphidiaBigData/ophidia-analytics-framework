@@ -695,7 +695,6 @@ int oph_tp_task_params_parser(char *task_string, HASHTBL **hashtbl){
 	long number_arguments = 0;
 	char value1[OPH_TP_TASKLEN] = {'\0'};
 	char value2[OPH_TP_TASKLEN] = {'\0'};
-	char *ptr_point1;
 	node = root->children;
 	while(node != NULL){
 		if(!xmlStrcmp(node->name, (const xmlChar *)OPH_TP_XML_ARGS)){
@@ -726,7 +725,6 @@ int oph_tp_task_params_parser(char *task_string, HASHTBL **hashtbl){
 							xmlFreeDoc(document);
 							return OPH_TP_TASK_PARSER_ERROR;
 						}
-						ptr_point1 = value1;
 						hashtbl_insert(*hashtbl, (char *) content, value1);
 
 						xmlFree(content);	

@@ -22,6 +22,8 @@ It shows metadata information about a datacube and the dimensions related to it.
 			   With &quot;yes&quot;, it will also show the dimension id next to the value.
 - show_time : if &quot;no&quot; (default), the values of time dimension are shown as numbers.
 			With &quot;yes&quot;, the values are converted as a string with date and time.
+- base64 : if &quot;no&quot; (default), dimension values are returned as strings (with possible trucantion errors).
+			With &quot;yes&quot;, raw dimension values are returned as base64-coded strings.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -52,6 +54,7 @@ SUBMISSION STRING: &quot;operator=oph_cubeschema;cube=http://www.example.com/1/1
         <argument type="string" mandatory="no" default="all">dim</argument>
         <argument type="string" mandatory="no" default="no" values="yes|no">show_index</argument>
 	<argument type="string" mandatory="no" default="no" values="yes|no">show_time</argument>
+	<argument type="string" mandatory="no" default="no" values="yes|no">base64</argument>
 	<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
         <argument type="string" mandatory="no" default="null">sessionid</argument>
         <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>

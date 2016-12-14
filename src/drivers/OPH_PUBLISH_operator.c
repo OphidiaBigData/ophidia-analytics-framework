@@ -1009,7 +1009,7 @@ int task_execute(oph_operator_struct *handle)
 	  char dim_index[OPH_COMMON_BUFFER_LEN];
 	  int m,first=1,mm;
 	  n = 0;
-	  int explicit_dim_number = 0, explicit_dim_total_number = 0, only_implicit_flag = 0;
+	  int explicit_dim_number = 0, explicit_dim_total_number = 0;
 	  //Write ID to index dimension string
 	  for(i = 0; i < dim_num ; i++)
 	  {
@@ -1029,7 +1029,6 @@ int task_execute(oph_operator_struct *handle)
 		dimension_index = dim_index;
 		explicit_dim_number++;
 	  }
-	  if(!explicit_dim_total_number) only_implicit_flag = 1;
 
 	  //Load dimension table database infos and connect
 	  oph_odb_db_instance db_;

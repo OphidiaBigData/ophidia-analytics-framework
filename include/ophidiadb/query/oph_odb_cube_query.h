@@ -26,7 +26,9 @@
 #define MYSQL_QUERY_CUBE_RETRIEVE_CUBEHASDIM "SELECT cubehasdim.iddimensioninstance, iddatacube, explicit, level, size FROM cubehasdim INNER JOIN dimensioninstance ON cubehasdim.iddimensioninstance = dimensioninstance.iddimensioninstance WHERE iddatacube = %d ORDER by explicit DESC, level ASC;"
 
 
-#define MYSQL_QUERY_CUBE_RETRIEVE_PART "SELECT iddbinstance from `partitioned` where iddatacube = %d"
+#define MYSQL_QUERY_CUBE_RETRIEVE_PART "SELECT iddbinstance FROM `partitioned` WHERE iddatacube = %d"
+
+#define MYSQL_QUERY_CUBE_RETRIEVE_PART2 "SELECT partitioned.iddbinstance FROM `partitioned` INNER JOIN dbinstance ON partitioned.iddbinstance = dbinstance.iddbinstance INNER JOIN dbmsinstance ON dbinstance.iddbmsinstance = dbmsinstance.iddbmsinstance INNER JOIN host ON dbmsinstance.idhost = host.idhost WHERE iddatacube = %d ORDER BY host.idhost, dbmsinstance.iddbmsinstance, dbinstance.iddbinstance"
 
 #define MYSQL_QUERY_CUBE_RETRIEVE_DATACUBE_ELEMENTS "SELECT celements from `datacube` where iddatacube = %d"
 

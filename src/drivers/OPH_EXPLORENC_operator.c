@@ -976,7 +976,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 				int want_start = 1;	//Single point, it is the same
 				int order = 1;		//It will be changed by the following function (1 ascending, 0 descending)
 				//Extract index of the point given the dimension value
-				if(oph_nc_index_by_value(OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], curfilter, want_start, &order, &coord_index)){
+				if(oph_nc_index_by_value(OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], curfilter, want_start, 0, &order, &coord_index)){
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_INVALID_INPUT_STRING, nc_strerror(retval));
 					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -1118,7 +1118,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 				int want_start = 1;
 				int order = 1;		//It will be changed by the following function (1 ascending, 0 descending)
 				//Extract index of the point given the dimension value
-				if(oph_nc_index_by_value(OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], startfilter, want_start, &order, &coord_index)){
+				if(oph_nc_index_by_value(OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], startfilter, want_start, 0, &order, &coord_index)){
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_INVALID_INPUT_STRING, nc_strerror(retval));
 					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -1141,7 +1141,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 				want_start = 0;
 				order = 1;		//It will be changed by the following function (1 ascending, 0 descending)
 				//Extract index of the point given the dimension value
-				if(oph_nc_index_by_value(OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], endfilter, want_start, &order, &coord_index)){
+				if(oph_nc_index_by_value(OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], endfilter, want_start, 0, &order, &coord_index)){
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_INVALID_INPUT_STRING);
 					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);

@@ -318,7 +318,7 @@ int oph_odb_cube_retrieve_source(ophidiadb *oDB, int id_src, oph_odb_source *src
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_retrieve_datacube(ophidiadb *oDB, int id_datacube, oph_odb_datacube *cube)
+int _oph_odb_cube_retrieve_datacube(ophidiadb *oDB, int id_datacube, oph_odb_datacube *cube, int partition_mode)
 {
 	if(!oDB || !id_datacube || !cube){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -380,7 +380,7 @@ int oph_odb_cube_retrieve_datacube(ophidiadb *oDB, int id_datacube, oph_odb_data
 	mysql_free_result(res);
 
 	//partitioned table data
-	n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_RETRIEVE_PART, cube->id_datacube);
+	n = snprintf(query, MYSQL_BUFLEN, partition_mode ? MYSQL_QUERY_CUBE_RETRIEVE_PART : MYSQL_QUERY_CUBE_RETRIEVE_PART2, cube->id_datacube);
 	if(n >= MYSQL_BUFLEN){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -417,6 +417,15 @@ int oph_odb_cube_retrieve_datacube(ophidiadb *oDB, int id_datacube, oph_odb_data
 
 	mysql_free_result(res);
 	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_cube_retrieve_datacube(ophidiadb *oDB, int id_datacube, oph_odb_datacube *cube)
+{
+	return _oph_odb_cube_retrieve_datacube(oDB, id_datacube, cube, 1);
+}
+int oph_odb_cube_retrieve_datacube_with_ordered_partitions(ophidiadb *oDB, int id_datacube, oph_odb_datacube *cube)
+{
+	return _oph_odb_cube_retrieve_datacube(oDB, id_datacube, cube, 0);
 }
 
 int oph_odb_cube_find_datacube_additional_info(ophidiadb *oDB, int id_datacube, char **creationdate, char **description)
@@ -672,21 +681,26 @@ int oph_odb_cube_find_datacube_hierarchy(ophidiadb *oDB, int direction, int id_d
 
 	if( oph_odb_check_connection_to_ophidiadb(oDB)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
-        return OPH_ODB_MYSQL_ERROR;
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
-	char query[MYSQL_BUFLEN];
 	int n;
+	char query[MYSQL_BUFLEN];
 
 	if(!direction)
 		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_RETRIEVE_DATACUBE_CHILDREN, id_datacube);
 	else
 		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_RETRIEVE_DATACUBE_PARENTS, id_datacube);
 
+	if(n >= MYSQL_BUFLEN){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
 	//Execute query
 	if (mysql_query(oDB->conn, query)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-        return OPH_ODB_MYSQL_ERROR;
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	// Init res

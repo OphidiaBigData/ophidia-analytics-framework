@@ -31,6 +31,7 @@ Dimension values are used as input filters.
 		     Multiple-value field: list of filters separated by &quot;|&quot; can be provided.
 		     Must be the same number of &quot;subset_dims&quot;.
 - time_filter : enable filters using dates for time dimensions; enabled by default.
+- offset : it is added to the bounds of subset intervals defined with &quot;subset_filter&quot; in case of &quot;coord&quot; filter type is used.
 - grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
              or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
 - container : name of the container to be used to store the output cube; by default it is the input container.
@@ -64,6 +65,7 @@ SUBMISSION STRING: &quot;operator=oph_subset2;cube=http://www.example.com/1/1;su
 		<argument type="string" mandatory="no" default="none">subset_dims</argument>
 		<argument type="string" mandatory="no" default="all">subset_filter</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">time_filter</argument>
+		<argument type="real" mandatory="no" default="0">offset</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>

@@ -21,6 +21,8 @@
 
 #include "oph_common.h"
 
+#define OPH_SCRIPT_NOP ":"
+
 /**
  * \brief Structure of parameters needed by the operator OPH_SCRIPT. It executes a script
  * \param script Script file to be executed
@@ -34,6 +36,7 @@
  * \param session_url Url relative to current session.
  * \param workflow_id Workflow ID.
  * \param marker_id Marker ID.
+ * \param list Flag used to list available scripts.
  */
 struct _OPH_SCRIPT_operator_handle
 {
@@ -46,8 +49,10 @@ struct _OPH_SCRIPT_operator_handle
   int objkeys_num;
   char *session_path;
   char *session_url;
+  char *session_code;
   char *workflow_id;
   char *marker_id;
+  int list;
 };
 typedef struct _OPH_SCRIPT_operator_handle OPH_SCRIPT_operator_handle;
 

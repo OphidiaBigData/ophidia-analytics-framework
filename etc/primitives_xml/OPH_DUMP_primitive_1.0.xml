@@ -15,6 +15,9 @@ Translates a binary array into a human-readable form.
 					&apos;oph_byte&apos;.
 - output measure type : not used.
 - measure : input measure.
+- encoding : used to represent data. Supported encoding are:
+					&apos;decimal&apos;; (default)
+					&apos;base64&apos;.
 
 [Return type]
 String.
@@ -32,5 +35,6 @@ oph_dump(&apos;OPH_DOUBLE&apos;,&apos;&apos;,measure)</abstract>
 	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
 	<argument type="oph_type" mandatory="yes">output measure type</argument>
 	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="string" mandatory="no" default="decimal" values="'decimal'|'base64'">encoding</argument>
     </args>
 </primitive>

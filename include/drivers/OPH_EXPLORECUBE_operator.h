@@ -31,11 +31,14 @@
 
 #define OPH_EXPLORECUBE_ISINSUBSET_PLUGIN "mysql.oph_is_in_subset(mysql.oph_id_to_index2(%s,%s),%lld,%lld,%lld)"
 #define OPH_EXPLORECUBE_PLUGIN_COMPR "oph_get_subarray3('oph_%s', 'oph_%s', oph_uncompress('', '', %s), %s)"
-#define OPH_EXPLORECUBE_PLUGIN_COMPR2 "oph_dump('oph_%s', '', oph_get_subarray3('oph_%s', 'oph_%s', oph_uncompress('', '', %s), %s))"
-#define OPH_EXPLORECUBE_PLUGIN_COMPR3 "oph_dump('oph_%s', '', oph_uncompress('', '', %s))"
+#define OPH_EXPLORECUBE_PLUGIN_COMPR2 "oph_dump('oph_%s', '', oph_get_subarray3('oph_%s', 'oph_%s', oph_uncompress('', '', %s), %s), '%s')"
+#define OPH_EXPLORECUBE_PLUGIN_COMPR3 "oph_dump('oph_%s', '', oph_uncompress('', '', %s), '%s')"
 #define OPH_EXPLORECUBE_PLUGIN "oph_get_subarray3('oph_%s', 'oph_%s', %s, %s)"
-#define OPH_EXPLORECUBE_PLUGIN2 "oph_dump('oph_%s', '', oph_get_subarray3('oph_%s', 'oph_%s', %s, %s))"
-#define OPH_EXPLORECUBE_PLUGIN3 "oph_dump('oph_%s', '', %s)"
+#define OPH_EXPLORECUBE_PLUGIN2 "oph_dump('oph_%s', '', oph_get_subarray3('oph_%s', 'oph_%s', %s, %s), '%s')"
+#define OPH_EXPLORECUBE_PLUGIN3 "oph_dump('oph_%s', '', %s, '%s')"
+
+#define OPH_EXPLORECUBE_DECIMAL "decimal"
+#define OPH_EXPLORECUBE_BASE64 "base64"
 
 /**
  * \brief Structure of parameters needed by the operator OPH_EXPLORECUBE. It generate a cube by selecting a subset of measure values based on a subset string related to a dimension.
@@ -51,6 +54,7 @@
  * \param sessionid SessionID
  * \param level Verbose level, used to enable the print of dimension values
  * \param time_filter Flag used in case time filters are expressed as dates
+ * \param base64 Flag used in representation of output data
  */
 struct _OPH_EXPLORECUBE_operator_handle
 {
@@ -73,6 +77,7 @@ struct _OPH_EXPLORECUBE_operator_handle
   char *sessionid;
   int level;
   int time_filter;
+  int base64;
 };
 typedef struct _OPH_EXPLORECUBE_operator_handle OPH_EXPLORECUBE_operator_handle;
 

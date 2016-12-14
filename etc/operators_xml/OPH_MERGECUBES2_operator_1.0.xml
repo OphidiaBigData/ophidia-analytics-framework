@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
-<operator name="OPH_MERGECUBES" version="1.0">
+<operator name="OPH_MERGECUBES2" version="1.0">
     <info>
         <abstract>[Type]
 Data Process.
@@ -8,7 +8,7 @@ Data Process.
 [Behaviour]
 It merges the measures of n input datacubes with the same fragmentation structure and
 creates a new datacube with the union of the n measures. NOTE: only single measure 
-data cubes can be merged.
+data cubes can be merged. A new implicit dimension will be created.
 
 [Parameters]
 - cubes : name of the datacubes to merge. The names must be in PID format.
@@ -17,6 +17,7 @@ data cubes can be merged.
 - schedule : scheduling algorithm. The only possible value is 0,
          for a static linear block distribution of resources.
 - container : name of the container to be used to store the output cube; by default it is the input container.
+- dim : name of the new dimension to be created; by default a unique random name is chosen.
 - description : additional description to be associated with the output cube.
         
 [System parameters]    
@@ -31,8 +32,8 @@ data cubes can be merged.
         
 [Examples]       
 Merge the datacubes identified by the PIDs &quot;http://www.example.com/1/1&quot; and &quot;http://www.example.com/1/2&quot; :
-OPH_TERM: oph_mergecubes cubes=http://www.example.com/1/1|http://www.example.com/1/2;
-SUBMISSION STRING: &quot;operator=oph_mergecubes;cubes=http://www.example.com/1/1|http://www.example.com/1/2;&quot;</abstract>
+OPH_TERM: oph_mergecubes2 cubes=http://www.example.com/1/1|http://www.example.com/1/2;
+SUBMISSION STRING: &quot;operator=oph_mergecubes2;cubes=http://www.example.com/1/1|http://www.example.com/1/2;&quot;</abstract>
         <author>CMCC Foundation</author>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
@@ -45,6 +46,7 @@ SUBMISSION STRING: &quot;operator=oph_mergecubes;cubes=http://www.example.com/1/
 		<argument type="string" mandatory="yes">cubes</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
+		<argument type="string" mandatory="no" default="-">dim</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|mergecubes">objkey_filter</argument>
     </args>

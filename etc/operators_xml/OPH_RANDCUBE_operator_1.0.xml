@@ -54,7 +54,7 @@ It creates a new datacube with random data and dimensions.
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
-                  randcube2 : show operator's output PID as text in case "run" is "yes", else the parameter check is shown.
+                  randcube : show operator's output PID as text in case "run" is "yes", else the parameter check is shown.
 
 [Examples]
 Generate a random compressed data cube with 1 host, 4 DBMSs/host, 2 dbs/DBMS, 2 fragments/db, 10 tuples/fragment, 

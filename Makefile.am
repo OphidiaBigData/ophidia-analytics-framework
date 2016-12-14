@@ -20,7 +20,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = . libltdl src 
 
-sysconf_DATA = etc/oph_analytics_driver etc/oph_io_server etc/oph_configuration etc/oph_dim_configuration etc/ophidiadb.sql etc/oph_soap_configuration
+sysconf_DATA = etc/oph_analytics_driver etc/oph_io_server etc/oph_configuration etc/oph_dim_configuration etc/ophidiadb.sql etc/oph_soap_configuration etc/oph_script_configuration
  
 logdir = $(prefix)/log/
 dist_log_DATA =
@@ -41,7 +41,10 @@ OPERATOR_XML+=etc/operators_xml/OPH_DELETECONTAINER_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_DELETE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_DRILLDOWN_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_DUPLICATE_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_ELSE_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_ELSEIF_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_ENDFOR_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_ENDIF_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_EXPLORECUBE_operator_1.0.xml
 if HAVE_NETCDF
 OPERATOR_XML+=etc/operators_xml/OPH_EXPORTNC_operator_1.0.xml
@@ -59,6 +62,8 @@ OPERATOR_XML+=etc/operators_xml/OPH_FOLDER_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_FOR_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_GET_CONFIG_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_HIERARCHY_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_IF_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_INPUT_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INSTANCES_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INTERCOMPARISON_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INTERCUBE_operator_1.0.xml
@@ -69,6 +74,7 @@ OPERATOR_XML+=etc/operators_xml/OPH_MANAGE_SESSION_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_MAN_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_MASSIVE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_MERGECUBES_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_MERGECUBES2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_MERGE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_METADATA_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_MOVECONTAINER_operator_1.0.xml
@@ -92,6 +98,7 @@ OPERATOR_XML+=etc/operators_xml/OPH_SUBSET2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_SUBSET_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_TASKS_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_UNPUBLISH_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_WAIT_operator_1.0.xml
 
 dist_xmloper_DATA = $(OPERATOR_XML)
 
@@ -109,4 +116,7 @@ dist_img_DATA = etc/img/*.png
 
 xmlwebdir = @OPH_WEB_SERVER_LOCATION@/operators_xml/
 dist_xmlweb_DATA = $(OPERATOR_XML)
+
+scriptdir = $(prefix)/etc/script/
+dist_script_DATA =
 

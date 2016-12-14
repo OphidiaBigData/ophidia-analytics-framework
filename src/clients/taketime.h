@@ -47,17 +47,4 @@ static int timeval_subtract (result, x, y)
   return x->tv_sec < y->tv_sec;
 }
 
-
-static int timeval_add (res, x, y)
-  struct timeval *res, *x, *y;
-{
-        res->tv_sec = x->tv_sec + y->tv_sec;
-        res->tv_usec = x->tv_usec + y->tv_usec;
-        while (res->tv_usec > MILLION) {
-                res->tv_usec -= 1000000;
-                res->tv_sec++;
-        }
-        return 0;
-}
-
 #endif /* TAKETIME_H_ */

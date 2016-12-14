@@ -161,6 +161,8 @@
 #define OPH_IN_PARAM_OFFSET					"offset"
 #define OPH_IN_PARAM_MISC					"misc"
 #define OPH_IN_PARAM_DESCRIPTION			"description"
+#define OPH_IN_PARAM_BASE64				"base64"
+#define OPH_IN_PARAM_LIST				"list"
 
 #define OPH_IN_PARAM_SCRIPT					 "script"
 #define OPH_IN_PARAM_ARGS					 "args"

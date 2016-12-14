@@ -38,6 +38,7 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 #include "oph_datacube2_library.h"
+#include "oph_utility_library.h"
 
 int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 {
@@ -78,6 +79,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->sessionid = NULL;
   ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->level = 1;
   ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->time_filter = 1;
+  ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64 = 0;
 
   int i,j;
   for (i=0;i<OPH_SUBSET_LIB_MAX_DIM;++i) ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[i] = ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->dim_task[i] = NULL;
@@ -266,6 +268,14 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	  }
   }
 
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_BASE64); 
+  if(!value){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_BASE64);
+	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_BASE64 );
+	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+  }
+  if( strcmp(value,OPH_COMMON_YES_VALUE) == 0) ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64 = 1;
+
 //Only master process has to initialize and open connection to management OphidiaDB
   ophidiadb *oDB = &((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->oDB;
   oph_odb_init_ophidiadb(oDB);	
@@ -404,14 +414,13 @@ int task_execute (oph_operator_struct *handle)
   char stream[stream_max_size];
   memset(stream, 0, sizeof(stream));
   *stream = 0;
-  char *id_string[3], *data_type, *params, *params2;
 
-  pointer=0; id_string[0]=stream+pointer;
-  pointer+=1+OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE; id_string[1]=stream+pointer;
-  pointer+=1+sizeof(int); id_string[2]=stream+pointer;
-  pointer+=1+sizeof(int); data_type=stream+pointer;
-  pointer+=1+OPH_ODB_CUBE_MEASURE_TYPE_SIZE; params=stream+pointer;
-  pointer+=1+OPH_TP_TASKLEN; params2=stream+pointer;
+  pointer=0;
+  pointer+=1+OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE;
+  pointer+=1+sizeof(int);
+  pointer+=1+sizeof(int);
+  pointer+=1+OPH_ODB_CUBE_MEASURE_TYPE_SIZE;
+  pointer+=1+OPH_TP_TASKLEN;
 
 	  ophidiadb *oDB = &((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->oDB;
 	  oph_odb_datacube cube;
@@ -505,7 +514,7 @@ int task_execute (oph_operator_struct *handle)
 	char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[OPH_COMMON_BUFFER_LEN], operation2[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
 	snprintf(index_dimension_table_name,OPH_COMMON_BUFFER_LEN,OPH_DIM_TABLE_NAME_MACRO,((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container);
 	snprintf(label_dimension_table_name,OPH_COMMON_BUFFER_LEN,OPH_DIM_TABLE_LABEL_MACRO,((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container);
-	int n, compressed = 0; 
+	int n, compressed = 0, non_empty_set = 1; 
 
 	for (d=0; d<((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->number_of_dim; ++d) // Loop on dimensions set as input
 	{
@@ -655,7 +664,7 @@ int task_execute (oph_operator_struct *handle)
 
 		// Real parsing
 		subset_struct[d]=0;
-		if (oph_subset_value_to_index(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d], dim_row, dim_size[d][dim_number[d]-1], dim[l].dimension_type, temp, &subset_struct[d]))
+		if (oph_subset_value_to_index(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d], dim_row, dim_size[d][dim_number[d]-1], dim[l].dimension_type, 0, temp, &subset_struct[d]))
 		{
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot convert the subset '%s' into a subset expressed as indexes.\n",((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d]);
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_PARSE_ERROR, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d]);
@@ -668,6 +677,8 @@ int task_execute (oph_operator_struct *handle)
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 		if (dim_row) free(dim_row);
+
+		if (non_empty_set && !strlen(temp)) non_empty_set = 0;
 
 		if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d])
 		{
@@ -685,7 +696,7 @@ int task_execute (oph_operator_struct *handle)
 			oph_dim_unload_dim_dbinstance(db);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-		if (oph_subset_size(subset_struct[d],dim_size[d][dim_number[d]-1],&new_size[l], 0, 0))
+		if (strlen(temp) && oph_subset_size(subset_struct[d],dim_size[d][dim_number[d]-1],&new_size[l], 0, 0))
 		{
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot evaluate subset size.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_SIZE_ERROR);
@@ -697,56 +708,10 @@ int task_execute (oph_operator_struct *handle)
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 		
-		snprintf(subarray_param,OPH_TP_TASKLEN,"'%s',1,%d",((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d],dim_inst[l].size);
-
-		if(!(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->dim_task[d] = (char *) strndup (subarray_param, OPH_TP_TASKLEN)))
+		if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d] && strlen(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d]))
 		{
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_STRUCT, "task" );
-			oph_odb_cube_free_datacube(&cube);
-			free(cubedims);
-			oph_subset_vector_free(subset_struct,((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->number_of_dim);
-			oph_dim_disconnect_from_dbms(db->dbms_instance);
-			oph_dim_unload_dim_dbinstance(db);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
-		if (explicited[d])
-		{
-			// WHERE clause building
-			char where_clause[OPH_TP_TASKLEN];
-			*where_clause = '\0';
-			for (i=0; i<(int)subset_struct[d]->number; ++i) // loop on subsets
-			{
-				if (i) strcat(where_clause, " OR ");
-				snprintf(temp,OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_ISINSUBSET_PLUGIN,MYSQL_FRAG_ID,size_string,subset_struct[d]->start[i],subset_struct[d]->stride[i],subset_struct[d]->end[i]);
-				strncat(where_clause, temp, OPH_TP_TASKLEN-strlen(where_clause)-1);
-			}
-			if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d])
-			{
-				free((char *)((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d]); 
-				((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d] = NULL;
-		  	}
-			if(!(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d] = (char *) strndup (where_clause, OPH_TP_TASKLEN)))
-			{
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_STRUCT, "task" );
-				oph_subset_vector_free(subset_struct,((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->number_of_dim);
-				oph_odb_cube_free_datacube(&cube);
-				free(cubedims);
-				oph_dim_disconnect_from_dbms(db->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db);
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-			}
-		}
-		else
-		{
-			snprintf(subarray_param,OPH_TP_TASKLEN,"'%s',%s",((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d],size_string);
-			if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d])
-			{
-				free((char *)((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d]); 
-				((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d] = NULL;
-		  	}
-			if(!(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d] = (char *) strndup (subarray_param, OPH_TP_TASKLEN)))
+			snprintf(subarray_param,OPH_TP_TASKLEN,"'%s',1,%d",((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d],dim_inst[l].size);
+			if(!(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->dim_task[d] = (char *) strndup (subarray_param, OPH_TP_TASKLEN)))
 			{
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_STRUCT, "task" );
@@ -756,6 +721,54 @@ int task_execute (oph_operator_struct *handle)
 				oph_dim_disconnect_from_dbms(db->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db);
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			if (explicited[d])
+			{
+				// WHERE clause building
+				char where_clause[OPH_TP_TASKLEN];
+				*where_clause = '\0';
+				for (i=0; i<(int)subset_struct[d]->number; ++i) // loop on subsets
+				{
+					if (i) strcat(where_clause, " OR ");
+					snprintf(temp,OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_ISINSUBSET_PLUGIN,MYSQL_FRAG_ID,size_string,subset_struct[d]->start[i],subset_struct[d]->stride[i],subset_struct[d]->end[i]);
+					strncat(where_clause, temp, OPH_TP_TASKLEN-strlen(where_clause)-1);
+				}
+				if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d])
+				{
+					free((char *)((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d]); 
+					((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d] = NULL;
+			  	}
+				if(!(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d] = (char *) strndup (where_clause, OPH_TP_TASKLEN)))
+				{
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_STRUCT, "task" );
+					oph_subset_vector_free(subset_struct,((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->number_of_dim);
+					oph_odb_cube_free_datacube(&cube);
+					free(cubedims);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
+			}
+			else
+			{
+				snprintf(subarray_param,OPH_TP_TASKLEN,"'%s',%s",((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d],size_string);
+				if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d])
+				{
+					free((char *)((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d]); 
+					((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d] = NULL;
+			  	}
+				if(!(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->task[d] = (char *) strndup (subarray_param, OPH_TP_TASKLEN)))
+				{
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_STRUCT, "task" );
+					oph_odb_cube_free_datacube(&cube);
+					free(cubedims);
+					oph_subset_vector_free(subset_struct,((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->number_of_dim);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
 			}
 		}
 	}
@@ -813,7 +826,7 @@ int task_execute (oph_operator_struct *handle)
 
 	int *keys = 0;
 	int frags_size = 0;
-	if (explicit_dim_number)
+	if (explicit_dim_number && non_empty_set)
 	{
 		// Fragment keys
 		oph_odb_fragment_list2 frags;
@@ -955,11 +968,11 @@ int task_execute (oph_operator_struct *handle)
 		}
 
 		oph_odb_stge_free_fragment_list2(&frags);
-	  }
-	  oph_subset_vector_free(subset_struct,((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->number_of_dim);
-	  
-	  if (implicit_dim_number)
-	  {
+	}
+	oph_subset_vector_free(subset_struct,((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->number_of_dim);
+
+	if (implicit_dim_number && non_empty_set)
+	{
 		int first=1;
 		char buffer[OPH_TP_TASKLEN];
 		*buffer = '\0';
@@ -984,172 +997,173 @@ int task_execute (oph_operator_struct *handle)
 			if (keys) free(keys);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-	  }
+	}
 
-	  int dimension_index_set = 0;
-	  char dimension_index[OPH_COMMON_BUFFER_LEN];
-	  int j,first=1;
-	  n = 0;
-	  int explicit_dim_total_number = 0;
-	  explicit_dim_number = 0;
-	  //Write ID to index dimension string
-	  for(l = 0; l < number_of_dimensions ; l++)
-	  {
-		if(!cubedims[l].explicit_dim) continue;
-		explicit_dim_total_number++;
-		if(!cubedims[l].size) continue;
-		if(!first)
-			n += sprintf(dimension_index + n, "|");	
-		n += sprintf(dimension_index + n,"oph_id_to_index(%s",MYSQL_FRAG_ID);
-		first = 0;
-		for(j = (number_of_dimensions-1); j >= l; j--){
-			if(!cubedims[j].size) continue;
-			if(cubedims[j].explicit_dim == 0) continue;
-			n += sprintf(dimension_index + n, ",%d", cubedims[j].size);
-		}
-		n += sprintf(dimension_index + n, ")");
-		dimension_index_set = 1;
-		explicit_dim_number++;
-	  }
-
-	// Begin - Load dimension table management (only explicit dimensions are preloaded if level=1; dimension are read without considering any previous subsetting)
+	int dimension_index_set = 0;
+	char dimension_index[OPH_COMMON_BUFFER_LEN];
+	int j,first=1;
+	int explicit_dim_total_number = 0;
 	char *dim_rows[number_of_dimensions];
 	char *dim_rows_index[number_of_dimensions];
+	char *sdim_rows_index[number_of_dimensions];
 	memset(dim_rows, 0, sizeof(char *)*number_of_dimensions);
 	memset(dim_rows_index, 0, sizeof(char *)*number_of_dimensions);
-
-	// Subsetted dimensions
-	char *sdim_rows_index[number_of_dimensions];
 	memset(sdim_rows_index, 0, sizeof(char *)*number_of_dimensions);
 
-	int iiii = ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->level>1 ? number_of_dimensions : explicit_dim_total_number;
-	for (l=0; l < iiii; ++l)
+	if (non_empty_set)
 	{
-		if (!dim_inst[l].fk_id_dimension_index || !dim_inst[l].size) continue;
-		if (dim_inst[l].fk_id_dimension_label) // Dimension not (partially) reduced
+		// Begin - Load dimension table management (only explicit dimensions are preloaded if level=1; dimension are read without considering any previous subsetting)
+		n = 0;
+		explicit_dim_number = 0;
+		//Write ID to index dimension string
+		for(l = 0; l < number_of_dimensions ; l++)
 		{
-			if(oph_dim_read_dimension_data(db, label_dimension_table_name, dim_inst[l].fk_id_dimension_label, MYSQL_DIMENSION, 0, &dim_rows[l]))
-			{
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve dimension data\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR); 
-				oph_odb_cube_free_datacube(&cube);
-				free(cubedims);
-				free(fragment_ids);
-				oph_dim_disconnect_from_dbms(db->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db);
-				for (j=0; j<=l; ++j)
-				{
-					if (dim_rows[j]) free(dim_rows[j]);	
-					if (dim_rows_index[j]) free(dim_rows_index[j]);
-					if (sdim_rows_index[j]) free(sdim_rows_index[j]);
-				}
-				if (keys) free(keys);
-				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-			}			
-			if(oph_dim_read_dimension_data(db, index_dimension_table_name, dim_inst[l].fk_id_dimension_index, MYSQL_DIMENSION, 0, &dim_rows_index[l])){
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve dimension data\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR); 
-				oph_odb_cube_free_datacube(&cube);
-				free(cubedims);
-				free(fragment_ids);
-				oph_dim_disconnect_from_dbms(db->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db);
-				for (j=0; j<=l; ++j)
-				{
-					if (dim_rows[j]) free(dim_rows[j]);	
-					if (dim_rows_index[j]) free(dim_rows_index[j]);
-					if (sdim_rows_index[j]) free(sdim_rows_index[j]);
-				}
-				if (keys) free(keys);
-				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			if(!cubedims[l].explicit_dim) continue;
+			explicit_dim_total_number++;
+			if(!cubedims[l].size) continue;
+			if(!first)
+				n += sprintf(dimension_index + n, "|");	
+			n += sprintf(dimension_index + n,"oph_id_to_index(%s",MYSQL_FRAG_ID);
+			first = 0;
+			for(j = (number_of_dimensions-1); j >= l; j--){
+				if(!cubedims[j].size) continue;
+				if(cubedims[j].explicit_dim == 0) continue;
+				n += sprintf(dimension_index + n, ",%d", cubedims[j].size);
 			}
-		}
-		else // Dimension partially reduced
-		{
-			if(oph_dim_read_dimension_data(db, index_dimension_table_name, dim_inst[l].fk_id_dimension_index, MYSQL_DIMENSION, 0, &dim_rows_index[l]))
-			{
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve dimension data\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR); 
-				oph_odb_cube_free_datacube(&cube);
-				free(cubedims);
-				free(fragment_ids);
-				oph_dim_disconnect_from_dbms(db->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db);
-				for (j=0; j<=l; ++j)
-				{
-					if (dim_rows[j]) free(dim_rows[j]);	
-					if (dim_rows_index[j]) free(dim_rows_index[j]);
-					if (sdim_rows_index[j]) free(sdim_rows_index[j]);
-				}
-				if (keys) free(keys);
-				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-			}
-			strncpy(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
-			//Since index is always long we can assure that lenght is size*SIZEOF(long)
-			dim_rows[l] = (char *)malloc(dim_inst[l].size*sizeof(long long)); 
-			if (!dim_rows[l]) {
-			  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "dim_rows" );
-				oph_odb_cube_free_datacube(&cube);
-				free(cubedims);
-				free(fragment_ids);
-				oph_dim_disconnect_from_dbms(db->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db);
-				for (j=0; j<=l; ++j)
-				{
-					if (dim_rows[j]) free(dim_rows[j]);	
-					if (dim_rows_index[j]) free(dim_rows_index[j]);
-					if (sdim_rows_index[j]) free(sdim_rows_index[j]);
-				}
-				if (keys) free(keys);
-			  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-		 	 }
-			memcpy(dim_rows[l], dim_rows_index[l],dim_inst[l].size*sizeof(long long));
+			n += sprintf(dimension_index + n, ")");
+			dimension_index_set = 1;
+			explicit_dim_number++;
 		}
 
-		if ((d=subsetted_dim[l])>=0)
+		int iiii = ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->level>1 ? number_of_dimensions : explicit_dim_total_number;
+		for (l=0; l < iiii; ++l)
 		{
-			if (compressed) n = snprintf(operation2, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN_COMPR, OPH_DIM_INDEX_DATA_TYPE, OPH_DIM_INDEX_DATA_TYPE, MYSQL_DIMENSION,((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->dim_task[d]);
-			else n = snprintf(operation2, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN, OPH_DIM_INDEX_DATA_TYPE, OPH_DIM_INDEX_DATA_TYPE, MYSQL_DIMENSION, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->dim_task[d]);
-			if(n >= OPH_COMMON_BUFFER_LEN)
+			if (!dim_inst[l].fk_id_dimension_index || !dim_inst[l].size) continue;
+			if (dim_inst[l].fk_id_dimension_label) // Dimension not (partially) reduced
 			{
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);    		
-				oph_odb_cube_free_datacube(&cube);
-				free(cubedims);
-				free(fragment_ids);
-				oph_dim_disconnect_from_dbms(db->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db);
-				for (j=0; j<=l; ++j)
+				if(oph_dim_read_dimension_data(db, label_dimension_table_name, dim_inst[l].fk_id_dimension_label, MYSQL_DIMENSION, 0, &dim_rows[l]))
 				{
-					if (dim_rows[j]) free(dim_rows[j]);	
-					if (dim_rows_index[j]) free(dim_rows_index[j]);
-					if (sdim_rows_index[j]) free(sdim_rows_index[j]);
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve dimension data\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR); 
+					oph_odb_cube_free_datacube(&cube);
+					free(cubedims);
+					free(fragment_ids);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					for (j=0; j<=l; ++j)
+					{
+						if (dim_rows[j]) free(dim_rows[j]);	
+						if (dim_rows_index[j]) free(dim_rows_index[j]);
+						if (sdim_rows_index[j]) free(sdim_rows_index[j]);
+					}
+					if (keys) free(keys);
+					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+				}			
+				if(oph_dim_read_dimension_data(db, index_dimension_table_name, dim_inst[l].fk_id_dimension_index, MYSQL_DIMENSION, 0, &dim_rows_index[l])){
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve dimension data\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR); 
+					oph_odb_cube_free_datacube(&cube);
+					free(cubedims);
+					free(fragment_ids);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					for (j=0; j<=l; ++j)
+					{
+						if (dim_rows[j]) free(dim_rows[j]);	
+						if (dim_rows_index[j]) free(dim_rows_index[j]);
+						if (sdim_rows_index[j]) free(sdim_rows_index[j]);
+					}
+					if (keys) free(keys);
+					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				}
-				if (keys) free(keys);
-				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
-			if(oph_dim_read_dimension_data(db, index_dimension_table_name, dim_inst[l].fk_id_dimension_index, operation2, 0, &sdim_rows_index[l]))
+			else // Dimension partially reduced
 			{
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve dimension data\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR); 
-				oph_odb_cube_free_datacube(&cube);
-				free(cubedims);
-				free(fragment_ids);
-				oph_dim_disconnect_from_dbms(db->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db);
-				for (j=0; j<=l; ++j)
+				if(oph_dim_read_dimension_data(db, index_dimension_table_name, dim_inst[l].fk_id_dimension_index, MYSQL_DIMENSION, 0, &dim_rows_index[l]))
 				{
-					if (dim_rows[j]) free(dim_rows[j]);	
-					if (dim_rows_index[j]) free(dim_rows_index[j]);
-					if (sdim_rows_index[j]) free(sdim_rows_index[j]);
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve dimension data\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR); 
+					oph_odb_cube_free_datacube(&cube);
+					free(cubedims);
+					free(fragment_ids);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					for (j=0; j<=l; ++j)
+					{
+						if (dim_rows[j]) free(dim_rows[j]);	
+						if (dim_rows_index[j]) free(dim_rows_index[j]);
+						if (sdim_rows_index[j]) free(sdim_rows_index[j]);
+					}
+					if (keys) free(keys);
+					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				}
-				if (keys) free(keys);
-				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+				strncpy(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
+				//Since index is always long we can assure that lenght is size*SIZEOF(long)
+				dim_rows[l] = (char *)malloc(dim_inst[l].size*sizeof(long long)); 
+				if (!dim_rows[l]) {
+				  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "dim_rows" );
+					oph_odb_cube_free_datacube(&cube);
+					free(cubedims);
+					free(fragment_ids);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					for (j=0; j<=l; ++j)
+					{
+						if (dim_rows[j]) free(dim_rows[j]);	
+						if (dim_rows_index[j]) free(dim_rows_index[j]);
+						if (sdim_rows_index[j]) free(sdim_rows_index[j]);
+					}
+					if (keys) free(keys);
+				  return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+			 	 }
+				memcpy(dim_rows[l], dim_rows_index[l],dim_inst[l].size*sizeof(long long));
+			}
+
+			if ((d=subsetted_dim[l])>=0)
+			{
+				if (compressed) n = snprintf(operation2, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN_COMPR, OPH_DIM_INDEX_DATA_TYPE, OPH_DIM_INDEX_DATA_TYPE, MYSQL_DIMENSION,((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->dim_task[d]);
+				else n = snprintf(operation2, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN, OPH_DIM_INDEX_DATA_TYPE, OPH_DIM_INDEX_DATA_TYPE, MYSQL_DIMENSION, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->dim_task[d]);
+				if(n >= OPH_COMMON_BUFFER_LEN)
+				{
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);    		
+					oph_odb_cube_free_datacube(&cube);
+					free(cubedims);
+					free(fragment_ids);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					for (j=0; j<=l; ++j)
+					{
+						if (dim_rows[j]) free(dim_rows[j]);	
+						if (dim_rows_index[j]) free(dim_rows_index[j]);
+						if (sdim_rows_index[j]) free(sdim_rows_index[j]);
+					}
+					if (keys) free(keys);
+					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+				}
+				if(oph_dim_read_dimension_data(db, index_dimension_table_name, dim_inst[l].fk_id_dimension_index, operation2, 0, &sdim_rows_index[l]))
+				{
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve dimension data\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR); 
+					oph_odb_cube_free_datacube(&cube);
+					free(cubedims);
+					free(fragment_ids);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					for (j=0; j<=l; ++j)
+					{
+						if (dim_rows[j]) free(dim_rows[j]);	
+						if (dim_rows_index[j]) free(dim_rows_index[j]);
+						if (sdim_rows_index[j]) free(sdim_rows_index[j]);
+					}
+					if (keys) free(keys);
+					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+				}
 			}
 		}
+		// End - Load dimension table
 	}
-	// End - Load dimension table
 
   int ii,jj,k,kk=0;
   int id_datacube_in = ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_datacube;
@@ -1209,236 +1223,227 @@ int task_execute (oph_operator_struct *handle)
   char **jsonvalues = NULL;
   char tmp_value[OPH_COMMON_BUFFER_LEN];
   *tmp_value=0;
-  if(oph_dc2_setup_dbms(&(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server), (dbmss.value[0]).io_server_type))
+
+  if (non_empty_set)
+  {
+
+	if(oph_dc2_setup_dbms(&(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server), (dbmss.value[0]).io_server_type))
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);    
-    result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-	}
-
-  //For each DBMS
-  for(i = 0; (i < dbmss.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS) && (!((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->limit || (current_limit > 0)); i++){
-
-	if(oph_dc2_connect_to_dbms(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]), 0))
-	{
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_DBMS_CONNECTION_ERROR, (dbmss.value[i]).id_dbms);    
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 
-	//For each DB
-	for(j = 0; (j < dbs.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS) && (!((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->limit || (current_limit > 0)); j++)
+	//For each DBMS
+	for(i = 0; (i < dbmss.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS) && (!((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->limit || (current_limit > 0)); i++)
 	{
-		//Check DB - DBMS Association
-		if(dbs.value[j].dbms_instance != &(dbmss.value[i])) continue;
-
-		if(oph_dc2_use_db_of_dbms(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j])))
+		if(oph_dc2_connect_to_dbms(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]), 0))
 		{
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_DB_SELECTION_ERROR, (dbs.value[j]).db_name);    
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_DBMS_CONNECTION_ERROR, (dbmss.value[i]).id_dbms);    
 			result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-			break;
 		}
 
-		//For each fragment
-		for(k = 0; (k < frags.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS) && (!((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->limit || (current_limit > 0)); k++)
+		//For each DB
+		for(j = 0; (j < dbs.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS) && (!((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->limit || (current_limit > 0)); j++)
 		{
-			//Check Fragment - DB Association
-			if(frags.value[k].db_instance != &(dbs.value[j])) continue;
+			//Check DB - DBMS Association
+			if(dbs.value[j].dbms_instance != &(dbmss.value[i])) continue;
 
-			if (frags_size)
+			if(oph_dc2_use_db_of_dbms(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j])))
 			{
-				index = frags.value[k].frag_relative_index-1;
-				frags.value[k].key_start = keys[index+frags_size];
-			}
-
-			if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->apply_clause && strlen(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->apply_clause))
-			{
-				if (compressed) n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN_COMPR2,cube.measure_type, cube.measure_type, cube.measure_type, MYSQL_FRAG_MEASURE, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->apply_clause);
-				else n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN2, cube.measure_type, cube.measure_type, cube.measure_type, MYSQL_FRAG_MEASURE, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->apply_clause);
-			}
-			else
-			{
-				if (compressed) n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN_COMPR3, cube.measure_type, MYSQL_FRAG_MEASURE);
-				else n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN3, cube.measure_type, MYSQL_FRAG_MEASURE);
-			}
-			if(n >= OPH_COMMON_BUFFER_LEN)
-			{
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);    		
-				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_DB_SELECTION_ERROR, (dbs.value[j]).db_name);    
+				result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				break;
 			}
 
-			//EXPLORECUBE fragment
-			if (frags.value[k].key_start)
+			//For each fragment
+			for(k = 0; (k < frags.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS) && (!((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->limit || (current_limit > 0)); k++)
 			{
-				if(oph_dc2_read_fragment_data(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, &(frags.value[k]), cube.measure_type, compressed, dimension_index_set ? dimension_index : 0, operation, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->where_clause, current_limit, 1, &frag_rows))
+				//Check Fragment - DB Association
+				if(frags.value[k].db_instance != &(dbs.value[j])) continue;
+
+				if (frags_size)
 				{
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read fragment %s.\n",frags.value[k].fragment_name);
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_READ_FRAGMENT_ERROR, frags.value[k].fragment_name);    
+					index = frags.value[k].frag_relative_index-1;
+					frags.value[k].key_start = keys[index+frags_size];
+				}
+
+				if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->apply_clause && strlen(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->apply_clause))
+				{
+					if (compressed) n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN_COMPR2,cube.measure_type, cube.measure_type, cube.measure_type, MYSQL_FRAG_MEASURE, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->apply_clause, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64 ? OPH_EXPLORECUBE_BASE64 : OPH_EXPLORECUBE_DECIMAL);
+					else n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN2, cube.measure_type, cube.measure_type, cube.measure_type, MYSQL_FRAG_MEASURE, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->apply_clause, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64 ? OPH_EXPLORECUBE_BASE64 : OPH_EXPLORECUBE_DECIMAL);
+				}
+				else
+				{
+					if (compressed) n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN_COMPR3, cube.measure_type, MYSQL_FRAG_MEASURE, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64 ? OPH_EXPLORECUBE_BASE64 : OPH_EXPLORECUBE_DECIMAL);
+					else n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_EXPLORECUBE_PLUGIN3, cube.measure_type, MYSQL_FRAG_MEASURE, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64 ? OPH_EXPLORECUBE_BASE64 : OPH_EXPLORECUBE_DECIMAL);
+				}
+				if(n >= OPH_COMMON_BUFFER_LEN)
+				{
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);    		
 					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					oph_ioserver_free_result(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, frag_rows);
-					break;
-				}
-				if((num_rows = frag_rows->num_rows) < 1)
-				{
-					frag_count++;
-					oph_ioserver_free_result(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, frag_rows);
-					continue;
-				}
-				else empty=0;
-
-				if((sql_num_fields = frag_rows->num_fields) != explicit_dim_number+2)
-				{
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MISSING_FIELDS);
-					result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-					oph_ioserver_free_result(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, frag_rows);
 					break;
 				}
 
-				//Read field maximum length and total row max length
-				jj=0;
-				for(ii = 0; ii < sql_num_fields; ii++)
+				//EXPLORECUBE fragment
+				if (frags.value[k].key_start)
 				{
-					if (ii)
+					if(oph_dc2_read_fragment_data(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, &(frags.value[k]), cube.measure_type, compressed, dimension_index_set ? dimension_index : 0, operation, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->where_clause, current_limit, 1, &frag_rows))
 					{
-						while (jj<number_of_dimensions)
-						{
-							if(!cubedims[jj].size)
-							{
-								jj++;
-								continue;
-							}
-							if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index) additional_space = 2*OPH_EXPLORECUBE_TABLE_SPACING;
-							else additional_space = OPH_EXPLORECUBE_TABLE_SPACING;
-							if (frag_rows->max_field_length[ii] < strlen(dim[jj].dimension_name) + additional_space) frag_rows->max_field_length[ii] = strlen(dim[jj].dimension_name) + additional_space;
-							jj++;
-							break;
-						}
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read fragment %s.\n",frags.value[k].fragment_name);
+						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_READ_FRAGMENT_ERROR, frags.value[k].fragment_name);    
+						result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+						oph_ioserver_free_result(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, frag_rows);
+						break;
 					}
-					else if (frag_rows->max_field_length[ii] < strlen(OPH_EXPLORECUBE_ID)) frag_rows->max_field_length[ii] = strlen(OPH_EXPLORECUBE_ID);
-					if (first_frag) total_length += frag_rows->max_field_length[ii]+3;
-				}
-
-				if (first_frag)
-				{
-					first_frag = 0;
-
-					for(ii = 0; ii < number_of_dimensions ; ii++) // Full reduced explicit dimensions
+					if((num_rows = frag_rows->num_rows) < 1)
 					{
-						if (!cubedims[ii].explicit_dim) break;
-						if (cubedims[ii].size) continue;
-						total_length += strlen(OPH_COMMON_FULL_REDUCED_DIM)+3;
+						frag_count++;
+						oph_ioserver_free_result(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, frag_rows);
+						continue;
+					}
+					else empty=0;
+
+					if((sql_num_fields = frag_rows->num_fields) != explicit_dim_number+2)
+					{
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MISSING_FIELDS);
+						result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+						oph_ioserver_free_result(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, frag_rows);
+						break;
 					}
 
-					table_row = (char*)malloc((total_length+1)*sizeof(char));
-					n = 0;
-					for(ii = 0; ii <= explicit_dim_total_number+1; ii++)
-					{
-						if(!(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_id) && !ii) 
-							continue;
-						n += snprintf(table_row +n,2,"+");
-						if (ii<=explicit_dim_number)
-						{
-							for(jj = 0; jj < (int)frag_rows->max_field_length[ii]+2; jj++)
-								n += snprintf(table_row + n,2,"-");
-						}
-						else if (ii == explicit_dim_total_number+1)
-						{
-							for(jj = 0; jj < (int)frag_rows->max_field_length[sql_num_fields-1]+2; jj++)
-								n += snprintf(table_row + n,2,"-");
-						}
-						else
-						{
-							for(jj = 0; jj < (int)strlen(OPH_COMMON_FULL_REDUCED_DIM)+2; jj++)
-								n += snprintf(table_row + n,2,"-");
-						}
-					}
-					n += snprintf(table_row + n,3,"+\n");
-
-					//Print column headers
-					int ed = 0, fr_ed = 0;
-					char *dimension_name[number_of_dimensions];
-					char *dimension_type[number_of_dimensions];
-					char dimension_time[number_of_dimensions];
+					//Read field maximum length and total row max length
 					jj=0;
-					printf("%s",table_row);
-					if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_id)
-						printf("| %-*s",(int)frag_rows->max_field_length[jj++]+1,OPH_EXPLORECUBE_ID);
-					else
-						jj++;
-
-					for(ii = 0; ii < number_of_dimensions ; ii++)
+					for(ii = 0; ii < sql_num_fields; ii++)
 					{
-						dimension_name[ii]=dimension_type[ii]=NULL;
-						dimension_time[ii]=0;
-						if (!cubedims[ii].explicit_dim) break;
-						if (!cubedims[ii].size) continue;
-						if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
-							printf("| %s%-*s", "(index) ", (int)(frag_rows->max_field_length[jj++]+1-strlen("(index) ")), dim[ii].dimension_name);
+						if (ii)
+						{
+							while (jj<number_of_dimensions)
+							{
+								if(!cubedims[jj].size)
+								{
+									jj++;
+									continue;
+								}
+								if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index) additional_space = 2*OPH_EXPLORECUBE_TABLE_SPACING;
+								else additional_space = OPH_EXPLORECUBE_TABLE_SPACING;
+								if (frag_rows->max_field_length[ii] < strlen(dim[jj].dimension_name) + additional_space) frag_rows->max_field_length[ii] = strlen(dim[jj].dimension_name) + additional_space;
+								jj++;
+								break;
+							}
+						}
+						else if (frag_rows->max_field_length[ii] < strlen(OPH_EXPLORECUBE_ID)) frag_rows->max_field_length[ii] = strlen(OPH_EXPLORECUBE_ID);
+						if (first_frag) total_length += frag_rows->max_field_length[ii]+3;
+					}
+
+					if (first_frag)
+					{
+						first_frag = 0;
+
+						for(ii = 0; ii < number_of_dimensions ; ii++) // Full reduced explicit dimensions
+						{
+							if (!cubedims[ii].explicit_dim) break;
+							if (cubedims[ii].size) continue;
+							total_length += strlen(OPH_COMMON_FULL_REDUCED_DIM)+3;
+						}
+
+						table_row = (char*)malloc((total_length+1)*sizeof(char));
+						n = 0;
+						for(ii = 0; ii <= explicit_dim_total_number+1; ii++)
+						{
+							if(!(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_id) && !ii) 
+								continue;
+							n += snprintf(table_row +n,2,"+");
+							if (ii<=explicit_dim_number)
+							{
+								for(jj = 0; jj < (int)frag_rows->max_field_length[ii]+2; jj++)
+									n += snprintf(table_row + n,2,"-");
+							}
+							else if (ii == explicit_dim_total_number+1)
+							{
+								for(jj = 0; jj < (int)frag_rows->max_field_length[sql_num_fields-1]+2; jj++)
+									n += snprintf(table_row + n,2,"-");
+							}
+							else
+							{
+								for(jj = 0; jj < (int)strlen(OPH_COMMON_FULL_REDUCED_DIM)+2; jj++)
+									n += snprintf(table_row + n,2,"-");
+							}
+						}
+						n += snprintf(table_row + n,3,"+\n");
+
+						//Print column headers
+						int ed = 0, fr_ed = 0;
+						char *dimension_name[number_of_dimensions];
+						char *dimension_type[number_of_dimensions];
+						char dimension_time[number_of_dimensions];
+						jj=0;
+						printf("%s",table_row);
+						if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_id)
+							printf("| %-*s",(int)frag_rows->max_field_length[jj++]+1,OPH_EXPLORECUBE_ID);
 						else
-							printf("| %-*s",(int)frag_rows->max_field_length[jj++]+1,dim[ii].dimension_name);
-						dimension_name[ed]=dim[ii].dimension_name;
-						dimension_type[ed]=dim[ii].dimension_type;
-						dimension_time[ed]=((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_time && dim[ii].calendar && strlen(dim[ii].calendar);
-						ed++;
-					}
-					for(ii = 0; ii < number_of_dimensions ; ii++)
-					{
-						if (!cubedims[ii].explicit_dim) break;
-						if (cubedims[ii].size) continue;
-						printf("| %-*s",(int)strlen(OPH_COMMON_FULL_REDUCED_DIM)+1,dim[ii].dimension_name);
-						dimension_name[ed+fr_ed]=dim[ii].dimension_name;
-						dimension_type[ed+fr_ed]=dim[ii].dimension_type;
-						fr_ed++;
-					}
-					printf("| %-*s |\n",(int)frag_rows->max_field_length[explicit_dim_number+1], cube.measure);
-					printf("%s",table_row);
+							jj++;
 
-					is_objkey_printable = oph_json_is_objkey_printable(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->objkeys,((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->objkeys_num,OPH_JSON_OBJKEY_EXPLORECUBE_DATA);
-					if (is_objkey_printable)
-					{
-						num_fields = (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_id?1:0) + (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index?2:1)*ed + fr_ed + 1;
+						for(ii = 0; ii < number_of_dimensions ; ii++)
+						{
+							dimension_name[ii]=dimension_type[ii]=NULL;
+							dimension_time[ii]=0;
+							if (!cubedims[ii].explicit_dim) break;
+							if (!cubedims[ii].size) continue;
+							if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
+								printf("| %s%-*s", "(index) ", (int)(frag_rows->max_field_length[jj++]+1-strlen("(index) ")), dim[ii].dimension_name);
+							else
+								printf("| %-*s",(int)frag_rows->max_field_length[jj++]+1,dim[ii].dimension_name);
+							dimension_name[ed]=dim[ii].dimension_name;
+							dimension_type[ed]=dim[ii].dimension_type;
+							dimension_time[ed]=((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_time && dim[ii].calendar && strlen(dim[ii].calendar);
+							ed++;
+						}
+						for(ii = 0; ii < number_of_dimensions ; ii++)
+						{
+							if (!cubedims[ii].explicit_dim) break;
+							if (cubedims[ii].size) continue;
+							printf("| %-*s",(int)strlen(OPH_COMMON_FULL_REDUCED_DIM)+1,dim[ii].dimension_name);
+							dimension_name[ed+fr_ed]=dim[ii].dimension_name;
+							dimension_type[ed+fr_ed]=dim[ii].dimension_type;
+							fr_ed++;
+						}
+						printf("| %-*s |\n",(int)frag_rows->max_field_length[explicit_dim_number+1], cube.measure);
+						printf("%s",table_row);
 
-						// Header
-						  jsonkeys = (char **)malloc(sizeof(char *)*num_fields);
-						  if (!jsonkeys) {
-							  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-							  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "keys" );
-							  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-							  break;
-						  }
-						  if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_id)
-						  {
-							  jsonkeys[jjj] = strdup(OPH_EXPLORECUBE_ID);
-							  if (!jsonkeys[jjj]) {
+						is_objkey_printable = oph_json_is_objkey_printable(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->objkeys,((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->objkeys_num,OPH_JSON_OBJKEY_EXPLORECUBE_DATA);
+						if (is_objkey_printable)
+						{
+							num_fields = (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_id?1:0) + (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index?2:1)*ed + fr_ed + 1;
+
+							// Header
+							  jsonkeys = (char **)malloc(sizeof(char *)*num_fields);
+							  if (!jsonkeys) {
 								  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-								  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "key" );
-								  for (iii=0;iii<jjj;iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
-								  if (jsonkeys) free(jsonkeys);
+								  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "keys" );
 								  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 								  break;
 							  }
-							  jjj++;
-						  }
-						  for (iii=0;(iii<ed) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS);++iii)
-						  {
-							jsonkeys[jjj] = strdup(dimension_name[iii] ? dimension_name[iii] : "");
-							if (!jsonkeys[jjj]) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "key" );
-								for (iii=0;iii<jjj;iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
-								if (jsonkeys) free(jsonkeys);
-								result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-								break;
-							}
-							jjj++;
-							if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
-							{
-								snprintf(jsontmp,OPH_COMMON_BUFFER_LEN,"INDEX OF %s",dimension_name[iii] ? dimension_name[iii] : "");
-								jsonkeys[jjj] = strdup(jsontmp);
+							  if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_id)
+							  {
+								  jsonkeys[jjj] = strdup(OPH_EXPLORECUBE_ID);
+								  if (!jsonkeys[jjj]) {
+									  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "key" );
+									  for (iii=0;iii<jjj;iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
+									  if (jsonkeys) free(jsonkeys);
+									  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									  break;
+								  }
+								  jjj++;
+							  }
+							  for (iii=0;(iii<ed) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS);++iii)
+							  {
+								jsonkeys[jjj] = strdup(dimension_name[iii] ? dimension_name[iii] : "");
 								if (!jsonkeys[jjj]) {
 									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "key" );
@@ -1448,82 +1453,59 @@ int task_execute (oph_operator_struct *handle)
 									break;
 								}
 								jjj++;
-							}
-						  }
-						  if (result != OPH_ANALYTICS_OPERATOR_SUCCESS) break;
-						  for (iii=0;(iii<fr_ed) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS);++iii)
-						  {
-							jsonkeys[jjj] = strdup(dimension_name[ed+iii] ? dimension_name[ed+iii] : "");
-							if (!jsonkeys[jjj]) {
+								if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
+								{
+									snprintf(jsontmp,OPH_COMMON_BUFFER_LEN,"INDEX OF %s",dimension_name[iii] ? dimension_name[iii] : "");
+									jsonkeys[jjj] = strdup(jsontmp);
+									if (!jsonkeys[jjj]) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "key" );
+										for (iii=0;iii<jjj;iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
+										if (jsonkeys) free(jsonkeys);
+										result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+										break;
+									}
+									jjj++;
+								}
+							  }
+							  if (result != OPH_ANALYTICS_OPERATOR_SUCCESS) break;
+							  for (iii=0;(iii<fr_ed) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS);++iii)
+							  {
+								jsonkeys[jjj] = strdup(dimension_name[ed+iii] ? dimension_name[ed+iii] : "");
+								if (!jsonkeys[jjj]) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "key" );
+									for (iii=0;iii<jjj;iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
+									if (jsonkeys) free(jsonkeys);
+									result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									break;
+								}
+								jjj++;
+							  }
+							  if (result != OPH_ANALYTICS_OPERATOR_SUCCESS) break;
+							  jsonkeys[jjj] = strdup(cube.measure ? cube.measure : "");
+							  if (!jsonkeys[jjj]) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "key" );
 								for (iii=0;iii<jjj;iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
 								if (jsonkeys) free(jsonkeys);
 								result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 								break;
-							}
-							jjj++;
-						  }
-						  if (result != OPH_ANALYTICS_OPERATOR_SUCCESS) break;
-						  jsonkeys[jjj] = strdup(cube.measure ? cube.measure : "");
-						  if (!jsonkeys[jjj]) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "key" );
-							for (iii=0;iii<jjj;iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
-							if (jsonkeys) free(jsonkeys);
-							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-							break;
-						  }
+							  }
 
-						  jjj = 0;
-						  fieldtypes = (char **)malloc(sizeof(char *)*num_fields);
-						  if (!fieldtypes) {
-							  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-							  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "fieldtypes" );
-							  for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
-							  if (jsonkeys) free(jsonkeys);
-							  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-							  break;
-						  }
-						  if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_id)
-						  {
-							  fieldtypes[jjj] = strdup(OPH_JSON_LONG);
-							  if (!fieldtypes[jjj]) {
+							  jjj = 0;
+							  fieldtypes = (char **)malloc(sizeof(char *)*num_fields);
+							  if (!fieldtypes) {
 								  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-								  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "fieldtype" );
+								  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "fieldtypes" );
 								  for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
 								  if (jsonkeys) free(jsonkeys);
-								  for (iii = 0; iii < jjj; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
-								  if (fieldtypes) free(fieldtypes);
 								  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 								  break;
 							  }
-							  jjj++;
-						  }
-						  for (iii=0;(iii<ed) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS);++iii)
-						  {
-							  if(dimension_time[iii]) fieldtypes[jjj] = strdup(OPH_JSON_STRING);
-							  else if(!strncasecmp(dimension_type[iii], OPH_COMMON_INT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_INT);
-							  else if(!strncasecmp(dimension_type[iii], OPH_COMMON_LONG_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_LONG);
-							  else if(!strncasecmp(dimension_type[iii], OPH_COMMON_SHORT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_SHORT);
-							  else if(!strncasecmp(dimension_type[iii], OPH_COMMON_BYTE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_BYTE);
-							  else if(!strncasecmp(dimension_type[iii], OPH_COMMON_FLOAT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_FLOAT);
-							  else if(!strncasecmp(dimension_type[iii], OPH_COMMON_DOUBLE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_DOUBLE);
-							  else fieldtypes[jjj] = 0;					
-							  if (!fieldtypes[jjj]) {
-								  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-								  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "fieldtype" );
-								  for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
-								  if (jsonkeys) free(jsonkeys);
-								  for (iii = 0; iii < jjj; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
-								  if (fieldtypes) free(fieldtypes);
-								  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-								  break;
-							  }
-							  jjj++;
-							  if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
+							  if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_id)
 							  {
-								  fieldtypes[jjj] = strdup(OPH_JSON_LONG);					
+								  fieldtypes[jjj] = strdup(OPH_JSON_LONG);
 								  if (!fieldtypes[jjj]) {
 									  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 									  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "fieldtype" );
@@ -1536,11 +1518,67 @@ int task_execute (oph_operator_struct *handle)
 								  }
 								  jjj++;
 							  }
-						  }
-						  if (result != OPH_ANALYTICS_OPERATOR_SUCCESS) break;
-						  for (iii=0;(iii<fr_ed) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS);++iii)
-						  {
-							  fieldtypes[jjj] = strdup(OPH_JSON_STRING); // A simple 'ALL'
+							  for (iii=0;(iii<ed) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS);++iii)
+							  {
+								  if(dimension_time[iii]) fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+								  else if(!strncasecmp(dimension_type[iii], OPH_COMMON_INT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_INT);
+								  else if(!strncasecmp(dimension_type[iii], OPH_COMMON_LONG_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_LONG);
+								  else if(!strncasecmp(dimension_type[iii], OPH_COMMON_SHORT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_SHORT);
+								  else if(!strncasecmp(dimension_type[iii], OPH_COMMON_BYTE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_BYTE);
+								  else if(!strncasecmp(dimension_type[iii], OPH_COMMON_FLOAT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_FLOAT);
+								  else if(!strncasecmp(dimension_type[iii], OPH_COMMON_DOUBLE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_DOUBLE);
+								  else fieldtypes[jjj] = 0;					
+								  if (!fieldtypes[jjj]) {
+									  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "fieldtype" );
+									  for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
+									  if (jsonkeys) free(jsonkeys);
+									  for (iii = 0; iii < jjj; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
+									  if (fieldtypes) free(fieldtypes);
+									  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									  break;
+								  }
+								  jjj++;
+								  if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
+								  {
+									  fieldtypes[jjj] = strdup(OPH_JSON_LONG);					
+									  if (!fieldtypes[jjj]) {
+										  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+										  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "fieldtype" );
+										  for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
+										  if (jsonkeys) free(jsonkeys);
+										  for (iii = 0; iii < jjj; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
+										  if (fieldtypes) free(fieldtypes);
+										  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+										  break;
+									  }
+									  jjj++;
+								  }
+							  }
+							  if (result != OPH_ANALYTICS_OPERATOR_SUCCESS) break;
+							  for (iii=0;(iii<fr_ed) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS);++iii)
+							  {
+								  fieldtypes[jjj] = strdup(OPH_JSON_STRING); // A simple 'ALL'
+								  if (!fieldtypes[jjj]) {
+									  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "fieldtype" );
+									  for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
+									  if (jsonkeys) free(jsonkeys);
+									  for (iii = 0; iii < jjj; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
+									  if (fieldtypes) free(fieldtypes);
+									  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									  break;
+								  }
+								  jjj++;
+							  }
+							  if (result != OPH_ANALYTICS_OPERATOR_SUCCESS) break;
+							  if(!strncasecmp(cube.measure_type, OPH_COMMON_INT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_INT);
+							  else if(!strncasecmp(cube.measure_type, OPH_COMMON_LONG_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_LONG);
+							  else if(!strncasecmp(cube.measure_type, OPH_COMMON_SHORT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_SHORT);
+							  else if(!strncasecmp(cube.measure_type, OPH_COMMON_BYTE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_BYTE);
+							  else if(!strncasecmp(cube.measure_type, OPH_COMMON_FLOAT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_FLOAT);
+							  else if(!strncasecmp(cube.measure_type, OPH_COMMON_DOUBLE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) fieldtypes[jjj] = strdup(OPH_JSON_DOUBLE);
+							  else fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 							  if (!fieldtypes[jjj]) {
 								  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 								  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "fieldtype" );
@@ -1551,161 +1589,213 @@ int task_execute (oph_operator_struct *handle)
 								  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 								  break;
 							  }
-							  jjj++;
-						  }
-						  if (result != OPH_ANALYTICS_OPERATOR_SUCCESS) break;
-						  fieldtypes[jjj] = strdup(OPH_JSON_STRING); // Array is a string in any case
-						  if (!fieldtypes[jjj]) {
-							  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-							  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "fieldtype" );
-							  for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
-							  if (jsonkeys) free(jsonkeys);
-							  for (iii = 0; iii < jjj; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
-							  if (fieldtypes) free(fieldtypes);
-							  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-							  break;
-						  }
 
-						  if (oph_json_add_grid(handle->operator_json,OPH_JSON_OBJKEY_EXPLORECUBE_DATA,cube.measure,NULL,jsonkeys,num_fields,fieldtypes,num_fields)) {
-							  pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
-							  logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD GRID error\n");
+							  if (oph_json_add_grid(handle->operator_json,OPH_JSON_OBJKEY_EXPLORECUBE_DATA,cube.measure,NULL,jsonkeys,num_fields,fieldtypes,num_fields)) {
+								  pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
+								  logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD GRID error\n");
+								  for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
+								  if (jsonkeys) free(jsonkeys);
+								  for (iii = 0; iii < num_fields; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
+								  if (fieldtypes) free(fieldtypes);
+								  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+								  break;
+							  }
+
 							  for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
 							  if (jsonkeys) free(jsonkeys);
 							  for (iii = 0; iii < num_fields; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
 							  if (fieldtypes) free(fieldtypes);
-							  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-							  break;
-						  }
+						}
 
-						  for (iii = 0; iii < num_fields; iii++) if (jsonkeys[iii]) free(jsonkeys[iii]);
-						  if (jsonkeys) free(jsonkeys);
-						  for (iii = 0; iii < num_fields; iii++) if (fieldtypes[iii]) free(fieldtypes[iii]);
-						  if (fieldtypes) free(fieldtypes);
 					}
 
-				}
+					dim_d = NULL;
+					dim_f = NULL;
+					dim_i = NULL;
+	 				dim_l = NULL;
+					dim_s = NULL;
+	 				dim_b = NULL;
 
-				dim_d = NULL;
-				dim_f = NULL;
-				dim_i = NULL;
- 				dim_l = NULL;
-				dim_s = NULL;
- 				dim_b = NULL;
-
-				if(oph_ioserver_fetch_row(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, frag_rows, &curr_row)){
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n"); 		
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_IOPLUGIN_FETCH_ROW_ERROR);    		
-					result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-					break;
-				}
-
-				while((curr_row->row) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS))
-				{
-					if (is_objkey_printable)
-					{
-						  jsonvalues = (char **)calloc(num_fields,sizeof(char *));
-						  if (!jsonvalues) {
-							  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-							  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSPECTFRAG_MEMORY_ERROR_INPUT, "values" );
-							  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-							  break;
-						  }
-						  jjj=0;
+					if(oph_ioserver_fetch_row(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, frag_rows, &curr_row)){
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n"); 		
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_IOPLUGIN_FETCH_ROW_ERROR);    		
+						result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+						break;
 					}
 
-					jj=0;
-					for(ii = 0; (ii < explicit_dim_total_number+1) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS);kk=ii++)
+					while((curr_row->row) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS))
 					{
-						if(ii)
+						if (is_objkey_printable)
 						{
-							if (curr_row->row[jj]) offset = strtoll(curr_row->row[jj],NULL,10)-1; else offset=0;
-							if (!dim_rows[kk] || !dim_inst[kk].size) continue;
-							else
+							  jsonvalues = (char **)calloc(num_fields,sizeof(char *));
+							  if (!jsonvalues) {
+								  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSPECTFRAG_MEMORY_ERROR_INPUT, "values" );
+								  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+								  break;
+							  }
+							  jjj=0;
+						}
+
+						jj=0;
+						for(ii = 0; (ii < explicit_dim_total_number+1) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS);kk=ii++)
+						{
+							if(ii)
 							{
-								index_dim = *((long long*) (dim_rows_index[kk] + offset*sizeof(long long))) - 1;
-								if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_time && dim[kk].calendar && strlen(dim[kk].calendar)){
-									if (oph_dim_get_time_string_of(dim_rows[kk], index_dim, &(dim[kk]), jsontmp))
-									{
-										pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in handling time dimension\n");
-										logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR);
-										result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-								  		break;
+								if (curr_row->row[jj]) offset = strtoll(curr_row->row[jj],NULL,10)-1; else offset=0;
+								if (!dim_rows[kk] || !dim_inst[kk].size) continue;
+								else
+								{
+									index_dim = *((long long*) (dim_rows_index[kk] + offset*sizeof(long long))) - 1;
+									if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_time && dim[kk].calendar && strlen(dim[kk].calendar)){
+										if (oph_dim_get_time_string_of(dim_rows[kk], index_dim, &(dim[kk]), jsontmp))
+										{
+											pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in handling time dimension\n");
+											logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR);
+											result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									  		break;
+										}
+										if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
+											printf("| (%s) %-*s", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), jsontmp); // Traditional print does not work correctly!!!
+										else
+											printf("| %-*s",(int)frag_rows->max_field_length[jj]+1, jsontmp); // Traditional print does not work correctly!!!
+										if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%s",jsontmp);
 									}
-									if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
-										printf("| (%s) %-*s", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), jsontmp); // Traditional print does not work correctly!!!
-									else
-										printf("| %-*s",(int)frag_rows->max_field_length[jj]+1, jsontmp); // Traditional print does not work correctly!!!
-									if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%s",jsontmp);
+									else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_INT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
+										dim_i = (int*) (dim_rows[kk] + index_dim*sizeof(int));
+										if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
+											printf("| (%s) %-*d", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_i);
+										else
+											printf("| %-*d",(int)frag_rows->max_field_length[jj]+1, *dim_i);
+										if (is_objkey_printable)
+										{
+											if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+											{
+												memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+												oph_utl_base64encode(dim_i, sizeof(int), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+											}
+											else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_i);
+										}
+									}
+									else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_LONG_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
+										dim_l = (long long*) (dim_rows[kk] + index_dim*sizeof(long long));
+										if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
+											printf("| (%s) %-*lld", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_l);
+										else
+											printf("| %-*lld",(int)frag_rows->max_field_length[jj]+1, *dim_l);
+										if (is_objkey_printable)
+										{
+											if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+											{
+												memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+												oph_utl_base64encode(dim_l, sizeof(long long), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+											}
+											else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%lld",*dim_l);
+										}
+									}
+									else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_SHORT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
+										dim_s = (short*) (dim_rows[kk] + index_dim*sizeof(short));
+										if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
+											printf("| (%s) %-*d", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_s);
+										else
+											printf("| %-*d",(int)frag_rows->max_field_length[jj]+1, *dim_s);
+										if (is_objkey_printable)
+										{
+											if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+											{
+												memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+												oph_utl_base64encode(dim_s, sizeof(short), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+											}
+											else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_s);
+										}
+									}
+									else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_BYTE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
+										dim_b = (char*) (dim_rows[kk] + index_dim*sizeof(char));
+										if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
+											printf("| (%s) %-*d", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_b);
+										else
+											printf("| %-*d",(int)frag_rows->max_field_length[jj]+1, *dim_b);
+										if (is_objkey_printable)
+										{
+											if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+											{
+												memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+												oph_utl_base64encode(dim_b, sizeof(char), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+											}
+											else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_b);
+										}
+									}
+									else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_FLOAT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
+										dim_f = (float*) (dim_rows[kk] + index_dim*sizeof(float));
+										if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
+											printf("| (%s) %-*f", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_f);
+										else
+											printf("| %-*f",(int)frag_rows->max_field_length[jj]+1, *dim_f);
+										if (is_objkey_printable)
+										{
+											if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+											{
+												memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+												oph_utl_base64encode(dim_f, sizeof(float), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+											}
+											else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_f);
+										}
+									}
+									else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_DOUBLE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
+										dim_d = (double*) (dim_rows[kk] + index_dim*sizeof(double));
+										if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
+											printf("| (%s) %-*f", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_d);
+										else
+											printf("| %-*f",(int)frag_rows->max_field_length[jj]+1, *dim_d);
+										if (is_objkey_printable)
+										{
+											if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+											{
+												memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+												oph_utl_base64encode(dim_d, sizeof(double), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+											}
+											else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_d);
+										}
+									}
+									else {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Type not supported.\n");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_TYPE_NOT_SUPPORTED, dim[kk].dimension_type);    		
+										result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+										break;
+									}
 								}
-								else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_INT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
-									dim_i = (int*) (dim_rows[kk] + index_dim*sizeof(int));
-									if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
-										printf("| (%s) %-*d", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_i);
-									else
-										printf("| %-*d",(int)frag_rows->max_field_length[jj]+1, *dim_i);
-									if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_i);
-								}
-								else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_LONG_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
-									dim_l = (long long*) (dim_rows[kk] + index_dim*sizeof(long long));
-									if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
-										printf("| (%s) %-*lld", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_l);
-									else
-										printf("| %-*lld",(int)frag_rows->max_field_length[jj]+1, *dim_l);
-									if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%lld",*dim_l);
-								}
-								else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_SHORT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
-									dim_s = (short*) (dim_rows[kk] + index_dim*sizeof(short));
-									if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
-										printf("| (%s) %-*d", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_s);
-									else
-										printf("| %-*d",(int)frag_rows->max_field_length[jj]+1, *dim_s);
-									if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_s);
-								}
-								else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_BYTE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
-									dim_b = (char*) (dim_rows[kk] + index_dim*sizeof(char));
-									if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
-										printf("| (%s) %-*d", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_b);
-									else
-										printf("| %-*d",(int)frag_rows->max_field_length[jj]+1, *dim_b);
-									if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_b);
-								}
-								else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_FLOAT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
-									dim_f = (float*) (dim_rows[kk] + index_dim*sizeof(float));
-									if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
-										printf("| (%s) %-*f", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_f);
-									else
-										printf("| %-*f",(int)frag_rows->max_field_length[jj]+1, *dim_f);
-									if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_f);
-								}
-								else if(!strncasecmp(dim[kk].dimension_type, OPH_COMMON_DOUBLE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
-									dim_d = (double*) (dim_rows[kk] + index_dim*sizeof(double));
-									if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
-										printf("| (%s) %-*f", curr_row->row[jj], (int)(frag_rows->max_field_length[jj]+1-(strlen(curr_row->row[jj]) + 3)), *dim_d);
-									else
-										printf("| %-*f",(int)frag_rows->max_field_length[jj]+1, *dim_d);
-									if (is_objkey_printable) snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_d);
-								}
-								else {
-									pmesg(LOG_ERROR, __FILE__, __LINE__, "Type not supported.\n");
-									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_TYPE_NOT_SUPPORTED, dim[kk].dimension_type);    		
-									result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-									break;
+
+								if (is_objkey_printable)
+								{
+									jsonvalues[jjj] = strdup(tmp_value);
+									if (!jsonvalues[jjj]) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "value" );
+										for (iii = 0; iii < jjj; iii++) if (jsonvalues[iii]) free(jsonvalues[iii]);
+										if (jsonvalues) free(jsonvalues);
+										result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+										break;
+									}
+									jjj++;
+									if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
+									{
+										jsonvalues[jjj] = strdup(curr_row->row[jj] ? curr_row->row[jj] : "");
+										if (!jsonvalues[jjj]) {
+											pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+											logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "value" );
+											for (iii = 0; iii < jjj; iii++) if (jsonvalues[iii]) free(jsonvalues[iii]);
+											if (jsonvalues) free(jsonvalues);
+											result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+											break;
+										}
+										jjj++;
+									}
 								}
 							}
-
-							if (is_objkey_printable)
+							else if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_id)
 							{
-								jsonvalues[jjj] = strdup(tmp_value);
-								if (!jsonvalues[jjj]) {
-									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "value" );
-									for (iii = 0; iii < jjj; iii++) if (jsonvalues[iii]) free(jsonvalues[iii]);
-									if (jsonvalues) free(jsonvalues);
-									result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-									break;
-								}
-								jjj++;
-								if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_index)
+								printf("| %-*s",(int)frag_rows->max_field_length[jj]+1,curr_row->row[jj]);							
+								if (is_objkey_printable)
 								{
 									jsonvalues[jjj] = strdup(curr_row->row[jj] ? curr_row->row[jj] : "");
 									if (!jsonvalues[jjj]) {
@@ -1719,13 +1809,14 @@ int task_execute (oph_operator_struct *handle)
 									jjj++;
 								}
 							}
+							jj++;
 						}
-						else if(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->show_id)
+						for(ii = 0; (ii < explicit_dim_total_number-explicit_dim_number) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS);ii++)
 						{
-							printf("| %-*s",(int)frag_rows->max_field_length[jj]+1,curr_row->row[jj]);							
+							printf("| %-*s",(int)strlen(OPH_COMMON_FULL_REDUCED_DIM)+1,OPH_COMMON_FULL_REDUCED_DIM);
 							if (is_objkey_printable)
 							{
-								jsonvalues[jjj] = strdup(curr_row->row[jj] ? curr_row->row[jj] : "");
+								jsonvalues[jjj] = strdup(OPH_COMMON_FULL_REDUCED_DIM);
 								if (!jsonvalues[jjj]) {
 									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "value" );
@@ -1737,69 +1828,50 @@ int task_execute (oph_operator_struct *handle)
 								jjj++;
 							}
 						}
-						jj++;
-					}
-					for(ii = 0; (ii < explicit_dim_total_number-explicit_dim_number) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS);ii++)
-					{
-						printf("| %-*s",(int)strlen(OPH_COMMON_FULL_REDUCED_DIM)+1,OPH_COMMON_FULL_REDUCED_DIM);
+						if (result != OPH_ANALYTICS_OPERATOR_SUCCESS) break;
+						printf("| %-*s |\n",(int)frag_rows->max_field_length[explicit_dim_number+1],curr_row->row[explicit_dim_number+1]?curr_row->row[explicit_dim_number+1]:"NULL");					
 						if (is_objkey_printable)
 						{
-							jsonvalues[jjj] = strdup(OPH_COMMON_FULL_REDUCED_DIM);
-							if (!jsonvalues[jjj]) {
+							  jsonvalues[jjj] = strdup(curr_row->row[explicit_dim_number+1] ? curr_row->row[explicit_dim_number+1] : "");
+							  if (!jsonvalues[jjj]) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "value" );
 								for (iii = 0; iii < jjj; iii++) if (jsonvalues[iii]) free(jsonvalues[iii]);
 								if (jsonvalues) free(jsonvalues);
 								result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 								break;
-							}
-							jjj++;
-						}
-					}
-					if (result != OPH_ANALYTICS_OPERATOR_SUCCESS) break;
-					printf("| %-*s |\n",(int)frag_rows->max_field_length[explicit_dim_number+1],curr_row->row[explicit_dim_number+1]?curr_row->row[explicit_dim_number+1]:"NULL");					
-					if (is_objkey_printable)
-					{
-						  jsonvalues[jjj] = strdup(curr_row->row[explicit_dim_number+1] ? curr_row->row[explicit_dim_number+1] : "");
-						  if (!jsonvalues[jjj]) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "value" );
-							for (iii = 0; iii < jjj; iii++) if (jsonvalues[iii]) free(jsonvalues[iii]);
-							if (jsonvalues) free(jsonvalues);
-							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-							break;
-						  }
-						  if (oph_json_add_grid_row(handle->operator_json,OPH_JSON_OBJKEY_EXPLORECUBE_DATA,jsonvalues)) {
-							  pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
-							  logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD GRID ROW error\n");
+							  }
+							  if (oph_json_add_grid_row(handle->operator_json,OPH_JSON_OBJKEY_EXPLORECUBE_DATA,jsonvalues)) {
+								  pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
+								  logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD GRID ROW error\n");
+								  for (iii = 0; iii < num_fields; iii++) if (jsonvalues[iii]) free(jsonvalues[iii]);
+								  if (jsonvalues) free(jsonvalues);
+								  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+								break;
+							  }
 							  for (iii = 0; iii < num_fields; iii++) if (jsonvalues[iii]) free(jsonvalues[iii]);
 							  if (jsonvalues) free(jsonvalues);
-							  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+						}
+						number_of_rows++;
+
+						if(oph_ioserver_fetch_row(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, frag_rows, &curr_row))
+						{
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n"); 		
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_IOPLUGIN_FETCH_ROW_ERROR);    		
+							result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 							break;
-						  }
-						  for (iii = 0; iii < num_fields; iii++) if (jsonvalues[iii]) free(jsonvalues[iii]);
-						  if (jsonvalues) free(jsonvalues);
+						}
 					}
-					number_of_rows++;
 
-					if(oph_ioserver_fetch_row(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, frag_rows, &curr_row))
-					{
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n"); 		
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_IOPLUGIN_FETCH_ROW_ERROR);    		
-						result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-						break;
-					}
+					oph_ioserver_free_result(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, frag_rows);
+					frag_count++;
+
+					if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->limit) current_limit -= num_rows;
 				}
-
-				oph_ioserver_free_result(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, frag_rows);
-				frag_count++;
-
-				if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->limit) current_limit -= num_rows;
 			}
 		}
+		oph_dc2_disconnect_from_dbms(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
 	}
-	oph_dc2_disconnect_from_dbms(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
-  }
 
 	if(oph_dc2_cleanup_dbms(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->server))
 	{
@@ -1807,6 +1879,8 @@ int task_execute (oph_operator_struct *handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_IOPLUGIN_CLEANUP_ERROR, (dbmss.value[0]).id_dbms);    
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
+
+  }
 
   oph_odb_stge_free_fragment_list(&frags);
   oph_odb_stge_free_db_list(&dbs);
@@ -1837,9 +1911,18 @@ int task_execute (oph_operator_struct *handle)
   }
   if (empty && !result)
   {
-	pmesg(LOG_WARNING, __FILE__, __LINE__, "No rows found by query.\n");
-	logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_NO_ROWS_FOUND);
-	printf("Empty set\n");
+	char message[OPH_COMMON_BUFFER_LEN];
+	snprintf(message,OPH_COMMON_BUFFER_LEN,"Empty set");
+	printf("%s\n",message);
+	if (oph_json_is_objkey_printable(((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->objkeys,((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->objkeys_num,OPH_JSON_OBJKEY_EXPLORECUBE_SUMMARY))
+	{
+		if (oph_json_add_text(handle->operator_json,OPH_JSON_OBJKEY_EXPLORECUBE_SUMMARY,"Summary",message))
+		{
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+			logging(LOG_WARNING,__FILE__,__LINE__, OPH_GENERIC_CONTAINER_ID,"ADD TEXT error\n");
+			result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+	}
   }
 
   if (!result && (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->level>1))
@@ -2002,32 +2085,67 @@ int task_execute (oph_operator_struct *handle)
 					else if(!strncasecmp(dim[l].dimension_type, OPH_COMMON_INT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
 					{
 						dim_i = (int*) (dim_rows_ + index_dim*sizeof(int));
-						snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_i);
+						if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_i, sizeof(int), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_i);
 					}
 					else if(!strncasecmp(dim[l].dimension_type, OPH_COMMON_LONG_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
 					{
 						dim_l = (long long*) (dim_rows_ + index_dim*sizeof(long long));
-						snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%lld",*dim_l);
+						if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_l, sizeof(long long), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%lld",*dim_l);
+
 					}
 					else if(!strncasecmp(dim[l].dimension_type, OPH_COMMON_SHORT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
 					{
 						dim_s = (short*) (dim_rows_ + index_dim*sizeof(short));
-						snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_s);
+						if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_s, sizeof(short), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_s);
+
 					}
 					else if(!strncasecmp(dim[l].dimension_type, OPH_COMMON_BYTE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
 					{
 						dim_b = (char*) (dim_rows_ + index_dim*sizeof(char));
-						snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_b);
+						if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_b, sizeof(char), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%d",*dim_b);
+
 					}
 					else if(!strncasecmp(dim[l].dimension_type, OPH_COMMON_FLOAT_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
 					{
 						dim_f = (float*) (dim_rows_ + index_dim*sizeof(float));
-						snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_f);
+						if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_f, sizeof(float), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_f);
+
 					}
 					else if(!strncasecmp(dim[l].dimension_type, OPH_COMMON_DOUBLE_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
 					{
 						dim_d = (double*) (dim_rows_ + index_dim*sizeof(double));
-						snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_d);
+						if (((OPH_EXPLORECUBE_operator_handle*)handle->operator_handle)->base64)
+						{
+							memset(tmp_value, 0, OPH_COMMON_BUFFER_LEN);
+							oph_utl_base64encode(dim_d, sizeof(double), tmp_value, OPH_COMMON_BUFFER_LEN-1);
+						}
+						else snprintf(tmp_value,OPH_COMMON_BUFFER_LEN,"%f",*dim_d);
+
 					}
 					else
 					{

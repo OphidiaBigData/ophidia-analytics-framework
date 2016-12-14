@@ -64,7 +64,9 @@
  * \param sessionid SessionID
  * \param id_user ID of submitter
  * \param time_filter Flag used in case time filters are expressed as dates
- * \param description Free description to be associated with output cube 
+ * \param description Free description to be associated with output cube
+ * \param offset List of offsets used to enlarge subset intervals
+ * \param offset_num Number of offsets
  */
 struct _OPH_SUBSET2_operator_handle
 {
@@ -97,6 +99,8 @@ struct _OPH_SUBSET2_operator_handle
   int id_user;
   int time_filter;
   char* description;
+  double *offset;
+  int offset_num;
 };
 typedef struct _OPH_SUBSET2_operator_handle OPH_SUBSET2_operator_handle;
 

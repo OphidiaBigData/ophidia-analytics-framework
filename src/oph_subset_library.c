@@ -57,7 +57,7 @@ int oph_subset_double_init(oph_subset_double** subset)
 	return OPH_SUBSET_LIB_OK;
 }
 
-int oph_subset_double_parse(const char* cond, unsigned long long len, oph_subset_double* subset, double min, double max)
+int oph_subset_double_parse(const char* cond, unsigned long long len, oph_subset_double* subset, double min, double max, double offset)
 {
 	char *result, *result2, temp0[OPH_SUBSET_LIB_MAX_STRING_LENGTH], temp1[OPH_SUBSET_LIB_MAX_STRING_LENGTH], temp2[OPH_SUBSET_LIB_MAX_STRING_LENGTH], *next, *temp, *savepointer = NULL;
 	unsigned int number;
@@ -133,6 +133,22 @@ int oph_subset_double_parse(const char* cond, unsigned long long len, oph_subset
 					else subset->end[i] = strtod(result2,NULL);
 					subset->start[i] = subset->end[i];
 					subset->type[i] = OPH_SUBSET_LIB_SINGLE;
+					if (offset)
+					{
+						subset->start[i] -= offset;
+						subset->end[i] += offset;
+						if (min)
+						{
+							if (subset->start[i] < min) subset->start[i] = min;
+							if (subset->end[i] < min) subset->end[i] = min;
+						}
+						if (max)
+						{
+							if (subset->start[i] > max) subset->start[i] = max;
+							if (subset->end[i] > max) subset->end[i] = max;
+						}
+						if (subset->start[i] != subset->end[i]) subset->type[i] = OPH_SUBSET_LIB_INTERVAL;
+					}
 					break;
 				case 1:
 					if (!strncasecmp(result2,OPH_SUBSET_LIB_PARAM_BEGIN,strlen(OPH_SUBSET_LIB_PARAM_BEGIN)))
@@ -151,6 +167,12 @@ int oph_subset_double_parse(const char* cond, unsigned long long len, oph_subset
 					}
 					else subset->end[i] = strtod(result2,NULL);
 					subset->type[i] = OPH_SUBSET_LIB_INTERVAL;
+					if (offset)
+					{
+						subset->end[i] += offset;
+						if (min && (subset->end[i] < min)) subset->end[i] = min;
+						if (max && (subset->end[i] > max)) subset->end[i] = max;
+					}
 					break;
 				default:
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong input data: too many '%s' in subset\n",OPH_SUBSET_LIB_PARAM_SEPARATOR);
@@ -443,7 +465,7 @@ int oph_subset_double_free(oph_subset_double* subset)
 	return OPH_SUBSET_LIB_OK;
 }
 
-int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long long data_size, char* data_type, char* out_cond, oph_subset** out_subset)
+int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long long data_size, char* data_type, double offset, char* out_cond, oph_subset** out_subset)
 {
 	if (!in_cond || !data || !data_size || !data_type || !out_cond)
 	{
@@ -493,20 +515,20 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 
 	oph_subset_double* subset_double;
 	if (oph_subset_double_init(&subset_double)) return OPH_SUBSET_LIB_SYSTEM_ERR;
-	if (oph_subset_double_parse(in_cond, strlen(in_cond), subset_double, min, max)) return OPH_SUBSET_LIB_DATA_ERR;
+	if (oph_subset_double_parse(in_cond, strlen(in_cond), subset_double, min, max, offset)) return OPH_SUBSET_LIB_DATA_ERR;
 	
 	oph_subset* subset;
 	oph_subset_init(&subset);
 	subset->number = subset_double->number;
-	subset->type = (oph_subset_type*)malloc(subset->number*sizeof(oph_subset_type));
-	subset->start = (unsigned long long*)malloc(subset->number*sizeof(unsigned long long));
-	subset->end = (unsigned long long*)malloc(subset->number*sizeof(unsigned long long));
-	subset->stride = (unsigned long long*)malloc(subset->number*sizeof(unsigned long long));
-	subset->count = (unsigned long long*)malloc(subset->number*sizeof(unsigned long long));
+	subset->type = (oph_subset_type*)calloc(subset->number,sizeof(oph_subset_type));
+	subset->start = (unsigned long long*)calloc(subset->number,sizeof(unsigned long long));
+	subset->end = (unsigned long long*)calloc(subset->number,sizeof(unsigned long long));
+	subset->stride = (unsigned long long*)calloc(subset->number,sizeof(unsigned long long));
+	subset->count = (unsigned long long*)calloc(subset->number,sizeof(unsigned long long));
 	subset->total = 0;
 
 	int i, j;
-	for (i=0;i<(int)subset->number;++i) subset->count[i] = 0;
+	for (i=0;i<(int)subset->number;++i) subset->stride[i] = 1;
 
 	if (!strncasecmp(data_type,OPH_SUBSET_LIB_DOUBLE_TYPE,OPH_SUBSET_LIB_MAX_TYPE_LENGTH))
 	{
@@ -538,17 +560,24 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							if (*((double*)data+j) >= subset_double->start[i]) break;
 						if (j==(int)data_size)
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too high\n", subset_double->start[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too high\n", subset_double->start[i]);
 							continue;
 						} 
-						else if(!j && (subset_double->end[i] < *((double*)data+j)))
+						else if (!j && (subset_double->end[i] < *((double*)data+j)))
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too low\n", subset_double->end[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too low\n", subset_double->end[i]);
 							continue;
 						} 
 						else
 						{
 							subset->start[i] = j+1; // Non 'C'-like indexing
+							if (*((double*)data+j) > subset_double->end[i]) // Empty set
+							{
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
+								subset->end[i] = subset->start[i]; // Non 'C'-like indexing
+								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
+								continue;
+							}
 							for (j++; j<(int)data_size; ++j)
 								if (*((double*)data+j) > subset_double->end[i]) break;
 							subset->end[i] = j; // Non 'C'-like indexing
@@ -561,17 +590,24 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							if (*((double*)data+j) >= subset_double->start[i]) break;
 						if (j<0)
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too high\n", subset_double->start[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too high\n", subset_double->start[i]);
 							continue;
 						} 
-						else if((j<(int)data_size-1) && (subset_double->end[i] < *((double*)data+j)))
+						else if ((j==(int)data_size-1) && (subset_double->end[i] < *((double*)data+j)))
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too low\n", subset_double->end[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too low\n", subset_double->end[i]);
 							continue;
 						} 
 						else
 						{
 							subset->end[i] = j+1; // Non 'C'-like indexing
+							if (*((double*)data+j) > subset_double->end[i]) // Empty set
+							{
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
+								subset->start[i] = subset->end[i]; // Non 'C'-like indexing
+								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
+								continue;
+							}
 							for (j--; j>=0; --j)
 								if (*((double*)data+j) > subset_double->end[i]) break;
 							subset->start[i] = j+2; // Non 'C'-like indexing
@@ -585,8 +621,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 					oph_subset_double_free(subset_double);
 					return OPH_SUBSET_LIB_SYSTEM_ERR;
 			}
-			subset->stride[i] = 1;
-			subset->count[i] = 1+(subset->end[i]-subset->start[i])/subset->stride[i];
+			subset->count[i] = 1+(subset->end[i]-subset->start[i]);
 			subset->total += subset->count[i];
 		}
 	}
@@ -620,17 +655,24 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							if (*((float*)data+j) >= subset_double->start[i]) break;
 						if (j==(int)data_size)
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too high\n", subset_double->start[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too high\n", subset_double->start[i]);
 							continue;
 						} 
 						else if(!j && (subset_double->end[i] < *((float*)data+j)))
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too low\n", subset_double->end[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too low\n", subset_double->end[i]);
 							continue;
 						} 
 						else
 						{
 							subset->start[i] = j+1; // Non 'C'-like indexing
+							if (*((float*)data+j) > subset_double->end[i]) // Empty set
+							{
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
+								subset->end[i] = subset->start[i]; // Non 'C'-like indexing
+								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
+								continue;
+							}
 							for (j++; j<(int)data_size; ++j)
 								if (*((float*)data+j) > subset_double->end[i]) break;
 							subset->end[i] = j; // Non 'C'-like indexing
@@ -643,17 +685,24 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							if (*((float*)data+j) >= subset_double->start[i]) break;
 						if (j<0)
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too high\n", subset_double->start[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too high\n", subset_double->start[i]);
 							continue;
 						} 
-						else if((j<(int)data_size-1) && (subset_double->end[i] < *((float*)data+j)))
+						else if ((j==(int)data_size-1) && (subset_double->end[i] < *((float*)data+j)))
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too low\n", subset_double->end[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too low\n", subset_double->end[i]);
 							continue;
 						} 
 						else
 						{
 							subset->end[i] = j+1; // Non 'C'-like indexing
+							if (*((float*)data+j) > subset_double->end[i]) // Empty set
+							{
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
+								subset->start[i] = subset->end[i]; // Non 'C'-like indexing
+								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
+								continue;
+							}
 							for (j--; j>=0; --j)
 								if (*((float*)data+j) > subset_double->end[i]) break;
 							subset->start[i] = j+2; // Non 'C'-like indexing
@@ -667,8 +716,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 					oph_subset_double_free(subset_double);
 					return OPH_SUBSET_LIB_SYSTEM_ERR;
 			}
-			subset->stride[i] = 1;
-			subset->count[i] = 1+(subset->end[i]-subset->start[i])/subset->stride[i];
+			subset->count[i] = 1+(subset->end[i]-subset->start[i]);
 			subset->total += subset->count[i];
 		}
 	}
@@ -702,17 +750,24 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							if (*((char*)data+j) >= subset_double->start[i]) break;
 						if (j==(int)data_size)
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too high\n", subset_double->start[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too high\n", subset_double->start[i]);
 							continue;
 						} 
-						else if(!j && (subset_double->end[i] < *((char*)data+j)))
+						else if (!j && (subset_double->end[i] < *((char*)data+j)))
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too low\n", subset_double->end[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too low\n", subset_double->end[i]);
 							continue;
 						} 
 						else
 						{
 							subset->start[i] = j+1; // Non 'C'-like indexing
+							if (*((char*)data+j) > subset_double->end[i]) // Empty set
+							{
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
+								subset->end[i] = subset->start[i]; // Non 'C'-like indexing
+								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
+								continue;
+							}
 							for (j++; j<(int)data_size; ++j)
 								if (*((char*)data+j) > subset_double->end[i]) break;
 							subset->end[i] = j; // Non 'C'-like indexing
@@ -725,17 +780,24 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							if (*((char*)data+j) >= subset_double->start[i]) break;
 						if (j<0)
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too high\n", subset_double->start[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too high\n", subset_double->start[i]);
 							continue;
 						} 
-						else if((j<(int)data_size-1) && (subset_double->end[i] < *((char*)data+j)))
+						else if ((j==(int)data_size-1) && (subset_double->end[i] < *((char*)data+j)))
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too low\n", subset_double->end[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too low\n", subset_double->end[i]);
 							continue;
 						} 
 						else
 						{
 							subset->end[i] = j+1; // Non 'C'-like indexing
+							if (*((char*)data+j) > subset_double->end[i]) // Empty set
+							{
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
+								subset->start[i] = subset->end[i]; // Non 'C'-like indexing
+								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
+								continue;
+							}
 							for (j--; j>=0; --j)
 								if (*((char*)data+j) > subset_double->end[i]) break;
 							subset->start[i] = j+2; // Non 'C'-like indexing
@@ -749,8 +811,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 					oph_subset_double_free(subset_double);
 					return OPH_SUBSET_LIB_SYSTEM_ERR;
 			}
-			subset->stride[i] = 1;
-			subset->count[i] = 1+(subset->end[i]-subset->start[i])/subset->stride[i];
+			subset->count[i] = 1+(subset->end[i]-subset->start[i]);
 			subset->total += subset->count[i];
 		}
 	}
@@ -784,17 +845,24 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							if (*((short*)data+j) >= subset_double->start[i]) break;
 						if (j==(int)data_size)
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too high\n", subset_double->start[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too high\n", subset_double->start[i]);
 							continue;
 						} 
-						else if(!j && (subset_double->end[i] < *((short*)data+j)))
+						else if (!j && (subset_double->end[i] < *((short*)data+j)))
 						{
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too low\n", subset_double->end[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too low\n", subset_double->end[i]);
 							continue;
 						} 
 						else
 						{
 							subset->start[i] = j+1; // Non 'C'-like indexing
+							if (*((short*)data+j) > subset_double->end[i]) // Empty set
+							{
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
+								subset->end[i] = subset->start[i]; // Non 'C'-like indexing
+								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
+								continue;
+							}
 							for (j++; j<(int)data_size; ++j)
 								if (*((short*)data+j) > subset_double->end[i]) break;
 							subset->end[i] = j; // Non 'C'-like indexing
@@ -807,17 +875,24 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							if (*((short*)data+j) >= subset_double->start[i]) break;
 						if (j<0)
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too high\n", subset_double->start[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too high\n", subset_double->start[i]);
 							continue;
 						} 
-						else if((j<(int)data_size-1) && (subset_double->end[i] < *((short*)data+j)))
+						else if ((j==(int)data_size-1) && (subset_double->end[i] < *((short*)data+j)))
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too low\n", subset_double->end[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too low\n", subset_double->end[i]);
 							continue;
 						} 
 						else
 						{
 							subset->end[i] = j+1; // Non 'C'-like indexing
+							if (*((short*)data+j) > subset_double->end[i]) // Empty set
+							{
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
+								subset->start[i] = subset->end[i]; // Non 'C'-like indexing
+								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
+								continue;
+							}
 							for (j--; j>=0; --j)
 								if (*((short*)data+j) > subset_double->end[i]) break;
 							subset->start[i] = j+2; // Non 'C'-like indexing
@@ -831,8 +906,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 					oph_subset_double_free(subset_double);
 					return OPH_SUBSET_LIB_SYSTEM_ERR;
 			}
-			subset->stride[i] = 1;
-			subset->count[i] = 1+(subset->end[i]-subset->start[i])/subset->stride[i];
+			subset->count[i] = 1+(subset->end[i]-subset->start[i]);
 			subset->total += subset->count[i];
 		}
 	}
@@ -866,17 +940,24 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							if (*((int*)data+j) >= subset_double->start[i]) break;
 						if (j==(int)data_size)
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too high\n", subset_double->start[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too high\n", subset_double->start[i]);
 							continue;
 						} 
-						else if(!j && (subset_double->end[i] < *((int*)data+j)))
+						else if (!j && (subset_double->end[i] < *((int*)data+j)))
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too low\n", subset_double->end[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too low\n", subset_double->end[i]);
 							continue;
 						} 
 						else
 						{
 							subset->start[i] = j+1; // Non 'C'-like indexing
+							if (*((int*)data+j) > subset_double->end[i]) // Empty set
+							{
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
+								subset->end[i] = subset->start[i];
+								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
+								continue;
+							}
 							for (j++; j<(int)data_size; ++j)
 								if (*((int*)data+j) > subset_double->end[i]) break;
 							subset->end[i] = j; // Non 'C'-like indexing
@@ -889,17 +970,24 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							if (*((int*)data+j) >= subset_double->start[i]) break;
 						if (j<0)
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too high\n", subset_double->start[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too high\n", subset_double->start[i]);
 							continue;
 						} 
-						else if((j<(int)data_size-1) && (subset_double->end[i] < *((int*)data+j)))
+						else if ((j==(int)data_size-1) && (subset_double->end[i] < *((int*)data+j)))
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too low\n", subset_double->end[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too low\n", subset_double->end[i]);
 							continue;
 						} 
 						else
 						{
 							subset->end[i] = j+1; // Non 'C'-like indexing
+							if (*((int*)data+j) > subset_double->end[i]) // Empty set
+							{
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
+								subset->start[i] = subset->end[i]; // Non 'C'-like indexing
+								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
+								continue;
+							}
 							for (j--; j>=0; --j)
 								if (*((int*)data+j) > subset_double->end[i]) break;
 							subset->start[i] = j+2; // Non 'C'-like indexing
@@ -913,8 +1001,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 					oph_subset_double_free(subset_double);
 					return OPH_SUBSET_LIB_SYSTEM_ERR;
 			}
-			subset->stride[i] = 1;
-			subset->count[i] = 1+(subset->end[i]-subset->start[i])/subset->stride[i];
+			subset->count[i] = 1+(subset->end[i]-subset->start[i]);
 			subset->total += subset->count[i];
 		}
 	}
@@ -948,17 +1035,24 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							if (*((long long*)data+j) >= subset_double->start[i]) break;
 						if (j==(int)data_size)
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too high\n", subset_double->start[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too high\n", subset_double->start[i]);
 							continue;
 						} 
-						else if(!j && (subset_double->end[i] < *((long long*)data+j)))
+						else if (!j && (subset_double->end[i] < *((int*)data+j)))
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too low\n", subset_double->end[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too low\n", subset_double->end[i]);
 							continue;
 						} 
 						else
 						{
 							subset->start[i] = j+1; // Non 'C'-like indexing
+							if (*((long long*)data+j) > subset_double->end[i]) // Empty set
+							{
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
+								subset->end[i] = subset->start[i];
+								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
+								continue;
+							}
 							for (j++; j<(int)data_size; ++j)
 								if (*((long long*)data+j) > subset_double->end[i]) break;
 							subset->end[i] = j; // Non 'C'-like indexing
@@ -971,17 +1065,24 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 							if (*((long long*)data+j) >= subset_double->start[i]) break;
 						if (j<0)
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too high\n", subset_double->start[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too high\n", subset_double->start[i]);
 							continue;
 						} 
-						else if((j<(int)data_size-1) && (subset_double->end[i] < *((long long*)data+j)))
+						else if ((j==(int)data_size-1) && (subset_double->end[i] < *((long long*)data+j)))
 						{
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval given is out of dimensione range: %f is too low\n", subset_double->end[i]);
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset interval is out of dimension range: %f is too low\n", subset_double->end[i]);
 							continue;
 						} 
 						else
 						{
 							subset->end[i] = j+1; // Non 'C'-like indexing
+							if (*((long long*)data+j) > subset_double->end[i]) // Empty set
+							{
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset cube is empty\n");
+								subset->start[i] = subset->end[i]; // Non 'C'-like indexing
+								subset_double->type[i] = OPH_SUBSET_LIB_SINGLE;
+								continue;
+							}
 							for (j--; j>=0; --j)
 								if (*((long long*)data+j) > subset_double->end[i]) break;
 							subset->start[i] = j+2; // Non 'C'-like indexing
@@ -995,8 +1096,7 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 					oph_subset_double_free(subset_double);
 					return OPH_SUBSET_LIB_SYSTEM_ERR;
 			}
-			subset->stride[i] = 1;
-			subset->count[i] = 1+(subset->end[i]-subset->start[i])/subset->stride[i];
+			subset->count[i] = 1+(subset->end[i]-subset->start[i]);
 			subset->total += subset->count[i];
 		}
 	}
@@ -1012,9 +1112,9 @@ int oph_subset_value_to_index(const char* in_cond, char* data, unsigned long lon
 
 	if (!subset->total)
 	{
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Subset cube is empty\n");
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "Subset cube is empty\n");
 		oph_subset_free(subset);
-		return OPH_SUBSET_LIB_DATA_ERR;
+		return OPH_SUBSET_LIB_OK;
 	}
 
 	size_t len;

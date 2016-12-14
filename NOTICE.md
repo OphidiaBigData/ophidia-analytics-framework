@@ -17,6 +17,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+Source code is available on github at: 
+https://github.com/OphidiaBigData/ophidia-analytics-framework
+
 ======================================================================
 
 The following libraries have been used:
@@ -51,7 +54,7 @@ http://www.unidata.ucar.edu/software/netcdf/copyright.html
 
 - Hash table</br>
 Creative Commons CC0 1.0</br>
-http://en.literateprograms.org/Hash_table_(C)
+https://creativecommons.org/publicdomain/zero/1.0/
 
 - gSOAP XML Web services tools</br>
 GPLv2</br>
@@ -69,6 +72,17 @@ http://www.apache.org/licenses/
 Apache License 2.0</br>
 http://www.apache.org/licenses/
 
+- Base64 encoding & decoding code (https://en.wikibooks.org/wiki/Algorithm_Implementation/Miscellaneous/Base64)
+Creative Commons CC BY-SA 3.0</br>
+https://creativecommons.org/licenses/by-sa/3.0/#
+
 <b>Note</b>:</br>
 This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit.
+
+=====================================================================
+
+<b>Acknowledgement</b>:</br>
+This software has been also supported by:
+
+- the Horizon 2020 Framework Programme through the INDIGO-DataCloud Project, RIA-653549
 

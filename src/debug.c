@@ -97,7 +97,7 @@ void pmesg(int level, const char* source, long int line_number, const char* form
 		if (*backtrace) free(*backtrace);
 		*backtrace = strdup(tmp);
 #else
-		if (!*backtrace)
+		if (!*backtrace && (level == LOG_ERROR))
 		{
 			int length = 4 + strlen(log_line);
 			char tmp[length];
@@ -180,7 +180,7 @@ void logging(int level, const char* source, long int line_number, int container_
 			if (*backtrace) free(*backtrace);
 			*backtrace = strdup(tmp);
 #else
-			if (!*backtrace)
+			if (!*backtrace && (level == LOG_ERROR))
 			{
 				int length = 4 + strlen(log_line);
 				char tmp[length];
@@ -264,7 +264,7 @@ void logging_server(int level, const char *source, long int line_number, const c
 			if (*backtrace) free(*backtrace);
 			*backtrace = strdup(tmp);
 #else
-			if (!*backtrace)
+			if (!*backtrace && (level == LOG_ERROR))
 			{
 				int length = 4 + strlen(log_line);
 				char tmp[length];

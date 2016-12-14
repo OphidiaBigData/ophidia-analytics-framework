@@ -19,7 +19,7 @@
 #ifndef __OPH_FRAMEWORK_PATHS_H
 #define __OPH_FRAMEWORK_PATHS_H
 
-#define OPH_VERSION						"Ophidia Analytics Framework, version 0.9.0\nCopyright (C) 2012-2016 CMCC Foundation - www.cmcc.it\n"
+#define OPH_VERSION						"Ophidia Analytics Framework, version 0.10.7\nCopyright (C) 2012-2016 CMCC Foundation - www.cmcc.it\n"
 #define OPH_DISCLAIMER						"This program comes with ABSOLUTELY NO WARRANTY; for details type `oph_analytics_framework -x'.\nThis is free software, and you are welcome to redistribute it\nunder certain conditions; type `oph_analytics_framework -z' for details.\n"
 #define OPH_WARRANTY						"\nTHERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM “AS IS” WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU. SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR OR CORRECTION.\n"
 #include "oph_license.h"
@@ -32,6 +32,7 @@
 #define OPH_FRAMEWORK_OPERATOR_XML_FOLDER_PATH                  "%s/etc/operators_xml"
 #define OPH_FRAMEWORK_PRIMITIVE_XML_FOLDER_PATH                 "%s/etc/primitives_xml"
 #define OPH_FRAMEWORK_HIERARCHY_XML_FOLDER_PATH                 "%s/etc/hierarchies_xml"
+#define OPH_FRAMEWORK_SCRIPT_FOLDER_PATH			"%s/etc/script"
 #define OPH_FRAMEWORK_OPERATOR_XML_FILE_PATH_DESC               "%s/etc/operators_xml/%s"
 #define OPH_FRAMEWORK_PRIMITIVE_XML_FILE_PATH_DESC              "%s/etc/primitives_xml/%s"
 #define OPH_FRAMEWORK_HIERARCHY_XML_FILE_PATH_DESC              "%s/etc/hierarchies_xml/%s"
@@ -49,6 +50,7 @@
 #define OPH_FRAMEWORK_OPHIDIADB_CONF_FILE_PATH          	"%s/etc/oph_configuration"
 #define OPH_FRAMEWORK_DIMENSION_CONF_FILE_PATH          	"%s/etc/oph_dim_configuration"
 #define OPH_FRAMEWORK_SOAP_CONF_FILE_PATH			"%s/etc/oph_soap_configuration"
+#define OPH_FRAMEWORK_SCRIPT_CONF_FILE_PATH			"%s/etc/oph_script_configuration"
 
 #define OPH_FRAMEWORK_JSON_GENERIC_PATH				"%s/%s.json"
 #define OPH_FRAMEWORK_JSON_PATH					"%s/sessions/%s/json/response/%s.json"

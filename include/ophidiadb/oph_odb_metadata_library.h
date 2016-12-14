@@ -215,4 +215,14 @@ int oph_odb_meta_check_for_time_dimension(ophidiadb *oDB, int id_datacube, const
  */
 int oph_odb_meta_delete_keys_of_cube(ophidiadb *oDB, int id_datacube);
 
+/**
+ * \brief Function to correct the list of metadata keys of a cube having a different measure name
+ * \param oDB Pointer to OphidiaDB
+ * \param id_datacube PID of the datacube
+ * \param old_variable Original value of parameter 'variable', used to find metadata to be changed
+ * \param new_variable New value for parameter 'variable'
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_meta_update_metadatakeys(ophidiadb *oDB, int id_datacube, const char* old_variable, const char* new_variable);
+
 #endif /* __OPH_ODB_META_H__ */

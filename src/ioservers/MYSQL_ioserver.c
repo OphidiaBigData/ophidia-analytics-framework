@@ -99,26 +99,26 @@ int oph_limit_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_f
   char *query_arg = hashtbl_get(hashtbl, OPH_IOSERVER_SQ_ARG_LIMIT);
   if (query_arg){
     if(oph_ioserver_parse_multivalue_arg (handle->server_type, query_arg, &query_arg_list, &arg_list_num)){
-      pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg);
-   	  logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg); 
-      if(query_arg_list) free(query_arg_list);
-      return MYSQL_IO_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg); 
+	if(query_arg_list) free(query_arg_list);
+	return MYSQL_IO_ERROR;
     }
     //Limit can have at most 2 values
     if(arg_list_num > 2){
-      pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MULTI_ARG_TOO_BIG);
-    	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MULTI_ARG_TOO_BIG);   
-      if(query_arg_list) free(query_arg_list);
-      return MYSQL_IO_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MULTI_ARG_TOO_BIG);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MULTI_ARG_TOO_BIG);   
+	if(query_arg_list) free(query_arg_list);
+	return MYSQL_IO_ERROR;
     }
     for(i = 0; i < arg_list_num; i++){
       if(query_arg_list[i][0] == MYSQL_IO_QUERY_VAR_CHAR){
          //Execute keyword mapping
           if(oph_map_keyword (handle, query_arg_list[i], &tmp_arg)){
-	          pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
-          	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
-            if(query_arg_list) free(query_arg_list);
-            return MYSQL_IO_ERROR;        
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
+		if(query_arg_list) free(query_arg_list);
+		return MYSQL_IO_ERROR;        
           }
           query_arg_list[i] = (char *)&tmp_arg;
       }
@@ -148,9 +148,9 @@ int oph_where2_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_
     if(query_arg[0] == MYSQL_IO_QUERY_VAR_CHAR){
        //Execute keyword mapping
         if(oph_map_keyword (handle, query_arg, &tmp_arg)){
-	        pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
-        	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
-          return MYSQL_IO_ERROR;        
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
+		return MYSQL_IO_ERROR;        
         }
         query_arg = (char *)&tmp_arg;
     }
@@ -163,9 +163,9 @@ int oph_where2_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_
       if(query_arg[0] == MYSQL_IO_QUERY_VAR_CHAR){
          //Execute keyword mapping
           if(oph_map_keyword (handle, query_arg, &tmp_arg)){
-	          pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
-          	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
-	          return MYSQL_IO_ERROR;        
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
+		return MYSQL_IO_ERROR;        
           }
           query_arg = (char *)&tmp_arg;
       }
@@ -177,9 +177,9 @@ int oph_where2_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_
         if(query_arg[0] == MYSQL_IO_QUERY_VAR_CHAR){
            //Execute keyword mapping
             if(oph_map_keyword (handle, query_arg, &tmp_arg)){
-	            pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
-            	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
-              return MYSQL_IO_ERROR;        
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
+		return MYSQL_IO_ERROR;        
             }
             query_arg = (char *)&tmp_arg;
         }
@@ -203,9 +203,9 @@ int oph_where_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_f
     if(query_arg[0] == MYSQL_IO_QUERY_VAR_CHAR){
        //Execute keyword mapping
         if(oph_map_keyword (handle, query_arg, &tmp_arg)){
-	        pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
-        	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
-          return MYSQL_IO_ERROR;        
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
+		return MYSQL_IO_ERROR;        
         }
         query_arg = (char *)&tmp_arg;
     }
@@ -228,51 +228,51 @@ int oph_from_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_fr
   char *query_arg = hashtbl_get(hashtbl, OPH_IOSERVER_SQ_ARG_FROM);
   if (!query_arg)
   {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_FROM);
-  	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_FROM);
-    return MYSQL_IO_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_FROM);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_FROM);
+	return MYSQL_IO_ERROR;
   }
   char * query_arg1 = hashtbl_get(hashtbl, OPH_IOSERVER_SQ_ARG_FROM_ALIAS);
   if (query_arg1){
     if(oph_ioserver_parse_multivalue_arg (handle->server_type, query_arg, &query_arg_list, &arg_list_num)){
-      pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg);
-   	  logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg); 
-      if(query_arg_list) free(query_arg_list);
-      return MYSQL_IO_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg); 
+	if(query_arg_list) free(query_arg_list);
+	return MYSQL_IO_ERROR;
     }
     if(oph_ioserver_parse_multivalue_arg (handle->server_type, query_arg1, &query_arg_list1, &arg_list_num1)){
-      pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg);
-   	  logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg); 
-      if(query_arg_list) free(query_arg_list);
-      if(query_arg_list1) free(query_arg_list1);
-      return MYSQL_IO_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg); 
+	if(query_arg_list) free(query_arg_list);
+	if(query_arg_list1) free(query_arg_list1);
+	return MYSQL_IO_ERROR;
     }
    if(arg_list_num != arg_list_num1){
-      pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MULTI_ARG_DONT_CORRESPOND);
-    	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MULTI_ARG_DONT_CORRESPOND);   
-      if(query_arg_list) free(query_arg_list);
-      if(query_arg_list1) free(query_arg_list1);
-      return MYSQL_IO_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MULTI_ARG_DONT_CORRESPOND);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MULTI_ARG_DONT_CORRESPOND);   
+	if(query_arg_list) free(query_arg_list);
+	if(query_arg_list1) free(query_arg_list1);
+	return MYSQL_IO_ERROR;
     }
     for(i = 0; i < arg_list_num; i++){
       if(query_arg_list[i][0] == MYSQL_IO_QUERY_VAR_CHAR){
          //Execute keyword mapping
           if(oph_map_keyword (handle, query_arg_list[i], &tmp_arg)){
-	          pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
-          	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
-            if(query_arg_list) free(query_arg_list);
-            return MYSQL_IO_ERROR;        
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
+		if(query_arg_list) free(query_arg_list);
+		return MYSQL_IO_ERROR;        
           }
           query_arg_list[i] = (char *)&tmp_arg;
       }
         if(query_arg_list1[i][0] == MYSQL_IO_QUERY_VAR_CHAR){
            //Execute keyword mapping
             if(oph_map_keyword (handle, query_arg_list1[i], &tmp_arg)){
-	            pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
-            	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
-              if(query_arg_list) free(query_arg_list);
-              if(query_arg_list1) free(query_arg_list1);
-              return MYSQL_IO_ERROR;        
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
+		if(query_arg_list) free(query_arg_list);
+		if(query_arg_list1) free(query_arg_list1);
+		return MYSQL_IO_ERROR;        
             }
             query_arg_list1[i] = (char *)&tmp_arg;
         }
@@ -303,10 +303,10 @@ int oph_from_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_fr
       if(query_arg_list[i][0] == MYSQL_IO_QUERY_VAR_CHAR){
          //Execute keyword mapping
           if(oph_map_keyword (handle, query_arg_list[i], &tmp_arg)){
-	          pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
-          	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
-            if(query_arg_list) free(query_arg_list);
-            return MYSQL_IO_ERROR;        
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
+		if(query_arg_list) free(query_arg_list);
+		return MYSQL_IO_ERROR;        
           }
           query_arg_list[i] = (char *)&tmp_arg;
       }
@@ -336,19 +336,18 @@ int oph_select_fields_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int 
   int arg_list_num = 0, arg_list_num1 = 0;
   int i;
   char *query_arg = hashtbl_get(hashtbl, OPH_IOSERVER_SQ_ARG_FIELD);
-  if (!query_arg)
-  {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_FIELD);
-  	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_FIELD);
-    return MYSQL_IO_ERROR;
+  if (!query_arg) {
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_FIELD);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_FIELD);
+	return MYSQL_IO_ERROR;
   }
   char * query_arg1 = hashtbl_get(hashtbl, OPH_IOSERVER_SQ_ARG_FIELD_ALIAS);
   if (query_arg1){
     if(oph_ioserver_parse_multivalue_arg (handle->server_type, query_arg, &query_arg_list, &arg_list_num)){
-      pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg);
-   	  logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg); 
-      if(query_arg_list) free(query_arg_list);
-      return MYSQL_IO_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg); 
+	if(query_arg_list) free(query_arg_list);
+	return MYSQL_IO_ERROR;
     }
     if(oph_ioserver_parse_multivalue_arg (handle->server_type, query_arg1, &query_arg_list1, &arg_list_num1)){
       pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg);
@@ -358,32 +357,32 @@ int oph_select_fields_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int 
       return MYSQL_IO_ERROR;
     }
    if(arg_list_num != arg_list_num1){
-      pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MULTI_ARG_DONT_CORRESPOND);
-    	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MULTI_ARG_DONT_CORRESPOND);   
-      if(query_arg_list) free(query_arg_list);
-      if(query_arg_list1) free(query_arg_list1);
-      return MYSQL_IO_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MULTI_ARG_DONT_CORRESPOND);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MULTI_ARG_DONT_CORRESPOND);   
+	if(query_arg_list) free(query_arg_list);
+	if(query_arg_list1) free(query_arg_list1);
+	return MYSQL_IO_ERROR;
     }
     for(i = 0; i < arg_list_num; i++){
       if(query_arg_list[i][0] == MYSQL_IO_QUERY_VAR_CHAR){
          //Execute keyword mapping
           if(oph_map_keyword (handle, query_arg_list[i], &tmp_arg)){
-	          pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
-          	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
-            if(query_arg_list) free(query_arg_list);
-            if(query_arg_list1) free(query_arg_list1);
-            return MYSQL_IO_ERROR;        
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
+		if(query_arg_list) free(query_arg_list);
+		if(query_arg_list1) free(query_arg_list1);
+		return MYSQL_IO_ERROR;        
           }
           query_arg_list[i] = (char *)&tmp_arg;
       }
         if(query_arg_list1[i][0] == MYSQL_IO_QUERY_VAR_CHAR){
            //Execute keyword mapping
             if(oph_map_keyword (handle, query_arg_list1[i], &tmp_arg)){
-	            pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
-            	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
-              if(query_arg_list) free(query_arg_list);
-              if(query_arg_list1) free(query_arg_list1);
-              return MYSQL_IO_ERROR;        
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
+		if(query_arg_list) free(query_arg_list);
+		if(query_arg_list1) free(query_arg_list1);
+		return MYSQL_IO_ERROR;        
             }
             query_arg_list1[i] = (char *)&tmp_arg;
         }
@@ -440,9 +439,9 @@ int oph_order_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_f
     if(query_arg[0] == MYSQL_IO_QUERY_VAR_CHAR){
        //Execute keyword mapping
         if(oph_map_keyword (handle, query_arg, &tmp_arg)){
-	        pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
-        	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
-          return MYSQL_IO_ERROR;        
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
+		return MYSQL_IO_ERROR;        
         }
         query_arg = (char *)&tmp_arg;
     }
@@ -456,9 +455,9 @@ int oph_order_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_f
       if(query_arg[0] == MYSQL_IO_QUERY_VAR_CHAR){
          //Execute keyword mapping
           if(oph_map_keyword (handle, query_arg, &tmp_arg)){
-	          pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
-          	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
-            return MYSQL_IO_ERROR;        
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
+		return MYSQL_IO_ERROR;        
           }
           query_arg = (char *)&tmp_arg;
       }
@@ -482,9 +481,9 @@ int oph_group_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_f
     if(query_arg[0] == MYSQL_IO_QUERY_VAR_CHAR){
        //Execute keyword mapping
         if(oph_map_keyword (handle, query_arg, &tmp_arg)){
-	        pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
-        	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
-          return MYSQL_IO_ERROR;        
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
+		return MYSQL_IO_ERROR;        
         }
         query_arg = (char *)&tmp_arg;
     }
@@ -508,15 +507,15 @@ int oph_insert_values_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int 
   char *query_arg = hashtbl_get(hashtbl, OPH_IOSERVER_SQ_ARG_FIELD);
   if (!query_arg)
   {
-	  pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_FIELD);
-  	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_FIELD);
-    return MYSQL_IO_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_FIELD);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_FIELD);
+	return MYSQL_IO_ERROR;
   }
   if(oph_ioserver_parse_multivalue_arg (handle->server_type, query_arg, &query_arg_list, &arg_list_num)){
-    pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg);
- 	  logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg); 
-    if(query_arg_list) free(query_arg_list);
-    return MYSQL_IO_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg); 
+	if(query_arg_list) free(query_arg_list);
+	return MYSQL_IO_ERROR;
   }
   query_arg = NULL;
 	  
@@ -524,17 +523,17 @@ int oph_insert_values_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int 
   query_arg = hashtbl_get(hashtbl, OPH_IOSERVER_SQ_ARG_VALUE);
   if (!query_arg)
   {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_VALUE);
-  	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_VALUE);
-    if(query_arg_list) free(query_arg_list);
-    return MYSQL_IO_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_VALUE);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_VALUE);
+	if(query_arg_list) free(query_arg_list);
+	return MYSQL_IO_ERROR;
   }
   if(oph_ioserver_parse_multivalue_arg (handle->server_type, query_arg, &query_arg_list1, &arg_list_num1)){
-    pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg);
- 	  logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg); 
-    if(query_arg_list) free(query_arg_list);
-    if(query_arg_list1) free(query_arg_list1);
-    return MYSQL_IO_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg); 
+	if(query_arg_list) free(query_arg_list);
+	if(query_arg_list1) free(query_arg_list1);
+	return MYSQL_IO_ERROR;
   }
   if(arg_list_num != arg_list_num1){
     pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MULTI_ARG_DONT_CORRESPOND);
@@ -548,11 +547,11 @@ int oph_insert_values_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int 
    if(query_arg_list[i][0] == MYSQL_IO_QUERY_VAR_CHAR){
        //Execute keyword mapping
         if(oph_map_keyword (handle, query_arg_list[i], &tmp_arg)){
-	        pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
-        	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
-          if(query_arg_list) free(query_arg_list);
-          if(query_arg_list1) free(query_arg_list1);
-          return MYSQL_IO_ERROR;        
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
+		if(query_arg_list) free(query_arg_list);
+		if(query_arg_list1) free(query_arg_list1);
+		return MYSQL_IO_ERROR;        
         }
         query_arg_list[i] = (char *)&tmp_arg;
     }
@@ -567,10 +566,10 @@ int oph_insert_values_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int 
      if(query_arg_list1[i][0] == MYSQL_IO_QUERY_VAR_CHAR){
          //Execute keyword mapping
           if(oph_map_keyword (handle, query_arg_list1[i], &tmp_arg)){
-	          pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
-          	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
-            if(query_arg_list1) free(query_arg_list1);
-            return MYSQL_IO_ERROR;        
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_KEYWORD_EVAL_ERROR);   
+		if(query_arg_list1) free(query_arg_list1);
+		return MYSQL_IO_ERROR;        
           }
           query_arg_list1[i] = (char *)&tmp_arg;
       }
@@ -614,17 +613,17 @@ int oph_multi_insert_values_block(oph_ioserver_handler *handle, HASHTBL *hashtbl
   query_arg = hashtbl_get(hashtbl, OPH_IOSERVER_SQ_ARG_VALUE);
   if (!query_arg)
   {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_VALUE);
-  	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_VALUE);
-    if(query_arg_list) free(query_arg_list);
-    return MYSQL_IO_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_VALUE);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_VALUE);
+	if(query_arg_list) free(query_arg_list);
+	return MYSQL_IO_ERROR;
   }
   if(oph_ioserver_parse_multivalue_arg (handle->server_type, query_arg, &query_arg_list1, &arg_list_num1)){
-    pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg);
- 	  logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg); 
-    if(query_arg_list) free(query_arg_list);
-    if(query_arg_list1) free(query_arg_list1);
-    return MYSQL_IO_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_BAD_MULTI_ARG, query_arg); 
+	if(query_arg_list) free(query_arg_list);
+	if(query_arg_list1) free(query_arg_list1);
+	return MYSQL_IO_ERROR;
   }
   if( (arg_list_num1 < arg_list_num) || (arg_list_num1%arg_list_num != 0)){
     pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MULTI_ARG_DONT_CORRESPOND);
@@ -789,16 +788,16 @@ int oph_query_parser(oph_ioserver_handler *handle, const char *query_string, cha
   
 	if( !(hashtbl = hashtbl_create(number_arguments + 1, NULL)) ){
 		pmesg(LOG_ERROR, __FILE__, __LINE__,OPH_IOSERVER_LOG_MYSQL_HASHTBL_ERROR);		
-  	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_HASHTBL_ERROR);		 
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_HASHTBL_ERROR);		 
 		return MYSQL_IO_ERROR;
 	}
 
 	//Split all arguments and load each one into hast table
 	if(oph_ioserver_load_query_string_params(handle->server_type, query_string, hashtbl) ){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_LOAD_ARGS_ERROR);		
-  	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_LOAD_ARGS_ERROR);		 
-    hashtbl_destroy(hashtbl);
-    return MYSQL_IO_ERROR;
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_LOAD_ARGS_ERROR);		 
+		hashtbl_destroy(hashtbl);
+		return MYSQL_IO_ERROR;
 	}
 
 	//Retrieve operation type
@@ -806,9 +805,9 @@ int oph_query_parser(oph_ioserver_handler *handle, const char *query_string, cha
 	if (!query_oper)
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_OPERATION);
-  	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_OPERATION);
-    hashtbl_destroy(hashtbl);
-	  return MYSQL_IO_ERROR;
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_OPERATION);
+		hashtbl_destroy(hashtbl);
+		return MYSQL_IO_ERROR;
 	}
 
   int n = 0;
@@ -1024,19 +1023,19 @@ int oph_query_parser(oph_ioserver_handler *handle, const char *query_string, cha
     }
   }
   else{
-  	  pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_UNKNOWN_OPERATION, query_oper);		
-    	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type,OPH_IOSERVER_LOG_MYSQL_UNKNOWN_OPERATION, query_oper);		
-      hashtbl_destroy(hashtbl);
-	    return MYSQL_IO_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_UNKNOWN_OPERATION, query_oper);		
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type,OPH_IOSERVER_LOG_MYSQL_UNKNOWN_OPERATION, query_oper);		
+	hashtbl_destroy(hashtbl);
+	return MYSQL_IO_ERROR;
   }
 
   hashtbl_destroy(hashtbl);
   //Return query
   *query_mysql = (char *)strndup(query, OPH_IOSERVER_SQ_LEN);  
   if(!*query_mysql){
-		  pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MEMORY_ERROR);
-    	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type,OPH_IOSERVER_LOG_MYSQL_MEMORY_ERROR);		
-	    return MYSQL_IO_ERROR;
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MEMORY_ERROR);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type,OPH_IOSERVER_LOG_MYSQL_MEMORY_ERROR);		
+	return MYSQL_IO_ERROR;
   }
 
 	return MYSQL_IO_SUCCESS;
@@ -1065,10 +1064,10 @@ int oph_query_is_statement(oph_ioserver_handler *handle, const char *operation, 
 
 int oph_to_mysql_type(oph_ioserver_handler *handle, oph_ioserver_arg_types oph_type, enum enum_field_types *mysql_type){
   if(!mysql_type){	
-		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);		
-  	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);    
-		return MYSQL_IO_NULL_PARAM;
-	}
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);		
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);    
+	return MYSQL_IO_NULL_PARAM;
+  }
 
   switch(oph_type){
     case OPH_IOSERVER_TYPE_DECIMAL:
@@ -1102,9 +1101,9 @@ int oph_to_mysql_type(oph_ioserver_handler *handle, oph_ioserver_arg_types oph_t
       *mysql_type = MYSQL_TYPE_BLOB;
       break;
     default: 
-	    pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_EXEC_QUERY_TYPE_ERROR);
-      logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_EXEC_QUERY_TYPE_ERROR);   
-	    return MYSQL_IO_ERROR;      
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_EXEC_QUERY_TYPE_ERROR);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_EXEC_QUERY_TYPE_ERROR);   
+	return MYSQL_IO_ERROR;      
   }
 	return MYSQL_IO_SUCCESS;
 }
@@ -1113,7 +1112,7 @@ int oph_to_mysql_type(oph_ioserver_handler *handle, oph_ioserver_arg_types oph_t
 int _mysql_setup (oph_ioserver_handler *handle){
 	if (mysql_library_init(0, NULL, NULL)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_LIB_INIT_ERROR);
-  	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_LIB_INIT_ERROR);    
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_LIB_INIT_ERROR);    
 		return MYSQL_IO_ERROR;
 	}
 
@@ -1192,7 +1191,7 @@ int _mysql_use_db (oph_ioserver_handler *handle, const char *db_name, void *conn
 int _mysql_execute_query (oph_ioserver_handler* handle, void *connection, oph_ioserver_query *query){
 	if( !connection || !query || !query->statement){	
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);		
-  	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);    
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);    
 		return MYSQL_IO_NULL_PARAM;
 	}
 
@@ -1202,32 +1201,31 @@ int _mysql_execute_query (oph_ioserver_handler* handle, void *connection, oph_io
     case OPH_IOSERVER_STMT_SIMPLE:
 	    if (mysql_query((MYSQL *)connection, (char *)query->statement) && mysql_errno((MYSQL *)connection))
 	    {
-		    pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_EXEC_QUERY_ERROR, mysql_error((MYSQL *)connection));
-        logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_EXEC_QUERY_ERROR, mysql_error((MYSQL *)connection));   
-		    return MYSQL_IO_ERROR;
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_EXEC_QUERY_ERROR, mysql_error((MYSQL *)connection));
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_EXEC_QUERY_ERROR, mysql_error((MYSQL *)connection));   
+		return MYSQL_IO_ERROR;
 	    }
       break;
     case OPH_IOSERVER_STMT_BINARY:
-      ;
-      MYSQL_STMT *tmp_stmt = (MYSQL_STMT *)((_mysql_query_struct*)query->statement)->stmt;
-      MYSQL_BIND *tmp_bind = (MYSQL_BIND *)((_mysql_query_struct*)query->statement)->bind;
-        
-		  if (mysql_stmt_bind_param(tmp_stmt, tmp_bind) && mysql_stmt_errno(tmp_stmt)){
-			  pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BINDING_ERROR, mysql_stmt_error(tmp_stmt));
-        logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_BINDING_ERROR, mysql_stmt_error(tmp_stmt));   
-		    return MYSQL_IO_ERROR;
-		  }
-		
-		  if (mysql_stmt_execute(tmp_stmt) && mysql_stmt_errno(tmp_stmt)){
-			  pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_STMT_EXEC_ERROR, mysql_stmt_error(tmp_stmt));
-        logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_STMT_EXEC_ERROR, mysql_stmt_error(tmp_stmt));   
-		    return MYSQL_IO_ERROR;
-      }
+	{
+		MYSQL_STMT *tmp_stmt = (MYSQL_STMT *)((_mysql_query_struct*)query->statement)->stmt;
+		MYSQL_BIND *tmp_bind = (MYSQL_BIND *)((_mysql_query_struct*)query->statement)->bind;
+		if (mysql_stmt_bind_param(tmp_stmt, tmp_bind) && mysql_stmt_errno(tmp_stmt)){
+			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_BINDING_ERROR, mysql_stmt_error(tmp_stmt));
+			logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_BINDING_ERROR, mysql_stmt_error(tmp_stmt));   
+			return MYSQL_IO_ERROR;
+		}
+		if (mysql_stmt_execute(tmp_stmt) && mysql_stmt_errno(tmp_stmt)){
+			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_STMT_EXEC_ERROR, mysql_stmt_error(tmp_stmt));
+			logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_STMT_EXEC_ERROR, mysql_stmt_error(tmp_stmt));   
+			return MYSQL_IO_ERROR;
+		}
+	}
       break;
     default:
-		    pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_EXEC_QUERY_TYPE_ERROR);
-        logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_EXEC_QUERY_TYPE_ERROR);   
-		    return MYSQL_IO_ERROR;      
+	pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_EXEC_QUERY_TYPE_ERROR);
+	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_EXEC_QUERY_TYPE_ERROR);   
+	return MYSQL_IO_ERROR;      
   }
 
 	return MYSQL_IO_SUCCESS;
@@ -1237,7 +1235,7 @@ int _mysql_setup_query (oph_ioserver_handler* handle, void *connection, const ch
 	UNUSED(tot_run) // TODO Handle tot number of runs
 	if( !connection || !operation || !query){	
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);		
-  	logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);    
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);    
 		return MYSQL_IO_NULL_PARAM;
 	}
 
