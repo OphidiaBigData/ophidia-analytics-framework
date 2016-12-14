@@ -706,21 +706,39 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb *oDB, int id_datacube_input, i
 	}
 
 	char insertQuery[MYSQL_BUFLEN];
-	int n;
-
-	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_COPY_DATACUBE_AND_MANAGE, id_datacube_output, id_datacube_input, id_user, id_datacube_output);
+	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_COPY_INSTANCE, id_datacube_output, id_datacube_input);
 	if(n >= MYSQL_BUFLEN){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	if (mysql_set_server_option(oDB->conn, MYSQL_OPTION_MULTI_STATEMENTS_ON))
-	{
+	if (mysql_autocommit(oDB->conn, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	if (mysql_query(oDB->conn, insertQuery)){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		mysql_autocommit(oDB->conn, 1);
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_COPY_MANAGE, id_user, id_datacube_output);
+	if(n >= MYSQL_BUFLEN){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		mysql_autocommit(oDB->conn, 1);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, insertQuery)){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		mysql_autocommit(oDB->conn, 1);
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	mysql_commit(oDB->conn);
+
+	if(mysql_autocommit(oDB->conn, 1)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}

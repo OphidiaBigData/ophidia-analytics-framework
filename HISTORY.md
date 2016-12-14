@@ -1,4 +1,16 @@
 
+## v0.10.7 - 2016-11-15
+
+### Fixed
+
+- Useless logging message in OPH_EXPORTNC
+- Bug [#8](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/8)
+
+### Changed:
+
+- Adapt storage library functions to handle fixed host partition
+- Enable BASE_SRC_PATH as prefix of output paths for OPH_EXPORTNC
+
 ## v0.10.6 - 2016-10-20
 
 ### Fixed

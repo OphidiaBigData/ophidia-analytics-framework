@@ -1107,7 +1107,7 @@ int task_init (oph_operator_struct *handle)
 	  if (strncasecmp(((OPH_APPLY_operator_handle*)handle->operator_handle)->measure,OPH_COMMON_NULL_VALUE,OPH_TP_TASKLEN))
 	  {
 		old_measure = strdup(cube.measure);
-		strncpy(cube.measure, ((OPH_APPLY_operator_handle*)handle->operator_handle)->measure, OPH_ODB_CUBE_MEASURE_SIZE);
+		snprintf(cube.measure,OPH_ODB_CUBE_MEASURE_SIZE,"%s",((OPH_APPLY_operator_handle*)handle->operator_handle)->measure);
 	  }
 
 	  // Save some parameters
@@ -1175,6 +1175,7 @@ int task_init (oph_operator_struct *handle)
 		oph_odb_cube_free_datacube(&cube);
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update datacube table\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_DATACUBE_INSERT_ERROR );
+		if (old_measure) free(old_measure);
 		goto __OPH_EXIT_1;	 
 	  }
 	  //Copy fragment id relative index set	
@@ -1183,6 +1184,7 @@ int task_init (oph_operator_struct *handle)
 		oph_odb_cube_free_datacube(&cube);
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_MEMORY_ERROR_INPUT, "fragment ids" );
+		if (old_measure) free(old_measure);
 		goto __OPH_EXIT_1;
 	  } 
 	  oph_odb_cube_free_datacube(&cube);
@@ -1196,6 +1198,7 @@ int task_init (oph_operator_struct *handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive datacube - dimension relations.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_CUBEHASDIM_READ_ERROR );
 		free(cubedims);
+		if (old_measure) free(old_measure);
 		goto __OPH_EXIT_1;
 	  }
 
@@ -1223,6 +1226,7 @@ int task_init (oph_operator_struct *handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to process '%s': too many implicit dimensions in input cube.\n", MYSQL_DIMENSION);
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_TOO_DIMENSION_ERROR, MYSQL_DIMENSION);
 			free(cubedims);
+			if (old_measure) free(old_measure);
 			goto __OPH_EXIT_1;
 		}
 		else
@@ -1236,6 +1240,7 @@ int task_init (oph_operator_struct *handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to process '%s': no implicit dimension in input cube.\n", MYSQL_DIMENSION);
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_TOO_DIMENSION_ERROR, MYSQL_DIMENSION);
 		free(cubedims);
+		if (old_measure) free(old_measure);
 		goto __OPH_EXIT_1;
 	}
 
@@ -1248,6 +1253,7 @@ int task_init (oph_operator_struct *handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading dimension information.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_DIM_READ_ERROR);
 			free(cubedims);
+			if (old_measure) free(old_measure);
 			goto __OPH_EXIT_1;
 		}
 		if (oph_odb_dim_retrieve_dimension(oDB, dim_inst.id_dimension, &dim, datacube_id))
@@ -1255,6 +1261,7 @@ int task_init (oph_operator_struct *handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading dimension information.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_DIM_READ_ERROR);
 			free(cubedims);
+			if (old_measure) free(old_measure);
 			goto __OPH_EXIT_1;
 		}
 		if (((OPH_APPLY_operator_handle*)handle->operator_handle)->dimension_operation)
@@ -1266,6 +1273,7 @@ int task_init (oph_operator_struct *handle)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing '%s'\n", ((OPH_APPLY_operator_handle*)handle->operator_handle)->dimension_operation);
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_INVALID_INPUT_STRING );
 				free(cubedims);
+				if (old_measure) free(old_measure);
 				goto __OPH_EXIT_1;
 			}
 			if (strncasecmp(dim.dimension_type,dimension_type,OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
@@ -1273,6 +1281,7 @@ int task_init (oph_operator_struct *handle)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Data type update for dimension is not supported. Check '%s'\n", ((OPH_APPLY_operator_handle*)handle->operator_handle)->dimension_operation);
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_INVALID_INPUT_STRING );
 				free(cubedims);
+				if (old_measure) free(old_measure);
 				goto __OPH_EXIT_1;
 			}
 		}
@@ -1286,6 +1295,7 @@ int task_init (oph_operator_struct *handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_DIM_LOAD );
 				oph_dim_unload_dim_dbinstance(db);
 				free(cubedims);
+				if (old_measure) free(old_measure);
 				goto __OPH_EXIT_1;
 			}
 			if (oph_dim_connect_to_dbms(db->dbms_instance, 0))
@@ -1295,6 +1305,7 @@ int task_init (oph_operator_struct *handle)
 				oph_dim_disconnect_from_dbms(db->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db);
 				free(cubedims);
+				if (old_measure) free(old_measure);
 				goto __OPH_EXIT_1;
 			}
 			if (oph_dim_use_db_of_dbms(db->dbms_instance, db))
@@ -1304,6 +1315,7 @@ int task_init (oph_operator_struct *handle)
 				oph_dim_disconnect_from_dbms(db->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db);
 				free(cubedims);
+				if (old_measure) free(old_measure);
 				goto __OPH_EXIT_1;
 			}
 
@@ -1321,6 +1333,7 @@ int task_init (oph_operator_struct *handle)
 				oph_dim_disconnect_from_dbms(db->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db);
 				free(cubedims);
+				if (old_measure) free(old_measure);
 				goto __OPH_EXIT_1;
 			}
 			if (dim_inst.fk_id_dimension_label)
@@ -1333,6 +1346,7 @@ int task_init (oph_operator_struct *handle)
 					oph_dim_disconnect_from_dbms(db->dbms_instance);
 					oph_dim_unload_dim_dbinstance(db);
 					free(cubedims);
+					if (old_measure) free(old_measure);
 					goto __OPH_EXIT_1;
 				}
 			}
@@ -1353,6 +1367,7 @@ int task_init (oph_operator_struct *handle)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to found data type '%s'.\n", dim.dimension_type);
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_TYPE_ERROR, dim.dimension_type);    				
 				free(cubedims);
+				if (old_measure) free(old_measure);
 				goto __OPH_EXIT_1;
 			}
 		}
@@ -1364,6 +1379,7 @@ int task_init (oph_operator_struct *handle)
 	  {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to copy metadata.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_METADATA_COPY_ERROR );
+		if (old_measure) free(old_measure);
 		goto __OPH_EXIT_1;
 	  }
 

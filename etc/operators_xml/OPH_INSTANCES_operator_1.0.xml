@@ -43,8 +43,8 @@ It shows information about host partitions, hosts and dbms instances.
 
 [Examples]
 Show all information about hosts and dbms instances :
-OPH_TERM: oph_instances level=2;host_filter=all;storage_filter=all;
-SUBMISSION STRING: &quot;operator=oph_instances;level=2;host_filter=all;storage_filter=all;&quot;</abstract>
+OPH_TERM: oph_instances level=2;host_filter=all;
+SUBMISSION STRING: &quot;operator=oph_instances;level=2;host_filter=all;&quot;</abstract>
         <author>CMCC Foundation</author>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
