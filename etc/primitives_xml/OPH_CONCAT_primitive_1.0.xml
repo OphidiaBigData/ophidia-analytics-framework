@@ -35,7 +35,7 @@ oph_concat(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;&apos;,oph_get_subarray(&apos
 	<operation type="simple"/>
     </info>
     <args>
-        <multi-argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</multi-argument>
+        <argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
         <argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
 	<multi-argument type="binary-array" mandatory="yes">measure</multi-argument>
     </args>

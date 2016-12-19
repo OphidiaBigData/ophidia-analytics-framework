@@ -35,7 +35,7 @@ oph_abs_array(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure_a
 	<operation type="simple"/>
     </info>
     <args>
-	<multi-argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</multi-argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
 	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
 	<argument type="binary-array" mandatory="yes">measure a</argument>
 	<argument type="binary-array" mandatory="yes">measure b</argument>

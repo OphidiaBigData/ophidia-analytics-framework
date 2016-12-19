@@ -35,7 +35,7 @@ oph_interlace(&apos;OPH_DOUBLE&apos;|&apos;OPH_FLOAT&apos;|&apos;OPH_INT&apos;,&
 	<operation type="reduce"/>
     </info>
     <args>
-	<multi-argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</multi-argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
 	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
 	<multi-argument type="binary-array" mandatory="yes" mintimes="1">measure</multi-argument>
     </args>
