@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_bit_rotate" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Executes a rotation of the bits inside the measure array.
+        
+[Parameters]
+- input data type : not used.
+- output data type : not used.
+- measure : input measure.
+- offset : specify the number of 1-bit movements.
+           If offset&gt;0 then rotate to the right.
+           If offset&lt;0 then rotate to the left.
+           Default value (0) corresponds to no rotation.
+        
+[Return type]
+Bit-array.
+        
+[Examples]
+Execute a 10-bit rotation to the right.
+oph_bit_rotate(&apos;&apos;,&apos;&apos;,bit_measure,10)</abstract>
+        <author>CMCC</author>
+        <creationdate>19/12/2016</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="bit-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes">input data type</argument>
+	<argument type="oph_type" mandatory="yes">output data type</argument>
+	<argument type="bit-array" mandatory="yes">measure</argument>
+	<argument type="long-long" mandatory="no" default="0">offset</argument>
+    </args>
+</primitive>

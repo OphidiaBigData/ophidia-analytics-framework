@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_bit_reverse" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Inverts the order of bits into the measure array.
+        
+[Parameters]
+- input data type : not used.
+- output data type : not used.
+- measure : input measure.
+
+[Return type]
+Bit-array.
+        
+[Examples]
+Invert the order of bits.
+oph_bit_reverse(&apos;&apos;,&apos;&apos;,bit_measure)</abstract>
+        <author>CMCC</author>
+        <creationdate>19/12/2016</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="bit-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes">input data type</argument>
+	<argument type="oph_type" mandatory="yes">output data type</argument>
+	<argument type="bit-array" mandatory="yes">measure</argument>
+    </args>
+</primitive>

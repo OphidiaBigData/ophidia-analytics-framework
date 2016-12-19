@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_bit_sequence" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Evalute a number of statistics on bit_sequences of a bit array.
+        
+[Parameters]
+- input data type : not used.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- mask : possible values are
+         -- 0000 : invalid
+         -- 1xxx : number of bit sequences
+         -- x1xx : mean size of bit sequence
+         -- xx1x : maximum size of bit sequence
+         -- xxx1 : maximum size of bit sequence
+- value : value of bit composing the sequence, 0 or 1 (default).
+        
+[Return type]
+Binary-array.
+        
+[Examples]
+Count the number of bit sequences.
+oph_bit_sequence(&apos;&apos;,&apos;OPH_LONG&apos;,measure,&apos;1&apos;)</abstract>
+        <author>CMCC</author>
+        <creationdate>19/12/2016</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="reduce"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes">input data type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="bit-array" mandatory="yes">measure</argument>
+	<argument type="string" mandatory="no" default="1111">mask</argument>
+	<argument type="bit" mandatory="no" default="1" values="0|1">value</argument>
+    </args>
+</primitive>
