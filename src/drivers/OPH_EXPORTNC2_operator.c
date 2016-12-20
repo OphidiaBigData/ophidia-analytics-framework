@@ -47,6 +47,23 @@
 #include <errno.h> 
 #include <netcdf_par.h>
 
+int _oph_get_next_count(size_t* id, unsigned int* sizemax, int i, int n)
+{
+        if (i<0) return 1; // Overflow
+        (id[i])++;
+        if (id[i]>sizemax[i])
+        {
+                id[i]=1;
+                return _oph_get_next_count(id, sizemax, i-1, n);
+        }
+        return 0;
+}
+
+int oph_get_next_count(size_t* id, unsigned int* sizemax, int n)
+{
+        return _oph_get_next_count(id, sizemax, n-1, n);
+}
+
 int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 {
   if (!handle){
@@ -91,6 +108,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->sessionid = NULL;
   ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->force = 0;
   ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->misc = 0;
+  ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->memory_size = 0;
 
   char *datacube_name;
   char *value;
@@ -372,6 +390,12 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
   if(!strcmp(value,OPH_COMMON_YES_VALUE)) ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->force = 1;
+
+  if (oph_pid_get_memory_size(&(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->memory_size))) {
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_OPHIDIADB_CONFIGURATION_FILE );
+	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+  }
 
   return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -1327,6 +1351,73 @@ int task_execute(oph_operator_struct *handle)
 				goto __OPH_EXIT_2;
 		}
 
+		long long current_size, current_length, iii, block_size = 1, memory_size_mb = ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->memory_size*1024*1024; // Buffer used to reduce the number of calls to nc_put_vara
+		char fetch, *raw_data = NULL, *memory_buffer = NULL;
+
+		if (memory_size_mb)
+		{
+			memory_buffer = (char*)malloc(memory_size_mb);
+			if (!memory_buffer) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_NC_DEFINE_VAR_ERROR, nc_strerror(retval));
+				oph_odb_stge_free_fragment_list(&frags);
+				oph_odb_stge_free_db_list(&dbs);
+				oph_odb_stge_free_dbms_list(&dbmss);
+				nc_close(ncid);
+				for(l = 0; l < num_of_dims; l++){
+					if(dim_rows[l]){ 
+						free(dim_rows[l]);
+						dim_rows[l] = NULL;	
+					}
+				}
+				free(dim_rows);
+				result = OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+				goto __OPH_EXIT_2;
+			}
+
+			for(inc = nexp; inc < num_of_dims; inc++)
+				block_size *= dims[inc].dimsize;
+
+			switch(type_nc){
+				case NC_BYTE:
+				case NC_CHAR:
+					block_size *= sizeof(unsigned char);
+					break;
+				case NC_SHORT:
+					block_size *= sizeof(short);
+					break;
+				case NC_INT:
+					block_size *= sizeof(int);
+					break;
+				case NC_INT64:
+					block_size *= sizeof(long long);
+					break;
+				case NC_FLOAT:
+					block_size *= sizeof(float);
+					break;
+				case NC_DOUBLE:
+					block_size *= sizeof(double);
+					break;
+				default:
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_VAR_TYPE_NOT_SUPPORTED, data_type);		
+					oph_odb_stge_free_fragment_list(&frags);
+					oph_odb_stge_free_db_list(&dbs);
+					oph_odb_stge_free_dbms_list(&dbmss);
+					nc_close(ncid);
+					for(l = 0; l < num_of_dims; l++){
+						if(dim_rows[l]){ 
+							free(dim_rows[l]);
+							dim_rows[l] = NULL;	
+						}
+					}
+					free(dim_rows);
+					if (memory_buffer) free(memory_buffer);
+					result = OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+					goto __OPH_EXIT_2;
+			}
+		}
+
 		//For each DBMS
 		for(i = 0; i < dbmss.size; i++)
 		{
@@ -1347,6 +1438,7 @@ int task_execute(oph_operator_struct *handle)
 					}
 				}
 				free(dim_rows);
+				if (memory_buffer) free(memory_buffer);
 				result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				goto __OPH_EXIT_2;
 			}
@@ -1374,6 +1466,7 @@ int task_execute(oph_operator_struct *handle)
 						}
 					}
 					free(dim_rows);
+					if (memory_buffer) free(memory_buffer);
 					result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 					goto __OPH_EXIT_2;
 				}
@@ -1476,6 +1569,7 @@ int task_execute(oph_operator_struct *handle)
 									}
 								}
 								free(dim_rows);
+								if (memory_buffer) free(memory_buffer);
 								result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 								goto __OPH_EXIT_2;
 						}
@@ -1495,6 +1589,7 @@ int task_execute(oph_operator_struct *handle)
 								}
 							}
 							free(dim_rows);
+							if (memory_buffer) free(memory_buffer);
 							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 							goto __OPH_EXIT_2;
 						}
@@ -1518,6 +1613,7 @@ int task_execute(oph_operator_struct *handle)
 							}
 						}
 						free(dim_rows);
+						if (memory_buffer) free(memory_buffer);
 						result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 						goto __OPH_EXIT_2;
 					}
@@ -1546,13 +1642,17 @@ int task_execute(oph_operator_struct *handle)
 							}
 						}
 						free(dim_rows);
+						if (memory_buffer) free(memory_buffer);
 						result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 						goto __OPH_EXIT_2;
 					}
 
 					for(inc = 0; inc < nexp; inc++){
 						start[inc] = dim_start[inc];
-						count[inc] = 1;
+						if (memory_size_mb)
+							count[inc] = 0;
+						else
+							count[inc] = 1;
 					}
 					//Implicit dimensions: the entire array from the beginning
 					for(inc = nexp; inc < num_of_dims; inc++){
@@ -1560,47 +1660,68 @@ int task_execute(oph_operator_struct *handle)
 						count[inc] = dims[inc].dimsize;
 					}
 
-					if(oph_ioserver_fetch_row(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->server, frag_rows, &curr_row)){
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
-						oph_ioserver_free_result(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->server, frag_rows);
-						oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-						oph_dc2_cleanup_dbms(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->server);
-						oph_odb_stge_free_fragment_list(&frags);
-						oph_odb_stge_free_db_list(&dbs);
-						oph_odb_stge_free_dbms_list(&dbmss);
-						nc_close(ncid);
-						for(l = 0; l < num_of_dims; l++){
-							if(dim_rows[l]){ 
-								free(dim_rows[l]);
-								dim_rows[l] = NULL;	
-							}
-						}
-						free(dim_rows);
-				             	result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-						goto __OPH_EXIT_2;
-					}
+					current_size = current_length = 0;
+					fetch = 1;
 
-					while((curr_row->row)){
+					do
+					{
+						if(fetch && oph_ioserver_fetch_row(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->server, frag_rows, &curr_row)){
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
+							oph_ioserver_free_result(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->server, frag_rows);
+							oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+							oph_dc2_cleanup_dbms(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->server);
+							oph_odb_stge_free_fragment_list(&frags);
+							oph_odb_stge_free_db_list(&dbs);
+							oph_odb_stge_free_dbms_list(&dbmss);
+							nc_close(ncid);
+							for(l = 0; l < num_of_dims; l++){
+								if(dim_rows[l]){ 
+									free(dim_rows[l]);
+									dim_rows[l] = NULL;	
+								}
+							}
+							free(dim_rows);
+							if (memory_buffer) free(memory_buffer);
+						     	result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+							goto __OPH_EXIT_2;
+						}
+						fetch = 1;
+						if (curr_row->row) current_length++;
+
+						if (memory_size_mb) {
+							if (curr_row->row && (current_size + block_size < memory_size_mb)) {
+								memcpy(memory_buffer + current_size, curr_row->row[1], block_size);
+								current_size += block_size;
+								oph_get_next_count(count, dim_sizes, nexp);
+								continue;
+							}
+							else
+								raw_data = memory_buffer;
+						} else {
+							if (!curr_row->row) break;
+							raw_data = curr_row->row[1];
+						}
+
 						retval = 1;
-						switch(type_nc){
+						switch(type_nc) {
 							case NC_BYTE:
 							case NC_CHAR:
-								retval = nc_put_vara_uchar (ncid, varid, start, count, (unsigned char*)(curr_row->row[1]));
+								retval = nc_put_vara_uchar (ncid, varid, start, count, (unsigned char*)raw_data);
 								break;
 							case NC_SHORT:
-								retval = nc_put_vara_short (ncid, varid, start, count, (short*)(curr_row->row[1]));
+								retval = nc_put_vara_short (ncid, varid, start, count, (short*)raw_data);
 								break;
 							case NC_INT:
-								retval = nc_put_vara_int (ncid, varid, start, count, (int*)(curr_row->row[1]));
+								retval = nc_put_vara_int (ncid, varid, start, count, (int*)raw_data);
 								break;
 							case NC_INT64:
-								retval = nc_put_vara_longlong (ncid, varid, start, count, (long long*)(curr_row->row[1]));
+								retval = nc_put_vara_longlong (ncid, varid, start, count, (long long*)raw_data);
 								break;
 							case NC_FLOAT:
-								retval = nc_put_vara_float (ncid, varid, start, count, (float*)(curr_row->row[1]));
+								retval = nc_put_vara_float (ncid, varid, start, count, (float*)raw_data);
 								break;
 							case NC_DOUBLE:
-								retval = nc_put_vara_double (ncid, varid, start, count, (double*)(curr_row->row[1]));
+								retval = nc_put_vara_double (ncid, varid, start, count, (double*)raw_data);
 								break;
 							default:
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
@@ -1619,6 +1740,7 @@ int task_execute(oph_operator_struct *handle)
 									}
 								}
 								free(dim_rows);
+								if (memory_buffer) free(memory_buffer);
 								result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 								goto __OPH_EXIT_2;
 						}
@@ -1639,30 +1761,20 @@ int task_execute(oph_operator_struct *handle)
 								}
 							}
 							free(dim_rows);
+							if (memory_buffer) free(memory_buffer);
 							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 							goto __OPH_EXIT_2;
 						}
-						oph_nc_get_next_nc_id(start, dim_sizes, nexp);
-						if(oph_ioserver_fetch_row(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->server, frag_rows, &curr_row)){
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
-							oph_ioserver_free_result(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->server, frag_rows);
-							oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-							oph_dc2_cleanup_dbms(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->server);
-							oph_odb_stge_free_fragment_list(&frags);
-							oph_odb_stge_free_db_list(&dbs);
-							oph_odb_stge_free_dbms_list(&dbmss);
-							nc_close(ncid);
-							for(l = 0; l < num_of_dims; l++){
-								if(dim_rows[l]){ 
-									free(dim_rows[l]);
-									dim_rows[l] = NULL;	
-								}
-							}
-							free(dim_rows);
-				             		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-							goto __OPH_EXIT_2;
-						}
+
+						if (memory_size_mb)
+							for(fetch = inc = 0; inc < nexp; inc++) count[inc] = 0;
+
+						for (iii = 0; iii < current_length; ++iii)
+							oph_nc_get_next_nc_id(start, dim_sizes, nexp);
+
+						current_size = current_length = 0;
 					}
+					while (curr_row->row);
 			
 					oph_ioserver_free_result(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->server, frag_rows);
 					frag_count++;
@@ -1670,6 +1782,8 @@ int task_execute(oph_operator_struct *handle)
 			}
 			oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
 		  }
+
+		  if (memory_buffer) free(memory_buffer);
 
 		  if(oph_dc2_cleanup_dbms(((OPH_EXPORTNC2_operator_handle*)handle->operator_handle)->server))
 		  {

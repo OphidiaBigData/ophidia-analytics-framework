@@ -55,7 +55,8 @@
  * \param server Pointer to I/O server handler
  * \param sessionid SessionID
  * \param force Flag used to force file creation
- * \param force Flag used to save file in export/misc folder
+ * \param misc Flag used to save file in export/misc folder
+ * \param memory_size Maximum amount of memory available
  */
 struct _OPH_EXPORTNC2_operator_handle
 {
@@ -84,6 +85,7 @@ struct _OPH_EXPORTNC2_operator_handle
   char *sessionid;
   int force;
   int misc;
+  long long memory_size;
 };
 typedef struct _OPH_EXPORTNC2_operator_handle OPH_EXPORTNC2_operator_handle;
 
