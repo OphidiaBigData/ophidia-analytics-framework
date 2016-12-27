@@ -24,10 +24,10 @@
 #include "oph_common.h"
 #include "oph_ioserver_library.h"
 
-#define OPH_REDUCE_QUERY_COMPR OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "fact_out") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "%s|oph_compress('','',oph_reduce('oph_%s','oph_%s',oph_uncompress('','',%s),'oph_%s',%d,%f))") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "fact_in")
-#define OPH_REDUCE_QUERY OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "fact_out") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "%s|oph_reduce('oph_%s','oph_%s',%s,'oph_%s',%d,%f)") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "fact_in")
-#define OPH_REDUCE_PLUGIN_COMPR "oph_compress('','',oph_reduce('oph_%s','oph_%s',oph_uncompress('','',%s),'oph_%s',%d,%f))"
-#define OPH_REDUCE_PLUGIN "oph_reduce('oph_%s','oph_%s',%s,'oph_%s',%d,%f)"
+#define OPH_REDUCE_QUERY_COMPR OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "fact_out") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "%s|oph_compress('','',oph_reduce('oph_%s','oph_%s',oph_uncompress('','',%s),'oph_%s',%d,%f,%s))") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "fact_in")
+#define OPH_REDUCE_QUERY OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "fact_out") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "%s|oph_reduce('oph_%s','oph_%s',%s,'oph_%s',%d,%f,%s)") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "fact_in")
+#define OPH_REDUCE_PLUGIN_COMPR "oph_compress('','',oph_reduce('oph_%s','oph_%s',oph_uncompress('','',%s),'oph_%s',%d,%f,%s))"
+#define OPH_REDUCE_PLUGIN "oph_reduce('oph_%s','oph_%s',%s,'oph_%s',%d,%f,%s)"
 
 /**
  * \brief Structure of parameters needed by the operator OPH_REDUCE. It generate a cube by aggregating more values along one or more implicit dimensions.
@@ -51,6 +51,7 @@
  * \param id_user ID of submitter
  * \param order Order to be used in case of evaluation of the moments
  * \param description Free description to be associated with output cube
+ * \param ms Conventional value for missing values
  */
 struct _OPH_REDUCE_operator_handle
 {
@@ -76,6 +77,7 @@ struct _OPH_REDUCE_operator_handle
   int id_user;
   double order;
   char* description;
+  double ms;
 };
 typedef struct _OPH_REDUCE_operator_handle OPH_REDUCE_operator_handle;
 

@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <mpi.h>
+#include <math.h>
 
 #include "oph_analytics_operator_library.h"
 
@@ -78,6 +79,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->sessionid = NULL;
   ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->id_user = 0;
   ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->description = NULL;
+  ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->ms = NAN;
 
   char *datacube_in[2];
   char *value;
@@ -288,6 +290,10 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   }
   ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->id_input_container = id_datacube_in[2];
   ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->id_output_container = id_datacube_in[3];
+
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_MISSINGVALUE);
+  if(value && strncmp(value,OPH_COMMON_NAN,OPH_TP_TASKLEN))
+	((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->ms = strtod(value, NULL);
 
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_SCHEDULE_ALGORITHM);
   if(!value){
@@ -670,8 +676,13 @@ int task_init (oph_operator_struct *handle)
   	  memset(new_task.query, 0, OPH_ODB_CUBE_OPERATION_QUERY_SIZE);
 	  new_task.id_job = ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->id_job;
 	  strncpy(new_task.operator, handle->operator_type, OPH_ODB_CUBE_OPERATOR_SIZE);
-	  if (((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->compressed) snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_INTERCOMPARISON_QUERY_COMPR, MYSQL_FRAG_ID, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, MYSQL_FRAG_ID);
-	  else snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_INTERCOMPARISON_QUERY, MYSQL_FRAG_ID, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, MYSQL_FRAG_ID);
+	  char _ms[OPH_COMMON_MAX_DOUBLE_LENGHT];
+	  if (isnan(((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->ms)) snprintf(_ms,OPH_COMMON_MAX_DOUBLE_LENGHT,"NULL");
+	  else snprintf(_ms,OPH_COMMON_MAX_DOUBLE_LENGHT,"%f",((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->ms);
+	  if (((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->compressed)
+		snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_INTERCOMPARISON_QUERY_COMPR, MYSQL_FRAG_ID, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, MYSQL_FRAG_ID);
+	  else
+		snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_INTERCOMPARISON_QUERY, MYSQL_FRAG_ID, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, MYSQL_FRAG_ID);
 	  new_task.input_cube_number = 2;
 	  if(!(new_task.id_inputcube = (int*)malloc(new_task.input_cube_number*sizeof(int))))
 	  {
@@ -868,7 +879,9 @@ int task_execute(oph_operator_struct *handle)
   char operation[OPH_COMMON_BUFFER_LEN];
   char frag_name_out[OPH_ODB_STGE_FRAG_NAME_SIZE];
   int n, result = OPH_ANALYTICS_OPERATOR_SUCCESS, frag_count = 0;
-	
+  char _ms[OPH_COMMON_MAX_DOUBLE_LENGHT];
+  if (isnan(((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->ms)) snprintf(_ms,OPH_COMMON_MAX_DOUBLE_LENGHT,"NULL");
+  else snprintf(_ms,OPH_COMMON_MAX_DOUBLE_LENGHT,"%f",((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->ms);
 
   if(oph_dc2_setup_dbms(&(((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->server), (dbmss.value[0]).io_server_type))
 	{
@@ -945,12 +958,12 @@ int task_execute(oph_operator_struct *handle)
 			}
 
 #ifdef OPH_DEBUG_MYSQL
-			if (compressed) printf("ORIGINAL QUERY: "OPH_INTERCOMPARISON_QUERY2_COMPR_MYSQL "\n", frag_name_out, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].fragment_name, MYSQL_FRAG_ID, MYSQL_FRAG_ID, frags.value[k].fragment_name, MYSQL_FRAG_MEASURE, frags2.value[k].fragment_name, MYSQL_FRAG_MEASURE, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, frags.value[k].fragment_name, MYSQL_FRAG_ID, frags2.value[k].fragment_name, MYSQL_FRAG_ID);
-			else printf("ORIGINAL QUERY: "OPH_INTERCOMPARISON_QUERY2_MYSQL "\n", frag_name_out, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].fragment_name, MYSQL_FRAG_ID, MYSQL_FRAG_ID, frags.value[k].fragment_name, MYSQL_FRAG_MEASURE, frags2.value[k].fragment_name, MYSQL_FRAG_MEASURE, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, frags.value[k].fragment_name, MYSQL_FRAG_ID, frags2.value[k].fragment_name, MYSQL_FRAG_ID);
+			if (compressed) printf("ORIGINAL QUERY: "OPH_INTERCOMPARISON_QUERY2_COMPR_MYSQL "\n", frag_name_out, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].fragment_name, MYSQL_FRAG_ID, MYSQL_FRAG_ID, frags.value[k].fragment_name, MYSQL_FRAG_MEASURE, frags2.value[k].fragment_name, MYSQL_FRAG_MEASURE, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, _ms, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, frags.value[k].fragment_name, MYSQL_FRAG_ID, frags2.value[k].fragment_name, MYSQL_FRAG_ID);
+			else printf("ORIGINAL QUERY: "OPH_INTERCOMPARISON_QUERY2_MYSQL "\n", frag_name_out, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].fragment_name, MYSQL_FRAG_ID, MYSQL_FRAG_ID, frags.value[k].fragment_name, MYSQL_FRAG_MEASURE, frags2.value[k].fragment_name, MYSQL_FRAG_MEASURE, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, _ms, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, frags.value[k].fragment_name, MYSQL_FRAG_ID, frags2.value[k].fragment_name, MYSQL_FRAG_ID);
 #endif
 
-			if (compressed) n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCOMPARISON_QUERY2_COMPR, frag_name_out, OPH_INTERCOMPARISON_FRAG1, MYSQL_FRAG_ID, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, OPH_INTERCOMPARISON_FRAG1, MYSQL_FRAG_MEASURE, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, OPH_INTERCOMPARISON_FRAG2, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, OPH_INTERCOMPARISON_FRAG1, OPH_INTERCOMPARISON_FRAG2, OPH_INTERCOMPARISON_FRAG1, MYSQL_FRAG_ID, OPH_INTERCOMPARISON_FRAG2, MYSQL_FRAG_ID);
-			else n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCOMPARISON_QUERY2, frag_name_out, OPH_INTERCOMPARISON_FRAG1, MYSQL_FRAG_ID, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, OPH_INTERCOMPARISON_FRAG1, MYSQL_FRAG_MEASURE, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, OPH_INTERCOMPARISON_FRAG2, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, OPH_INTERCOMPARISON_FRAG1, OPH_INTERCOMPARISON_FRAG2, OPH_INTERCOMPARISON_FRAG1, MYSQL_FRAG_ID, OPH_INTERCOMPARISON_FRAG2, MYSQL_FRAG_ID);
+			if (compressed) n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCOMPARISON_QUERY2_COMPR, frag_name_out, OPH_INTERCOMPARISON_FRAG1, MYSQL_FRAG_ID, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, OPH_INTERCOMPARISON_FRAG1, MYSQL_FRAG_MEASURE, OPH_INTERCOMPARISON_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, OPH_INTERCOMPARISON_FRAG1, OPH_INTERCOMPARISON_FRAG2, OPH_INTERCOMPARISON_FRAG1, MYSQL_FRAG_ID, OPH_INTERCOMPARISON_FRAG2, MYSQL_FRAG_ID);
+			else n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCOMPARISON_QUERY2, frag_name_out, OPH_INTERCOMPARISON_FRAG1, MYSQL_FRAG_ID, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, ((OPH_INTERCOMPARISON_operator_handle*)handle->operator_handle)->measure_type, OPH_INTERCOMPARISON_FRAG1, MYSQL_FRAG_MEASURE, OPH_INTERCOMPARISON_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, OPH_INTERCOMPARISON_FRAG1, OPH_INTERCOMPARISON_FRAG2, OPH_INTERCOMPARISON_FRAG1, MYSQL_FRAG_ID, OPH_INTERCOMPARISON_FRAG2, MYSQL_FRAG_ID);
 			if(n >= OPH_COMMON_BUFFER_LEN)
 			{
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
