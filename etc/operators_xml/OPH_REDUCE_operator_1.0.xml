@@ -28,6 +28,7 @@ It performs a reduction operation on a datacube with respect to implicit dimensi
               &quot;armoment&quot; to evaluate the absolute raw moment;
               &quot;quantile&quot; to evaluate the quantile.
 - order : order used in evaluation the moments or value of the quantile in range [0, 1].
+- missingvalue : value to be considered as missing value; by default it is NAN (for float and double).
 - grid : optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
          or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
 - container : name of the container to be used to store the output cube; by default it is the input container.
@@ -61,6 +62,7 @@ SUBMISSION STRING: &quot;operator=oph_reduce;operation=max;group_size=10;cube=ht
 		<argument type="string" mandatory="no" minvalue="1" default="all">group_size</argument>
 		<argument type="string" mandatory="yes" values="count|max|min|avg|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile">operation</argument>
 		<argument type="real" mandatory="no" default="2" minvalue="0">order</argument>
+		<argument type="real" mandatory="no" default="NAN">missingvalue</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>

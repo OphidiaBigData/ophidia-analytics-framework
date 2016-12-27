@@ -25,6 +25,7 @@
 #include <string.h>
 #include <mpi.h>
 #include <strings.h>
+#include <math.h>
 
 #include "oph_analytics_operator_library.h"
 
@@ -82,6 +83,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   ((OPH_REDUCE_operator_handle*)handle->operator_handle)->id_user = 0;
   ((OPH_REDUCE_operator_handle*)handle->operator_handle)->order = 2.0;
   ((OPH_REDUCE_operator_handle*)handle->operator_handle)->description = NULL;
+  ((OPH_REDUCE_operator_handle*)handle->operator_handle)->ms = NAN;
 
   char *datacube_in;
   char *value;
@@ -267,6 +269,10 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], "Wrong value of parameter '%s'. It should be not negative\n", OPH_IN_PARAM_ORDER);
 	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
+
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_MISSINGVALUE);
+  if(value && strncmp(value,OPH_COMMON_NAN,OPH_TP_TASKLEN))
+	((OPH_REDUCE_operator_handle*)handle->operator_handle)->ms = strtod(value, NULL);
 
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_REDUCTION_SIZE);
   if(!value){
@@ -773,8 +779,11 @@ int task_init (oph_operator_struct *handle)
 	  new_task.id_job = ((OPH_REDUCE_operator_handle*)handle->operator_handle)->id_job;
   	  memset(new_task.query, 0, OPH_ODB_CUBE_OPERATION_QUERY_SIZE);
 	  strncpy(new_task.operator, handle->operator_type, OPH_ODB_CUBE_OPERATOR_SIZE);
-	  if (((OPH_REDUCE_operator_handle*)handle->operator_handle)->compressed) snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_REDUCE_QUERY_COMPR, MYSQL_FRAG_ID, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->measure_type, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->operation, size, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->order, MYSQL_FRAG_MEASURE);
-	  else snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_REDUCE_QUERY, MYSQL_FRAG_ID, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->measure_type, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->operation, size, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->order, MYSQL_FRAG_MEASURE);
+	  char _ms[OPH_COMMON_MAX_DOUBLE_LENGHT];
+	  if (isnan(((OPH_REDUCE_operator_handle*)handle->operator_handle)->ms)) snprintf(_ms,OPH_COMMON_MAX_DOUBLE_LENGHT,"NULL");
+	  else snprintf(_ms,OPH_COMMON_MAX_DOUBLE_LENGHT,"%f",((OPH_REDUCE_operator_handle*)handle->operator_handle)->ms);
+	  if (((OPH_REDUCE_operator_handle*)handle->operator_handle)->compressed) snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_REDUCE_QUERY_COMPR, MYSQL_FRAG_ID, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->measure_type, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->operation, size, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->order, _ms, MYSQL_FRAG_MEASURE);
+	  else snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_REDUCE_QUERY, MYSQL_FRAG_ID, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->measure_type, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->operation, size, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->order, _ms, MYSQL_FRAG_MEASURE);
 	  new_task.input_cube_number = 1;
 	  if(!(new_task.id_inputcube = (int*)malloc(new_task.input_cube_number*sizeof(int))))
 	  {
@@ -950,7 +959,10 @@ int task_execute(oph_operator_struct *handle)
   char operation[OPH_COMMON_BUFFER_LEN];
   char frag_name_out[OPH_ODB_STGE_FRAG_NAME_SIZE];
   int n, result = OPH_ANALYTICS_OPERATOR_SUCCESS, frag_count = 0;
-	
+  char _ms[OPH_COMMON_MAX_DOUBLE_LENGHT];
+  if (isnan(((OPH_REDUCE_operator_handle*)handle->operator_handle)->ms)) snprintf(_ms,OPH_COMMON_MAX_DOUBLE_LENGHT,"NULL");
+  else snprintf(_ms,OPH_COMMON_MAX_DOUBLE_LENGHT,"%f",((OPH_REDUCE_operator_handle*)handle->operator_handle)->ms);
+
   if(oph_dc2_setup_dbms(&(((OPH_REDUCE_operator_handle*)handle->operator_handle)->server), (dbmss.value[0]).io_server_type))
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
@@ -995,8 +1007,8 @@ int task_execute(oph_operator_struct *handle)
 			}
 
 			//OPH_REDUCE mysql plugin
-			if (compressed) n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_REDUCE_PLUGIN_COMPR, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->measure_type, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->operation, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->size, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->order);
-			else n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_REDUCE_PLUGIN, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->measure_type, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->operation, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->size, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->order);
+			if (compressed) n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_REDUCE_PLUGIN_COMPR, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->measure_type, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->operation, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->size, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->order, _ms);
+			else n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_REDUCE_PLUGIN, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->measure_type, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->operation, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->size, ((OPH_REDUCE_operator_handle*)handle->operator_handle)->order, _ms);
 			if(n >= OPH_COMMON_BUFFER_LEN)
 			{
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");

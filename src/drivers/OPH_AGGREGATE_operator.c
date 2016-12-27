@@ -25,6 +25,7 @@
 #include <string.h>
 #include <mpi.h>
 #include <strings.h>
+#include <math.h>
 
 #include "oph_analytics_operator_library.h"
 
@@ -81,6 +82,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->sessionid = NULL;
   ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->id_user = 0;
   ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->description = NULL;
+  ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->ms = NAN;
 
   char *datacube_in;
   char *value;
@@ -265,6 +267,10 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	
     return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
   }
+
+  value = hashtbl_get(task_tbl, OPH_IN_PARAM_MISSINGVALUE);
+  if(value && strncmp(value,OPH_COMMON_NAN,OPH_TP_TASKLEN))
+	((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->ms = strtod(value, NULL);
 
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_REDUCTION_SIZE);
   if(!value){
@@ -781,8 +787,11 @@ int task_init (oph_operator_struct *handle)
 	  new_task.id_job = ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->id_job;
   	  memset(new_task.query, 0, OPH_ODB_CUBE_OPERATION_QUERY_SIZE);
 	  strncpy(new_task.operator, handle->operator_type, OPH_ODB_CUBE_OPERATOR_SIZE);
-	  if (((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->compressed) snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_AGGREGATE_QUERY_COMPR, MYSQL_FRAG_ID, size,  ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->measure_type, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, size);
-	  else snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_AGGREGATE_QUERY, MYSQL_FRAG_ID, size, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->measure_type, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, size);
+	  char _ms[OPH_COMMON_MAX_DOUBLE_LENGHT];
+	  if (isnan(((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->ms)) snprintf(_ms,OPH_COMMON_MAX_DOUBLE_LENGHT,"NULL");
+	  else snprintf(_ms,OPH_COMMON_MAX_DOUBLE_LENGHT,"%f",((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->ms);
+	  if (((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->compressed) snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_AGGREGATE_QUERY_COMPR, MYSQL_FRAG_ID, size,  ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->measure_type, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->operation, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, size);
+	  else snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_AGGREGATE_QUERY, MYSQL_FRAG_ID, size, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->measure_type, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->operation, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, size);
 	  new_task.input_cube_number = 1;
 	  if(!(new_task.id_inputcube = (int*)malloc(new_task.input_cube_number*sizeof(int))))
 	  {
@@ -961,6 +970,10 @@ int task_execute(oph_operator_struct *handle)
   int n, result = OPH_ANALYTICS_OPERATOR_SUCCESS, frag_count = 0, tuplexfragment, size;
   long long size_;
 
+  char _ms[OPH_COMMON_MAX_DOUBLE_LENGHT];
+  if (isnan(((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->ms)) snprintf(_ms,OPH_COMMON_MAX_DOUBLE_LENGHT,"NULL");
+  else snprintf(_ms,OPH_COMMON_MAX_DOUBLE_LENGHT,"%f",((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->ms);
+
   if(oph_dc2_setup_dbms(&(((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->server), (dbmss.value[0]).io_server_type))
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
@@ -1018,8 +1031,8 @@ int task_execute(oph_operator_struct *handle)
 			}
 
 			//AGGREGATE mysql plugin
-			if (compressed) n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_AGGREGATE_PLUGIN_COMPR, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->measure_type, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->operation);
-			else n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_AGGREGATE_PLUGIN, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->measure_type, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->operation);
+			if (compressed) n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_AGGREGATE_PLUGIN_COMPR, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->measure_type, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->operation, _ms);
+			else n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_AGGREGATE_PLUGIN, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->measure_type, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_AGGREGATE_operator_handle*)handle->operator_handle)->operation, _ms);
 			if(n >= OPH_COMMON_BUFFER_LEN)
 			{
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
