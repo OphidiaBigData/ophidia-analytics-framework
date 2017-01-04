@@ -1692,7 +1692,7 @@ int task_execute(oph_operator_struct *handle)
 								memcpy(memory_buffer + current_size, curr_row->row[1], block_size);
 								current_size += block_size;
 								if (current_length > 1) oph_get_next_count(count, dim_sizes, nexp);
-								if (nexp && (count[inc] < dims[inc].dimsize)) continue;
+								if (nexp && (count[inc] < (size_t)dims[inc].dimsize)) continue;
 								// else avoid to buffer more than one value of outer explicit dimensions
 							} else fetch = 0;
 						} else {
