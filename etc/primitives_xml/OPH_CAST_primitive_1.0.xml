@@ -34,7 +34,8 @@ With conversion from real to complex numbers it adds imaginary parts as 0, while
                         &apos;oph_complex_int&apos;
                         &apos;oph_complex_long&apos;.
 - measure : input measure.
-- missingvalue : value to be considered as missing value; by default it is NAN (for &apos;oph_double&apos; and &apos;oph_float&apos;).
+- missingvalue : value to be considered as missing value in input data; by default it is NAN (for &apos;oph_double&apos; and &apos;oph_float&apos;).
+- output_missingvalue : value to be considered as missing value in output data; by default it is NAN (for &apos;oph_double&apos; and &apos;oph_float&apos;).
 
 [Return type]
 Binary-array.
@@ -53,5 +54,6 @@ oph_cast(&apos;OPH_DOUBLE&apos;,&apos;OPH_COMPLEX_INT&apos;,measure)</abstract>
         <argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_byte'|'oph_short'|'oph_long'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">output measure type</argument>
 	<argument type="binary-array" mandatory="yes">measure</argument>
 	<argument type="double" mandatory="no" default="NAN">missingvalue</argument>
+	<argument type="double" mandatory="no" default="NAN">output_missingvalue</argument>
     </args>
 </primitive>
