@@ -612,7 +612,7 @@ int task_execute(oph_operator_struct *handle)
 	tmp_counter = 0;
 	buffer_length = 0;
 	while((row = mysql_fetch_row(frag_list))){	
-		buffer_length += (strlen(row[0]) + 5);
+		buffer_length += (strlen(row[0]) + 3);
 		//Resize fragment_name buffer for each result
 		if(!(tmp_names = (char*)realloc(frag_name,(buffer_length+1)*sizeof(char)))){
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");		
@@ -630,8 +630,8 @@ int task_execute(oph_operator_struct *handle)
 		}
 		frag_name = tmp_names;
 		tmp_names = NULL;
-  		snprintf(frag_name + tmp_counter, buffer_length +1, " '%s' ,", row[0]);
-		tmp_counter +=  (strlen(row[0]) + 5);
+  		snprintf(frag_name + tmp_counter, buffer_length +1, "'%s'|", row[0]);
+		tmp_counter +=  (strlen(row[0]) + 3);
 	}
 	mysql_free_result(frag_list);
 	if(frag_name)
