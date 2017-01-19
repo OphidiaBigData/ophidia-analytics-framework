@@ -30,14 +30,11 @@ ioserver_LTLIBRARIES = $(IOSERVER)
 
 if DEBUG_1
 libmysql_ioserver_la_CFLAGS =  ${MYSQL_CFLAGS}  ${ioserver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\"  $(OPT)
-libophidia_ioserver_la_CFLAGS =  ${MYSQL_CFLAGS}  ${ioserver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\"  $(OPT)
 else
 if DEBUG_2
 libmysql_ioserver_la_CFLAGS =  ${MYSQL_CFLAGS}  ${ioserver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\"  $(OPT) -DOPH_DEBUG_MYSQL
-libophidia_ioserver_la_CFLAGS =  ${MYSQL_CFLAGS}  ${ioserver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\"  $(OPT) -DOPH_DEBUG_MYSQL
 else
 libmysql_ioserver_la_CFLAGS =  ${MYSQL_CFLAGS}  ${ioserver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\"  $(OPT)
-libophidia_ioserver_la_CFLAGS =  ${MYSQL_CFLAGS}  ${ioserver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\"  $(OPT)
 endif
 endif
 
