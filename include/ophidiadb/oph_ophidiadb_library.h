@@ -39,6 +39,12 @@
 #define OPH_ODB_BUFFER_LEN 	256
 #define OPH_ODB_PATH_LEN 	1000
 
+#define OPH_CONF_OPHDB_NAME	"OPHDB_NAME"
+#define OPH_CONF_OPHDB_HOST	"OPHDB_HOST"
+#define OPH_CONF_OPHDB_PORT	"OPHDB_PORT"
+#define OPH_CONF_OPHDB_LOGIN	"OPHDB_LOGIN"
+#define OPH_CONF_OPHDB_PWD	"OPHDB_PWD"
+
 /**
  * \brief Structure that contain OphidiaDB parameters
  * \param name name of OphidiaDB
