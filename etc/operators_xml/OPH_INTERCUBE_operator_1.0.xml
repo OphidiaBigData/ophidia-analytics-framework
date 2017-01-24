@@ -22,6 +22,9 @@ returns a new datacube as result of the specified operation applied element by e
               -- corr: compute the Pearson correlation coefficient row by row;
               -- mask: take all elements of cube corresponding to 1s in cube2,
                     remaining elements are set to 0 (int, byte, short or long) or NaN (float or double);
+              -- max: return the maximum value between the corresponding elements one by one;
+              -- min: return the minimum value between the corresponding elements one by one.
+- missingvalue : value to be considered as missing value; by default it is NAN (for float and double).
 - measure : name of the new measure resulting from the specified operation
 - schedule : scheduling algorithm. The only possible value is 0,
 		     for a static linear block distribution of resources.
@@ -53,7 +56,8 @@ SUBMISSION STRING: &quot;operator=oph_intercube;cube=http://www.example.com/1/1;
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="yes">cube</argument>
 		<argument type="string" mandatory="yes">cube2</argument>
-		<argument type="string" mandatory="yes" values="sum|sub|mul|div|abs|arg|corr|mask">operation</argument>
+		<argument type="string" mandatory="yes" values="sum|sub|mul|div|abs|arg|corr|mask|max|min">operation</argument>
+		<argument type="real" mandatory="no" default="NAN">missingvalue</argument>
 		<argument type="string" mandatory="no" default="null">measure</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>

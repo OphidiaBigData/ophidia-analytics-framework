@@ -15,7 +15,8 @@ Counts the number of elements into an array.
 		 &apos;oph_byte&apos;.
 - output measure type : not used.
 - measure : first input measure.
-- missing values : use '1' (default) to include missing values, use '0' to exclude them.
+- include missing values : use '1' (default) to include missing values, use '0' to exclude them.
+- missingvalue : value to be considered as missing value; by default it is NAN (for &apos;oph_double&apos; and &apos;oph_float&apos;).
 
 [Return type]
 Long-long.
@@ -32,7 +33,8 @@ oph_count_array(&apos;OPH_FLOAT&apos;,&apos;&apos;,measure)</abstract>
 	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
 	<argument type="oph_type" mandatory="yes">output measure type</argument>
 	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="bool" mandatory="no" default="1" values="0|1">missing values</argument>
+	<argument type="bool" mandatory="no" default="1" values="0|1">include missing values</argument>
+	<argument type="double" mandatory="no" default="NAN">missingvalue</argument>
     </args>
 
 </primitive>
