@@ -339,6 +339,32 @@ AC_SUBST(JANSON_LIBS)
 JANSSON_LIBDIR=`pkg-config --variable=libdir jansson`
 AC_SUBST(JANSSON_LIBDIR)
 
+ophidiaio_server_support=no
+OPHIDIAIO_SERVER_PATH=
+AC_ARG_WITH(ophidiaio_server_path,
+           [  --with-ophidiaio-server-path=PATH   Set Ophidia IO server lib dir (Not available by default)],
+           [
+                ophidiaio_server_path="$withval"
+                ophidiaio_server_support=yes
+           ],
+           [
+                AC_MSG_NOTICE("Ophidia IO server support disabled.")
+           ]
+           )
+if test "x${ophidiaio_server_support}" = "xyes"; then
+        if test "x${ophidiaio_server_path}" != "x"; then
+                OPHIDIAIO_SERVER_CFLAGS="-I${ophidiaio_server_path}/include"
+                OPHIDIAIO_SERVER_LIBS="-L${ophidiaio_server_path}/lib"
+                AC_SUBST(OPHIDIAIO_SERVER_CFLAGS)
+                AC_SUBST(OPHIDIAIO_SERVER_LIBS)
+                AC_MSG_NOTICE("Ophidia IO server support enabled.")
+        else
+                AC_MSG_ERROR("Ophidia IO server install dir not found!")
+                ophidiaio_server_support=no
+        fi
+fi
+AM_CONDITIONAL([OPHIDIAIO_SERVER_SUPPORT], [test "x$ophidiaio_server_support" = "xyes"])
+
 AC_ARG_WITH(interface_type,
 	   [  --with-interface-type=TYPE 		Interface type: SSL],
 	   [

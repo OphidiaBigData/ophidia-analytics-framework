@@ -973,21 +973,55 @@ int oph_query_parser(oph_ioserver_handler *handle, const char *query_string, cha
   else if(strncasecmp(query_oper,OPH_IOSERVER_SQ_OP_FUNCTION, STRLEN_MAX(query_oper,OPH_IOSERVER_SQ_OP_FUNCTION)) ==0){
     //Compose query by selecting fields in the right order 
 
-    //First part of query + new table name
-    if(oph_first_block(handle, hashtbl, MYSQL_IO_QUERY_FUNC, OPH_IOSERVER_SQ_ARG_FUNC, &n, &query)){
-        pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "FUNCTION NAME");
-        logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type,OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "FUNCTION NAME");	
-        hashtbl_destroy(hashtbl);
-        return MYSQL_IO_ERROR;        
-    }
-	  
-     //Function and arg section
-    if(oph_func_args_block(handle, hashtbl, &n, &query)){
-        pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "FUNCTION ARGUMENTS");
-        logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type,OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "FUNCTION ARGUMENTS");	
-        hashtbl_destroy(hashtbl);
-        return MYSQL_IO_ERROR;        
-    }
+	//Check special server functions
+	char *query_arg = hashtbl_get(hashtbl, OPH_IOSERVER_SQ_ARG_FUNC);
+	if (!query_arg)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_FUNC);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_FUNC);
+		hashtbl_destroy(hashtbl);
+		return MYSQL_IO_ERROR;
+	}
+	if(strncasecmp(query_arg,"oph_export", STRLEN_MAX(query_oper,"oph_export")) ==0){
+		char *query_arg = hashtbl_get(hashtbl, OPH_IOSERVER_SQ_ARG_ARG);
+		if (!query_arg)
+		{
+			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_ARG);
+			logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_MISSING_ARG, OPH_IOSERVER_SQ_ARG_ARG);
+			hashtbl_destroy(hashtbl);
+			return MYSQL_IO_ERROR;
+		}
+
+		snprintf(query, OPH_IOSERVER_SQ_LEN, "SELECT id_dim, measure FROM %s ORDER BY id_dim", query_arg);
+	}
+	else if(strncasecmp(query_arg,"oph_size", STRLEN_MAX(query_oper,"oph_size")) ==0){
+		n = snprintf(query, OPH_IOSERVER_SQ_LEN, "SELECT %s AS size FROM %s WHERE table_name IN (",MYSQL_IO_KW_TABLE_SIZE,MYSQL_IO_KW_INFO_SYSTEM);
+
+		 //Function and arg section
+		if(oph_func_args_block(handle, hashtbl, &n, &query)){
+		    pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "FUNCTION ARGUMENTS");
+		    logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type,OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "FUNCTION ARGUMENTS");	
+		    hashtbl_destroy(hashtbl);
+		    return MYSQL_IO_ERROR;        
+		}
+	}
+	else{
+		//First part of query + new table name
+		if(oph_first_block(handle, hashtbl, MYSQL_IO_QUERY_FUNC, OPH_IOSERVER_SQ_ARG_FUNC, &n, &query)){
+		    pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "FUNCTION NAME");
+		    logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type,OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "FUNCTION NAME");	
+		    hashtbl_destroy(hashtbl);
+		    return MYSQL_IO_ERROR;        
+		}
+		  
+		 //Function and arg section
+		if(oph_func_args_block(handle, hashtbl, &n, &query)){
+		    pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "FUNCTION ARGUMENTS");
+		    logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type,OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "FUNCTION ARGUMENTS");	
+		    hashtbl_destroy(hashtbl);
+		    return MYSQL_IO_ERROR;        
+		}
+	}
   }
   else if(strncasecmp(query_oper,OPH_IOSERVER_SQ_OP_DROP_FRAG, STRLEN_MAX(query_oper,OPH_IOSERVER_SQ_OP_DROP_FRAG)) ==0){
     //Compose query by selecting fields in the right order 

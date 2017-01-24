@@ -1861,26 +1861,25 @@ int oph_dc2_read_fragment_data(oph_ioserver_handler *server, oph_odb_fragment *f
 	}
 	else if (!array_clause) // Real raw
 	{
-		if (data_type && !strcasecmp(data_type,  OPH_DC2_BIT_TYPE)){
-#ifdef OPH_DEBUG_MYSQL
-      printf("ORIGINAL QUERY: "MYSQL_DC_READ_RAW_FRAG2"\n", compressed ? "oph_bit_export('','OPH_INT',oph_uncompress('','',measure))" : "oph_bit_export('','OPH_INT',measure)", frag->fragment_name);
-#endif
+		if (data_type && !strcasecmp(data_type,  OPH_DC2_BIT_TYPE)) {
+			#ifdef OPH_DEBUG_MYSQL
+			printf("ORIGINAL QUERY: "MYSQL_DC_READ_RAW_FRAG2"\n", compressed ? "oph_bit_export('','OPH_INT',oph_uncompress('','',measure))" : "oph_bit_export('','OPH_INT',measure)", frag->fragment_name);
+			#endif
 			n =  snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_FRAG2"\n", compressed ? "oph_bit_export('','OPH_INT',oph_uncompress('','',measure))" : "oph_bit_export('','OPH_INT',measure)", frag->fragment_name);
-    }
-		else
-		{
+		}
+		else {
 			if(compressed){
-#ifdef OPH_DEBUG_MYSQL
-        printf("ORIGINAL QUERY: "MYSQL_DC_READ_RAW_COMPRESSED_FRAG"\n", frag->fragment_name);
-#endif
+				#ifdef OPH_DEBUG_MYSQL
+				printf("ORIGINAL QUERY: "MYSQL_DC_READ_RAW_COMPRESSED_FRAG"\n", frag->fragment_name);
+				#endif
 				n =  snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG, frag->fragment_name);
 			}
-      else{
-#ifdef OPH_DEBUG_MYSQL
-        printf("ORIGINAL QUERY: "MYSQL_DC_READ_RAW_FRAG"\n", frag->fragment_name);
-#endif
+			else{
+				#ifdef OPH_DEBUG_MYSQL
+				printf("ORIGINAL QUERY: "MYSQL_DC_READ_RAW_FRAG"\n", frag->fragment_name);
+				#endif
 				n =  snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_FRAG, frag->fragment_name);
-      }
+			}
 		}	
 	}
 	else // Raw adapted to inspect cube
@@ -2088,9 +2087,9 @@ int oph_dc2_get_total_number_of_elements_in_fragment(oph_ioserver_handler *serve
 	return OPH_DC2_SUCCESS;
 }
 
-int oph_dc2_get_total_number_of_rows_in_fragment(oph_ioserver_handler *server, oph_odb_fragment *frag, long long *count)
+int oph_dc2_get_total_number_of_rows_in_fragment(oph_ioserver_handler *server, oph_odb_fragment *frag, char *data_type, long long *count)
 {
-	if(!frag || !count|| !server){	
+	if(!frag || !data_type || !count|| !server){	
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");		
 		return OPH_DC2_NULL_PARAM;
 	}

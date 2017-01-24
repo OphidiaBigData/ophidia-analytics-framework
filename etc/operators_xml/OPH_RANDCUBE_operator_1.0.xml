@@ -18,7 +18,7 @@ It creates a new datacube with random data and dimensions.
                Possible values are &quot;local&quot;, &quot;global&quot; or &quot;auto&quot; (default).
                In the last case the first filesystem available will be used. 
 - ioserver : type of I/O server used to store data.
-             Possible values are: &quot;mysql_table&quot; (default)
+             Possible values are: &quot;ophidiaio_memory&quot; or &quot;mysql_table&quot; (default)
 - schedule : scheduling algorithm. The only possible value is 0,
 		   for a static linear block distribution of resources.
 - nhost : number of output hosts. With default value (&apos;0&apos;) all host available in the host partition are used.
@@ -75,7 +75,7 @@ SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;cwd=/session
 		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="no" default="auto">host_partition</argument>
 		<argument type="string" mandatory="no" default="auto" values="auto|local|global">filesystem</argument>
-		<argument type="string" mandatory="no" default="mysql_table" values="mysql_table">ioserver</argument>
+		<argument type="string" mandatory="no" default="mysql_table" values="mysql_table|ophidiaio_memory">ioserver</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="0">nhost</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="1">ndbms</argument>
