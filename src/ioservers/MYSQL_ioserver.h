@@ -31,6 +31,7 @@
 //Defines for queries
 
 #define MYSQL_IO_QUERY_CREATE_FRAG_SELECT "CREATE TABLE %s (id_dim integer, measure longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT" 
+#define MYSQL_IO_QUERY_INSERT_SELECT 	  "INSERT INTO %s (id_dim, measure) SELECT" 
 #define MYSQL_IO_QUERY_SELECT             "SELECT"
 #define MYSQL_IO_QUERY_INSERT             "INSERT INTO %s"
 #define MYSQL_IO_QUERY_CREATE_FRAG        "CREATE TABLE %s (id_dim integer, measure longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1"

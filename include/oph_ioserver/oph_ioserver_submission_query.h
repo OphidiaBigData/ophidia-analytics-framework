@@ -41,6 +41,7 @@
 #define OPH_IOSERVER_SQ_OP_DROP_DB "drop_database"
 #define OPH_IOSERVER_SQ_OP_INSERT "insert"
 #define OPH_IOSERVER_SQ_OP_MULTI_INSERT "multi_insert"
+#define OPH_IOSERVER_SQ_OP_INSERT_SELECT "insert_select"
 #define OPH_IOSERVER_SQ_OP_SELECT "select"
 #define OPH_IOSERVER_SQ_OP_FUNCTION "function"
 
