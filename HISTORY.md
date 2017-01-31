@@ -9,7 +9,6 @@
 - Example in OPH_INSTANCE xml file
 - Bug [#7](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/7)
 - Bug [#5](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/5)
-- Bug [#8](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/8)
 
 ### Added:
 
@@ -18,8 +17,6 @@
 - Support for missing values to several operators
 - Support for base64-encoded dimensions [#10](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/10)
 - Support for missing values to several primitives XML descriptions
-- Support for operation-fixed host partition
-- Use of BASE_SRC_PATH as prefix of the path in exportnc operators
 - Support for Ophidia native IO server
 
 ### Changed:
@@ -30,7 +27,6 @@
 - OPH_INTERCUBE operator to allow comparison of cubes stored on different IO nodes
 - OPH_SERVICE xml file for listing running tasks
 - Configuration parameters names in oph_configuration
-- Use of BASE_SRC_PATH as prefix of the path in importnc operators
 - Query used in exportnc operators to optimize retrieval from IO server
 - Multi-insert query to optimize operations on IO server side
 - OPH_APPLY query used to count fragment rows
