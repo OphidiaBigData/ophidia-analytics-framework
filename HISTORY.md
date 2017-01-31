@@ -38,6 +38,8 @@
 ### Removed:
 
 - oph_dim_configuration file (unified with oph_configuration)
+- OPH_IMPORTNC
+- OPH_IMPORTNC2
 
 ## v0.10.7 - 2016-11-15
 
