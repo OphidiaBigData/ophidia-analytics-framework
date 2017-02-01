@@ -131,6 +131,7 @@
 #define OPH_IN_PARAM_SUBSET_FILTER_TYPE   				"subset_type"
 #define OPH_IN_PARAM_OUTPUT_PATH   					"output_path"
 #define OPH_IN_PARAM_OUTPUT_NAME   					"output_name"
+#define OPH_IN_PARAM_FITS_TEMPL_PATH                                    "template_path"
 #define OPH_IN_PARAM_LINK						"link"
 #define OPH_IN_PARAM_BYTE_UNIT   					 "byte_unit"
 #define OPH_IN_PARAM_ALGORITHM   					 "algorithm"

@@ -46,6 +46,7 @@ LIBRARY+= liboph_analytics_operator.la
 LIBRARY+= liboph_ioserver_parser.la
 LIBRARY+= liboph_ioserver.la
 LIBRARY+= liboph_analytics_framework.la
+LIBRARY+= liboph_fits.la
 
 lib_LTLIBRARIES = $(LIBRARY)
 if DEBUG_1
@@ -169,3 +170,9 @@ liboph_nc_la_CFLAGS= ${MYSQL_CFLAGS} $(NETCDF_CFLAGS) -prefer-pic -I../include -
 liboph_nc_la_LDFLAGS = -static
 liboph_nc_la_LIBADD = -lz -lm $(NETCDF_LIBS) @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube2
 endif
+
+liboph_fits_la_SOURCES = oph_fits_library.c
+liboph_fits_la_CFLAGS= ${MYSQL_CFLAGS} -I/usr/local/ophidia/extra/fits/include -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
+liboph_fits_la_LDFLAGS = -static
+liboph_fits_la_LIBADD = -lz -lm -L/usr/local/ophidia/extra/fits/lib -lcfitsio -lpthread @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube2
+
