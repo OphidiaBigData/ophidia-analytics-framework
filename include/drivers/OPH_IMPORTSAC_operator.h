@@ -105,7 +105,7 @@ struct _OPH_IMPORTSAC_operator_handle
   char *user;
   //fitsfile *fptr;   /* FITS file pointer, defined in fitsio.h */
   FILE* filesac;	// SAC file pointer
-  headerDataInfo hdi;	//Structure used to store SAC metadata information
+  headerDataInfo *hdi;	//Structure used to store SAC metadata information
   int sacid;
   SAC_var measure;
   int compressed;

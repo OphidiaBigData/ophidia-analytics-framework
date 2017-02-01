@@ -210,7 +210,7 @@ int check_subset_string(char* curfilter, int i, SAC_var *measure, int is_index, 
 			measure->dims_end_index[i] = measure->dims_start_index[i];
 		}
 		else{
-			//Not allowed for fits - always index
+			//Not allowed for sac - always index
 			//Input filter is value
 			#if 0
 			for (ii = 0; ii < (int)strlen(curfilter); ii++){
@@ -437,24 +437,25 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->create_container = 0;
   ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->user = NULL;
   ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->grid_name = NULL;
-  ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path = NULL;
+  ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path = NULL;
   ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->id_output_datacube = 0;
   ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->id_input_container = 0;
   ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->compressed = 0;
   ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->import_metadata = 0;
   ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->check_compliance = 0;
-  ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fptr = NULL;
-  SAC_var *fits_measure = &(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->measure);
-  //fits_measure->fptr = NULL;		//File pointer to fits file
-  fits_measure->dims_name = NULL;
-  fits_measure->dims_id = NULL;
-  //fits_measure->dims_unlim = NULL;
-  fits_measure->dims_length = NULL;
-  fits_measure->dims_type = NULL;
-  fits_measure->dims_oph_level = NULL;
-  fits_measure->dims_start_index = NULL;
-  fits_measure->dims_end_index = NULL;
-  fits_measure->dims_concept_level = NULL;
+  ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->filesac = NULL;
+  ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->hdi = NULL;
+  SAC_var *sac_measure = &(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->measure);
+  //sac_measure->fptr = NULL;		//File pointer to sac file
+  sac_measure->dims_name = NULL;
+  sac_measure->dims_id = NULL;
+  //sac_measure->dims_unlim = NULL;
+  sac_measure->dims_length = NULL;
+  sac_measure->dims_type = NULL;
+  sac_measure->dims_oph_level = NULL;
+  sac_measure->dims_start_index = NULL;
+  sac_measure->dims_end_index = NULL;
+  sac_measure->dims_concept_level = NULL;
   ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->cwd = NULL;
   ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->user = NULL;
   ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->run = 1;
@@ -603,7 +604,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SRC_FILE_PATH );
 	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
   }
-  if(!(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path = (char *) strndup (value, OPH_TP_TASKLEN))){
+  if(!(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path = (char *) strndup (value, OPH_TP_TASKLEN))){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_MEMORY_ERROR_INPUT_NO_CONTAINER, value, "nc file path" );
 	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
@@ -618,13 +619,13 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   if (!strncmp(value,OPH_COMMON_DEFAULT_EMPTY_VALUE,OPH_TP_TASKLEN))
   {
 	((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->create_container = 1;
-	char* pointer = strrchr(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path,'/');
+	char* pointer = strrchr(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path,'/');
 	while (pointer && !strlen(pointer))
 	{
 		*pointer = 0;
-		pointer = strrchr(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path,'/');
+		pointer = strrchr(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path,'/');
 	}
-	container_name = pointer ? pointer+1 : ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path;
+	container_name = pointer ? pointer+1 : ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path;
   }
   else container_name = value;
   if(!(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->container_input = (char *) strndup (container_name, OPH_TP_TASKLEN))){
@@ -633,12 +634,12 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
   }
 
-	if (strstr(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path,"..")) {
+	if (strstr(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path,"..")) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (!strstr(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path,"http"))
+	if (!strstr(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path,"http"))
 	{
 		if (oph_pid_get_base_src_path(&value)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
@@ -647,12 +648,12 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 		}
 		if (value)
 		{
-			if (*(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path) != '/')
+			if (*(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path) != '/')
 			{
 				char tmp[OPH_COMMON_BUFFER_LEN];
-				snprintf(tmp,OPH_COMMON_BUFFER_LEN,"%s/%s",value,((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path);
-				free(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path);
-				((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path = strdup(tmp);
+				snprintf(tmp,OPH_COMMON_BUFFER_LEN,"%s/%s",value,((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path);
+				free(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path);
+				((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path = strdup(tmp);
 			}
 			free(value);
 		}
@@ -759,24 +760,39 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   int imp_number_of_dim_clevels = 0;
   int number_of_dim_clevels = 0;
 
-  //Open fits file
+  //Open sac file
   int j;
   int retval = 0;
   int status = 0;
-  char err_text[48];	//Descriptive text string (30 char max.) corresponding to a CSACIO error status code
+
+  if(!( ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->hdi = (headerDataInfo*)calloc(1, sizeof(headerDataInfo)) )){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "username" );
+	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+  }
+  headerDataInfo *hdi = ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->hdi;
+
+  //char err_text[48];	//Descriptive text string (30 char max.) corresponding to a CSACIO error status code
   //if ((retval = nc_open(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->nc_file_path, SAC_NOWRITE, &(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->ncid)))) {
-  fits_open_file(&(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fptr), ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path, READONLY, &status);
-  if (status){
-	fits_get_errstatus(status, err_text);
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open fits file '%s': %s\n", ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path, err_text);
+  if (getHeaderInfo(hdi,((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path) < 0){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open sac file '%s': %s\n", ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path, err_text);
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_SAC_OPEN_ERROR_NO_CONTAINER, container_name, err_text);
 	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
   }
 
+  ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->filesac = fopen(hdi->filename, "rb");
+  if ( ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->filesac == NULL){
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open sac file '%s': %s\n", ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path, err_text);
+	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_SAC_OPEN_ERROR_NO_CONTAINER, container_name, err_text);
+	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+  }
+
+  FILE *filesac = ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->filesac;
+
   //int ncid = ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->ncid;
-  fitsfile *fptr = ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fptr;
+  //fitsfile *fptr = ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fptr;
   //Extract measured variable information
-  /* No varid in fits file; for variable let set it to 0  
+  /* No varid in sac file; for variable let set it to 0  
   if((retval = nc_inq_varid(ncid, measure->varname, &(measure->varid)))){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_SAC_ISAC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
@@ -787,13 +803,11 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   //Get information from id
   //if((retval = nc_inq_vartype(ncid, measure->varid, &(measure->vartype)))){
 
-  // Only IMGs are supported
-  // Fits files are formed by various data HDUs. Suppose that there is a single IMAGE HDU
-  // Loop on the available hdus. fptr points to the current hdu
+/*
   int hdunum;
-  fits_get_num_hdus(fptr, &hdunum, &status);
+  sac_get_num_hdus(fptr, &hdunum, &status);
   if (status){
-	fits_get_errstatus(status, err_text);
+	sac_get_errstatus(status, err_text);
   	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", err_text);
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_SAC_ISAC_VAR_ERROR_NO_CONTAINER, container_name, err_text);
  	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -805,38 +819,40 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 
   for (curhdu = 1; curhdu <= hdunum; curhdu++){
 	// Get the type of the hdu. It should be IMAGE
-	fits_get_hdu_type(fptr, &hdutype, &status);
+	sac_get_hdu_type(fptr, &hdutype, &status);
 	if (hdutype==0){
 		// Get the number of dimensions
-		fits_get_img_dim(fptr, &naxis, &status);
+		sac_get_img_dim(fptr, &naxis, &status);
 		if (naxis == 0){
-			fits_movrel_hdu(fptr, 1, NULL, &status);
+			sac_movrel_hdu(fptr, 1, NULL, &status);
               	}
 		else break;
 	}
-	else fits_movrel_hdu(fptr, 1, NULL, &status);
+	else sac_movrel_hdu(fptr, 1, NULL, &status);
   }
-  // status contains the error code; if status > 0 the subsequent calls of fits functions will be skipped
+  // status contains the error code; if status > 0 the subsequent calls of sac functions will be skipped
   if (status){
-	fits_get_errstatus(status, err_text);
+	sac_get_errstatus(status, err_text);
   	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", err_text);
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_SAC_ISAC_VAR_ERROR_NO_CONTAINER, container_name, err_text);
  	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
   }
+*/
 
-  // Now fptr points to the correct hdu
-
-  measure->ndims = naxis;
-
-  fits_get_img_equivtype(fptr, &(measure->vartype), &status);
+  //For sac files, ndims is fixed 2
+  measure->ndims = 2;
+/*
+  sac_get_img_equivtype(fptr, &(measure->vartype), &status);
   if (status){
-	fits_get_errstatus(status, err_text);
+	sac_get_errstatus(status, err_text);
   	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", err_text);
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_SAC_ISAC_VAR_ERROR_NO_CONTAINER, container_name, err_text);
  	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
   }
-
-  int ndims = naxis;
+*/
+  //For sac files, type of measure is float
+  measure->vartype = OPH_SAC_FLOAT_TYPE;
+  int ndims = measure->ndims;
 /*
   if((retval = nc_inq_varndims(ncid, measure->varid, &(ndims)))){
   	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
@@ -862,7 +878,9 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
     }
     measure->nimp = imp_number_of_dim_names;
 
-    if(measure->nimp > ndims){
+    //if(measure->nimp > ndims){
+    //For SAC files we have always 1 implicit and 1 explicit dimensions
+    if(measure->nimp > 1){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong number of dimensions provided in task string\n");
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_WRONG_DIM_NUMBER_NO_CONTAINER, container_name, ndims);
 	oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
@@ -897,7 +915,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
     measure->ndims = measure->nexp+measure->nimp;
   }
   else{
-    //Implicit dimension is auto, import as fits file order: NAXISn, NAXISn-1, ..., NAXIS1
+    //Implicit dimension is auto
     measure->nimp = 1;
     measure->nexp = ndims - 1;
     measure->ndims = ndims;
@@ -1042,7 +1060,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
     return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
   }
 
-// No unlimit dimension in fits file
+// No unlimited dimension in sac file
 /*
   if(!(measure->dims_unlim = (char*)malloc(measure->ndims*sizeof(char)))){
     pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -1080,7 +1098,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   }
   memset(measure->dims_concept_level, 0, measure->ndims*sizeof(char));
 
-  //For fits files, there are no dimension id.
+  //For sac files, there are no dimension id.
   if(!(measure->dims_id = (int*)malloc(measure->ndims*sizeof(int)))){
     pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_id");
@@ -1092,10 +1110,9 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 
   int counter = ndims;
   for (i=0; i < ndims; i++){
-	// For fits file more internal dimension is NAXIS1, more external is NAXISn
-	// see cfitsio.pdf page 51
-	measure->dims_id[i] = counter;
-	counter--;
+	// For sac files dimensions are fixed: blocks are explicit, samplesxblock is implicit. Assign fixed ids
+	//measure->dims_id[i] = counter;
+	measure->dims_id[i] = i+1;
   }
 /*
   if((retval = nc_inq_vardimid(ncid, measure->varid, measure->dims_id))){
@@ -1121,9 +1138,9 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   char *dimname;
   short int flag = 0;
   // Get the size of the dimensions
-  fits_get_img_size(fptr, ndims, measure->dims_length, &status);
+  sac_get_img_size(fptr, ndims, measure->dims_length, &status);
   if (status){
-	fits_get_errstatus(status, err_text);
+	sac_get_errstatus(status, err_text);
   	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", err_text);
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_SAC_ISAC_VAR_ERROR_NO_CONTAINER, container_name, err_text);
 	oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
@@ -1136,7 +1153,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   for(i = 0; i < ndims; i++){
 	//measure->dims_unlim[i] = measure->dims_id[i] == unlimdimid;
 	// Dimensions name are: NAXIS1, NAXIS2, ..., NAXISn
-	// For fits file more internal dimension is NAXIS1, more external is NAXISn
+	// For sac file more internal dimension is NAXIS1, more external is NAXISn
 	measure->dims_name[i] = (char *)calloc(16,sizeof(char));
 	snprintf(measure->dims_name[i], 16, "NAXIS%d", counter);
 	counter--; 
@@ -1167,7 +1184,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	    }
       if(!flag){
         //pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension %s related to variable %s in in nc file\n", dimname, measure->varname);
-        pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension name in fits files should be NAXISn (e.g. NASIX1); found %s\n in %s variable\n", dimname, measure->varname);
+        pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension name in sac files should be NAXISn (e.g. NASIX1); found %s\n in %s variable\n", dimname, measure->varname);
         logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name,  dimname, measure->varname);
         oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
         oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
@@ -1228,7 +1245,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
       }
       if(!flag){
             //pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension %s related to variable %s in in nc file\n", dimname, measure->varname);
-      		pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension name in fits files should be NAXISn (e.g. NASIX1); found %s\n in %s variable\n", dimname, measure->varname);
+      		pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension name in sac files should be NAXISn (e.g. NASIX1); found %s\n in %s variable\n", dimname, measure->varname);
         	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name,  dimname, measure->varname);
 	      oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 	      oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
@@ -1369,7 +1386,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	dimname = sub_dims[i];
 	for (j = 0; j < ndims; j++) if (!strcmp(dimname, measure->dims_name[j])) break;
 	if (j == ndims) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s' in in fits file\n", dimname, measure->varname);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s' in in sac file\n", dimname, measure->varname);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name,  dimname, measure->varname);
         	oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
         	oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
@@ -1379,7 +1396,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   }
 
   //Check the sub_filters strings
-  //Fot fits file this section could be not used
+  //Fot sac file this section could be not used
   int tf = -1; // Id of time filter
   for (i = 0; i < number_of_sub_dims; i++){
 	if (((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->time_filter && strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR[1])) {
@@ -1460,7 +1477,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 			SAC_var tmp_var;
 			tmp_var.dims_id = NULL;
 			tmp_var.dims_length = NULL;
-			if(oph_fits_get_fits_var(OPH_GENERIC_CONTAINER_ID, measure->dims_name[i], &(measure->dims_length[i]), &tmp_var, 0))
+			if(oph_sac_get_sac_var(OPH_GENERIC_CONTAINER_ID, measure->dims_name[i], &(measure->dims_length[i]), &tmp_var, 0))
 			{
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_DIM_READ_ERROR, "");
@@ -1474,7 +1491,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 			free(tmp_var.dims_id);
 			free(tmp_var.dims_length);
 
-			if (oph_fits_get_c_type(tmp_var.vartype, dim.dimension_type))
+			if (oph_sac_get_c_type(tmp_var.vartype, dim.dimension_type))
 			{
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_DIM_READ_ERROR, "type cannot be converted" );
@@ -2258,7 +2275,7 @@ int task_init (oph_operator_struct *handle)
 		goto __OPH_EXIT_1;
 	  }
 
-	fitsfile *fptr = ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fptr;
+	sacfile *fptr = ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fptr;
 	char *cwd = ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->cwd;
 	char *user = ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->user;
 	SAC_var tmp_var;
@@ -2349,8 +2366,8 @@ int task_init (oph_operator_struct *handle)
 			tmp_var.dims_id = NULL;
 			tmp_var.dims_length = NULL;
 
-			//if(oph_fits_get_fits_var(OPH_GENERIC_CONTAINER_ID, measure->dims_name[i], ncid, 1, &tmp_var))
-			if(oph_fits_get_fits_var(OPH_GENERIC_CONTAINER_ID, measure->dims_name[i], &(measure->dims_length[i]), &tmp_var, 0))
+			//if(oph_sac_get_sac_var(OPH_GENERIC_CONTAINER_ID, measure->dims_name[i], ncid, 1, &tmp_var))
+			if(oph_sac_get_sac_var(OPH_GENERIC_CONTAINER_ID, measure->dims_name[i], &(measure->dims_length[i]), &tmp_var, 0))
 			{
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_DIM_READ_ERROR, "");
@@ -2363,7 +2380,7 @@ int task_init (oph_operator_struct *handle)
 
 			// Load dimension names and types
 			strncpy(dim.dimension_name, measure->dims_name[i], OPH_ODB_DIM_DIMENSION_SIZE);
-			if (oph_fits_get_c_type(tmp_var.vartype, dim.dimension_type))
+			if (oph_sac_get_c_type(tmp_var.vartype, dim.dimension_type))
 			{
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_DIM_READ_ERROR, "type cannot be converted" );
@@ -2597,7 +2614,7 @@ int task_init (oph_operator_struct *handle)
 						curdimlength =  measure->dims_end_index[i] - measure->dims_start_index[i]+1;
 					if(dim_inst[j].size == curdimlength && dim_inst[j].concept_level == measure->dims_concept_level[i])
 					{
-						//No varid in fits file
+						//No varid in sac file
 						//The id will be a number between 1 and ndims (names: NAXIS1, ...NAXISn)
 						tmp_var.varid = (int) strtol((measure->dims_name[i])+5, NULL, 10);
 						/*
@@ -2671,7 +2688,7 @@ int task_init (oph_operator_struct *handle)
 						dim_array = NULL;
 						
 						//if(oph_nc_get_dim_array2(id_container_out, ncid, tmp_var.varid, dims[j].dimension_type, dim_inst[j].size, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index), &dim_array)){
-						if(oph_fits_get_dim_array2(id_container_out, dim_inst[j].size, &dim_array)){
+						if(oph_sac_get_dim_array2(id_container_out, dim_inst[j].size, &dim_array)){
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information", "");
 							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTSAC_DIM_READ_ERROR, "" );
 							oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -2843,7 +2860,7 @@ int task_init (oph_operator_struct *handle)
 		  	tmp_var.dims_length = NULL;
 
 			//if((retval = oph_nc_get_nc_var(id_container_out, measure->dims_name[i], ncid, 1, &tmp_var))){
-			if(oph_fits_get_fits_var(OPH_GENERIC_CONTAINER_ID, measure->dims_name[i], &(measure->dims_length[i]), &tmp_var, 0)){
+			if(oph_sac_get_sac_var(OPH_GENERIC_CONTAINER_ID, measure->dims_name[i], &(measure->dims_length[i]), &tmp_var, 0)){
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTSAC_DIM_READ_ERROR, "");
 				free(tot_dims);
@@ -2883,7 +2900,7 @@ int task_init (oph_operator_struct *handle)
 			dim_inst[i].concept_level = measure->dims_concept_level[i];
 			//dim_inst[i].unlimited = measure->dims_unlim[i];
 
-			if(oph_fits_compare_fits_c_types(id_container_out, tmp_var.vartype, tot_dims[j].dimension_type)){
+			if(oph_sac_compare_sac_c_types(id_container_out, tmp_var.vartype, tot_dims[j].dimension_type)){
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension type in SAC file doesn't correspond to the one stored in OphidiaDB\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTSAC_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i] );
 				free(tot_dims);
@@ -2900,7 +2917,7 @@ int task_init (oph_operator_struct *handle)
 			tmp_var.dims_end_index = &(measure->dims_end_index[i]);
 
 			//if(oph_nc_get_dim_array2(id_container_out, ncid, tmp_var.varid, tot_dims[j].dimension_type, tmp_var.varsize, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index), &dim_array)){
-			if(oph_fits_get_dim_array2(id_container_out, tmp_var.varsize, &dim_array)){
+			if(oph_sac_get_dim_array2(id_container_out, tmp_var.varsize, &dim_array)){
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information", "");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTSAC_DIM_READ_ERROR, "" );
 				free(tot_dims);
@@ -2987,7 +3004,7 @@ int task_init (oph_operator_struct *handle)
 	//Import source name
 	oph_odb_source src;
 	int id_src = 0;
-	strncpy(src.uri, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path, OPH_ODB_CUBE_SOURCE_URI_SIZE);
+	strncpy(src.uri, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path, OPH_ODB_CUBE_SOURCE_URI_SIZE);
 	if(oph_odb_cube_insert_into_source_table(oDB,&src,&id_src)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert source URI\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTSAC_INSERT_SOURCE_URI_ERROR, src.uri);
@@ -3006,7 +3023,7 @@ int task_init (oph_operator_struct *handle)
 	cube.tuplexfragment = ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->tuplexfrag_number;
 	cube.id_container = id_container_out;
 	strncpy(cube.measure, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->measure.varname, OPH_ODB_CUBE_MEASURE_SIZE);
-	if(oph_fits_get_c_type(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->measure.vartype, cube.measure_type)){
+	if(oph_sac_get_c_type(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->measure.vartype, cube.measure_type)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTSAC_VAR_TYPE_NOT_SUPPORTED, cube.measure_type );
 		oph_odb_cube_free_datacube(&cube);
@@ -4029,7 +4046,7 @@ int task_execute(oph_operator_struct *handle)
 
 			//Populate fragment
 			//if(oph_nc_populate_fragment_from_nc3(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &new_frag, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->ncid, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->tuplexfrag_number, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->array_length, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->compressed, (NETCDF_var*)&(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->measure), ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->memory_size)){
-			if(oph_fits_populate_fragment_from_fits3(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &new_frag, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fptr, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->tuplexfrag_number, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->array_length, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->compressed, (SAC_var*)&(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->measure), ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->memory_size)){
+			if(oph_sac_populate_fragment_from_sac3(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &new_frag, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fptr, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->tuplexfrag_number, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->array_length, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->compressed, (SAC_var*)&(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->measure), ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->memory_size)){
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTSAC_FRAG_POPULATE_ERROR, new_frag.fragment_name, "");
 				oph_dc2_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
@@ -4165,16 +4182,16 @@ int env_unset(oph_operator_struct *handle)
 	  free((char *)((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->grid_name);
 	  ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->grid_name = NULL;
   }
-  if(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path){
-	  free((char *)((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path);
-	  ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fits_file_path = NULL;
+  if(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path){
+	  free((char *)((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path);
+	  ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->sac_file_path = NULL;
   }
 int status = 0;
 char err_text[48];    //Descriptive text string (30 char max.) corresponding to a CSACIO error status code
 
-  retval = fits_close_file(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fptr, &status);
+  retval = sac_close_file(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fptr, &status);
   if(status){
-	fits_get_errstatus(status, err_text);
+	sac_get_errstatus(status, err_text);
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", err_text);
   }
 
