@@ -99,6 +99,7 @@ OPERATOR_XML+=etc/operators_xml/OPH_UNPUBLISH_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_WAIT_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTFITS_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_EXPORTFITS_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_IMPORTSAC_operator_1.0.xml
 
 
 dist_xmloper_DATA = $(OPERATOR_XML)

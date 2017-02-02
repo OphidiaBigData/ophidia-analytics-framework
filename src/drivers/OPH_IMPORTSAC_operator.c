@@ -853,6 +853,12 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   //For sac files, type of measure is float
   measure->vartype = OPH_SAC_FLOAT_TYPE;
   int ndims = measure->ndims;
+  //For SAC files we have always 1 implicit and 1 explicit dimensions
+  //For SAC files dimensions are fixed: samplesxblock (SAMPLE) is the implicit, block (BLOCK) is the explicit
+  measure->nimp = 1;
+  measure->nexp = 1;
+  exp_dim_names = imp_dim_names = NULL;
+  exp_number_of_dim_names = imp_number_of_dim_names = 0; 
 /*
   if((retval = nc_inq_varndims(ncid, measure->varid, &(ndims)))){
   	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
@@ -861,6 +867,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   }
 */
 
+/*
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_IMPLICIT_DIMENSION_NAME);
   if(!value){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IMPLICIT_DIMENSION_NAME);
@@ -876,10 +883,9 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
     }
-    measure->nimp = imp_number_of_dim_names;
-
+*/
+/*
     //if(measure->nimp > ndims){
-    //For SAC files we have always 1 implicit and 1 explicit dimensions
     if(measure->nimp > 1){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong number of dimensions provided in task string\n");
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_WRONG_DIM_NUMBER_NO_CONTAINER, container_name, ndims);
@@ -922,7 +928,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
     exp_dim_names = imp_dim_names = NULL;
     exp_number_of_dim_names = imp_number_of_dim_names = 0; 
   }
-
+*/
   value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXPLICIT_DIMENSION_CONCEPT_LEVEL);
   if(!value){
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_EXPLICIT_DIMENSION_CONCEPT_LEVEL);
@@ -1031,7 +1037,6 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 		tmp_concept_levels[i] = OPH_COMMON_BASE_CONCEPT_LEVEL;
   }
 
-
   if(ndims != measure->ndims){
   	pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong number of dimensions provided in task string\n");
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_WRONG_DIM_NUMBER_NO_CONTAINER, container_name, ndims);
@@ -1061,16 +1066,6 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
   }
 
 // No unlimited dimension in sac file
-/*
-  if(!(measure->dims_unlim = (char*)malloc(measure->ndims*sizeof(char)))){
-    pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_unlim");
-	oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-	oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-	free(tmp_concept_levels);
-    return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-  }
-*/
   if(!(measure->dims_type = (short int*)malloc(measure->ndims*sizeof(short int)))){
     pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_type");
@@ -1114,59 +1109,25 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	//measure->dims_id[i] = counter;
 	measure->dims_id[i] = i+1;
   }
-/*
-  if((retval = nc_inq_vardimid(ncid, measure->varid, measure->dims_id))){
-  	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_SAC_ISAC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
-	oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-	oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-	free(tmp_concept_levels);
-  	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
-  int unlimdimid;
-  if((retval = nc_inq_unlimdim(ncid, &unlimdimid))){
-  	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_SAC_ISAC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
-	oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-	oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-	free(tmp_concept_levels);
-  	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
-*/
 
   //Extract dimensions information and check names provided by task string
   char *dimname;
   short int flag = 0;
   // Get the size of the dimensions
-  sac_get_img_size(fptr, ndims, measure->dims_length, &status);
-  if (status){
-	sac_get_errstatus(status, err_text);
-  	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", err_text);
-	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_SAC_ISAC_VAR_ERROR_NO_CONTAINER, container_name, err_text);
-	oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-	oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-	free(tmp_concept_levels);
- 	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
 
-  counter = ndims;
+  //Setting of the SAC dimensions: names, length and length of the last block
   for(i = 0; i < ndims; i++){
 	//measure->dims_unlim[i] = measure->dims_id[i] == unlimdimid;
 	// Dimensions name are: NAXIS1, NAXIS2, ..., NAXISn
 	// For sac file more internal dimension is NAXIS1, more external is NAXISn
 	measure->dims_name[i] = (char *)calloc(16,sizeof(char));
-	snprintf(measure->dims_name[i], 16, "NAXIS%d", counter);
-	counter--; 
-/*
-  	if((retval = nc_inq_dim(ncid, measure->dims_id[i], measure->dims_name[i], &measure->dims_length[i]))){
-  		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_SAC_ISAC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-		free(tmp_concept_levels);
-  		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  	}
-*/
+  }
+  snprintf(measure->dims_name[1], 16, "BLOCK");
+  snprintf(measure->dims_name[0], 16, "SAMPLE");
+  measure->dims_length[1]=hdi->blocksNumber;
+  measure->dims_length[0]=hdi->samplesForBlock;
+  measure->lastblocklength=hdi->samplesForLastBlock;
+
   }
 
   int level = 1;
@@ -1184,7 +1145,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
 	    }
       if(!flag){
         //pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension %s related to variable %s in in nc file\n", dimname, measure->varname);
-        pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension name in sac files should be NAXISn (e.g. NASIX1); found %s\n in %s variable\n", dimname, measure->varname);
+        pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension name in sac files should be BLOCK and SAMPLE; found %s\n in %s variable\n", dimname, measure->varname);
         logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name,  dimname, measure->varname);
         oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
         oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
@@ -1245,7 +1206,7 @@ int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
       }
       if(!flag){
             //pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension %s related to variable %s in in nc file\n", dimname, measure->varname);
-      		pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension name in sac files should be NAXISn (e.g. NASIX1); found %s\n in %s variable\n", dimname, measure->varname);
+      		pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension name in sac files should be BLOCK and SAMPLE; found %s\n in %s variable\n", dimname, measure->varname);
         	logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name,  dimname, measure->varname);
 	      oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 	      oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
@@ -2044,7 +2005,7 @@ int task_init (oph_operator_struct *handle)
 			//Check how many DBMS and HOST are available into specified partition and of server type
 			if(oph_odb_stge_count_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, &nhost, &ndbms) || !nhost || !ndbms){
 				if(run){
-				  pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host and dbms or server type and partition are not available!\n");
+				  pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve number of host and dbms or server type and partition are not available!\n");
 				  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
 				  goto __OPH_EXIT_1;
         }
@@ -2275,7 +2236,7 @@ int task_init (oph_operator_struct *handle)
 		goto __OPH_EXIT_1;
 	  }
 
-	sacfile *fptr = ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fptr;
+	FILE *fptr = ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->filesac;
 	char *cwd = ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->cwd;
 	char *user = ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->user;
 	SAC_var tmp_var;
@@ -2367,7 +2328,8 @@ int task_init (oph_operator_struct *handle)
 			tmp_var.dims_length = NULL;
 
 			//if(oph_sac_get_sac_var(OPH_GENERIC_CONTAINER_ID, measure->dims_name[i], ncid, 1, &tmp_var))
-			if(oph_sac_get_sac_var(OPH_GENERIC_CONTAINER_ID, measure->dims_name[i], &(measure->dims_length[i]), &tmp_var, 0))
+			//if(oph_sac_get_sac_var(OPH_GENERIC_CONTAINER_ID, measure->dims_name[i], &(measure->dims_length[i]), &tmp_var, 0))
+			if(oph_sac_get_sac_var(OPH_GENERIC_CONTAINER_ID, measure, i, &tmp_var, 0))
 			{
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_DIM_READ_ERROR, "");

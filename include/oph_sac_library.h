@@ -79,6 +79,7 @@ struct _SAC_var
         char **dims_name;
         int *dims_id;
         long *dims_length;
+	int lastblocklength;		//Last block could have less samples
 	short int *dims_type;		//Contains the type of the dimension (explicit = 1/implicit = 0) as a boolean value
 	short int *dims_oph_level;	//Contains the oph_level of the dimensions (explicit and implicit)
 	// For allowing subsetting during the import phase
@@ -255,14 +256,12 @@ int oph_sac_compare_sac_c_types(int id_container, int var_type, const char dim_t
 /**
  * \brief Retrieve SAC_var info from file
  * \param id_container Id of output container (used by logging function)
- * \param varname Name of the variable
- * \param dims_length Size of the dimensions
- * \param max_ndims Max number of dimensions allowed for variable
+ * \param measure SAC variable struct
  * \param var Structure containing the variable info read
  * \param flag Flag to distinguish between variables and dimensions
  * \return 0 if successfull
  */
-int oph_sac_get_sac_var(int id_container, char* varname, long *dims_length, SAC_var *var, short flag);
+int oph_sac_get_sac_var(int id_container, SAC_var measure, int index, SAC_var *var, short flag);
 
 /**
  * \brief Extract a row from nc file
