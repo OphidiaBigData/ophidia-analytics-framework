@@ -687,7 +687,7 @@ int task_init (oph_operator_struct *handle)
 			long long value[cubedims[l].size], sizes[cubedims[l].size];
 			// svalue indicates the index of group which the current value belongs to
 			prev_value=-1;
-			new_size=0;
+			sizes[new_size=0]=0;
 				
 			if (dim[l].calendar && strlen(dim[l].calendar) && OPH_DIM_TIME_CL_IS_TIME(concept_level_in)) // Time dimension (the check can be improved by checking hierarchy name)
 			{

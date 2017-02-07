@@ -446,6 +446,63 @@ int oph_set_centroid(char* dim_row, unsigned int kk, oph_odb_dimension* dim, str
 	return OPH_DIM_SUCCESS;
 }
 
+int oph_dim_get_month_size_of(struct tm* tm_time, oph_odb_dimension* dim)
+{
+	if (!tm_time || !dim)
+	{
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return 0;
+	}
+	if (!dim->calendar || !strlen(dim->calendar)) return 0;
+
+	if (strncmp(dim->calendar,OPH_DIM_TIME_CALENDAR_USER_DEFINED,OPH_ODB_DIM_TIME_SIZE))
+	{
+		switch (tm_time->tm_mon)
+		{
+			case 1:
+			case 3:
+			case 5:
+			case 7:
+			case 8:
+			case 10:
+			case 12:
+				return 31;
+			case 4:
+			case 6:
+			case 9:
+			case 11:
+				return 30;
+			case 2:
+			{
+				int leap = 0, y = tm_time->tm_year;
+				if (!strncmp(dim->calendar,OPH_DIM_TIME_CALENDAR_GREGORIAN,OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar,OPH_DIM_TIME_CALENDAR_STANDARD,OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar,OPH_DIM_TIME_CALENDAR_PGREGORIAN,OPH_ODB_DIM_TIME_SIZE))
+					leap = !(y%4) && (y%100) && !(y%400);
+				else if (!strncmp(dim->calendar,OPH_DIM_TIME_CALENDAR_JULIAN,OPH_ODB_DIM_TIME_SIZE))
+					leap = !(y%4);
+				else if (!strncmp(dim->calendar,OPH_DIM_TIME_CALENDAR_ALL_LEAP,OPH_ODB_DIM_TIME_SIZE))
+					leap = 1;
+				return leap ? 29 : 28;
+			}
+			default:
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong month %d\n", tm_time->tm_mon);
+				return 0;
+		}
+
+	} else {
+
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "This option is not well supported\n");
+		if ((tm_time->tm_mon > 0) && (tm_time->tm_mon <= OPH_ODB_DIM_MONTH_NUMBER))
+		{
+			if ((tm_time->tm_mon == dim->leap_month) && (!(tm_time->tm_year - dim->leap_year)%4))
+				return dim->month_lengths[tm_time->tm_mon] + 1;
+			else return dim->month_lengths[tm_time->tm_mon];
+		}
+	}
+
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong month %d\n", tm_time->tm_mon);
+	return 0;
+}
+
 int oph_dim_is_in_time_group_of(char* dim_row, unsigned int kk, oph_odb_dimension* dim, char concept_level_out, struct tm* tm_prev, int midnight, int centroid, int* res)
 {
 	if (!dim_row || !dim || !tm_prev || !res)
@@ -459,6 +516,7 @@ int oph_dim_is_in_time_group_of(char* dim_row, unsigned int kk, oph_odb_dimensio
 	struct tm tm_base;
 	long long base_time;
 	if (oph_dim_get_time_value_of(dim_row, kk, dim, &tm_base, &base_time)) return OPH_DIM_DATA_ERROR;
+	int msize;
 
 	// Check for group
 	int first_element = tm_prev->tm_year<0;
@@ -474,12 +532,12 @@ int oph_dim_is_in_time_group_of(char* dim_row, unsigned int kk, oph_odb_dimensio
 				tm_centroid.tm_sec = 30;
 				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time))
 				{
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid.");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
 					return OPH_DIM_DATA_ERROR;
 				}
 				centroid = 0;
 			}
-			if (first_element || (midnight && (tm_prev->tm_min == tm_base.tm_min) && !tm_prev->tm_sec) || ((tm_prev->tm_min != tm_base.tm_min) && (!midnight || (tm_prev->tm_min+1 != tm_base.tm_min) || tm_base.tm_sec))) break;
+			if (first_element || (midnight && (tm_prev->tm_min == tm_base.tm_min) && !tm_prev->tm_sec) || ((tm_prev->tm_min != tm_base.tm_min) && (!midnight || ((tm_prev->tm_min+1)%60 != tm_base.tm_min) || tm_base.tm_sec))) break;
 		case 'h':
 			if (centroid)
 			{
@@ -487,12 +545,12 @@ int oph_dim_is_in_time_group_of(char* dim_row, unsigned int kk, oph_odb_dimensio
 				tm_centroid.tm_sec = 0;
 				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time))
 				{
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid.");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
 					return OPH_DIM_DATA_ERROR;
 				}
 				centroid = 0;
 			}
-			if (first_element || (midnight && (tm_prev->tm_hour == tm_base.tm_hour) && !tm_prev->tm_sec && !tm_prev->tm_min) || ((tm_prev->tm_hour != tm_base.tm_hour) && (!midnight || (tm_prev->tm_hour+1 != tm_base.tm_hour) || tm_base.tm_sec || tm_base.tm_min))) break;
+			if (first_element || (midnight && (tm_prev->tm_hour == tm_base.tm_hour) && !tm_prev->tm_sec && !tm_prev->tm_min) || ((tm_prev->tm_hour != tm_base.tm_hour) && (!midnight || ((tm_prev->tm_hour+1)%24 != tm_base.tm_hour) || tm_base.tm_sec || tm_base.tm_min))) break;
 		case '3':
 			if (centroid)
 			{
@@ -501,12 +559,12 @@ int oph_dim_is_in_time_group_of(char* dim_row, unsigned int kk, oph_odb_dimensio
 				tm_centroid.tm_sec = 0;
 				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time))
 				{
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid.");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
 					return OPH_DIM_DATA_ERROR;
 				}
 				centroid = 0;
 			}
-			if (first_element || (midnight && (tm_prev->tm_hour/3 == tm_base.tm_hour/3) && !tm_prev->tm_sec && !tm_prev->tm_min) || ((tm_prev->tm_hour/3 != tm_base.tm_hour/3) && (!midnight || (tm_prev->tm_hour/3+1 != tm_base.tm_hour/3) || tm_base.tm_sec || tm_base.tm_min))) break;
+			if (first_element || (midnight && (tm_prev->tm_hour/3 == tm_base.tm_hour/3) && !tm_prev->tm_sec && !tm_prev->tm_min) || ((tm_prev->tm_hour/3 != tm_base.tm_hour/3) && (!midnight || ((tm_prev->tm_hour/3+1)%8 != tm_base.tm_hour/3) || tm_base.tm_sec || tm_base.tm_min))) break;
 		case '6':
 			if (centroid)
 			{
@@ -515,12 +573,12 @@ int oph_dim_is_in_time_group_of(char* dim_row, unsigned int kk, oph_odb_dimensio
 				tm_centroid.tm_sec = 0;
 				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time))
 				{
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid.");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
 					return OPH_DIM_DATA_ERROR;
 				}
 				centroid = 0;
 			}
-			if (first_element || (midnight && (tm_prev->tm_hour/6 == tm_base.tm_hour/6) && !tm_prev->tm_sec && !tm_prev->tm_min) || ((tm_prev->tm_hour/6 != tm_base.tm_hour/6) && (!midnight || (tm_prev->tm_hour/6+1 != tm_base.tm_hour/6) || tm_base.tm_sec || tm_base.tm_min))) break;
+			if (first_element || (midnight && (tm_prev->tm_hour/6 == tm_base.tm_hour/6) && !tm_prev->tm_sec && !tm_prev->tm_min) || ((tm_prev->tm_hour/6 != tm_base.tm_hour/6) && (!midnight || ((tm_prev->tm_hour/6+1)%4 != tm_base.tm_hour/6) || tm_base.tm_sec || tm_base.tm_min))) break;
 		case 'd':
 			if (centroid)
 			{
@@ -529,12 +587,18 @@ int oph_dim_is_in_time_group_of(char* dim_row, unsigned int kk, oph_odb_dimensio
 				tm_centroid.tm_sec = 0;
 				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time))
 				{
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid.");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
 					return OPH_DIM_DATA_ERROR;
 				}
 				centroid = 0;
 			}
-			if (first_element || (midnight && (tm_prev->tm_mday == tm_base.tm_mday) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour) || ((tm_prev->tm_mday != tm_base.tm_mday) && (!midnight || (tm_prev->tm_mday+1 != tm_base.tm_mday) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour))) break;
+			if (first_element) break;
+			msize = oph_dim_get_month_size_of(tm_prev, dim);
+			if (!msize) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting month size\n");
+				return OPH_DIM_DATA_ERROR;
+			}
+			if ((midnight && (tm_prev->tm_mday == tm_base.tm_mday) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour) || ((tm_prev->tm_mday != tm_base.tm_mday) && (!midnight || ((tm_prev->tm_mday+1)%msize != tm_base.tm_mday) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour))) break;
 		case 'M':
 			if (centroid)
 			{
@@ -544,12 +608,12 @@ int oph_dim_is_in_time_group_of(char* dim_row, unsigned int kk, oph_odb_dimensio
 				tm_centroid.tm_sec = 0;
 				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time))
 				{
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid.");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
 					return OPH_DIM_DATA_ERROR;
 				}
 				centroid = 0;
 			}
-			if (first_element || (midnight && (tm_prev->tm_mon == tm_base.tm_mon) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1)) || ((tm_prev->tm_mon != tm_base.tm_mon) && (!midnight || (tm_prev->tm_mon+1 != tm_base.tm_mon) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1)))) break;
+			if (first_element || (midnight && (tm_prev->tm_mon == tm_base.tm_mon) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1)) || ((tm_prev->tm_mon != tm_base.tm_mon) && (!midnight || ((tm_prev->tm_mon+1)%12 != tm_base.tm_mon) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1)))) break;
 		case 'q':
 			if (centroid)
 			{
@@ -560,12 +624,12 @@ int oph_dim_is_in_time_group_of(char* dim_row, unsigned int kk, oph_odb_dimensio
 				tm_centroid.tm_sec = 0;
 				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time))
 				{
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid.");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
 					return OPH_DIM_DATA_ERROR;
 				}
 				centroid = 0;
 			}
-			if (first_element || (midnight && (tm_prev->tm_mon/3 == tm_base.tm_mon/3) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1)) || ((tm_prev->tm_mon/3 != tm_base.tm_mon/3) && (!midnight || (tm_prev->tm_mon/3+1 != tm_base.tm_mon/3) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1)))) break;
+			if (first_element || (midnight && (tm_prev->tm_mon/3 == tm_base.tm_mon/3) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1)) || ((tm_prev->tm_mon/3 != tm_base.tm_mon/3) && (!midnight || ((tm_prev->tm_mon/3+1)%4 != tm_base.tm_mon/3) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1)))) break;
 		case 'y':
 			if (centroid)
 			{
@@ -576,7 +640,7 @@ int oph_dim_is_in_time_group_of(char* dim_row, unsigned int kk, oph_odb_dimensio
 				tm_centroid.tm_sec = 0;
 				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time))
 				{
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid.");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
 					return OPH_DIM_DATA_ERROR;
 				}
 				centroid = 0;
