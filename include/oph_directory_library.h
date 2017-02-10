@@ -31,9 +31,9 @@
  * \var OPH_DIR_ALL Variable used for all extensions
  */
 typedef enum {
-    OPH_DIR_NC,
-    OPH_DIR_NCL,
-    OPH_DIR_ALL
+	OPH_DIR_NC,
+	OPH_DIR_NCL,
+	OPH_DIR_ALL
 } oph_dir_extension;
 
 #define OPH_DIR_NCL_EXTENSION OPH_COMMON_NCL_EXTENSION
@@ -60,7 +60,7 @@ int oph_dir_r_mkdir(const char *dir);
  * \param ext_type Type of file extension to be counted
  * \return 0 if successfull, N otherwise
  */
-int oph_dir_get_num_of_files_in_dir(char *dirpath,int *num, oph_dir_extension ext_type);
+int oph_dir_get_num_of_files_in_dir(char *dirpath, int *num, oph_dir_extension ext_type);
 
 /** 
  * \brief Function to get the list of file name inside a folder
@@ -88,5 +88,5 @@ int oph_dir_get_defnc_in_dir(char *dirpath, char *file_name);
  * \return 0 if successfull, N otherwise
  */
 int oph_dir_unlink_path(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf);
- 
-#endif //__OPH_DIRECTORY_H
+
+#endif				//__OPH_DIRECTORY_H

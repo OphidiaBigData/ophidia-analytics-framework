@@ -32,18 +32,17 @@
 
 extern int msglevel;
 
-int oph_odb_read_ophidiadb_config_file(ophidiadb *oDB)
+int oph_odb_read_ophidiadb_config_file(ophidiadb * oDB)
 {
-	if(!oDB){
+	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
 
 	char config[OPH_ODB_PATH_LEN];
-  	snprintf(config, sizeof(config), OPH_ODB_DBMS_CONFIGURATION, OPH_ANALYTICS_LOCATION);
+	snprintf(config, sizeof(config), OPH_ODB_DBMS_CONFIGURATION, OPH_ANALYTICS_LOCATION);
 	FILE *file = fopen(config, "r");
-	if(file == NULL)
-	{
+	if (file == NULL) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Configuration file not found\n");
 		return OPH_ODB_ERROR;
 	}
@@ -53,14 +52,13 @@ int oph_odb_read_ophidiadb_config_file(ophidiadb *oDB)
 	char *argument_value = NULL;
 	int argument_length = 0;
 	char *result = NULL;
-	char line[OPH_ODB_BUFFER_LEN] = {'\0'};
-	while (!feof (file))
-	{
-		result = fgets (line, OPH_ODB_BUFFER_LEN, file);
+	char line[OPH_ODB_BUFFER_LEN] = { '\0' };
+	while (!feof(file)) {
+		result = fgets(line, OPH_ODB_BUFFER_LEN, file);
 		if (!result) {
-			if (ferror (file)) {
-				fclose (file);
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read file line from %s\n", OPH_ODB_BUFFER_LEN );
+			if (ferror(file)) {
+				fclose(file);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read file line from %s\n", OPH_ODB_BUFFER_LEN);
 				return OPH_ODB_ERROR;
 			} else {
 				break;
@@ -73,57 +71,57 @@ int oph_odb_read_ophidiadb_config_file(ophidiadb *oDB)
 
 		/* Skip comment lines */
 		if (line[0] == '#') {
-			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Read comment line: %s\n", line );
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Read comment line: %s\n", line);
 			continue;
 		}
 
 		/* Check if line contains only spaces */
-		for(i = 0; (i < strlen(line)) && (i < OPH_ODB_BUFFER_LEN); i++) {
-			if(!isspace((unsigned char)line[i]))
-			break;
+		for (i = 0; (i < strlen(line)) && (i < OPH_ODB_BUFFER_LEN); i++) {
+			if (!isspace((unsigned char) line[i]))
+				break;
 		}
-		if( i == strlen(line) || i == OPH_ODB_BUFFER_LEN) {
-			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Read empty or blank line\n" );
+		if (i == strlen(line) || i == OPH_ODB_BUFFER_LEN) {
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Read empty or blank line\n");
 			continue;
 		}
 
 		/* Split argument and value on '=' character */
-		for(i = 0; (i < strlen(line)) && (i < OPH_ODB_BUFFER_LEN); i++) {
-			if(line[i] == '=')
+		for (i = 0; (i < strlen(line)) && (i < OPH_ODB_BUFFER_LEN); i++) {
+			if (line[i] == '=')
 				break;
 		}
-		if( (i == strlen(line)) || (i == OPH_ODB_BUFFER_LEN)) {
-			pmesg(LOG_WARNING, __FILE__, __LINE__, "Read invalid line: %s\n", line );
+		if ((i == strlen(line)) || (i == OPH_ODB_BUFFER_LEN)) {
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Read invalid line: %s\n", line);
 			continue;
 		}
 
 		argument_length = strlen(line) - i - 1;
 
-		argument = (char *)strndup(line, sizeof(char) * i);
+		argument = (char *) strndup(line, sizeof(char) * i);
 		if (!argument) {
-			fclose (file);
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to alloc memory for configuration argument\n" );
+			fclose(file);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to alloc memory for configuration argument\n");
 			return OPH_ODB_ERROR;
 		}
 
-		argument_value = (char *)strndup(line + i + 1 , sizeof(char) * argument_length);
+		argument_value = (char *) strndup(line + i + 1, sizeof(char) * argument_length);
 		if (!argument_value) {
-			fclose (file);
+			fclose(file);
 			free(argument);
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to alloc memory for configuration argument\n" );
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to alloc memory for configuration argument\n");
 			return OPH_ODB_ERROR;
 		}
 
-		if(!strncasecmp(argument, OPH_CONF_OPHDB_NAME, strlen(OPH_CONF_OPHDB_NAME))) {
+		if (!strncasecmp(argument, OPH_CONF_OPHDB_NAME, strlen(OPH_CONF_OPHDB_NAME))) {
 			oDB->name = argument_value;
-		} else if(!strncasecmp(argument, OPH_CONF_OPHDB_HOST, strlen(OPH_CONF_OPHDB_HOST))) {
+		} else if (!strncasecmp(argument, OPH_CONF_OPHDB_HOST, strlen(OPH_CONF_OPHDB_HOST))) {
 			oDB->hostname = argument_value;
-		} else if(!strncasecmp(argument, OPH_CONF_OPHDB_PORT, strlen(OPH_CONF_OPHDB_PORT))) {
-			oDB->server_port = (int)strtol(argument_value, NULL, 10);
+		} else if (!strncasecmp(argument, OPH_CONF_OPHDB_PORT, strlen(OPH_CONF_OPHDB_PORT))) {
+			oDB->server_port = (int) strtol(argument_value, NULL, 10);
 			free(argument_value);
-		} else if(!strncasecmp(argument, OPH_CONF_OPHDB_LOGIN, strlen(OPH_CONF_OPHDB_LOGIN))) {
+		} else if (!strncasecmp(argument, OPH_CONF_OPHDB_LOGIN, strlen(OPH_CONF_OPHDB_LOGIN))) {
 			oDB->username = argument_value;
-		} else if(!strncasecmp(argument, OPH_CONF_OPHDB_PWD, strlen(OPH_CONF_OPHDB_PWD))) {
+		} else if (!strncasecmp(argument, OPH_CONF_OPHDB_PWD, strlen(OPH_CONF_OPHDB_PWD))) {
 			oDB->pwd = argument_value;
 		} else {
 			free(argument_value);
@@ -137,55 +135,55 @@ int oph_odb_read_ophidiadb_config_file(ophidiadb *oDB)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_init_ophidiadb(ophidiadb *oDB)
+int oph_odb_init_ophidiadb(ophidiadb * oDB)
 {
-	if(!oDB){
+	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
 
-	oDB->name=NULL;
+	oDB->name = NULL;
 	oDB->hostname = NULL;
-	oDB->username=NULL;
-	oDB->pwd=NULL;
-	oDB->conn=NULL;
+	oDB->username = NULL;
+	oDB->pwd = NULL;
+	oDB->conn = NULL;
 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_free_ophidiadb(ophidiadb *oDB)
+int oph_odb_free_ophidiadb(ophidiadb * oDB)
 {
-	if(!oDB){
+	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
 
-	if(oDB->name){
+	if (oDB->name) {
 		free(oDB->name);
-		oDB->name=NULL;
+		oDB->name = NULL;
 	}
-	if(oDB->hostname){
+	if (oDB->hostname) {
 		free(oDB->hostname);
 		oDB->hostname = NULL;
 	}
-	if(oDB->username){
+	if (oDB->username) {
 		free(oDB->username);
-		oDB->username=NULL;
+		oDB->username = NULL;
 	}
-	if(oDB->pwd){
+	if (oDB->pwd) {
 		free(oDB->pwd);
-		oDB->pwd=NULL;
+		oDB->pwd = NULL;
 	}
-	if(oDB->conn){
+	if (oDB->conn) {
 		oph_odb_disconnect_from_ophidiadb(oDB);
-		oDB->conn=NULL;
+		oDB->conn = NULL;
 	}
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_connect_to_ophidiadb(ophidiadb *oDB)
+int oph_odb_connect_to_ophidiadb(ophidiadb * oDB)
 {
-	if(!oDB){
+	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
@@ -196,55 +194,54 @@ int oph_odb_connect_to_ophidiadb(ophidiadb *oDB)
 	}
 
 	oDB->conn = NULL;
-	if(!(oDB->conn = mysql_init(NULL))){
+	if (!(oDB->conn = mysql_init(NULL))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error: %s\n", mysql_error(oDB->conn));
 		oph_odb_disconnect_from_ophidiadb(oDB);
-        return OPH_ODB_MYSQL_ERROR;
-    }
+		return OPH_ODB_MYSQL_ERROR;
+	}
 
 	/* Connect to database */
-	if (!mysql_real_connect(oDB->conn, oDB->hostname, oDB->username, oDB->pwd, oDB->name, oDB->server_port, NULL, 0)){
+	if (!mysql_real_connect(oDB->conn, oDB->hostname, oDB->username, oDB->pwd, oDB->name, oDB->server_port, NULL, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL connection error: %s\n", mysql_error(oDB->conn));
 		oph_odb_disconnect_from_ophidiadb(oDB);
-        return OPH_ODB_MYSQL_ERROR;
+		return OPH_ODB_MYSQL_ERROR;
 	}
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_check_connection_to_ophidiadb(ophidiadb *oDB)
+int oph_odb_check_connection_to_ophidiadb(ophidiadb * oDB)
 {
-	if(!oDB){
+	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
 
-	if(!(oDB->conn)){
+	if (!(oDB->conn)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Connection was somehow closed.\n");
-        	return OPH_ODB_MYSQL_ERROR;
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
-	if(mysql_ping(oDB->conn))
-	{
+	if (mysql_ping(oDB->conn)) {
 		pmesg(LOG_WARNING, __FILE__, __LINE__, "Connection was lost. Reconnecting...\n");
-		mysql_close(oDB->conn); // Flush any data related to previuos connection
+		mysql_close(oDB->conn);	// Flush any data related to previuos connection
 		/* Connect to database */
-		if( oph_odb_connect_to_ophidiadb(oDB)){
+		if (oph_odb_connect_to_ophidiadb(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 			oph_odb_disconnect_from_ophidiadb(oDB);
-		    return OPH_ODB_MYSQL_ERROR;
+			return OPH_ODB_MYSQL_ERROR;
 		}
 	}
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_disconnect_from_ophidiadb(ophidiadb *oDB)
+int oph_odb_disconnect_from_ophidiadb(ophidiadb * oDB)
 {
-	if(!oDB){
+	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
 
-	if(oDB->conn){
+	if (oDB->conn) {
 		mysql_close(oDB->conn);
 		oDB->conn = NULL;
 	}

@@ -51,4 +51,4 @@ WHERE metadatainstance.iddatacube=%d AND metadatainstance.idmetadatainstance LIK
 #define MYSQL_QUERY_META_RETRIEVE_KEY_OF_INSTANCE	"SELECT idmetadatainstance, label FROM metadatainstance INNER JOIN metadatakey ON metadatainstance.idkey = metadatakey.idkey WHERE iddatacube = %d AND variable = '%s';"
 #define MYSQL_QUERY_META_UPDATE_KEY_OF_INSTANCE		"UPDATE metadatainstance SET idkey = %d WHERE idmetadatainstance = %d;"
 
-#endif /* __OPH_ODB_META_QUERY_H__ */
+#endif				/* __OPH_ODB_META_QUERY_H__ */

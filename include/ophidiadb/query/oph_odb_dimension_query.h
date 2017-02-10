@@ -66,4 +66,4 @@
 
 #define MYSQL_RETRIEVE_HIERARCHY_ID "SELECT idhierarchy from `hierarchy` where hierarchyname = '%s';"
 
-#endif /* __OPH_ODB_DIM_QUERY_H__ */
+#endif				/* __OPH_ODB_DIM_QUERY_H__ */

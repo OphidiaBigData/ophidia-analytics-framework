@@ -41,18 +41,18 @@
 #define OPH_IDS_SEMICOLON_CHAR ';'
 
 //Retreive ID in string at given position 
-int oph_ids_get_id_from_string(char *string, int position, int * id);
+int oph_ids_get_id_from_string(char *string, int position, int *id);
 
 //Retreive substring of number IDs starting at given position. new_string is the pointer to the new id string
 int oph_ids_get_substring_from_string(char *string, int position, int number, char **new_string);
 
 //Count number of ID in string
-int oph_ids_count_number_of_ids(char* string, int *res);
+int oph_ids_count_number_of_ids(char *string, int *res);
 
 //Remove given ID form string 
-int oph_ids_remove_id_from_string(char** string, int removed_id);
+int oph_ids_remove_id_from_string(char **string, int removed_id);
 
 //Write ID string specifying first and last id
-int oph_ids_create_new_id_string(char** string, int string_len, int first_id, int last_id);
+int oph_ids_create_new_id_string(char **string, int string_len, int first_id, int last_id);
 
-#endif  //__OPH_IDSTRING_H
+#endif				//__OPH_IDSTRING_H

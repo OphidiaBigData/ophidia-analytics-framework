@@ -69,4 +69,4 @@
 
 #define MYSQL_QUERY_STGE_UPDATE_HOST_COUNTER					"UPDATE host SET priority = priority + %d WHERE idhost IN (%s)"
 
-#endif /* __OPH_ODB_STGE_QUERY_H__ */
+#endif				/* __OPH_ODB_STGE_QUERY_H__ */

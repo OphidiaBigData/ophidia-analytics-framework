@@ -28,4 +28,4 @@
 #define MYSQL_QUERY_JOB_RETRIEVE_SESSION_ID "SELECT idsession FROM session WHERE sessionid = '%s'"
 #define MYSQL_QUERY_JOB_RETRIEVE_JOB_ID "SELECT idjob FROM session INNER JOIN job ON session.idsession = job.idsession WHERE sessionid = '%s' AND markerid = %s"
 
-#endif /* __OPH_ODB_JOB_QUERY_H__ */
+#endif				/* __OPH_ODB_JOB_QUERY_H__ */
