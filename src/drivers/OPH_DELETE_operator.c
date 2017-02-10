@@ -370,7 +370,6 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_free_ophidiadb(&oDB_slave);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
-
 	//retrieve connection string
 	if (oph_odb_stge_fetch_fragment_connection_string_for_deletion(&oDB_slave, id_datacube, ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids, &frags, &dbs, &dbmss)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");

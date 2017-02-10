@@ -1481,12 +1481,17 @@ int task_init(oph_operator_struct * handle)
 			char buff_tmp[OPH_TP_TASKLEN];
 			snprintf(buff_tmp, OPH_TP_TASKLEN, "%s,%s,%s", ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->apply_clause_type, MYSQL_FRAG_MEASURE,
 				 ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->apply_clause);
-			snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_SUBSET2_QUERY, "ID", buff_tmp,
-				 (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->where_clause ? ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->where_clause : ""));
-		} else
-			snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_SUBSET2_QUERY, "ID", MYSQL_FRAG_MEASURE,
-				 (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->where_clause ? ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->where_clause : ""));
-
+			if (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->where_clause)
+				snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_SUBSET2_QUERY, "ID", buff_tmp, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->where_clause);
+			else
+				snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_SUBSET2_QUERY, "ID", buff_tmp, "");
+		} else {
+			if (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->where_clause)
+				snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_SUBSET2_QUERY, "ID", MYSQL_FRAG_MEASURE,
+					 ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->where_clause);
+			else
+				snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_SUBSET2_QUERY, "ID", MYSQL_FRAG_MEASURE, "");
+		}
 		new_task.input_cube_number = 1;
 		if (!(new_task.id_inputcube = (int *) malloc(new_task.input_cube_number * sizeof(int)))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -1687,7 +1692,6 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_free_ophidiadb(&oDB_slave);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
-
 	//retrieve connection string
 	if (oph_odb_stge_fetch_fragment_connection_string(&oDB_slave, id_datacube_in, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->fragment_ids, &frags, &dbs, &dbmss)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve connection strings\n");
@@ -1773,14 +1777,19 @@ int task_execute(oph_operator_struct * handle)
 
 					//SUBSET mysql plugin
 #ifdef OPH_DEBUG_MYSQL
-					printf("ORIGINAL QUERY: " OPH_SUBSET2_QUERY2_MYSQL "\n", frags.value[k].db_instance->db_name, frags.value[k].fragment_name,
-					       (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->frags_size ? tmp : 0), operation, frags.value[k].db_instance->db_name, frag_name_out,
-					       (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->frags_size ? ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->where_clause : ""));
+					if (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->frags_size)
+						printf("ORIGINAL QUERY: " OPH_SUBSET2_QUERY2_MYSQL "\n", frags.value[k].db_instance->db_name, frags.value[k].fragment_name, tmp, operation,
+						       frags.value[k].db_instance->db_name, frag_name_out, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->where_clause);
+					else
+						printf("ORIGINAL QUERY: " OPH_SUBSET2_QUERY2_MYSQL "\n", frags.value[k].db_instance->db_name, frags.value[k].fragment_name, 0, operation,
+						       frags.value[k].db_instance->db_name, frag_name_out, "");
 #endif
-					n = snprintf(query, OPH_COMMON_BUFFER_LEN, OPH_SUBSET2_QUERY2, frags.value[k].db_instance->db_name, frags.value[k].fragment_name,
-						     (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->frags_size ? tmp : 0), operation, frags.value[k].db_instance->db_name, frag_name_out,
-						     (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->frags_size ? ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->
-						      where_clause : ""));
+					if (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->frags_size)
+						n = snprintf(query, OPH_COMMON_BUFFER_LEN, OPH_SUBSET2_QUERY2, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, tmp, operation,
+							     frags.value[k].db_instance->db_name, frag_name_out, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->where_clause);
+					else
+						n = snprintf(query, OPH_COMMON_BUFFER_LEN, OPH_SUBSET2_QUERY2, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, 0, operation,
+							     frags.value[k].db_instance->db_name, frag_name_out, "");
 					if (n >= OPH_COMMON_BUFFER_LEN) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container,

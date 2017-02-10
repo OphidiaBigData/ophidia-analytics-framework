@@ -764,7 +764,6 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_free_ophidiadb(&oDB_slave);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
-
 	//retrieve connection string
 	if (oph_odb_stge_fetch_fragment_connection_string(&oDB_slave, id_datacube_in, ((OPH_ROLLUP_operator_handle *) handle->operator_handle)->fragment_ids, &frags, &dbs, &dbmss)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve connection strings\n");
@@ -812,9 +811,8 @@ int task_execute(oph_operator_struct * handle)
 					continue;
 
 				tuplexfragment = frags.value[k].key_end - frags.value[k].key_start + 1;	// Under the assumption that IDs are consecutive without any holes
-				if (frags.value[k].key_end
-				    && ((tuplexfragment < ((OPH_ROLLUP_operator_handle *) handle->operator_handle)->size)
-					|| (tuplexfragment % (((OPH_ROLLUP_operator_handle *) handle->operator_handle)->size)))) {
+				if (frags.value[k].key_end && ((tuplexfragment < ((OPH_ROLLUP_operator_handle *) handle->operator_handle)->size)
+							       || (tuplexfragment % (((OPH_ROLLUP_operator_handle *) handle->operator_handle)->size)))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__,
 					      "Internal error: too many tuples (%d) to be aggregated (maximum is %d, try to merge fragments before rolling up the dimension) or bad parameter value\n",
 					      ((OPH_ROLLUP_operator_handle *) handle->operator_handle)->size, tuplexfragment);

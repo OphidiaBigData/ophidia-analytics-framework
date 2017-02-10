@@ -59,7 +59,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBEIO_MEMORY_ERROR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
-
 	//1 - Set up struct to empty values
 	((OPH_CUBEIO_operator_handle *) handle->operator_handle)->direction = 0;
 	((OPH_CUBEIO_operator_handle *) handle->operator_handle)->id_input_container = 0;

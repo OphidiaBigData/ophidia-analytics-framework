@@ -283,9 +283,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link = strdup(tmp);
 			}
 		} else {
-			int n =
-			    snprintf(NULL, 0, OPH_FRAMEWORK_NC_FILES_PATH, oph_pid_path()? oph_pid_path() : OPH_PREFIX_CLUSTER, session_code,
-				     ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube) + 1;
+			int n = snprintf(NULL, 0, OPH_FRAMEWORK_NC_FILES_PATH, oph_pid_path()? oph_pid_path() : OPH_PREFIX_CLUSTER, session_code,
+					 ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
+					 ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube) + 1;
 			if (n >= OPH_TP_TASKLEN) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of path exceeded limit.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_STRING_BUFFER_OVERFLOW,

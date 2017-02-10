@@ -1289,7 +1289,6 @@ int task_execute(oph_operator_struct * handle)
 						}
 						return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 					}
-
 					//Set new fragment
 					new_frag.id_datacube = id_datacube_out;
 					new_frag.id_db = db_out.id_db;

@@ -431,7 +431,8 @@ int task_execute(oph_operator_struct * handle)
 						snprintf(tmpbuf, 20, "%d", dbms.id_dbms);
 						char *my_row[5] =
 						    { curr_row->row[0], (curr_row->row[1][0] == '0') ? "array" : "number", curr_row->row[2], (curr_row->row[3][0] == 'f') ? "simple" : "aggregate",
-					      tmpbuf };
+							tmpbuf
+						};
 						if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_PRIMITIVES_LIST_LIST, my_row)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
@@ -449,7 +450,8 @@ int task_execute(oph_operator_struct * handle)
 						snprintf(tmpbuf, 20, "%d", dbms.id_dbms);
 						char *my_row[5] =
 						    { curr_row->row[0], (curr_row->row[1][0] == '0') ? "array" : "number", curr_row->row[2], (curr_row->row[3][0] == 'f') ? "simple" : "aggregate",
-					      tmpbuf };
+							tmpbuf
+						};
 						if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_PRIMITIVES_LIST_LIST, my_row)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");

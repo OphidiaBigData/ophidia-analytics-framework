@@ -1466,7 +1466,6 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 	if (!whole_fragment || dimension_ordered || !whole_explicit) {
 		return oph_nc_populate_fragment_from_nc2(server, frag, ncid, tuplexfrag_number, array_length, compressed, measure);
 	}
-
 	//Compute number of tuples per insert (regular case)
 	long long regular_rows = 0;
 	long long regular_times = 0;
@@ -1650,7 +1649,6 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		free(args);
 		return OPH_NC_ERROR;
 	}
-
 	//idDim controls the start array
 	//start and count array must be sorted in base of the real order of dimensions in the nc file
 	//sizemax must be sorted in base of the oph_level value

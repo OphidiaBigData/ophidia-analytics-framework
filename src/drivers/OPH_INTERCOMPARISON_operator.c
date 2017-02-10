@@ -941,7 +941,6 @@ int task_execute(oph_operator_struct * handle)
 				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				break;
 			}
-
 			//For each fragment
 			for (k = 0; (k < frags.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS); k++) {
 				//Check Fragment - DB Association

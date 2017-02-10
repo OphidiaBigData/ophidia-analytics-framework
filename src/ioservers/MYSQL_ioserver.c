@@ -1322,7 +1322,6 @@ int _mysql_setup_query(oph_ioserver_handler * handle, void *connection, const ch
 		*query = NULL;
 		return MYSQL_IO_ERROR;
 	}
-
 #ifdef OPH_DEBUG_MYSQL
 	printf("PARSED   QUERY: %s\n", sql_query);
 #endif

@@ -3740,7 +3740,6 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_free_ophidiadb(&oDB_slave);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
-
 	//retrieve connection string
 	if (oph_odb_stge_fetch_db_connection_string(&oDB_slave, id_datacube_out, start_position, row_number, &dbs, &dbmss)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");
@@ -3765,7 +3764,6 @@ int task_execute(oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 	}
-
 	//For each DBMS
 	for (i = 0; i < dbmss.size; i++) {
 
