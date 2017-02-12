@@ -31,6 +31,6 @@
  * \param id_user ID of the user
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_user_retrieve_user_id(ophidiadb *oDB, char* username, int *id_user);
+int oph_odb_user_retrieve_user_id(ophidiadb * oDB, char *username, int *id_user);
 
-#endif /* __OPH_ODB_META_H__ */
+#endif				/* __OPH_ODB_META_H__ */

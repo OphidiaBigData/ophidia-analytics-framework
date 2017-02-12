@@ -791,7 +791,7 @@
 #define OPH_LOG_OPH_CONCATNC_DIM_LOAD_FROM_GRID_ERROR				OPH_LOG_GENERIC_DIM_LOAD_FROM_GRID_ERROR
 #define OPH_LOG_OPH_CONCATNC_GRID_STORE_ERROR						OPH_LOG_GENERIC_GRID_STORE_ERROR
 #define OPH_LOG_OPH_CONCATNC_IMP_DOMAIN_OVERLAP						"Implicit dimensions %s are not disjoint\n"
-#define OPH_LOG_OPH_CONCATNC_DIM_SIZE_MISMATCH						"Dimension size of %s in NC file doesn't correspond to the one stored in OphidiaDB\n" 
+#define OPH_LOG_OPH_CONCATNC_DIM_SIZE_MISMATCH						"Dimension size of %s in NC file doesn't correspond to the one stored in OphidiaDB\n"
 #define	OPH_LOG_OPH_CONCATNC_OLD_GRID_ERROR							"Unable to use an already defined grid\n"
 #define OPH_LOG_OPH_CONCATNC_IOPLUGIN_SETUP_ERROR						OPH_LOG_GENERIC_IOPLUGIN_SETUP_ERROR
 #define OPH_LOG_OPH_CONCATNC_IOPLUGIN_CLEANUP_ERROR					OPH_LOG_GENERIC_IOPLUGIN_CLEANUP_ERROR
@@ -1998,4 +1998,4 @@
 #define OPH_LOG_ANALITICS_OPERATOR_UNSET_ENV_ERROR				"Process finilization failed%s"
 
 
-#endif  //__OPH_LOG_ERROR_CODES_H
+#endif				//__OPH_LOG_ERROR_CODES_H

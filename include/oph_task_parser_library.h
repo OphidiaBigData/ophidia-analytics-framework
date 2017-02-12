@@ -60,7 +60,7 @@
 #define OPH_TP_PARAM_PARAM_SEPARATOR ';'
 #define OPH_TP_MULTI_VALUE_SEPARATOR '|'
 #define OPH_TP_CONT_CUBE_SEPARATOR '.'
-#define OPH_TP_SKIP_SEPARATOR '\0' // '#' // Not used
+#define OPH_TP_SKIP_SEPARATOR '\0'	// '#' // Not used
 
 #define OPH_TP_OPERATOR_NAME OPH_IN_PARAM_OPERATOR_NAME
 
@@ -74,10 +74,10 @@ int oph_tp_retrieve_function_xml_file(const char *function_name, const char *fun
 int oph_tp_find_param_in_task_string(const char *task_string, const char *param, char (*value)[OPH_TP_TASKLEN]);
 
 //Load the operator parameters from task_string and XML into the hash table
-int oph_tp_task_params_parser(char *task_string, HASHTBL **hashtbl);
+int oph_tp_task_params_parser(char *task_string, HASHTBL ** hashtbl);
 
 //Split multiple values params into a value_list of size value_num
-int oph_tp_parse_multiple_value_param (char *values, char ***value_list, int *value_num);
+int oph_tp_parse_multiple_value_param(char *values, char ***value_list, int *value_num);
 
 //Free the value_list of size value_num
 int oph_tp_free_multiple_value_param_list(char **value_list, int value_num);
@@ -88,4 +88,4 @@ int oph_tp_start_xml_parser();
 //End xml parsing
 int oph_tp_end_xml_parser();
 
-#endif  //__OPH_TASK_PARSER_H
+#endif				//__OPH_TASK_PARSER_H

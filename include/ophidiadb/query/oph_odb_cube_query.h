@@ -101,4 +101,4 @@
 
 #define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_TUPLEXFRAGMENT "UPDATE datacube SET tuplexfragment = %d WHERE iddatacube = %d"
 
-#endif /* __OPH_ODB_CUBE_QUERY_H__ */
+#endif				/* __OPH_ODB_CUBE_QUERY_H__ */

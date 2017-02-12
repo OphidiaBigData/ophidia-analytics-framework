@@ -25,7 +25,7 @@
 #include <libxml/tree.h>
 #include "oph_common.h"
 
-#define OPH_HIER_MAX_STRING_LENGTH 1024 // chars
+#define OPH_HIER_MAX_STRING_LENGTH 1024	// chars
 #define OPH_HIER_AGGREGATE_OP_SEPARATOR "|"
 
 // XML names
@@ -55,60 +55,55 @@
 
 // enum and struct
 
-typedef struct
-{
+typedef struct {
 	xmlDocPtr document;
 } oph_hier_document;
 
-typedef struct
-{
-	char** names;
+typedef struct {
+	char **names;
 	unsigned int number;
 } oph_hier_list;
 
-typedef struct
-{
+typedef struct {
 	char long_name[OPH_HIER_MAX_STRING_LENGTH];
 	char short_name;
 	char aggregate_field;
 	unsigned int aggregate_set;
-	oph_hier_list* aggregate_operation_list;
+	oph_hier_list *aggregate_operation_list;
 } oph_hier_attribute;
 
-typedef struct 
-{
+typedef struct {
 	//char name[OPH_HIER_MAX_STRING_LENGTH];
-	oph_hier_attribute** attributes;
+	oph_hier_attribute **attributes;
 	unsigned int attribute_number;
 } oph_hier_hierarchy;
 
 //Auxilia
-int oph_hier_is_numeric (const char * s);
-int oph_hier_basic_control(oph_hier_document* document);
-void oph_hier_free_strings(char** names,unsigned int number);
+int oph_hier_is_numeric(const char *s);
+int oph_hier_basic_control(oph_hier_document * document);
+void oph_hier_free_strings(char **names, unsigned int number);
 
 // Prototypes
 
-int oph_hier_open(oph_hier_document** document_pointer, const char* filename);
-int oph_hier_close(oph_hier_document* document);
+int oph_hier_open(oph_hier_document ** document_pointer, const char *filename);
+int oph_hier_close(oph_hier_document * document);
 
-int oph_hier_validate(oph_hier_document* document);
+int oph_hier_validate(oph_hier_document * document);
 
-int oph_hier_get_hierarchy(oph_hier_hierarchy* hierarchy, oph_hier_document* document);
+int oph_hier_get_hierarchy(oph_hier_hierarchy * hierarchy, oph_hier_document * document);
 
-int oph_hier_get_attributes(oph_hier_list** list, const char* hierarchy, oph_hier_document* document);
-int oph_hier_get_attribute(const char* name, oph_hier_attribute* attribute, const char* hierarchy, oph_hier_document* document);
+int oph_hier_get_attributes(oph_hier_list ** list, const char *hierarchy, oph_hier_document * document);
+int oph_hier_get_attribute(const char *name, oph_hier_attribute * attribute, const char *hierarchy, oph_hier_document * document);
 
-void oph_hier_free_hierarchy(oph_hier_hierarchy* name);
-void oph_hier_free_attribute(oph_hier_attribute* name);
-void oph_hier_free_list(oph_hier_list* list);
+void oph_hier_free_hierarchy(oph_hier_hierarchy * name);
+void oph_hier_free_attribute(oph_hier_attribute * name);
+void oph_hier_free_list(oph_hier_list * list);
 
 // Main functions
 
-int oph_hier_check_concept_level_long(const char* filename, char* concept_level_long, int* exists, char* short_name);
-int oph_hier_check_concept_level_short(const char* filename, char concept_level_short, int* exists);
-int oph_hier_retrieve_available_op(const char* filename, char concept_level_in, char concept_level_out, oph_hier_list** available_op, int* aggregate_set);
-int oph_hier_get_concept_level_long(const char* filename, char concept_level_short, char** concept_level_long);
+int oph_hier_check_concept_level_long(const char *filename, char *concept_level_long, int *exists, char *short_name);
+int oph_hier_check_concept_level_short(const char *filename, char concept_level_short, int *exists);
+int oph_hier_retrieve_available_op(const char *filename, char concept_level_in, char concept_level_out, oph_hier_list ** available_op, int *aggregate_set);
+int oph_hier_get_concept_level_long(const char *filename, char concept_level_short, char **concept_level_long);
 
-#endif /* OPH_HIER_CUBOIDXML_H */
-
+#endif				/* OPH_HIER_CUBOIDXML_H */

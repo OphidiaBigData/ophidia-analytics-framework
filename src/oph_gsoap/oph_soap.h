@@ -26,19 +26,18 @@
 #define OPH_SOAP_SERVER_CONFIGURATION OPH_FRAMEWORK_SOAP_CONF_FILE_PATH
 
 typedef struct {
-	char* server;
-	char* username;
-	char* password;
+	char *server;
+	char *username;
+	char *password;
 	int timeout;
 	int recv_timeout;
 } oph_soap_data;
 
-int oph_notify(struct soap* soap, oph_soap_data* data, char* output_string, char* output_json, xsd__int* response);
+int oph_notify(struct soap *soap, oph_soap_data * data, char *output_string, char *output_json, xsd__int * response);
 
-int oph_soap_init(struct soap *soap, oph_soap_data* data);
-int oph_soap_cleanup(struct soap *soap, oph_soap_data* data);
+int oph_soap_init(struct soap *soap, oph_soap_data * data);
+int oph_soap_cleanup(struct soap *soap, oph_soap_data * data);
 
-int oph_soap_free_data(oph_soap_data* data);
+int oph_soap_free_data(oph_soap_data * data);
 
 #endif
-

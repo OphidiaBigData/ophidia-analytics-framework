@@ -65,4 +65,4 @@
 
 #define MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_NAME	"UPDATE `container` SET containername = CONCAT(containername, CONCAT('_', idcontainer)) WHERE idcontainer = '%d'"
 
-#endif /* __OPH_ODB_FS_QUERY_H__ */
+#endif				/* __OPH_ODB_FS_QUERY_H__ */

@@ -28,4 +28,4 @@
  */
 int oph_af_execute_framework(char *task_string, int task_number, int task_rank);
 
-#endif //__OPH_ANALYTICS_FRAMEWORK_H
+#endif				//__OPH_ANALYTICS_FRAMEWORK_H

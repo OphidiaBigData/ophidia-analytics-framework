@@ -67,49 +67,48 @@
 
 //****************Handle******************//
 
-struct _oph_operator_struct
-{
-	char 	*operator_type;
-	void 	*operator_handle;
+struct _oph_operator_struct {
+	char *operator_type;
+	void *operator_handle;
 	oph_json *operator_json;
-	char	*output_string;
-	char	*output_json;
-	char	*output_path;
-	char	*output_name;
-	int 	proc_number;
-	int 	proc_rank;
-	char	*lib;
-	void	*dlh;
+	char *output_string;
+	char *output_json;
+	char *output_path;
+	char *output_name;
+	int proc_number;
+	int proc_rank;
+	char *lib;
+	void *dlh;
 };
 typedef struct _oph_operator_struct oph_operator_struct;
 
 //*****************Functions***************//
 
 //Initialize structure (mandatory)
-int oph_operator_struct_initializer(int size, int myrank, oph_operator_struct *handle);
+int oph_operator_struct_initializer(int size, int myrank, oph_operator_struct * handle);
 
 //Do operation initialization procedure (optional)
-int oph_init_task(oph_operator_struct *handle);
+int oph_init_task(oph_operator_struct * handle);
 
 //Set environment library and structures (mandatory)
-int oph_set_env(HASHTBL *task_tbl, oph_operator_struct *handle);
+int oph_set_env(HASHTBL * task_tbl, oph_operator_struct * handle);
 
 //Do distribution stuff (optional)
-int oph_distribute_task(oph_operator_struct *handle);
+int oph_distribute_task(oph_operator_struct * handle);
 
 //Execute query or operation (mandatory)
-int oph_execute_task(oph_operator_struct* handle);
+int oph_execute_task(oph_operator_struct * handle);
 
 //Do reduction operation (optional)
-int oph_reduce_task(oph_operator_struct *handle);
+int oph_reduce_task(oph_operator_struct * handle);
 
 //Do de-initialization procedure (optional)
-int oph_destroy_task(oph_operator_struct* handle);
+int oph_destroy_task(oph_operator_struct * handle);
 
 //Unset environment free struture memory (mandatory)
-int oph_unset_env(oph_operator_struct* handle);
+int oph_unset_env(oph_operator_struct * handle);
 
 //Close dynamic library (mandatory)
 int oph_exit_task();
 
-#endif //__OPH_ANALYTICS_OPERATOR_H
+#endif				//__OPH_ANALYTICS_OPERATOR_H

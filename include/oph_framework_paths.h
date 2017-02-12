@@ -73,4 +73,4 @@
 #define OPH_FRAMEWORK_IOSERVER_LOG_PATH				"log/server_%s.log"
 #define OPH_FRAMEWORK_IOSERVER_LOG_PATH_WITH_PREFIX		"%s/server_%s.log"
 
-#endif  //__OPH_FRAMEWORK_PATHS_H
+#endif				//__OPH_FRAMEWORK_PATHS_H

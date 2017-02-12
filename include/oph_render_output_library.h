@@ -26,7 +26,7 @@
 #define OPH_RENDER_OUTPUT_RENDER_ERROR        2
 
 //table dimensions for MAN (OPERATOR/PRIMITIVE)
-#define OPH_RENDER_OUTPUT_MAN_TABLE_WIDTH 150 //must be even
+#define OPH_RENDER_OUTPUT_MAN_TABLE_WIDTH 150	//must be even
 #define OPH_RENDER_OUTPUT_MAN_ARG_NAME_WIDTH 24
 #define OPH_RENDER_OUTPUT_MAN_ARG_TYPE_WIDTH 13
 #define OPH_RENDER_OUTPUT_MAN_ARG_MINVAL_WIDTH 4
@@ -53,7 +53,7 @@
                         - OPH_RENDER_OUTPUT_MAN_MULTI_ARG_SPACING)
 
 //table dimensions for HIERARCHY
-#define OPH_RENDER_OUTPUT_HIERARCHY_TABLE_WIDTH 130 //must be even
+#define OPH_RENDER_OUTPUT_HIERARCHY_TABLE_WIDTH 130	//must be even
 #define OPH_RENDER_OUTPUT_HIERARCHY_ATTR_LNAME_WIDTH 30
 #define OPH_RENDER_OUTPUT_HIERARCHY_ATTR_SNAME_WIDTH 12
 #define OPH_RENDER_OUTPUT_HIERARCHY_ATTR_AGG_FIELD_WIDTH 22
@@ -71,6 +71,6 @@
  * \param objkeys_num Number of objkeys
  * \return 0 if successfull, -1 otherwise
  */
-int renderXML(const char *xmlfilename, short int function_type_code, oph_json *oper_json, char **objkeys, int objkeys_num);
+int renderXML(const char *xmlfilename, short int function_type_code, oph_json * oper_json, char **objkeys, int objkeys_num);
 
-#endif /* __OPH_RENDER_OUTPUT_LIBRARY__ */
+#endif				/* __OPH_RENDER_OUTPUT_LIBRARY__ */
