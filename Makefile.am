@@ -48,8 +48,6 @@ OPERATOR_XML+=etc/operators_xml/OPH_ENDIF_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_EXPLORECUBE_operator_1.0.xml
 if HAVE_NETCDF
 OPERATOR_XML+=etc/operators_xml/OPH_EXPORTNC_operator_1.0.xml
-OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC_operator_1.0.xml
-OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC3_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CONCATNC_operator_1.0.xml
 if GSL_SUPPORT

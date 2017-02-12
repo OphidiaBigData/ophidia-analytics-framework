@@ -1630,7 +1630,7 @@ int task_execute (oph_operator_struct *handle)
 							  jsonvalues = (char **)calloc(num_fields,sizeof(char *));
 							  if (!jsonvalues) {
 								  pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-								  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSPECTFRAG_MEMORY_ERROR_INPUT, "values" );
+								  logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "values" );
 								  result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 								  break;
 							  }

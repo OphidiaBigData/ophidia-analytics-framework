@@ -7,7 +7,6 @@ Data Process.
 
 [Behaviour]
 It imports a NetCDF file into a datacube (both measure and dimensions).
-Optimized version of OPH_IMPORTNC2
 WARNING: It imports only mono-dimensional coordinate variables. 
 
 [Parameters]
