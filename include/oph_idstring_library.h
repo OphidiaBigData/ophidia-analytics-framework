@@ -19,26 +19,26 @@
 #ifndef __OPH_IDSTRING_H
 #define __OPH_IDSTRING_H
 
-#define OPH_IDS_LONGLEN 2000
+#define OPH_IDS_LONGLEN		2000
 
-#define OPH_IDS_SUCCESS 0
-#define OPH_IDS_ERROR 1
+#define OPH_IDS_SUCCESS		0
+#define OPH_IDS_ERROR		1
 
-#define OPH_IDS_PATTERN1 "%s%ld;%s"
-#define OPH_IDS_PATTERN2 "%s%ld-%s"
-#define OPH_IDS_PATTERN3 "%s;%ld;%s"
-#define OPH_IDS_PATTERN4 "%s;%ld-%s"
-#define OPH_IDS_PATTERN5 "%s;%s";
-#define OPH_IDS_PATTERN6 "%s;%ld%s"
-#define OPH_IDS_PATTERN7 "%s-%ld%s"
-#define OPH_IDS_PATTERN8 "%s-%ld;%s"
-#define OPH_IDS_PATTERN9 "%s;%ld;%ld;%s"
-#define OPH_IDS_PATTERN10 "%s-%ld;%ld;%s"
-#define OPH_IDS_PATTERN11 "%s;%ld;%ld-%s"
-#define OPH_IDS_PATTERN12 "%s-%ld;%ld-%s"
+#define OPH_IDS_PATTERN1	"%s%ld;%s"
+#define OPH_IDS_PATTERN2	"%s%ld-%s"
+#define OPH_IDS_PATTERN3	"%s;%ld;%s"
+#define OPH_IDS_PATTERN4	"%s;%ld-%s"
+#define OPH_IDS_PATTERN5	"%s;%s";
+#define OPH_IDS_PATTERN6	"%s;%ld%s"
+#define OPH_IDS_PATTERN7	"%s-%ld%s"
+#define OPH_IDS_PATTERN8	"%s-%ld;%s"
+#define OPH_IDS_PATTERN9	"%s;%ld;%ld;%s"
+#define OPH_IDS_PATTERN10	"%s-%ld;%ld;%s"
+#define OPH_IDS_PATTERN11	"%s;%ld;%ld-%s"
+#define OPH_IDS_PATTERN12	"%s-%ld;%ld-%s"
 
-#define OPH_IDS_HYPHEN_CHAR '-'
-#define OPH_IDS_SEMICOLON_CHAR ';'
+#define OPH_IDS_HYPHEN_CHAR	'-'
+#define OPH_IDS_SEMICOLON_CHAR	';'
 
 //Retreive ID in string at given position 
 int oph_ids_get_id_from_string(char *string, int position, int *id);

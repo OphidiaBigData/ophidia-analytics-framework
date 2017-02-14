@@ -39,11 +39,11 @@
 #define OPH_NC_SHORT_FLAG	OPH_COMMON_SHORT_FLAG
 #define OPH_NC_BYTE_FLAG	OPH_COMMON_BYTE_FLAG
 
-#define OPH_NC_ERRCODE  2
-#define OPH_NC_ERR(e)   {printf("Error: %s\n", nc_strerror(e));}
+#define OPH_NC_ERRCODE		2
+#define OPH_NC_ERR(e)		{printf("Error: %s\n", nc_strerror(e));}
 
-#define OPH_NC_ERROR 1
-#define OPH_NC_SUCCESS 0
+#define OPH_NC_ERROR		1
+#define OPH_NC_SUCCESS		0
 
 //Structure used by OPH_EXPORTNC operator
 struct _NETCDF_dim {

@@ -25,33 +25,33 @@
 #include <libxml/tree.h>
 #include "oph_common.h"
 
-#define OPH_HIER_MAX_STRING_LENGTH 1024	// chars
-#define OPH_HIER_AGGREGATE_OP_SEPARATOR "|"
+#define OPH_HIER_MAX_STRING_LENGTH		1024	// chars
+#define OPH_HIER_AGGREGATE_OP_SEPARATOR		"|"
 
 // XML names
-#define OPH_HIER_STR_HIERARCHY "hierarchy"
-#define OPH_HIER_STR_NAME "name"
-#define OPH_HIER_STR_ATTRIBUTE "attribute"
-#define OPH_HIER_STR_LONG_NAME "long_name"
-#define OPH_HIER_STR_SHORT_NAME "short_name"
-#define OPH_HIER_STR_AGGREGATE_FIELD "aggregate_field"
-#define OPH_HIER_STR_AGGREGATE_SET "aggregate_set"
-#define OPH_HIER_STR_AGGREGATE_OPERATION "aggregate_op"
-#define OPH_HIER_STR_ALL_LONG_NAME "ALL"
-#define OPH_HIER_STR_ALL_SHORT_NAME "A"
+#define OPH_HIER_STR_HIERARCHY			"hierarchy"
+#define OPH_HIER_STR_NAME			"name"
+#define OPH_HIER_STR_ATTRIBUTE			"attribute"
+#define OPH_HIER_STR_LONG_NAME			"long_name"
+#define OPH_HIER_STR_SHORT_NAME			"short_name"
+#define OPH_HIER_STR_AGGREGATE_FIELD		"aggregate_field"
+#define OPH_HIER_STR_AGGREGATE_SET		"aggregate_set"
+#define OPH_HIER_STR_AGGREGATE_OPERATION	"aggregate_op"
+#define OPH_HIER_STR_ALL_LONG_NAME		"ALL"
+#define OPH_HIER_STR_ALL_SHORT_NAME		"A"
 
 // Time
-#define OPH_HIER_MINUTE_LONG_NAME "minute"
-#define OPH_HIER_MINUTE_SHORT_NAME "m"
-#define OPH_HIER_MONTH_LONG_NAME "month"
-#define OPH_HIER_MONTH_SHORT_NAME "M"
+#define OPH_HIER_MINUTE_LONG_NAME		"minute"
+#define OPH_HIER_MINUTE_SHORT_NAME		"m"
+#define OPH_HIER_MONTH_LONG_NAME		"month"
+#define OPH_HIER_MONTH_SHORT_NAME		"M"
 
 // error codes
-#define OPH_HIER_OK 0
-#define OPH_HIER_DATA_ERR 1
-#define OPH_HIER_IO_ERR 2
-#define OPH_HIER_SYSTEM_ERR 3
-#define OPH_HIER_XML_ERR 4
+#define OPH_HIER_OK				0
+#define OPH_HIER_DATA_ERR			1
+#define OPH_HIER_IO_ERR				2
+#define OPH_HIER_SYSTEM_ERR			3
+#define OPH_HIER_XML_ERR			4
 
 // enum and struct
 

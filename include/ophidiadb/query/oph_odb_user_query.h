@@ -19,6 +19,6 @@
 #ifndef __OPH_ODB_USER_QUERY_H__
 #define __OPH_ODB_USER_QUERY_H__
 
-#define MYSQL_QUERY_USER_RETRIEVE_USER_ID "SELECT iduser from `user` where username = '%s';"
+#define MYSQL_QUERY_USER_RETRIEVE_USER_ID	"SELECT iduser from `user` where username = '%s';"
 
 #endif				/* __OPH_ODB_USER_QUERY_H__ */
