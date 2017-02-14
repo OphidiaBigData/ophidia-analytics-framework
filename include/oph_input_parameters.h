@@ -163,6 +163,7 @@
 #define OPH_IN_PARAM_BASE64				"base64"
 #define OPH_IN_PARAM_LIST				"list"
 #define OPH_IN_PARAM_MISSINGVALUE				"missingvalue"
+#define OPH_IN_PARAM_DIM_OFFSET					"dim_offset"
 
 #define OPH_IN_PARAM_SCRIPT					 "script"
 #define OPH_IN_PARAM_ARGS					 "args"

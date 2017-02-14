@@ -56,6 +56,7 @@
  * \param id_user ID of submitter
  * \param description Free description to be associated with output cube
  * \param time_filter Flag used in case time filters are expressed as dates
+ * \param dim_offset Offset to be added to dimension values of imported data
  */
 struct _OPH_CONCATNC_operator_handle {
 	ophidiadb oDB;
@@ -82,6 +83,7 @@ struct _OPH_CONCATNC_operator_handle {
 	int id_user;
 	char *description;
 	int time_filter;
+	double *dim_offset;
 };
 typedef struct _OPH_CONCATNC_operator_handle OPH_CONCATNC_operator_handle;
 

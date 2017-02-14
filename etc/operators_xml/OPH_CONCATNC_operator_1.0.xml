@@ -21,6 +21,7 @@ while those considered as implicit dimensions must not overlap with those in the
 - src_path : path of the NetCDF file.
 - grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
         or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
+- dim_offset: offset to be added to dimension values of imported data; default setting aims to held the difference between consecutive values.
 - subset_dims : dimension names used for the subsetting.
                 Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
                 Must be the same number of &quot;subset_filter&quot; 
@@ -63,6 +64,7 @@ SUBMISSION STRING: &quot;operator=oph_concatnc;src_path=/path/of/ncfile.nc;cube=
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="yes">src_path</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
+		<argument type="real" mandatory="no" default="-">dim_offset</argument>
 		<argument type="string" mandatory="no" default="none">subset_dims</argument>
 		<argument type="string" mandatory="no" default="index" values="index|coord">subset_type</argument>
 		<argument type="string" mandatory="no" default="all">subset_filter</argument>

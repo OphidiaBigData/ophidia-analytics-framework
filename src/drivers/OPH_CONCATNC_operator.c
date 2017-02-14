@@ -88,6 +88,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_user = 0;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->time_filter = 1;
+	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset = NULL;
 
 	char *value;
 	char *datacube_in = NULL;
@@ -846,6 +847,21 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 	}
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DIM_OFFSET);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DIM_OFFSET);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_DIM_OFFSET);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strcasecmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE) != 0) {
+		if (!(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset = (double *) malloc(sizeof(double)))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_INPUT_NO_CONTAINER, "NO-CONTAINER", OPH_IN_PARAM_DIM_OFFSET);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		*((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset = (double) strtod(value, NULL);
+	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -1149,24 +1165,37 @@ int task_init(oph_operator_struct * handle)
 						free(dim_array);
 						goto __OPH_EXIT_1;
 					}
-					//TODO Check disjoint method evaluation
-					/*int tmp_value = (int)( *dim_rows[imp_dim_count]+(dim_inst[l].size-1)*sizeof(int)) - (int)(*dim_array);
-					   if (tmp_value > 0) {
-					   pmesg(LOG_ERROR, __FILE__, __LINE__, "Implicit dimensions %s are not disjoint\n",dim[l].dimension_name);
-					   logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATNC_IMP_DOMAIN_OVERLAP, dim[l].dimension_name );
-					   oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					   oph_dim_unload_dim_dbinstance(db_dimension);
-					   free(dim_row);
-					   free(dim_row_index);
-					   free(dim_array);
-					   goto __OPH_EXIT_1;
-					   } */
-					//memcpy(dim_rows[imp_dim_count]+dim_inst[l].size*sizeof(int),dim_array,tmp_var.varsize*sizeof(int));
 					int i_tmp_start, i_tmp;
 					i_tmp_start = *(int *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(int));
+					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
+						i_tmp_start += (int) * ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
+					else if (dim_inst[l].size > 1)
+						i_tmp_start = (3 * i_tmp_start - *(char *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(int))) / 2;
 					for (k = 0; k < tmp_var.varsize; k++) {
 						i_tmp = i_tmp_start + *(int *) (dim_array + (k) * sizeof(int));
 						memcpy((char *) (dim_rows[imp_dim_count] + (k + dim_inst[l].size) * sizeof(int)), (int *) &i_tmp, sizeof(int));
+					}
+				} else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim[l].dimension_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+					dim_rows[imp_dim_count] = realloc(dim_row, (tmp_var.varsize + dim_inst[l].size) * sizeof(long long));
+					if (!dim_rows[imp_dim_count]) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_INPUT, "dimensions binary array");
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						free(dim_row);
+						free(dim_row_index);
+						free(dim_array);
+						goto __OPH_EXIT_1;
+					}
+					long long i_tmp_start, i_tmp;
+					i_tmp_start = *(long long *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(long long));
+					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
+						i_tmp_start += (long long) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
+					else if (dim_inst[l].size > 1)
+						i_tmp_start = (3 * i_tmp_start - *(char *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(long long))) / 2;
+					for (k = 0; k < tmp_var.varsize; k++) {
+						i_tmp = i_tmp_start + *(long long *) (dim_array + (k) * sizeof(long long));
+						memcpy((char *) (dim_rows[imp_dim_count] + (k + dim_inst[l].size) * sizeof(long long)), (long long *) &i_tmp, sizeof(long long));
 					}
 				} else if (!strncasecmp(OPH_COMMON_SHORT_TYPE, dim[l].dimension_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
 					dim_rows[imp_dim_count] = realloc(dim_row, (tmp_var.varsize + dim_inst[l].size) * sizeof(short));
@@ -1180,21 +1209,12 @@ int task_init(oph_operator_struct * handle)
 						free(dim_array);
 						goto __OPH_EXIT_1;
 					}
-					//TODO Check disjoint method evaluation
-					/*short tmp_value = (int)( *dim_rows[imp_dim_count]+(dim_inst[l].size-1)*sizeof(short)) - (short)(*dim_array);
-					   if (tmp_value > 0) {
-					   pmesg(LOG_ERROR, __FILE__, __LINE__, "Implicit dimensions %s are not disjoint\n",dim[l].dimension_name);
-					   logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATNC_IMP_DOMAIN_OVERLAP, dim[l].dimension_name );
-					   oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					   oph_dim_unload_dim_dbinstance(db_dimension);
-					   free(dim_row);
-					   free(dim_row_index);
-					   free(dim_array);
-					   goto __OPH_EXIT_1;
-					   } */
-					//memcpy(dim_rows[imp_dim_count]+dim_inst[l].size*sizeof(int),dim_array,tmp_var.varsize*sizeof(int));
 					short i_tmp_start, i_tmp;
 					i_tmp_start = *(short *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(short));
+					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
+						i_tmp_start += (short) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
+					else if (dim_inst[l].size > 1)
+						i_tmp_start = (3 * i_tmp_start - *(char *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(short))) / 2;
 					for (k = 0; k < tmp_var.varsize; k++) {
 						i_tmp = i_tmp_start + *(short *) (dim_array + (k) * sizeof(short));
 						memcpy((char *) (dim_rows[imp_dim_count] + (k + dim_inst[l].size) * sizeof(short)), (short *) &i_tmp, sizeof(short));
@@ -1211,21 +1231,12 @@ int task_init(oph_operator_struct * handle)
 						free(dim_array);
 						goto __OPH_EXIT_1;
 					}
-					//TODO Check disjoint method evaluation
-					/*char tmp_value = (int)( *dim_rows[imp_dim_count]+(dim_inst[l].size-1)*sizeof(char)) - (char)(*dim_array);
-					   if (tmp_value > 0) {
-					   pmesg(LOG_ERROR, __FILE__, __LINE__, "Implicit dimensions %s are not disjoint\n",dim[l].dimension_name);
-					   logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATNC_IMP_DOMAIN_OVERLAP, dim[l].dimension_name );
-					   oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					   oph_dim_unload_dim_dbinstance(db_dimension);
-					   free(dim_row);
-					   free(dim_row_index);
-					   free(dim_array);
-					   goto __OPH_EXIT_1;
-					   } */
-					//memcpy(dim_rows[imp_dim_count]+dim_inst[l].size*sizeof(int),dim_array,tmp_var.varsize*sizeof(int));
 					char i_tmp_start, i_tmp;
 					i_tmp_start = *(char *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(char));
+					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
+						i_tmp_start += (char) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
+					else if (dim_inst[l].size > 1)
+						i_tmp_start = (3 * i_tmp_start - *(char *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(char))) / 2;
 					for (k = 0; k < tmp_var.varsize; k++) {
 						i_tmp = i_tmp_start + *(char *) (dim_array + (k) * sizeof(char));
 						memcpy((char *) (dim_rows[imp_dim_count] + (k + dim_inst[l].size) * sizeof(char)), (char *) &i_tmp, sizeof(char));
@@ -1242,21 +1253,12 @@ int task_init(oph_operator_struct * handle)
 						free(dim_array);
 						goto __OPH_EXIT_1;
 					}
-
-					/*float tmp_value = (float)(*dim_rows[imp_dim_count]+(dim_inst[l].size-1)*sizeof(float)) - (float)(*dim_array);
-					   if (tmp_value > 0) {
-					   pmesg(LOG_ERROR, __FILE__, __LINE__, "Implicit dimensions %s are not disjoint\n",dim[l].dimension_name);
-					   logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATNC_IMP_DOMAIN_OVERLAP, dim[l].dimension_name );
-					   oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					   oph_dim_unload_dim_dbinstance(db_dimension);
-					   free(dim_row);
-					   free(dim_row_index);
-					   free(dim_array);
-					   goto __OPH_EXIT_1;
-					   } */
-					//memcpy(dim_rows[imp_dim_count]+dim_inst[l].size*sizeof(float),dim_array,tmp_var.varsize*sizeof(float));
 					float f_tmp_start, f_tmp;
 					f_tmp_start = *(float *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(float));
+					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
+						f_tmp_start += (float) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
+					else if (dim_inst[l].size > 1)
+						f_tmp_start = (3.0 * f_tmp_start - *(float *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(float))) / 2.0;
 					for (k = 0; k < tmp_var.varsize; k++) {
 						f_tmp = f_tmp_start + *(float *) (dim_array + (k) * sizeof(float));
 						memcpy((char *) (dim_rows[imp_dim_count] + (k + dim_inst[l].size) * sizeof(float)), (float *) &f_tmp, sizeof(float));
@@ -1273,21 +1275,12 @@ int task_init(oph_operator_struct * handle)
 						free(dim_array);
 						goto __OPH_EXIT_1;
 					}
-
-					/*double tmp_value = (double)( *dim_rows[imp_dim_count]+(dim_inst[l].size-1)*sizeof(double)) - (double)(*dim_array);
-					   if (tmp_value > 0) {
-					   pmesg(LOG_ERROR, __FILE__, __LINE__, "Implicit dimensions %s are not disjoint\n",dim[l].dimension_name);
-					   logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATNC_IMP_DOMAIN_OVERLAP, dim[l].dimension_name );
-					   oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					   oph_dim_unload_dim_dbinstance(db_dimension);
-					   free(dim_row);
-					   free(dim_row_index);
-					   free(dim_array);
-					   goto __OPH_EXIT_1;
-					   } */
-					//memcpy(dim_rows[imp_dim_count]+dim_inst[l].size*sizeof(double),dim_array,tmp_var.varsize*sizeof(double));
 					double d_tmp_start, d_tmp;
 					d_tmp_start = *(double *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(double));
+					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
+						d_tmp_start += (double) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
+					else if (dim_inst[l].size > 1)
+						d_tmp_start = (3.0 * d_tmp_start - *(double *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(double))) / 2.0;
 					for (k = 0; k < tmp_var.varsize; k++) {
 						d_tmp = d_tmp_start + *(double *) (dim_array + (k) * sizeof(double));
 						memcpy((char *) (dim_rows[imp_dim_count] + (k + dim_inst[l].size) * sizeof(double)), (double *) &d_tmp, sizeof(double));
@@ -2063,6 +2056,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->description);
 		((OPH_CONCATNC_operator_handle *) handle->operator_handle)->description = NULL;
+	}
+	if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset) {
+		free((char *) ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset);
+		((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset = NULL;
 	}
 
 	free((OPH_CONCATNC_operator_handle *) handle->operator_handle);
