@@ -2497,7 +2497,6 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		free(query_string);
 		return OPH_NC_ERROR;
 	}
-
 	//Create binary array
 	char *binary = 0;
 	int l, res;

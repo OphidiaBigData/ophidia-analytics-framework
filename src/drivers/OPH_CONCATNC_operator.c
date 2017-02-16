@@ -1168,7 +1168,7 @@ int task_init(oph_operator_struct * handle)
 					int i_tmp_start, i_tmp;
 					i_tmp_start = *(int *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(int));
 					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
-						i_tmp_start += (int) * ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
+						i_tmp_start += (int) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
 					else if (dim_inst[l].size > 1)
 						i_tmp_start = (3 * i_tmp_start - *(char *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(int))) / 2;
 					for (k = 0; k < tmp_var.varsize; k++) {
