@@ -975,7 +975,6 @@ int oph_query_parser(oph_ioserver_handler * handle, const char *query_string, ch
 		}
 	} else if (strncasecmp(query_oper, OPH_IOSERVER_SQ_OP_SELECT, STRLEN_MAX(query_oper, OPH_IOSERVER_SQ_OP_SELECT)) == 0) {
 		//Compose query by selecting fields in the right order 
-
 		//First part of query
 		n += snprintf(query + n, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_SELECT);
 

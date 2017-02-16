@@ -23,49 +23,49 @@
 #include "oph_common.h"
 #include "oph_framework_paths.h"
 
-#define OPH_TP_TASK_PARSER_SUCCESS 0
-#define OPH_TP_TASK_PARSER_ERROR 1
+#define OPH_TP_TASK_PARSER_SUCCESS		0
+#define OPH_TP_TASK_PARSER_ERROR		1
 
 #define OPH_TP_TASKLEN				OPH_COMMON_BUFFER_LEN
 #define	OPH_TP_BUFLEN				OPH_COMMON_BUFFER_LEN
 
-#define OPH_TP_DTD_SCHEMA OPH_FRAMEWORK_OPERATOR_DTD_PATH
-#define OPH_TP_XML_PATH_LENGTH 		OPH_COMMON_BUFFER_LEN
-#define OPH_TP_XML_OPERATOR_FILE OPH_FRAMEWORK_OPERATOR_XML_FILE_PATH_DESC
+#define OPH_TP_DTD_SCHEMA			OPH_FRAMEWORK_OPERATOR_DTD_PATH
+#define OPH_TP_XML_PATH_LENGTH			OPH_COMMON_BUFFER_LEN
+#define OPH_TP_XML_OPERATOR_FILE		OPH_FRAMEWORK_OPERATOR_XML_FILE_PATH_DESC
 
-#define OPH_TP_XML_FILE_FORMAT "%s_%s_%s.xml"
-#define OPH_TP_XML_FILE_EXTENSION "xml"
+#define OPH_TP_XML_FILE_FORMAT			"%s_%s_%s.xml"
+#define OPH_TP_XML_FILE_EXTENSION		"xml"
 
-#define OPH_TP_XML_PRIMITIVE_TYPE      "primitive"
-#define OPH_TP_XML_OPERATOR_TYPE       "operator"
-#define OPH_TP_XML_HIERARCHY_TYPE       "hierarchy"
-#define OPH_TP_XML_PRIMITIVE_TYPE_CODE 1
-#define OPH_TP_XML_OPERATOR_TYPE_CODE  2
-#define OPH_TP_XML_HIERARCHY_TYPE_CODE  3
+#define OPH_TP_XML_PRIMITIVE_TYPE		"primitive"
+#define OPH_TP_XML_OPERATOR_TYPE		"operator"
+#define OPH_TP_XML_HIERARCHY_TYPE		"hierarchy"
+#define OPH_TP_XML_PRIMITIVE_TYPE_CODE		1
+#define OPH_TP_XML_OPERATOR_TYPE_CODE		2
+#define OPH_TP_XML_HIERARCHY_TYPE_CODE		3
 
-#define OPH_TP_VERSION_SEPARATOR '.'
-#define OPH_TP_VERSION_EXTENSION ".xml"
+#define OPH_TP_VERSION_SEPARATOR		'.'
+#define OPH_TP_VERSION_EXTENSION		".xml"
 
-#define OPH_TP_XML_ARGS "args"
-#define OPH_TP_XML_ARGUMENT "argument"
+#define OPH_TP_XML_ARGS				"args"
+#define OPH_TP_XML_ARGUMENT			"argument"
 
-#define OPH_TP_XML_ATTRIBUTE_TYPE "type"
-#define OPH_TP_XML_ATTRIBUTE_MANDATORY "mandatory"
-#define OPH_TP_XML_ATTRIBUTE_DEFAULT "default"
-#define OPH_TP_XML_ATTRIBUTE_MINVALUE "minvalue"
-#define OPH_TP_XML_ATTRIBUTE_MAXVALUE "maxvalue"
-#define OPH_TP_XML_ATTRIBUTE_VALUES "values"
+#define OPH_TP_XML_ATTRIBUTE_TYPE		"type"
+#define OPH_TP_XML_ATTRIBUTE_MANDATORY		"mandatory"
+#define OPH_TP_XML_ATTRIBUTE_DEFAULT		"default"
+#define OPH_TP_XML_ATTRIBUTE_MINVALUE		"minvalue"
+#define OPH_TP_XML_ATTRIBUTE_MAXVALUE		"maxvalue"
+#define OPH_TP_XML_ATTRIBUTE_VALUES		"values"
 
-#define OPH_TP_PARAM_VALUE_SEPARATOR '='
-#define OPH_TP_PARAM_PARAM_SEPARATOR ';'
-#define OPH_TP_MULTI_VALUE_SEPARATOR '|'
-#define OPH_TP_CONT_CUBE_SEPARATOR '.'
-#define OPH_TP_SKIP_SEPARATOR '\0'	// '#' // Not used
+#define OPH_TP_PARAM_VALUE_SEPARATOR		'='
+#define OPH_TP_PARAM_PARAM_SEPARATOR		';'
+#define OPH_TP_MULTI_VALUE_SEPARATOR		'|'
+#define OPH_TP_CONT_CUBE_SEPARATOR		'.'
+#define OPH_TP_SKIP_SEPARATOR			'\0'	// '#' // Not used
 
-#define OPH_TP_OPERATOR_NAME OPH_IN_PARAM_OPERATOR_NAME
+#define OPH_TP_OPERATOR_NAME			OPH_IN_PARAM_OPERATOR_NAME
 
-#define OPH_TP_INT_TYPE OPH_COMMON_INT_TYPE
-#define OPH_TP_REAL_TYPE "real"
+#define OPH_TP_INT_TYPE				OPH_COMMON_INT_TYPE
+#define OPH_TP_REAL_TYPE			"real"
 
 //Retrieve the correct xml file version for operators or primitives
 int oph_tp_retrieve_function_xml_file(const char *function_name, const char *function_version, short int function_type_code, char (*xml_filename)[OPH_TP_BUFLEN]);

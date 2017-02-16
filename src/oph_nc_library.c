@@ -756,6 +756,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 	//Alloc query String
 	char *insert_query = (remainder_rows > 0 ? OPH_DC_SQ_MULTI_INSERT_FRAG : OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL);
 	long long query_size = snprintf(NULL, 0, insert_query, frag->fragment_name) + strlen(compressed ? OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW : OPH_DC_SQ_MULTI_INSERT_ROW) * regular_rows;
+
 	char *query_string = (char *) malloc(query_size * sizeof(char));
 	if (!(query_string)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -853,7 +854,6 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 		args[2 * ii]->arg_type = OPH_IOSERVER_TYPE_LONGLONG;
 		args[2 * ii]->arg_is_null = 0;
 		args[2 * ii]->arg = (unsigned long long *) (idDim + ii);
-
 		args[2 * ii + 1]->arg_length = sizeof_var;
 		args[2 * ii + 1]->arg_type = OPH_IOSERVER_TYPE_BLOB;
 		args[2 * ii + 1]->arg_is_null = 0;
@@ -1138,7 +1138,6 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 			}
 		}
 
-
 		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
@@ -1172,7 +1171,6 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 	oph_ioserver_free_query(server, query);
 	free(query_string);
 	query_string = NULL;
-
 
 	if (remainder_rows > 0) {
 		query_size =
@@ -1423,6 +1421,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		sizeof_var = (array_length) * sizeof(double);
 
 	long long memory_size_mb = memory_size * OPH_NC_MEMORY_BLOCK;
+
 	//Flag set to 1 if whole fragment fits in memory
 	//Conservative choice. At most we insert the whole fragment, hence we need 2 equal buffers: 1 to read and 1 to write 
 	short int whole_fragment = ((tuplexfrag_number * sizeof_var) > (long long) (memory_size_mb / 2) ? 0 : 1);
@@ -1618,7 +1617,6 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		args[2 * ii]->arg_type = OPH_IOSERVER_TYPE_LONGLONG;
 		args[2 * ii]->arg_is_null = 0;
 		args[2 * ii]->arg = (unsigned long long *) (idDim + ii);
-
 		args[2 * ii + 1]->arg_length = sizeof_var;
 		args[2 * ii + 1]->arg_type = OPH_IOSERVER_TYPE_BLOB;
 		args[2 * ii + 1]->arg_is_null = 0;
@@ -1722,7 +1720,6 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 	int jj = 0;
 
 	oph_nc_compute_dimension_id(idDim[jj], sizemax, measure->nexp, start_pointer);
-
 	for (i = 0; i < measure->nexp; i++) {
 		*(start_pointer[i]) -= 1;
 		for (ii = 0; ii < measure->ndims; ii++) {
@@ -2501,11 +2498,9 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		return OPH_NC_ERROR;
 	}
 
-	int l;
-
 	//Create binary array
 	char *binary = 0;
-	int res;
+	int l, res;
 
 	if (type_flag == OPH_NC_BYTE_FLAG)
 		res = oph_iob_bin_array_create_b(&binary, array_length * regular_rows);
@@ -2598,7 +2593,6 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		}
 	}
 
-
 	int jj = 0;
 
 	//Flag set to 0 if implicit dimensions are not in the order specified in the file
@@ -2652,6 +2646,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 			free(count);
 			free(start_pointer);
 			free(sizemax);
+
 			return OPH_NC_ERROR;
 		}
 		//Prepare structures for buffer insert update
@@ -2799,6 +2794,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 				return OPH_NC_ERROR;
 			}
 
+
 			if (!imp_dim_ordered) {
 				//Implicit dimensions are not orderer, hence we must rearrange binary.
 				memset(counters, 0, measure->nimp);
@@ -2917,6 +2913,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 				free(query_string);
 				free(idDim);
 				free(binary);
+
 				if (binary_tmp)
 					free(binary_tmp);
 				for (ii = 0; ii < c_arg - 1; ii++)
@@ -2946,11 +2943,13 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 			}
 		}
 
+
 		if (oph_ioserver_execute_query(server, old_frag->db_instance->dbms_instance->conn, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(idDim);
 			free(binary);
+
 			if (binary_tmp)
 				free(binary_tmp);
 			for (ii = 0; ii < c_arg - 1; ii++)
@@ -2977,6 +2976,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 	free(query_string);
 	free(idDim);
 	free(binary);
+
 	if (binary_tmp)
 		free(binary_tmp);
 	for (ii = 0; ii < c_arg - 1; ii++)
@@ -3739,6 +3739,7 @@ int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE
 	if ((retval = nc_inq_dimlen(ncid, var->dims_id[0], &(var->dims_length[0])))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+
 		return OPH_NC_ERROR;
 	}
 	var->varsize = 1 * var->dims_length[0];

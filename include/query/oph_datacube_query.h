@@ -164,8 +164,6 @@
 
 #define MYSQL_DC_MAX_ROW_LENGTH_FRAG "SELECT MAX(LENGTH(measure)) FROM %s"
 
-#define MYSQL_DC_APPLY_MYSQL_INTERCOMPARISON "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT %s.%s AS %s, oph_sum_array('oph_%s|oph_%s','oph_%s',%s.%s,oph_mul_scalar('oph_%s','oph_%s',%s.%s,-1.0)) AS %s FROM %s, %s WHERE %s.%s = %s.%s"
-
 #define MYSQL_QUERY_RETRIEVE_PRIMITIVES_LIST "SELECT name,ret,dl,type FROM mysql.func;"
 #define MYSQL_QUERY_RETRIEVE_PRIMITIVES_LIST_W "SELECT name,ret,dl,type FROM mysql.func WHERE name LIKE '%%%s%%';"
 
