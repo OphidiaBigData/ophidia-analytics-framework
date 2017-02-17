@@ -1015,8 +1015,6 @@ int task_init(oph_operator_struct * handle)
 
 		// Grid management
 		int id_grid = 0, new_grid = 0;
-
-
 		if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->grid_name) {
 			if (oph_odb_dim_retrieve_grid_id
 			    (oDB, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->grid_name, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container, &id_grid)) {
@@ -1087,13 +1085,42 @@ int task_init(oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATNC_DIM_READ_ERROR, nc_strerror(retval));
 				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db_dimension);
+				if (tmp_var.dims_id)
+					free(tmp_var.dims_id);
+				if (tmp_var.dims_length)
+					free(tmp_var.dims_length);
 				goto __OPH_EXIT_1;
 			}
 			tmp_dims_id[l] = tmp_var.dims_id[0];
 
+			if (tmp_var.dims_id)
+				free(tmp_var.dims_id);
+			if (tmp_var.dims_length)
+				free(tmp_var.dims_length);
+			tmp_var.dims_id = NULL;
+			tmp_var.dims_length = NULL;
+
+			//Modified to allow subsetting
+			for (i = 0; i < measure->ndims; i++)
+				if (!strncmp(dim[l].dimension_name, measure->dims_name[i], OPH_ODB_DIM_DIMENSION_SIZE))
+					break;
+			if (i >= measure->ndims) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension '%s' not found\n", dim[l].dimension_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, "Dimension '%s' not found\n", dim[l].dimension_name);
+				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db_dimension);
+				goto __OPH_EXIT_1;
+			}
+
+			if (measure->dims_start_index[i] == measure->dims_end_index[i])
+				tmp_var.varsize = 1;
+			else
+				tmp_var.varsize = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
+
 			if (cubedims[l].explicit_dim) {
 				if (tmp_var.varsize != cubedims[l].size) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension size in NC file doesn't correspond to the one stored in OphidiaDB\n");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of dimension '%s' in NC file (%d) does not correspond to the one stored in OphidiaDB (%d)\n", dim[l].dimension_name,
+					      tmp_var.varsize, cubedims[l].size);
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATNC_DIM_SIZE_MISMATCH, dim[l].dimension_name);
 					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 					oph_dim_unload_dim_dbinstance(db_dimension);
@@ -1103,12 +1130,16 @@ int task_init(oph_operator_struct * handle)
 				measure_stream[3 + number_of_dimensions + l] = tmp_var.varsize;
 
 			if (oph_nc_compare_nc_c_types(id_container_in, tmp_var.vartype, dim[l].dimension_type)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension type in NC file doesn't correspond to the one stored in OphidiaDB\n");
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension type in NC file does not correspond to the one stored in OphidiaDB\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATNC_DIM_TYPE_MISMATCH_ERROR, dim[l].dimension_name);
 				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db_dimension);
 				goto __OPH_EXIT_1;
 			}
+			//Modified to allow subsetting
+			tmp_var.dims_start_index = &(measure->dims_start_index[i]);
+			tmp_var.dims_end_index = &(measure->dims_end_index[i]);
+
 			//If dimension is implicit then retrieve the values
 			if (!cubedims[l].explicit_dim && (new_grid || !((OPH_CONCATNC_operator_handle *) handle->operator_handle)->grid_name)) {
 				char *dim_row_index = NULL;
@@ -1143,7 +1174,8 @@ int task_init(oph_operator_struct * handle)
 				}
 
 				char *dim_array = NULL;
-				if (oph_nc_get_dim_array(id_container_in, ncid, tmp_var.varid, dim[l].dimension_type, tmp_var.varsize, &dim_array)) {
+				if (oph_nc_get_dim_array2
+				    (id_container_in, ncid, tmp_var.varid, dim[l].dimension_type, tmp_var.varsize, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index), &dim_array)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATNC_DIM_READ_ERROR, nc_strerror(retval));
 					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -1311,7 +1343,8 @@ int task_init(oph_operator_struct * handle)
 				// If old grid is given on dimension is explicit and check_exp_dim is set then compare the values
 				char *dim_array = NULL;
 
-				if (oph_nc_get_dim_array(id_container_in, ncid, tmp_var.varid, dim[l].dimension_type, dim_inst[l].size, &dim_array)) {
+				if (oph_nc_get_dim_array2
+				    (id_container_in, ncid, tmp_var.varid, dim[l].dimension_type, dim_inst[l].size, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index), &dim_array)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", nc_strerror(retval));
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATNC_DIM_READ_ERROR, nc_strerror(retval));
 					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -1332,10 +1365,6 @@ int task_init(oph_operator_struct * handle)
 				free(dim_array);
 				dim_array = NULL;
 			}
-			free(tmp_var.dims_id);
-			tmp_var.dims_id = NULL;
-			free(tmp_var.dims_length);
-			tmp_var.dims_length = NULL;
 		}
 
 		//Get id from measure name
@@ -2005,27 +2034,30 @@ int env_unset(oph_operator_struct * handle)
 		free(measure->dims_name);
 		measure->dims_name = NULL;
 	}
-
 	if (measure->dims_id) {
 		free((int *) measure->dims_id);
 		measure->dims_id = NULL;
 	}
-
 	if (measure->dims_length) {
 		free((size_t *) measure->dims_length);
 		measure->dims_length = NULL;
 	}
-
 	if (measure->dims_type) {
 		free((short int *) measure->dims_type);
 		measure->dims_type = NULL;
 	}
-
 	if (measure->dims_oph_level) {
 		free((short int *) measure->dims_oph_level);
 		measure->dims_oph_level = NULL;
 	}
-
+	if (measure->dims_start_index) {
+		free((int *) measure->dims_start_index);
+		measure->dims_start_index = NULL;
+	}
+	if (measure->dims_end_index) {
+		free((int *) measure->dims_end_index);
+		measure->dims_end_index = NULL;
+	}
 	if (measure->dims_concept_level) {
 		free((char *) measure->dims_concept_level);
 		measure->dims_concept_level = NULL;

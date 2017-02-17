@@ -3640,7 +3640,6 @@ int env_unset(oph_operator_struct * handle)
 	if ((retval = nc_close(((OPH_IMPORTNC3_operator_handle *) handle->operator_handle)->ncid)))
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", nc_strerror(retval));
 
-
 	NETCDF_var *measure = ((NETCDF_var *) & (((OPH_IMPORTNC3_operator_handle *) handle->operator_handle)->measure));
 
 	if (measure->dims_name) {
@@ -3653,42 +3652,34 @@ int env_unset(oph_operator_struct * handle)
 		free(measure->dims_name);
 		measure->dims_name = NULL;
 	}
-
 	if (measure->dims_id) {
 		free((int *) measure->dims_id);
 		measure->dims_id = NULL;
 	}
-
 	if (measure->dims_unlim) {
 		free((char *) measure->dims_unlim);
 		measure->dims_unlim = NULL;
 	}
-
 	if (measure->dims_length) {
 		free((size_t *) measure->dims_length);
 		measure->dims_length = NULL;
 	}
-
 	if (measure->dims_type) {
 		free((short int *) measure->dims_type);
 		measure->dims_type = NULL;
 	}
-
 	if (measure->dims_oph_level) {
 		free((short int *) measure->dims_oph_level);
 		measure->dims_oph_level = NULL;
 	}
-
 	if (measure->dims_start_index) {
 		free((int *) measure->dims_start_index);
 		measure->dims_start_index = NULL;
 	}
-
 	if (measure->dims_end_index) {
 		free((int *) measure->dims_end_index);
 		measure->dims_end_index = NULL;
 	}
-
 	if (measure->dims_concept_level) {
 		free((char *) measure->dims_concept_level);
 		measure->dims_concept_level = NULL;
