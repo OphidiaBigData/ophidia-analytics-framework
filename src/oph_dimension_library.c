@@ -219,7 +219,7 @@ int oph_date_to_day(int y, int m, int d, long long *g, oph_odb_dimension * dim)
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_day_to_date(long long g, int *yy, int *mm, int *dd, oph_odb_dimension * dim)
+int oph_day_to_date(long long g, int *yy, int *mm, int *dd, int *wd, int *yd, oph_odb_dimension * dim)
 {
 	if (!yy || !mm || !dd || !dim)
 		return OPH_DIM_NULL_PARAM;
@@ -312,6 +312,18 @@ int oph_day_to_date(long long g, int *yy, int *mm, int *dd, oph_odb_dimension * 
 	} else
 		return OPH_DIM_DATA_ERROR;
 
+	if (wd || yd) {
+		struct tm timeinfo;
+		timeinfo.tm_year = *yy - 1900;
+		timeinfo.tm_mon = *mm - 1;
+		timeinfo.tm_mday = *dd;
+		mktime(&timeinfo);
+		if (wd)
+			*wd = timeinfo.tm_wday;
+		if (yd)
+			*yd = timeinfo.tm_yday + 1;
+	}
+
 	return OPH_DIM_SUCCESS;
 }
 
@@ -371,7 +383,7 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 	value /= OPH_ODB_DIM_MINUTE_NUMBER;	// hours
 	tm_base->tm_hour = value % OPH_ODB_DIM_HOUR_NUMBER;
 	value /= OPH_ODB_DIM_HOUR_NUMBER;	// days
-	if (oph_day_to_date(value, &tm_base->tm_year, &tm_base->tm_mon, &tm_base->tm_mday, dim)) {
+	if (oph_day_to_date(value, &tm_base->tm_year, &tm_base->tm_mon, &tm_base->tm_mday, &tm_base->tm_wday, &tm_base->tm_yday, dim)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
 		return OPH_DIM_DATA_ERROR;
 	}
@@ -514,7 +526,7 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 	long long base_time;
 	if (oph_dim_get_time_value_of(dim_row, kk, dim, &tm_base, &base_time))
 		return OPH_DIM_DATA_ERROR;
-	int msize;
+	int msize, prev_week, base_week;
 
 	// Check for group
 	int first_element = tm_prev->tm_year < 0;
@@ -598,39 +610,63 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 			if ((midnight && (tm_prev->tm_mday == tm_base.tm_mday) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour)
 			    || ((tm_prev->tm_mday != tm_base.tm_mday) && (!midnight || ((tm_prev->tm_mday + 1) % msize != tm_base.tm_mday) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour)))
 				break;
+		case 'w':
+			if (centroid) {
+				tm_centroid.tm_mday += 3 - tm_centroid.tm_wday;
+				tm_centroid.tm_wday = 3;
+				tm_centroid.tm_hour = 12;
+				tm_centroid.tm_min = 0;
+				tm_centroid.tm_sec = 0;
+				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
+					return OPH_DIM_DATA_ERROR;
+				}
+				centroid = 0;
+			}
+			if (first_element)
+				break;
+			prev_week = (tm_prev->tm_yday + (tm_prev->tm_wday + 8 - tm_prev->tm_yday % 7) % 7 ) / 7;
+			base_week = (tm_base.tm_yday + (tm_base.tm_wday + 8 - tm_base.tm_yday % 7) % 7 ) / 7;
+			if ((midnight && (prev_week == base_week) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && !tm_prev->tm_wday) || ((prev_week != base_week)
+				&& (!midnight || ((prev_week + 1) % 53 != base_week) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || tm_prev->tm_wday)))
+				break;
 		case 'M':
-			if (centroid) {
-				tm_centroid.tm_mday = 15;
-				tm_centroid.tm_hour = 0;
-				tm_centroid.tm_min = 0;
-				tm_centroid.tm_sec = 0;
-				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
-					return OPH_DIM_DATA_ERROR;
+			if (concept_level_out != 'w') {
+				if (centroid) {
+					tm_centroid.tm_mday = 15;
+					tm_centroid.tm_hour = 0;
+					tm_centroid.tm_min = 0;
+					tm_centroid.tm_sec = 0;
+					if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
+						return OPH_DIM_DATA_ERROR;
+					}
+					centroid = 0;
 				}
-				centroid = 0;
+				if (first_element || (midnight && (tm_prev->tm_mon == tm_base.tm_mon) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1))
+					|| ((tm_prev->tm_mon != tm_base.tm_mon)
+					&& (!midnight || ((tm_prev->tm_mon + 1) % 12 != tm_base.tm_mon) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1))))
+					break;
 			}
-			if (first_element || (midnight && (tm_prev->tm_mon == tm_base.tm_mon) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1))
-			    || ((tm_prev->tm_mon != tm_base.tm_mon)
-				&& (!midnight || ((tm_prev->tm_mon + 1) % 12 != tm_base.tm_mon) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1))))
-				break;
 		case 'q':
-			if (centroid) {
-				tm_centroid.tm_mon = 1 + 3 * (tm_centroid.tm_mon / 3);
-				tm_centroid.tm_mday = 15;
-				tm_centroid.tm_hour = 0;
-				tm_centroid.tm_min = 0;
-				tm_centroid.tm_sec = 0;
-				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
-					return OPH_DIM_DATA_ERROR;
+			if (concept_level_out != 'w') {
+				if (centroid) {
+					tm_centroid.tm_mon = 1 + 3 * (tm_centroid.tm_mon / 3);
+					tm_centroid.tm_mday = 15;
+					tm_centroid.tm_hour = 0;
+					tm_centroid.tm_min = 0;
+					tm_centroid.tm_sec = 0;
+					if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
+						return OPH_DIM_DATA_ERROR;
+					}
+					centroid = 0;
 				}
-				centroid = 0;
+				if (first_element || (midnight && (tm_prev->tm_mon / 3 == tm_base.tm_mon / 3) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1))
+					|| ((tm_prev->tm_mon / 3 != tm_base.tm_mon / 3)
+					&& (!midnight || ((tm_prev->tm_mon / 3 + 1) % 4 != tm_base.tm_mon / 3) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1))))
+					break;
 			}
-			if (first_element || (midnight && (tm_prev->tm_mon / 3 == tm_base.tm_mon / 3) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1))
-			    || ((tm_prev->tm_mon / 3 != tm_base.tm_mon / 3)
-				&& (!midnight || ((tm_prev->tm_mon / 3 + 1) % 4 != tm_base.tm_mon / 3) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1))))
-				break;
 		case 'y':
 			if (centroid) {
 				tm_centroid.tm_mon = 6;
