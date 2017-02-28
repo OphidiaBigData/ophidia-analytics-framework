@@ -42,6 +42,13 @@
 #define OPH_SAC_SHORT_FLAG	OPH_COMMON_SHORT_FLAG
 #define OPH_SAC_BYTE_FLAG	OPH_COMMON_BYTE_FLAG
 
+#define BYTE_SAC		1	
+#define SHORT_SAC		2
+#define INT_SAC			3
+#define FLOAT_SAC		4
+#define DOUBLE_SAC		5
+#define LONG_SAC		6
+#define BIT_SAC			7
 
 #define OPH_SAC_ERRCODE  2
 // Managed locally
@@ -144,7 +151,7 @@ int oph_sac_populate_fragment_from_sac(oph_ioserver_handler *server, oph_odb_fra
  * \param measure Structure containing measure data and information to be stored
  * \return 0 if successfull
  */
-int oph_sac_populate_fragment_from_sac2(oph_ioserver_handler *server, oph_odb_fragment *frag, FILE *fptr, int tuplexfrag_number, int array_length, int compressed, SAC_var *measure);
+int oph_sac_populate_fragment_from_sac2(oph_ioserver_handler *server, oph_odb_fragment *frag, FILE *fptr, int tuplexfrag_number, int array_length, int compressed, SAC_var *measure, headerDataInfo *hdi);
 
 /**
  * \brief Populate a fragment with sac data (auto-drilldown version of previous function)
@@ -158,7 +165,7 @@ int oph_sac_populate_fragment_from_sac2(oph_ioserver_handler *server, oph_odb_fr
  * \param memory_size Value of maximum memory available
  * \return 0 if successfull
  */
-int oph_sac_populate_fragment_from_sac3(oph_ioserver_handler *server, oph_odb_fragment *frag, FILE *fptr, int tuplexfrag_number, int array_length, int compressed, SAC_var *measure, long long memory_size);
+int oph_sac_populate_fragment_from_sac3(oph_ioserver_handler *server, oph_odb_fragment *frag, FILE *fptr, int tuplexfrag_number, int array_length, int compressed, SAC_var *measure, long long memory_size, headerDataInfo *hdi);
 
 /**
  * \brief Return the C type given the type_sac
@@ -226,7 +233,7 @@ int oph_sac_get_dim_array(int id_container, int sacid, int dim_id, const char di
  * \param dim_array Structure containing the dimension data read
  * \return 0 if successfull
  */
-int oph_sac_get_dim_array2(int id_container ,int dim_size, char **dim_array);
+int oph_sac_get_dim_array2(int id_container ,int dim_size, headerDataInfo *hdi, int varid, char **dim_array);
 
 /**
  * \brief Retrieve the index of a coordinated variable using its value from a NetCDF file
@@ -261,7 +268,7 @@ int oph_sac_compare_sac_c_types(int id_container, int var_type, const char dim_t
  * \param flag Flag to distinguish between variables and dimensions
  * \return 0 if successfull
  */
-int oph_sac_get_sac_var(int id_container, SAC_var measure, int index, SAC_var *var, short flag);
+int oph_sac_get_sac_var(int id_container, SAC_var *measure, int index, SAC_var *var, short flag);
 
 /**
  * \brief Extract a row from nc file

@@ -49,7 +49,7 @@ static int timeval_add (res, x, y)
 
 extern int msglevel;
 
-int _oph_fits_cache_to_buffer(short int tot_dim_number, short int curr_dim, unsigned int *counters, unsigned int *limits, unsigned int *products, long long *index, char *binary_cache, char * binary_insert, size_t sizeof_var){
+int _oph_sac_cache_to_buffer(short int tot_dim_number, short int curr_dim, unsigned int *counters, unsigned int *limits, unsigned int *products, long long *index, char *binary_cache, char * binary_insert, size_t sizeof_var){
   int i = 0;
   long long addr = 0;
 
@@ -60,7 +60,7 @@ int _oph_fits_cache_to_buffer(short int tot_dim_number, short int curr_dim, unsi
     if(curr_dim != 0) counters[curr_dim] = 0;
     while(counters[curr_dim] < limits[curr_dim])
     {
-      _oph_fits_cache_to_buffer(tot_dim_number, curr_dim+1, counters, limits, products, index, binary_cache, binary_insert, sizeof_var);
+      _oph_sac_cache_to_buffer(tot_dim_number, curr_dim+1, counters, limits, products, index, binary_cache, binary_insert, sizeof_var);
       counters[curr_dim]++;
     }
     return 0;
@@ -80,9 +80,9 @@ int _oph_fits_cache_to_buffer(short int tot_dim_number, short int curr_dim, unsi
   return 0;
 }
 
-int oph_fits_cache_to_buffer(short int tot_dim_number, unsigned int *counters, unsigned int *limits, unsigned int *products, char *binary_cache, char * binary_insert, size_t sizeof_var){
+int oph_sac_cache_to_buffer(short int tot_dim_number, unsigned int *counters, unsigned int *limits, unsigned int *products, char *binary_cache, char * binary_insert, size_t sizeof_var){
   long long index = 0;
-  return _oph_fits_cache_to_buffer(tot_dim_number, 0, counters, limits, products, &index, binary_cache, binary_insert, sizeof_var);
+  return _oph_sac_cache_to_buffer(tot_dim_number, 0, counters, limits, products, &index, binary_cache, binary_insert, sizeof_var);
 }
 #if 0
 int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragment *frag, int ncid, int tuplexfrag_number, int array_length, int compressed, NETCDF_var *measure)
@@ -601,56 +601,55 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragm
 	return OPH_NC_SUCCESS;
 }
 #endif
-int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_fragment *frag, fitsfile *fptr, int tuplexfrag_number, int array_length, int compressed, FITS_var *measure)
+int oph_sac_populate_fragment_from_sac2(oph_ioserver_handler *server, oph_odb_fragment *frag, FILE *filesac, int tuplexfrag_number, int array_length, int compressed, SAC_var *measure, headerDataInfo *hdi)
 {
-	if(!frag || !fptr || !tuplexfrag_number || !array_length || !measure || !server){
+	if(!frag || !filesac || !tuplexfrag_number || !array_length || !measure || !server){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return OPH_FITS_ERROR;
+		return OPH_SAC_ERROR;
 	}
 
 	if( oph_dc2_check_connection_to_db(server, frag->db_instance->dbms_instance,frag->db_instance, 0)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
-	    return OPH_FITS_ERROR;
+	    return OPH_SAC_ERROR;
 	}
 
 	char type_flag = '\0';
 	switch( measure->vartype ){
-	    case BYTE_IMG:
+/*	    case BYTE_IMG:
 	    //case NC_CHAR:
 		type_flag = OPH_FITS_BYTE_FLAG;
                     break;
 	    case SHORT_IMG:
 		type_flag = OPH_FITS_SHORT_FLAG;
                     break;
-	    case LONG_IMG:
-		type_flag = OPH_FITS_INT_FLAG;
+*/
+	    case INT_SAC:
+		type_flag = OPH_SAC_INT_FLAG;
                     break;
-	    case LONGLONG_IMG:
-		type_flag = OPH_FITS_LONG_FLAG;
+            case FLOAT_SAC:
+		type_flag = OPH_SAC_FLOAT_FLAG;
                     break;
-            case FLOAT_IMG:
-		type_flag = OPH_FITS_FLOAT_FLAG;
-                    break;
-	    case DOUBLE_IMG:
-		type_flag = OPH_FITS_DOUBLE_FLAG;
+	    case DOUBLE_SAC:
+		type_flag = OPH_SAC_DOUBLE_FLAG;
                     break;
             default:
-		type_flag = OPH_FITS_DOUBLE_FLAG;
+		type_flag = OPH_SAC_DOUBLE_FLAG;
       }
 
 	long long sizeof_var = 0;
 
-	if(type_flag == OPH_FITS_BYTE_FLAG)
+/*	if(type_flag == OPH_FITS_BYTE_FLAG)
 		sizeof_var = (array_length)*sizeof(char);
 	else if(type_flag == OPH_FITS_SHORT_FLAG)
 		sizeof_var = (array_length)*sizeof(short);
-	else if(type_flag == OPH_FITS_INT_FLAG)
+*/
+	if(type_flag == OPH_SAC_INT_FLAG)
 		sizeof_var = (array_length)*sizeof(int);
-	else if(type_flag == OPH_FITS_LONG_FLAG)
-		sizeof_var = (array_length)*sizeof(long long);
-	else if(type_flag == OPH_FITS_FLOAT_FLAG)
+//	else if(type_flag == OPH_FITS_LONG_FLAG)
+//		sizeof_var = (array_length)*sizeof(long long);
+	else if(type_flag == OPH_SAC_FLOAT_FLAG)
 		sizeof_var = (array_length)*sizeof(float);
-	else if(type_flag == OPH_FITS_DOUBLE_FLAG)
+	else if(type_flag == OPH_SAC_DOUBLE_FLAG)
 		sizeof_var = (array_length)*sizeof(double);
 	else
 		sizeof_var = (array_length)*sizeof(double);
@@ -705,7 +704,7 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
   char *query_string = (char*)malloc(query_size*sizeof(char)); 
 	if(!(query_string)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		return OPH_FITS_ERROR;
+		return OPH_SAC_ERROR;
 	}  
 
   int j = 0;
@@ -740,7 +739,7 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
     free(query_string);
-		return OPH_FITS_ERROR;
+		return OPH_SAC_ERROR;
 	}
 
 	int l;
@@ -748,18 +747,19 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
 	//Create binary array
 	char* binary = 0;
 	int res;
-
+/*
 	if(type_flag == OPH_FITS_BYTE_FLAG)
 		res = oph_iob_bin_array_create_b(&binary, array_length*regular_rows);
 	else if(type_flag == OPH_FITS_SHORT_FLAG)
 		res = oph_iob_bin_array_create_s(&binary, array_length*regular_rows);
-	else if(type_flag == OPH_FITS_INT_FLAG)
+	else 
+*/	if(type_flag == OPH_SAC_INT_FLAG)
 		res = oph_iob_bin_array_create_i(&binary, array_length*regular_rows);
-	else if(type_flag == OPH_FITS_LONG_FLAG)
-		res = oph_iob_bin_array_create_l(&binary, array_length*regular_rows);
-	else if(type_flag == OPH_FITS_FLOAT_FLAG)
+//	else if(type_flag == OPH_FITS_LONG_FLAG)
+//		res = oph_iob_bin_array_create_l(&binary, array_length*regular_rows);
+	else if(type_flag == OPH_SAC_FLOAT_FLAG)
 		res = oph_iob_bin_array_create_f(&binary, array_length*regular_rows);
-	else if(type_flag == OPH_FITS_DOUBLE_FLAG)
+	else if(type_flag == OPH_SAC_DOUBLE_FLAG)
 		res = oph_iob_bin_array_create_d(&binary, array_length*regular_rows);
 	else
 		res = oph_iob_bin_array_create_d(&binary, array_length*regular_rows);
@@ -768,7 +768,7 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
 		free(binary);
     free(query_string);
     free(idDim);
-		return OPH_FITS_ERROR;
+		return OPH_SAC_ERROR;
 	}
 
   int c_arg = 1 + regular_rows*2, ii;
@@ -779,7 +779,7 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
     free(query_string);
 		free(binary);
     free(idDim);
-		return OPH_FITS_ERROR;
+		return OPH_SAC_ERROR;
 	}  
 
   for(ii = 0; ii < c_arg -1; ii++){
@@ -791,7 +791,7 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
 		  free(binary);
       for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
       free(args);
-      return OPH_FITS_ERROR;
+      return OPH_SAC_ERROR;
 	  } 
   }
   args[c_arg -1] = NULL;
@@ -814,16 +814,18 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
 		free(binary);
     for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
     free(args);
-    return OPH_FITS_ERROR;
+    return OPH_SAC_ERROR;
 	}
 
 	//idDim controls the start array
-	//start and count array must be sorted in base of the real order of dimensions in the fits file
+	//start and count array must be sorted in base of the real order of dimensions in the sac file 
 	//sizemax must be sorted in base of the oph_level value
+	//Actually, for sac files no permutation of dimensions is allowed: explicit will be always BLOCK, implicit SAMPLE
+
 	unsigned int *sizemax = (unsigned int*)malloc((measure->nexp)*sizeof(unsigned int));
 	long *start = (long*)malloc((measure->ndims)*sizeof(long));
 	long *count = (long*)malloc((measure->ndims)*sizeof(long));
-	long *inc   = (long*)malloc((measure->ndims)*sizeof(long));	//For FITS files used to control the stride value in subset
+	//long *inc   = (long*)malloc((measure->ndims)*sizeof(long));	//For FITS files used to control the stride value in subset
 	//Sort start in base of oph_level of explicit dimension
 	long **start_pointer = (long**)malloc((measure->nexp)*sizeof(long*));
 	//Set count
@@ -843,7 +845,7 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
 				count[i] = (long) measure->dims_end_index[i]+1;
 			start[i] = (long) measure->dims_start_index[i] + 1;
 		}
-		inc[i] = 1;		//Stride non supported
+		//inc[i] = 1;		//Stride non supported
 	}
 	//Check
 	long total = 1;
@@ -864,10 +866,10 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
     oph_ioserver_free_query(server, query);
 		free(start);
 		free(count);
-		free(inc);
+		//free(inc);
 		free(start_pointer);
 		free(sizemax);
-		return OPH_FITS_ERROR;
+		return OPH_SAC_ERROR;
 	}
 
 	short int flag = 0;
@@ -897,10 +899,10 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
       oph_ioserver_free_query(server, query);
 			free(start);
 			free(count);
-		free(inc);
+		//free(inc);
 			free(start_pointer);
 			free(sizemax);
-			return OPH_FITS_ERROR;
+			return OPH_SAC_ERROR;
 		}
 	}
 
@@ -930,17 +932,18 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
 
   //Create a binary array to store the tmp row
   if(!imp_dim_ordered ){
-	  if(type_flag == OPH_FITS_BYTE_FLAG)
+/*	  if(type_flag == OPH_FITS_BYTE_FLAG)
 		  res = oph_iob_bin_array_create_b(&binary_tmp, array_length);
 	  else if(type_flag == OPH_FITS_SHORT_FLAG)
 		  res = oph_iob_bin_array_create_s(&binary_tmp, array_length);
-	  else if(type_flag == OPH_FITS_INT_FLAG)
+	  else
+*/	  if(type_flag == OPH_SAC_INT_FLAG)
 		  res = oph_iob_bin_array_create_i(&binary_tmp, array_length);
-	  else if(type_flag == OPH_FITS_LONG_FLAG)
-		  res = oph_iob_bin_array_create_l(&binary_tmp, array_length);
-	  else if(type_flag == OPH_FITS_FLOAT_FLAG)
+//	  else if(type_flag == OPH_FITS_LONG_FLAG)
+//		  res = oph_iob_bin_array_create_l(&binary_tmp, array_length);
+	  else if(type_flag == OPH_SAC_FLOAT_FLAG)
 		  res = oph_iob_bin_array_create_f(&binary_tmp, array_length);
-	  else if(type_flag == OPH_FITS_DOUBLE_FLAG)
+	  else if(type_flag == OPH_SAC_DOUBLE_FLAG)
 		  res = oph_iob_bin_array_create_d(&binary_tmp, array_length);
 	  else
 		  res = oph_iob_bin_array_create_d(&binary_tmp, array_length);
@@ -954,10 +957,10 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
       oph_ioserver_free_query(server, query);
 		  free(start);
 		  free(count);
-		free(inc);
+		//free(inc);
 		  free(start_pointer);
 		  free(sizemax);
-		  return OPH_FITS_ERROR;
+		  return OPH_SAC_ERROR;
 	  }
 
     //Prepare structures for buffer insert update
@@ -1003,14 +1006,14 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
           oph_ioserver_free_query(server, query);
           free(start);
           free(count);
-		free(inc);
+		//free(inc);
           free(start_pointer);
           free(sizemax);
           free(counters);
           free(file_indexes);
           free(products);
           free(limits);
-			    return OPH_FITS_ERROR;
+			    return OPH_SAC_ERROR;
 		    }
       }
     }
@@ -1025,102 +1028,102 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
     //Build binary rows
   	for(jj=0; jj< regular_rows; jj++)
     {
-      oph_fits_compute_dimension_id(idDim[jj], sizemax, measure->nexp, start_pointer);
+      oph_sac_compute_dimension_id(idDim[jj], sizemax, measure->nexp, start_pointer);
 
       for (i = 0; i < measure->nexp; i++){
         *(start_pointer[i]) -= 1;
         for (ii=0; ii<measure->ndims; ii++){
           if(start_pointer[i] == &(start[ii])){
+	          //*(start_pointer[i]) += measure->dims_start_index[ii]+1;
 	          *(start_pointer[i]) += measure->dims_start_index[ii]+1;
-		  count[ii] = start[ii];
+		  //count[ii] = start[ii];
 	  }
         }
       }
 
-  int status = 0;
+  //int status = 0;
+  unsigned long int beginReadingPoint=0;
 
       //Fill array
       res = -1;
-      if(type_flag == OPH_FITS_INT_FLAG){
-	res = fits_read_subset(fptr, LONG_IMG, start, count, NULL, NULL, (int*)(binary + jj*sizeof_var), NULL, &status);
+      if(type_flag == OPH_SAC_INT_FLAG){
+	//res = fits_read_subset(fptr, LONG_IMG, start, count, NULL, NULL, (int*)(binary + jj*sizeof_var), NULL, &status);
         //res = nc_get_vara_int(ncid, measure->varid, start, count, (int*)(binary + jj*sizeof_var));
       }
-      else if(type_flag == OPH_FITS_BYTE_FLAG){
-	res = fits_read_subset(fptr, BYTE_IMG, start, count, NULL, NULL, (unsigned char*)(binary+ jj*sizeof_var ), NULL, &status);
+      else if(type_flag == OPH_SAC_BYTE_FLAG){
+	//res = fits_read_subset(fptr, BYTE_IMG, start, count, NULL, NULL, (unsigned char*)(binary+ jj*sizeof_var ), NULL, &status);
         //res = nc_get_vara_uchar(ncid, measure->varid, start, count, (unsigned char*)(binary + jj*sizeof_var));
       }
-      else if(type_flag == OPH_FITS_SHORT_FLAG){
-/*
-		int gu=0;
-		for(gu=0; gu<2;gu++){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "START: %d\n", start[gu]);
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "count: %d\n", count[gu]);
-		}
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "jj: %d\n", jj);
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "sizeof_var: %d\n", sizeof_var);
-*/		
+      else if(type_flag == OPH_SAC_SHORT_FLAG){
 
-
-		fits_read_subset(fptr, TSHORT, start, count, inc, NULL, (void*)(binary + jj*sizeof_var ), NULL, &status);
+		//fits_read_subset(fptr, TSHORT, start, count, inc, NULL, (void*)(binary + jj*sizeof_var ), NULL, &status);
         //res = nc_get_vara_short(ncid, measure->varid, start, count, (short*)(binary + jj*sizeof_var));
       }
-      else if(type_flag == OPH_FITS_LONG_FLAG){
-	res = fits_read_subset(fptr, LONGLONG_IMG, start, count, NULL, NULL, (long long*)(binary + jj*sizeof_var ), NULL, &status);
+      else if(type_flag == OPH_SAC_LONG_FLAG){
+	//res = fits_read_subset(fptr, LONGLONG_IMG, start, count, NULL, NULL, (long long*)(binary + jj*sizeof_var ), NULL, &status);
         //res = nc_get_vara_longlong(ncid, measure->varid, start, count, (long long*)(binary + jj*sizeof_var));
       }
-      else if(type_flag == OPH_FITS_FLOAT_FLAG){
-	res = fits_read_subset(fptr, FLOAT_IMG, start, count, NULL, NULL, (float*)(binary + jj*sizeof_var ), NULL, &status);
+      else if(type_flag == OPH_SAC_FLOAT_FLAG){
+//	res = fits_read_subset(fptr, FLOAT_IMG, start, count, NULL, NULL, (float*)(binary + jj*sizeof_var ), NULL, &status);
+
+	beginReadingPoint=hdi->startDataPoint+ (start[0] + (start[1]*count[0]))*sizeof(float);
+
+	fseek(filesac,beginReadingPoint,SEEK_SET);
+	long int samplesToRead = count[0];
+	//I need to know if I am on the last block and if it contains less samples
+	long int to_padd=0;
+	if( hdi->samplesForLastBlock && (start[1] == hdi->blocksNumber)){
+		to_padd = count[0] - hdi->samplesForLastBlock;
+		samplesToRead = hdi->samplesForLastBlock;
+	}
+	float* data;
+	if(getSacData(filesac, &data, samplesToRead)){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unble to get data from sac file\n");
+          	free(query_string);
+          	free(idDim);
+	    	free(binary);
+        	if(binary_tmp) free(binary_tmp);
+	        for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
+       		free(args);
+          	oph_ioserver_free_query(server, query);
+	        free(start);
+        	free(count);
+		//free(inc);
+          	free(start_pointer);
+          	free(sizemax);
+          	free(counters);
+          	//free(file_indexes);
+       	 	free(products);
+	        free(limits);
+		return OPH_SAC_ERROR;
+	}
+	int pa = 0;
+	//int dd = 0;
+	float myf = NAN;
+        memcpy(binary, data, samplesToRead*sizeof(float));
+	if(to_padd){
+		for(pa = (hdi->samplesForLastBlock-1); pa < (count[0] - 1); pa++){
+        		memcpy(binary + pa*sizeof(float), &myf, sizeof(float));
+		}
+	}
+	free(data);
+	data = NULL;
         //res = nc_get_vara_float(ncid, measure->varid, start, count, (float*)(binary + jj*sizeof_var));
       }
-      else if(type_flag == OPH_FITS_DOUBLE_FLAG){
-/*
-		int gu=0;
-		for(gu=0; gu<2;gu++){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "START: %d\n", start[gu]);
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "count: %d\n", count[gu]);
-		}
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "jj: %d\n", jj);
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "sizeof_var: %d\n", sizeof_var);
-		
-
-		long inc[2]={1,1};
-*/	res = fits_read_subset(fptr, TDOUBLE, start, count, inc, NULL, (double*)(binary + jj*sizeof_var ), NULL, &status);
+      else if(type_flag == OPH_SAC_DOUBLE_FLAG){
+	//res = fits_read_subset(fptr, TDOUBLE, start, count, inc, NULL, (double*)(binary + jj*sizeof_var ), NULL, &status);
         //res = nc_get_vara_double(ncid, measure->varid, start, count, (double*)(binary + jj*sizeof_var));
       }
       else{
-	res = fits_read_subset(fptr, DOUBLE_IMG, start, count, NULL, NULL, (double*)(binary + jj*sizeof_var ), NULL, &status);
+	//res = fits_read_subset(fptr, DOUBLE_IMG, start, count, NULL, NULL, (double*)(binary + jj*sizeof_var ), NULL, &status);
         //res = nc_get_vara_double(ncid, measure->varid, start, count, (double*)(binary + jj*sizeof_var));
-      }
-char err_text[48];    //Descriptive text string (30 char max.) corresponding to a CFITSIO error status code
-
-      if(status != 0){
-	fits_get_errstatus(status, err_text);
-      //if(res != 0){
-        OPH_FITS_ERR(err_text);
-        pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling, %s\n", err_text);
-        free(query_string);
-        free(idDim);
-        free(binary);
-        for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
-        free(args);
-        oph_ioserver_free_query(server, query);
-        free(start);
-        free(count);
-		free(inc);
-        free(start_pointer);
-        free(sizemax);
-        if(binary_tmp) free(binary_tmp);
-        if(counters) free(counters);
-        if(products) free(products);
-        if(limits) free(limits);
-        return OPH_FITS_ERROR;
       }
 
       if(!imp_dim_ordered){
 
         //Implicit dimensions are not orderer, hence we must rearrange binary.
         memset(counters, 0, measure->nimp);
-        oph_fits_cache_to_buffer(measure->nimp, counters, limits, products, binary + jj*sizeof_var, binary_tmp, sizeof_type);
+        oph_sac_cache_to_buffer(measure->nimp, counters, limits, products, binary + jj*sizeof_var, binary_tmp, sizeof_type);
         //Move from tmp to input buffer
         memcpy (binary + jj*sizeof_var, binary_tmp, sizeof_var);
       }
@@ -1138,13 +1141,13 @@ char err_text[48];    //Descriptive text string (30 char max.) corresponding to 
       oph_ioserver_free_query(server, query);
 			free(start);
 			free(count);
-		free(inc);
+		//free(inc);
 			free(start_pointer);
       free(sizemax);
       if(counters) free(counters);
       if(products) free(products);
       if(limits) free(limits);
-			return OPH_FITS_ERROR;
+			return OPH_SAC_ERROR;
 		}
 
     //Increase idDim
@@ -1201,101 +1204,111 @@ char err_text[48];    //Descriptive text string (30 char max.) corresponding to 
       free(args);
 			free(start);
 			free(count);
-		free(inc);
+		//free(inc);
 			free(start_pointer);
 			free(sizemax);
       if(counters) free(counters);
       if(products) free(products);
       if(limits) free(limits);
-      return OPH_FITS_ERROR;
+      return OPH_SAC_ERROR;
 	  }
 
     //Build binary rows
   	for(jj=0; jj< remainder_rows; jj++)
     {
-		  oph_fits_compute_dimension_id(idDim[jj], sizemax, measure->nexp, start_pointer);
+		  oph_sac_compute_dimension_id(idDim[jj], sizemax, measure->nexp, start_pointer);
 
 		  for (i = 0; i < measure->nexp; i++){
 			  *(start_pointer[i]) -= 1;
 			  for (ii=0; ii<measure->ndims; ii++){
 				  if(start_pointer[i] == &(start[ii])){
+					  //*(start_pointer[i]) += measure->dims_start_index[ii]+1;
 					  *(start_pointer[i]) += measure->dims_start_index[ii]+1;
-					  count[ii] = start[ii];
+					  //count[ii] = start[ii];
 				  }
 			  }
 		  }
 		  //Fill array
       res = -1;
-      int status=0;
-      char err_text[48];    //Descriptive text string (30 char max.) corresponding to a CFITSIO error status code
+      //int status=0;
+      unsigned long int beginReadingPoint=0;
 
-      if(type_flag == OPH_FITS_INT_FLAG){
-	res = fits_read_subset(fptr, LONG_IMG, start, count, NULL, NULL, (int*)(binary + jj*sizeof_var), NULL, &status);
+      if(type_flag == OPH_SAC_INT_FLAG){
+//	res = fits_read_subset(fptr, LONG_IMG, start, count, NULL, NULL, (int*)(binary + jj*sizeof_var), NULL, &status);
         //res = nc_get_vara_int(ncid, measure->varid, start, count, (int*)(binary + jj*sizeof_var));
       }
-      else if(type_flag == OPH_FITS_BYTE_FLAG){
-	res = fits_read_subset(fptr, BYTE_IMG, start, count, NULL, NULL, (unsigned char**)(binary + jj*sizeof_var), NULL, &status);
+      else if(type_flag == OPH_SAC_BYTE_FLAG){
+//	res = fits_read_subset(fptr, BYTE_IMG, start, count, NULL, NULL, (unsigned char**)(binary + jj*sizeof_var), NULL, &status);
         //res = nc_get_vara_uchar(ncid, measure->varid, start, count, (unsigned char*)(binary + jj*sizeof_var));
       }
-      else if(type_flag == OPH_FITS_SHORT_FLAG){
-	res = fits_read_subset(fptr, SHORT_IMG, start, count, NULL, NULL, (short*)(binary + jj*sizeof_var), NULL, &status);
+      else if(type_flag == OPH_SAC_SHORT_FLAG){
+//	res = fits_read_subset(fptr, SHORT_IMG, start, count, NULL, NULL, (short*)(binary + jj*sizeof_var), NULL, &status);
         //res = nc_get_vara_short(ncid, measure->varid, start, count, (short*)(binary + jj*sizeof_var));
       }
-      else if(type_flag == OPH_FITS_LONG_FLAG){
-	res = fits_read_subset(fptr, LONGLONG_IMG, start, count, NULL, NULL, (long long*)(binary + jj*sizeof_var), NULL, &status);	
+      else if(type_flag == OPH_SAC_LONG_FLAG){
+//	res = fits_read_subset(fptr, LONGLONG_IMG, start, count, NULL, NULL, (long long*)(binary + jj*sizeof_var), NULL, &status);	
         //res = nc_get_vara_longlong(ncid, measure->varid, start, count, (long long*)(binary + jj*sizeof_var));
       }
-      else if(type_flag == OPH_FITS_FLOAT_FLAG){
-	res = fits_read_subset(fptr, FLOAT_IMG, start, count, NULL, NULL, (float*)(binary + jj*sizeof_var), NULL, &status);
+      else if(type_flag == OPH_SAC_FLOAT_FLAG){
+//	res = fits_read_subset(fptr, TDOUBLE, start, count, inc, NULL, (double*)(binary + jj*sizeof_var), NULL, &status);
+
+	beginReadingPoint=hdi->startDataPoint+ (start[0] + (start[1]*count[0]))*sizeof(float);
+
+	fseek(filesac,beginReadingPoint,SEEK_SET);
+	long int samplesToRead = count[0];
+	//I need to know if I am on the last block and if it contains less samples
+	long int to_padd=0;
+	if( hdi->samplesForLastBlock && (start[1] == hdi->blocksNumber)){
+		to_padd = count[0]-hdi->samplesForLastBlock;
+		samplesToRead = hdi->samplesForLastBlock;
+	}
+	float* data;
+	if(getSacData(filesac, &data, samplesToRead)){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unble to get data from sac file\n");
+          	free(query_string);
+          	free(idDim);
+	    	free(binary);
+        	if(binary_tmp) free(binary_tmp);
+	        for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
+       		free(args);
+          	oph_ioserver_free_query(server, query);
+	        free(start);
+        	free(count);
+		//free(inc);
+          	free(start_pointer);
+          	free(sizemax);
+          	free(counters);
+          	//free(file_indexes);
+       	 	free(products);
+	        free(limits);
+		return OPH_SAC_ERROR;
+	}
+	int pa = 0;
+	//int dd = 0;
+	float myf = NAN;
+        memcpy(binary, data, samplesToRead*sizeof(float));
+	if(to_padd){
+		for(pa = (hdi->samplesForLastBlock-1); pa < (count[0] - 1); pa++){
+        		memcpy(binary + pa*sizeof(float), &myf, sizeof(float));
+		}
+	}
+	free(data);
+	data = NULL;
+        //res = nc_get_vara_double(ncid, measure->varid, start, count, (double*)(binary + jj*sizeof_var));
+      }
+      else if(type_flag == OPH_SAC_DOUBLE_FLAG){
+//	res = fits_read_subset(fptr, FLOAT_IMG, start, count, NULL, NULL, (float*)(binary + jj*sizeof_var), NULL, &status);
         //res = nc_get_vara_float(ncid, measure->varid, start, count, (float*)(binary + jj*sizeof_var));
       }
-      else if(type_flag == OPH_FITS_DOUBLE_FLAG){
-/*
-                int gu=0;
-                for(gu=0; gu<2;gu++){
-                        pmesg(LOG_ERROR, __FILE__, __LINE__, "START: %d\n", start[gu]);
-                        pmesg(LOG_ERROR, __FILE__, __LINE__, "count: %d\n", count[gu]);
-                }
-                pmesg(LOG_ERROR, __FILE__, __LINE__, "jj: %d\n", jj);
-                pmesg(LOG_ERROR, __FILE__, __LINE__, "sizeof_var: %d\n", sizeof_var);
-
-
-                long inc[2]={1,1};
-*/
-	res = fits_read_subset(fptr, TDOUBLE, start, count, inc, NULL, (double*)(binary + jj*sizeof_var), NULL, &status);
-        //res = nc_get_vara_double(ncid, measure->varid, start, count, (double*)(binary + jj*sizeof_var));
-      }
       else{
-	res = fits_read_subset(fptr, DOUBLE_IMG, start, count, NULL, NULL, (double*)(binary + jj*sizeof_var), NULL, &status);
+//	res = fits_read_subset(fptr, DOUBLE_IMG, start, count, NULL, NULL, (double*)(binary + jj*sizeof_var), NULL, &status);
         //res = nc_get_vara_double(ncid, measure->varid, start, count, (double*)(binary + jj*sizeof_var));
-      }
-
-      if(status != 0){
-	fits_get_errstatus(status, err_text);
-        OPH_FITS_ERR(err_text);
-        pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling, %s\n", err_text);
-        free(query_string);
-        free(idDim);
-        free(binary);
-        if(binary_tmp) free(binary_tmp);
-        for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
-        free(args);
-        oph_ioserver_free_query(server, query);
-        free(start);
-        free(count);
-		free(inc);
-        free(start_pointer);
-        free(sizemax);
-        if(counters) free(counters);
-        if(products) free(products);
-        if(limits) free(limits);
-        return OPH_FITS_ERROR;
       }
 
       if(!imp_dim_ordered){
         //Implicit dimensions are not orderer, hence we must rearrange binary.
         memset(counters, 0, measure->nimp);
-        oph_fits_cache_to_buffer(measure->nimp, counters, limits, products, binary + jj*sizeof_var, binary_tmp, sizeof_type);
+        oph_sac_cache_to_buffer(measure->nimp, counters, limits, products, binary + jj*sizeof_var, binary_tmp, sizeof_type);
         //Move from tmp to input buffer
         memcpy (binary + jj*sizeof_var, binary_tmp, sizeof_var);
       }
@@ -1313,13 +1326,13 @@ char err_text[48];    //Descriptive text string (30 char max.) corresponding to 
       oph_ioserver_free_query(server, query);
 			free(start);
 			free(count);
-		free(inc);
+		//free(inc);
 			free(start_pointer);
 			free(sizemax);
       if(counters) free(counters);
       if(products) free(products);
       if(limits) free(limits);
-			return OPH_FITS_ERROR;
+			return OPH_SAC_ERROR;
 		}
 
     oph_ioserver_free_query(server, query);
@@ -1333,65 +1346,64 @@ char err_text[48];    //Descriptive text string (30 char max.) corresponding to 
   free(args);
 	free(start);
 	free(count);
-		free(inc);
+		//free(inc);
 	free(start_pointer);
 	free(sizemax);
   if(counters) free(counters);
   if(products) free(products);
   if(limits) free(limits);
-	return OPH_FITS_SUCCESS;
+	return OPH_SAC_SUCCESS;
 }
 
-int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_fragment *frag, fitsfile *fptr, int tuplexfrag_number, int array_length, int compressed, FITS_var *measure, long long memory_size)
+//int oph_sac_populate_fragment_from_sac3(oph_ioserver_handler *server, oph_odb_fragment *frag, fitsfile *fptr, int tuplexfrag_number, int array_length, int compressed, FITS_var *measure, long long memory_size)
+int oph_sac_populate_fragment_from_sac3(oph_ioserver_handler *server, oph_odb_fragment *frag, FILE *filesac, int tuplexfrag_number, int array_length, int compressed, SAC_var *measure, long long memory_size, headerDataInfo* hdi)
 {
-	if(!frag || !fptr || !tuplexfrag_number || !array_length || !measure || !server){
+	if(!frag || !filesac || !tuplexfrag_number || !array_length || !measure || !server){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return OPH_FITS_ERROR;
+		return OPH_SAC_ERROR;
 	}
 
 	if( oph_dc2_check_connection_to_db(server, frag->db_instance->dbms_instance,frag->db_instance, 0)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
-	    return OPH_FITS_ERROR;
+	    return OPH_SAC_ERROR;
 	}
 
 	char type_flag = '\0';
     switch( measure->vartype ){
-	    case BYTE_IMG:
+/*	    case BYTE_IMG:
 	    //case NC_CHAR:
 		type_flag = OPH_FITS_BYTE_FLAG;
                     break;
 	    case SHORT_IMG:
 		type_flag = OPH_FITS_SHORT_FLAG;
                     break;
-	    case LONG_IMG:
-		type_flag = OPH_FITS_INT_FLAG;
+*/	    case INT_SAC:
+		type_flag = OPH_SAC_INT_FLAG;
                     break;
-	    case LONGLONG_IMG:
-		type_flag = OPH_FITS_LONG_FLAG;
+            case FLOAT_SAC:
+		type_flag = OPH_SAC_FLOAT_FLAG;
                     break;
-            case FLOAT_IMG:
-		type_flag = OPH_FITS_FLOAT_FLAG;
-                    break;
-	    case DOUBLE_IMG:
-		type_flag = OPH_FITS_DOUBLE_FLAG;
+	    case DOUBLE_SAC:
+		type_flag = OPH_SAC_DOUBLE_FLAG;
                     break;
             default:
-		type_flag = OPH_FITS_DOUBLE_FLAG;
+		type_flag = OPH_SAC_DOUBLE_FLAG;
       }
 
 	long long sizeof_var = 0;
 
-	if(type_flag == OPH_FITS_BYTE_FLAG)
+/*	if(type_flag == OPH_FITS_BYTE_FLAG)
 		sizeof_var = (array_length)*sizeof(char);
 	else if(type_flag == OPH_FITS_SHORT_FLAG)
 		sizeof_var = (array_length)*sizeof(short);
-	else if(type_flag == OPH_FITS_INT_FLAG)
+	else 
+*/	if(type_flag == OPH_SAC_INT_FLAG)
 		sizeof_var = (array_length)*sizeof(int);
-	else if(type_flag == OPH_FITS_LONG_FLAG)
-		sizeof_var = (array_length)*sizeof(long long);
-	else if(type_flag == OPH_FITS_FLOAT_FLAG)
+//	else if(type_flag == OPH_FITS_LONG_FLAG)
+//		sizeof_var = (array_length)*sizeof(long long);
+	else if(type_flag == OPH_SAC_FLOAT_FLAG)
 		sizeof_var = (array_length)*sizeof(float);
-	else if(type_flag == OPH_FITS_DOUBLE_FLAG)
+	else if(type_flag == OPH_SAC_DOUBLE_FLAG)
 		sizeof_var = (array_length)*sizeof(double);
 	else
 		sizeof_var = (array_length)*sizeof(double);
@@ -1437,7 +1449,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_
   //If flag is set call old approach, else continue
   if(!whole_fragment || dimension_ordered || !whole_explicit){
     //return oph_nc_populate_fragment_from_nc2(server, frag, ncid, tuplexfrag_number, array_length, compressed, measure);
-    return oph_fits_populate_fragment_from_fits2(server, frag, fptr, tuplexfrag_number, array_length, compressed, measure);
+    return oph_sac_populate_fragment_from_sac2(server, frag, filesac, tuplexfrag_number, array_length, compressed, measure, hdi);
   }
 
 
@@ -1492,7 +1504,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_
   char *query_string = (char*)malloc(query_size*sizeof(char)); 
 	if(!(query_string)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		return OPH_FITS_ERROR;
+		return OPH_SAC_ERROR;
 	}  
 
   int j = 0;
@@ -1527,7 +1539,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
     free(query_string);
-		return OPH_FITS_ERROR;
+		return OPH_SAC_ERROR;
 	}
 
 	int l;
@@ -1537,17 +1549,17 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_
 	int res;
 
   //Create a binary array to store the whole fragment
-	if(type_flag == OPH_FITS_BYTE_FLAG)
+	if(type_flag == OPH_SAC_BYTE_FLAG)
 		res = oph_iob_bin_array_create_b(&binary_cache, array_length*tuplexfrag_number);
-	else if(type_flag == OPH_FITS_SHORT_FLAG)
+	else if(type_flag == OPH_SAC_SHORT_FLAG)
 		res = oph_iob_bin_array_create_s(&binary_cache, array_length*tuplexfrag_number);
-	else if(type_flag == OPH_FITS_INT_FLAG)
+	else if(type_flag == OPH_SAC_INT_FLAG)
 		res = oph_iob_bin_array_create_i(&binary_cache, array_length*tuplexfrag_number);
-	else if(type_flag == OPH_FITS_LONG_FLAG)
+	else if(type_flag == OPH_SAC_LONG_FLAG)
 		res = oph_iob_bin_array_create_l(&binary_cache, array_length*tuplexfrag_number);
-	else if(type_flag == OPH_FITS_FLOAT_FLAG)
+	else if(type_flag == OPH_SAC_FLOAT_FLAG)
 		res = oph_iob_bin_array_create_f(&binary_cache, array_length*tuplexfrag_number);
-	else if(type_flag == OPH_FITS_DOUBLE_FLAG)
+	else if(type_flag == OPH_SAC_DOUBLE_FLAG)
 		res = oph_iob_bin_array_create_d(&binary_cache, array_length*tuplexfrag_number);
 	else
 		res = oph_iob_bin_array_create_d(&binary_cache, array_length*tuplexfrag_number);
@@ -1556,23 +1568,23 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_
 		free(binary_cache);
     free(query_string);
     free(idDim);
-		return OPH_FITS_ERROR;
+		return OPH_SAC_ERROR;
 	}
 
   //Create array for rows to be insert
 	char* binary_insert = 0;
   res = 0;
-	if(type_flag == OPH_FITS_BYTE_FLAG)
+	if(type_flag == OPH_SAC_BYTE_FLAG)
 		res = oph_iob_bin_array_create_b(&binary_insert, array_length*regular_rows);
-	else if(type_flag == OPH_FITS_SHORT_FLAG)
+	else if(type_flag == OPH_SAC_SHORT_FLAG)
 		res = oph_iob_bin_array_create_s(&binary_insert, array_length*regular_rows);
-	else if(type_flag == OPH_FITS_INT_FLAG)
+	else if(type_flag == OPH_SAC_INT_FLAG)
 		res = oph_iob_bin_array_create_i(&binary_insert, array_length*regular_rows);
-	else if(type_flag == OPH_FITS_LONG_FLAG)
+	else if(type_flag == OPH_SAC_LONG_FLAG)
 		res = oph_iob_bin_array_create_l(&binary_insert, array_length*regular_rows);
-	else if(type_flag == OPH_FITS_FLOAT_FLAG)
+	else if(type_flag == OPH_SAC_FLOAT_FLAG)
 		res = oph_iob_bin_array_create_f(&binary_insert, array_length*regular_rows);
-	else if(type_flag == OPH_FITS_DOUBLE_FLAG)
+	else if(type_flag == OPH_SAC_DOUBLE_FLAG)
 		res = oph_iob_bin_array_create_d(&binary_insert, array_length*regular_rows);
 	else
 		res = oph_iob_bin_array_create_d(&binary_insert, array_length*regular_rows);
@@ -1582,7 +1594,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_
     free(binary_insert);
     free(query_string);
     free(idDim);
-		return OPH_FITS_ERROR;
+		return OPH_SAC_ERROR;
 	}
 
   int c_arg = 1 + regular_rows*2, ii;
@@ -1594,7 +1606,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_
 		free(binary_cache);
     free(binary_insert);
     free(idDim);
-		return OPH_FITS_ERROR;
+		return OPH_SAC_ERROR;
 	}  
 
   for(ii = 0; ii < c_arg -1; ii++){
@@ -1607,7 +1619,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_
       free(binary_insert);
       for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
       free(args);
-      return OPH_FITS_ERROR;
+      return OPH_SAC_ERROR;
 	  } 
   }
   args[c_arg -1] = NULL;
@@ -1631,20 +1643,19 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_
     free(binary_insert);
     for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
     free(args);
-    return OPH_FITS_ERROR;
+    return OPH_SAC_ERROR;
 	}
 
-
 	//idDim controls the start array
-	//start and count array must be sorted in base of the real order of dimensions in the fits file
+	//start and count array must be sorted in base of the real order of dimensions in the sac file
 	//sizemax must be sorted in base of the oph_level value
-	// start corresponds to the start point - bottom left corner of image
-	// count corresponds to the end point - upper right corner of image
+	// start corresponds to the start point
+	// count corresponds to the numero of samples
 	
 	unsigned int *sizemax = (unsigned int*)malloc((measure->nexp)*sizeof(unsigned int));
 	long *start = (long*)malloc((measure->ndims)*sizeof(long));
 	long *count = (long*)malloc((measure->ndims)*sizeof(long));
-	long *inc   = (long*)malloc((measure->ndims)*sizeof(long));	//For FITS files used to control the stride value in subset
+	//long *inc   = (long*)malloc((measure->ndims)*sizeof(long));	//For FITS files used to control the stride value in subset
 	//Sort start in base of oph_level of explicit dimension
 	long **start_pointer = (long**)malloc((measure->nexp)*sizeof(long*));
 
@@ -1662,7 +1673,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_
 			else
 				count[i] = (long) measure->dims_end_index[i]+1;
 			start[i] = (long) measure->dims_start_index[i]+1;
-			inc[i] = 1;             //Stride non supported
+			//inc[i] = 1;             //Stride non supported
 		}
 	}
 	//Check
@@ -1684,10 +1695,10 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_
     oph_ioserver_free_query(server, query);
 		free(start);
 		free(count);
-		free(inc);
+		//free(inc);
 		free(start_pointer);
 		free(sizemax);
-		return OPH_FITS_ERROR;
+		return OPH_SAC_ERROR;
 	}
 
 	short int flag = 0;
@@ -1718,23 +1729,23 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_
       oph_ioserver_free_query(server, query);
 			free(start);
 			free(count);
-		free(inc);
+		//free(inc);
 			free(start_pointer);
 			free(sizemax);
-			return OPH_FITS_ERROR;
+			return OPH_SAC_ERROR;
 		}
 	}
 
   int jj =0;
 
-  oph_fits_compute_dimension_id(idDim[jj], sizemax, measure->nexp, start_pointer);
+  oph_sac_compute_dimension_id(idDim[jj], sizemax, measure->nexp, start_pointer);
 
   for (i = 0; i < measure->nexp; i++){
     *(start_pointer[i]) -= 1;
     for (ii=0; ii<measure->ndims; ii++){
       if(start_pointer[i] == &(start[ii])){
         *(start_pointer[i]) += measure->dims_start_index[ii]+1;
-	count[ii]=start[ii];
+	//count[ii]=start[ii];
       }
     }
   }
@@ -1754,43 +1765,79 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_
 
   gettimeofday(&start_read_time, NULL);
 #endif
-  int status = 0;
+  //int status = 0;
+      unsigned long int beginReadingPoint=0;
 
-  if(type_flag == OPH_FITS_INT_FLAG){
-    res = fits_read_subset(fptr, LONG_IMG, start, count, NULL, NULL, (int*)(binary_cache), NULL, &status);
+  if(type_flag == OPH_SAC_INT_FLAG){
+    //res = fits_read_subset(fptr, LONG_IMG, start, count, NULL, NULL, (int*)(binary_cache), NULL, &status);
     //res = nc_get_vara_int(ncid, measure->varid, start, count, (int*)(binary_cache));
   }
-  else if(type_flag == OPH_FITS_BYTE_FLAG){
-    res = fits_read_subset(fptr, BYTE_IMG, start, count, NULL, NULL, (unsigned char*)(binary_cache), NULL, &status);   
+  else if(type_flag == OPH_SAC_BYTE_FLAG){
+    //res = fits_read_subset(fptr, BYTE_IMG, start, count, NULL, NULL, (unsigned char*)(binary_cache), NULL, &status);   
     //res = nc_get_vara_uchar(ncid, measure->varid, start, count, (unsigned char*)(binary_cache));
   }
-  else if(type_flag == OPH_FITS_SHORT_FLAG){
-    res = fits_read_subset(fptr, SHORT_IMG, start, count, NULL, NULL, (short*)(binary_cache), NULL, &status);   
+  else if(type_flag == OPH_SAC_SHORT_FLAG){
+    //res = fits_read_subset(fptr, SHORT_IMG, start, count, NULL, NULL, (short*)(binary_cache), NULL, &status);   
     //res = nc_get_vara_short(ncid, measure->varid, start, count, (short*)(binary_cache));
   }
-  else if(type_flag == OPH_FITS_LONG_FLAG){
-    res = fits_read_subset(fptr, LONGLONG_IMG, start, count, NULL, NULL, (long long*)(binary_cache), NULL, &status);   
+  else if(type_flag == OPH_SAC_LONG_FLAG){
+    //res = fits_read_subset(fptr, LONGLONG_IMG, start, count, NULL, NULL, (long long*)(binary_cache), NULL, &status);   
     //res = nc_get_vara_longlong(ncid, measure->varid, start, count, (long long*)(binary_cache));
   }
-  else if(type_flag == OPH_FITS_FLOAT_FLAG){
-    res = fits_read_subset(fptr, FLOAT_IMG, start, count, NULL, NULL, (float*)(binary_cache), NULL, &status);   
+  else if(type_flag == OPH_SAC_FLOAT_FLAG){
+    //res = fits_read_subset(fptr, FLOAT_IMG, start, count, NULL, NULL, (float*)(binary_cache), NULL, &status);
+
+        beginReadingPoint=hdi->startDataPoint+ (start[0] + (start[1]*count[0]))*sizeof(float);
+
+        fseek(filesac,beginReadingPoint,SEEK_SET);
+        long int samplesToRead = count[0];
+        //I need to know if I am on the last block and if it contains less samples
+        long int to_padd=0;
+        if( hdi->samplesForLastBlock && (start[1] == hdi->blocksNumber)){
+        	to_padd = count[0] - hdi->samplesForLastBlock;
+                samplesToRead = hdi->samplesForLastBlock;
+        }
+        float* data;
+        if(getSacData(filesac, &data, samplesToRead)){
+        	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unble to get data from sac file\n");
+                free(query_string);
+                free(idDim);
+       		//free(binary);
+                //if(binary_tmp) free(binary_tmp);
+                for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
+                free(args);
+                oph_ioserver_free_query(server, query);
+        	free(start);
+        	free(count);
+	        //free(inc);
+        	free(start_pointer);
+	        free(sizemax);
+        	//free(counters);
+	        //free(file_indexes);
+        	//free(products);
+	        //free(limits);
+        	return OPH_SAC_ERROR;
+        }
+        int pa = 0;
+        //int dd = 0;
+        float myf = NAN;
+        memcpy(binary_cache, data, samplesToRead*sizeof(float));
+	if(to_padd){
+                for(pa = (hdi->samplesForLastBlock-1); pa < (count[0] - 1); pa++){
+                        memcpy(binary_cache + pa*sizeof(float), &myf, sizeof(float));
+                }
+        }
+        free(data);
+        data = NULL;
+        
     //res = nc_get_vara_float(ncid, measure->varid, start, count, (float*)(binary_cache));
   }
-  else if(type_flag == OPH_FITS_DOUBLE_FLAG){
-/*
-                int gu=0;
-                for(gu=0; gu<2;gu++){
-                        pmesg(LOG_ERROR, __FILE__, __LINE__, "START: %d\n", start[gu]);
-                        pmesg(LOG_ERROR, __FILE__, __LINE__, "count: %d\n", count[gu]);
-                }
-                pmesg(LOG_ERROR, __FILE__, __LINE__, "jj: %d\n", jj);
-                pmesg(LOG_ERROR, __FILE__, __LINE__, "sizeof_var: %d\n", sizeof_var);
-		long inc[2]={1,1};
-*/    res = fits_read_subset(fptr, TDOUBLE, start, count, inc, NULL, (double*)(binary_cache), NULL, &status);   
+  else if(type_flag == OPH_SAC_DOUBLE_FLAG){
+    //res = fits_read_subset(fptr, TDOUBLE, start, count, inc, NULL, (double*)(binary_cache), NULL, &status);   
     //res = nc_get_vara_double(ncid, measure->varid, start, count, (double*)(binary_cache));
   }
   else{
-    res = fits_read_subset(fptr, DOUBLE_IMG, start, count, NULL, NULL, (double*)(binary_cache), NULL, &status);   
+    //res = fits_read_subset(fptr, DOUBLE_IMG, start, count, NULL, NULL, (double*)(binary_cache), NULL, &status);   
     //res = nc_get_vara_double(ncid, measure->varid, start, count, (double*)(binary_cache));
   }
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
@@ -1799,29 +1846,8 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_
   printf("Fragment %s:  Total read :\t Time %d,%06d sec\n", frag->fragment_name, (int)total_read_time.tv_sec, (int)total_read_time.tv_usec);
 #endif
 
-char err_text[48];    //Descriptive text string (30 char max.) corresponding to a CFITSIO error status code
-
-  if(status != 0){
-    OPH_FITS_ERR(err_text);
-    fits_get_errstatus(status, err_text);
-    pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling,%s\n", err_text);
-    free(query_string);
-    free(idDim);
-    free(binary_cache);
-    free(binary_insert);
-    for(ii = 0; ii < c_arg -1; ii++) if(args[ii]) free(args[ii]);
-    free(args);
-    oph_ioserver_free_query(server, query);
-    free(start);
-    free(count);
-		free(inc);
-    free(start_pointer);
-    free(sizemax);
-    return OPH_FITS_ERROR;
-  }
-
   free(start);
-		free(inc);
+//		free(inc);
   free(start_pointer);
   free(sizemax);
 
@@ -1877,7 +1903,7 @@ char err_text[48];    //Descriptive text string (30 char max.) corresponding to 
         free(file_indexes);
         free(products);
         free(limits);
-	return OPH_FITS_ERROR;
+	return OPH_SAC_ERROR;
 		  }
     }
   }
@@ -1896,7 +1922,7 @@ char err_text[48];    //Descriptive text string (30 char max.) corresponding to 
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
   gettimeofday(&start_transpose_time, NULL);
 #endif
-    oph_fits_cache_to_buffer(measure->nimp + 1, counters, limits, products, binary_cache, binary_insert, sizeof_type);
+    oph_sac_cache_to_buffer(measure->nimp + 1, counters, limits, products, binary_cache, binary_insert, sizeof_type);
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
   gettimeofday(&end_transpose_time, NULL);
   timeval_subtract(&intermediate_transpose_time, &end_transpose_time, &start_transpose_time);
@@ -1918,7 +1944,7 @@ char err_text[48];    //Descriptive text string (30 char max.) corresponding to 
       free(counters);
       free(products);
       free(limits);
-			return OPH_FITS_ERROR;
+			return OPH_SAC_ERROR;
 		}
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
   gettimeofday(&end_write_time, NULL);
@@ -1979,7 +2005,7 @@ char err_text[48];    //Descriptive text string (30 char max.) corresponding to 
       free(counters);
       free(products);
       free(limits);
-      return OPH_FITS_ERROR;
+      return OPH_SAC_ERROR;
 	  }
 
     //Update counters and limit for explicit internal dimension
@@ -1989,7 +2015,7 @@ char err_text[48];    //Descriptive text string (30 char max.) corresponding to 
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
   gettimeofday(&start_transpose_time, NULL);
 #endif
-    oph_fits_cache_to_buffer(measure->nimp + 1, counters, limits, products, binary_cache, binary_insert, sizeof_type);
+    oph_sac_cache_to_buffer(measure->nimp + 1, counters, limits, products, binary_cache, binary_insert, sizeof_type);
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
   gettimeofday(&end_transpose_time, NULL);
   timeval_subtract(&intermediate_transpose_time, &end_transpose_time, &start_transpose_time);
@@ -2011,7 +2037,7 @@ char err_text[48];    //Descriptive text string (30 char max.) corresponding to 
       free(counters);
       free(products);
       free(limits);
-			return OPH_FITS_ERROR;
+			return OPH_SAC_ERROR;
 		}
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
   gettimeofday(&end_write_time, NULL);
@@ -2038,7 +2064,7 @@ char err_text[48];    //Descriptive text string (30 char max.) corresponding to 
   free(products);
   free(limits);
 
-	return OPH_FITS_SUCCESS;
+	return OPH_SAC_SUCCESS;
 }
 #if 0
 int oph_nc_get_row_from_nc(int ncid, int array_length, NETCDF_var *measure, unsigned long idDim, char** row)
@@ -2283,7 +2309,7 @@ int oph_nc_get_row_from_nc(int ncid, int array_length, NETCDF_var *measure, unsi
 	return OPH_NC_SUCCESS;
 }
 #endif
-int _oph_fits_get_dimension_id(unsigned long residual, unsigned long total, unsigned int* sizemax, long** id, int i, int n)
+int _oph_sac_get_dimension_id(unsigned long residual, unsigned long total, unsigned int* sizemax, long** id, int i, int n)
 {
         if (i<n-1)
         {
@@ -2291,7 +2317,7 @@ int _oph_fits_get_dimension_id(unsigned long residual, unsigned long total, unsi
                 tmp = total/sizemax[i];
                 *(id[i]) = (size_t)(residual/tmp+1);
                 residual %= tmp;
-                _oph_fits_get_dimension_id(residual, tmp, sizemax, id, i+1, n);
+                _oph_sac_get_dimension_id(residual, tmp, sizemax, id, i+1, n);
         }
         else {
 		*(id[i]) = (size_t)(residual+1);
@@ -2299,12 +2325,12 @@ int _oph_fits_get_dimension_id(unsigned long residual, unsigned long total, unsi
         return 0;
 }
 
-int oph_fits_compute_dimension_id(unsigned long ID, unsigned int* sizemax, int n, long** id)
+int oph_sac_compute_dimension_id(unsigned long ID, unsigned int* sizemax, int n, long** id)
 {
         int i;
         unsigned long total=1;
         for (i=0; i<n; ++i) total *= sizemax[i];
-        _oph_fits_get_dimension_id(ID-1, total, sizemax, id, 0, n);
+        _oph_sac_get_dimension_id(ID-1, total, sizemax, id, 0, n);
         return 0;
 }
 
@@ -2319,28 +2345,28 @@ int oph_sac_get_c_type(int type_sac, char* out_c_type){
 // CHECK: NEED TO DEFINE OTHER TYPES? USHORT, ULONG, ETC
         	strncpy(out_c_type, OPH_FITS_SHORT_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
                 break;
-*/	case OPH_SAC_INT_TYPE:
+*/	case INT_SAC:
         	strncpy(out_c_type, OPH_SAC_INT_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
                 break;
 /*	case LONGLONG_IMG:
         	strncpy(out_c_type, OPH_FITS_LONG_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
                 break;
-*/      case OPH_SAC_FLOAT_TYPE::
+*/      case FLOAT_SAC:
                 strncpy(out_c_type, OPH_SAC_FLOAT_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
                 break;
-/*        case DOUBLE_IMG:
-                strncpy(out_c_type, OPH_FITS_DOUBLE_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
+        case DOUBLE_SAC:
+                strncpy(out_c_type, OPH_SAC_DOUBLE_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
                 break;
-*/      default:
+        default:
                 pmesg(LOG_WARNING, __FILE__, __LINE__, "Variable type not supported: double used\n");
-        	strncpy(out_c_type, OPH_FITS_DOUBLE_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
+        	strncpy(out_c_type, OPH_SAC_DOUBLE_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
                 break;
   }
   return 0;
 
 }
 
-int oph_sac_get_sac_type(char* in_c_type, int* type_fits)
+int oph_sac_get_sac_type(char* in_c_type, int* type_sac)
 {
 /*
   if(!strcasecmp(in_c_type, OPH_FITS_BYTE_TYPE)){
@@ -2353,7 +2379,7 @@ int oph_sac_get_sac_type(char* in_c_type, int* type_fits)
   }
 */
   if(!strcasecmp(in_c_type, OPH_SAC_INT_TYPE)){
-  	*type_fits = OPH_SAC_INT_TYPE;
+  	*type_sac = INT_SAC;
 	return 0;
   }
 /*
@@ -2363,17 +2389,17 @@ int oph_sac_get_sac_type(char* in_c_type, int* type_fits)
   }
 */
   if(!strcasecmp(in_c_type, OPH_SAC_FLOAT_TYPE)){
-  	*type_fits = OPH_SAC_FLOAT_TYPE;
+  	*type_sac = FLOAT_SAC;
 	return 0;
   }
-/*
-  if(!strcasecmp(in_c_type, OPH_FITS_DOUBLE_TYPE)){
-  	*type_fits = DOUBLE_IMG;
+
+  if(!strcasecmp(in_c_type, OPH_SAC_DOUBLE_TYPE)){
+  	*type_sac = DOUBLE_SAC;
 	return 0;
   }
-*/
+
   pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported: double used\n");
-  *type_fits = OPH_SAC_DOUBLE_TYPE;
+  *type_sac = DOUBLE_SAC;
   return 0;
 /*
   if(!strcasecmp(in_c_type, OPH_NC_BIT_TYPE)){
@@ -2384,21 +2410,21 @@ int oph_sac_get_sac_type(char* in_c_type, int* type_fits)
 
 }
 
-int _oph_fits_get_next_fits_id(size_t* id, unsigned int* sizemax, int i, int n)
+int _oph_sac_get_next_sac_id(size_t* id, unsigned int* sizemax, int i, int n)
 {
         if (i<0) return 1; // Overflow
         (id[i])++;
         if (id[i]>=sizemax[i])
         {
                 id[i]=0;
-                return _oph_fits_get_next_fits_id(id, sizemax, i-1, n);
+                return _oph_sac_get_next_sac_id(id, sizemax, i-1, n);
         }
         return 0;
 }
 
-int oph_fits_get_next_fits_id(size_t* id, unsigned int* sizemax, int n)
+int oph_sac_get_next_sac_id(size_t* id, unsigned int* sizemax, int n)
 {
-        return _oph_fits_get_next_fits_id(id, sizemax, n-1, n);
+        return _oph_sac_get_next_sac_id(id, sizemax, n-1, n);
 }
 #if 0
 int oph_nc_append_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragment *old_frag,oph_odb_fragment *new_frag, int ncid, int compressed, NETCDF_var *measure)
@@ -2831,14 +2857,49 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragmen
 	return OPH_NC_SUCCESS;
 }
 #endif
-int oph_fits_get_dim_array2(int id_container ,int dim_size, char **dim_array){
-	// FITS file has no dimension values; they are sequential long-type ordered numbers
+int oph_sac_get_dim_array2(int id_container ,int dim_size, headerDataInfo *hdi, int varid, char **dim_array){
+	// SAC file has 2 dimensions:
+	// id = 2 -> BLOCK -> sequence of numbers between 1 and blocksnumber [ int ]
+	// id = 1 -> SAMPLE -> samples of the wave evaluated every DELTA seconds [ double ]
+	// for samples, assume: first value = start time of sampling, then add DELTA to each sample
+	// for the BLOCK n, the sample j (0 based) is evaluated in: start_time+(j*DELTA) + (n-1)*samplesxblock*DELTA
 	if(!dim_size || !dim_array){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return OPH_FITS_ERROR;
+		return OPH_SAC_ERROR;
 	}
-	int i=0;
-	int j=0;
+	if(varid == 2){
+		//BLOCKS
+		*dim_array = (char*)malloc(sizeof(int)*dim_size);
+		if(!(*dim_array)){
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions binary array" );
+			return OPH_SAC_ERROR;
+		}
+		int i=0;
+		int j=0;
+		for (i=0; i < dim_size; i++){
+			j++;
+			memcpy((char*)((*dim_array)+i*sizeof(int)), (char *)(&j), sizeof(char)*sizeof(int));	//Set dimension values as 1,..,n
+		}
+	}
+	else{
+		*dim_array = (char*)malloc(sizeof(double)*dim_size);
+		if(!(*dim_array)){
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions binary array" );
+			return OPH_SAC_ERROR;
+		}
+		//SAMPLES
+		double mytime = (double)mktime(hdi->datetime);
+		int i=0;
+		float delta = getSamplingRate();
+		for (i=0; i < dim_size; i++){
+			//Set dimension values to the base epoch time -> to retrieve the real value, I need to add ((n-1)*samplesxblock*delta) where n is the related block number
+			memcpy((char*)((*dim_array)+i*sizeof(double)), (char *)(&mytime), sizeof(char)*sizeof(double));	
+			mytime+=delta;
+		}
+		
+	}
 /*
 	void *binary_dim = NULL;
 	//int retval = 0;
@@ -2852,6 +2913,7 @@ int oph_fits_get_dim_array2(int id_container ,int dim_size, char **dim_array){
 		memcpy(binary_dim[i], i, sizeof(int));
 	}
 */
+/*
 	*dim_array = (char*)malloc(sizeof(int)*dim_size);
 	if(!(*dim_array)){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -2864,6 +2926,7 @@ int oph_fits_get_dim_array2(int id_container ,int dim_size, char **dim_array){
 		j++;
 		memcpy((char*)((*dim_array)+i*sizeof(int)), (char *)(&j), sizeof(char)*sizeof(int));	//Set dimension values as 1,..,n
 	}
+*/
 	/*
 	size_t start[1];
 	size_t count[1];
@@ -2989,7 +3052,7 @@ int oph_fits_get_dim_array2(int id_container ,int dim_size, char **dim_array){
 	}
 	*/
 	//free(binary_dim);		
-	return OPH_FITS_SUCCESS;
+	return OPH_SAC_SUCCESS;
 }
 #if 0
 int oph_nc_get_dim_array(int id_container ,int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array){
@@ -3508,42 +3571,42 @@ int oph_nc_index_by_value(int id_container ,int ncid, int dim_id, nc_type dim_ty
 	return OPH_NC_SUCCESS;
 }
 #endif
-int oph_fits_compare_fits_c_types(int id_container, int var_type, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE]){
+int oph_sac_compare_sac_c_types(int id_container, int var_type, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE]){
 	if(!var_type || !dim_type ){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return OPH_FITS_ERROR;
+		return OPH_SAC_ERROR;
 	}
 
 	switch( var_type ){
-		case BYTE_IMG:
+		case BYTE_SAC:
 		//case NC_CHAR:
 			if(strncasecmp(OPH_COMMON_BYTE_TYPE,dim_type,OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
-				return OPH_FITS_ERROR;
+				return OPH_SAC_ERROR;
 			}
 			break;
-		case SHORT_IMG:
+		case SHORT_SAC:
 			if(strncasecmp(OPH_COMMON_SHORT_TYPE,dim_type,OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
-				return OPH_FITS_ERROR;
+				return OPH_SAC_ERROR;
 			}
 			break;
-		case LONG_IMG:
+		case INT_SAC:
 			if(strncasecmp(OPH_COMMON_INT_TYPE,dim_type,OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
-				return OPH_FITS_ERROR;
+				return OPH_SAC_ERROR;
 			}
 			break;
-		case LONGLONG_IMG:
+		case LONG_SAC:
 			if(strncasecmp(OPH_COMMON_LONG_TYPE,dim_type,OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
-				return OPH_FITS_ERROR;
+				return OPH_SAC_ERROR;
 			}
 			break;
-		case FLOAT_IMG:
+		case FLOAT_SAC:
 			if(strncasecmp(OPH_COMMON_FLOAT_TYPE,dim_type,OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
-				return OPH_FITS_ERROR;
+				return OPH_SAC_ERROR;
 			}
 			break;
-		case DOUBLE_IMG:
+		case DOUBLE_SAC:
 			if(strncasecmp(OPH_COMMON_DOUBLE_TYPE,dim_type,OPH_ODB_DIM_DIMENSION_TYPE_SIZE)){
-				return OPH_FITS_ERROR;
+				return OPH_SAC_ERROR;
 			}
 			break;
 		default:
@@ -3552,16 +3615,16 @@ int oph_fits_compare_fits_c_types(int id_container, int var_type, const char dim
 			break;
 			//return OPH_FITS_ERROR;
 	}
-	return OPH_FITS_SUCCESS;
+	return OPH_SAC_SUCCESS;
 }
 
-int oph_sac_get_sac_var(int id_container , SAC_var *measure, int i, SAC_var *var, short flag)
+int oph_sac_get_sac_var(int id_container , SAC_var *measure, int index, SAC_var *var, short flag)
 {
 	if(!measure || !var){
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_SAC_ERROR;
 	}
-	int retval = 0;
+	//int retval = 0;
 	// There are no dimensions and var id in sac file.
 	// Assume the id a sequential number for dimensions, and 0 for the measured variable
 /*
@@ -3589,20 +3652,20 @@ int oph_sac_get_sac_var(int id_container , SAC_var *measure, int i, SAC_var *var
 		var->varid = (int) strtol(s, NULL, 10);
 		*/
 		var->varid = measure->dims_id[index];
-		var->vartype=OPH_SAC_LONG_TYPE;
+		var->vartype=LONG_SAC;
 		var->ndims = 1;
   		var->dims_id = malloc( var->ndims * sizeof(int));
 		if(!(var->dims_id)){
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions fits ids" );
-			return OPH_FITS_ERROR;
+			return OPH_SAC_ERROR;
   		}
 		var->dims_id[0] = 1;
   		var->dims_length = malloc( var->ndims * sizeof(size_t));
 		if(!(var->dims_length)){
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions fits lengths" );
-			return OPH_FITS_ERROR;
+			return OPH_SAC_ERROR;
   		}
 		//var->dims_length[0] = *dims_length;
 		var->dims_length[0] = measure->dims_length[index];

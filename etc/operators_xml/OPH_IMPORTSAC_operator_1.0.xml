@@ -34,6 +34,17 @@ BLOCK and SAMPLE are the fixed names of the explicit and implicit dimensions.
 - run : If set to &apos;no&apos; the operator simulates the import and computes the fragmentation parameters 
 		that would be used, else if set to &apos;yes&apos; the actual import operation is executed.
 - src_path : path of the FITS file.
+- exp_dim : names of explicit dimensions.
+                		Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided
+                                It implicitly defines explicit dimension number and level (order).
+                                If default value &quot;auto&quot; is specified, then the first n-1 dimension of the measure in the nc file
+                                will be used as explicit dimensions.
+- imp_dim : names of implicit dimensions.
+                                Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided
+                                It implicitly defines implicit dimension number and level (order).  ^M
+                                Must be the same number of &quot;imp_concept_level&quot; ^M
+                                If default value &quot;auto&quot; is specified, then the last dimension of the measure in the nc file
+                                will be used as implicit dimension.^M
 - subset_dims : dimension names used for the subsetting: use BLOCK and/or SAMPLE.
 				Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
 				Must be the same number of &quot;subset_filter&quot; 
@@ -117,6 +128,8 @@ SUBMISSION STRING: &quot;operator=oph_importnc3;cwd=/session-code1;container=con
 		<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
 		<argument type="string" mandatory="yes">measure</argument>
 		<argument type="string" mandatory="yes">src_path</argument>
+		<argument type="string" mandatory="no" default="auto">exp_dim</argument>
+		<argument type="string" mandatory="no" default="auto">imp_dim</argument>
 		<argument type="string" mandatory="no" default="none">subset_dims</argument>
 		<argument type="string" mandatory="no" default="index" values="index|coord">subset_type</argument>
 		<argument type="string" mandatory="no" default="all">subset_filter</argument>

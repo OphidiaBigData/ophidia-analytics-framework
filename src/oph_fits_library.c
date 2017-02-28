@@ -1042,11 +1042,11 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
       //Fill array
       res = -1;
       if(type_flag == OPH_FITS_INT_FLAG){
-	res = fits_read_subset(fptr, LONG_IMG, start, count, NULL, NULL, (int*)(binary + jj*sizeof_var), NULL, &status);
+	res = fits_read_subset(fptr, TLONG, start, count, inc, NULL, (int*)(binary + jj*sizeof_var), NULL, &status);
         //res = nc_get_vara_int(ncid, measure->varid, start, count, (int*)(binary + jj*sizeof_var));
       }
       else if(type_flag == OPH_FITS_BYTE_FLAG){
-	res = fits_read_subset(fptr, BYTE_IMG, start, count, NULL, NULL, (unsigned char*)(binary+ jj*sizeof_var ), NULL, &status);
+	res = fits_read_subset(fptr, TBYTE, start, count, inc, NULL, (unsigned char*)(binary+ jj*sizeof_var ), NULL, &status);
         //res = nc_get_vara_uchar(ncid, measure->varid, start, count, (unsigned char*)(binary + jj*sizeof_var));
       }
       else if(type_flag == OPH_FITS_SHORT_FLAG){
@@ -1061,15 +1061,15 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
 */		
 
 
-		fits_read_subset(fptr, TSHORT, start, count, inc, NULL, (void*)(binary + jj*sizeof_var ), NULL, &status);
+		fits_read_subset(fptr, TSHORT, start, count, inc, NULL, (short*)(binary + jj*sizeof_var ), NULL, &status);
         //res = nc_get_vara_short(ncid, measure->varid, start, count, (short*)(binary + jj*sizeof_var));
       }
       else if(type_flag == OPH_FITS_LONG_FLAG){
-	res = fits_read_subset(fptr, LONGLONG_IMG, start, count, NULL, NULL, (long long*)(binary + jj*sizeof_var ), NULL, &status);
+	res = fits_read_subset(fptr, TLONGLONG, start, count, inc, NULL, (long long*)(binary + jj*sizeof_var ), NULL, &status);
         //res = nc_get_vara_longlong(ncid, measure->varid, start, count, (long long*)(binary + jj*sizeof_var));
       }
       else if(type_flag == OPH_FITS_FLOAT_FLAG){
-	res = fits_read_subset(fptr, FLOAT_IMG, start, count, NULL, NULL, (float*)(binary + jj*sizeof_var ), NULL, &status);
+	res = fits_read_subset(fptr, TFLOAT, start, count, inc, NULL, (float*)(binary + jj*sizeof_var ), NULL, &status);
         //res = nc_get_vara_float(ncid, measure->varid, start, count, (float*)(binary + jj*sizeof_var));
       }
       else if(type_flag == OPH_FITS_DOUBLE_FLAG){
@@ -1088,7 +1088,7 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
         //res = nc_get_vara_double(ncid, measure->varid, start, count, (double*)(binary + jj*sizeof_var));
       }
       else{
-	res = fits_read_subset(fptr, DOUBLE_IMG, start, count, NULL, NULL, (double*)(binary + jj*sizeof_var ), NULL, &status);
+	res = fits_read_subset(fptr, TDOUBLE, start, count, inc, NULL, (double*)(binary + jj*sizeof_var ), NULL, &status);
         //res = nc_get_vara_double(ncid, measure->varid, start, count, (double*)(binary + jj*sizeof_var));
       }
 char err_text[48];    //Descriptive text string (30 char max.) corresponding to a CFITSIO error status code
@@ -1230,23 +1230,23 @@ char err_text[48];    //Descriptive text string (30 char max.) corresponding to 
       char err_text[48];    //Descriptive text string (30 char max.) corresponding to a CFITSIO error status code
 
       if(type_flag == OPH_FITS_INT_FLAG){
-	res = fits_read_subset(fptr, LONG_IMG, start, count, NULL, NULL, (int*)(binary + jj*sizeof_var), NULL, &status);
+	res = fits_read_subset(fptr, TLONG, start, count, inc, NULL, (int*)(binary + jj*sizeof_var), NULL, &status);
         //res = nc_get_vara_int(ncid, measure->varid, start, count, (int*)(binary + jj*sizeof_var));
       }
       else if(type_flag == OPH_FITS_BYTE_FLAG){
-	res = fits_read_subset(fptr, BYTE_IMG, start, count, NULL, NULL, (unsigned char**)(binary + jj*sizeof_var), NULL, &status);
+	res = fits_read_subset(fptr, TBYTE, start, count, inc, NULL, (unsigned char**)(binary + jj*sizeof_var), NULL, &status);
         //res = nc_get_vara_uchar(ncid, measure->varid, start, count, (unsigned char*)(binary + jj*sizeof_var));
       }
       else if(type_flag == OPH_FITS_SHORT_FLAG){
-	res = fits_read_subset(fptr, SHORT_IMG, start, count, NULL, NULL, (short*)(binary + jj*sizeof_var), NULL, &status);
+	res = fits_read_subset(fptr, TSHORT, start, count, inc, NULL, (short*)(binary + jj*sizeof_var), NULL, &status);
         //res = nc_get_vara_short(ncid, measure->varid, start, count, (short*)(binary + jj*sizeof_var));
       }
       else if(type_flag == OPH_FITS_LONG_FLAG){
-	res = fits_read_subset(fptr, LONGLONG_IMG, start, count, NULL, NULL, (long long*)(binary + jj*sizeof_var), NULL, &status);	
+	res = fits_read_subset(fptr, TLONGLONG, start, count, inc, NULL, (long long*)(binary + jj*sizeof_var), NULL, &status);	
         //res = nc_get_vara_longlong(ncid, measure->varid, start, count, (long long*)(binary + jj*sizeof_var));
       }
       else if(type_flag == OPH_FITS_FLOAT_FLAG){
-	res = fits_read_subset(fptr, FLOAT_IMG, start, count, NULL, NULL, (float*)(binary + jj*sizeof_var), NULL, &status);
+	res = fits_read_subset(fptr, TFLOAT, start, count, inc, NULL, (float*)(binary + jj*sizeof_var), NULL, &status);
         //res = nc_get_vara_float(ncid, measure->varid, start, count, (float*)(binary + jj*sizeof_var));
       }
       else if(type_flag == OPH_FITS_DOUBLE_FLAG){
@@ -1266,7 +1266,7 @@ char err_text[48];    //Descriptive text string (30 char max.) corresponding to 
         //res = nc_get_vara_double(ncid, measure->varid, start, count, (double*)(binary + jj*sizeof_var));
       }
       else{
-	res = fits_read_subset(fptr, DOUBLE_IMG, start, count, NULL, NULL, (double*)(binary + jj*sizeof_var), NULL, &status);
+	res = fits_read_subset(fptr, TDOUBLE, start, count, inc, NULL, (double*)(binary + jj*sizeof_var), NULL, &status);
         //res = nc_get_vara_double(ncid, measure->varid, start, count, (double*)(binary + jj*sizeof_var));
       }
 
@@ -1757,23 +1757,23 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_
   int status = 0;
 
   if(type_flag == OPH_FITS_INT_FLAG){
-    res = fits_read_subset(fptr, LONG_IMG, start, count, NULL, NULL, (int*)(binary_cache), NULL, &status);
+    res = fits_read_subset(fptr, TLONG, start, count, inc, NULL, (int*)(binary_cache), NULL, &status);
     //res = nc_get_vara_int(ncid, measure->varid, start, count, (int*)(binary_cache));
   }
   else if(type_flag == OPH_FITS_BYTE_FLAG){
-    res = fits_read_subset(fptr, BYTE_IMG, start, count, NULL, NULL, (unsigned char*)(binary_cache), NULL, &status);   
+    res = fits_read_subset(fptr, TBYTE, start, count, inc, NULL, (unsigned char*)(binary_cache), NULL, &status);   
     //res = nc_get_vara_uchar(ncid, measure->varid, start, count, (unsigned char*)(binary_cache));
   }
   else if(type_flag == OPH_FITS_SHORT_FLAG){
-    res = fits_read_subset(fptr, SHORT_IMG, start, count, NULL, NULL, (short*)(binary_cache), NULL, &status);   
+    res = fits_read_subset(fptr, TSHORT, start, count, inc, NULL, (short*)(binary_cache), NULL, &status);   
     //res = nc_get_vara_short(ncid, measure->varid, start, count, (short*)(binary_cache));
   }
   else if(type_flag == OPH_FITS_LONG_FLAG){
-    res = fits_read_subset(fptr, LONGLONG_IMG, start, count, NULL, NULL, (long long*)(binary_cache), NULL, &status);   
+    res = fits_read_subset(fptr, TLONGLONG, start, count, inc, NULL, (long long*)(binary_cache), NULL, &status);   
     //res = nc_get_vara_longlong(ncid, measure->varid, start, count, (long long*)(binary_cache));
   }
   else if(type_flag == OPH_FITS_FLOAT_FLAG){
-    res = fits_read_subset(fptr, FLOAT_IMG, start, count, NULL, NULL, (float*)(binary_cache), NULL, &status);   
+    res = fits_read_subset(fptr, TFLOAT, start, count, inc, NULL, (float*)(binary_cache), NULL, &status);   
     //res = nc_get_vara_float(ncid, measure->varid, start, count, (float*)(binary_cache));
   }
   else if(type_flag == OPH_FITS_DOUBLE_FLAG){
@@ -1790,7 +1790,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_
     //res = nc_get_vara_double(ncid, measure->varid, start, count, (double*)(binary_cache));
   }
   else{
-    res = fits_read_subset(fptr, DOUBLE_IMG, start, count, NULL, NULL, (double*)(binary_cache), NULL, &status);   
+    res = fits_read_subset(fptr, TDOUBLE, start, count, inc, NULL, (double*)(binary_cache), NULL, &status);   
     //res = nc_get_vara_double(ncid, measure->varid, start, count, (double*)(binary_cache));
   }
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)

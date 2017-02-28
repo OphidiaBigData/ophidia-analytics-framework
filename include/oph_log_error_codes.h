@@ -1998,7 +1998,7 @@
 #define OPH_LOG_ANALITICS_OPERATOR_UNSET_ENV_ERROR				"Process finilization failed%s"
 
 /*OPH_IMPORTFITS OPERATOR LOG ERRORS*/
-#define OPH_LOG_GENERIC_FITS_OPEN_ERROR_NO_CONTAINER                                    "[CONTAINER: %s] Unable to open netcdf file: %s\n"
+#define OPH_LOG_GENERIC_FITS_OPEN_ERROR_NO_CONTAINER                                    "[CONTAINER: %s] Unable to open fits file: %s\n"
 #define OPH_LOG_OPH_IMPORTFITS_TASK_STRING_ERROR_NO_CONTAINER                     "[CONTAINER: %s] Task string not properly setted\n"
 #define OPH_LOG_OPH_IMPORTFITS_FITS_OPEN_ERROR_NO_CONTAINER                                 OPH_LOG_GENERIC_FITS_OPEN_ERROR_NO_CONTAINER
 #define OPH_LOG_OPH_IMPORTFITS_FITS_IFITS_VAR_ERROR_NO_CONTAINER                              "[CONTAINER: %s] Unable to read variable informations: %s\n"
@@ -2142,5 +2142,151 @@
 #define OPH_LOG_OPH_EXPORTFITS_IOPLUGIN_CLEANUP_ERROR                                   OPH_LOG_GENERIC_IOPLUGIN_CLEANUP_ERROR
 #define OPH_LOG_OPH_EXPORTFITS_READ_METADATA_ERROR                                      OPH_LOG_GENERIC_READ_METADATA_ERROR
 #define OPH_LOG_OPH_EXPORTFITS_WRITE_METADATA_ERROR                             OPH_LOG_GENERIC_WRITE_METADATA_ERROR
+
+/*OPH_IMPORTSAC OPERATOR LOG ERRORS*/
+#define OPH_LOG_GENERIC_SAC_OPEN_ERROR_NO_CONTAINER                                    "[CONTAINER: %s] Unable to open fits file: %s\n"
+#define OPH_LOG_OPH_IMPORTSAC_TASK_STRING_ERROR_NO_CONTAINER                     "[CONTAINER: %s] Task string not properly setted\n"
+#define OPH_LOG_OPH_IMPORTSAC_SAC_OPEN_ERROR_NO_CONTAINER                                 OPH_LOG_GENERIC_SAC_OPEN_ERROR_NO_CONTAINER
+#define OPH_LOG_OPH_IMPORTSAC_SAC_ISAC_VAR_ERROR_NO_CONTAINER                              "[CONTAINER: %s] Unable to read variable informations: %s\n"
+#define OPH_LOG_OPH_IMPORTSAC_WRONG_DIM_NUMBER_NO_CONTAINER                              "[CONTAINER: %s] Wrong number of dimensions (%d) provided in task string\n"
+#define OPH_LOG_OPH_IMPORTSAC_MEMORY_ERROR_NO_CONTAINER                                  OPH_LOG_GENERIC_MEMORY_ERROR_NO_CONTAINER
+#define OPH_LOG_OPH_IMPORTSAC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER              "[CONTAINER: %s] Unable to find dimension %s related to variable %s in in nc file\n"
+#define OPH_LOG_OPH_IMPORTSAC_MEMORY_ERROR_HANDLE                                                OPH_LOG_GENERIC_MEMORY_ERROR_HANDLE
+#define OPH_LOG_OPH_IMPORTSAC_INVALID_INPUT_STRING                                               OPH_LOG_GENERIC_INVALID_INPUT_STRING
+#define OPH_LOG_OPH_IMPORTSAC_MISSING_INPUT_PARAMETER                                    OPH_LOG_GENERIC_MISSING_INPUT_PARAMETER
+#define OPH_LOG_OPH_IMPORTSAC_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING     OPH_LOG_GENERIC_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING
+#define OPH_LOG_OPH_IMPORTSAC_OPHIDIADB_CONFIGURATION_FILE                               OPH_LOG_GENERIC_OPHIDIADB_CONFIGURATION_FILE
+#define OPH_LOG_OPH_IMPORTSAC_OPHIDIADB_CONNECTION_ERROR                                 OPH_LOG_GENERIC_OPHIDIADB_CONNECTION_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_DATACUBE_INSERT_ERROR                                              OPH_LOG_GENERIC_DATACUBE_INSERT_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_CUBEHASDIM_INSERT_ERROR                                    OPH_LOG_GENERIC_CUBEHASDIM_INSERT_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_DBMS_CONNECTION_ERROR                                              OPH_LOG_GENERIC_DBMS_CONNECTION_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_MASTER_TASK_INIT_FAILED_NO_CONTAINER               OPH_LOG_GENERIC_MASTER_TASK_INIT_FAILED_NO_CONTAINER
+#define OPH_LOG_OPH_IMPORTSAC_NULL_OPERATOR_HANDLE                                               OPH_LOG_GENERIC_NULL_OPERATOR_HANDLE
+#define OPH_LOG_OPH_IMPORTSAC_CONNECTION_STRINGS_NOT_FOUND                               OPH_LOG_GENERIC_CONNECTION_STRINGS_NOT_FOUND
+#define OPH_LOG_OPH_IMPORTSAC_DB_SELECTION_ERROR                                                 OPH_LOG_GENERIC_DB_SELECTION_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_STRING_BUFFER_OVERFLOW                                     OPH_LOG_GENERIC_STRING_BUFFER_OVERFLOW
+#define OPH_LOG_OPH_IMPORTSAC_FRAGMENT_INSERT_ERROR                                              OPH_LOG_GENERIC_FRAGMENT_INSERT_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_MEMORY_ERROR_INPUT_NO_CONTAINER                    OPH_LOG_GENERIC_MEMORY_ERROR_INPUT_WITH_CONTAINER
+#define OPH_LOG_OPH_IMPORTSAC_MEMORY_ERROR_INPUT                                                 OPH_LOG_GENERIC_MEMORY_ERROR_INPUT
+#define OPH_LOG_OPH_IMPORTSAC_NULL_OPERATOR_HANDLE_NO_CONTAINER                  OPH_LOG_GENERIC_NULL_OPERATOR_HANDLE_NO_CONTAINER
+#define OPH_LOG_OPH_IMPORTSAC_HOST_DBMS_COUNT_ERROR_NO_CONTAINER                 OPH_LOG_GENERIC_HOST_DBMS_COUNT_ERROR_NO_CONTAINER
+#define OPH_LOG_OPH_IMPORTSAC_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER           OPH_LOG_GENERIC_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER
+#define OPH_LOG_OPH_IMPORTSAC_OUTPUT_DATACUBE_EXISTS_NO_CONTAINER                OPH_LOG_GENERIC_OUTPUT_DATACUBE_EXISTS_NO_CONTAINER
+#define OPH_LOG_OPH_IMPORTSAC_INPUT_CONTAINER_ERROR_NO_CONTAINER                 OPH_LOG_GENERIC_OUTPUT_CONTAINER_ERROR_WITH_CONTAINER
+#define OPH_LOG_OPH_IMPORTSAC_OUTPUT_CONTAINER_ERROR_NO_CONTAINER                OPH_LOG_GENERIC_OUTPUT_CONTAINER_ERROR_WITH_CONTAINER
+#define OPH_LOG_OPH_IMPORTSAC_OUTPUT_CONTAINER_EXIST_ERROR                       OPH_LOG_GENERIC_OUTPUT_CONTAINER_EXIST_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_INSERT_CONTAINER_ERROR_NO_CONTAINER                OPH_LOG_GENERIC_INSERT_CONTAINER_ERROR_WITH_CONTAINER
+#define OPH_LOG_OPH_IMPORTSAC_INSERT_DIMENSION_ERROR                                     OPH_LOG_GENERIC_INSERT_DIMENSION_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_NO_INPUT_CONTAINER_NO_CONTAINER                    OPH_LOG_GENERIC_NO_INPUT_CONTAINER_WITH_CONTAINER
+#define OPH_LOG_OPH_IMPORTSAC_NO_VOCABULARY_NO_CONTAINER                                 OPH_LOG_GENERIC_NO_VOCABULARY_NO_CONTAINER
+#define OPH_LOG_OPH_IMPORTSAC_CREATE_ID_STRING_ERROR                                     OPH_LOG_GENERIC_CREATE_ID_STRING_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_VAR_TYPE_NOT_SUPPORTED                                     OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED
+#define OPH_LOG_OPH_IMPORTSAC_DIMENSION_READ_ERROR                                               OPH_LOG_GENERIC_DIMENSION_READ_ERROR2
+#define OPH_LOG_OPH_IMPORTSAC_DBMS_LIST_ERROR                                                    OPH_LOG_GENERIC_DBMS_LIST_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_DBMS_ERROR                                                                 OPH_LOG_GENERIC_DBMS_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_NEW_DB_ERROR                                                               OPH_LOG_GENERIC_NEW_DB_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_DB_INSERT_ERROR                                                    OPH_LOG_GENERIC_DB_INSERT_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_FRAGMENT_CREATION_ERROR                                    OPH_LOG_GENERIC_FRAGMENT_CREATION_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_FRAG_POPULATE_ERROR                                                OPH_LOG_GENERIC_FRAG_POPULATE_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_NO_ROWS_FOUND                                                              "No information found in key list\n"
+#define OPH_LOG_OPH_IMPORTSAC_READ_KEY_LIST                                                      "Unable to retreive key list for given input parameters\n"
+#define OPH_LOG_OPH_IMPORTSAC_SAC_NATTS_ERROR                                                             "Error while retrieving number of global attributes\n"
+#define OPH_LOG_OPH_IMPORTSAC_SAC_ATTRIBUTE_ERROR                                                 "Error while retrieving a global attribute\n"
+#define OPH_LOG_OPH_IMPORTSAC_SAC_NATTS_LOCAL_ERROR                                               "Error while retrieving number of local attributes\n"
+#define OPH_LOG_OPH_IMPORTSAC_SAC_ATTRIBUTE_LOCAL_ERROR                                   "Error while retrieving a local attribute\n"
+#define OPH_LOG_OPH_IMPORTSAC_USER_ID_ERROR                                                      OPH_LOG_GENERIC_USER_ID_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_METADATATYPE_ID_ERROR                                              "Unable to retreive metadata key type id\n"
+#define OPH_LOG_OPH_IMPORTSAC_INSERT_METADATAINSTASACE_ERROR                              "Unable to update metadatainstance table with key %s and value %s\n"
+#define OPH_LOG_OPH_IMPORTSAC_DIM_LOAD                                                                   OPH_LOG_GENERIC_DIM_LOAD_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_DIM_CONNECT                                                                OPH_LOG_GENERIC_DIM_CONNECT_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_DIM_USE_DB                                                                 OPH_LOG_GENERIC_DIM_USE_DB_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_DIM_TABLE_RETREIVE_ERROR                                   OPH_LOG_GENERIC_DIM_TABLE_RETREIVE_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_DIMENSION_ODB_ERROR                                                OPH_LOG_GENERIC_DIMENSION_ODB_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_DIMENSION_DIM_ERROR                                                "Unable to retreive dimension %s in dimension table.\n"
+#define OPH_LOG_OPH_IMPORTSAC_NO_GRID                                                                    OPH_LOG_GENERIC_NO_GRID
+#define OPH_LOG_OPH_IMPORTSAC_INPUT_DIMENSION_MISMATCH                                   OPH_LOG_GENERIC_INPUT_DIMENSION_MISMATCH
+#define OPH_LOG_OPH_IMPORTSAC_INPUT_GRID_DIMENSION_MISMATCH                              OPH_LOG_GENERIC_INPUT_GRID_DIMENSION_MISMATCH
+#define OPH_LOG_OPH_IMPORTSAC_DIM_READ_ERROR                                                             OPH_LOG_GENERIC_DIMENSIONS_DIM_READ_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_DIM_NOT_ALLOWED                                                    OPH_LOG_GENERIC_DIM_NOT_ALLOWED
+#define OPH_LOG_OPH_IMPORTSAC_DIM_ROW_ERROR                                                              OPH_LOG_GENERIC_IMPORTRANDDIMENSIONS_DIM_ROW_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_DIM_TYPE_MISMATCH_ERROR                                    OPH_LOG_GENERIC_DIM_TYPE_MISMATCH_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_GRID_INSERT_ERROR                                                  OPH_LOG_GENERIC_IMPORTRANDDIMENSIONS_GRID_INSERT_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_DIM_CONT_ERROR                                                     OPH_LOG_GENERIC_IMPORTRANDDIMENSIONS_DIM_CONT_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_DIMINST_INSERT_ERROR                                               OPH_LOG_GENERIC_IMPORTRANDDIMENSIONS_DIMINST_INSERT_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_INSERT_SOURCE_URI_ERROR                                    "Unable to insert source URI %s\n"
+#define OPH_LOG_OPH_IMPORTSAC_HIERARCHY_ERROR                                                    OPH_LOG_GENERIC_HIERARCHY_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_BAD2_PARAMETER                                                             OPH_LOG_GENERIC_BAD2_PARAMETER
+#define OPH_LOG_OPH_IMPORTSAC_PID_CREATION                                                               OPH_LOG_GENERIC_PID_CREATION
+#define OPH_LOG_OPH_IMPORTSAC_PID_INSERT                                                                 OPH_LOG_GENERIC_PID_INSERT
+#define OPH_LOG_OPH_IMPORTSAC_EXP_DIM_LEVEL_ERROR                                                "[CONTAINER %s] Explicit dimension levels aren't correct\n"
+#define OPH_LOG_OPH_IMPORTSAC_PID_URI_ERROR                                                              OPH_LOG_GENERIC_PID_URI_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_PID_SHOW_ERROR                                                             OPH_LOG_GENERIC_PID_SHOW_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_DATACUBE_PERMISSION_ERROR                                  OPH_LOG_GENERIC_DATACUBE_PERMISSION_ERROR_WITH_CONTAINER
+#define OPH_LOG_OPH_IMPORTSAC_CWD_ERROR                                                                  OPH_LOG_GENERIC_CWD_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER  "[CONTAINER: %s] Unable to retreive number of host or dbms or server type and partition %s are not available!\n"
+#define OPH_LOG_OPH_IMPORTSAC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER  "[CONTAINER: %s] Maximum number of fragments is: %d, specified fragmentation parameters are not allowed!\n"
+#define OPH_LOG_OPH_IMPORTSAC_HOST_DBMS_CONSTRAINT4_FAILED_NO_CONTAINER  "[CONTAINER: %s] Number of rows x fragment must be the same. %d is not an allowed value!\n"
+#define OPH_LOG_OPH_IMPORTSAC_IOPLUGIN_SETUP_ERROR                                               OPH_LOG_GENERIC_IOPLUGIN_SETUP_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_IOPLUGIN_CLEANUP_ERROR                                     OPH_LOG_GENERIC_IOPLUGIN_CLEANUP_ERROR
+#define OPH_LOG_OPH_IMPORTSAC_FRAG_PARAMS_ERROR                                      "[CONTAINER: %s] Fragmentation parameters cannot be set to 0\n"
+#define OPH_LOG_OPH_IMPORTSAC_COMPLIASACE_ERROR                                           "File is not compliant with the vocabulary\n"
+#define OPH_LOG_OPH_IMPORTSAC_INPUT_HIERARCHY_ERROR_NO_CONTAINER                 "[CONTAINER: %s] Unable to check input hierarchy %s, or it doesn't exists\n"
+#define OPH_LOG_OPH_IMPORTSAC_GRID_DELETE_ERROR                                  "Error while deleting grid related to container\n"
+#define OPH_LOG_OPH_IMPORTSAC_CONTAINER_DELETE_ERROR                             "Error while deleting input container.\n"
+#define OPH_LOG_OPH_IMPORTSAC_DIM_TABLE_DELETE_ERROR                             "Error while deleting dimension table"
+#define OPH_LOG_OPH_IMPORTSAC_DB_CREATION                                                        "[CONTAINER: %s] Unable to create dimension database.\n"
+#define OPH_LOG_OPH_IMPORTSAC_DIM_TABLE_CREATION_ERROR                           "Error while creating dimension table\n"
+#define OPH_LOG_OPH_IMPORTSAC_FRAGMENTATION_ERROR                                "Error unable to generate this number of fragments\n"
+#define OPH_LOG_OPH_IMPORTSAC_UPDATE_TIME_ERROR                                          "Error while updating time dimension metadata\n"
+#define OPH_LOG_OPH_IMPORTSAC_SET_TIME_ERROR                                             "Error while setting time dimension metadata\n"
+
+/*OPH_EXPORTSAC OPERATOR LOG ERRORS*/
+#define OPH_LOG_OPH_EXPORTSAC_DIMENSION_FEATURES_ERROR                                 "Unable to retrieve datacube - dimension relations features.\n"
+#define OPH_LOG_OPH_EXPORTSAC_MEMORY_ERROR                                                     OPH_LOG_GENERIC_MEMORY_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_INTERNAL_ERROR                                           "Internal error.\n"
+#define OPH_LOG_OPH_EXPORTSAC_SAC_OUTPUT_FILE_ERROR                                   "Unable to create fits output file: %s\n"
+#define OPH_LOG_OPH_EXPORTSAC_SAC_DEFINE_DIM_ERROR                                    "Unable to define dimensions %s: %s\n"
+#define OPH_LOG_OPH_EXPORTSAC_SAC_DEFINE_VAR_ERROR                                    "Unable to define variable: %s\n"
+#define OPH_LOG_OPH_EXPORTSAC_SAC_END_DEFINITION_ERROR                                "Unable to complete output fits definition: %s\n"
+#define OPH_LOG_OPH_EXPORTSAC_VAR_WRITE_ERROR                                          "Unable to write variable values: %s\n"
+#define OPH_LOG_OPH_EXPORTSAC_MEMORY_ERROR_HANDLE                                      OPH_LOG_GENERIC_MEMORY_ERROR_HANDLE
+#define OPH_LOG_OPH_EXPORTSAC_INVALID_INPUT_STRING                                     OPH_LOG_GENERIC_INVALID_INPUT_STRING
+#define OPH_LOG_OPH_EXPORTSAC_NULL_OPERATOR_HANDLE                                     OPH_LOG_GENERIC_NULL_OPERATOR_HANDLE
+#define OPH_LOG_OPH_EXPORTSAC_MEMORY_ERROR_INPUT                                       OPH_LOG_GENERIC_MEMORY_ERROR_INPUT
+#define OPH_LOG_OPH_EXPORTSAC_DATACUBE_READ_ERROR                                      OPH_LOG_GENERIC_DATACUBE_READ_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_MASTER_TASK_INIT_FAILED                          OPH_LOG_GENERIC_MASTER_TASK_INIT_FAILED
+#define OPH_LOG_OPH_EXPORTSAC_RETREIVE_IDS_ERROR                                       OPH_LOG_GENERIC_RETREIVE_IDS_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_ID_STRING_SPLIT_ERROR                                    OPH_LOG_GENERIC_ID_STRING_SPLIT_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_CONNECTION_STRINGS_NOT_FOUND                     OPH_LOG_GENERIC_CONNECTION_STRINGS_NOT_FOUND
+#define OPH_LOG_OPH_EXPORTSAC_DBMS_CONNECTION_ERROR                                    OPH_LOG_GENERIC_DBMS_CONNECTION_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_DB_SELECTION_ERROR                                       OPH_LOG_GENERIC_DB_SELECTION_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_STRING_BUFFER_OVERFLOW                                   OPH_LOG_GENERIC_STRING_BUFFER_OVERFLOW
+#define OPH_LOG_OPH_EXPORTSAC_DIR_CREATION_ERROR                                       OPH_LOG_GENERIC_DIR_CREATION_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_DATACUBE_EXPORTED                                                "Dataset has been already exported\n"
+#define OPH_LOG_OPH_EXPORTSAC_READ_FRAG_ERROR                                          OPH_LOG_GENERIC_READ_FRAG_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_MISSING_FIELDS                                           OPH_LOG_GENERIC_MISSING_FIELD
+#define OPH_LOG_OPH_EXPORTSAC_VAR_TYPE_NOT_SUPPORTED                           OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED
+#define OPH_LOG_OPH_EXPORTSAC_MAX_DIM_ERROR                                                    OPH_LOG_GENERIC_MAX_DIM_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_CUBEHASDIM_READ_ERROR                                    OPH_LOG_GENERIC_CUBEHASDIM_READ_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_DIM_LOAD                                                         OPH_LOG_GENERIC_DIM_LOAD_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_DIM_CONNECT                                                      OPH_LOG_GENERIC_DIM_CONNECT_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_DIM_USE_DB                                                               OPH_LOG_GENERIC_DIM_USE_DB_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_DIM_TABLE_RETREIVE_ERROR                         OPH_LOG_GENERIC_DIM_TABLE_RETREIVE_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_DIMENSION_READ_ERROR                                     OPH_LOG_GENERIC_DIMENSION_READ_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_TYPE_NOT_SUPPORTED                                               OPH_LOG_GENERIC_TYPE_NOT_SUPPORTED
+#define OPH_LOG_OPH_EXPORTSAC_DIM_READ_ERROR                                                   OPH_LOG_GENERIC_DIM_READ_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_PID_ERROR                                                                OPH_LOG_GENERIC_PID_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_MISSING_INPUT_PARAMETER                          OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER
+#define OPH_LOG_OPH_EXPORTSAC_NO_INPUT_DATACUBE                                                OPH_LOG_GENERIC_NO_INPUT_DATACUBE_PID
+#define OPH_LOG_OPH_EXPORTSAC_OPHIDIADB_CONFIGURATION_FILE                     OPH_LOG_GENERIC_OPHIDIADB_CONFIGURATION_FILE_NO_CONTAINER
+#define OPH_LOG_OPH_EXPORTSAC_OPHIDIADB_CONNECTION_ERROR                       OPH_LOG_GENERIC_OPHIDIADB_CONNECTION_ERROR_NO_CONTAINER
+#define OPH_LOG_OPH_EXPORTSAC_NO_INPUT_CONTAINER                                       OPH_LOG_GENERIC_NO_INPUT_CONTAINER_PID
+#define OPH_LOG_OPH_EXPORTSAC_DATACUBE_AVAILABILITY_ERROR                      OPH_LOG_GENERIC_DATACUBE_AVAILABILITY_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_DATACUBE_FOLDER_ERROR                                    OPH_LOG_GENERIC_DATACUBE_FOLDER_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_DATACUBE_PERMISSION_ERROR                                OPH_LOG_GENERIC_DATACUBE_PERMISSION_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_IOPLUGIN_SETUP_ERROR                                             OPH_LOG_GENERIC_IOPLUGIN_SETUP_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_IOPLUGIN_CLEANUP_ERROR                                   OPH_LOG_GENERIC_IOPLUGIN_CLEANUP_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_READ_METADATA_ERROR                                      OPH_LOG_GENERIC_READ_METADATA_ERROR
+#define OPH_LOG_OPH_EXPORTSAC_WRITE_METADATA_ERROR                             OPH_LOG_GENERIC_WRITE_METADATA_ERROR
 
 #endif  //__OPH_LOG_ERROR_CODES_H

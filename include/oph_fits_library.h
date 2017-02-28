@@ -53,7 +53,7 @@ struct _FITS_dim
 {
         int dimid;
 	// fits files have no dimensions name. So, they are fixed as NAXIS1, NAXIS2, ..., NAXISn
-        char dimname[16];
+        char dimname[256];
 	// always integer
         short int dimtype;
         int dimsize;

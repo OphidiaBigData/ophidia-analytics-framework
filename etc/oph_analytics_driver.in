@@ -152,5 +152,3 @@ LIB     @MYSQL_LDFLAGS@
 @DRIVER_PATH@/liboph_importsacoperator.so
 LIB     @MYSQL_LDFLAGS@
 [OPH_EXPORTSAC]
-@DRIVER_PATH@/liboph_exportsacoperator.so
-LIB     @MYSQL_LDFLAGS@
