@@ -89,7 +89,6 @@ int oph_set_env(HASHTBL *task_tbl, oph_operator_struct* handle)
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Driver library not found\n");
 	return OPH_ANALYTICS_OPERATOR_LIB_NOT_FOUND;
   }
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "LIBRARY %s\n", handle->lib);
 
   if (!(handle->dlh = (lt_dlhandle) lt_dlopen (handle->lib))) {
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "lt_dlopen error: %s\n", lt_dlerror());

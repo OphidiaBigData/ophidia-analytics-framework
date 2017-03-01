@@ -1066,7 +1066,7 @@ int oph_sac_populate_fragment_from_sac2(oph_ioserver_handler *server, oph_odb_fr
       else if(type_flag == OPH_SAC_FLOAT_FLAG){
 //	res = fits_read_subset(fptr, FLOAT_IMG, start, count, NULL, NULL, (float*)(binary + jj*sizeof_var ), NULL, &status);
 
-	beginReadingPoint=hdi->startDataPoint+ (start[0] + (start[1]*count[0]))*sizeof(float);
+	beginReadingPoint=hdi->startDataPoint+ ( (start[0]-1) + ( (start[1]-1)*count[0]))*sizeof(float);
 
 	fseek(filesac,beginReadingPoint,SEEK_SET);
 	long int samplesToRead = count[0];
@@ -1447,10 +1447,10 @@ int oph_sac_populate_fragment_from_sac3(oph_ioserver_handler *server, oph_odb_fr
   }
 
   //If flag is set call old approach, else continue
-  if(!whole_fragment || dimension_ordered || !whole_explicit){
+  //if(!whole_fragment || dimension_ordered || !whole_explicit){
     //return oph_nc_populate_fragment_from_nc2(server, frag, ncid, tuplexfrag_number, array_length, compressed, measure);
     return oph_sac_populate_fragment_from_sac2(server, frag, filesac, tuplexfrag_number, array_length, compressed, measure, hdi);
-  }
+  //}
 
 
   //Compute number of tuples per insert (regular case)
@@ -1786,8 +1786,9 @@ int oph_sac_populate_fragment_from_sac3(oph_ioserver_handler *server, oph_odb_fr
   }
   else if(type_flag == OPH_SAC_FLOAT_FLAG){
     //res = fits_read_subset(fptr, FLOAT_IMG, start, count, NULL, NULL, (float*)(binary_cache), NULL, &status);
+        	pmesg(LOG_ERROR, __FILE__, __LINE__, "XXXX READ DATA\n");
 
-        beginReadingPoint=hdi->startDataPoint+ (start[0] + (start[1]*count[0]))*sizeof(float);
+        beginReadingPoint=hdi->startDataPoint+ ( (start[0]-1) + ( (start[1]-1)*count[0]))*sizeof(float);
 
         fseek(filesac,beginReadingPoint,SEEK_SET);
         long int samplesToRead = count[0];
@@ -1797,6 +1798,7 @@ int oph_sac_populate_fragment_from_sac3(oph_ioserver_handler *server, oph_odb_fr
         	to_padd = count[0] - hdi->samplesForLastBlock;
                 samplesToRead = hdi->samplesForLastBlock;
         }
+        	pmesg(LOG_ERROR, __FILE__, __LINE__, "XXXX BEGIN1 %d, BEGIN2 %d, start[0] %d, start[1] %d, count[0] %d samptoread %d\n", hdi->startDataPoint, beginReadingPoint, start[0], start[1], count[0], samplesToRead);
         float* data;
         if(getSacData(filesac, &data, samplesToRead)){
         	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unble to get data from sac file\n");
@@ -1827,6 +1829,13 @@ int oph_sac_populate_fragment_from_sac3(oph_ioserver_handler *server, oph_odb_fr
                         memcpy(binary_cache + pa*sizeof(float), &myf, sizeof(float));
                 }
         }
+	int uu;
+	float* ui=data;
+	for(uu=0; uu < samplesToRead; uu++){
+        	pmesg(LOG_ERROR, __FILE__, __LINE__, "XXXX DATA %f\n", *ui);
+		ui++;
+	}
+		
         free(data);
         data = NULL;
         
@@ -3652,7 +3661,14 @@ int oph_sac_get_sac_var(int id_container , SAC_var *measure, int index, SAC_var 
 		var->varid = (int) strtol(s, NULL, 10);
 		*/
 		var->varid = measure->dims_id[index];
-		var->vartype=LONG_SAC;
+		if (var->varid == 2){
+			//BLOCK
+			var->vartype=INT_SAC;
+		}
+		else{
+			//SAMPLE
+			var->vartype=DOUBLE_SAC;
+		}
 		var->ndims = 1;
   		var->dims_id = malloc( var->ndims * sizeof(int));
 		if(!(var->dims_id)){
