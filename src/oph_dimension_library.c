@@ -313,15 +313,19 @@ int oph_day_to_date(long long g, int *yy, int *mm, int *dd, int *wd, int *yd, op
 		return OPH_DIM_DATA_ERROR;
 
 	if (wd || yd) {
+		time_t rawtime;
+		time(&rawtime);
 		struct tm timeinfo;
+		if (!localtime_r(&rawtime, &timeinfo))
+			return OPH_DIM_SYSTEM_ERROR;
 		timeinfo.tm_year = *yy - 1900;
 		timeinfo.tm_mon = *mm - 1;
 		timeinfo.tm_mday = *dd;
 		mktime(&timeinfo);
 		if (wd)
-			*wd = timeinfo.tm_wday;
+			*wd = (timeinfo.tm_wday ? timeinfo.tm_wday : OPH_ODB_DIM_WEEK_NUMBER) - 1;	// Sunday will be marked with the last index
 		if (yd)
-			*yd = timeinfo.tm_yday + 1;
+			*yd = timeinfo.tm_yday;
 	}
 
 	return OPH_DIM_SUCCESS;
@@ -625,10 +629,10 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 			}
 			if (first_element)
 				break;
-			prev_week = (tm_prev->tm_yday + (tm_prev->tm_wday + 8 - tm_prev->tm_yday % 7) % 7 ) / 7;
-			base_week = (tm_base.tm_yday + (tm_base.tm_wday + 8 - tm_base.tm_yday % 7) % 7 ) / 7;
-			if ((midnight && (prev_week == base_week) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && !tm_prev->tm_wday) || ((prev_week != base_week)
-				&& (!midnight || ((prev_week + 1) % 53 != base_week) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || tm_prev->tm_wday)))
+			prev_week = (tm_prev->tm_yday + (tm_prev->tm_wday + OPH_ODB_DIM_WEEK_NUMBER - tm_prev->tm_yday % OPH_ODB_DIM_WEEK_NUMBER) % OPH_ODB_DIM_WEEK_NUMBER) / OPH_ODB_DIM_WEEK_NUMBER;
+			base_week = (tm_base.tm_yday + (tm_base.tm_wday + OPH_ODB_DIM_WEEK_NUMBER - tm_base.tm_yday % OPH_ODB_DIM_WEEK_NUMBER) % OPH_ODB_DIM_WEEK_NUMBER) / OPH_ODB_DIM_WEEK_NUMBER;
+			if ((midnight && (prev_week == base_week) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && !tm_prev->tm_wday)
+			    || ((prev_week != base_week) && (!midnight || ((prev_week + 1) % 53 != base_week) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || tm_base.tm_wday)))
 				break;
 		case 'M':
 			if (concept_level_out != 'w') {
@@ -644,7 +648,7 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 					centroid = 0;
 				}
 				if (first_element || (midnight && (tm_prev->tm_mon == tm_base.tm_mon) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1))
-					|| ((tm_prev->tm_mon != tm_base.tm_mon)
+				    || ((tm_prev->tm_mon != tm_base.tm_mon)
 					&& (!midnight || ((tm_prev->tm_mon + 1) % 12 != tm_base.tm_mon) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1))))
 					break;
 			}
@@ -663,7 +667,7 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 					centroid = 0;
 				}
 				if (first_element || (midnight && (tm_prev->tm_mon / 3 == tm_base.tm_mon / 3) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1))
-					|| ((tm_prev->tm_mon / 3 != tm_base.tm_mon / 3)
+				    || ((tm_prev->tm_mon / 3 != tm_base.tm_mon / 3)
 					&& (!midnight || ((tm_prev->tm_mon / 3 + 1) % 4 != tm_base.tm_mon / 3) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1))))
 					break;
 			}
