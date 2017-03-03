@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_encrypt" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Encrypt the input array using a standard cryptographic hash algorithm. 
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are pairs of:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : not used.
+- measure : input measure.
+- algorithm : possible values are &apos;md5&apos;, &apos;sha256&apos;, &apos;sha512&apos;
+
+[Return type]
+Binary-array.
+        
+[Examples]
+oph_encrypt(&apos;&apos;,&apos;&apos;,measure,&apos;sha256&apos;)</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>02/03/2017</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+	<operation type="simple"/>
+    </info>
+    <args>
+	<argument type="oph_type" mandatory="yes">input measure type</argument>
+        <argument type="oph_type" mandatory="yes">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="string" mandatory="no" default="md5">algorithm</argument>
+    </args>
+</primitive>
