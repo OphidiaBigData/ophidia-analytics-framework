@@ -120,8 +120,22 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	if (!(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure = (char *) strdup(value))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INTERCUBE_MEMORY_ERROR_INPUT, "output measure");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INTERCUBE_MEMORY_ERROR_INPUT, "measure");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+	// Only for backward compatibility
+	if (!strncasecmp(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure, OPH_COMMON_NULL_VALUE, OPH_TP_TASKLEN)) {
+		value = hashtbl_get(task_tbl, "output_measure");
+		if (!value) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", "output_measure");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, "output_measure");
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		if (!(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure = (char *) strdup(value))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INTERCUBE_MEMORY_ERROR_INPUT, "output measure");
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
 	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_REDUCTION_OPERATION);
