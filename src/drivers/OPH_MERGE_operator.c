@@ -1143,6 +1143,7 @@ int task_execute(oph_operator_struct * handle)
 	frag_count = 0;
 	new_input_frag_count = 0;
 	new_frag_flag = 0;
+	char fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE];
 
 	//For each input DBMS
 	for (i = 0; i < dbmss_in.size; i++) {
@@ -1303,10 +1304,10 @@ int task_execute(oph_operator_struct * handle)
 					new_frag.frag_relative_index = ((OPH_MERGE_operator_handle *) handle->operator_handle)->output_fragment_id_start_position + frag_count + 1;
 					new_frag.db_instance = &(db_out);
 
-					if (oph_dc2_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &(new_frag.fragment_name))) {
+					if (oph_dc2_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &fragment_name)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag  name exceed limit.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container,
-							OPH_LOG_OPH_MERGE_STRING_BUFFER_OVERFLOW, "fragment name", new_frag.fragment_name);
+							OPH_LOG_OPH_MERGE_STRING_BUFFER_OVERFLOW, "fragment name", fragment_name);
 						oph_dc2_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &dbms_out);
 						oph_dc2_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbmss_in.value[i]));
 						oph_dc2_cleanup_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server);
@@ -1330,6 +1331,8 @@ int task_execute(oph_operator_struct * handle)
 						}
 						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
+					strcpy(new_frag.fragment_name, fragment_name);
+
 					//Create Empty fragment
 					if (oph_dc2_create_empty_fragment(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &new_frag)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating fragment.\n");

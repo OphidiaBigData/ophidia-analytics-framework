@@ -1297,7 +1297,7 @@ int task_execute(oph_operator_struct * handle)
 				//Change fragment fields
 				frags[0].value[k].id_datacube = id_datacube_out;
 				strncpy(frags[0].value[k].fragment_name, 1 + strchr(frag_name_out, '.'), OPH_ODB_STGE_FRAG_NAME_SIZE);
-				frags[0].value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE];
+				frags[0].value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
 
 				//Insert new fragment
 				if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &(frags[0].value[k]))) {
