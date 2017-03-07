@@ -183,15 +183,15 @@ int oph_odb_stge_retrieve_dbmsinstance(ophidiadb * oDB, int id_dbms, oph_odb_dbm
 
 	if ((row = mysql_fetch_row(res)) != NULL) {
 		dbms->id_dbms = (int) strtol(row[0], NULL, 10);
-		memset(&(dbms->hostname), 0, OPH_ODB_STGE_HOST_NAME_SIZE);
+		memset(&(dbms->hostname), 0, OPH_ODB_STGE_HOST_NAME_SIZE + 1);
 		strncpy(dbms->hostname, row[1], OPH_ODB_STGE_HOST_NAME_SIZE);
-		memset(&(dbms->login), 0, OPH_ODB_STGE_LOGIN_SIZE);
+		memset(&(dbms->login), 0, OPH_ODB_STGE_LOGIN_SIZE + 1);
 		strncpy(dbms->login, row[2], OPH_ODB_STGE_LOGIN_SIZE);
-		memset(&(dbms->pwd), 0, OPH_ODB_STGE_PWD_SIZE);
+		memset(&(dbms->pwd), 0, OPH_ODB_STGE_PWD_SIZE + 1);
 		strncpy(dbms->pwd, row[3], OPH_ODB_STGE_PWD_SIZE);
 		dbms->port = (row[4] ? (int) strtol(row[4], NULL, 10) : 0);
 		dbms->fs_type = (row[5] ? (int) strtol(row[5], NULL, 10) : 0);
-		memset(&(dbms->io_server_type), 0, OPH_ODB_STGE_SERVER_NAME_SIZE);
+		memset(&(dbms->io_server_type), 0, OPH_ODB_STGE_SERVER_NAME_SIZE + 1);
 		strncpy(dbms->io_server_type, row[6], OPH_ODB_STGE_SERVER_NAME_SIZE);
 	}
 	mysql_free_result(res);
@@ -315,7 +315,7 @@ int oph_odb_stge_fetch_db_connection_string(ophidiadb * oDB, int datacube_id, in
 		//Found new DB
 		dbs->value[i_db].id_db = (int) strtol(row[6], NULL, 10);
 		dbs->value[i_db].id_dbms = (int) strtol(row[0], NULL, 10);
-		memset(&(dbs->value[i_db].db_name), 0, OPH_ODB_STGE_DB_NAME_SIZE);
+		memset(&(dbs->value[i_db].db_name), 0, OPH_ODB_STGE_DB_NAME_SIZE + 1);
 		strncpy(dbs->value[i_db].db_name, row[7], OPH_ODB_STGE_DB_NAME_SIZE);
 
 		//Found new DBMS
@@ -330,14 +330,14 @@ int oph_odb_stge_fetch_db_connection_string(ophidiadb * oDB, int datacube_id, in
 			dbmss->value = curr_dbms;
 			dbmss->size++;
 			dbmss->value[i_dbms].id_dbms = (int) strtol(row[0], NULL, 10);
-			memset(&(dbmss->value[i_dbms].login), 0, OPH_ODB_STGE_LOGIN_SIZE);
+			memset(&(dbmss->value[i_dbms].login), 0, OPH_ODB_STGE_LOGIN_SIZE + 1);
 			strncpy(dbmss->value[i_dbms].login, row[1], OPH_ODB_STGE_LOGIN_SIZE);
-			memset(&(dbmss->value[i_dbms].pwd), 0, OPH_ODB_STGE_PWD_SIZE);
+			memset(&(dbmss->value[i_dbms].pwd), 0, OPH_ODB_STGE_PWD_SIZE + 1);
 			strncpy(dbmss->value[i_dbms].pwd, row[2], OPH_ODB_STGE_PWD_SIZE);
 			dbmss->value[i_dbms].port = (row[3] ? (int) strtol(row[3], NULL, 10) : 0);
-			memset(&(dbmss->value[i_dbms].hostname), 0, OPH_ODB_STGE_HOST_NAME_SIZE);
+			memset(&(dbmss->value[i_dbms].hostname), 0, OPH_ODB_STGE_HOST_NAME_SIZE + 1);
 			strncpy(dbmss->value[i_dbms].hostname, row[4], OPH_ODB_STGE_HOST_NAME_SIZE);
-			memset(&(dbmss->value[i_dbms].io_server_type), 0, OPH_ODB_STGE_SERVER_NAME_SIZE);
+			memset(&(dbmss->value[i_dbms].io_server_type), 0, OPH_ODB_STGE_SERVER_NAME_SIZE + 1);
 			strncpy(dbmss->value[i_dbms].io_server_type, row[5], OPH_ODB_STGE_SERVER_NAME_SIZE);
 			//Set current dbms
 			curr_dbms_id = dbmss->value[i_dbms].id_dbms;
@@ -418,14 +418,14 @@ int oph_odb_stge_fetch_dbms_connection_string(ophidiadb * oDB, int id_datacube, 
 	//Fill connection strings structures
 	while ((row = mysql_fetch_row(res))) {
 		dbmss->value[i_dbms].id_dbms = (int) strtol(row[0], NULL, 10);
-		memset(&(dbmss->value[i_dbms].login), 0, OPH_ODB_STGE_LOGIN_SIZE);
+		memset(&(dbmss->value[i_dbms].login), 0, OPH_ODB_STGE_LOGIN_SIZE + 1);
 		strncpy(dbmss->value[i_dbms].login, row[1], OPH_ODB_STGE_LOGIN_SIZE);
-		memset(&(dbmss->value[i_dbms].pwd), 0, OPH_ODB_STGE_PWD_SIZE);
+		memset(&(dbmss->value[i_dbms].pwd), 0, OPH_ODB_STGE_PWD_SIZE + 1);
 		strncpy(dbmss->value[i_dbms].pwd, row[2], OPH_ODB_STGE_PWD_SIZE);
 		dbmss->value[i_dbms].port = (row[3] ? (int) strtol(row[3], NULL, 10) : 0);
-		memset(&(dbmss->value[i_dbms].hostname), 0, OPH_ODB_STGE_HOST_NAME_SIZE);
+		memset(&(dbmss->value[i_dbms].hostname), 0, OPH_ODB_STGE_HOST_NAME_SIZE + 1);
 		strncpy(dbmss->value[i_dbms].hostname, row[4], OPH_ODB_STGE_HOST_NAME_SIZE);
-		memset(&(dbmss->value[i_dbms].io_server_type), 0, OPH_ODB_STGE_SERVER_NAME_SIZE);
+		memset(&(dbmss->value[i_dbms].io_server_type), 0, OPH_ODB_STGE_SERVER_NAME_SIZE + 1);
 		strncpy(dbmss->value[i_dbms].io_server_type, row[5], OPH_ODB_STGE_SERVER_NAME_SIZE);
 		i_dbms++;
 	}
@@ -575,7 +575,7 @@ int oph_odb_stge_fetch_fragment_connection_string(ophidiadb * oDB, int id_datacu
 		frags->value[i_frag].frag_relative_index = (int) strtol(row[2], NULL, 10);
 		frags->value[i_frag].id_datacube = (int) strtol(row[1], NULL, 10);
 		frags->value[i_frag].id_db = (int) strtol(row[12], NULL, 10);
-		memset(&(frags->value[i_frag].fragment_name), 0, OPH_ODB_STGE_FRAG_NAME_SIZE);
+		memset(&(frags->value[i_frag].fragment_name), 0, OPH_ODB_STGE_FRAG_NAME_SIZE + 1);
 		strncpy(frags->value[i_frag].fragment_name, row[0], OPH_ODB_STGE_FRAG_NAME_SIZE);
 		frags->value[i_frag].id_fragment = (int) strtol(row[3], NULL, 10);
 		frags->value[i_frag].key_start = (int) strtol(row[4], NULL, 10);
@@ -594,7 +594,7 @@ int oph_odb_stge_fetch_fragment_connection_string(ophidiadb * oDB, int id_datacu
 			dbs->size++;
 			dbs->value[i_db].id_db = (int) strtol(row[12], NULL, 10);
 			dbs->value[i_db].id_dbms = (int) strtol(row[6], NULL, 10);
-			memset(&(dbs->value[i_db].db_name), 0, OPH_ODB_STGE_DB_NAME_SIZE);
+			memset(&(dbs->value[i_db].db_name), 0, OPH_ODB_STGE_DB_NAME_SIZE + 1);
 			strncpy(dbs->value[i_db].db_name, row[13], OPH_ODB_STGE_DB_NAME_SIZE);
 
 			//Found new DBMS
@@ -610,14 +610,14 @@ int oph_odb_stge_fetch_fragment_connection_string(ophidiadb * oDB, int id_datacu
 				dbmss->value = curr_dbms;
 				dbmss->size++;
 				dbmss->value[i_dbms].id_dbms = (int) strtol(row[6], NULL, 10);
-				memset(&(dbmss->value[i_dbms].login), 0, OPH_ODB_STGE_LOGIN_SIZE);
+				memset(&(dbmss->value[i_dbms].login), 0, OPH_ODB_STGE_LOGIN_SIZE + 1);
 				strncpy(dbmss->value[i_dbms].login, row[7], OPH_ODB_STGE_LOGIN_SIZE);
-				memset(&(dbmss->value[i_dbms].pwd), 0, OPH_ODB_STGE_PWD_SIZE);
+				memset(&(dbmss->value[i_dbms].pwd), 0, OPH_ODB_STGE_PWD_SIZE + 1);
 				strncpy(dbmss->value[i_dbms].pwd, row[8], OPH_ODB_STGE_PWD_SIZE);
 				dbmss->value[i_dbms].port = (row[9] ? (int) strtol(row[9], NULL, 10) : 0);
-				memset(&(dbmss->value[i_dbms].hostname), 0, OPH_ODB_STGE_HOST_NAME_SIZE);
+				memset(&(dbmss->value[i_dbms].hostname), 0, OPH_ODB_STGE_HOST_NAME_SIZE + 1);
 				strncpy(dbmss->value[i_dbms].hostname, row[10], OPH_ODB_STGE_HOST_NAME_SIZE);
-				memset(&(dbmss->value[i_dbms].io_server_type), 0, OPH_ODB_STGE_SERVER_NAME_SIZE);
+				memset(&(dbmss->value[i_dbms].io_server_type), 0, OPH_ODB_STGE_SERVER_NAME_SIZE + 1);
 				strncpy(dbmss->value[i_dbms].io_server_type, row[11], OPH_ODB_STGE_SERVER_NAME_SIZE);
 				//Set current dbms
 				curr_dbms_id = dbmss->value[i_dbms].id_dbms;
@@ -789,7 +789,7 @@ int oph_odb_stge_fetch_fragment_connection_string_for_deletion(ophidiadb * oDB, 
 		frags->value[i_frag].frag_relative_index = (int) strtol(row[2], NULL, 10);
 		frags->value[i_frag].id_datacube = (int) strtol(row[1], NULL, 10);
 		frags->value[i_frag].id_db = (int) strtol(row[12], NULL, 10);
-		memset(&(frags->value[i_frag].fragment_name), 0, OPH_ODB_STGE_FRAG_NAME_SIZE);
+		memset(&(frags->value[i_frag].fragment_name), 0, OPH_ODB_STGE_FRAG_NAME_SIZE + 1);
 		strncpy(frags->value[i_frag].fragment_name, row[0], OPH_ODB_STGE_FRAG_NAME_SIZE);
 		frags->value[i_frag].id_fragment = (int) strtol(row[3], NULL, 10);
 		frags->value[i_frag].key_start = (int) strtol(row[4], NULL, 10);
@@ -808,7 +808,7 @@ int oph_odb_stge_fetch_fragment_connection_string_for_deletion(ophidiadb * oDB, 
 			dbs->size++;
 			dbs->value[i_db].id_db = (int) strtol(row[12], NULL, 10);
 			dbs->value[i_db].id_dbms = (int) strtol(row[6], NULL, 10);
-			memset(&(dbs->value[i_db].db_name), 0, OPH_ODB_STGE_DB_NAME_SIZE);
+			memset(&(dbs->value[i_db].db_name), 0, OPH_ODB_STGE_DB_NAME_SIZE + 1);
 			strncpy(dbs->value[i_db].db_name, row[13], OPH_ODB_STGE_DB_NAME_SIZE);
 
 			//Found new DBMS
@@ -824,14 +824,14 @@ int oph_odb_stge_fetch_fragment_connection_string_for_deletion(ophidiadb * oDB, 
 				dbmss->value = curr_dbms;
 				dbmss->size++;
 				dbmss->value[i_dbms].id_dbms = (int) strtol(row[6], NULL, 10);
-				memset(&(dbmss->value[i_dbms].login), 0, OPH_ODB_STGE_LOGIN_SIZE);
+				memset(&(dbmss->value[i_dbms].login), 0, OPH_ODB_STGE_LOGIN_SIZE + 1);
 				strncpy(dbmss->value[i_dbms].login, row[7], OPH_ODB_STGE_LOGIN_SIZE);
-				memset(&(dbmss->value[i_dbms].pwd), 0, OPH_ODB_STGE_PWD_SIZE);
+				memset(&(dbmss->value[i_dbms].pwd), 0, OPH_ODB_STGE_PWD_SIZE + 1);
 				strncpy(dbmss->value[i_dbms].pwd, row[8], OPH_ODB_STGE_PWD_SIZE);
 				dbmss->value[i_dbms].port = (row[9] ? (int) strtol(row[9], NULL, 10) : 0);
-				memset(&(dbmss->value[i_dbms].hostname), 0, OPH_ODB_STGE_HOST_NAME_SIZE);
+				memset(&(dbmss->value[i_dbms].hostname), 0, OPH_ODB_STGE_HOST_NAME_SIZE + 1);
 				strncpy(dbmss->value[i_dbms].hostname, row[10], OPH_ODB_STGE_HOST_NAME_SIZE);
-				memset(&(dbmss->value[i_dbms].io_server_type), 0, OPH_ODB_STGE_SERVER_NAME_SIZE);
+				memset(&(dbmss->value[i_dbms].io_server_type), 0, OPH_ODB_STGE_SERVER_NAME_SIZE + 1);
 				strncpy(dbmss->value[i_dbms].io_server_type, row[11], OPH_ODB_STGE_SERVER_NAME_SIZE);
 				//Set current dbms
 				curr_dbms_id = dbmss->value[i_dbms].id_dbms;
@@ -1464,7 +1464,7 @@ int oph_odb_stge_retrieve_fragment(ophidiadb * oDB, char *frag_name, oph_odb_fra
 		frag->id_datacube = (int) strtol(row[1], NULL, 10);
 		frag->id_db = (int) strtol(row[2], NULL, 10);
 		frag->frag_relative_index = (int) strtol(row[3], NULL, 10);
-		memset(&(frag->fragment_name), 0, OPH_ODB_STGE_FRAG_NAME_SIZE);
+		memset(&(frag->fragment_name), 0, OPH_ODB_STGE_FRAG_NAME_SIZE + 1);
 		strncpy(frag->fragment_name, row[4], OPH_ODB_STGE_FRAG_NAME_SIZE);
 		frag->key_start = (int) strtol(row[5], NULL, 10);
 		frag->key_end = (int) strtol(row[6], NULL, 10);
@@ -1519,7 +1519,7 @@ int oph_odb_stge_retrieve_dbinstance(ophidiadb * oDB, int id_dbinstance, oph_odb
 	if ((row = mysql_fetch_row(res))) {
 		db->id_db = (int) strtol(row[6], NULL, 10);
 		db->id_dbms = (int) strtol(row[0], NULL, 10);
-		memset(&(db->db_name), 0, OPH_ODB_STGE_DB_NAME_SIZE);
+		memset(&(db->db_name), 0, OPH_ODB_STGE_DB_NAME_SIZE + 1);
 		strncpy(db->db_name, row[7], OPH_ODB_STGE_DB_NAME_SIZE);
 		if (!(db->dbms_instance = (oph_odb_dbms_instance *) malloc(1 * sizeof(oph_odb_dbms_instance)))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -1527,14 +1527,14 @@ int oph_odb_stge_retrieve_dbinstance(ophidiadb * oDB, int id_dbinstance, oph_odb
 			return OPH_ODB_MEMORY_ERROR;
 		}
 		db->dbms_instance->id_dbms = (int) strtol(row[0], NULL, 10);
-		memset(&(db->dbms_instance->login), 0, OPH_ODB_STGE_LOGIN_SIZE);
+		memset(&(db->dbms_instance->login), 0, OPH_ODB_STGE_LOGIN_SIZE + 1);
 		strncpy(db->dbms_instance->login, row[1], OPH_ODB_STGE_LOGIN_SIZE);
-		memset(&(db->dbms_instance->pwd), 0, OPH_ODB_STGE_PWD_SIZE);
+		memset(&(db->dbms_instance->pwd), 0, OPH_ODB_STGE_PWD_SIZE + 1);
 		strncpy(db->dbms_instance->pwd, row[2], OPH_ODB_STGE_PWD_SIZE);
 		db->dbms_instance->port = (row[3] ? (int) strtol(row[3], NULL, 10) : 0);
-		memset(&(db->dbms_instance->hostname), 0, OPH_ODB_STGE_HOST_NAME_SIZE);
+		memset(&(db->dbms_instance->hostname), 0, OPH_ODB_STGE_HOST_NAME_SIZE + 1);
 		strncpy(db->dbms_instance->hostname, row[4], OPH_ODB_STGE_HOST_NAME_SIZE);
-		memset(&(db->dbms_instance->io_server_type), 0, OPH_ODB_STGE_SERVER_NAME_SIZE);
+		memset(&(db->dbms_instance->io_server_type), 0, OPH_ODB_STGE_SERVER_NAME_SIZE + 1);
 		strncpy(db->dbms_instance->io_server_type, row[5], OPH_ODB_STGE_SERVER_NAME_SIZE);
 	}
 	mysql_free_result(res);

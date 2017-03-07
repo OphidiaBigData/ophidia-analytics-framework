@@ -709,8 +709,10 @@ int task_init(oph_operator_struct * handle)
 							free(cubedims);
 							goto __OPH_EXIT_1;
 						}
-					} else
+					} else {
 						strncpy(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);	// A reduced dimension is handled by indexes
+						dim[l].dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
+					}
 					// Store output labels
 					if (oph_dim_insert_into_dimension_table
 					    (db, o_label_dimension_table_name, dim[l].dimension_type, dim_inst[l].size, dim_row, &(dim_inst[l].fk_id_dimension_label))) {
@@ -804,6 +806,7 @@ int task_init(oph_operator_struct * handle)
 		new_task.id_outputcube = ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_output_datacube;
 		new_task.id_job = ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_job;
 		strncpy(new_task.operator, handle->operator_type, OPH_ODB_CUBE_OPERATOR_SIZE);
+		new_task.operator[OPH_ODB_CUBE_OPERATOR_SIZE] = 0;
 		memset(new_task.query, 0, OPH_ODB_CUBE_OPERATION_QUERY_SIZE * sizeof(char));
 		if (!(new_task.id_inputcube = (int *) malloc(1 * sizeof(int)))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -1221,18 +1224,23 @@ int task_execute(oph_operator_struct * handle)
 
 					//Copy dbmss_in.value[i] in dbms_out
 					strncpy(dbms_out.hostname, dbmss_in.value[i].hostname, OPH_ODB_STGE_HOST_NAME_SIZE);
+					dbms_out.hostname[OPH_ODB_STGE_HOST_NAME_SIZE] = 0;
 					dbms_out.id_dbms = dbmss_in.value[i].id_dbms;
 					strncpy(dbms_out.login, dbmss_in.value[i].login, OPH_ODB_STGE_LOGIN_SIZE);
+					dbms_out.login[OPH_ODB_STGE_LOGIN_SIZE] = 0;
 					strncpy(dbms_out.pwd, dbmss_in.value[i].pwd, OPH_ODB_STGE_PWD_SIZE);
+					dbms_out.pwd[OPH_ODB_STGE_PWD_SIZE] = 0;
 					dbms_out.port = dbmss_in.value[i].port;
 					dbms_out.fs_type = dbmss_in.value[i].fs_type;
 
 					//Copy dbs_in.value[j] in db_out
 					strncpy(dbms_out.hostname, dbmss_in.value[i].hostname, OPH_ODB_STGE_HOST_NAME_SIZE);
+					dbms_out.hostname[OPH_ODB_STGE_HOST_NAME_SIZE] = 0;
 					db_out.dbms_instance = &dbms_out;
 					db_out.id_dbms = dbs_in.value[j].id_dbms;
 					db_out.id_db = dbs_in.value[j].id_db;
 					strncpy(db_out.db_name, dbs_in.value[j].db_name, OPH_ODB_STGE_DB_NAME_SIZE);
+					db_out.db_name[OPH_ODB_STGE_DB_NAME_SIZE] = 0;
 
 					if (oph_dc2_connect_to_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbms_out), 0)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");

@@ -1023,6 +1023,7 @@ int task_init(oph_operator_struct * handle)
 				new_grid = 1;
 				oph_odb_dimension_grid grid;
 				strncpy(grid.grid_name, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->grid_name, OPH_ODB_DIM_GRID_SIZE);
+				grid.grid_name[OPH_ODB_DIM_GRID_SIZE] = 0;
 				if (oph_odb_dim_insert_into_grid_table(oDB, &grid, &id_grid)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while storing grid\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_GRID_STORE_ERROR);
@@ -1110,7 +1111,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 
-		char dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[OPH_COMMON_BUFFER_LEN];
+		char dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[1 + OPH_COMMON_BUFFER_LEN];
 		snprintf(dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container);
 		char o_dimension_table_name[OPH_COMMON_BUFFER_LEN];
 		snprintf(o_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_output_container);
@@ -1141,8 +1142,10 @@ int task_init(oph_operator_struct * handle)
 						oph_subset_vector_free(subset_struct, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->number_of_dim);
 						goto __OPH_EXIT_1;
 					}
-				} else
+				} else {
 					strncpy(operation, MYSQL_DIMENSION, OPH_COMMON_BUFFER_LEN);
+					operation[OPH_COMMON_BUFFER_LEN] = 0;
+				}
 			} else	// Subsetted dimension
 			{
 				if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->dim_task[d] && strlen(((OPH_SUBSET_operator_handle *) handle->operator_handle)->dim_task[d])) {
@@ -1277,6 +1280,7 @@ int task_init(oph_operator_struct * handle)
 		new_task.id_job = ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_job;
 		memset(new_task.query, 0, OPH_ODB_CUBE_OPERATION_QUERY_SIZE);
 		strncpy(new_task.operator, handle->operator_type, OPH_ODB_CUBE_OPERATOR_SIZE);
+		new_task.operator[OPH_ODB_CUBE_OPERATOR_SIZE] = 0;
 		if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->apply_clause) {
 			char buff_tmp[OPH_TP_TASKLEN];
 			snprintf(buff_tmp, OPH_TP_TASKLEN, "%s,%s,%s", ((OPH_SUBSET_operator_handle *) handle->operator_handle)->apply_clause_type, MYSQL_FRAG_MEASURE,
@@ -1607,6 +1611,7 @@ int task_execute(oph_operator_struct * handle)
 					//Change the other fragment fields
 					frags.value[k].id_datacube = id_datacube_out;
 					strncpy(frags.value[k].fragment_name, frag_name_out, OPH_ODB_STGE_FRAG_NAME_SIZE);
+					frags.value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
 					if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->frags_size)
 						frags.value[k].frag_relative_index =
 						    ((OPH_SUBSET_operator_handle *) handle->operator_handle)->keys[index + 2 * ((OPH_SUBSET_operator_handle *) handle->operator_handle)->frags_size];

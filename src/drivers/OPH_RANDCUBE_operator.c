@@ -740,8 +740,11 @@ int task_init(oph_operator_struct * handle)
 		cube.tuplexfragment = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 		cube.id_container = id_container_out;
 		strncpy(cube.measure, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->measure, OPH_ODB_CUBE_MEASURE_SIZE);
+		cube.measure[OPH_ODB_CUBE_MEASURE_SIZE] = 0;
 		strncpy(cube.measure_type, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->measure_type, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
+		cube.measure_type[OPH_ODB_CUBE_MEASURE_TYPE_SIZE] = 0;
 		strncpy(cube.frag_relative_index_set, id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
+		cube.frag_relative_index_set[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE] = 0;
 		cube.db_number = cube.hostxdatacube * cube.dbmsxhost * cube.dbxdbms;
 		cube.compressed = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->compressed;
 		cube.id_db = NULL;
@@ -978,6 +981,7 @@ int task_init(oph_operator_struct * handle)
 			if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->grid_name) {
 				oph_odb_dimension_grid new_grid;
 				strncpy(new_grid.grid_name, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->grid_name, OPH_ODB_DIM_GRID_SIZE);
+				new_grid.grid_name[OPH_ODB_DIM_GRID_SIZE] = 0;
 				int last_inserted_grid_id = 0;
 
 				if (oph_odb_dim_insert_into_grid_table(oDB, &new_grid, &last_inserted_grid_id)) {

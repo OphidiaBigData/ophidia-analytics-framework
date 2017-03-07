@@ -48,8 +48,8 @@
 typedef struct {
 	int id_outputcube;
 	int id_job;
-	char operator[OPH_ODB_CUBE_OPERATOR_SIZE];
-	char query[OPH_ODB_CUBE_OPERATION_QUERY_SIZE];
+	char operator[OPH_ODB_CUBE_OPERATOR_SIZE + 1];
+	char query[OPH_ODB_CUBE_OPERATION_QUERY_SIZE + 1];
 	int input_cube_number;
 	int *id_inputcube;
 } oph_odb_task;
@@ -78,16 +78,16 @@ typedef struct {
 	int dbxdbms;
 	int fragmentxdb;
 	int tuplexfragment;
-	char measure[OPH_ODB_CUBE_MEASURE_SIZE];
-	char measure_type[OPH_ODB_CUBE_MEASURE_TYPE_SIZE];
-	char frag_relative_index_set[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
+	char measure[OPH_ODB_CUBE_MEASURE_SIZE + 1];
+	char measure_type[OPH_ODB_CUBE_MEASURE_TYPE_SIZE + 1];
+	char frag_relative_index_set[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE + 1];
 	int id_container;
 	int *id_db;
 	int db_number;
 	int compressed;
 	int level;
 	int id_source;
-	char description[OPH_ODB_CUBE_DESCRIPTION_SIZE];
+	char description[OPH_ODB_CUBE_DESCRIPTION_SIZE + 1];
 } oph_odb_datacube;
 
 
@@ -99,7 +99,7 @@ typedef struct {
  */
 typedef struct {
 	int id_source;
-	char uri[OPH_ODB_CUBE_SOURCE_URI_SIZE];
+	char uri[OPH_ODB_CUBE_SOURCE_URI_SIZE + 1];
 } oph_odb_source;
 
 

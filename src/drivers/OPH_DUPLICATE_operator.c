@@ -410,8 +410,10 @@ int task_init(oph_operator_struct * handle)
 							free(cubedims);
 							goto __OPH_EXIT_1;
 						}
-					} else
+					} else {
 						strncpy(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);	// A reduced dimension is handled by indexes
+						dim[l].dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
+					}
 					// Store output labels
 					if (oph_dim_insert_into_dimension_table
 					    (db, o_label_dimension_table_name, dim[l].dimension_type, dim_inst[l].size, dim_row, &(dim_inst[l].fk_id_dimension_label))) {
@@ -506,6 +508,7 @@ int task_init(oph_operator_struct * handle)
 		new_task.id_job = ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_job;
 		memset(new_task.query, 0, OPH_ODB_CUBE_OPERATION_QUERY_SIZE);
 		strncpy(new_task.operator, handle->operator_type, OPH_ODB_CUBE_OPERATOR_SIZE);
+		new_task.operator[OPH_ODB_CUBE_OPERATOR_SIZE] = 0;
 		snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_DUPLICATE_QUERY, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE);
 		new_task.input_cube_number = 1;
 		if (!(new_task.id_inputcube = (int *) malloc(new_task.input_cube_number * sizeof(int)))) {
@@ -721,6 +724,7 @@ int task_execute(oph_operator_struct * handle)
 				//Change fragment fields
 				frags.value[k].id_datacube = id_datacube_out;
 				strncpy(frags.value[k].fragment_name, frag_name_out, OPH_ODB_STGE_FRAG_NAME_SIZE);
+				frags.value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
 
 				//Insert new fragment
 				if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &(frags.value[k]))) {

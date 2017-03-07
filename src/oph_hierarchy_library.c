@@ -92,6 +92,7 @@ int _oph_hier_get_attribute(xmlNodePtr node, oph_hier_attribute * attribute)
 			result = OPH_HIER_XML_ERR;
 		} else {
 			strncpy(attribute->long_name, (char *) name_attr->children->content, OPH_HIER_MAX_STRING_LENGTH);
+			attribute->long_name[OPH_HIER_MAX_STRING_LENGTH] = 0;
 			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Property '%s' for attribute '%s' read\n", OPH_HIER_STR_LONG_NAME, attribute->long_name);
 		}
 	}
@@ -115,6 +116,7 @@ int _oph_hier_get_attribute(xmlNodePtr node, oph_hier_attribute * attribute)
 		} else {
 			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Property '%s' for attribute '%s' read\n", OPH_HIER_STR_AGGREGATE_FIELD, attribute->long_name);
 			strncpy(attribute->aggregate_field, (char *) name_attr->children->content, OPH_HIER_MAX_STRING_LENGTH);
+			attribute->aggregate_field[OPH_HIER_MAX_STRING_LENGTH] = 0;
 		}
 	}
 
@@ -143,6 +145,7 @@ int _oph_hier_get_attribute(xmlNodePtr node, oph_hier_attribute * attribute)
 		else {
 			char aggregate_op[OPH_HIER_MAX_STRING_LENGTH];
 			strncpy(aggregate_op, (char *) name_attr->children->content, OPH_HIER_MAX_STRING_LENGTH);
+			aggregate_op[OPH_HIER_MAX_STRING_LENGTH] = 0;
 			oph_hier_list *list = attribute->aggregate_operation_list = (oph_hier_list *) malloc(sizeof(oph_hier_list));
 			list->names = NULL;
 			list->number = 0;
@@ -166,6 +169,7 @@ int _oph_hier_get_attribute(xmlNodePtr node, oph_hier_attribute * attribute)
 			list->names = (char **) malloc(list->number * sizeof(char *));
 			list->number = 0;
 			strncpy(aggregate_op, (char *) name_attr->children->content, OPH_HIER_MAX_STRING_LENGTH);
+			aggregate_op[OPH_HIER_MAX_STRING_LENGTH] = 0;
 			pch = strtok_r(aggregate_op, OPH_HIER_AGGREGATE_OP_SEPARATOR, &savepointer);
 			while (pch) {
 				list->names[list->number++] = strndup(pch, OPH_HIER_MAX_STRING_LENGTH);

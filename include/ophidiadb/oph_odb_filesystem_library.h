@@ -46,8 +46,8 @@
 typedef struct {
 	int id_folder;
 	int id_parent;
-	char container_name[OPH_ODB_FS_CONTAINER_SIZE];
-	char operation[OPH_ODB_FS_CONTAINER_OPERATOR_SIZE];
+	char container_name[OPH_ODB_FS_CONTAINER_SIZE + 1];
+	char operation[OPH_ODB_FS_CONTAINER_OPERATOR_SIZE + 1];
 	int id_vocabulary;
 } oph_odb_container;
 

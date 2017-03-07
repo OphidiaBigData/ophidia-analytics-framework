@@ -627,8 +627,10 @@ int task_init(oph_operator_struct * handle)
 								free(old_measure);
 							goto __OPH_EXIT_1;
 						}
-					} else
+					} else {
 						strncpy(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);	// A reduced dimension is handled by indexes
+						dim[l].dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
+					}
 					// Store output labels
 					if (oph_dim_insert_into_dimension_table
 					    (db, o_label_dimension_table_name, dim[l].dimension_type, dim_inst[l].size, dim_row, &(dim_inst[l].fk_id_dimension_label))) {
@@ -747,7 +749,7 @@ int task_init(oph_operator_struct * handle)
 		memset(new_task.query, 0, OPH_ODB_CUBE_OPERATION_QUERY_SIZE);
 		new_task.id_job = ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->id_job;
 		strncpy(new_task.operator, handle->operator_type, OPH_ODB_CUBE_OPERATOR_SIZE);
-
+		new_task.operator[OPH_ODB_CUBE_OPERATOR_SIZE] = 0;
 		char _ms[OPH_COMMON_MAX_DOUBLE_LENGHT];
 		if (isnan(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->ms))
 			snprintf(_ms, OPH_COMMON_MAX_DOUBLE_LENGHT, "NULL");
@@ -1252,6 +1254,7 @@ int task_execute(oph_operator_struct * handle)
 
 					frags.value[k].id_datacube = id_datacube_out;
 					strncpy(frags.value[k].fragment_name, 1 + strchr(frag_name_out, '.'), OPH_ODB_STGE_FRAG_NAME_SIZE);
+					frags.value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
 
 					// Insert new fragment in OphDB
 					if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &(frags.value[k]))) {
@@ -1621,6 +1624,7 @@ int task_execute(oph_operator_struct * handle)
 					//Change fragment fields
 					frags.value[k].id_datacube = id_datacube_out;
 					strncpy(frags.value[k].fragment_name, 1 + strchr(frag_name_out, '.'), OPH_ODB_STGE_FRAG_NAME_SIZE);
+					frags.value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
 
 					//Insert new fragment
 					if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &(frags.value[k]))) {

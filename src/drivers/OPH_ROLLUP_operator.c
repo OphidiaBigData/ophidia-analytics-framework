@@ -501,8 +501,10 @@ int task_init(oph_operator_struct * handle)
 							free(cubedims);
 							goto __OPH_EXIT_1;
 						}
-					} else
+					} else {
 						strncpy(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);	// A reduced dimension is handled by indexes
+						dim[l].dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
+					}
 					// Store output labels
 					if (oph_dim_insert_into_dimension_table
 					    (db, o_label_dimension_table_name, dim[l].dimension_type, dim_inst[l].size, dim_row, &(dim_inst[l].fk_id_dimension_label))) {
@@ -596,6 +598,8 @@ int task_init(oph_operator_struct * handle)
 		new_task.id_job = ((OPH_ROLLUP_operator_handle *) handle->operator_handle)->id_job;
 		memset(new_task.query, 0, OPH_ODB_CUBE_OPERATION_QUERY_SIZE);
 		strncpy(new_task.operator, handle->operator_type, OPH_ODB_CUBE_OPERATOR_SIZE);
+		new_task.operator[OPH_ODB_CUBE_OPERATOR_SIZE] = 0;
+
 		if (((OPH_ROLLUP_operator_handle *) handle->operator_handle)->compressed)
 			snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_ROLLUP_QUERY_COMPR, MYSQL_FRAG_ID, ((OPH_ROLLUP_operator_handle *) handle->operator_handle)->size,
 				 ((OPH_ROLLUP_operator_handle *) handle->operator_handle)->measure_type, ((OPH_ROLLUP_operator_handle *) handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE,
@@ -857,6 +861,7 @@ int task_execute(oph_operator_struct * handle)
 				//Change fragment fields
 				frags.value[k].id_datacube = id_datacube_out;
 				strncpy(frags.value[k].fragment_name, frag_name_out, OPH_ODB_STGE_FRAG_NAME_SIZE);
+				frags.value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
 				if (frags.value[k].key_end) {
 					frags.value[k].key_start = 1 + (frags.value[k].key_start - 1) / ((OPH_ROLLUP_operator_handle *) handle->operator_handle)->size;
 					frags.value[k].key_end = 1 + (frags.value[k].key_end - 1) / ((OPH_ROLLUP_operator_handle *) handle->operator_handle)->size;

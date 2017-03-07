@@ -78,8 +78,9 @@ int main(int argc, char *argv[])
 		if (!myrank)
 			gettimeofday(&start_time, NULL);
 
-		char task_string[OPH_COMMON_BUFFER_LEN];
+		char task_string[OPH_COMMON_BUFFER_LEN + 1];
 		strncpy(task_string, argv[1], OPH_COMMON_BUFFER_LEN);
+		task_string[OPH_COMMON_BUFFER_LEN] = 0;
 
 		if ((res = oph_af_execute_framework(task_string, size, myrank))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Framework execution failed! ERROR: %d\n", res);

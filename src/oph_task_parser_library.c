@@ -650,7 +650,7 @@ int oph_tp_task_params_parser(char *task_string, HASHTBL ** hashtbl)
 	//Select the correct XML file
 	char path_file[OPH_TP_XML_PATH_LENGTH] = { '\0' };
 	char filename[OPH_TP_XML_PATH_LENGTH] = { '\0' };
-	char operator_name[OPH_TP_TASKLEN] = { '\0' };
+	char operator_name[OPH_TP_TASKLEN + 1] = { '\0' };
 	strncpy(operator_name, operator, OPH_TP_TASKLEN);
 	char *op = operator_name;
 	while (*op != '\0') {
