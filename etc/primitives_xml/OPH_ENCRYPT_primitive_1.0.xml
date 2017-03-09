@@ -29,9 +29,9 @@ oph_encrypt(&apos;&apos;,&apos;&apos;,measure,&apos;sha256&apos;)</abstract>
 	<operation type="simple"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
         <argument type="oph_type" mandatory="yes">output measure type</argument>
 	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="string" mandatory="no" default="md5">algorithm</argument>
+	<argument type="string" mandatory="no" default="'md5'" values="'md5'|'sh1256'|'sha512'">algorithm</argument>
     </args>
 </primitive>
