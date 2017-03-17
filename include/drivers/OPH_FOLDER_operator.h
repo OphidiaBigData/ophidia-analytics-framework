@@ -48,19 +48,18 @@
  * \param sessionid SessionID
  * \param userrole User role
  */
-typedef struct _OPH_FOLDER_operator_handle
-{
-  ophidiadb oDB;
-  int mode;
-  char **path;
-  int path_num;
-  char *cwd;
-  char *user;
-  char **objkeys;
-  int objkeys_num;
-  char *sessionid;
-  int userrole;
+typedef struct _OPH_FOLDER_operator_handle {
+	ophidiadb oDB;
+	int mode;
+	char **path;
+	int path_num;
+	char *cwd;
+	char *user;
+	char **objkeys;
+	int objkeys_num;
+	char *sessionid;
+	int userrole;
 } OPH_FOLDER_operator_handle;
 
 
-#endif  //__OPH_FOLDER_OPERATOR_H
+#endif				//__OPH_FOLDER_OPERATOR_H

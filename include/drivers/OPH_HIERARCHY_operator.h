@@ -31,12 +31,11 @@
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
  */
-typedef struct _OPH_HIERARCHY_operator_handle
-{
-  char *hierarchy_name;
-  char *hierarchy_version;
-  char **objkeys;
-  int objkeys_num;
+typedef struct _OPH_HIERARCHY_operator_handle {
+	char *hierarchy_name;
+	char *hierarchy_version;
+	char **objkeys;
+	int objkeys_num;
 } OPH_HIERARCHY_operator_handle;
 
-#endif  //__OPH_HIERARCHY_OPERATOR_H
+#endif				//__OPH_HIERARCHY_OPERATOR_H

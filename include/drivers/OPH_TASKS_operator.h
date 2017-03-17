@@ -36,19 +36,18 @@
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
  */
-struct _OPH_TASKS_operator_handle
-{
-  ophidiadb oDB;
-  char *datacube_name;
-  char *path;
-  char *cwd;
-  char *container_name;
-  char *user;
-  char *operator;
-  char **objkeys;
-  int objkeys_num;
-  char *sessionid;
+struct _OPH_TASKS_operator_handle {
+	ophidiadb oDB;
+	char *datacube_name;
+	char *path;
+	char *cwd;
+	char *container_name;
+	char *user;
+	char *operator;
+	char **objkeys;
+	int objkeys_num;
+	char *sessionid;
 };
 typedef struct _OPH_TASKS_operator_handle OPH_TASKS_operator_handle;
 
-#endif  //__OPH_TASKS_OPERATOR_H
+#endif				//__OPH_TASKS_OPERATOR_H

@@ -41,19 +41,18 @@
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
  */
-struct _OPH_DELETECONTAINER_operator_handle
-{
-  ophidiadb oDB;
-  char *cwd;
-  char *user;
-  int hidden;
-  int delete_type;
-  int id_input_container;
-  char *container_input;
-  char **objkeys;
-  int objkeys_num;
-  char *sessionid;
+struct _OPH_DELETECONTAINER_operator_handle {
+	ophidiadb oDB;
+	char *cwd;
+	char *user;
+	int hidden;
+	int delete_type;
+	int id_input_container;
+	char *container_input;
+	char **objkeys;
+	int objkeys_num;
+	char *sessionid;
 };
 typedef struct _OPH_DELETECONTAINER_operator_handle OPH_DELETECONTAINER_operator_handle;
 
-#endif  //__OPH_DELETECONTAINER_OPERATOR_H
+#endif				//__OPH_DELETECONTAINER_OPERATOR_H

@@ -31,15 +31,14 @@
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
  */
-struct _OPH_UNPUBLISH_operator_handle
-{
-  ophidiadb oDB;
-  char *datacube_path;
-  int id_input_container;
-  char **objkeys;
-  int objkeys_num;
-  char *sessionid;
+struct _OPH_UNPUBLISH_operator_handle {
+	ophidiadb oDB;
+	char *datacube_path;
+	int id_input_container;
+	char **objkeys;
+	int objkeys_num;
+	char *sessionid;
 };
 typedef struct _OPH_UNPUBLISH_operator_handle OPH_UNPUBLISH_operator_handle;
 
-#endif  //__OPH_UNPUBLISH_OPERATOR_H
+#endif				//__OPH_UNPUBLISH_OPERATOR_H

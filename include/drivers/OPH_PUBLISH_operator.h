@@ -82,46 +82,45 @@
  * \param server Pointer to I/O server handler
  * \param sessionid SessionID
  */
-struct _OPH_PUBLISH_operator_handle
-{
-  ophidiadb oDB;
-  int id_input_datacube;
-  int id_input_container;
-  char *input_path;
-  char *output_path;
-  char *output_link;
-  char **map_list;
-  int total_maps_number;
-  int map_num_start_position;
-  int map_nums;
-  int cached_flag;
-  char *datacube_input;
-  int publish_metadata;
-  int schedule_algo;
-  char* fragment_ids;
-  int total_fragment_number;
-  int fragment_id_start_position;
-  char *measure_type;
-  int compressed;
-  char *macro;
-  char *var;
-  //Used to support dimensions
-  int dim_num;
-  int *dim_sizes;
-  int *dim_ids;
-  int *dim_oph_types;
-  int *dim_fk_ids;
-  int *dim_fk_labels;
-  int *dim_types;
-  short int show_id;
-  short int show_index;
-  short int show_time;
-  char **objkeys;
-  int objkeys_num;
-  oph_ioserver_handler *server;
-  char *sessionid;
+struct _OPH_PUBLISH_operator_handle {
+	ophidiadb oDB;
+	int id_input_datacube;
+	int id_input_container;
+	char *input_path;
+	char *output_path;
+	char *output_link;
+	char **map_list;
+	int total_maps_number;
+	int map_num_start_position;
+	int map_nums;
+	int cached_flag;
+	char *datacube_input;
+	int publish_metadata;
+	int schedule_algo;
+	char *fragment_ids;
+	int total_fragment_number;
+	int fragment_id_start_position;
+	char *measure_type;
+	int compressed;
+	char *macro;
+	char *var;
+	//Used to support dimensions
+	int dim_num;
+	int *dim_sizes;
+	int *dim_ids;
+	int *dim_oph_types;
+	int *dim_fk_ids;
+	int *dim_fk_labels;
+	int *dim_types;
+	short int show_id;
+	short int show_index;
+	short int show_time;
+	char **objkeys;
+	int objkeys_num;
+	oph_ioserver_handler *server;
+	char *sessionid;
 };
 typedef struct _OPH_PUBLISH_operator_handle OPH_PUBLISH_operator_handle;
 
 
-#endif  //__OPH_PUBLISH_OPERATOR_H
+#endif				//__OPH_PUBLISH_OPERATOR_H

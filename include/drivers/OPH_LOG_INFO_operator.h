@@ -43,17 +43,16 @@
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
  */
-typedef struct _OPH_LOG_INFO_operator_handle
-{
-  int log_type;
-  int container_id;
-  char* server_type;
-  int nlines;
-  ophidiadb oDB;
-  char *user;
-  char **objkeys;
-  int objkeys_num;
-  char *sessionid;
+typedef struct _OPH_LOG_INFO_operator_handle {
+	int log_type;
+	int container_id;
+	char *server_type;
+	int nlines;
+	ophidiadb oDB;
+	char *user;
+	char **objkeys;
+	int objkeys_num;
+	char *sessionid;
 } OPH_LOG_INFO_operator_handle;
 
-#endif  //__OPH_LOG_INFO_OPERATOR_H
+#endif				//__OPH_LOG_INFO_OPERATOR_H

@@ -47,24 +47,23 @@
  * \param server Pointer to I/O server handler
  * \param sessionid SessionID
  */
-struct _OPH_CUBEELEMENTS_operator_handle
-{
-  ophidiadb oDB;
-  int id_input_datacube;
-  int id_input_container;
-  int schedule_algo;
-  char* fragment_ids;
-  int fragment_number;
-  int fragment_id_start_position;
-  char *measure_type;
-  long long partial_count;
-  int compressed;
-  int first_time_computation;
-  char **objkeys;
-  int objkeys_num;
-  oph_ioserver_handler *server;
-  char *sessionid;
+struct _OPH_CUBEELEMENTS_operator_handle {
+	ophidiadb oDB;
+	int id_input_datacube;
+	int id_input_container;
+	int schedule_algo;
+	char *fragment_ids;
+	int fragment_number;
+	int fragment_id_start_position;
+	char *measure_type;
+	long long partial_count;
+	int compressed;
+	int first_time_computation;
+	char **objkeys;
+	int objkeys_num;
+	oph_ioserver_handler *server;
+	char *sessionid;
 };
 typedef struct _OPH_CUBEELEMENTS_operator_handle OPH_CUBEELEMENTS_operator_handle;
 
-#endif  //__OPH_CUBEELEMENTS_OPERATOR_H
+#endif				//__OPH_CUBEELEMENTS_OPERATOR_H

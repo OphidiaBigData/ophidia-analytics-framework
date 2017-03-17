@@ -57,27 +57,26 @@
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
  */
-struct _OPH_LIST_operator_handle
-{
-  ophidiadb oDB;
-  int level;
-  int hidden;
-  int recursive_search;
-  char *path;
-  char *cwd;
-  char *container_name;
-  char *datacube_name;
-  char *hostname;
-  char *src;
-  char *measure;
-  int oper_level;
-  int id_dbms;
-  char *db_name;
-  char *user;
-  char **objkeys;
-  int objkeys_num;
-  char *sessionid;
+struct _OPH_LIST_operator_handle {
+	ophidiadb oDB;
+	int level;
+	int hidden;
+	int recursive_search;
+	char *path;
+	char *cwd;
+	char *container_name;
+	char *datacube_name;
+	char *hostname;
+	char *src;
+	char *measure;
+	int oper_level;
+	int id_dbms;
+	char *db_name;
+	char *user;
+	char **objkeys;
+	int objkeys_num;
+	char *sessionid;
 };
 typedef struct _OPH_LIST_operator_handle OPH_LIST_operator_handle;
 
-#endif  //__OPH_LIST_OPERATOR_H
+#endif				//__OPH_LIST_OPERATOR_H

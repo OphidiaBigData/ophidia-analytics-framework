@@ -41,6 +41,4 @@
 #define OPH_IOSERVER_LOG_VALID_ERROR       "Submission query not valid\n"
 
 
-#endif  //__OPH_IOSERVER_LOG_ERROR_CODES_H
-
- 
+#endif				//__OPH_IOSERVER_LOG_ERROR_CODES_H
