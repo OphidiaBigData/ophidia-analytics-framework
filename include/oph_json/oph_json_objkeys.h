@@ -97,7 +97,6 @@
 #define OPH_JSON_OBJKEY_REDUCE2						"reduce2"
 #define OPH_JSON_OBJKEY_AGGREGATE					"aggregate"
 #define OPH_JSON_OBJKEY_AGGREGATE2					"aggregate2"
-#define OPH_JSON_OBJKEY_INTERCOMPARISON					"intercomparison"
 #define OPH_JSON_OBJKEY_DRILLDOWN					"drilldown"
 #define OPH_JSON_OBJKEY_ROLLUP						"rollup"
 #define OPH_JSON_OBJKEY_DUPLICATE					"duplicate"

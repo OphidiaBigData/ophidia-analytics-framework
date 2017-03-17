@@ -42,7 +42,6 @@ DRIVER+=liboph_reduceoperator.la
 DRIVER+=liboph_reduce2operator.la
 DRIVER+=liboph_aggregateoperator.la
 DRIVER+=liboph_aggregate2operator.la
-DRIVER+=liboph_intercomparisonoperator.la
 DRIVER+=liboph_intercubeoperator.la
 DRIVER+=liboph_drilldownoperator.la
 DRIVER+=liboph_rollupoperator.la
@@ -170,11 +169,6 @@ liboph_instancesoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_instancesoperator_la_SOURCES = OPH_INSTANCES_operator.c
 liboph_instancesoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_instancesoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
-
-liboph_intercomparisonoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
-liboph_intercomparisonoperator_la_SOURCES = OPH_INTERCOMPARISON_operator.c
-liboph_intercomparisonoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_intercomparisonoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube2 -loph_ioserver -loph_dimension
 
 liboph_intercubeoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_intercubeoperator_la_SOURCES = OPH_INTERCUBE_operator.c
