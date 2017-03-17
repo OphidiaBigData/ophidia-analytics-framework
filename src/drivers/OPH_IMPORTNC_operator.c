@@ -2104,8 +2104,7 @@ int task_init(oph_operator_struct * handle)
 			len += snprintf(message + len, OPH_COMMON_BUFFER_LEN, "\tNumber of tuples per fragment: %d\n", ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number);
 
 			if (oph_json_is_objkey_printable
-			    (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->objkeys, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->objkeys_num,
-			     OPH_JSON_OBJKEY_IMPORTNC)) {
+			    (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->objkeys, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_IMPORTNC)) {
 				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_IMPORTNC, "Fragmentation parameters", message)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 					logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, "ADD TEXT error\n");
@@ -2117,8 +2116,7 @@ int task_init(oph_operator_struct * handle)
 		if ((oph_odb_stge_check_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, *host_number, *dbmsxhost_number, &exist_part)) || !exist_part) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts - dbms per host is too big or server type and partition are not available!\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
-				((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->host_number, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->dbmsxhost_number,
-				host_partition);
+				((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->host_number, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->dbmsxhost_number, host_partition);
 			goto __OPH_EXIT_1;
 		}
 
@@ -3796,8 +3794,7 @@ int task_execute(oph_operator_struct * handle)
 			//Compute number of fragments to insert in DB
 			frag_to_insert =
 			    ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number - (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id + frag_count -
-													   start_position *
-													   ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number);
+													  start_position * ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number);
 
 			//For each fragment
 			for (k = 0; k < frag_to_insert; k++) {
