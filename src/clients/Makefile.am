@@ -35,4 +35,4 @@ oph_analytics_framework_LDADD= -L.. -loph_analytics_framework @LIBLTDL@
 
 oph_ioserver_client_SOURCES= oph_ioserver_client.c 
 oph_ioserver_client_CFLAGS= $(OPT) -I../../include -I../../include/oph_ioserver @INCLTDL@ -DOPH_PARALLEL_LOCATION=\"${prefix}\"  ${MYSQL_CFLAGS} 
-oph_ioserver_client_LDADD= ${MYSQL_LDFLAGS} -L.. -loph_datacube2 -lophidiadb @LIBLTDL@
+oph_ioserver_client_LDADD= ${MYSQL_LDFLAGS} -L.. -loph_datacube -lophidiadb @LIBLTDL@

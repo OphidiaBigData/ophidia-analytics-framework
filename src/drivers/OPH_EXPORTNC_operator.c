@@ -37,7 +37,7 @@
 #include "oph_pid_library.h"
 #include "oph_directory_library.h"
 #include "oph_json_library.h"
-#include "oph_datacube2_library.h"
+#include "oph_datacube_library.h"
 
 #include "debug.h"
 
@@ -932,7 +932,7 @@ int task_execute(oph_operator_struct * handle)
 	int tmp_div = 0;
 	int tmp_rem = 0;
 
-	if (oph_dc2_setup_dbms(&(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
+	if (oph_dc_setup_dbms(&(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_IOPLUGIN_SETUP_ERROR,
 			(dbmss.value[0]).id_dbms);
@@ -951,12 +951,12 @@ int task_execute(oph_operator_struct * handle)
 	//For each DBMS
 	for (i = 0; i < dbmss.size; i++) {
 
-		if (oph_dc2_connect_to_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
+		if (oph_dc_connect_to_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_DBMS_CONNECTION_ERROR,
 				(dbmss.value[i]).id_dbms);
-			oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
-			oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+			oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+			oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 			oph_odb_stge_free_fragment_list(&frags);
 			oph_odb_stge_free_db_list(&dbs);
 			oph_odb_stge_free_dbms_list(&dbmss);
@@ -975,12 +975,12 @@ int task_execute(oph_operator_struct * handle)
 			if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
 				continue;
 
-			if (oph_dc2_use_db_of_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
+			if (oph_dc_use_db_of_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_DB_SELECTION_ERROR,
 					(dbs.value[j]).db_name);
-				oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
-				oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+				oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+				oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 				oph_odb_stge_free_fragment_list(&frags);
 				oph_odb_stge_free_db_list(&dbs);
 				oph_odb_stge_free_dbms_list(&dbmss);
@@ -1014,8 +1014,8 @@ int task_execute(oph_operator_struct * handle)
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of path exceeded limit.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
 						OPH_LOG_OPH_EXPORTNC_STRING_BUFFER_OVERFLOW, "path", file_name);
-					oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-					oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+					oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+					oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
@@ -1033,8 +1033,8 @@ int task_execute(oph_operator_struct * handle)
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create nc output file: %s\n", nc_strerror(retval));
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
 						OPH_LOG_OPH_EXPORTNC_NC_OUTPUT_FILE_ERROR, nc_strerror(retval));
-					oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-					oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+					oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+					oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
@@ -1113,8 +1113,8 @@ int task_execute(oph_operator_struct * handle)
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to define dimensions %s: %s\n", dims[inc].dimname, nc_strerror(retval));
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_EXPORTNC_NC_DEFINE_DIM_ERROR, dims[inc].dimname, nc_strerror(retval));
-						oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-						oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+						oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+						oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
@@ -1133,8 +1133,8 @@ int task_execute(oph_operator_struct * handle)
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to define variable: %s\n", nc_strerror(retval));
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_EXPORTNC_NC_DEFINE_VAR_ERROR, nc_strerror(retval));
-						oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-						oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+						oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+						oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
@@ -1156,8 +1156,8 @@ int task_execute(oph_operator_struct * handle)
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to define variable: %s\n", nc_strerror(retval));
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_NC_DEFINE_VAR_ERROR,
 						nc_strerror(retval));
-					oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-					oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+					oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+					oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
@@ -1175,8 +1175,8 @@ int task_execute(oph_operator_struct * handle)
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to complete output nc definition: %s\n", nc_strerror(retval));
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
 						OPH_LOG_OPH_EXPORTNC_NC_END_DEFINITION_ERROR, nc_strerror(retval));
-					oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-					oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+					oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+					oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
@@ -1198,8 +1198,8 @@ int task_execute(oph_operator_struct * handle)
 					     NULL, NULL, NULL, &read_result)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
-						oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-						oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+						oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+						oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
@@ -1248,8 +1248,8 @@ int task_execute(oph_operator_struct * handle)
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable ? mvariable : "", mkey,
 								nc_strerror(retval));
 							mysql_free_result(read_result);
-							oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-							oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+							oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+							oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 							oph_odb_stge_free_fragment_list(&frags);
 							oph_odb_stge_free_db_list(&dbs);
 							oph_odb_stge_free_dbms_list(&dbmss);
@@ -1272,8 +1272,8 @@ int task_execute(oph_operator_struct * handle)
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "This cube is too fragmented to be split in different files. Try to merge it\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
 							"This cube is too fragmented to be split in different files. Try to merge it\n");
-						oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-						oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+						oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+						oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
@@ -1315,8 +1315,8 @@ int task_execute(oph_operator_struct * handle)
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
 								OPH_LOG_OPH_EXPORTNC_VAR_TYPE_NOT_SUPPORTED, dims[m].dimtype);
-							oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-							oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+							oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+							oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 							oph_odb_stge_free_fragment_list(&frags);
 							oph_odb_stge_free_db_list(&dbs);
 							oph_odb_stge_free_dbms_list(&dbmss);
@@ -1334,8 +1334,8 @@ int task_execute(oph_operator_struct * handle)
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write variable values: %s\n", nc_strerror(retval));
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_EXPORTNC_VAR_WRITE_ERROR, nc_strerror(retval));
-						oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-						oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+						oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+						oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
@@ -1351,14 +1351,14 @@ int task_execute(oph_operator_struct * handle)
 					}
 				}
 
-				if (oph_dc2_read_fragment_data
+				if (oph_dc_read_fragment_data
 				    (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, &(frags.value[k]), data_type, compressed, NULL, NULL, NULL, 0, 1, &frag_rows)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_READ_FRAG_ERROR,
 						(frags.value[k]).fragment_name);
 					oph_ioserver_free_result(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frag_rows);
-					oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-					oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+					oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+					oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
@@ -1384,8 +1384,8 @@ int task_execute(oph_operator_struct * handle)
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MISSING_FIELDS);
 					oph_ioserver_free_result(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frag_rows);
-					oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-					oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+					oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+					oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
@@ -1410,8 +1410,8 @@ int task_execute(oph_operator_struct * handle)
 				if (oph_ioserver_fetch_row(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frag_rows, &curr_row)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
 					oph_ioserver_free_result(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frag_rows);
-					oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-					oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+					oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+					oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
@@ -1453,8 +1453,8 @@ int task_execute(oph_operator_struct * handle)
 							logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
 								OPH_LOG_OPH_EXPORTNC_VAR_TYPE_NOT_SUPPORTED, data_type);
 							oph_ioserver_free_result(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frag_rows);
-							oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-							oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+							oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+							oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 							oph_odb_stge_free_fragment_list(&frags);
 							oph_odb_stge_free_db_list(&dbs);
 							oph_odb_stge_free_dbms_list(&dbmss);
@@ -1473,8 +1473,8 @@ int task_execute(oph_operator_struct * handle)
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_EXPORTNC_VAR_WRITE_ERROR, nc_strerror(retval));
 						oph_ioserver_free_result(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frag_rows);
-						oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-						oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+						oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+						oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
@@ -1492,8 +1492,8 @@ int task_execute(oph_operator_struct * handle)
 					if (oph_ioserver_fetch_row(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frag_rows, &curr_row)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
 						oph_ioserver_free_result(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frag_rows);
-						oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-						oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+						oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+						oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
@@ -1515,9 +1515,9 @@ int task_execute(oph_operator_struct * handle)
 				frag_count++;
 			}
 		}
-		oph_dc2_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+		oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 	}
-	if (oph_dc2_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server)) {
+	if (oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_IOPLUGIN_CLEANUP_ERROR,
 			(dbmss.value[0]).id_dbms);

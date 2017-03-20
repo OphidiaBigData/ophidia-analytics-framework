@@ -31,7 +31,7 @@
 #include "oph_task_parser_library.h"
 #include "oph_pid_library.h"
 #include "oph_json_library.h"
-#include "oph_datacube2_library.h"
+#include "oph_datacube_library.h"
 
 #include "debug.h"
 
@@ -570,7 +570,7 @@ int task_execute(oph_operator_struct * handle)
 	int tmp_counter = 0;
 	int buffer_length = 0;
 
-	if (oph_dc2_setup_dbms(&(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
+	if (oph_dc_setup_dbms(&(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CUBESIZE_IOPLUGIN_SETUP_ERROR,
 			(dbmss.value[0]).id_dbms);
@@ -580,7 +580,7 @@ int task_execute(oph_operator_struct * handle)
 	//For each DBMS
 	for (i = 0; i < dbmss.size; i++) {
 
-		if (oph_dc2_connect_to_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
+		if (oph_dc_connect_to_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CUBESIZE_DBMS_CONNECTION_ERROR,
 				(dbmss.value[i]).id_dbms);
@@ -588,8 +588,8 @@ int task_execute(oph_operator_struct * handle)
 				free(frag_name);
 				frag_name = NULL;
 			}
-			oph_dc2_disconnect_from_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
-			oph_dc2_cleanup_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server);
+			oph_dc_disconnect_from_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+			oph_dc_cleanup_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server);
 			oph_odb_stge_free_dbms_list(&dbmss);
 			oph_odb_free_ophidiadb(&oDB_slave);
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -606,8 +606,8 @@ int task_execute(oph_operator_struct * handle)
 				frag_name = NULL;
 			}
 			mysql_free_result(frag_list);
-			oph_dc2_disconnect_from_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
-			oph_dc2_cleanup_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server);
+			oph_dc_disconnect_from_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+			oph_dc_cleanup_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server);
 			oph_odb_stge_free_dbms_list(&dbmss);
 			oph_odb_free_ophidiadb(&oDB_slave);
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -621,8 +621,8 @@ int task_execute(oph_operator_struct * handle)
 				frag_name = NULL;
 			}
 			mysql_free_result(frag_list);
-			oph_dc2_disconnect_from_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
-			oph_dc2_cleanup_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server);
+			oph_dc_disconnect_from_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+			oph_dc_cleanup_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server);
 			oph_odb_stge_free_dbms_list(&dbmss);
 			oph_odb_free_ophidiadb(&oDB_slave);
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -636,8 +636,8 @@ int task_execute(oph_operator_struct * handle)
 				frag_name = NULL;
 			}
 			mysql_free_result(frag_list);
-			oph_dc2_disconnect_from_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
-			oph_dc2_cleanup_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server);
+			oph_dc_disconnect_from_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+			oph_dc_cleanup_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server);
 			oph_odb_stge_free_dbms_list(&dbmss);
 			oph_odb_free_ophidiadb(&oDB_slave);
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -657,8 +657,8 @@ int task_execute(oph_operator_struct * handle)
 					frag_name = NULL;
 				}
 				mysql_free_result(frag_list);
-				oph_dc2_disconnect_from_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
-				oph_dc2_cleanup_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server);
+				oph_dc_disconnect_from_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+				oph_dc_cleanup_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server);
 				oph_odb_stge_free_dbms_list(&dbmss);
 				oph_odb_free_ophidiadb(&oDB_slave);
 				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
@@ -675,28 +675,28 @@ int task_execute(oph_operator_struct * handle)
 		partial_elements = 0;
 
 		//CUBESIZE size
-		if (oph_dc2_get_fragments_size_in_bytes(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), frag_name, &partial_elements)) {
+		if (oph_dc_get_fragments_size_in_bytes(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), frag_name, &partial_elements)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve fragment size\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CUBESIZE_GET_FRAG_SIZE_ERROR, frag_name);
 			if (frag_name) {
 				free(frag_name);
 				frag_name = NULL;
 			}
-			oph_dc2_disconnect_from_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
-			oph_dc2_cleanup_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server);
+			oph_dc_disconnect_from_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+			oph_dc_cleanup_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server);
 			oph_odb_stge_free_dbms_list(&dbmss);
 			oph_odb_free_ophidiadb(&oDB_slave);
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 		total_size += partial_elements;
 
-		oph_dc2_disconnect_from_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+		oph_dc_disconnect_from_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 		if (frag_name) {
 			free(frag_name);
 			frag_name = NULL;
 		}
 	}
-	if (oph_dc2_cleanup_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server)) {
+	if (oph_dc_cleanup_dbms(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->server)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CUBESIZE_IOPLUGIN_CLEANUP_ERROR,
 			(dbmss.value[0]).id_dbms);

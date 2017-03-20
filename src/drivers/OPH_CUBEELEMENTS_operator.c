@@ -32,7 +32,7 @@
 #include "oph_task_parser_library.h"
 #include "oph_pid_library.h"
 #include "oph_json_library.h"
-#include "oph_datacube2_library.h"
+#include "oph_datacube_library.h"
 
 #include "debug.h"
 
@@ -619,7 +619,7 @@ int task_execute(oph_operator_struct * handle)
 	long long total_elements = 0;
 	long long partial_elements;
 
-	if (oph_dc2_setup_dbms(&(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
+	if (oph_dc_setup_dbms(&(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CUBEELEMENTS_IOPLUGIN_SETUP_ERROR,
 			(dbmss.value[0]).id_dbms);
@@ -631,12 +631,12 @@ int task_execute(oph_operator_struct * handle)
 	//For each DBMS
 	for (i = 0; i < dbmss.size; i++) {
 
-		if (oph_dc2_connect_to_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
+		if (oph_dc_connect_to_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CUBEELEMENTS_DBMS_CONNECTION_ERROR,
 				(dbmss.value[i]).id_dbms);
-			oph_dc2_disconnect_from_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
-			oph_dc2_cleanup_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server);
+			oph_dc_disconnect_from_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+			oph_dc_cleanup_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server);
 			oph_odb_stge_free_fragment_list(&frags);
 			oph_odb_stge_free_db_list(&dbs);
 			oph_odb_stge_free_dbms_list(&dbmss);
@@ -648,12 +648,12 @@ int task_execute(oph_operator_struct * handle)
 			if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
 				continue;
 
-			if (oph_dc2_use_db_of_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
+			if (oph_dc_use_db_of_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CUBEELEMENTS_DB_SELECTION_ERROR,
 					(dbs.value[j]).db_name);
-				oph_dc2_disconnect_from_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
-				oph_dc2_cleanup_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server);
+				oph_dc_disconnect_from_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+				oph_dc_cleanup_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server);
 				oph_odb_stge_free_fragment_list(&frags);
 				oph_odb_stge_free_db_list(&dbs);
 				oph_odb_stge_free_dbms_list(&dbmss);
@@ -668,13 +668,13 @@ int task_execute(oph_operator_struct * handle)
 				partial_elements = 0;
 
 				//CUBEELEMENTS count
-				if (oph_dc2_get_total_number_of_elements_in_fragment
+				if (oph_dc_get_total_number_of_elements_in_fragment
 				    (((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server, &(frags.value[k]), data_type, compressed, &partial_elements)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to count elements in fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->id_input_container,
 						OPH_LOG_OPH_CUBEELEMENTS_COUNT_NUMBER_ELEMENTS_ERROR, (frags.value[k]).fragment_name);
-					oph_dc2_disconnect_from_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-					oph_dc2_cleanup_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server);
+					oph_dc_disconnect_from_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+					oph_dc_cleanup_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server);
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
@@ -683,9 +683,9 @@ int task_execute(oph_operator_struct * handle)
 				total_elements += partial_elements;
 			}
 		}
-		oph_dc2_disconnect_from_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+		oph_dc_disconnect_from_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 	}
-	if (oph_dc2_cleanup_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server)) {
+	if (oph_dc_cleanup_dbms(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->server)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CUBEELEMENTS_IOPLUGIN_CLEANUP_ERROR,
 			(dbmss.value[0]).id_dbms);

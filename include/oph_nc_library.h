@@ -21,7 +21,7 @@
 
 #include "netcdf.h"
 #include "oph_common.h"
-#include "oph_datacube2_library.h"
+#include "oph_datacube_library.h"
 #include "oph_ioserver_library.h"
 
 #define OPH_NC_BYTE_TYPE	OPH_COMMON_BYTE_TYPE

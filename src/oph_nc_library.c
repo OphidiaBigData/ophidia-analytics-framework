@@ -94,7 +94,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 		return OPH_NC_ERROR;
 	}
 
-	if (oph_dc2_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
+	if (oph_dc_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
 		return OPH_NC_ERROR;
 	}
@@ -667,7 +667,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 
-	if (oph_dc2_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
+	if (oph_dc_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
 		return OPH_NC_ERROR;
 	}
@@ -1377,7 +1377,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 
-	if (oph_dc2_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
+	if (oph_dc_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
 		return OPH_NC_ERROR;
 	}
@@ -2373,7 +2373,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		return OPH_NC_ERROR;
 	}
 
-	if (oph_dc2_check_connection_to_db(server, old_frag->db_instance->dbms_instance, old_frag->db_instance, 0)) {
+	if (oph_dc_check_connection_to_db(server, old_frag->db_instance->dbms_instance, old_frag->db_instance, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
 		return OPH_NC_ERROR;
 	}
@@ -2425,7 +2425,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 	oph_nc_get_c_type(measure->vartype, c_type);
 	oph_ioserver_result *frag_rows;
 	short int i;
-	if (oph_dc2_read_fragment_data(server, old_frag, c_type, compressed, NULL, NULL, NULL, 0, 1, &frag_rows)) {
+	if (oph_dc_read_fragment_data(server, old_frag, c_type, compressed, NULL, NULL, NULL, 0, 1, &frag_rows)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read fragment.\n");
 		return OPH_NC_ERROR;
 	}
@@ -2627,7 +2627,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		if (oph_ioserver_fetch_row(server, frag_rows, &old_row)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
 			oph_ioserver_free_result(server, frag_rows);
-			return OPH_DC2_SERVER_ERROR;
+			return OPH_DC_SERVER_ERROR;
 		}
 
 		if (!old_row->row) {

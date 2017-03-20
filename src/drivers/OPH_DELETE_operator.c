@@ -36,7 +36,7 @@
 
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
-#include "oph_datacube2_library.h"
+#include "oph_datacube_library.h"
 
 int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
@@ -388,14 +388,14 @@ int task_execute(oph_operator_struct * handle)
 
 	int result = OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	if (oph_dc2_setup_dbms(&(((OPH_DELETE_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
+	if (oph_dc_setup_dbms(&(((OPH_DELETE_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 	//For each DBMS
 	for (i = 0; (i < dbmss.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
-		if (oph_dc2_connect_to_dbms(((OPH_DELETE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
+		if (oph_dc_connect_to_dbms(((OPH_DELETE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DBMS_CONNECTION_ERROR,
 				(dbmss.value[i]).id_dbms);
@@ -418,7 +418,7 @@ int task_execute(oph_operator_struct * handle)
 			//If the db stores just one datacube then directly drop the dbinstance
 			if (datacubexdb_number == 1) {
 				//Databse drop
-				if (oph_dc2_delete_db(((OPH_DELETE_operator_handle *) handle->operator_handle)->server, &(dbs.value[j]))) {
+				if (oph_dc_delete_db(((OPH_DELETE_operator_handle *) handle->operator_handle)->server, &(dbs.value[j]))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while dropping database.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DROP_DB_ERROR,
 						(dbs.value[j]).db_name);
@@ -431,7 +431,7 @@ int task_execute(oph_operator_struct * handle)
 			else if (datacubexdb_number == 0)
 				continue;
 
-			if (oph_dc2_use_db_of_dbms(((OPH_DELETE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
+			if (oph_dc_use_db_of_dbms(((OPH_DELETE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_SELECTION_ERROR,
 					(dbs.value[j]).db_name);
@@ -445,7 +445,7 @@ int task_execute(oph_operator_struct * handle)
 					continue;
 
 				//Delete fragment
-				if (oph_dc2_delete_fragment(((OPH_DELETE_operator_handle *) handle->operator_handle)->server, &(frags.value[k]))) {
+				if (oph_dc_delete_fragment(((OPH_DELETE_operator_handle *) handle->operator_handle)->server, &(frags.value[k]))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while dropping table.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DROP_FRAGMENT_ERROR,
 						(frags.value[j]).fragment_name);
@@ -454,9 +454,9 @@ int task_execute(oph_operator_struct * handle)
 				}
 			}
 		}
-		oph_dc2_disconnect_from_dbms(((OPH_DELETE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+		oph_dc_disconnect_from_dbms(((OPH_DELETE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 	}
-	if (oph_dc2_cleanup_dbms(((OPH_DELETE_operator_handle *) handle->operator_handle)->server)) {
+	if (oph_dc_cleanup_dbms(((OPH_DELETE_operator_handle *) handle->operator_handle)->server)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_IOPLUGIN_CLEANUP_ERROR,
 			(dbmss.value[0]).id_dbms);
