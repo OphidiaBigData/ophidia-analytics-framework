@@ -39,19 +39,18 @@
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
  */
-typedef struct _OPH_PRIMITIVES_LIST_operator_handle
-{
-  ophidiadb oDB;
-  int level;
-  int id_dbms;
-  char *func_ret;
-  char *func_type;
-  char *name_filter;
-  int limit;
-  oph_ioserver_handler *server;
-  char **objkeys;
-  int objkeys_num;
+typedef struct _OPH_PRIMITIVES_LIST_operator_handle {
+	ophidiadb oDB;
+	int level;
+	int id_dbms;
+	char *func_ret;
+	char *func_type;
+	char *name_filter;
+	int limit;
+	oph_ioserver_handler *server;
+	char **objkeys;
+	int objkeys_num;
 } OPH_PRIMITIVES_LIST_operator_handle;
 
 
-#endif  //__PRIMITIVES_LIST_OPERATOR_H
+#endif				//__PRIMITIVES_LIST_OPERATOR_H

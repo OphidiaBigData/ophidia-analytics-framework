@@ -58,27 +58,26 @@
  * \param sessionid SessionID
  * \param userrole User role
  */
-typedef struct _OPH_METADATA_operator_handle
-{
-  ophidiadb oDB;
-  int mode;
-  int force;
-  int id_datacube_input;
-  int id_container_input;
-  char **metadata_keys;
-  int metadata_keys_num;
-  char *variable;
-  int metadata_id;
-  char *metadata_id_str;
-  char *metadata_type;
-  char *metadata_value;
-  char *metadata_type_filter;
-  char *metadata_value_filter;
-  char *user;
-  char **objkeys;
-  int objkeys_num;
-  char *sessionid;
-  int userrole;
+typedef struct _OPH_METADATA_operator_handle {
+	ophidiadb oDB;
+	int mode;
+	int force;
+	int id_datacube_input;
+	int id_container_input;
+	char **metadata_keys;
+	int metadata_keys_num;
+	char *variable;
+	int metadata_id;
+	char *metadata_id_str;
+	char *metadata_type;
+	char *metadata_value;
+	char *metadata_type_filter;
+	char *metadata_value_filter;
+	char *user;
+	char **objkeys;
+	int objkeys_num;
+	char *sessionid;
+	int userrole;
 } OPH_METADATA_operator_handle;
 
-#endif  //__OPH_METADATA_OPERATOR_H
+#endif				//__OPH_METADATA_OPERATOR_H

@@ -39,6 +39,12 @@
 #define OPH_ODB_BUFFER_LEN 	256
 #define OPH_ODB_PATH_LEN 	1000
 
+#define OPH_CONF_OPHDB_NAME	"OPHDB_NAME"
+#define OPH_CONF_OPHDB_HOST	"OPHDB_HOST"
+#define OPH_CONF_OPHDB_PORT	"OPHDB_PORT"
+#define OPH_CONF_OPHDB_LOGIN	"OPHDB_LOGIN"
+#define OPH_CONF_OPHDB_PWD	"OPHDB_PWD"
+
 /**
  * \brief Structure that contain OphidiaDB parameters
  * \param name name of OphidiaDB
@@ -48,8 +54,7 @@
  * \param pwd Password to connect to MySQL instance that host OphidiaDB
  * \param conn Pointer to a MYSQL * type that is used to do a query on the db
  */
-typedef struct
-{
+typedef struct {
 	char *name;
 	char *hostname;
 	int server_port;
@@ -63,39 +68,39 @@ typedef struct
  * \param ophidiadb Pointer to an allocated ophidiadb structure
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_read_ophidiadb_config_file(ophidiadb *oDB);
+int oph_odb_read_ophidiadb_config_file(ophidiadb * oDB);
 
 /**
  * \brief Function to initilize OphidiaDB structure.
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_init_ophidiadb(ophidiadb *oDB);
+int oph_odb_init_ophidiadb(ophidiadb * oDB);
 
 /**
  * \brief Function to delete OphidiaDB and to free memory allocated.
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_free_ophidiadb(ophidiadb *oDB);
+int oph_odb_free_ophidiadb(ophidiadb * oDB);
 
 /**
  * \brief Function to connect to the OphidiaDB. WARNING: Call this function before any other function or the system will crash
  * \param structure containing OphidiaDB parameters
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_connect_to_ophidiadb(ophidiadb *oDB);
+int oph_odb_connect_to_ophidiadb(ophidiadb * oDB);
 
 /**
  * \brief Function to check connect status to the OphidiaDB. WARNING: Do not call this function (or any other) before calling connect_to_ophidiaDB or the client will crash
  * \param structure containing OphidiaDB parameters
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_check_connection_to_ophidiadb(ophidiadb *oDB);
+int oph_odb_check_connection_to_ophidiadb(ophidiadb * oDB);
 
 /**
  * \brief Function to disconnect from the OphidiaDB
  * \param structure containig OphidiaDB parameters
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_disconnect_from_ophidiadb(ophidiadb *oDB);
+int oph_odb_disconnect_from_ophidiadb(ophidiadb * oDB);
 
-#endif /* __OPH_OPHIDIA_DB__ */
+#endif				/* __OPH_OPHIDIA_DB__ */

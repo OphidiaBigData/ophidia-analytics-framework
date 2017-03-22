@@ -23,7 +23,7 @@
 #include "oph_ophidiadb_main.h"
 #include "oph_common.h"
 #include "oph_ioserver_library.h"
- 
+
 /**
  * \brief Structure of parameters needed by the operator OPH_CUBESIZE. It computes the number of elements stored in the input datacube
  * \param oDB Contains the parameters and the connection to OphidiaDB
@@ -41,24 +41,23 @@
  * \param server Pointer to I/O server handler
  * \param sessionid SessionID
  */
-struct _OPH_CUBESIZE_operator_handle
-{
-  ophidiadb oDB;
-  int id_input_datacube;
-  int id_input_container;
-  int byte_unit;
-  int schedule_algo;
-  int dbms_number;
-  int dbms_id_start_position;
-  int frag_on_dbms_number;
-  int frag_on_dbms_start_position;
-  long long partial_size;
-  int first_time_computation;
-  char **objkeys;
-  int objkeys_num;
-  oph_ioserver_handler *server;
-  char *sessionid;
+struct _OPH_CUBESIZE_operator_handle {
+	ophidiadb oDB;
+	int id_input_datacube;
+	int id_input_container;
+	int byte_unit;
+	int schedule_algo;
+	int dbms_number;
+	int dbms_id_start_position;
+	int frag_on_dbms_number;
+	int frag_on_dbms_start_position;
+	long long partial_size;
+	int first_time_computation;
+	char **objkeys;
+	int objkeys_num;
+	oph_ioserver_handler *server;
+	char *sessionid;
 };
 typedef struct _OPH_CUBESIZE_operator_handle OPH_CUBESIZE_operator_handle;
 
-#endif  //__OPH_CUBESIZE_OPERATOR_H
+#endif				//__OPH_CUBESIZE_OPERATOR_H

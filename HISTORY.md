@@ -1,4 +1,42 @@
 
+## v0.11.0 - 2017-01-31
+
+### Fixed:
+
+- Bug regarding metadatakey table update on cube deletion
+- Memory leak in OPH_APPLY
+- Bug [#9](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/9)
+- Example in OPH_INSTANCE xml file
+- Bug [#7](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/7)
+- Bug [#5](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/5)
+
+### Added:
+
+- Max and min operations to OPH_INTERCUBE operator
+- Argument 'status_filter' to OPH_RESUME operator XML file
+- Support for missing values to several operators
+- Support for base64-encoded dimensions [#10](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/10)
+- Support for missing values to several primitives XML descriptions
+- Support for Ophidia native IO server
+
+### Changed:
+
+- OPH_CUBESIZE query to compute data fragment size
+- OPH_EXPORTNC2 to handle multiple row selection and export
+- XML descriptions of the primitives with two input measures
+- OPH_INTERCUBE operator to allow comparison of cubes stored on different IO nodes
+- OPH_SERVICE xml file for listing running tasks
+- Configuration parameters names in oph_configuration
+- Query used in exportnc operators to optimize retrieval from IO server
+- Multi-insert query to optimize operations on IO server side
+- OPH_APPLY query used to count fragment rows
+
+### Removed:
+
+- oph_dim_configuration file (unified with oph_configuration)
+- OPH_IMPORTNC
+- OPH_IMPORTNC2
+
 ## v0.10.7 - 2016-11-15
 
 ### Fixed

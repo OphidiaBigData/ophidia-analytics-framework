@@ -24,21 +24,21 @@
 #include "oph_common.h"
 #include "oph_ioserver_library.h"
 
-#define OPH_INTERCOMPARISON_QUERY_COMPR OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "fact_out") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "fact_in1.%s|oph_compress('', '', oph_sum_array('oph_%s|oph_%s','oph_%s', oph_uncompress('', '', fact_in1.%s),oph_mul_scalar('oph_%s', 'oph_%s', oph_uncompress('', '', fact_in2.%s),-1.0)))") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "fact_in1|fact_in2")  OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "fact_in1.%s = fact_in2.%s")
+#define OPH_INTERCOMPARISON_QUERY_COMPR OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "fact_out") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "fact_in1.%s|oph_compress('', '', oph_sub_array('oph_%s|oph_%s','oph_%s', oph_uncompress('', '', fact_in1.%s), oph_uncompress('', '', fact_in2.%s), %s))") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "fact_in1|fact_in2")  OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "fact_in1.%s = fact_in2.%s")
 
-#define OPH_INTERCOMPARISON_QUERY OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "fact_out") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "fact_in1.%s|oph_sum_array('oph_%s|oph_%s','oph_%s',fact_in1.%s,oph_mul_scalar('oph_%s', 'oph_%s', fact_in2.%s,-1.0)))") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "fact_in1|fact_in2")  OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "fact_in1.%s = fact_in2.%s")
+#define OPH_INTERCOMPARISON_QUERY OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "fact_out") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "fact_in1.%s|oph_sub_array('oph_%s|oph_%s','oph_%s',fact_in1.%s,fact_in2.%s, %s))") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "fact_in1|fact_in2")  OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "fact_in1.%s = fact_in2.%s")
 
 #ifdef OPH_DEBUG_MYSQL
-#define OPH_INTERCOMPARISON_QUERY2_COMPR_MYSQL "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT %s.%s AS %s, oph_compress(oph_sum_array(oph_uncompress(%s.%s),oph_mul_scalar(oph_uncompress(%s.%s),-1.0,'oph_%s'),'oph_%s','oph_%s')) AS %s FROM %s.%s, %s.%s WHERE %s.%s = %s.%s"
-#define OPH_INTERCOMPARISON_QUERY2_MYSQL "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT %s.%s AS %s, oph_sum_array(%s.%s,oph_mul_scalar(%s.%s,-1.0,'oph_%s'),'oph_%s','oph_%s') AS %s FROM %s.%s, %s.%s WHERE %s.%s = %s.%s"
+#define OPH_INTERCOMPARISON_QUERY2_COMPR_MYSQL "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT %s.%s AS %s, oph_compress(oph_sub_array(oph_uncompress(%s.%s),oph_uncompress(%s.%s),'oph_%s','oph_%s',%s)) AS %s FROM %s.%s, %s.%s WHERE %s.%s = %s.%s"
+#define OPH_INTERCOMPARISON_QUERY2_MYSQL "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT %s.%s AS %s, oph_sub_array(%s.%s,%s.%s,'oph_%s','oph_%s',%s) AS %s FROM %s.%s, %s.%s WHERE %s.%s = %s.%s"
 #endif
 
 #define OPH_INTERCOMPARISON_FRAG1 "frag1"
 #define OPH_INTERCOMPARISON_FRAG2 "frag2"
 
-#define OPH_INTERCOMPARISON_QUERY2_COMPR OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "%s.%s|oph_compress('', '', oph_sum_array('oph_%s|oph_%s','oph_%s', oph_uncompress('', '', %s.%s),oph_mul_scalar('oph_%s', 'oph_%s', oph_uncompress('', '', %s.%s),-1.0)))") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "%s.%s|%s.%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "%s.%s = %s.%s")
+#define OPH_INTERCOMPARISON_QUERY2_COMPR OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "%s.%s|oph_compress('', '', oph_sub_array('oph_%s|oph_%s','oph_%s', oph_uncompress('', '', %s.%s), oph_uncompress('', '', %s.%s), %s))") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "%s.%s|%s.%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "%s.%s = %s.%s")
 
-#define OPH_INTERCOMPARISON_QUERY2 OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "%s.%s|oph_sum_array('oph_%s|oph_%s','oph_%s',%s.%s,oph_mul_scalar('oph_%s', 'oph_%s', %s.%s,-1.0))") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "%s.%s|%s.%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "%s.%s = %s.%s")
+#define OPH_INTERCOMPARISON_QUERY2 OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "%s.%s|oph_sub_array('oph_%s|oph_%s','oph_%s',%s.%s, %s.%s, %s)") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "%s.%s|%s.%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "%s.%s = %s.%s")
 
 /**
  * \brief Structure of parameters needed by the operator OPH_INTERCOMPARISON. It compares two cubes materializing a new datacube
@@ -58,28 +58,29 @@
  * \param sessionid SessionID
  * \param id_user ID of submitter
  * \param description Free description to be associated with output cube
+ * \param ms Conventional value for missing values
  */
-struct _OPH_INTERCOMPARISON_operator_handle
-{
-  ophidiadb oDB;
-  int id_input_datacube[2];
-  int id_input_container;
-  int id_output_datacube;
-  int id_output_container;
-  int id_job;
-  int schedule_algo;
-  char* fragment_ids;
-  int fragment_number;
-  int fragment_id_start_position;
-  char* measure_type;
-  int compressed;
-  char **objkeys;
-  int objkeys_num;
-  oph_ioserver_handler *server;
-  char *sessionid;
-  int id_user;
-  char* description;
+struct _OPH_INTERCOMPARISON_operator_handle {
+	ophidiadb oDB;
+	int id_input_datacube[2];
+	int id_input_container;
+	int id_output_datacube;
+	int id_output_container;
+	int id_job;
+	int schedule_algo;
+	char *fragment_ids;
+	int fragment_number;
+	int fragment_id_start_position;
+	char *measure_type;
+	int compressed;
+	char **objkeys;
+	int objkeys_num;
+	oph_ioserver_handler *server;
+	char *sessionid;
+	int id_user;
+	char *description;
+	double ms;
 };
 typedef struct _OPH_INTERCOMPARISON_operator_handle OPH_INTERCOMPARISON_operator_handle;
 
-#endif  //__OPH_INTERCOMPARISON_OPERATOR_H
+#endif				//__OPH_INTERCOMPARISON_OPERATOR_H

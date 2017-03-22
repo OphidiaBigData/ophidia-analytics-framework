@@ -31,11 +31,9 @@
 #define MYSQL_DIM_RETRIEVE_DIMENSION_DUMP 				"SELECT oph_dump('oph_%s', '', dimension)  FROM %s WHERE iddimension = %d;"
 #define MYSQL_DIM_RETRIEVE_COMPRESSED_DIMENSION_LABELS 	"SELECT oph_compress('','',oph_extract('oph_%s', 'oph_%s',%s,?)) FROM %s WHERE iddimension = %d;"
 #define MYSQL_DIM_RETRIEVE_DIMENSION_LABELS 			"SELECT oph_extract('oph_%s', 'oph_%s',%s,?) FROM %s WHERE iddimension = %d;"
-
 #define MYSQL_DIM_DELETE_FRAG "DROP TABLE IF EXISTS %s"
 #define MYSQL_DIM_CREATE_DB "CREATE DATABASE IF NOT EXISTS %s DEFAULT CHARACTER SET latin1 COLLATE latin1_swedish_ci"
 #define MYSQL_DIM_DELETE_DB "DROP DATABASE IF EXISTS %s"
-
 #define MYSQL_DIM_INDEX_ARRAY "oph_get_index_array('','oph_%s',%d,%d)"
-
-#endif // __OPH_DIM_QUERY_H__
+    
+#endif				// __OPH_DIM_QUERY_H__

@@ -33,6 +33,7 @@
 #define OPH_DIM_MYSQL_ERROR		2
 #define OPH_DIM_DATA_ERROR 		3
 #define OPH_DIM_TIME_PARSING_ERROR	4
+#define OPH_DIM_SYSTEM_ERROR	5
 
 #define OPH_DIM_DOUBLE_TYPE		OPH_COMMON_DOUBLE_TYPE
 #define OPH_DIM_FLOAT_TYPE 		OPH_COMMON_FLOAT_TYPE
@@ -51,6 +52,13 @@
 #define OPH_DIM_BUFFER_LEN 		256
 #define OPH_DIM_PATH_LEN 		1000
 
+#define OPH_CONF_DIMDB_NAME		"DIMDB_NAME"
+#define OPH_CONF_DIMDB_HOST		"DIMDB_HOST"
+#define OPH_CONF_DIMDB_PORT		"DIMDB_PORT"
+#define OPH_CONF_DIMDB_LOGIN		"DIMDB_LOGIN"
+#define OPH_CONF_DIMDB_PWD		"DIMDB_PWD"
+
+
 #define OPH_DIM_SUBSET_SEPARATOR	",_"
 #define OPH_DIM_SUBSET_SEPARATOR2	':'
 
@@ -59,7 +67,7 @@
  * \param db Pointer to allocated db_instance structure
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_load_dim_dbinstance(oph_odb_db_instance *db);
+int oph_dim_load_dim_dbinstance(oph_odb_db_instance * db);
 
 /**
  * \brief Function to connect to dbms_instance. It doesn't connect to a DB. WARNING: Call this function before any other function
@@ -67,7 +75,7 @@ int oph_dim_load_dim_dbinstance(oph_odb_db_instance *db);
  * \param flag Value for client_flag of mysql_real_connect(), it may be 0 if the option is unused
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_connect_to_dbms(oph_odb_dbms_instance *dbms, unsigned long flag);
+int oph_dim_connect_to_dbms(oph_odb_dbms_instance * dbms, unsigned long flag);
 
 /**
  * \brief Function choose new current db. Call this function to use a database manged by a dbms
@@ -75,7 +83,7 @@ int oph_dim_connect_to_dbms(oph_odb_dbms_instance *dbms, unsigned long flag);
  * \param dbms2 Pointer to db_instance to switch on (may be null)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_use_db_of_dbms(oph_odb_dbms_instance *dbms1, oph_odb_db_instance *dbms2);
+int oph_dim_use_db_of_dbms(oph_odb_dbms_instance * dbms1, oph_odb_db_instance * dbms2);
 
 /**
  * \brief Function to check connect status to the DB. WARNING: Do not call this function (or any other) before calling connect_to_dbms
@@ -84,28 +92,28 @@ int oph_dim_use_db_of_dbms(oph_odb_dbms_instance *dbms1, oph_odb_db_instance *db
  * \param flag Value for client_flag of mysql_real_connect() in case of reconnection, it may be 0 if not used
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_check_connection_to_db(oph_odb_dbms_instance *dbms, oph_odb_db_instance *db, unsigned long flag);
+int oph_dim_check_connection_to_db(oph_odb_dbms_instance * dbms, oph_odb_db_instance * db, unsigned long flag);
 
 /**
  * \brief Function to disconnect from dbms_instance
  * \param dbms Pointer to dbms_instance to disconnect from
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_disconnect_from_dbms(oph_odb_dbms_instance *dbms);
+int oph_dim_disconnect_from_dbms(oph_odb_dbms_instance * dbms);
 
 /**
  * \brief Function to create an empty dimension database
  * \param db Pointer to db_instance to create
  * \return 0 if successfull, N otherwise
  */
-int oph_dim_create_db(oph_odb_db_instance *db);
+int oph_dim_create_db(oph_odb_db_instance * db);
 
 /**
  * \brief Function to delete an empty dimension database (checks if the database is empty)
  * \param db Pointer to db_instance to delete
  * \return 0 if successfull, N otherwise
  */
-int oph_dim_delete_db(oph_odb_db_instance *db);
+int oph_dim_delete_db(oph_odb_db_instance * db);
 
 /**
  * \brief Function to create an empty dimension table
@@ -113,7 +121,7 @@ int oph_dim_delete_db(oph_odb_db_instance *db);
  * \param dimension_table_name Name of new dimension table
  * \return 0 if successfull, N otherwise
  */
-int oph_dim_create_empty_table(oph_odb_db_instance *db, char* dimension_table_name);
+int oph_dim_create_empty_table(oph_odb_db_instance * db, char *dimension_table_name);
 
 /**
  * \brief Function to retrieve a dimension row from a dimension table
@@ -123,7 +131,7 @@ int oph_dim_create_empty_table(oph_odb_db_instance *db, char* dimension_table_na
  * \param dim_row Binary dimension array row to be found
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_retrieve_dimension(oph_odb_db_instance *db, char* dimension_table_name, int dimension_id, char** dim_row);
+int oph_dim_retrieve_dimension(oph_odb_db_instance * db, char *dimension_table_name, int dimension_id, char **dim_row);
 
 /**
  * \brief Function that updates a dimension table adding new dimensions (if it not exists)
@@ -135,7 +143,7 @@ int oph_dim_retrieve_dimension(oph_odb_db_instance *db, char* dimension_table_na
  * \param dimension_id Id of last inserted dimension
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_insert_into_dimension_table(oph_odb_db_instance *db, char* dimension_table_name, char *dim_type, long long dim_size, char* dim_row, int *dimension_id);
+int oph_dim_insert_into_dimension_table(oph_odb_db_instance * db, char *dimension_table_name, char *dim_type, long long dim_size, char *dim_row, int *dimension_id);
 
 /**
  * \brief Function that updates a dimension table adding new dimensions (if it not exists)
@@ -148,7 +156,7 @@ int oph_dim_insert_into_dimension_table(oph_odb_db_instance *db, char* dimension
  * \param dimension_id Id of last inserted dimension
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_insert_into_dimension_table_from_query(oph_odb_db_instance *db, char* dimension_table_name, char *dim_type, long long dim_size, char* query, char* dim_row, int *dimension_id);
+int oph_dim_insert_into_dimension_table_from_query(oph_odb_db_instance * db, char *dimension_table_name, char *dim_type, long long dim_size, char *query, char *dim_row, int *dimension_id);
 
 /**
  * \brief Function that check if the values of a dimension correspond to those of another dimension
@@ -161,7 +169,7 @@ int oph_dim_insert_into_dimension_table_from_query(oph_odb_db_instance *db, char
  * \param match Flag indicating if the output of the comparison
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_compare_dimension(oph_odb_db_instance *db, char* dimension_table_name, char* dim_type, long long dim_size, char *dim_row, int dimension_id, int* match);
+int oph_dim_compare_dimension(oph_odb_db_instance * db, char *dimension_table_name, char *dim_type, long long dim_size, char *dim_row, int dimension_id, int *match);
 
 /**
  * \brief Function that check if the values of a dimension correspond to those of another dimension
@@ -175,7 +183,7 @@ int oph_dim_compare_dimension(oph_odb_db_instance *db, char* dimension_table_nam
  * \param match Flag indicating if the output of the comparison
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_compare_dimension2(oph_odb_db_instance *db, char* dimension_table_name, char* dim_type, long long dim_size, char *apply_clause, char *dim_row, int dimension_id, int* match);
+int oph_dim_compare_dimension2(oph_odb_db_instance * db, char *dimension_table_name, char *dim_type, long long dim_size, char *apply_clause, char *dim_row, int dimension_id, int *match);
 
 /**
  * \brief Function to check if a dimension table exists
@@ -184,7 +192,7 @@ int oph_dim_compare_dimension2(oph_odb_db_instance *db, char* dimension_table_na
  * \param exist_flag It is set to 1 if the table exists otherwise it is set to 0
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_check_if_dimension_table_exists(oph_odb_db_instance *db, char* dimension_table_name, int *exist_flag);
+int oph_dim_check_if_dimension_table_exists(oph_odb_db_instance * db, char *dimension_table_name, int *exist_flag);
 
 /**
  * \brief Function to populate a dimension table with random values [1;100)
@@ -195,7 +203,7 @@ int oph_dim_check_if_dimension_table_exists(oph_odb_db_instance *db, char* dimen
  * \param dimension_id Id of last inserted dimension
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_insert_into_dimension_table_rand_data(oph_odb_db_instance *db, char* dimension_table_name, char *dimension_type, long long dim_size, int *dimension_id);
+int oph_dim_insert_into_dimension_table_rand_data(oph_odb_db_instance * db, char *dimension_table_name, char *dimension_type, long long dim_size, int *dimension_id);
 
 /**
  * \brief Function to read a dimension table with filtering parameters
@@ -207,7 +215,7 @@ int oph_dim_insert_into_dimension_table_rand_data(oph_odb_db_instance *db, char*
  * \param dim_row Binary dimension array row to be read
  * \return 0 if successfull, N otherwise
  */
-int oph_dim_read_dimension_data(oph_odb_db_instance *db, char* dimension_table_name, int dimension_id, char* array_clause, int compressed, char** dim_row);
+int oph_dim_read_dimension_data(oph_odb_db_instance * db, char *dimension_table_name, int dimension_id, char *array_clause, int compressed, char **dim_row);
 
 
 /**
@@ -220,7 +228,7 @@ int oph_dim_read_dimension_data(oph_odb_db_instance *db, char* dimension_table_n
  * \param dim_row Binary dimension array row to be read
  * \return 0 if successfull, N otherwise
  */
-int oph_dim_read_dimension(oph_odb_db_instance *db, char* dimension_table_name, char *dimension_type, int dimension_id, int compressed, char **dim_row);
+int oph_dim_read_dimension(oph_odb_db_instance * db, char *dimension_table_name, char *dimension_type, int dimension_id, int compressed, char **dim_row);
 
 /**
  * \brief Function to read a dimension table with filtering parameters
@@ -233,7 +241,8 @@ int oph_dim_read_dimension(oph_odb_db_instance *db, char* dimension_table_name, 
  * \param dim_type Type of dimension to be extracted
  * \return 0 if successfull, N otherwise
  */
-int oph_dim_read_dimension_filtered_data(oph_odb_db_instance *db, char* dimension_table_name, int dimension_id, char* apply_clause, int compressed, char** dim_row, char* data_type, long long dim_size);
+int oph_dim_read_dimension_filtered_data(oph_odb_db_instance * db, char *dimension_table_name, int dimension_id, char *apply_clause, int compressed, char **dim_row, char *data_type,
+					 long long dim_size);
 
 /**
  * \brief Function to delete a dimension table
@@ -241,14 +250,14 @@ int oph_dim_read_dimension_filtered_data(oph_odb_db_instance *db, char* dimensio
  * \param dimension_table_name Name of dimension table
  * \return 0 if successfull, N otherwise
  */
-int oph_dim_delete_table(oph_odb_db_instance *db, char* dimension_table_name);
+int oph_dim_delete_table(oph_odb_db_instance * db, char *dimension_table_name);
 
 /**
  * \brief Function to free db instance
  * \param db Pointer to db_instance used for dimension
  * \return 0 if successfull, N otherwise
  */
-int oph_dim_unload_dim_dbinstance(oph_odb_db_instance *db);
+int oph_dim_unload_dim_dbinstance(oph_odb_db_instance * db);
 
 /**
  * \brief Function to check dimensions data type
@@ -256,7 +265,7 @@ int oph_dim_unload_dim_dbinstance(oph_odb_db_instance *db);
  * \param size Pointer to a variable which the data size will be 
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_check_data_type(char *input_type, int* size);
+int oph_dim_check_data_type(char *input_type, int *size);
 
 /**
  * \brief Function to evaluate the reduction group for time dimensions
@@ -270,7 +279,7 @@ int oph_dim_check_data_type(char *input_type, int* size);
  * \param res Output flag
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_is_in_time_group_of(char* dim_row, unsigned int kk, oph_odb_dimension* dim, char concept_level_out, struct tm* tm_prev, int midnight, int evaluate_centroid, int* res);
+int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, char concept_level_out, struct tm *tm_prev, int midnight, int evaluate_centroid, int *res);
 
 /**
  * \brief Function to evaluate the centroid using mean of original values
@@ -280,7 +289,7 @@ int oph_dim_is_in_time_group_of(char* dim_row, unsigned int kk, oph_odb_dimensio
  * \param last Index of the last element of the set which the centroid refers to
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_update_value(char* dim_row, const char* dimension_type, unsigned int first, unsigned int last);
+int oph_dim_update_value(char *dim_row, const char *dimension_type, unsigned int first, unsigned int last);
 
 /**
  * \brief Function to evaluate the traditional subset string from a time subset string
@@ -289,7 +298,7 @@ int oph_dim_update_value(char* dim_row, const char* dimension_type, unsigned int
  * \param output_string Char vector to be used for output subset string; it must be already allocated
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_parse_time_subset(const char* subset_string, oph_odb_dimension* dim, char* output_string);
+int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim, char *output_string);
 
 /**
  * \brief Function to extract the datetime string associated to a time dimension value
@@ -300,7 +309,7 @@ int oph_dim_parse_time_subset(const char* subset_string, oph_odb_dimension* dim,
  * \param base_time Base time (in sec) evaluated internally (it could be NULL)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_get_time_value_of(char* dim_row, unsigned int kk, oph_odb_dimension* dim, struct tm* tm_time, long long* base_time);
+int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, struct tm *tm_time, long long *base_time);
 
 /**
  * \brief Function to extract the datetime string associated to a time dimension value
@@ -310,6 +319,6 @@ int oph_dim_get_time_value_of(char* dim_row, unsigned int kk, oph_odb_dimension*
  * \param output_string Char vector to be used for output subset string; it must be already allocated
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_get_time_string_of(char* dim_row, unsigned int kk, oph_odb_dimension* dim, char* output_string);
+int oph_dim_get_time_string_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, char *output_string);
 
 #endif

@@ -38,574 +38,559 @@
 #include "oph_log_error_codes.h"
 #include "oph_datacube2_library.h"
 
-int env_set (HASHTBL *task_tbl, oph_operator_struct *handle)
+int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
-  if (!handle){
-  	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-	  return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
-  }
-
-  if (!task_tbl){
-	  pmesg(LOG_ERROR, __FILE__, __LINE__, "Null operator string\n");
-      return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
-  }
-
-  if (handle->operator_handle){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator handle already initialized\n");
-    return OPH_ANALYTICS_OPERATOR_NOT_NULL_OPERATOR_HANDLE;
-  }
-
-  if (!(handle->operator_handle = (OPH_DELETE_operator_handle *) calloc (1, sizeof (OPH_DELETE_operator_handle)))){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETE_MEMORY_ERROR_HANDLE );
-    return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-  }
-
-  //1 - Set up struct to empty values
-  ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_datacube = 0;
-  ((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_ids = NULL;
-  ((OPH_DELETE_operator_handle*)handle->operator_handle)->objkeys = NULL;
-  ((OPH_DELETE_operator_handle*)handle->operator_handle)->objkeys_num = -1;
-  ((OPH_DELETE_operator_handle*)handle->operator_handle)->server = NULL;
-  ((OPH_DELETE_operator_handle*)handle->operator_handle)->sessionid = NULL;
-
-
-  //3 - Fill struct with the correct data
-  char *value;
-  char *datacube_name;
-
-  // retrieve objkeys
-  value = hashtbl_get(task_tbl, OPH_IN_PARAM_OBJKEY_FILTER);
-  if(!value){
-    pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OBJKEY_FILTER);
-    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OBJKEY_FILTER );
-    return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-  }
-  if(oph_tp_parse_multiple_value_param(value, &((OPH_DELETE_operator_handle*)handle->operator_handle)->objkeys, &((OPH_DELETE_operator_handle*)handle->operator_handle)->objkeys_num)){
-    pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
-    oph_tp_free_multiple_value_param_list(((OPH_DELETE_operator_handle*)handle->operator_handle)->objkeys, ((OPH_DELETE_operator_handle*)handle->operator_handle)->objkeys_num);
-    return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-  }
-
-  // retrieve sessionid
-  value = hashtbl_get(task_tbl, OPH_ARG_SESSIONID);
-  if(!value){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_SESSIONID);
-    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_ARG_SESSIONID);
-	return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-  }
-  if(!(((OPH_DELETE_operator_handle*)handle->operator_handle)->sessionid = (char *) strndup (value, OPH_TP_TASKLEN))){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "sessionid" );
-	return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-  }
-
-  value = hashtbl_get(task_tbl, OPH_IN_PARAM_DATACUBE_INPUT);
-  datacube_name = value;
-  if(!value){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DATACUBE_INPUT);
-    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DATACUBE_INPUT );
-	
-    return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-  }
-
-  //For error checking
-  int id_datacube_in[2] = { 0, 0 };
-
-  value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
-  if(!value){
-    pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
-    logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETE_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME );
-    return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-  }
-  char *username = value;
-
-  if(handle->proc_rank == 0){
-  		//Only master process has to initialize and open connection to management OphidiaDB
-	  ophidiadb *oDB = &((OPH_DELETE_operator_handle*)handle->operator_handle)->oDB;
-	  oph_odb_init_ophidiadb(oDB);	
-
-	  if(oph_odb_read_ophidiadb_config_file(oDB)){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETE_OPHIDIADB_CONFIGURATION_FILE);
-	
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	  }
-
-	  if( oph_odb_connect_to_ophidiadb(oDB)){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETE_OPHIDIADB_CONNECTION_ERROR);
-	
-		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-	  }
-
-	  //Check if datacube exists (by ID container and datacube)
-	  int exists = 0;
-	  int status = 0;
-	  char *uri = NULL;
-	  int folder_id = 0;
-	  int permission = 0;
-	  if(oph_pid_parse_pid(datacube_name, &id_datacube_in[1], &id_datacube_in[0], &uri)){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse the PID string\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_PID_ERROR, datacube_name );
-		id_datacube_in[0] = 0;
-		id_datacube_in[1] = 0;
-	  }
-	  else if((oph_odb_cube_check_if_datacube_not_present_by_pid(oDB, uri, id_datacube_in[1], id_datacube_in[0], &exists)) || !exists){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container - datacube combination\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_NO_INPUT_DATACUBE, datacube_name );
-		id_datacube_in[0] = 0;
-		id_datacube_in[1] = 0;
-	  }
-	  else if((oph_odb_cube_check_datacube_availability(oDB, id_datacube_in[0], 0, &status)) || !status){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "I/O nodes storing datacube aren't available\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_DATACUBE_AVAILABILITY_ERROR, datacube_name );
-		id_datacube_in[0] = 0;
-		id_datacube_in[1] = 0;
-	  }
-	  else if((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], 1, &folder_id))){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_DATACUBE_FOLDER_ERROR, datacube_name );
-		id_datacube_in[0] = 0;
-		id_datacube_in[1] = 0;
-	  }
-	  else if((oph_odb_fs_check_folder_session(folder_id, ((OPH_DELETE_operator_handle*)handle->operator_handle)->sessionid, oDB, &permission)) || !permission){
-		//Check if user can work on datacube
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "User %s is not allowed to work on this datacube\n", username);
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_DATACUBE_PERMISSION_ERROR, username );
-		id_datacube_in[0] = 0;
-		id_datacube_in[1] = 0;
-	  }
-	if(uri) free(uri);
-	uri = NULL;
-  }
-
-  //Broadcast to all other processes the fragment relative index 	
-  MPI_Bcast(id_datacube_in,2,MPI_INT,0,MPI_COMM_WORLD);
-
-  //Check if sequential part has been completed
- if (id_datacube_in[0] == 0){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");		
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_NO_INPUT_DATACUBE, datacube_name );
-		
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
-  ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_datacube = id_datacube_in[0];
-
-  if (id_datacube_in[1] == 0){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");		
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_NO_INPUT_CONTAINER, datacube_name );
-		
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
-  ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container = id_datacube_in[1];
-
-  value = hashtbl_get(task_tbl, OPH_IN_PARAM_SCHEDULE_ALGORITHM);
-  if(!value){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SCHEDULE_ALGORITHM);
-    logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SCHEDULE_ALGORITHM );
-	
-    return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-  }
-  ((OPH_DELETE_operator_handle*)handle->operator_handle)->schedule_algo = (int)strtol(value, NULL, 10);
-
-  return OPH_ANALYTICS_OPERATOR_SUCCESS;
-}
-
-int task_init (oph_operator_struct *handle)
-{
-  if (!handle || !handle->operator_handle){
-  	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_NULL_OPERATOR_HANDLE );	
-	  return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
-  }
-
-  //For error checking
-  char id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
-  memset(id_string, 0, sizeof(id_string));
-  id_string[0] = 0;
-
-  if(handle->proc_rank == 0){
-	  ophidiadb *oDB = &((OPH_DELETE_operator_handle*)handle->operator_handle)->oDB;
-	  oph_odb_datacube cube;
-	  oph_odb_cube_init_datacube(&cube);
-
-	  int datacube_id = ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_datacube;
-
-	  //retrieve input datacube
-	  if(oph_odb_cube_retrieve_datacube(oDB, datacube_id, &cube)){
-		oph_odb_cube_free_datacube(&cube);
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DATACUBE_READ_ERROR );		
-	  }
-	  else{
-		  //Copy fragment id relative index set	
-		  if(!(((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_ids = (char *) strndup (cube.frag_relative_index_set, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE)))
-		  {
-			oph_odb_cube_free_datacube(&cube);
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_MEMORY_ERROR_INPUT, "fragment ids" );		
-		  } 
-		  else{
-			  oph_odb_cube_free_datacube(&cube);
-			  strncpy(id_string, ((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_ids, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
-		  }
-	  }
-  }
-
-  //Broadcast to all other processes the fragment relative index 	
-  MPI_Bcast(id_string,OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE,MPI_CHAR,0,MPI_COMM_WORLD);
-
-  //Check if sequential part has been completed
-  if (id_string[0] == 0){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");		
-	    logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_MASTER_TASK_INIT_FAILED);
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
-
-  if(handle->proc_rank != 0){
-	  if(!(((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_ids = (char *) strndup (id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_MEMORY_ERROR_INPUT, "fragment ids" );		
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	  }
-  }
-
-  return OPH_ANALYTICS_OPERATOR_SUCCESS;
-}
-
-int task_distribute(oph_operator_struct *handle)
-{
-  if (!handle || !handle->operator_handle){
-  	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_NULL_OPERATOR_HANDLE);
-	  return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
-  }
-
-  int id_number;
-  char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
-
-  //Get total number of fragment IDs
-  if(oph_ids_count_number_of_ids(((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_ids, &id_number)){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get total number of IDs\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_RETREIVE_IDS_ERROR);      
-	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
-
-  //All processes compute the fragment number to work on
-  int div_result = (id_number)/(handle->proc_number);
-  int div_remainder = (id_number)%(handle->proc_number);
-
-  //Every process must process at least divResult
-  ((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_number = div_result;	
-
-  if(div_remainder != 0)
-  {
-	//Only some certain processes must process an additional part
-	if (handle->proc_rank/div_remainder == 0)
-		((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_number++;
-  }
-
-  int i;
-  //Compute fragment IDs starting position
-  if(((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_number == 0){
-	// In case number of process is higher than fragment number
-    ((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_id_start_position = -1;	
-  }
-  else{
-	((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_id_start_position = 0;	
-	for(i = handle->proc_rank-1; i >= 0; i--)
-	{
-		if(div_remainder != 0)
-			((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_id_start_position += (div_result + (i/div_remainder == 0 ? 1 : 0) );
-		else
-			((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_id_start_position += div_result;
+	if (!handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
-	if(((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_id_start_position >= id_number) ((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_id_start_position = -1;	
-  }
 
-  if(((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank!= 0)
+	if (!task_tbl) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null operator string\n");
+		return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+	}
+
+	if (handle->operator_handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator handle already initialized\n");
+		return OPH_ANALYTICS_OPERATOR_NOT_NULL_OPERATOR_HANDLE;
+	}
+
+	if (!(handle->operator_handle = (OPH_DELETE_operator_handle *) calloc(1, sizeof(OPH_DELETE_operator_handle)))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETE_MEMORY_ERROR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+	//1 - Set up struct to empty values
+	((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_datacube = 0;
+	((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids = NULL;
+	((OPH_DELETE_operator_handle *) handle->operator_handle)->objkeys = NULL;
+	((OPH_DELETE_operator_handle *) handle->operator_handle)->objkeys_num = -1;
+	((OPH_DELETE_operator_handle *) handle->operator_handle)->server = NULL;
+	((OPH_DELETE_operator_handle *) handle->operator_handle)->sessionid = NULL;
+
+
+	//3 - Fill struct with the correct data
+	char *value;
+	char *datacube_name;
+
+	// retrieve objkeys
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OBJKEY_FILTER);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OBJKEY_FILTER);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OBJKEY_FILTER);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (oph_tp_parse_multiple_value_param(value, &((OPH_DELETE_operator_handle *) handle->operator_handle)->objkeys, &((OPH_DELETE_operator_handle *) handle->operator_handle)->objkeys_num)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
+		oph_tp_free_multiple_value_param_list(((OPH_DELETE_operator_handle *) handle->operator_handle)->objkeys, ((OPH_DELETE_operator_handle *) handle->operator_handle)->objkeys_num);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	// retrieve sessionid
+	value = hashtbl_get(task_tbl, OPH_ARG_SESSIONID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_SESSIONID);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_ARG_SESSIONID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!(((OPH_DELETE_operator_handle *) handle->operator_handle)->sessionid = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "sessionid");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DATACUBE_INPUT);
+	datacube_name = value;
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DATACUBE_INPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DATACUBE_INPUT);
+
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	//For error checking
+	int id_datacube_in[2] = { 0, 0 };
+
+	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETE_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	char *username = value;
+
+	if (handle->proc_rank == 0) {
+		//Only master process has to initialize and open connection to management OphidiaDB
+		ophidiadb *oDB = &((OPH_DELETE_operator_handle *) handle->operator_handle)->oDB;
+		oph_odb_init_ophidiadb(oDB);
+
+		if (oph_odb_read_ophidiadb_config_file(oDB)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETE_OPHIDIADB_CONFIGURATION_FILE);
+
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+
+		if (oph_odb_connect_to_ophidiadb(oDB)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETE_OPHIDIADB_CONNECTION_ERROR);
+
+			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+		}
+		//Check if datacube exists (by ID container and datacube)
+		int exists = 0;
+		int status = 0;
+		char *uri = NULL;
+		int folder_id = 0;
+		int permission = 0;
+		if (oph_pid_parse_pid(datacube_name, &id_datacube_in[1], &id_datacube_in[0], &uri)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse the PID string\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_PID_ERROR, datacube_name);
+			id_datacube_in[0] = 0;
+			id_datacube_in[1] = 0;
+		} else if ((oph_odb_cube_check_if_datacube_not_present_by_pid(oDB, uri, id_datacube_in[1], id_datacube_in[0], &exists)) || !exists) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container - datacube combination\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_NO_INPUT_DATACUBE, datacube_name);
+			id_datacube_in[0] = 0;
+			id_datacube_in[1] = 0;
+		} else if ((oph_odb_cube_check_datacube_availability(oDB, id_datacube_in[0], 0, &status)) || !status) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "I/O nodes storing datacube aren't available\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_DATACUBE_AVAILABILITY_ERROR, datacube_name);
+			id_datacube_in[0] = 0;
+			id_datacube_in[1] = 0;
+		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], 1, &folder_id))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_DATACUBE_FOLDER_ERROR, datacube_name);
+			id_datacube_in[0] = 0;
+			id_datacube_in[1] = 0;
+		} else if ((oph_odb_fs_check_folder_session(folder_id, ((OPH_DELETE_operator_handle *) handle->operator_handle)->sessionid, oDB, &permission)) || !permission) {
+			//Check if user can work on datacube
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "User %s is not allowed to work on this datacube\n", username);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_DATACUBE_PERMISSION_ERROR, username);
+			id_datacube_in[0] = 0;
+			id_datacube_in[1] = 0;
+		}
+		if (uri)
+			free(uri);
+		uri = NULL;
+	}
+	//Broadcast to all other processes the fragment relative index        
+	MPI_Bcast(id_datacube_in, 2, MPI_INT, 0, MPI_COMM_WORLD);
+
+	//Check if sequential part has been completed
+	if (id_datacube_in[0] == 0) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_NO_INPUT_DATACUBE, datacube_name);
+
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+	((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_datacube = id_datacube_in[0];
+
+	if (id_datacube_in[1] == 0) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_NO_INPUT_CONTAINER, datacube_name);
+
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+	((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container = id_datacube_in[1];
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SCHEDULE_ALGORITHM);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SCHEDULE_ALGORITHM);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SCHEDULE_ALGORITHM);
+
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_DELETE_operator_handle *) handle->operator_handle)->schedule_algo = (int) strtol(value, NULL, 10);
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
-
-  //Partition fragment relative index string
-  char *new_ptr = new_id_string;
-  if(oph_ids_get_substring_from_string(((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_ids, ((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_id_start_position, ((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_number, &new_ptr)){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to split IDs fragment string\n");			
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_ID_STRING_SPLIT_ERROR);    
-	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
-
-  free(((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_ids);
-  if(!(((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_ids = (char *) strndup (new_id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_MEMORY_ERROR_INPUT, "fragment ids");    
-    return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-  }
-
-  return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_execute(oph_operator_struct *handle)
+int task_init(oph_operator_struct * handle)
 {
-  if (!handle || !handle->operator_handle){
-  	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_NULL_OPERATOR_HANDLE);    
-	  return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
-  }
+	if (!handle || !handle->operator_handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+	//For error checking
+	char id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
+	memset(id_string, 0, sizeof(id_string));
+	id_string[0] = 0;
 
-  if(((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank!= 0)
+	if (handle->proc_rank == 0) {
+		ophidiadb *oDB = &((OPH_DELETE_operator_handle *) handle->operator_handle)->oDB;
+		oph_odb_datacube cube;
+		oph_odb_cube_init_datacube(&cube);
+
+		int datacube_id = ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_datacube;
+
+		//retrieve input datacube
+		if (oph_odb_cube_retrieve_datacube(oDB, datacube_id, &cube)) {
+			oph_odb_cube_free_datacube(&cube);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DATACUBE_READ_ERROR);
+		} else {
+			//Copy fragment id relative index set 
+			if (!(((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids = (char *) strndup(cube.frag_relative_index_set, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))) {
+				oph_odb_cube_free_datacube(&cube);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_MEMORY_ERROR_INPUT,
+					"fragment ids");
+			} else {
+				oph_odb_cube_free_datacube(&cube);
+				strncpy(id_string, ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
+			}
+		}
+	}
+	//Broadcast to all other processes the fragment relative index        
+	MPI_Bcast(id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+	//Check if sequential part has been completed
+	if (id_string[0] == 0) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_MASTER_TASK_INIT_FAILED);
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+
+	if (handle->proc_rank != 0) {
+		if (!(((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids = (char *) strndup(id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_MEMORY_ERROR_INPUT, "fragment ids");
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+}
 
-  int i, j, k;
+int task_distribute(oph_operator_struct * handle)
+{
+	if (!handle || !handle->operator_handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
 
-  int id_datacube = ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_datacube;
-  
-  oph_odb_fragment_list frags;
-  oph_odb_db_instance_list dbs;
-  oph_odb_dbms_instance_list dbmss;
+	int id_number;
+	char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
 
-  int datacubexdb_number = 0;
+	//Get total number of fragment IDs
+	if (oph_ids_count_number_of_ids(((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids, &id_number)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get total number of IDs\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_RETREIVE_IDS_ERROR);
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+	//All processes compute the fragment number to work on
+	int div_result = (id_number) / (handle->proc_number);
+	int div_remainder = (id_number) % (handle->proc_number);
+
+	//Every process must process at least divResult
+	((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_number = div_result;
+
+	if (div_remainder != 0) {
+		//Only some certain processes must process an additional part
+		if (handle->proc_rank / div_remainder == 0)
+			((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_number++;
+	}
+
+	int i;
+	//Compute fragment IDs starting position
+	if (((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_number == 0) {
+		// In case number of process is higher than fragment number
+		((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_id_start_position = -1;
+	} else {
+		((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_id_start_position = 0;
+		for (i = handle->proc_rank - 1; i >= 0; i--) {
+			if (div_remainder != 0)
+				((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_id_start_position += (div_result + (i / div_remainder == 0 ? 1 : 0));
+			else
+				((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_id_start_position += div_result;
+		}
+		if (((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_id_start_position >= id_number)
+			((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_id_start_position = -1;
+	}
+
+	if (((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0)
+		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+
+	//Partition fragment relative index string
+	char *new_ptr = new_id_string;
+	if (oph_ids_get_substring_from_string
+	    (((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids, ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_id_start_position,
+	     ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_number, &new_ptr)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to split IDs fragment string\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_ID_STRING_SPLIT_ERROR);
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+
+	free(((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids);
+	if (!(((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids = (char *) strndup(new_id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_MEMORY_ERROR_INPUT, "fragment ids");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+}
+
+int task_execute(oph_operator_struct * handle)
+{
+	if (!handle || !handle->operator_handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	if (((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0)
+		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+
+	int i, j, k;
+
+	int id_datacube = ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_datacube;
+
+	oph_odb_fragment_list frags;
+	oph_odb_db_instance_list dbs;
+	oph_odb_dbms_instance_list dbmss;
+
+	int datacubexdb_number = 0;
 
 	//Each process has to be connected to a slave ophidiadb
-  ophidiadb oDB_slave;
-  oph_odb_init_ophidiadb(&oDB_slave);	
+	ophidiadb oDB_slave;
+	oph_odb_init_ophidiadb(&oDB_slave);
 
-  if(oph_odb_read_ophidiadb_config_file(&oDB_slave)){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_OPHIDIADB_CONFIGURATION_FILE);
-	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
+	if (oph_odb_read_ophidiadb_config_file(&oDB_slave)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_OPHIDIADB_CONFIGURATION_FILE);
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
 
-  if( oph_odb_connect_to_ophidiadb(&oDB_slave)){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_OPHIDIADB_CONNECTION_ERROR);
-    oph_odb_free_ophidiadb(&oDB_slave);
-	return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-  }
+	if (oph_odb_connect_to_ophidiadb(&oDB_slave)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_OPHIDIADB_CONNECTION_ERROR);
+		oph_odb_free_ophidiadb(&oDB_slave);
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+	//retrieve connection string
+	if (oph_odb_stge_fetch_fragment_connection_string_for_deletion(&oDB_slave, id_datacube, ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids, &frags, &dbs, &dbmss)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_CONNECTION_STRINGS_NOT_FOUND);
+		oph_odb_free_ophidiadb(&oDB_slave);
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
 
+	if (!frags.size) {
+		oph_odb_stge_free_fragment_list(&frags);
+		oph_odb_stge_free_db_list(&dbs);
+		oph_odb_stge_free_dbms_list(&dbmss);
+		oph_odb_free_ophidiadb(&oDB_slave);
+		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+	}
 
-  //retrieve connection string
-  if(oph_odb_stge_fetch_fragment_connection_string_for_deletion(&oDB_slave, id_datacube, ((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_ids, &frags, &dbs, &dbmss)){
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_CONNECTION_STRINGS_NOT_FOUND);    
-	oph_odb_free_ophidiadb(&oDB_slave);
-	return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
+	int result = OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-  if (!frags.size)
-  {
+	if (oph_dc2_setup_dbms(&(((OPH_DELETE_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);
+		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+	//For each DBMS
+	for (i = 0; (i < dbmss.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
+		if (oph_dc2_connect_to_dbms(((OPH_DELETE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DBMS_CONNECTION_ERROR,
+				(dbmss.value[i]).id_dbms);
+			result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+		}
+		//For each DB
+		for (j = 0; (j < dbs.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS); j++) {
+			//Check DB - DBMS Association
+			if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
+				continue;
+
+			//For each dbinstance count the number of stored datacubes
+			if (oph_odb_stge_get_number_of_datacube_for_db(&oDB_slave, dbs.value[j].id_db, &datacubexdb_number)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve database instance information.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_DATACUBE_COUNT_ERROR,
+					(dbs.value[j]).db_name);
+				result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+				break;
+			}
+			//If the db stores just one datacube then directly drop the dbinstance
+			if (datacubexdb_number == 1) {
+				//Databse drop
+				if (oph_dc2_delete_db(((OPH_DELETE_operator_handle *) handle->operator_handle)->server, &(dbs.value[j]))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while dropping database.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DROP_DB_ERROR,
+						(dbs.value[j]).db_name);
+					result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+					break;
+				}
+				continue;
+			}
+			//In this case the dbinstance may be already been deleted before
+			else if (datacubexdb_number == 0)
+				continue;
+
+			if (oph_dc2_use_db_of_dbms(((OPH_DELETE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_SELECTION_ERROR,
+					(dbs.value[j]).db_name);
+				result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+				break;
+			}
+			//For each fragment
+			for (k = 0; k < frags.size; k++) {
+				//Check Fragment - DB Association
+				if (frags.value[k].db_instance != &(dbs.value[j]))
+					continue;
+
+				//Delete fragment
+				if (oph_dc2_delete_fragment(((OPH_DELETE_operator_handle *) handle->operator_handle)->server, &(frags.value[k]))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while dropping table.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DROP_FRAGMENT_ERROR,
+						(frags.value[j]).fragment_name);
+					result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+					break;
+				}
+			}
+		}
+		oph_dc2_disconnect_from_dbms(((OPH_DELETE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+	}
+	if (oph_dc2_cleanup_dbms(((OPH_DELETE_operator_handle *) handle->operator_handle)->server)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_IOPLUGIN_CLEANUP_ERROR,
+			(dbmss.value[0]).id_dbms);
+		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+
 	oph_odb_stge_free_fragment_list(&frags);
 	oph_odb_stge_free_db_list(&dbs);
 	oph_odb_stge_free_dbms_list(&dbmss);
 	oph_odb_free_ophidiadb(&oDB_slave);
+
+	return result;
+}
+
+int task_reduce(oph_operator_struct * handle)
+{
+	if (!handle || !handle->operator_handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
-  }
-
-  int result = OPH_ANALYTICS_OPERATOR_SUCCESS;	
-
-  if(oph_dc2_setup_dbms(&(((OPH_DELETE_operator_handle*)handle->operator_handle)->server), (dbmss.value[0]).io_server_type))
-	{
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);    
-		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-	}
-
-  //For each DBMS
-  for(i = 0; (i < dbmss.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS);  i++){
-	if(oph_dc2_connect_to_dbms(((OPH_DELETE_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]), 0))
-	{
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DBMS_CONNECTION_ERROR, (dbmss.value[i]).id_dbms);    
-		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-	}
-
-	//For each DB
-	for(j = 0; (j < dbs.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS); j++){
-		//Check DB - DBMS Association
-		if(dbs.value[j].dbms_instance != &(dbmss.value[i])) continue;
-
-		//For each dbinstance count the number of stored datacubes
-		if(oph_odb_stge_get_number_of_datacube_for_db(&oDB_slave, dbs.value[j].id_db, &datacubexdb_number))
-		{
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve database instance information.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_DATACUBE_COUNT_ERROR, (dbs.value[j]).db_name);    
-			result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-			break;
-		}
-
-	    //If the db stores just one datacube then directly drop the dbinstance
-		if(datacubexdb_number == 1){
-			//Databse drop
-			if(oph_dc2_delete_db(((OPH_DELETE_operator_handle*)handle->operator_handle)->server, &(dbs.value[j])))
-			{
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while dropping database.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DROP_DB_ERROR, (dbs.value[j]).db_name);    
-				result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-				break;
-			}
-			continue;
-		}
-		//In this case the dbinstance may be already been deleted before
-		else if(datacubexdb_number == 0)
-			continue;
-
-		if(oph_dc2_use_db_of_dbms(((OPH_DELETE_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j])))
-		{
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_SELECTION_ERROR, (dbs.value[j]).db_name);    
-			result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-			break;
-		}
-
-		//For each fragment
-		for(k = 0; k < frags.size; k++){
-			//Check Fragment - DB Association
-			if(frags.value[k].db_instance != &(dbs.value[j])) continue;
-
-			//Delete fragment
-			if(oph_dc2_delete_fragment(((OPH_DELETE_operator_handle*)handle->operator_handle)->server, &(frags.value[k]))){
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while dropping table.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DROP_FRAGMENT_ERROR, (frags.value[j]).fragment_name);    
-				result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-				break;
-			}
-		}
-	}
-	oph_dc2_disconnect_from_dbms(((OPH_DELETE_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
-  }
-  if(oph_dc2_cleanup_dbms(((OPH_DELETE_operator_handle*)handle->operator_handle)->server))
-	{
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_IOPLUGIN_CLEANUP_ERROR, (dbmss.value[0]).id_dbms);    
-		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-	}
-
-  oph_odb_stge_free_fragment_list(&frags);
-  oph_odb_stge_free_db_list(&dbs);
-  oph_odb_stge_free_dbms_list(&dbmss);
-  oph_odb_free_ophidiadb(&oDB_slave);
-
-  return result;
 }
 
-int task_reduce(oph_operator_struct *handle)
+int task_destroy(oph_operator_struct * handle)
 {
-  if (!handle || !handle->operator_handle){
-  	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_NULL_OPERATOR_HANDLE);
-	  return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
-  }
-  
-  return OPH_ANALYTICS_OPERATOR_SUCCESS;
-}
-
-int task_destroy(oph_operator_struct *handle)
-{
-  if (!handle || !handle->operator_handle){
-  	pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-	logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_NULL_OPERATOR_HANDLE);
-	  return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
-  }
-
-  //For error checking
-  int result = 0;
-
-  //Before deleting wait for all process to reach this point
-  MPI_Barrier(MPI_COMM_WORLD); 
-  if(handle->proc_rank == 0){
-	ophidiadb *oDB = &((OPH_DELETE_operator_handle*)handle->operator_handle)->oDB;
-	int id_datacube_in = ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_datacube;
-
-	int *id_dbs;
-	int size_dbs;
-	//Get IDdb related to Datacube
-	if(oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(oDB, id_datacube_in, &id_dbs, &size_dbs)){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DB ID\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
-		free(id_dbs);
-		goto __OPH_EXIT_1;
+	if (!handle || !handle->operator_handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
+	//For error checking
+	int result = 0;
 
-	//Delete datacube and associated partitions, fragments and cubehasdims
-	if(oph_odb_cube_delete_from_datacube_table(oDB, id_datacube_in)){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update datacube table\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DATACUBE_DELETE_ERROR);
-		free(id_dbs);
-		goto __OPH_EXIT_1;
-	}
+	//Before deleting wait for all process to reach this point
+	MPI_Barrier(MPI_COMM_WORLD);
+	if (handle->proc_rank == 0) {
+		ophidiadb *oDB = &((OPH_DELETE_operator_handle *) handle->operator_handle)->oDB;
+		int id_datacube_in = ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_datacube;
 
-	int i;
-	int *id_datacubes = NULL;
-	int size_datacubes;
-
-	//Remove DBs
-	for(i = 0; i < size_dbs; i++){
-		//Get IDdatacubes related to DB
-		size_datacubes = 0;
-		if(oph_odb_cube_retrieve_datacube_id_list_from_dbinstance(oDB, id_dbs[i], &id_datacubes, &size_datacubes)){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve datacube ID\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_DATACUBE_READ_ERROR, id_dbs[i]);
-			if(id_datacubes) free(id_datacubes);
+		int *id_dbs;
+		int size_dbs;
+		//Get IDdb related to Datacube
+		if (oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(oDB, id_datacube_in, &id_dbs, &size_dbs)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DB ID\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			free(id_dbs);
 			goto __OPH_EXIT_1;
 		}
-		//Delete only empty dbinstances
-		if(!size_datacubes){
-			//Delete database instance
-			if(oph_odb_stge_delete_from_dbinstance_table(oDB, id_dbs[i])){
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update database instance table\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_DELETE_ERROR, id_dbs[i]);
-				if(id_datacubes) free(id_datacubes);
+		//Delete datacube and associated partitions, fragments and cubehasdims
+		if (oph_odb_cube_delete_from_datacube_table(oDB, id_datacube_in)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update datacube table\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DATACUBE_DELETE_ERROR);
+			free(id_dbs);
+			goto __OPH_EXIT_1;
+		}
+
+		int i;
+		int *id_datacubes = NULL;
+		int size_datacubes;
+
+		//Remove DBs
+		for (i = 0; i < size_dbs; i++) {
+			//Get IDdatacubes related to DB
+			size_datacubes = 0;
+			if (oph_odb_cube_retrieve_datacube_id_list_from_dbinstance(oDB, id_dbs[i], &id_datacubes, &size_datacubes)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve datacube ID\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_DATACUBE_READ_ERROR,
+					id_dbs[i]);
+				if (id_datacubes)
+					free(id_datacubes);
 				free(id_dbs);
 				goto __OPH_EXIT_1;
-			}		
+			}
+			//Delete only empty dbinstances
+			if (!size_datacubes) {
+				//Delete database instance
+				if (oph_odb_stge_delete_from_dbinstance_table(oDB, id_dbs[i])) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update database instance table\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_DELETE_ERROR,
+						id_dbs[i]);
+					if (id_datacubes)
+						free(id_datacubes);
+					free(id_dbs);
+					goto __OPH_EXIT_1;
+				}
+			}
+			if (id_datacubes)
+				free(id_datacubes);
+			id_datacubes = NULL;
 		}
-		if(id_datacubes) free(id_datacubes);
-		id_datacubes = NULL;
+
+		free(id_dbs);
+		result = 1;
 	}
+      __OPH_EXIT_1:
+	//Broadcast to all other processes the operation result       
+	MPI_Bcast(&result, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-	free(id_dbs);
-	result = 1;
-  }
-__OPH_EXIT_1:
-  //Broadcast to all other processes the operation result 	
-  MPI_Bcast(&result,1,MPI_INT,0,MPI_COMM_WORLD);
-
-  //Check if sequential part has been completed
-  if (!result){
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master destroy procedure has failed\n");		
-	    logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_MASTER_TASK_DESTROY_FAILED);
+	//Check if sequential part has been completed
+	if (!result) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master destroy procedure has failed\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_MASTER_TASK_DESTROY_FAILED);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-  }
-  return OPH_ANALYTICS_OPERATOR_SUCCESS;
+	}
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_unset(oph_operator_struct *handle)
+int env_unset(oph_operator_struct * handle)
 {
-  //If NULL return success; it's already free
-  if (!handle || !handle->operator_handle)
-    return OPH_ANALYTICS_OPERATOR_SUCCESS;    
- 
-  //Only master process has to close and release connection to management OphidiaDB
-  if(handle->proc_rank == 0){
-	  oph_odb_disconnect_from_ophidiadb(&((OPH_DELETE_operator_handle*)handle->operator_handle)->oDB);
-	  oph_odb_free_ophidiadb(&((OPH_DELETE_operator_handle*)handle->operator_handle)->oDB);
-  }
-  if(((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_ids){
-	  free((char *)((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_ids); 
-	  ((OPH_DELETE_operator_handle*)handle->operator_handle)->fragment_ids = NULL;
-  }
-  if(((OPH_DELETE_operator_handle*)handle->operator_handle)->objkeys){
-      oph_tp_free_multiple_value_param_list(((OPH_DELETE_operator_handle*)handle->operator_handle)->objkeys, ((OPH_DELETE_operator_handle*)handle->operator_handle)->objkeys_num);
-      ((OPH_DELETE_operator_handle*)handle->operator_handle)->objkeys = NULL;
-  }
-  if(((OPH_DELETE_operator_handle*)handle->operator_handle)->sessionid){
-	  free((char *)((OPH_DELETE_operator_handle*)handle->operator_handle)->sessionid);
-	  ((OPH_DELETE_operator_handle*)handle->operator_handle)->sessionid = NULL;
-  }
-  free((OPH_DELETE_operator_handle*)handle->operator_handle);
-  handle->operator_handle = NULL;
-  
-  return OPH_ANALYTICS_OPERATOR_SUCCESS;
+	//If NULL return success; it's already free
+	if (!handle || !handle->operator_handle)
+		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+
+	//Only master process has to close and release connection to management OphidiaDB
+	if (handle->proc_rank == 0) {
+		oph_odb_disconnect_from_ophidiadb(&((OPH_DELETE_operator_handle *) handle->operator_handle)->oDB);
+		oph_odb_free_ophidiadb(&((OPH_DELETE_operator_handle *) handle->operator_handle)->oDB);
+	}
+	if (((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids) {
+		free((char *) ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids);
+		((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids = NULL;
+	}
+	if (((OPH_DELETE_operator_handle *) handle->operator_handle)->objkeys) {
+		oph_tp_free_multiple_value_param_list(((OPH_DELETE_operator_handle *) handle->operator_handle)->objkeys, ((OPH_DELETE_operator_handle *) handle->operator_handle)->objkeys_num);
+		((OPH_DELETE_operator_handle *) handle->operator_handle)->objkeys = NULL;
+	}
+	if (((OPH_DELETE_operator_handle *) handle->operator_handle)->sessionid) {
+		free((char *) ((OPH_DELETE_operator_handle *) handle->operator_handle)->sessionid);
+		((OPH_DELETE_operator_handle *) handle->operator_handle)->sessionid = NULL;
+	}
+	free((OPH_DELETE_operator_handle *) handle->operator_handle);
+	handle->operator_handle = NULL;
+
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

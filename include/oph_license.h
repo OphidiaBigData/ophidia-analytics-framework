@@ -571,4 +571,3 @@ copy of the Program in return for a fee.\n\
                      END OF TERMS AND CONDITIONS\n\
 \n\
 See <http://www.gnu.org/licenses/> for additinal information.\n"
-

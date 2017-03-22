@@ -34,18 +34,17 @@
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
  */
-struct _OPH_RESTORECONTAINER_operator_handle
-{
-  ophidiadb oDB;
-  char *container_output;
-  char *user;
-  int id_output_container;
-  char *cwd;
-  char **objkeys;
-  int objkeys_num;
-  char *sessionid;
+struct _OPH_RESTORECONTAINER_operator_handle {
+	ophidiadb oDB;
+	char *container_output;
+	char *user;
+	int id_output_container;
+	char *cwd;
+	char **objkeys;
+	int objkeys_num;
+	char *sessionid;
 };
 typedef struct _OPH_RESTORECONTAINER_operator_handle OPH_RESTORECONTAINER_operator_handle;
 
 
-#endif  //__OPH_RESTORECONTAINER_OPERATOR_H
+#endif				//__OPH_RESTORECONTAINER_OPERATOR_H

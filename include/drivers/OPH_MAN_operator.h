@@ -28,13 +28,12 @@
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
  */
-typedef struct _OPH_MAN_operator_handle
-{
-  char *function_name;
-  char *function_version;
-  short int function_type_code;
-  char **objkeys;
-  int objkeys_num;
+typedef struct _OPH_MAN_operator_handle {
+	char *function_name;
+	char *function_version;
+	short int function_type_code;
+	char **objkeys;
+	int objkeys_num;
 } OPH_MAN_operator_handle;
 
-#endif  //__OPH_MAN_OPERATOR_H
+#endif				//__OPH_MAN_OPERATOR_H

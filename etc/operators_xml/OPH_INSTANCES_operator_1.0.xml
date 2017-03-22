@@ -19,6 +19,7 @@ It shows information about host partitions, hosts and dbms instances.
 				       &quot;all&quot; (default) for all disks.
 - ioserver_filter : optional filter on the type of I/O server used. Used only with level 2:
 				       &quot;mysql_table&quot; for MySQL I/O servers only,
+				       &quot;ophidiaio_memory&quot; for Ophidia I/O servers only,
 				       &quot;all&quot; (default) for all disks.
 - host_status : optional filter on the status of I/O nodes:
 				       &quot;up&quot; for up hosts only,
@@ -54,7 +55,7 @@ SUBMISSION STRING: &quot;operator=oph_instances;level=2;host_filter=all;&quot;</
         <argument type="string" mandatory="no" default="all">host_filter</argument>
         <argument type="string" mandatory="no" default="all">host_partition</argument>
 		<argument type="string" mandatory="no" default="all" values="local|global|all">filesystem_filter</argument>
-		<argument type="string" mandatory="no" default="all" values="mysql_table|all">ioserver_filter</argument>
+		<argument type="string" mandatory="no" default="all" values="mysql_table|ophidiaio_memory|all">ioserver_filter</argument>
 		<argument type="string" mandatory="no" default="all" values="up|down|all">host_status</argument>
 		<argument type="string" mandatory="no" default="all" values="up|down|all">dbms_status</argument>
         <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>

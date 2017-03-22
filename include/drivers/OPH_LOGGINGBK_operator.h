@@ -31,7 +31,7 @@
 //Filter queries
 #define MYSQL_QUERY_OPH_LOGGINGBK_PARENT_ID "AND (job.idparent LIKE '%s')"
 
-#define MYSQL_QUERY_OPH_LOGGINGBK_SESSION_LABEL1 "1" // "(session.label LIKE '%%' OR session.label IS NULL)" // TODO: check current validity
+#define MYSQL_QUERY_OPH_LOGGINGBK_SESSION_LABEL1 "1"	// "(session.label LIKE '%%' OR session.label IS NULL)" // TODO: check current validity
 #define MYSQL_QUERY_OPH_LOGGINGBK_SESSION_LABEL2 "session.label LIKE '%s'"
 #define MYSQL_QUERY_OPH_LOGGINGBK_SESSION_LABEL3 "session.label IS NULL"
 
@@ -173,31 +173,30 @@
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
  */
-typedef struct _OPH_LOGGINGBK_operator_handle
-{
-  ophidiadb oDB;
-  int session;
-  int marker;
-  char mask[OPH_LOGGINGBK_MASK_LEN+1];
-  char *session_filter;
-  char *session_label_filter;
-  char session_creation_date1[OPH_LOGGINGBK_DATE_LEN+1];
-  char session_creation_date2[OPH_LOGGINGBK_DATE_LEN+1];
-  char *workflow_id_filter;
-  char *marker_id_filter;
-  char *parent_job_id_filter;
-  char job_submission_date1[OPH_LOGGINGBK_DATE_LEN+1];
-  char job_submission_date2[OPH_LOGGINGBK_DATE_LEN+1];
-  char *job_status;
-  char *submission_string_filter;
-  char job_start_date1[OPH_LOGGINGBK_DATE_LEN+1];
-  char job_start_date2[OPH_LOGGINGBK_DATE_LEN+1];
-  char job_end_date1[OPH_LOGGINGBK_DATE_LEN+1];
-  char job_end_date2[OPH_LOGGINGBK_DATE_LEN+1];
-  char *user;
-  int nlines;
-  char **objkeys;
-  int objkeys_num;
+typedef struct _OPH_LOGGINGBK_operator_handle {
+	ophidiadb oDB;
+	int session;
+	int marker;
+	char mask[OPH_LOGGINGBK_MASK_LEN + 1];
+	char *session_filter;
+	char *session_label_filter;
+	char session_creation_date1[OPH_LOGGINGBK_DATE_LEN + 1];
+	char session_creation_date2[OPH_LOGGINGBK_DATE_LEN + 1];
+	char *workflow_id_filter;
+	char *marker_id_filter;
+	char *parent_job_id_filter;
+	char job_submission_date1[OPH_LOGGINGBK_DATE_LEN + 1];
+	char job_submission_date2[OPH_LOGGINGBK_DATE_LEN + 1];
+	char *job_status;
+	char *submission_string_filter;
+	char job_start_date1[OPH_LOGGINGBK_DATE_LEN + 1];
+	char job_start_date2[OPH_LOGGINGBK_DATE_LEN + 1];
+	char job_end_date1[OPH_LOGGINGBK_DATE_LEN + 1];
+	char job_end_date2[OPH_LOGGINGBK_DATE_LEN + 1];
+	char *user;
+	int nlines;
+	char **objkeys;
+	int objkeys_num;
 } OPH_LOGGINGBK_operator_handle;
 
-#endif  //__OPH_LOGGINGBK_OPERATOR_H
+#endif				//__OPH_LOGGINGBK_OPERATOR_H

@@ -25,7 +25,7 @@
 #include "oph_nc_library.h"
 #include "oph_ioserver_library.h"
 
-#define OPH_IMPORTNC3_SUBSET_INDEX	    "index" 
+#define OPH_IMPORTNC3_SUBSET_INDEX	    "index"
 #define OPH_IMPORTNC3_SUBSET_COORD	    "coord"
 #define OPH_IMPORTNC3_DIMENSION_DEFAULT	"auto"
 
@@ -76,53 +76,51 @@
  * \param description Free description to be associated with output cube
  * \param time_filter Flag used in case time filters are expressed as dates
  */
-struct _OPH_IMPORTNC3_operator_handle
-{
-  ophidiadb oDB;
-  char *container_input;
-  int create_container;
-  char *cwd;
-  int run;
-  char *nc_file_path;
-  char *partition_input;
-  char *grid_name;
-  int fs_type;
-  char *ioserver_type;
-  int id_output_datacube;
-  int id_input_container;
-  int import_metadata;
-  int check_compliance;
-  int schedule_algo;
-  int fragment_number;
-  int fragment_first_id;
-  int host_number;
-  int dbmsxhost_number;
-  int dbxdbms_number;
-  int fragxdb_number;
-  int tuplexfrag_number;
-  int array_length;
-  int total_frag_number;
-  char *user;
-  int ncid;
-  NETCDF_var measure;
-  int compressed;
-  char **objkeys;
-  int objkeys_num;
-  oph_ioserver_handler *server;
-  char *sessionid;
-  int id_vocabulary;
-  int *id_dimension_hierarchy;
-  char* base_time;
-  char* units;
-  char* calendar;
-  char* month_lengths;
-  int leap_year;
-  int leap_month;
-  long long memory_size;
-  char* description;
-  int time_filter;
+struct _OPH_IMPORTNC3_operator_handle {
+	ophidiadb oDB;
+	char *container_input;
+	int create_container;
+	char *cwd;
+	int run;
+	char *nc_file_path;
+	char *partition_input;
+	char *grid_name;
+	int fs_type;
+	char *ioserver_type;
+	int id_output_datacube;
+	int id_input_container;
+	int import_metadata;
+	int check_compliance;
+	int schedule_algo;
+	int fragment_number;
+	int fragment_first_id;
+	int host_number;
+	int dbmsxhost_number;
+	int dbxdbms_number;
+	int fragxdb_number;
+	int tuplexfrag_number;
+	int array_length;
+	int total_frag_number;
+	char *user;
+	int ncid;
+	NETCDF_var measure;
+	int compressed;
+	char **objkeys;
+	int objkeys_num;
+	oph_ioserver_handler *server;
+	char *sessionid;
+	int id_vocabulary;
+	int *id_dimension_hierarchy;
+	char *base_time;
+	char *units;
+	char *calendar;
+	char *month_lengths;
+	int leap_year;
+	int leap_month;
+	long long memory_size;
+	char *description;
+	int time_filter;
 };
 typedef struct _OPH_IMPORTNC3_operator_handle OPH_IMPORTNC3_operator_handle;
 
-#endif  //__OPH_IMPORTNC3_OPERATOR_H
-
+#endif				//__OPH_IMPORTNC3_OPERATOR_H

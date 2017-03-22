@@ -23,7 +23,7 @@ oph_compare(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure_a,m
 	<operation type="simple"/>
     </info>
     <args>
-	<multi-argument type="oph_type" mandatory="yes">input measure type</multi-argument>
+	<argument type="oph_type" mandatory="yes">input measure type</argument>
         <argument type="oph_type" mandatory="yes">output measure type</argument>
 	<argument type="binary-array" mandatory="yes">measure a</argument>
 	<argument type="binary-array" mandatory="yes">measure b</argument>

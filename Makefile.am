@@ -20,7 +20,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = . libltdl src 
 
-sysconf_DATA = etc/oph_analytics_driver etc/oph_io_server etc/oph_configuration etc/oph_dim_configuration etc/ophidiadb.sql etc/oph_soap_configuration etc/oph_script_configuration
+sysconf_DATA = etc/oph_analytics_driver etc/oph_io_server etc/oph_configuration etc/ophidiadb.sql etc/oph_soap_configuration etc/oph_script_configuration
  
 logdir = $(prefix)/log/
 dist_log_DATA =
@@ -48,8 +48,6 @@ OPERATOR_XML+=etc/operators_xml/OPH_ENDIF_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_EXPLORECUBE_operator_1.0.xml
 if HAVE_NETCDF
 OPERATOR_XML+=etc/operators_xml/OPH_EXPORTNC_operator_1.0.xml
-OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC_operator_1.0.xml
-OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC3_operator_1.0.xml
 if GSL_SUPPORT
 OPERATOR_XML+=etc/operators_xml/OPH_EXPLORENC_operator_1.0.xml

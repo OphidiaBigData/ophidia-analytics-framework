@@ -24,11 +24,11 @@
 #include "oph_common.h"
 #include "oph_ioserver_library.h"
 
-#define OPH_AGGREGATE2_PLUGIN_COMPR "oph_compress('', '', oph_aggregate_operator('oph_%s','oph_%s', oph_uncompress('', '', %s),'oph_%s'))"
-#define OPH_AGGREGATE2_PLUGIN "oph_aggregate_operator('oph_%s','oph_%s', %s,'oph_%s')"
+#define OPH_AGGREGATE2_PLUGIN_COMPR "oph_compress('', '', oph_aggregate_operator('oph_%s','oph_%s', oph_uncompress('', '', %s),'oph_%s',%s))"
+#define OPH_AGGREGATE2_PLUGIN "oph_aggregate_operator('oph_%s','oph_%s', %s,'oph_%s',%s)"
 
-#define OPH_AGGREGATE2_QUERY_COMPR OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "fact_out") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "oph_id3(%s,oph_to_bin('','oph_%s','%s'),%lld)|oph_compress('', '', oph_aggregate_operator('oph_%s','oph_%s',oph_uncompress('', '',%s),'oph_%s'))") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "fact_in") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_GROUP, "oph_id3(%s,oph_to_bin('','oph_%s','%s'),%lld)")
-#define OPH_AGGREGATE2_QUERY OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "fact_out") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "oph_id3(%s,oph_to_bin('', 'oph_%s','%s'),%lld)|oph_aggregate_operator('oph_%s','oph_%s',%s,'oph_%s')") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "fact_in") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_GROUP, "oph_id3(%s,oph_to_bin('','oph_%s','%s'),%lld)")
+#define OPH_AGGREGATE2_QUERY_COMPR OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "fact_out") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "oph_id3(%s,oph_to_bin('','oph_%s','%s'),%lld)|oph_compress('', '', oph_aggregate_operator('oph_%s','oph_%s',oph_uncompress('', '',%s),'oph_%s',%s))") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "fact_in") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_GROUP, "oph_id3(%s,oph_to_bin('','oph_%s','%s'),%lld)")
+#define OPH_AGGREGATE2_QUERY OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "fact_out") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "oph_id3(%s,oph_to_bin('', 'oph_%s','%s'),%lld)|oph_aggregate_operator('oph_%s','oph_%s',%s,'oph_%s',%s)") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "fact_in") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_GROUP, "oph_id3(%s,oph_to_bin('','oph_%s','%s'),%lld)")
 
 /**
  * \brief Structure of parameters needed by the operator OPH_AGGREGATE2. It generate a cube by aggregating more values along one or more explicit dimensions.
@@ -53,37 +53,38 @@
  * \param midnight Flag related to mode for edge aggregation
  * \param id_user ID of submitter
  * \param description Free description to be associated with output cube
+ * \param ms Conventional value for missing values
  */
-struct _OPH_AGGREGATE2_operator_handle
-{
-  ophidiadb oDB;
-  int id_input_datacube;
-  int id_input_container;
-  int id_output_datacube;
-  int id_output_container;
-  int id_job;
-  int schedule_algo;
-  char* fragment_ids;
-  int fragment_number;
-  int fragment_id_start_position;
-  char* operation;
-  int size;
-  char* measure_type;
-  int compressed;
-  char* grid_name;
-  char* dimension_name;
-  char* dimension_level;
-  long long block_size;
-  char* sizes;
-  long size_num;
-  char **objkeys;
-  int objkeys_num;
-  oph_ioserver_handler *server;
-  char *sessionid;
-  int midnight;
-  int id_user;
-  char* description;
+struct _OPH_AGGREGATE2_operator_handle {
+	ophidiadb oDB;
+	int id_input_datacube;
+	int id_input_container;
+	int id_output_datacube;
+	int id_output_container;
+	int id_job;
+	int schedule_algo;
+	char *fragment_ids;
+	int fragment_number;
+	int fragment_id_start_position;
+	char *operation;
+	int size;
+	char *measure_type;
+	int compressed;
+	char *grid_name;
+	char *dimension_name;
+	char *dimension_level;
+	long long block_size;
+	char *sizes;
+	long size_num;
+	char **objkeys;
+	int objkeys_num;
+	oph_ioserver_handler *server;
+	char *sessionid;
+	int midnight;
+	int id_user;
+	char *description;
+	double ms;
 };
 typedef struct _OPH_AGGREGATE2_operator_handle OPH_AGGREGATE2_operator_handle;
 
-#endif  //__OPH_AGGREGATE2_OPERATOR_H
+#endif				//__OPH_AGGREGATE2_OPERATOR_H

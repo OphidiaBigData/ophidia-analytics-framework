@@ -46,29 +46,28 @@
  * \param id_user ID of submitter
  * \param description Free description to be associated with output cube
  */
-struct _OPH_MERGE_operator_handle
-{
-  ophidiadb oDB;
-  int id_input_container;
-  int id_input_datacube;
-  int id_output_datacube;
-  int id_output_container;
-  int id_job;
-  int merge_number;
-  int schedule_algo;
-  char* output_fragment_ids;
-  char* input_fragment_ids;
-  int input_fragment_number;
-  int input_fragment_id_start_position;
-  int output_fragment_number;
-  int output_fragment_id_start_position;
-  char **objkeys;
-  int objkeys_num;
-  oph_ioserver_handler *server;
-  char *sessionid;
-  int id_user;
-  char* description;
+struct _OPH_MERGE_operator_handle {
+	ophidiadb oDB;
+	int id_input_container;
+	int id_input_datacube;
+	int id_output_datacube;
+	int id_output_container;
+	int id_job;
+	int merge_number;
+	int schedule_algo;
+	char *output_fragment_ids;
+	char *input_fragment_ids;
+	int input_fragment_number;
+	int input_fragment_id_start_position;
+	int output_fragment_number;
+	int output_fragment_id_start_position;
+	char **objkeys;
+	int objkeys_num;
+	oph_ioserver_handler *server;
+	char *sessionid;
+	int id_user;
+	char *description;
 };
 typedef struct _OPH_MERGE_operator_handle OPH_MERGE_operator_handle;
 
-#endif  //__OPH_MERGE_OPERATOR_H
+#endif				//__OPH_MERGE_OPERATOR_H

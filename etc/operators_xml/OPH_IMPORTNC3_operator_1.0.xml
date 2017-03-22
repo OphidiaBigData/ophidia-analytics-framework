@@ -7,7 +7,6 @@ Data Process.
 
 [Behaviour]
 It imports a NetCDF file into a datacube (both measure and dimensions).
-Optimized version of OPH_IMPORTNC2
 WARNING: It imports only mono-dimensional coordinate variables. 
 
 [Parameters]
@@ -20,12 +19,10 @@ WARNING: It imports only mono-dimensional coordinate variables.
                Possible values are &quot;local&quot;, &quot;global&quot; or &quot;auto&quot; (default).
                In the last case the first filesystem available will be used. 
 - ioserver : type of I/O server used to store data.
-			Possible values are: &quot;mysql_table&quot; (default)
-- import_metadata: imports also metadata with &quot;yes&quot; (default)
-			       or only data with &quot;no&quot;.
+             Possible values are: &quot;ophidiaio_memory&quot; or &quot;mysql_table&quot; (default)
+- import_metadata: imports also metadata with &quot;yes&quot; (default) or only data with &quot;no&quot;.
 - check_compliance: checks if all the metadata registered for reference vocabulary are available; no check is done by default.
-- schedule : scheduling algorithm. The only possible value is 0,
-		     for a static linear block distribution of resources.
+- schedule : scheduling algorithm. The only possible value is 0, for a static linear block distribution of resources.
 - nhost : number of output hosts. With default value (&apos;0&apos;) all host available in the host partition are used.
 - ndbms : number of the output DBMS per host. With default value (&apos;0&apos;) all DBMS instance available per host are used.
 - ndb : number of output database per host. Default value is &apos;1&apos;.
@@ -33,63 +30,63 @@ WARNING: It imports only mono-dimensional coordinate variables.
           the product of sizes of the n-1 most outer explicit dimensions to the product of the other arguments.
 - measure : name of the measure related to the NetCDF file.
 - run : If set to &apos;no&apos; the operator simulates the import and computes the fragmentation parameters 
-		that would be used, else if set to &apos;yes&apos; the actual import operation is executed.
+        that would be used, else if set to &apos;yes&apos; the actual import operation is executed.
 - src_path : path or OPeNDAP URL of the NetCDF file.
 - exp_dim : names of explicit dimensions.
-				 Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
-				 It implicitly defines explicit dimension number and level (order). 
-         If default value &quot;auto&quot; is specified, then the first n-1 dimension of the measure in the nc file 
-          will be used as explicit dimensions.
+            Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
+            It implicitly defines explicit dimension number and level (order). 
+            If default value &quot;auto&quot; is specified, then the first n-1 dimension of the measure in the nc file 
+            will be used as explicit dimensions.
 - imp_dim : names of implicit dimensions.
-				 Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided 
-				 It implicitly defines implicit dimension number and level (order).  
-				 Must be the same number of &quot;imp_concept_level&quot; 
-         If default value &quot;auto&quot; is specified, then the last dimension of the measure in the nc file 
-          will be used as implicit dimension.
+            Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided 
+            It implicitly defines implicit dimension number and level (order).  
+            Must be the same number of &quot;imp_concept_level&quot; 
+            If default value &quot;auto&quot; is specified, then the last dimension of the measure in the nc file 
+            will be used as implicit dimension.
 - subset_dims : dimension names used for the subsetting.
-				Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
-				Must be the same number of &quot;subset_filter&quot; 
+                Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
+                Must be the same number of &quot;subset_filter&quot; 
 - subset_filter : enumeration of comma-separated elementary filters (1 series of filters for each dimension). Possible forms are:
-					-- start_value : single value specifying the start index of the subset
-					-- start_value:stop_value : select elements from start_index to stop_index
-			    	Values should be numbers.
-					Example:
-						subset_dims=lat|lon;subset_filter=35:45|15:20;
-				Multiple-value field: list of filters separated by &quot;|&quot; can be provided  
-				Must be the same number of &quot;subset_dims&quot;
+                  -- start_value : single value specifying the start index of the subset
+                  -- start_value:stop_value : select elements from start_index to stop_index
+                  Values should be numbers.
+                  Example: subset_dims=lat|lon;subset_filter=35:45|15:20;
+                  Multiple-value field: list of filters separated by &quot;|&quot; can be provided  
+                  Must be the same number of &quot;subset_dims&quot;
 - subset_type : if set to &quot;index&quot; (default), the subset_filter is considered on dimension index. 
                 With &quot;coord&quot;, filter is considered on dimension values.
 - time_filter : enable filters using dates for time dimensions; enabled by default.
 - offset : it is added to the bounds of subset intervals defined with &quot;subset_filter&quot; in case of &quot;coord&quot; filter type is used.
 - exp_concept_level: concept level short name (must be a single char) of explicit dimensions. Default value is &quot;c&quot;
-				  Multiple-value field: list of concept levels separated by &quot;|&quot; can be provided. 
-				  Must be the same number of &quot;exp_dim&quot;
+                     Multiple-value field: list of concept levels separated by &quot;|&quot; can be provided. 
+                     Must be the same number of &quot;exp_dim&quot;
 - imp_concept_level: concept level short name (must be a single char) of implicit dimensions. Default value is &quot;c&quot;
-				  Multiple-value field: list of concept levels separated by &quot;|&quot; can be provided. 
+                     Multiple-value field: list of concept levels separated by &quot;|&quot; can be provided. 
 - compressed: save compressed data with &quot;yes&quot;
-			  or original data with &quot;no&quot; (default).
+              or original data with &quot;no&quot; (default).
 - grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
-             or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
+        or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
+- description : additional description to be associated with the output cube.
+
+The following parameters are considered only in case the container has to be created.
 - hierarchy: concept hierarchy name of the dimensions. Default value is &quot;oph_base&quot;
-				  Multiple-value field: list of concept hierarchies separated by &quot;|&quot; can be provided, the explicit dimensions first.
-- vocabulary: optional argument used to indicate a vocabulary (name of set of keys) to be used 
-			  to associate metadata to the container.
+             Multiple-value field: list of concept hierarchies separated by &quot;|&quot; can be provided, the explicit dimensions first.
+- vocabulary: optional argument used to indicate a vocabulary (name of set of keys) to be used  to associate metadata to the container.
 - base_time: in case of time hierarchy, it indicates the base time of the dimension. Default value is 1900-01-01.
 - units: in case of time hierarchy, it indicates the units of the dimension. Possible values are: s, m, h, 3, 6, d.
 - calendar: in case of time hierarchy, it indicates the calendar type. Possible values are:
-				  -- standard (default)
-				  -- gregorian
-				  -- proleptic_gregorian
-				  -- julian
-				  -- 360_day
-				  -- no_leap
-				  -- all_leap
-				  -- user_defined
+            -- standard (default)
+            -- gregorian
+            -- proleptic_gregorian
+            -- julian
+            -- 360_day
+            -- no_leap
+            -- all_leap
+            -- user_defined
 - month_lengths: in case of time dimension and user-defined calendar, it indicates the sizes of each month in days.
                  There must be 12 positive integers separated by commas. Default is &apos;31,28,31,30,31,30,31,31,30,31,30,31&apos;.
 - leap_year: in case of time dimension and user-defined calendar, it indicates the first leap year. By default it is set to 0.
 - leap_month: in case of time dimension and user-defined calendar, it indicates the leap month. By default it is set to 2 (i.e. February).
-- description : additional description to be associated with the output cube.
         
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -118,7 +115,7 @@ SUBMISSION STRING: &quot;operator=oph_importnc3;cwd=/session-code1;container=con
 		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="no" default="auto">host_partition</argument>
 		<argument type="string" mandatory="no" default="auto" values="auto|local|global">filesystem</argument>
-		<argument type="string" mandatory="no" default="mysql_table" values="mysql_table">ioserver</argument>
+		<argument type="string" mandatory="no" default="mysql_table" values="mysql_table|ophidiaio_memory">ioserver</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">import_metadata</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">check_compliance</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>

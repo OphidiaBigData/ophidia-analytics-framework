@@ -12,6 +12,7 @@ returns a new datacube as the difference (element by element) of the two.
 [Parameters]
 - cube : name of the first datacube to compare. The name must be in PID format.
 - cube2 : name of the second datacube to compare. The name must be in PID format.
+- missingvalue : value to be considered as missing value; by default it is NAN (for float and double).
 - schedule : scheduling algorithm. The only possible value is 0,
 		     for a static linear block distribution of resources.
 - container : name of the container to be used to store the output cube; by default it is the container of the first cube.
@@ -42,6 +43,7 @@ SUBMISSION STRING: &quot;operator=oph_intercomparison;cube=http://www.example.co
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="yes">cube</argument>
 		<argument type="string" mandatory="yes">cube2</argument>
+		<argument type="real" mandatory="no" default="NAN">missingvalue</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>

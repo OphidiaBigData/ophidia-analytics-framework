@@ -19,27 +19,27 @@
 #ifndef __OPH_PID_H__
 #define __OPH_PID_H__
 
-#define OPH_PID_OUTPUT_MESSAGE "PID of output datacube is: "
-#define OPH_PID_FORMAT	"%s/%d/%d"
+#define OPH_PID_OUTPUT_MESSAGE		"PID of output datacube is: "
+#define OPH_PID_FORMAT			"%s/%d/%d"
 
-#define OPH_PID_OUTPUT_MESSAGE2 "PID of output container is: "
-#define OPH_PID_FORMAT2	"%s/%d"
+#define OPH_PID_OUTPUT_MESSAGE2		"PID of output container is: "
+#define OPH_PID_FORMAT2			"%s/%d"
 
-#define OPH_PID_WEBSERVER_NAME "WEB_SERVER"
-#define OPH_PID_WEBSERVER_LOCATION "WEB_SERVER_LOCATION"
-#define OPH_PID_MEMORY "MEMORY"
-#define OPH_PID_BASE_SRC_PATH "BASE_SRC_PATH"
+#define OPH_PID_WEBSERVER_NAME		"WEB_SERVER"
+#define OPH_PID_WEBSERVER_LOCATION	"WEB_SERVER_LOCATION"
+#define OPH_PID_MEMORY			"MEMORY"
+#define OPH_PID_BASE_SRC_PATH		"BASE_SRC_PATH"
 
-#define OPH_PID_SLASH "/"
+#define OPH_PID_SLASH			"/"
 
-#define OPH_PID_SUCCESS 0
-#define OPH_PID_NULL_PARAM 1
-#define OPH_PID_MEMORY_ERROR 2
-#define OPH_PID_GENERIC_ERROR 3
+#define OPH_PID_SUCCESS			0
+#define OPH_PID_NULL_PARAM		1
+#define OPH_PID_MEMORY_ERROR		2
+#define OPH_PID_GENERIC_ERROR		3
 
-#define OPH_PID_SIZE        512
+#define OPH_PID_SIZE			512
 
-#define OPH_PID_BUFFER_SIZE 256
+#define OPH_PID_BUFFER_SIZE		256
 
 /** 
  * \brief Function to load configuration data
@@ -53,7 +53,7 @@ int oph_pid_get_memory_size(long long *memory_size);
  * \brief base_src_path Pointer to the memory area where base_src_path will be written; it has to be freed
  * \return 0 if successfull, N otherwise
  */
-int oph_pid_get_base_src_path(char** base_src_path);
+int oph_pid_get_base_src_path(char **base_src_path);
 
 /** 
  * \brief Function to create a new pid given container and datacube id
@@ -75,7 +75,7 @@ int oph_pid_get_uri(char **uri);
  * \brief Function to retrieve PID server uri
  * \return String containing PID uri (it does not have to be freed)
  */
-char* oph_pid_uri();
+char *oph_pid_uri();
 
 /** 
  * \brief Function to retrieve base dir for PID
@@ -88,7 +88,7 @@ int oph_pid_get_path(char **path);
  * \brief Function to retrieve base dir for PID
  * \return String containing the path to basedir (it does not have to be freed)
  */
-char* oph_pid_path();
+char *oph_pid_path();
 
 /** 
  * \brief Function to validate a pid format
@@ -130,7 +130,7 @@ int oph_pid_free();
  * \param code Session code. It has to be an pre-allocated string 
  * \return 0 if successfull, N otherwise
  */
-int oph_pid_get_session_code(const char* sessionid, char* code);
+int oph_pid_get_session_code(const char *sessionid, char *code);
 
 /** 
  * \brief Function to convert folder name into user format
@@ -139,6 +139,6 @@ int oph_pid_get_session_code(const char* sessionid, char* code);
  * \param new_folder. It has to be freed
  * \return 0 if successfull, N otherwise
  */
-int oph_pid_drop_session_prefix(const char* folder, const char* sessionid, char** new_folder);
+int oph_pid_drop_session_prefix(const char *folder, const char *sessionid, char **new_folder);
 
 #endif

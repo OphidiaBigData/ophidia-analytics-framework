@@ -32,6 +32,7 @@ Applies an operation between the value of measure array b and the value in the s
                     -- &apos;oph_abs&apos; : compute the modulus (as oph_abs_array);
                     -- &apos;oph_arg&apos; : compute the phase (as oph_arg_array);
                     -- &apos;oph_mask&apos; : use measure b as a mask for measure a (as oph_mask_array).
+- missingvalue : value to be considered as missing value; by default it is NAN (for &apos;oph_double&apos; and &apos;oph_float&apos;).
 
 [Return type]
 Binary-array.
@@ -45,10 +46,11 @@ oph_operator_array(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,meas
 	<operation type="simple"/>
     </info>
     <args>
-	<multi-argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</multi-argument>
+	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
 	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
 	<argument type="binary-array" mandatory="yes">measure a</argument>
 	<argument type="binary-array" mandatory="yes">measure b</argument>
 	<argument type="oph_operator" mandatory="yes" values="'oph_max'|'oph_min'|'oph_sum'|'oph_sub'|'oph_mul'|'oph_div'|'oph_abs'|'oph_arg'|'oph_mask'">operator name</argument>
+	<argument type="double" mandatory="no" default="NAN">missingvalue</argument>
     </args>
 </primitive>
