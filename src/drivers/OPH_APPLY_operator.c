@@ -452,7 +452,7 @@ int oph_apply_parse_query(oph_operator_struct * handle, char *data_type, const c
 		*use_subtarget = 0;
 
 	int is_measure = strcasecmp(target, MYSQL_DIMENSION);
-	char *array_operation = is_measure ? ((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation : ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation;
+	char *array_operation = is_measure ? ((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation : ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation[0];
 
 	// Pre-parsing: check for clause 'target'
 	if (is_measure && !strcasestr(array_operation, target)) {
@@ -487,7 +487,7 @@ int oph_apply_parse_query(oph_operator_struct * handle, char *data_type, const c
 		if (is_measure)
 			((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation = array_operation;
 		else
-			((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation = array_operation;
+			((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation[0] = array_operation;
 	}
 	// Pre-parsing: check for brackets, spaces and special chars
 	int j, l = strlen(array_operation), bcount = 0, pcount = 0, comma_up = 0, scount = 0;
@@ -759,6 +759,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->fragment_ids = NULL;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation = NULL;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation = NULL;
+	((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num = 0;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->objkeys_num = -1;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->server = NULL;
@@ -780,6 +781,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->array_values = NULL;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->array_length = 0;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->description = NULL;
+	((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size = NULL;
+	((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num = 0;
 
 	//3 - Fill struct with the correct data
 	char *datacube_in;
@@ -1007,12 +1010,24 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_APPLY_DIM_QUERY);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (strncasecmp(value, OPH_COMMON_NULL_VALUE, OPH_TP_TASKLEN)) {
-		if (!(((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation = (char *) strndup(value, OPH_TP_TASKLEN))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_MEMORY_ERROR_INPUT, "dimension operation");
-			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-		}
+	if (oph_tp_parse_multiple_value_param(value, &((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation, &((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
+		oph_tp_free_multiple_value_param_list(((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size, ((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DIMENSION_SIZE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DIMENSION_SIZE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DIMENSION_SIZE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (oph_tp_parse_multiple_value_param(value, &((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size, &((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
+		oph_tp_free_multiple_value_param_list(((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size, ((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
 	value = hashtbl_get(task_tbl, OPH_ARG_IDJOB);
@@ -1212,7 +1227,7 @@ int task_init(oph_operator_struct * handle)
 				if (old_measure)
 					free(old_measure);
 				goto __OPH_EXIT_1;
-			} else {
+			} else if (((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num != number_of_implicit_dimensions) {
 				pmesg(LOG_WARNING, __FILE__, __LINE__, "The number of implicit dimensions will be set to 1.\n");
 				logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_TOO_DIMENSION_WARNING);
 			}
@@ -1224,8 +1239,24 @@ int task_init(oph_operator_struct * handle)
 				free(old_measure);
 			goto __OPH_EXIT_1;
 		}
+		if (((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num && (((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num != number_of_implicit_dimensions)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to process '%s': wrong number of values.\n", OPH_IN_PARAM_DIMENSION_SIZE);
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, "Unable to process '%s': wrong number of values.\n", OPH_IN_PARAM_DIMENSION_SIZE);
+			free(cubedims);
+			if (old_measure)
+				free(old_measure);
+			goto __OPH_EXIT_1;
+		}
+		if (((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num && (((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num != number_of_implicit_dimensions)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to process '%s': wrong number of values.\n", OPH_IN_PARAM_APPLY_DIM_QUERY);
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, "Unable to process '%s': wrong number of values.\n", OPH_IN_PARAM_DIMENSION_SIZE);
+			free(cubedims);
+			if (old_measure)
+				free(old_measure);
+			goto __OPH_EXIT_1;
+		}
 
-		if ((use_dim || ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation) && (main_impl_dim >= 0)) {
+		if ((use_dim || ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num) && (main_impl_dim >= 0)) {
 			oph_odb_dimension dim;
 			oph_odb_dimension_instance dim_inst;
 			if (oph_odb_dim_retrieve_dimension_instance(oDB, cubedims[main_impl_dim].id_dimensioninst, &dim_inst, datacube_id)) {
@@ -1244,11 +1275,11 @@ int task_init(oph_operator_struct * handle)
 					free(old_measure);
 				goto __OPH_EXIT_1;
 			}
-			if (((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation) {
+			if (((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num) {
 				char dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE];
 				strcpy(dimension_type, dim.dimension_type);
 				if (oph_apply_parse_query(handle, dim.dimension_type, MYSQL_DIMENSION, NULL, NULL)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing '%s'\n", ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation);
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing '%s'\n", ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation[0]);
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_INVALID_INPUT_STRING);
 					free(cubedims);
 					if (old_measure)
@@ -1257,7 +1288,7 @@ int task_init(oph_operator_struct * handle)
 				}
 				if (strncasecmp(dim.dimension_type, dimension_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Data type update for dimension is not supported. Check '%s'\n",
-					      ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation);
+					      ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation[0]);
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_INVALID_INPUT_STRING);
 					free(cubedims);
 					if (old_measure)
@@ -1859,6 +1890,7 @@ int task_reduce(oph_operator_struct * handle)
 
 		short is_reduce = (((OPH_APPLY_operator_handle *) handle->operator_handle)->operation_type == OPH_APPLY_PRIMITIVE_REDUCE)
 		    || (((OPH_APPLY_operator_handle *) handle->operator_handle)->operation_type == OPH_APPLY_PRIMITIVE_TOTAL);
+		int dim_size_i = 0, dim_size[((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num ? ((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num : 1];
 
 		//Write new cube - dimension relation rows
 		for (l = number_of_dimensions - 1; l >= 0; l--) {
@@ -1908,18 +1940,37 @@ int task_reduce(oph_operator_struct * handle)
 							if ((size == 1) && is_reduce) {
 								cubedims[l].size = cubedims[l].level = 0;
 								dim_inst[l].concept_level = OPH_COMMON_ALL_CONCEPT_LEVEL;
-							} else {
+								first = 0;
+							} else if (((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num) {
+								int ii, jj, _size = 1;
+								for (ii = 0, jj = ((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num - 1; ii < ((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num; ++ii, --jj) {
+									dim_size[ii] = (int)strtol(((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size[jj], NULL, 10);
+									_size *= dim_size[ii];
+								}
+								if (_size == size) {
+									cubedims[l].size = dim_size[dim_size_i++];
+									if (is_reduce)
+										dim_inst[l].concept_level = OPH_COMMON_CONCEPT_LEVEL_UNKNOWN;
+									reduced_impl_dim = l;	// Values of dimensions will be changed even if no reduction is called, e.g. in case of subsetting
+									first = 0;
+								}
+							}
+							if (first) {
 								cubedims[l].size = size;
 								cubedims[l].level = 1;
 								if (is_reduce)
 									dim_inst[l].concept_level = OPH_COMMON_CONCEPT_LEVEL_UNKNOWN;
 								reduced_impl_dim = l;	// Values of dimensions will be changed even if no reduction is called, e.g. in case of subsetting
+								first = 0;
 							}
-							first = 0;
 						} else	// Other implicit dimensions will be collapsed
 						{
-							cubedims[l].size = cubedims[l].level = 0;
-							dim_inst[l].concept_level = OPH_COMMON_ALL_CONCEPT_LEVEL;
+							if (dim_size_i)
+								cubedims[l].size = dim_size[dim_size_i++];
+							else {
+								cubedims[l].size = cubedims[l].level = 0;
+								dim_inst[l].concept_level = OPH_COMMON_ALL_CONCEPT_LEVEL;
+							}
 						}
 					}
 				}
@@ -1927,7 +1978,7 @@ int task_reduce(oph_operator_struct * handle)
 		}
 
 		char *dim_row;
-		int updated_dim = -1, compressed = 0, n;
+		int updated_dim = -1, compressed = 0, n, dim_i = ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num - 1;
 
 		char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[OPH_COMMON_BUFFER_LEN];
 		snprintf(index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container);
@@ -1946,10 +1997,7 @@ int task_reduce(oph_operator_struct * handle)
 			if (cubedims[l].size)	// Extract the subset only in case the dimension is not collapsed
 			{
 				// Build the vector of labels
-				// Only the implicit dimension will be treated
-				// The update concerns the unique implicit dimension to be reduced or the first dimension found in scanning
-				if (((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation && !cubedims[l].explicit_dim && (updated_dim < 0)
-				    && ((l == reduced_impl_dim) || (reduced_impl_dim < 0))) {
+				if (((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num && !cubedims[l].explicit_dim) {
 					updated_dim = l;
 
 					// Load input indexes
@@ -1995,7 +2043,7 @@ int task_reduce(oph_operator_struct * handle)
 
 					// Store output labels
 					if (oph_dim_insert_into_dimension_table_from_query
-					    (db, o_label_dimension_table_name, dim[l].dimension_type, dim_inst[l].size, ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation,
+					    (db, o_label_dimension_table_name, dim[l].dimension_type, dim_inst[l].size, ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation[dim_i],
 					     dim_row, &(dim_inst[l].fk_id_dimension_label))) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in inserting a new row in dimension table.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_DIM_ROW_ERROR);
@@ -2010,9 +2058,12 @@ int task_reduce(oph_operator_struct * handle)
 					if (dim_row)
 						free(dim_row);
 					dim_row = NULL;
+
+					if (dim_i)
+						dim_i--;
 				}
 
-				if ((l == reduced_expl_dim) || (l == reduced_impl_dim) || (l == updated_dim)) {
+				if ((l == reduced_expl_dim) || (l == reduced_impl_dim) || (l == updated_dim) || (dim_size_i && !cubedims[l].explicit_dim)) {
 					n = snprintf(operation, OPH_COMMON_BUFFER_LEN, MYSQL_DIM_INDEX_ARRAY, OPH_DIM_INDEX_DATA_TYPE, 1, cubedims[l].size);
 					if (n >= OPH_COMMON_BUFFER_LEN) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
@@ -2137,7 +2188,7 @@ int env_unset(oph_operator_struct * handle)
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation = NULL;
 	}
 	if (((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation) {
-		free((char *) ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation);
+		oph_tp_free_multiple_value_param_list(((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation, ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num);
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation = NULL;
 	}
 	if (((OPH_APPLY_operator_handle *) handle->operator_handle)->measure) {
@@ -2167,6 +2218,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_APPLY_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_APPLY_operator_handle *) handle->operator_handle)->description);
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->description = NULL;
+	}
+	if (((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size) {
+		oph_tp_free_multiple_value_param_list(((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size, ((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num);
+		((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size = NULL;
 	}
 	free((OPH_APPLY_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;

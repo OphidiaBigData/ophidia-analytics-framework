@@ -36,7 +36,8 @@
  * \param schedule_algo Number of the distribution algorithm to use 
  * \param fragment_ids Contains the string of fragment relative index
  * \param array_operation Query to be executed on the input datacube 
- * \param dimension_operation Query to be executed on the implicit dimension of input datacube 
+ * \param dimension_operation List of ueries to be executed on the implicit dimensions of input datacube 
+ * \param dimension_operation_num Number of ueries to be executed on the implicit dimensions of input datacube 
  * \param fragment_number Number of fragments that a process has to manage
  * \param fragment_id_start_position First fragment in the relative index set to work on
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
@@ -59,6 +60,8 @@
  * \param num_reference_to_dim Number of references to keyword 'dimension' in main query
  * \param array_values Pointer to value of main implicit dimension of input cube
  * \param description Free description to be associated with output cube
+ * \param dim_size List of output dimension sizes
+ * \param description Number of dim_size
  */
 struct _OPH_APPLY_operator_handle {
 	ophidiadb oDB;
@@ -70,7 +73,8 @@ struct _OPH_APPLY_operator_handle {
 	int schedule_algo;
 	char *fragment_ids;
 	char *array_operation;
-	char *dimension_operation;
+	char **dimension_operation;
+	int dimension_operation_num;
 	int fragment_number;
 	int fragment_id_start_position;
 	char **objkeys;
@@ -94,6 +98,8 @@ struct _OPH_APPLY_operator_handle {
 	char *array_values;
 	long long array_length;
 	char *description;
+	char **dim_size;
+	int dim_size_num;
 };
 typedef struct _OPH_APPLY_operator_handle OPH_APPLY_operator_handle;
 

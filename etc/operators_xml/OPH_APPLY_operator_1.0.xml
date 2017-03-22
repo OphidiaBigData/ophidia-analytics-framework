@@ -27,6 +27,7 @@ In case of inequalities, it is necessary to call the primitive &quot;oph_cast&qu
                  if &quot;manual&quot; (default) measure type and the related primitive arguments have to be set in &quot;query&quot;.
 - dim_type : if &quot;auto&quot; dimension type will be set automatically to that of input datacube, the related primitive arguments have to be omitted in &quot;dim_query&quot;;
              if &quot;manual&quot; (default) dimension type and the related primitive arguments have to be set in &quot;dim_query&quot;.
+- dim_size : it can be used to set dimension sizes in output cubes when &quot;dim_query&quot; is used.
 - check_type : if &quot;yes&quot; the agreement between input and output data types of nested primitives will be checked,
                if &quot;no&quot; data type will be not checked (valid only for &quot;manual&quot; setting of &quot;measure_type&quot; and &quot;dim_type&quot;).
 - compressed : if &quot;auto&quot; (default) new data wil be compressed according to compression status of input datacube,
@@ -66,6 +67,7 @@ SUBMISSION STRING: &quot;operator=oph_apply;cube=http://www.example.com/1/1;quer
 		<argument type="string" mandatory="no" default="null">measure</argument>
 		<argument type="string" mandatory="no" default="manual" values="auto|manual">measure_type</argument>
 		<argument type="string" mandatory="no" default="manual" values="auto|manual">dim_type</argument>
+		<argument type="string" mandatory="no" default="-">dim_size</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">check_type</argument>
 		<argument type="string" mandatory="no" default="auto" values="yes|no|auto">compressed</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>

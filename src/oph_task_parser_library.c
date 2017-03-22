@@ -734,6 +734,24 @@ int oph_tp_task_params_parser(char *task_string, HASHTBL ** hashtbl)
 	return OPH_TP_TASK_PARSER_SUCCESS;
 }
 
+char *multival_strchr(char *str, char value)
+{
+	int i = 0;
+	int string_flag = 0;
+	for (i = 0; str[i]; i++) {
+		//In this case set the flag for an opening string delimiter
+		if (str[i] == OPH_TP_STRING_DELIMITER && !string_flag)
+			string_flag = 1;
+		//Count separator only if not in the middle of a string
+		else if (str[i] == value && !string_flag)
+			return &(str[i]);
+		//If string is open, then the new delimiter will close it
+		else if (str[i] == OPH_TP_STRING_DELIMITER && string_flag)
+			string_flag = 0;
+	}
+	return NULL;
+}
+
 int oph_tp_parse_multiple_value_param(char *values, char ***value_list, int *value_num)
 {
 	if (!values || !value_list || !value_num)
@@ -764,14 +782,14 @@ int oph_tp_parse_multiple_value_param(char *values, char ***value_list, int *val
 	char *ptr_begin, *ptr_end;
 
 	ptr_begin = values;
-	ptr_end = strchr(values, OPH_TP_MULTI_VALUE_SEPARATOR);
+	ptr_end = multival_strchr(values, OPH_TP_MULTI_VALUE_SEPARATOR);
 	j = 0;
 	while (ptr_begin) {
 		if (ptr_end) {
 			strncpy((*value_list)[j], ptr_begin, strlen(ptr_begin) - strlen(ptr_end));
 			(*value_list)[j][strlen(ptr_begin) - strlen(ptr_end)] = 0;
 			ptr_begin = ptr_end + 1;
-			ptr_end = strchr(ptr_end + 1, OPH_TP_MULTI_VALUE_SEPARATOR);
+			ptr_end = multival_strchr(ptr_end + 1, OPH_TP_MULTI_VALUE_SEPARATOR);
 		} else {
 			strncpy((*value_list)[j], ptr_begin, strlen(ptr_begin));
 			(*value_list)[j][strlen(ptr_begin)] = 0;

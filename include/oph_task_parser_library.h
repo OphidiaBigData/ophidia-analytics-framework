@@ -61,6 +61,7 @@
 #define OPH_TP_MULTI_VALUE_SEPARATOR		'|'
 #define OPH_TP_CONT_CUBE_SEPARATOR		'.'
 #define OPH_TP_SKIP_SEPARATOR			'\0'	// '#' // Not used
+#define OPH_TP_STRING_DELIMITER			'\''
 
 #define OPH_TP_OPERATOR_NAME			OPH_IN_PARAM_OPERATOR_NAME
 
