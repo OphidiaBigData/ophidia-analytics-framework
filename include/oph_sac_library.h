@@ -23,7 +23,7 @@
 #include "sacsubc.h"
 #include "readsaclib.h"
 #include "oph_common.h"
-#include "oph_datacube2_library.h"
+#include "oph_datacube_library.h"
 #include "oph_ioserver_library.h"
 
 #define SAC_MAX_VAR_DIMS	4

@@ -21,7 +21,7 @@
 //#include "netcdf.h"
 #include "fitsio.h"
 #include "oph_common.h"
-#include "oph_datacube2_library.h"
+#include "oph_datacube_library.h"
 #include "oph_ioserver_library.h"
 
 #define FITS_MAX_VAR_DIMS	4

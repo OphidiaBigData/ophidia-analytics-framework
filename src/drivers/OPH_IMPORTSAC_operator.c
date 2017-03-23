@@ -3671,7 +3671,7 @@ int task_init (oph_operator_struct *handle)
 		db.dbms_instance = &dbms;
 
     if(!((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server){
-      if(oph_dc2_setup_dbms(&(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server), dbms.io_server_type))
+      if(oph_dc_setup_dbms(&(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server), dbms.io_server_type))
 	    {
 		    pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		    logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTSAC_IOPLUGIN_SETUP_ERROR, db.id_dbms);		 
@@ -3680,29 +3680,29 @@ int task_init (oph_operator_struct *handle)
 	    }
     }
 
-		if(oph_dc2_connect_to_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbms), 0))
+		if(oph_dc_connect_to_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbms), 0))
 		{
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTSAC_DBMS_CONNECTION_ERROR, dbms.id_dbms);
-			oph_dc2_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbms));
+			oph_dc_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbms));
 			free(id_dbmss);
 			goto __OPH_EXIT_1;
 		}
 
 		for(i = 0; i < ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->dbxdbms_number; i++){
-		  if(oph_dc2_generate_db_name(oDB->name, id_datacube_out, db.id_dbms,  0, i+1, &db.db_name))
+		  if(oph_dc_generate_db_name(oDB->name, id_datacube_out, db.id_dbms,  0, i+1, &db.db_name))
 		  {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of Db instance  name exceed limit.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTSAC_STRING_BUFFER_OVERFLOW, "DB instance name", db.db_name);
 		 	free(id_dbmss);
-			oph_dc2_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbms));
+			oph_dc_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbms));
 			goto __OPH_EXIT_1;
 		  }
-		  if(oph_dc2_create_db(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &db)){
+		  if(oph_dc_create_db(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &db)){
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create new db\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTSAC_NEW_DB_ERROR, db.db_name);
 			free(id_dbmss);
-			oph_dc2_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbms));
+			oph_dc_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbms));
 			goto __OPH_EXIT_1;
 		  }
 		  //Insert new database instance and partitions
@@ -3710,11 +3710,11 @@ int task_init (oph_operator_struct *handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update dbinstance table\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTSAC_DB_INSERT_ERROR, db.db_name);
 			free(id_dbmss);
-			oph_dc2_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbms));
+			oph_dc_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbms));
 			goto __OPH_EXIT_1;
 		  }
 		}
-		oph_dc2_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbms));
+		oph_dc_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbms));
 	}
 	free(id_dbmss);
 	  /********************************
@@ -3936,7 +3936,7 @@ int task_execute(oph_operator_struct *handle)
   int frag_count = 0;
 
     if(!((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server){
-      if(oph_dc2_setup_dbms(&(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server), dbmss.value[0].io_server_type))
+      if(oph_dc_setup_dbms(&(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server), dbmss.value[0].io_server_type))
 	    {
 		    pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		    logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTSAC_IOPLUGIN_SETUP_ERROR,dbmss.value[0].id_dbms);		 
@@ -3952,11 +3952,11 @@ int task_execute(oph_operator_struct *handle)
   //For each DBMS
   for(i = 0; i < dbmss.size; i++){
 
-	if(oph_dc2_connect_to_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]), 0))
+	if(oph_dc_connect_to_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]), 0))
 	{
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTSAC_DBMS_CONNECTION_ERROR, (dbmss.value[i]).id_dbms);
-	    oph_dc2_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
+	    oph_dc_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
 	    oph_odb_free_ophidiadb(&oDB_slave);
@@ -3968,11 +3968,11 @@ int task_execute(oph_operator_struct *handle)
 		//Check DB - DBMS Association
 		if(dbs.value[j].dbms_instance != &(dbmss.value[i])) continue;
 
-		if(oph_dc2_use_db_of_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j])))
+		if(oph_dc_use_db_of_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j])))
 		{
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTSAC_DB_SELECTION_ERROR, (dbs.value[j]).db_name);
-			oph_dc2_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
+			oph_dc_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
 			oph_odb_stge_free_db_list(&dbs);
 			oph_odb_stge_free_dbms_list(&dbmss);
 		    oph_odb_free_ophidiadb(&oDB_slave);
@@ -3993,11 +3993,11 @@ int task_execute(oph_operator_struct *handle)
 			new_frag.key_end = ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->fragment_first_id * ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->tuplexfrag_number + frag_count* ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->tuplexfrag_number + ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->tuplexfrag_number;
 			new_frag.db_instance = &(dbs.value[j]);
 
-			if(oph_dc2_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count+1), &(new_frag.fragment_name)))
+			if(oph_dc_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count+1), &(new_frag.fragment_name)))
 			{
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag  name exceed limit.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTSAC_STRING_BUFFER_OVERFLOW, "fragment name", new_frag.fragment_name);
-				oph_dc2_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
+				oph_dc_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
 				oph_odb_stge_free_db_list(&dbs);
 				oph_odb_stge_free_dbms_list(&dbmss);
 			    oph_odb_free_ophidiadb(&oDB_slave);
@@ -4005,11 +4005,11 @@ int task_execute(oph_operator_struct *handle)
 			}
 
 			//Create Empty fragment
-			if (oph_dc2_create_empty_fragment(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &new_frag))
+			if (oph_dc_create_empty_fragment(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &new_frag))
 			{
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating fragment.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTSAC_FRAGMENT_CREATION_ERROR, new_frag.fragment_name);
-				oph_dc2_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
+				oph_dc_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
 				oph_odb_stge_free_db_list(&dbs);
 				oph_odb_stge_free_dbms_list(&dbmss);
 			    oph_odb_free_ophidiadb(&oDB_slave);
@@ -4022,7 +4022,7 @@ int task_execute(oph_operator_struct *handle)
 			if(oph_sac_populate_fragment_from_sac3(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &new_frag, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->filesac, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->tuplexfrag_number, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->array_length, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->compressed, (SAC_var*)&(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->measure), ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->memory_size, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->hdi)){
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTSAC_FRAG_POPULATE_ERROR, new_frag.fragment_name, "");
-				oph_dc2_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
+				oph_dc_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
 				oph_odb_stge_free_db_list(&dbs);
 				oph_odb_stge_free_dbms_list(&dbmss);
 			    oph_odb_free_ophidiadb(&oDB_slave);
@@ -4033,7 +4033,7 @@ int task_execute(oph_operator_struct *handle)
 			if(oph_odb_stge_insert_into_fragment_table(&oDB_slave, &new_frag)){
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update fragment table.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTSAC_FRAGMENT_INSERT_ERROR, new_frag.fragment_name);
-				oph_dc2_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
+				oph_dc_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
 				oph_odb_stge_free_db_list(&dbs);
 				oph_odb_stge_free_dbms_list(&dbmss);
 			    oph_odb_free_ophidiadb(&oDB_slave);
@@ -4044,7 +4044,7 @@ int task_execute(oph_operator_struct *handle)
 		}
 		start_position++;
 	}
-	oph_dc2_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
+	oph_dc_disconnect_from_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server, &(dbmss.value[i]));
 
   }
   oph_odb_stge_free_db_list(&dbs);
@@ -4139,7 +4139,7 @@ int env_unset(oph_operator_struct *handle)
 	  ((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->cwd = NULL;
   }
 
-  if(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server) oph_dc2_cleanup_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server);
+  if(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server) oph_dc_cleanup_dbms(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->server);
 
 
   if(((OPH_IMPORTSAC_operator_handle*)handle->operator_handle)->ioserver_type){
