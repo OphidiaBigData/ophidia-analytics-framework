@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,7 +38,8 @@ extern int msglevel;
 /***********OPH_JSON_OBJ_MULTIGRID INTERNAL FUNCTIONS***********/
 
 // Free a multigrid object contents
-int oph_json_free_multigrid(oph_json_obj_multigrid *obj) {
+int oph_json_free_multigrid(oph_json_obj_multigrid * obj)
+{
 	if (obj) {
 		if (obj->colfieldtypes) {
 			unsigned int i;
@@ -170,15 +171,18 @@ int oph_json_free_multigrid(oph_json_obj_multigrid *obj) {
 
 /***********OPH_JSON_OBJ_MULTIGRID FUNCTIONS***********/
 
-int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title, const char *description, char **rowkeys, int rowkeys_num, char **rowfieldtypes, int rowfieldtypes_num, char **colkeys, int colkeys_num, char **colfieldtypes, int colfieldtypes_num, char ***colvalues, int colvalues_num, const char *measurename, const char *measuretype) {
-	if (!json || !objkey || !title || !rowkeys || rowkeys_num<1 || !rowfieldtypes || rowfieldtypes_num<1 || !colkeys || colkeys_num<1 || !colfieldtypes || colfieldtypes_num<1 || !colvalues || colvalues_num<1 || !measurename || !measuretype) {
+int oph_json_add_multigrid(oph_json * json, const char *objkey, const char *title, const char *description, char **rowkeys, int rowkeys_num, char **rowfieldtypes, int rowfieldtypes_num,
+			   char **colkeys, int colkeys_num, char **colfieldtypes, int colfieldtypes_num, char ***colvalues, int colvalues_num, const char *measurename, const char *measuretype)
+{
+	if (!json || !objkey || !title || !rowkeys || rowkeys_num < 1 || !rowfieldtypes || rowfieldtypes_num < 1 || !colkeys || colkeys_num < 1 || !colfieldtypes || colfieldtypes_num < 1 || !colvalues
+	    || colvalues_num < 1 || !measurename || !measuretype) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
 		return OPH_JSON_BAD_PARAM_ERROR;
 	}
 
 	if (json->response_num == 0) {
-		json->response = (oph_json_response *)malloc(sizeof(oph_json_response));
+		json->response = (oph_json_response *) malloc(sizeof(oph_json_response));
 		if (!json->response) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "response");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "response");
@@ -189,7 +193,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 		json->response[0].objcontent_num = 0;
 		json->response[0].objkey = NULL;
 
-		json->response[0].objclass = (char *)strdup(OPH_JSON_MULTIGRID);
+		json->response[0].objclass = (char *) strdup(OPH_JSON_MULTIGRID);
 		if (!json->response[0].objclass) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "objclass");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "objclass");
@@ -198,13 +202,13 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 
 		json->response_num++;
 
-		json->response[0].objkey = (char *)strdup(objkey);
+		json->response[0].objkey = (char *) strdup(objkey);
 		if (!json->response[0].objkey) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "objkey");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "objkey");
 			return OPH_JSON_MEMORY_ERROR;
 		}
-		if (oph_json_add_responseKey(json,objkey)) {
+		if (oph_json_add_responseKey(json, objkey)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "objkey");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "objkey");
 			return OPH_JSON_MEMORY_ERROR;
@@ -238,7 +242,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].rowvalues_num2 = 0;
 		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].title = NULL;
 
-		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].title = (char *)strdup(title);
+		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].title = (char *) strdup(title);
 		if (!((oph_json_obj_multigrid *) json->response[0].objcontent)[0].title) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "title");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "title");
@@ -248,7 +252,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 		json->response[0].objcontent_num++;
 
 		if (description) {
-			((oph_json_obj_multigrid *) json->response[0].objcontent)[0].description = (char *)strdup(description);
+			((oph_json_obj_multigrid *) json->response[0].objcontent)[0].description = (char *) strdup(description);
 			if (!((oph_json_obj_multigrid *) json->response[0].objcontent)[0].description) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "description");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "description");
@@ -256,9 +260,9 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			}
 		}
 
-		int k,q;
+		int k, q;
 
-		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].rowkeys = (char **)malloc(sizeof(char *)*rowkeys_num);
+		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].rowkeys = (char **) malloc(sizeof(char *) * rowkeys_num);
 		if (!((oph_json_obj_multigrid *) json->response[0].objcontent)[0].rowkeys) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "rowkeys");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "rowkeys");
@@ -266,13 +270,13 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 		}
 		for (k = 0; k < rowkeys_num; k++) {
 			for (q = 0; q < k; q++) {
-				if (!strcmp(rowkeys[q],rowkeys[k])) {
+				if (!strcmp(rowkeys[q], rowkeys[k])) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "rowkey");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "rowkey");
 					return OPH_JSON_BAD_PARAM_ERROR;
 				}
 			}
-			((oph_json_obj_multigrid *) json->response[0].objcontent)[0].rowkeys[k] = (char *)strdup(rowkeys[k]);
+			((oph_json_obj_multigrid *) json->response[0].objcontent)[0].rowkeys[k] = (char *) strdup(rowkeys[k]);
 			if (!((oph_json_obj_multigrid *) json->response[0].objcontent)[0].rowkeys[k]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "rowkey");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "rowkey");
@@ -281,7 +285,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			((oph_json_obj_multigrid *) json->response[0].objcontent)[0].rowkeys_num++;
 		}
 
-		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].rowfieldtypes = (char **)malloc(sizeof(char *)*rowfieldtypes_num);
+		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].rowfieldtypes = (char **) malloc(sizeof(char *) * rowfieldtypes_num);
 		if (!((oph_json_obj_multigrid *) json->response[0].objcontent)[0].rowfieldtypes) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "rowfieldtypes");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "rowfieldtypes");
@@ -293,7 +297,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "rowfieldtype");
 				return OPH_JSON_BAD_PARAM_ERROR;
 			}
-			((oph_json_obj_multigrid *) json->response[0].objcontent)[0].rowfieldtypes[k] = (char *)strdup(rowfieldtypes[k]);
+			((oph_json_obj_multigrid *) json->response[0].objcontent)[0].rowfieldtypes[k] = (char *) strdup(rowfieldtypes[k]);
 			if (!((oph_json_obj_multigrid *) json->response[0].objcontent)[0].rowfieldtypes[k]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "rowfieldtype");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "rowfieldtype");
@@ -302,7 +306,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			((oph_json_obj_multigrid *) json->response[0].objcontent)[0].rowfieldtypes_num++;
 		}
 
-		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colkeys = (char **)malloc(sizeof(char *)*colkeys_num);
+		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colkeys = (char **) malloc(sizeof(char *) * colkeys_num);
 		if (!((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colkeys) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colkeys");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colkeys");
@@ -310,13 +314,13 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 		}
 		for (k = 0; k < colkeys_num; k++) {
 			for (q = 0; q < k; q++) {
-				if (!strcmp(colkeys[q],colkeys[k])) {
+				if (!strcmp(colkeys[q], colkeys[k])) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "colkey");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "colkey");
 					return OPH_JSON_BAD_PARAM_ERROR;
 				}
 			}
-			((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colkeys[k] = (char *)strdup(colkeys[k]);
+			((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colkeys[k] = (char *) strdup(colkeys[k]);
 			if (!((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colkeys[k]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colkey");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colkey");
@@ -325,7 +329,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colkeys_num++;
 		}
 
-		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colfieldtypes = (char **)malloc(sizeof(char *)*colfieldtypes_num);
+		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colfieldtypes = (char **) malloc(sizeof(char *) * colfieldtypes_num);
 		if (!((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colfieldtypes) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colfieldtypes");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colfieldtypes");
@@ -337,7 +341,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "colfieldtype");
 				return OPH_JSON_BAD_PARAM_ERROR;
 			}
-			((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colfieldtypes[k] = (char *)strdup(colfieldtypes[k]);
+			((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colfieldtypes[k] = (char *) strdup(colfieldtypes[k]);
 			if (!((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colfieldtypes[k]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colfieldtype");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colfieldtype");
@@ -346,7 +350,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colfieldtypes_num++;
 		}
 
-		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colvalues = (char ***)malloc(sizeof(char **)*colvalues_num);
+		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colvalues = (char ***) malloc(sizeof(char **) * colvalues_num);
 		if (!((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colvalues) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colvalues");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colvalues");
@@ -358,7 +362,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colvalues_num1 = colvalues_num;
 		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colvalues_num2 = colkeys_num;
 		for (k = 0; k < colvalues_num; k++) {
-			((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colvalues[k] = (char **)malloc(sizeof(char *)*colkeys_num);
+			((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colvalues[k] = (char **) malloc(sizeof(char *) * colkeys_num);
 			if (!((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colvalues[k]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colvalues row");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colvalues row");
@@ -369,7 +373,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colvalues[k][q] = NULL;
 			}
 			for (q = 0; q < colkeys_num; q++) {
-				((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colvalues[k][q] = (char *)strdup(colvalues[k][q]);
+				((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colvalues[k][q] = (char *) strdup(colvalues[k][q]);
 				if (!((oph_json_obj_multigrid *) json->response[0].objcontent)[0].colvalues[k][q]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colvalue");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colvalue");
@@ -378,7 +382,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			}
 		}
 
-		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].measurename = (char *)strdup(measurename);
+		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].measurename = (char *) strdup(measurename);
 		if (!((oph_json_obj_multigrid *) json->response[0].objcontent)[0].measurename) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "measurename");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "measurename");
@@ -390,7 +394,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "measuretype");
 			return OPH_JSON_BAD_PARAM_ERROR;
 		}
-		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].measuretype = (char *)strdup(measuretype);
+		((oph_json_obj_multigrid *) json->response[0].objcontent)[0].measuretype = (char *) strdup(measuretype);
 		if (!((oph_json_obj_multigrid *) json->response[0].objcontent)[0].measuretype) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "measuretype");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "measuretype");
@@ -404,8 +408,8 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 		unsigned int i;
 		int add_frag = 0;
 		for (i = 0; i < json->response_num; i++) {
-			if (!strcmp(json->response[i].objkey,objkey)) {
-				if (!strcmp(json->response[i].objclass,OPH_JSON_MULTIGRID)) {
+			if (!strcmp(json->response[i].objkey, objkey)) {
+				if (!strcmp(json->response[i].objclass, OPH_JSON_MULTIGRID)) {
 					add_frag = 1;
 					break;
 				}
@@ -417,7 +421,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 		if (add_frag) {
 			void *tmp = json->response[i].objcontent;
 			unsigned int index = json->response[i].objcontent_num;
-			json->response[i].objcontent = realloc(json->response[i].objcontent,sizeof(oph_json_obj_multigrid)*(json->response[i].objcontent_num + 1));
+			json->response[i].objcontent = realloc(json->response[i].objcontent, sizeof(oph_json_obj_multigrid) * (json->response[i].objcontent_num + 1));
 			if (!json->response[i].objcontent) {
 				json->response[i].objcontent = tmp;
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "objcontent");
@@ -446,7 +450,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].rowvalues_num2 = 0;
 			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].title = NULL;
 
-			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].title = (char *)strdup(title);
+			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].title = (char *) strdup(title);
 			if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[index].title) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "title");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "title");
@@ -456,7 +460,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			json->response[i].objcontent_num++;
 
 			if (description) {
-				((oph_json_obj_multigrid *) json->response[i].objcontent)[index].description = (char *)strdup(description);
+				((oph_json_obj_multigrid *) json->response[i].objcontent)[index].description = (char *) strdup(description);
 				if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[index].description) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "description");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "description");
@@ -464,9 +468,9 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				}
 			}
 
-			int k,q;
+			int k, q;
 
-			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].rowkeys = (char **)malloc(sizeof(char *)*rowkeys_num);
+			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].rowkeys = (char **) malloc(sizeof(char *) * rowkeys_num);
 			if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[index].rowkeys) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "rowkeys");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "rowkeys");
@@ -474,13 +478,13 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			}
 			for (k = 0; k < rowkeys_num; k++) {
 				for (q = 0; q < k; q++) {
-					if (!strcmp(rowkeys[q],rowkeys[k])) {
+					if (!strcmp(rowkeys[q], rowkeys[k])) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "rowkey");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "rowkey");
 						return OPH_JSON_BAD_PARAM_ERROR;
 					}
 				}
-				((oph_json_obj_multigrid *) json->response[i].objcontent)[index].rowkeys[k] = (char *)strdup(rowkeys[k]);
+				((oph_json_obj_multigrid *) json->response[i].objcontent)[index].rowkeys[k] = (char *) strdup(rowkeys[k]);
 				if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[index].rowkeys[k]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "rowkey");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "rowkey");
@@ -489,7 +493,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				((oph_json_obj_multigrid *) json->response[i].objcontent)[index].rowkeys_num++;
 			}
 
-			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].rowfieldtypes = (char **)malloc(sizeof(char *)*rowfieldtypes_num);
+			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].rowfieldtypes = (char **) malloc(sizeof(char *) * rowfieldtypes_num);
 			if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[index].rowfieldtypes) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "rowfieldtypes");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "rowfieldtypes");
@@ -501,7 +505,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "rowfieldtype");
 					return OPH_JSON_BAD_PARAM_ERROR;
 				}
-				((oph_json_obj_multigrid *) json->response[i].objcontent)[index].rowfieldtypes[k] = (char *)strdup(rowfieldtypes[k]);
+				((oph_json_obj_multigrid *) json->response[i].objcontent)[index].rowfieldtypes[k] = (char *) strdup(rowfieldtypes[k]);
 				if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[index].rowfieldtypes[k]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "rowfieldtype");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "rowfieldtype");
@@ -510,7 +514,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				((oph_json_obj_multigrid *) json->response[i].objcontent)[index].rowfieldtypes_num++;
 			}
 
-			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colkeys = (char **)malloc(sizeof(char *)*colkeys_num);
+			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colkeys = (char **) malloc(sizeof(char *) * colkeys_num);
 			if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colkeys) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colkeys");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colkeys");
@@ -518,13 +522,13 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			}
 			for (k = 0; k < colkeys_num; k++) {
 				for (q = 0; q < k; q++) {
-					if (!strcmp(colkeys[q],colkeys[k])) {
+					if (!strcmp(colkeys[q], colkeys[k])) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "colkey");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "colkey");
 						return OPH_JSON_BAD_PARAM_ERROR;
 					}
 				}
-				((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colkeys[k] = (char *)strdup(colkeys[k]);
+				((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colkeys[k] = (char *) strdup(colkeys[k]);
 				if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colkeys[k]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colkey");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colkey");
@@ -533,7 +537,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colkeys_num++;
 			}
 
-			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colfieldtypes = (char **)malloc(sizeof(char *)*colfieldtypes_num);
+			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colfieldtypes = (char **) malloc(sizeof(char *) * colfieldtypes_num);
 			if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colfieldtypes) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colfieldtypes");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colfieldtypes");
@@ -545,7 +549,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "colfieldtype");
 					return OPH_JSON_BAD_PARAM_ERROR;
 				}
-				((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colfieldtypes[k] = (char *)strdup(colfieldtypes[k]);
+				((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colfieldtypes[k] = (char *) strdup(colfieldtypes[k]);
 				if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colfieldtypes[k]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colfieldtype");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colfieldtype");
@@ -554,7 +558,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colfieldtypes_num++;
 			}
 
-			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colvalues = (char ***)malloc(sizeof(char **)*colvalues_num);
+			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colvalues = (char ***) malloc(sizeof(char **) * colvalues_num);
 			if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colvalues) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colvalues");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colvalues");
@@ -566,7 +570,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colvalues_num1 = colvalues_num;
 			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colvalues_num2 = colkeys_num;
 			for (k = 0; k < colvalues_num; k++) {
-				((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colvalues[k] = (char **)malloc(sizeof(char *)*colkeys_num);
+				((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colvalues[k] = (char **) malloc(sizeof(char *) * colkeys_num);
 				if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colvalues[k]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colvalues row");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colvalues row");
@@ -577,7 +581,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 					((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colvalues[k][q] = NULL;
 				}
 				for (q = 0; q < colkeys_num; q++) {
-					((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colvalues[k][q] = (char *)strdup(colvalues[k][q]);
+					((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colvalues[k][q] = (char *) strdup(colvalues[k][q]);
 					if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[index].colvalues[k][q]) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colvalue");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colvalue");
@@ -586,7 +590,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				}
 			}
 
-			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].measurename = (char *)strdup(measurename);
+			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].measurename = (char *) strdup(measurename);
 			if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[index].measurename) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "measurename");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "measurename");
@@ -598,7 +602,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "measuretype");
 				return OPH_JSON_BAD_PARAM_ERROR;
 			}
-			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].measuretype = (char *)strdup(measuretype);
+			((oph_json_obj_multigrid *) json->response[i].objcontent)[index].measuretype = (char *) strdup(measuretype);
 			if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[index].measuretype) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "measuretype");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "measuretype");
@@ -611,7 +615,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 		} else {
 			oph_json_response *tmp = json->response;
 			unsigned int index = json->response_num;
-			json->response = (oph_json_response *)realloc(json->response,sizeof(oph_json_response)*(json->response_num + 1));
+			json->response = (oph_json_response *) realloc(json->response, sizeof(oph_json_response) * (json->response_num + 1));
 			if (!json->response) {
 				json->response = tmp;
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "response");
@@ -623,7 +627,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			json->response[index].objcontent_num = 0;
 			json->response[index].objkey = NULL;
 
-			json->response[index].objclass = (char *)strdup(OPH_JSON_MULTIGRID);
+			json->response[index].objclass = (char *) strdup(OPH_JSON_MULTIGRID);
 			if (!json->response[index].objclass) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "objclass");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "objclass");
@@ -632,13 +636,13 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 
 			json->response_num++;
 
-			json->response[index].objkey = (char *)strdup(objkey);
+			json->response[index].objkey = (char *) strdup(objkey);
 			if (!json->response[index].objkey) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "objkey");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "objkey");
 				return OPH_JSON_MEMORY_ERROR;
 			}
-			if (oph_json_add_responseKey(json,objkey)) {
+			if (oph_json_add_responseKey(json, objkey)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "objkey");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "objkey");
 				return OPH_JSON_MEMORY_ERROR;
@@ -672,7 +676,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].rowvalues_num2 = 0;
 			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].title = NULL;
 
-			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].title = (char *)strdup(title);
+			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].title = (char *) strdup(title);
 			if (!((oph_json_obj_multigrid *) json->response[index].objcontent)[0].title) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "title");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "title");
@@ -682,7 +686,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			json->response[index].objcontent_num++;
 
 			if (description) {
-				((oph_json_obj_multigrid *) json->response[index].objcontent)[0].description = (char *)strdup(description);
+				((oph_json_obj_multigrid *) json->response[index].objcontent)[0].description = (char *) strdup(description);
 				if (!((oph_json_obj_multigrid *) json->response[index].objcontent)[0].description) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "description");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "description");
@@ -690,9 +694,9 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				}
 			}
 
-			int k,q;
+			int k, q;
 
-			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].rowkeys = (char **)malloc(sizeof(char *)*rowkeys_num);
+			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].rowkeys = (char **) malloc(sizeof(char *) * rowkeys_num);
 			if (!((oph_json_obj_multigrid *) json->response[index].objcontent)[0].rowkeys) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "rowkeys");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "rowkeys");
@@ -700,13 +704,13 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			}
 			for (k = 0; k < rowkeys_num; k++) {
 				for (q = 0; q < k; q++) {
-					if (!strcmp(rowkeys[q],rowkeys[k])) {
+					if (!strcmp(rowkeys[q], rowkeys[k])) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "rowkey");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "rowkey");
 						return OPH_JSON_BAD_PARAM_ERROR;
 					}
 				}
-				((oph_json_obj_multigrid *) json->response[index].objcontent)[0].rowkeys[k] = (char *)strdup(rowkeys[k]);
+				((oph_json_obj_multigrid *) json->response[index].objcontent)[0].rowkeys[k] = (char *) strdup(rowkeys[k]);
 				if (!((oph_json_obj_multigrid *) json->response[index].objcontent)[0].rowkeys[k]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "rowkey");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "rowkey");
@@ -715,7 +719,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				((oph_json_obj_multigrid *) json->response[index].objcontent)[0].rowkeys_num++;
 			}
 
-			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].rowfieldtypes = (char **)malloc(sizeof(char *)*rowfieldtypes_num);
+			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].rowfieldtypes = (char **) malloc(sizeof(char *) * rowfieldtypes_num);
 			if (!((oph_json_obj_multigrid *) json->response[index].objcontent)[0].rowfieldtypes) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "rowfieldtypes");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "rowfieldtypes");
@@ -727,7 +731,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "rowfieldtype");
 					return OPH_JSON_BAD_PARAM_ERROR;
 				}
-				((oph_json_obj_multigrid *) json->response[index].objcontent)[0].rowfieldtypes[k] = (char *)strdup(rowfieldtypes[k]);
+				((oph_json_obj_multigrid *) json->response[index].objcontent)[0].rowfieldtypes[k] = (char *) strdup(rowfieldtypes[k]);
 				if (!((oph_json_obj_multigrid *) json->response[index].objcontent)[0].rowfieldtypes[k]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "rowfieldtype");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "rowfieldtype");
@@ -736,7 +740,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				((oph_json_obj_multigrid *) json->response[index].objcontent)[0].rowfieldtypes_num++;
 			}
 
-			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colkeys = (char **)malloc(sizeof(char *)*colkeys_num);
+			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colkeys = (char **) malloc(sizeof(char *) * colkeys_num);
 			if (!((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colkeys) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colkeys");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colkeys");
@@ -744,13 +748,13 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			}
 			for (k = 0; k < colkeys_num; k++) {
 				for (q = 0; q < k; q++) {
-					if (!strcmp(colkeys[q],colkeys[k])) {
+					if (!strcmp(colkeys[q], colkeys[k])) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "colkey");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "colkey");
 						return OPH_JSON_BAD_PARAM_ERROR;
 					}
 				}
-				((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colkeys[k] = (char *)strdup(colkeys[k]);
+				((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colkeys[k] = (char *) strdup(colkeys[k]);
 				if (!((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colkeys[k]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colkey");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colkey");
@@ -759,7 +763,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colkeys_num++;
 			}
 
-			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colfieldtypes = (char **)malloc(sizeof(char *)*colfieldtypes_num);
+			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colfieldtypes = (char **) malloc(sizeof(char *) * colfieldtypes_num);
 			if (!((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colfieldtypes) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colfieldtypes");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colfieldtypes");
@@ -771,7 +775,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "colfieldtype");
 					return OPH_JSON_BAD_PARAM_ERROR;
 				}
-				((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colfieldtypes[k] = (char *)strdup(colfieldtypes[k]);
+				((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colfieldtypes[k] = (char *) strdup(colfieldtypes[k]);
 				if (!((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colfieldtypes[k]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colfieldtype");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colfieldtype");
@@ -780,7 +784,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colfieldtypes_num++;
 			}
 
-			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colvalues = (char ***)malloc(sizeof(char **)*colvalues_num);
+			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colvalues = (char ***) malloc(sizeof(char **) * colvalues_num);
 			if (!((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colvalues) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colvalues");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colvalues");
@@ -792,7 +796,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colvalues_num1 = colvalues_num;
 			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colvalues_num2 = colkeys_num;
 			for (k = 0; k < colvalues_num; k++) {
-				((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colvalues[k] = (char **)malloc(sizeof(char *)*colkeys_num);
+				((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colvalues[k] = (char **) malloc(sizeof(char *) * colkeys_num);
 				if (!((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colvalues[k]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colvalues row");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colvalues row");
@@ -803,7 +807,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 					((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colvalues[k][q] = NULL;
 				}
 				for (q = 0; q < colkeys_num; q++) {
-					((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colvalues[k][q] = (char *)strdup(colvalues[k][q]);
+					((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colvalues[k][q] = (char *) strdup(colvalues[k][q]);
 					if (!((oph_json_obj_multigrid *) json->response[index].objcontent)[0].colvalues[k][q]) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "colvalue");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "colvalue");
@@ -812,7 +816,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				}
 			}
 
-			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].measurename = (char *)strdup(measurename);
+			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].measurename = (char *) strdup(measurename);
 			if (!((oph_json_obj_multigrid *) json->response[index].objcontent)[0].measurename) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "measurename");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "measurename");
@@ -824,7 +828,7 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "measuretype");
 				return OPH_JSON_BAD_PARAM_ERROR;
 			}
-			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].measuretype = (char *)strdup(measuretype);
+			((oph_json_obj_multigrid *) json->response[index].objcontent)[0].measuretype = (char *) strdup(measuretype);
 			if (!((oph_json_obj_multigrid *) json->response[index].objcontent)[0].measuretype) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "measuretype");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "measuretype");
@@ -840,7 +844,8 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
 	return OPH_JSON_SUCCESS;
 }
 
-int oph_json_add_multigrid_row(oph_json *json, const char *objkey, char **rowvalues, char **measurevalues) {
+int oph_json_add_multigrid_row(oph_json * json, const char *objkey, char **rowvalues, char **measurevalues)
+{
 	if (!json || !objkey || !rowvalues || !measurevalues) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
@@ -856,8 +861,8 @@ int oph_json_add_multigrid_row(oph_json *json, const char *objkey, char **rowval
 	unsigned int i;
 	int grid_present = 0;
 	for (i = 0; i < json->response_num; i++) {
-		if (!strcmp(json->response[i].objkey,objkey)) {
-			if (!strcmp(json->response[i].objclass,OPH_JSON_MULTIGRID)) {
+		if (!strcmp(json->response[i].objkey, objkey)) {
+			if (!strcmp(json->response[i].objclass, OPH_JSON_MULTIGRID)) {
 				grid_present = 1;
 				break;
 			}
@@ -874,13 +879,13 @@ int oph_json_add_multigrid_row(oph_json *json, const char *objkey, char **rowval
 		}
 		unsigned int index = 0;
 		if (((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues_num1 == 0) {
-			((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues = (char ***)malloc(sizeof(char **));
+			((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues = (char ***) malloc(sizeof(char **));
 			if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "measurevalues");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "measurevalues");
 				return OPH_JSON_MEMORY_ERROR;
 			}
-			((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues = (char ***)malloc(sizeof(char **));
+			((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues = (char ***) malloc(sizeof(char **));
 			if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "rowvalues");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "rowvalues");
@@ -889,7 +894,9 @@ int oph_json_add_multigrid_row(oph_json *json, const char *objkey, char **rowval
 			index = 0;
 		} else {
 			char ***tmp = ((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues;
-			((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues = (char ***)realloc(((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues,sizeof(char **)*(((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues_num1 + 1));
+			((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues =
+			    (char ***) realloc(((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues,
+					       sizeof(char **) * (((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues_num1 + 1));
 			if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues) {
 				((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues = tmp;
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "measurevalues");
@@ -897,7 +904,9 @@ int oph_json_add_multigrid_row(oph_json *json, const char *objkey, char **rowval
 				return OPH_JSON_MEMORY_ERROR;
 			}
 			char ***tmp2 = ((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues;
-			((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues = (char ***)realloc(((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues,sizeof(char **)*(((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues_num1 + 1));
+			((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues =
+			    (char ***) realloc(((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues,
+					       sizeof(char **) * (((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues_num1 + 1));
 			if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues) {
 				((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues = tmp2;
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "rowvalues");
@@ -909,7 +918,8 @@ int oph_json_add_multigrid_row(oph_json *json, const char *objkey, char **rowval
 
 		unsigned int k;
 
-		((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues[index] = (char **)malloc(sizeof(char *)*(((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues_num2));
+		((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues[index] =
+		    (char **) malloc(sizeof(char *) * (((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues_num2));
 		if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues[index]) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "measurevalues row");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "measurevalues row");
@@ -920,7 +930,8 @@ int oph_json_add_multigrid_row(oph_json *json, const char *objkey, char **rowval
 			((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues[index][k] = NULL;
 		}
 
-		((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues[index] = (char **)malloc(sizeof(char *)*(((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues_num2));
+		((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues[index] =
+		    (char **) malloc(sizeof(char *) * (((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues_num2));
 		if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues[index]) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "rowvalues row");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "rowvalues row");
@@ -932,7 +943,7 @@ int oph_json_add_multigrid_row(oph_json *json, const char *objkey, char **rowval
 		}
 
 		for (k = 0; k < ((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues_num2; k++) {
-			((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues[index][k] = (char *)strdup(measurevalues[k]);
+			((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues[index][k] = (char *) strdup(measurevalues[k]);
 			if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].measurevalues[index][k]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "measurevalue");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "measurevalue");
@@ -941,7 +952,7 @@ int oph_json_add_multigrid_row(oph_json *json, const char *objkey, char **rowval
 		}
 
 		for (k = 0; k < ((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues_num2; k++) {
-			((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues[index][k] = (char *)strdup(rowvalues[k]);
+			((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues[index][k] = (char *) strdup(rowvalues[k]);
 			if (!((oph_json_obj_multigrid *) json->response[i].objcontent)[json->response[i].objcontent_num - 1].rowvalues[index][k]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_MEMORY_ERROR, "rowvalue");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "rowvalue");

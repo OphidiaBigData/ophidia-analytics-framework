@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@
 #ifdef OPH_DEBUG_MYSQL
 #define OPH_DRILLDOWN_PLUGIN2_MYSQL "CALL mysql.oph_drill_down('%s.%s',%d,%d,'oph_%s','%s',%d)"
 #endif
-#define OPH_DRILLDOWN_PLUGIN2 OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_FUNCTION) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FUNC, "mysql.oph_drill_down") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_ARG, "'%s.%s'|%d|%d|'oph_%s'|'%s'|%d") 
+#define OPH_DRILLDOWN_PLUGIN2 OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_FUNCTION) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FUNC, "mysql.oph_drill_down") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_ARG, "'%s.%s'|%d|%d|'oph_%s'|'%s'|%d")
 
 /**
  * \brief Structure of parameters needed by the operator OPH_DRILLDOWN. It generate a cube materializing a new datacube with more explicit dimensions and less implicit dimensions
@@ -51,29 +51,28 @@
  * \param id_user ID of submitter
  * \param description Free description to be associated with output cube
  */
-struct _OPH_DRILLDOWN_operator_handle
-{
-  ophidiadb oDB;
-  int id_input_datacube;
-  int id_input_container;
-  int id_output_datacube;
-  int id_output_container;
-  int id_job;
-  int schedule_algo;
-  char* fragment_ids;
-  int fragment_number;
-  int fragment_id_start_position;
-  int outer_size;
-  int inner_size;
-  char* measure_type;
-  int compressed;
-  char **objkeys;
-  int objkeys_num;
-  oph_ioserver_handler *server;
-  char *sessionid;
-  int id_user;
-  char* description;
+struct _OPH_DRILLDOWN_operator_handle {
+	ophidiadb oDB;
+	int id_input_datacube;
+	int id_input_container;
+	int id_output_datacube;
+	int id_output_container;
+	int id_job;
+	int schedule_algo;
+	char *fragment_ids;
+	int fragment_number;
+	int fragment_id_start_position;
+	int outer_size;
+	int inner_size;
+	char *measure_type;
+	int compressed;
+	char **objkeys;
+	int objkeys_num;
+	oph_ioserver_handler *server;
+	char *sessionid;
+	int id_user;
+	char *description;
 };
 typedef struct _OPH_DRILLDOWN_operator_handle OPH_DRILLDOWN_operator_handle;
 
-#endif  //__OPH_DRILLDOWN_OPERATOR_H
+#endif				//__OPH_DRILLDOWN_OPERATOR_H

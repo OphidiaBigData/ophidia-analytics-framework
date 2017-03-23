@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,8 +45,7 @@
  * \param cores Number of cores available on host
  * \param memory Amount of RAM memory available on host
  */
-typedef struct
-{
+typedef struct {
 	char hostname[OPH_ODB_STGE_HOST_NAME_SIZE];
 	int id_host;
 	int cores;
@@ -64,15 +63,14 @@ typedef struct
  * \param io_server_type String with IO server type
  * \param conn Connection to dbms instance
  */
-typedef struct
-{
+typedef struct {
 	char hostname[OPH_ODB_STGE_HOST_NAME_SIZE];
 	int id_dbms;
 	char login[OPH_ODB_STGE_LOGIN_SIZE];
 	char pwd[OPH_ODB_STGE_PWD_SIZE];
 	int port;
 	int fs_type;
-  char io_server_type[OPH_ODB_STGE_SERVER_NAME_SIZE];
+	char io_server_type[OPH_ODB_STGE_SERVER_NAME_SIZE];
 	void *conn;
 } oph_odb_dbms_instance;
 
@@ -82,8 +80,7 @@ typedef struct
  * \param id_db id assigned to dbinstance
  * \param db_name name of database
  */
-typedef struct
-{
+typedef struct {
 	oph_odb_dbms_instance *dbms_instance;
 	int id_dbms;
 	int id_db;
@@ -100,8 +97,7 @@ typedef struct
  * \param key_start starting id referred to DataCube
  * \param key_end ending id referred to DataCube
  */
-typedef struct
-{
+typedef struct {
 	oph_odb_db_instance *db_instance;
 	int id_datacube;
 	int id_db;
@@ -112,8 +108,7 @@ typedef struct
 	int key_end;
 } oph_odb_fragment;
 
-typedef struct
-{
+typedef struct {
 	int id_host;
 	int id_dbms;
 	int id_db;
@@ -128,8 +123,7 @@ typedef struct
  * \param value Pointer to dbms_instance array
  * \param size Length of the list
  */
-typedef struct
-{
+typedef struct {
 	oph_odb_dbms_instance *value;
 	int size;
 } oph_odb_dbms_instance_list;
@@ -139,8 +133,7 @@ typedef struct
  * \param value Pointer to db_instance array
  * \param size Length of the list
  */
-typedef struct
-{
+typedef struct {
 	oph_odb_db_instance *value;
 	int size;
 } oph_odb_db_instance_list;
@@ -150,14 +143,12 @@ typedef struct
  * \param value Pointer to fragment array
  * \param size Length of the list
  */
-typedef struct
-{
+typedef struct {
 	oph_odb_fragment *value;
 	int size;
 } oph_odb_fragment_list;
 
-typedef struct
-{
+typedef struct {
 	oph_odb_fragment2 *value;
 	int size;
 } oph_odb_fragment_list2;
@@ -167,44 +158,44 @@ typedef struct
  * \param m Pointer to fragment list to initialize
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_init_fragment_list(oph_odb_fragment_list *m);
-int oph_odb_stge_init_fragment_list2(oph_odb_fragment_list2 *m);
+int oph_odb_stge_init_fragment_list(oph_odb_fragment_list * m);
+int oph_odb_stge_init_fragment_list2(oph_odb_fragment_list2 * m);
 
 /**
  * \brief Function to free fragment list resources
  * \param m Pointer to fragment list to clean
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_free_fragment_list(oph_odb_fragment_list *m);
-int oph_odb_stge_free_fragment_list2(oph_odb_fragment_list2 *m);
+int oph_odb_stge_free_fragment_list(oph_odb_fragment_list * m);
+int oph_odb_stge_free_fragment_list2(oph_odb_fragment_list2 * m);
 
 /**
  * \brief Function to initialize db list
  * \param m Pointer to db list to initialize
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_init_db_list(oph_odb_db_instance_list *m);
+int oph_odb_stge_init_db_list(oph_odb_db_instance_list * m);
 
 /**
  * \brief Function to free db instance list resources
  * \param m Pointer to db list to clean
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_free_db_list(oph_odb_db_instance_list *m);
+int oph_odb_stge_free_db_list(oph_odb_db_instance_list * m);
 
 /**
  * \brief Function to initialize dbms list
  * \param m Pointer to dbms list to initialize
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_init_dbms_list(oph_odb_dbms_instance_list *m);
+int oph_odb_stge_init_dbms_list(oph_odb_dbms_instance_list * m);
 
 /**
  * \brief Function to free dbms instance list resources
  * \param m Pointer to dbms list to clean
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_free_dbms_list(oph_odb_dbms_instance_list *m);
+int oph_odb_stge_free_dbms_list(oph_odb_dbms_instance_list * m);
 
 /**
  * \brief Function to retrieve dbms informations from OphidiaDB given the dbms id
@@ -213,7 +204,7 @@ int oph_odb_stge_free_dbms_list(oph_odb_dbms_instance_list *m);
  * \param dbms Pointer dbms_instance to be filled
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_retrieve_dbmsinstance(ophidiadb *oDB, int id_dbms, oph_odb_dbms_instance *dbms);
+int oph_odb_stge_retrieve_dbmsinstance(ophidiadb * oDB, int id_dbms, oph_odb_dbms_instance * dbms);
 
 /**
  * \brief Function to retrieve information of the first dbms available from OphidiaDB
@@ -221,7 +212,7 @@ int oph_odb_stge_retrieve_dbmsinstance(ophidiadb *oDB, int id_dbms, oph_odb_dbms
  * \param dbms Pointer dbms_instance to be filled
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_retrieve_first_dbmsinstance(ophidiadb *oDB, oph_odb_dbms_instance *dbms);
+int oph_odb_stge_retrieve_first_dbmsinstance(ophidiadb * oDB, oph_odb_dbms_instance * dbms);
 
 /**
  * \brief Function to retrieve DB connection string informations from OphidiaDB
@@ -233,7 +224,7 @@ int oph_odb_stge_retrieve_first_dbmsinstance(ophidiadb *oDB, oph_odb_dbms_instan
  * \param dbmss Pointer to dbms list to be filled
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_fetch_db_connection_string(ophidiadb *oDB, int datacube_id, int start_position, int row_number, oph_odb_db_instance_list *dbs, oph_odb_dbms_instance_list *dbmss);
+int oph_odb_stge_fetch_db_connection_string(ophidiadb * oDB, int datacube_id, int start_position, int row_number, oph_odb_db_instance_list * dbs, oph_odb_dbms_instance_list * dbmss);
 
 /**
  * \brief Function to retrieve DBMS connection string informations from OphidiaDB
@@ -244,7 +235,7 @@ int oph_odb_stge_fetch_db_connection_string(ophidiadb *oDB, int datacube_id, int
  * \param dbmss Pointer to dbms list to be filled
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_fetch_dbms_connection_string(ophidiadb *oDB, int id_datacube, int start_position, int row_number, oph_odb_dbms_instance_list *dbmss);
+int oph_odb_stge_fetch_dbms_connection_string(ophidiadb * oDB, int id_datacube, int start_position, int row_number, oph_odb_dbms_instance_list * dbmss);
 
 /**
  * \brief Function to retrieve connection string informations from OphidiaDB given fragment and datacube
@@ -256,7 +247,8 @@ int oph_odb_stge_fetch_dbms_connection_string(ophidiadb *oDB, int id_datacube, i
  * \param dbmss Pointer to dbms list to be filled
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_fetch_fragment_connection_string(ophidiadb *oDB, int id_datacube, char *fragrelindexset, oph_odb_fragment_list *frags, oph_odb_db_instance_list *dbs, oph_odb_dbms_instance_list *dbmss);
+int oph_odb_stge_fetch_fragment_connection_string(ophidiadb * oDB, int id_datacube, char *fragrelindexset, oph_odb_fragment_list * frags, oph_odb_db_instance_list * dbs,
+						  oph_odb_dbms_instance_list * dbmss);
 
 /**
  * \brief Function to retrieve connection string informations from OphidiaDB given fragment and datacube
@@ -268,7 +260,8 @@ int oph_odb_stge_fetch_fragment_connection_string(ophidiadb *oDB, int id_datacub
  * \param dbmss Pointer to dbms list to be filled
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_fetch_fragment_connection_string_for_deletion(ophidiadb *oDB, int id_datacube, char *fragrelindexset, oph_odb_fragment_list *frags, oph_odb_db_instance_list *dbs, oph_odb_dbms_instance_list *dbmss);
+int oph_odb_stge_fetch_fragment_connection_string_for_deletion(ophidiadb * oDB, int id_datacube, char *fragrelindexset, oph_odb_fragment_list * frags, oph_odb_db_instance_list * dbs,
+							       oph_odb_dbms_instance_list * dbmss);
 
 /**
  * \brief Function to get default values for host partition and/or file system
@@ -281,7 +274,7 @@ int oph_odb_stge_fetch_fragment_connection_string_for_deletion(ophidiadb *oDB, i
  * \param exists Variable that contains 0 if the host partition of file system doesn't exists and 1 otherwise
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_get_default_host_partition_fs(ophidiadb *oDB, int *fs_type, char *ioserver_type, char** host_partition, int host_number, int dbmsxhost_number, int *exist);
+int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, int *fs_type, char *ioserver_type, char **host_partition, int host_number, int dbmsxhost_number, int *exist);
 
 /**
  * \brief Function to check if number of host and DBMS in OphidiaDB are available
@@ -294,7 +287,7 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb *oDB, int *fs_type, cha
  * \param exists Variable that contains 0 if the container.datacube doesn't exists and 1 otherwise
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_check_number_of_host_dbms(ophidiadb *oDB, int fs_type, char *ioserver_type, char* host_partition, int host_number, int dbmsxhost_number, int *exist);
+int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int host_number, int dbmsxhost_number, int *exist);
 
 /**
  * \brief Function to count maximum number of host and DBMS available in OphidiaDB
@@ -306,7 +299,7 @@ int oph_odb_stge_check_number_of_host_dbms(ophidiadb *oDB, int fs_type, char *io
  * \param dbmsxhots_number Variable that will contain the number of DBMS per host
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_count_number_of_host_dbms(ophidiadb *oDB, int server_type, char *ioserver_type, char* host_partition, int *host_number, int *dbmsxhost_number);
+int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, int server_type, char *ioserver_type, char *host_partition, int *host_number, int *dbmsxhost_number);
 
 /**
  * \brief Function to retrieve fragment list from OphidiaDB given datacube id
@@ -315,7 +308,7 @@ int oph_odb_stge_count_number_of_host_dbms(ophidiadb *oDB, int server_type, char
  * \param frags Pointer to fragment list to be filled
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_retrieve_fragment_list(ophidiadb *oDB, int id_datacube, oph_odb_fragment_list *frags);
+int oph_odb_stge_retrieve_fragment_list(ophidiadb * oDB, int id_datacube, oph_odb_fragment_list * frags);
 
 /**
  * \brief Function to retrieve fragment list from OphidiaDB given datacube id. It also retrieves id of host, dbmsinstance and dbinstance that stores the fragment
@@ -324,7 +317,7 @@ int oph_odb_stge_retrieve_fragment_list(ophidiadb *oDB, int id_datacube, oph_odb
  * \param frags Pointer to fragment list to be filled
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_retrieve_fragment_list2(ophidiadb *oDB, int id_datacube, oph_odb_fragment_list2 *frags);
+int oph_odb_stge_retrieve_fragment_list2(ophidiadb * oDB, int id_datacube, oph_odb_fragment_list2 * frags);
 
 /**
  * \brief Function to retrieve list of structure information from OphidiaDB given datacube and optionally a db name and/or id_dbms and/or hostname
@@ -337,7 +330,7 @@ int oph_odb_stge_retrieve_fragment_list2(ophidiadb *oDB, int id_datacube, oph_od
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_find_datacube_fragmentation_list(ophidiadb *oDB, int level, int id_datacube, char *hostname, char *db_name, int id_dbms, MYSQL_RES **information_list);
+int oph_odb_stge_find_datacube_fragmentation_list(ophidiadb * oDB, int level, int id_datacube, char *hostname, char *db_name, int id_dbms, MYSQL_RES ** information_list);
 
 /**
  * \brief Function to retrieve list of hostname dbms instances information from OphidiaDB given optionally hostname
@@ -351,7 +344,8 @@ int oph_odb_stge_find_datacube_fragmentation_list(ophidiadb *oDB, int level, int
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_find_instances_information(ophidiadb *oDB, int level, char *hostname, char *partition_name, int fs_type, char *ioserver_type, char *host_status, char *dbms_status, MYSQL_RES **information_list);
+int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *hostname, char *partition_name, int fs_type, char *ioserver_type, char *host_status, char *dbms_status,
+					    MYSQL_RES ** information_list);
 
 /**
  * \brief Function to retrieve list of fragments name related to datacube and id_dbms
@@ -363,7 +357,7 @@ int oph_odb_stge_find_instances_information(ophidiadb *oDB, int level, char *hos
  * \param fragment_name_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_find_fragment_name_list(ophidiadb *oDB, int id_datacube, int id_dbms, int start_position, int row_number, MYSQL_RES **fragment_list);
+int oph_odb_stge_find_fragment_name_list(ophidiadb * oDB, int id_datacube, int id_dbms, int start_position, int row_number, MYSQL_RES ** fragment_list);
 
 /**
  * \brief Function to retrieve fragment related metadata
@@ -372,7 +366,7 @@ int oph_odb_stge_find_fragment_name_list(ophidiadb *oDB, int id_datacube, int id
  * \param frag Pointer fragment structure that will contain the retrieved data
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_retrieve_fragment(ophidiadb *oDB, char *frag_name, oph_odb_fragment *frag);
+int oph_odb_stge_retrieve_fragment(ophidiadb * oDB, char *frag_name, oph_odb_fragment * frag);
 
 /**
  * \brief Function to retrieve db + dbms related metadata
@@ -381,7 +375,7 @@ int oph_odb_stge_retrieve_fragment(ophidiadb *oDB, char *frag_name, oph_odb_frag
  * \param db Pointer to db structure that will contain the retrieved data
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_retrieve_dbinstance(ophidiadb *oDB, int id_dbinstance, oph_odb_db_instance *db);
+int oph_odb_stge_retrieve_dbinstance(ophidiadb * oDB, int id_dbinstance, oph_odb_db_instance * db);
 
 /**
  * \brief Function to delete db_istance tuple from OphidiaDB
@@ -389,7 +383,7 @@ int oph_odb_stge_retrieve_dbinstance(ophidiadb *oDB, int id_dbinstance, oph_odb_
  * \param id_db ID to the db_instance to be deleted
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_delete_from_dbinstance_table(ophidiadb *oDB, int id_db);
+int oph_odb_stge_delete_from_dbinstance_table(ophidiadb * oDB, int id_db);
 
 /**
  * \brief Function that updates OphidiaDB adding fragment specified
@@ -397,7 +391,7 @@ int oph_odb_stge_delete_from_dbinstance_table(ophidiadb *oDB, int id_db);
  * \param fragment Pointer to fragment to be added
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_insert_into_fragment_table(ophidiadb *oDB, oph_odb_fragment *fragment);
+int oph_odb_stge_insert_into_fragment_table(ophidiadb * oDB, oph_odb_fragment * fragment);
 
 /**
  * \brief Function to retrieve id of the container of a fragment
@@ -406,7 +400,7 @@ int oph_odb_stge_insert_into_fragment_table(ophidiadb *oDB, oph_odb_fragment *fr
  * \param id_container ID of the container
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_retrieve_container_id_from_fragment_name(ophidiadb *oDB, char *frag_name, int *id_container);
+int oph_odb_stge_retrieve_container_id_from_fragment_name(ophidiadb * oDB, char *frag_name, int *id_container);
 
 /**
  * \brief Function to retrieve id of the fragment from its name (that is unique)
@@ -415,7 +409,7 @@ int oph_odb_stge_retrieve_container_id_from_fragment_name(ophidiadb *oDB, char *
  * \param id_fragment id of the fragment retrieved
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_retrieve_fragment_id(ophidiadb *oDB, char *frag_name, int *id_fragment);
+int oph_odb_stge_retrieve_fragment_id(ophidiadb * oDB, char *frag_name, int *id_fragment);
 
 /**
  * \brief Function to retrieve id of a db from its name (that is unique)
@@ -424,7 +418,7 @@ int oph_odb_stge_retrieve_fragment_id(ophidiadb *oDB, char *frag_name, int *id_f
  * \param id_db ID of the database retrieved
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_retrieve_dbinstance_id(ophidiadb *oDB, char *db_name, int *id_db);
+int oph_odb_stge_retrieve_dbinstance_id(ophidiadb * oDB, char *db_name, int *id_db);
 
 /**
  * \brief Function to retrieve id of databases related to a datacube
@@ -434,7 +428,7 @@ int oph_odb_stge_retrieve_dbinstance_id(ophidiadb *oDB, char *db_name, int *id_d
  * \param size Pointer with the length of id_dbs
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb *oDB, int id_datacube, int **id_dbs, int *size);
+int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int id_datacube, int **id_dbs, int *size);
 
 /**
  * \brief Function to retrieve the list of ID of available DBMS instances
@@ -448,7 +442,7 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb *oDB, int i
  * \param size Pointer with the length of id_dbmss
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb *oDB, int fs_type, char *ioserver_type, char *host_partition, int host_number, int dbmsxhost_number, int **id_dbmss, int *size);
+int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int host_number, int dbmsxhost_number, int **id_dbmss, int *size);
 
 /**
  * \brief Function to retrieve the number of datacubes stored in the database instance
@@ -457,7 +451,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb *oDB, int fs_type, char
  * \param datacubexdb_number Variable that will contain the datacube number in the database instance
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_get_number_of_datacube_for_db(ophidiadb *oDB, int id_db, int *datacubexdb_number);
+int oph_odb_stge_get_number_of_datacube_for_db(ophidiadb * oDB, int id_db, int *datacubexdb_number);
 
 /**
  * \brief Function that updates OphidiaDB adding the new db instances and new partition relations
@@ -466,6 +460,6 @@ int oph_odb_stge_get_number_of_datacube_for_db(ophidiadb *oDB, int id_db, int *d
  * \param id_datacube ID of related Datacube
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_insert_into_dbinstance_partitioned_tables(ophidiadb *oDB, oph_odb_db_instance *db, int id_datacube);
+int oph_odb_stge_insert_into_dbinstance_partitioned_tables(ophidiadb * oDB, oph_odb_db_instance * db, int id_datacube);
 
-#endif /* __OPH_ODB_STGE_H__ */
+#endif				/* __OPH_ODB_STGE_H__ */

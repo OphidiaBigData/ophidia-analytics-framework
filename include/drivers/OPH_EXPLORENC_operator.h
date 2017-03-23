@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@
 #include "oph_ioserver_library.h"
 
 #define OPH_EXPLORENC_ID "ID"
-#define OPH_EXPLORENC_SUBSET_INDEX	"index" 
+#define OPH_EXPLORENC_SUBSET_INDEX	"index"
 #define OPH_EXPLORENC_SUBSET_COORD	"coord"
 #define OPH_EXPLORENC_PRECISION 10
 
@@ -53,33 +53,31 @@
  * \param operation Operation to be applied in case of reduction
  * \param offset Offset to be used to set reduction interval bounds
  */
-struct _OPH_EXPLORENC_operator_handle
-{
-  ophidiadb oDB;
-  char *nc_file_path;
-  int schedule_algo;
-  int ncid;
-  NETCDF_var measure;
-  char** dim_arrays;
-  int number_of_dim;
-  int limit;
-  short int show_id;
-  short int show_index;
-  short int show_time;
-  char **objkeys;
-  int objkeys_num;
-  char *sessionid;
-  int level;
-  int imp_num_points;
-  int wavelet;
-  double wavelet_ratio;
-  int wavelet_coeff;
-  char* stats_mask;
-  int show_fit;
-  char* operation;
-  double offset;
+struct _OPH_EXPLORENC_operator_handle {
+	ophidiadb oDB;
+	char *nc_file_path;
+	int schedule_algo;
+	int ncid;
+	NETCDF_var measure;
+	char **dim_arrays;
+	int number_of_dim;
+	int limit;
+	short int show_id;
+	short int show_index;
+	short int show_time;
+	char **objkeys;
+	int objkeys_num;
+	char *sessionid;
+	int level;
+	int imp_num_points;
+	int wavelet;
+	double wavelet_ratio;
+	int wavelet_coeff;
+	char *stats_mask;
+	int show_fit;
+	char *operation;
+	double offset;
 };
 typedef struct _OPH_EXPLORENC_operator_handle OPH_EXPLORENC_operator_handle;
 
-#endif  //__OPH_EXPLORENC_OPERATOR_H
-
+#endif				//__OPH_EXPLORENC_OPERATOR_H

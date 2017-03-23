@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,22 +38,21 @@
  * \param marker_id Marker ID.
  * \param list Flag used to list available scripts.
  */
-struct _OPH_SCRIPT_operator_handle
-{
-  char *script;
-  char **args;
-  int args_num;
-  char *out_redir;
-  char *err_redir;
-  char **objkeys;
-  int objkeys_num;
-  char *session_path;
-  char *session_url;
-  char *session_code;
-  char *workflow_id;
-  char *marker_id;
-  int list;
+struct _OPH_SCRIPT_operator_handle {
+	char *script;
+	char **args;
+	int args_num;
+	char *out_redir;
+	char *err_redir;
+	char **objkeys;
+	int objkeys_num;
+	char *session_path;
+	char *session_url;
+	char *session_code;
+	char *workflow_id;
+	char *marker_id;
+	int list;
 };
 typedef struct _OPH_SCRIPT_operator_handle OPH_SCRIPT_operator_handle;
 
-#endif  //__OPH_SCRIPT_OPERATOR_H
+#endif				//__OPH_SCRIPT_OPERATOR_H

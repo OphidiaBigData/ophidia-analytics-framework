@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2016 CMCC Foundation
+#    Copyright (C) 2012-2017 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ LIBRARY+= liboph_task_parser.la
 LIBRARY+= libophidiadb.la
 LIBRARY+= liboph_hierarchy.la
 LIBRARY+= liboph_dimension.la
-LIBRARY+= liboph_datacube2.la
+LIBRARY+= liboph_datacube.la
 if HAVE_NETCDF
 LIBRARY+= liboph_nc.la
 endif
@@ -160,16 +160,16 @@ liboph_dimension_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include @INCLTDL@ $
 liboph_dimension_la_LDFLAGS = -static $(LIB_OPERATOR)
 liboph_dimension_la_LIBADD = -lz -lm ${MYSQL_LDFLAGS} @LIBLTDL@ -L. -ldebug -loph_binary_io 
 
-liboph_datacube2_la_SOURCES = oph_datacube2_library.c
-liboph_datacube2_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
-liboph_datacube2_la_LDFLAGS = -static
-liboph_datacube2_la_LIBADD = -lz -lm @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver 
+liboph_datacube_la_SOURCES = oph_datacube_library.c
+liboph_datacube_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
+liboph_datacube_la_LDFLAGS = -static
+liboph_datacube_la_LIBADD = -lz -lm @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver 
 
 if HAVE_NETCDF
 liboph_nc_la_SOURCES = oph_nc_library.c
 liboph_nc_la_CFLAGS= ${MYSQL_CFLAGS} $(NETCDF_CFLAGS) -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
 liboph_nc_la_LDFLAGS = -static
-liboph_nc_la_LIBADD = -lz -lm $(NETCDF_LIBS) @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube2
+liboph_nc_la_LIBADD = -lz -lm $(NETCDF_LIBS) @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube
 endif
 
 liboph_fits_la_SOURCES = oph_fits_library.c

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -51,7 +51,7 @@
  * \param path Path to shorten
  * \return 0 if successfull, N otherwise
  */
-int oph_utl_short_folder(int max_size, int start_size, char* path);
+int oph_utl_short_folder(int max_size, int start_size, char *path);
 
 /** 
  * \brief Function to compute size automatically setting size unit
@@ -95,7 +95,7 @@ int oph_utl_unit_to_value(char unit_str[OPH_UTL_UNIT_SIZE], int *unit_value);
  * \param resultSize Output buffer maximum size
  * \return 0 if successfull, N otherwise
  */
-int oph_utl_base64encode(const void* data_buf, size_t dataLength, char* result, size_t resultSize);
+int oph_utl_base64encode(const void *data_buf, size_t dataLength, char *result, size_t resultSize);
 
 /** 
  * \brief Function to decode base64 data into binary data
@@ -103,6 +103,6 @@ int oph_utl_base64encode(const void* data_buf, size_t dataLength, char* result, 
  * \param result Pointer to decoded data; it has to be freed
  * \return 0 if successfull, N otherwise
  */
-int oph_utl_base64decode(const char* data_buf, char** result);
+int oph_utl_base64decode(const char *data_buf, char **result);
 
-#endif //__OPH_UTILITY_H
+#endif				//__OPH_UTILITY_H

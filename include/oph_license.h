@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -571,4 +571,3 @@ copy of the Program in return for a fee.\n\
                      END OF TERMS AND CONDITIONS\n\
 \n\
 See <http://www.gnu.org/licenses/> for additinal information.\n"
-

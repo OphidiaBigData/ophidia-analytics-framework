@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ typedef struct _oph_json_obj_graph {
  * \param nodekeys_num Number of node properties or 0
  * \return 0 if successfull, N otherwise
  */
-int oph_json_add_graph(oph_json *json, const char *objkey, int is_digraph, const char *title, const char *description, char **nodekeys, int nodekeys_num);
+int oph_json_add_graph(oph_json * json, const char *objkey, int is_digraph, const char *title, const char *description, char **nodekeys, int nodekeys_num);
 
 /**
  * \brief Function to add a node to a (di)graph object in OPH_JSON. Node indexes are autoincremental and starting from 0.
@@ -69,7 +69,7 @@ int oph_json_add_graph(oph_json *json, const char *objkey, int is_digraph, const
  * \param nodevalues The values of node properties or NULL
  * \return 0 if successfull, N otherwise
  */
-int oph_json_add_graph_node(oph_json *json, const char *objkey, char **nodevalues);
+int oph_json_add_graph_node(oph_json * json, const char *objkey, char **nodevalues);
 
 /**
  * \brief Function to add a link between two nodes of a (di)graph object in OPH_JSON
@@ -80,11 +80,11 @@ int oph_json_add_graph_node(oph_json *json, const char *objkey, char **nodevalue
  * \param description A description for the link or NULL
  * \return 0 if successfull, N otherwise
  */
-int oph_json_add_graph_link(oph_json *json, const char *objkey, int node1, int node2, const char *description);
+int oph_json_add_graph_link(oph_json * json, const char *objkey, int node1, int node2, const char *description);
 
 /***********OPH_JSON_OBJ_GRAPH INTERNAL FUNCTIONS***********/
 
 // Free a (di)graph object contents
-int oph_json_free_graph(oph_json_obj_graph *obj);
+int oph_json_free_graph(oph_json_obj_graph * obj);
 
 #endif

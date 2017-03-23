@@ -92,7 +92,7 @@ WARNING: It handles only mono-dimensional coordinate variables.
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
-                  importnc : show operator's output PID as text.
+                  explorenc : show operator's output PID as text.
 
 [Examples] 
 Read the NetCDF file /path/of/ncfile.nc:
