@@ -467,6 +467,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->memory_size = 0;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->time_filter = 1;
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 
 	char *value;
 
@@ -2020,10 +2021,8 @@ int task_init(oph_operator_struct * handle)
 							frag_param_error = 1;
 							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
 						}
-					} else {
-						//Compute fragments
+					} else
 						*fragxdb_number = final_frag_number / user_arg_prod;
-					}
 				}
 			} else {
 				//User has set all parameters - in this case allow further fragmentation
@@ -2049,9 +2048,8 @@ int task_init(oph_operator_struct * handle)
 							frag_param_error = 1;
 							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
 						}
-					} else {
+					} else
 						((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number = (int) ceilf((float) max_frag_number / user_arg_prod);
-					}
 				}
 			}
 		}

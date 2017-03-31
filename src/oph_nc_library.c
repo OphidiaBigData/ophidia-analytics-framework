@@ -2275,11 +2275,13 @@ int _oph_nc_get_dimension_id(unsigned long residual, unsigned long total, unsign
 
 int oph_nc_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n, size_t ** id)
 {
-	int i;
-	unsigned long total = 1;
-	for (i = 0; i < n; ++i)
-		total *= sizemax[i];
-	_oph_nc_get_dimension_id(ID - 1, total, sizemax, id, 0, n);
+	if (n > 0) {
+		int i;
+		unsigned long total = 1;
+		for (i = 0; i < n; ++i)
+			total *= sizemax[i];
+		_oph_nc_get_dimension_id(ID - 1, total, sizemax, id, 0, n);
+	}
 	return 0;
 }
 
