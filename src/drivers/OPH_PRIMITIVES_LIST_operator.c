@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
 
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
-#include "oph_datacube2_library.h"
+#include "oph_datacube_library.h"
 
 #include "oph_json_library.h"
 
@@ -343,28 +343,28 @@ int task_execute(oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
-	if (oph_dc2_setup_dbms(&(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server), dbms.io_server_type)) {
+	if (oph_dc_setup_dbms(&(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server), dbms.io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PRIMITIVES_LIST_IOPLUGIN_SETUP_ERROR, dbms.io_server_type);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	if (oph_dc2_connect_to_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms, 0)) {
+	if (oph_dc_connect_to_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PRIMITIVES_LIST_CONNECT_DBMS_ERROR, dbms.id_dbms);
-		oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-		oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+		oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+		oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 
 	oph_ioserver_result *primitives_list = NULL;
 
 	//retrieve primitives list
-	if (oph_dc2_get_primitives(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms, name_filter, &primitives_list)) {
+	if (oph_dc_get_primitives(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms, name_filter, &primitives_list)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve primitives list\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PRIMITIVES_LIST_RETRIEVE_LIST_ERROR, dbms.id_dbms);
-		oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-		oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+		oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+		oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -375,8 +375,8 @@ int task_execute(oph_operator_struct * handle)
 		pmesg(LOG_WARNING, __FILE__, __LINE__, "No rows found by query\n");
 		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PRIMITIVES_LIST_NO_ROWS_FOUND);
 		oph_ioserver_free_result(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, primitives_list);
-		oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-		oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+		oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+		oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 	}
 
@@ -384,8 +384,8 @@ int task_execute(oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PRIMITIVES_LIST_NO_ROWS_FOUND);
 		oph_ioserver_free_result(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, primitives_list);
-		oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-		oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+		oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+		oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 	}
 
@@ -395,9 +395,9 @@ int task_execute(oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
 		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PRIMITIVES_LIST_ROW_ERROR);
 		oph_ioserver_free_result(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, primitives_list);
-		oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-		oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
-		return OPH_DC2_SERVER_ERROR;
+		oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+		oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+		return OPH_DC_SERVER_ERROR;
 	}
 	//For each ROW
 	char tmp_ret[OPH_COMMON_BUFFER_LEN] = { '\0' }, tmp_type[OPH_COMMON_BUFFER_LEN] = {
@@ -437,8 +437,8 @@ int task_execute(oph_operator_struct * handle)
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
 							oph_ioserver_free_result(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, primitives_list);
-							oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-							oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+							oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+							oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
 							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						}
 					}
@@ -456,8 +456,8 @@ int task_execute(oph_operator_struct * handle)
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
 							oph_ioserver_free_result(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, primitives_list);
-							oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-							oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+							oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+							oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
 							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						}
 					}
@@ -489,8 +489,8 @@ int task_execute(oph_operator_struct * handle)
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
 							oph_ioserver_free_result(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, primitives_list);
-							oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-							oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+							oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+							oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
 							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						}
 					}
@@ -504,8 +504,8 @@ int task_execute(oph_operator_struct * handle)
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
 							oph_ioserver_free_result(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, primitives_list);
-							oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-							oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+							oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+							oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
 							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						}
 					}
@@ -526,8 +526,8 @@ int task_execute(oph_operator_struct * handle)
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
 							oph_ioserver_free_result(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, primitives_list);
-							oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-							oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+							oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+							oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
 							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						}
 					}
@@ -539,8 +539,8 @@ int task_execute(oph_operator_struct * handle)
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
 							oph_ioserver_free_result(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, primitives_list);
-							oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-							oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+							oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+							oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
 							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						}
 					}
@@ -561,8 +561,8 @@ int task_execute(oph_operator_struct * handle)
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
 							oph_ioserver_free_result(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, primitives_list);
-							oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-							oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+							oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+							oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
 							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						}
 					}
@@ -574,8 +574,8 @@ int task_execute(oph_operator_struct * handle)
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
 							oph_ioserver_free_result(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, primitives_list);
-							oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-							oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+							oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+							oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
 							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						}
 					}
@@ -590,8 +590,8 @@ int task_execute(oph_operator_struct * handle)
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
 						oph_ioserver_free_result(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, primitives_list);
-						oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-						oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+						oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+						oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
 						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
 				}
@@ -601,8 +601,8 @@ int task_execute(oph_operator_struct * handle)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "List level unrecognized\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PRIMITIVES_LIST_BAD_LEVEL);
 				oph_ioserver_free_result(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, primitives_list);
-				oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-				oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+				oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+				oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 
@@ -610,16 +610,16 @@ int task_execute(oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
 			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PRIMITIVES_LIST_ROW_ERROR);
 			oph_ioserver_free_result(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, primitives_list);
-			oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-			oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
-			return OPH_DC2_SERVER_ERROR;
+			oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+			oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+			return OPH_DC_SERVER_ERROR;
 		}
 
 	}
 
 	oph_ioserver_free_result(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, primitives_list);
-	oph_dc2_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
-	oph_dc2_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
+	oph_dc_disconnect_from_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server, &dbms);
+	oph_dc_cleanup_dbms(((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->server);
 
 	switch (level) {
 		case 5:
