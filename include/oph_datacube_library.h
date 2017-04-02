@@ -147,7 +147,7 @@ int oph_dc_create_empty_fragment_from_name(oph_ioserver_handler * server, const 
  * \return 0 if successfull, N otherwise
  */
 int oph_dc_create_fragment_from_query_with_param(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
-						  long long *start_id, char *param, long long param_size);
+						 long long *start_id, char *param, long long param_size);
 
 /** 
  * \brief Function to create a new fragment from old_frag applying the operation query
@@ -164,7 +164,7 @@ int oph_dc_create_fragment_from_query_with_param(oph_ioserver_handler * server, 
  * \return 0 if successfull, N otherwise
  */
 int oph_dc_create_fragment_from_query_with_param2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
-						   long long *start_id, long long *block_size, char *param, long long param_size);
+						  long long *start_id, long long *block_size, char *param, long long param_size);
 
 /** 
  * \brief Function to create a new fragment from old_frag applying the operation query
@@ -181,7 +181,7 @@ int oph_dc_create_fragment_from_query_with_param2(oph_ioserver_handler * server,
  * \return 0 if successfull, N otherwise
  */
 int oph_dc_create_fragment_from_query_with_params(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
-						   long long *start_id, char *param, long long param_size, int num);
+						  long long *start_id, char *param, long long param_size, int num);
 
 /** 
  * \brief Function to create a new fragment from old_frag applying the operation query
@@ -199,7 +199,7 @@ int oph_dc_create_fragment_from_query_with_params(oph_ioserver_handler * server,
  * \return 0 if successfull, N otherwise
  */
 int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
-						    long long *start_id, long long *block_size, char *param, long long param_size, int num);
+						   long long *start_id, long long *block_size, char *param, long long param_size, int num);
 
 /** 
  * \brief Function to create a new fragment from old_frag applying the operation query
@@ -215,7 +215,7 @@ int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server
  * \return 0 if successfull, N otherwise
  */
 int oph_dc_create_fragment_from_query_with_aggregation(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
-							long long *start_id, char *param, long long param_size);
+						       long long *start_id, char *param, long long param_size);
 
 /** 
  * \brief Function to create a new fragment from old_frag applying the operation query
@@ -232,7 +232,7 @@ int oph_dc_create_fragment_from_query_with_aggregation(oph_ioserver_handler * se
  * \return 0 if successfull, N otherwise
  */
 int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
-							 long long *start_id, long long *block_size, char *param, long long param_size);
+							long long *start_id, long long *block_size, char *param, long long param_size);
 
 /** 
  * \brief Function to append new_frag to old_frag
@@ -248,7 +248,7 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
  * \return 0 if successfull, N otherwise
  */
 int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned long long tot_rows, short int exec_flag, oph_odb_fragment * new_frag, oph_odb_fragment * old_frag, long long *first_id,
-					long long *last_id, oph_ioserver_query ** exec_query, oph_ioserver_query_arg *** exec_args);
+				       long long *last_id, oph_ioserver_query ** exec_query, oph_ioserver_query_arg *** exec_args);
 
 /** 
  * \brief Function to copy new_frag to old_frag and apply a binary primitive on the result
@@ -263,7 +263,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
  * \return 0 if successfull, N otherwise
  */
 int oph_dc_copy_and_process_fragment(oph_ioserver_handler * server, unsigned long long tot_rows, oph_odb_fragment * old_frag1, oph_odb_fragment * old_frag2, const char *frag_name, int compressed,
-				      const char *operation, const char *measure_type);
+				     const char *operation, const char *measure_type);
 
 /** 
  * \brief Function to populate a phisical table with random values [1;100)
@@ -292,7 +292,7 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
  * \return 0 if successfull, N otherwise
  */
 int oph_dc_read_fragment_data(oph_ioserver_handler * server, oph_odb_fragment * frag, char *data_type, int compressed, char *id_clause, char *array_clause, char *where_clause, int limit,
-			       int raw_format, oph_ioserver_result ** frag_rows);
+			      int raw_format, oph_ioserver_result ** frag_rows);
 
 /** 
  * \brief Function to count the number of elements in the fragment
@@ -380,7 +380,7 @@ int oph_dc_create_fragment_from_query(oph_ioserver_handler * server, oph_odb_fra
  * \return 0 if successfull, N otherwise
  */
 int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id,
-					long long *block_size);
+				       long long *block_size);
 
 /**
  * \brief Function to generate a new fragment name 
