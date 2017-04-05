@@ -1,4 +1,28 @@
 
+## v1.0.0 - 2017-03-23
+
+### Fixed:
+
+- Typos in OPH_EXPLORENC, OPH_MERGECUBES and OPH_MERGECUBES2 XML files
+- Subset library to handle large filters
+- Bug in evaluating monthly reductions
+
+### Added:
+
+- 'week' concept level to oph_time hierarchy
+
+### Changed:
+
+- Library name from oph_datacube2_library to oph_datacube_library
+- Default value of 'operation' argument in OPH_INTERCUBE to 'sub' 
+- Default value of 'compressed' argument in OPH_RANDCUBE to 'no' 
+- Operator name from OPH_IMPORTNC3 to OPH_IMPORTNC
+- Code indentation style
+
+### Removed:
+
+- Operator OPH_INTERCOMPARISON
+
 ## v0.11.0 - 2017-01-31
 
 ### Fixed:

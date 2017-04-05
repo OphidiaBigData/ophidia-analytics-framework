@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OPH_IMPORTNC3_OPERATOR_H
-#define __OPH_IMPORTNC3_OPERATOR_H
+#ifndef __OPH_IMPORTNC_OPERATOR_H
+#define __OPH_IMPORTNC_OPERATOR_H
 
 //Operator specific headers
 #include "oph_common.h"
@@ -25,14 +25,14 @@
 #include "oph_nc_library.h"
 #include "oph_ioserver_library.h"
 
-#define OPH_IMPORTNC3_SUBSET_INDEX	    "index"
-#define OPH_IMPORTNC3_SUBSET_COORD	    "coord"
-#define OPH_IMPORTNC3_DIMENSION_DEFAULT	"auto"
+#define OPH_IMPORTNC_SUBSET_INDEX	    "index"
+#define OPH_IMPORTNC_SUBSET_COORD	    "coord"
+#define OPH_IMPORTNC_DIMENSION_DEFAULT	"auto"
 
 //Only import of measured variables is supported
 
 /**
- * \brief Structure of parameters needed by the operator OPH_IMPORTNC3. It creates a new datacube filling it with data taken from nc file
+ * \brief Structure of parameters needed by the operator OPH_IMPORTNC. It creates a new datacube filling it with data taken from nc file
  *
  * \param oDB Contains the parameters and the connection to OphidiaDB
  * \param container_input Name of the input container used
@@ -76,7 +76,7 @@
  * \param description Free description to be associated with output cube
  * \param time_filter Flag used in case time filters are expressed as dates
  */
-struct _OPH_IMPORTNC3_operator_handle {
+struct _OPH_IMPORTNC_operator_handle {
 	ophidiadb oDB;
 	char *container_input;
 	int create_container;
@@ -121,6 +121,6 @@ struct _OPH_IMPORTNC3_operator_handle {
 	char *description;
 	int time_filter;
 };
-typedef struct _OPH_IMPORTNC3_operator_handle OPH_IMPORTNC3_operator_handle;
+typedef struct _OPH_IMPORTNC_operator_handle OPH_IMPORTNC_operator_handle;
 
-#endif				//__OPH_IMPORTNC3_OPERATOR_H
+#endif				//__OPH_IMPORTNC_OPERATOR_H

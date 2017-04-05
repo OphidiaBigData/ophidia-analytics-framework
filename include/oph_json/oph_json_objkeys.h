@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -97,7 +97,6 @@
 #define OPH_JSON_OBJKEY_REDUCE2						"reduce2"
 #define OPH_JSON_OBJKEY_AGGREGATE					"aggregate"
 #define OPH_JSON_OBJKEY_AGGREGATE2					"aggregate2"
-#define OPH_JSON_OBJKEY_INTERCOMPARISON					"intercomparison"
 #define OPH_JSON_OBJKEY_DRILLDOWN					"drilldown"
 #define OPH_JSON_OBJKEY_ROLLUP						"rollup"
 #define OPH_JSON_OBJKEY_DUPLICATE					"duplicate"

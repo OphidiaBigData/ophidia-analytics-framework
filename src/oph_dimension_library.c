@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -184,7 +184,7 @@ int oph_date_to_day(int y, int m, int d, long long *g, oph_odb_dimension * dim)
 		m = (m + 9) % 12;
 		y = y - m / 10;
 		*g = 365L * y + y / 4 + (offset > 0 ? -y / 100 + y / 400 : 0) + (m * 306L + 5) / 10 + (d + offset - 2);
-	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN, OPH_ODB_DIM_TIME_SIZE)) {
+	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN2, OPH_ODB_DIM_TIME_SIZE)) {
 		m = (m + 9) % 12;
 		y = y - m / 10;
 		*g = 365L * y + y / 4 - y / 100 + y / 400 + (m * 306L + 5) / 10 + (d - 1);
@@ -192,13 +192,13 @@ int oph_date_to_day(int y, int m, int d, long long *g, oph_odb_dimension * dim)
 		m = (m + 9) % 12;
 		y = y - m / 10;
 		*g = 365L * y + y / 4 + (m * 306L + 5) / 10 + (d - 1);
-	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_360_DAY, OPH_ODB_DIM_TIME_SIZE)) {
+	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_360_DAY, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_360DAY, OPH_ODB_DIM_TIME_SIZE)) {
 		*g = 360L * y + 30L * (m - 1) + (d - 1);
-	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_NO_LEAP, OPH_ODB_DIM_TIME_SIZE)) {
+	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_NO_LEAP, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_NOLEAP, OPH_ODB_DIM_TIME_SIZE)) {
 		m = (m + 9) % 12;
 		y = y - m / 10;
 		*g = 365L * y + (m * 306L + 5) / 10 + (d - 1);
-	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALL_LEAP, OPH_ODB_DIM_TIME_SIZE)) {
+	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALL_LEAP, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALLLEAP, OPH_ODB_DIM_TIME_SIZE)) {
 		m = (m + 9) % 12;
 		y = y - m / 10;
 		*g = 366L * y + (m * 306L + 5) / 10 + (d - 1);
@@ -240,7 +240,7 @@ int oph_day_to_date(long long g, int *yy, int *mm, int *dd, int *wd, int *yd, op
 		*mm = (mi + 2) % 12 + 1;
 		*yy = y + (mi + 2) / 12;
 		*dd = ddd - (mi * 306 + 5) / 10 + 1;
-	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN, OPH_ODB_DIM_TIME_SIZE)) {
+	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN2, OPH_ODB_DIM_TIME_SIZE)) {
 		y = (10000 * g + 14780) / 3652425;
 		ddd = g - (365 * y + y / 4 - y / 100 + y / 400);
 		if (ddd < 0) {
@@ -262,13 +262,13 @@ int oph_day_to_date(long long g, int *yy, int *mm, int *dd, int *wd, int *yd, op
 		*mm = (mi + 2) % 12 + 1;
 		*yy = y + (mi + 2) / 12;
 		*dd = ddd - (mi * 306 + 5) / 10 + 1;
-	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_360_DAY, OPH_ODB_DIM_TIME_SIZE)) {
+	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_360_DAY, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_360DAY, OPH_ODB_DIM_TIME_SIZE)) {
 		*dd = g % OPH_ODB_DIM_DAY_NUMBER + 1;
 		g /= OPH_ODB_DIM_DAY_NUMBER;
 		*mm = g % OPH_ODB_DIM_MONTH_NUMBER + 1;
 		g /= OPH_ODB_DIM_MONTH_NUMBER;
 		*yy = g;
-	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_NO_LEAP, OPH_ODB_DIM_TIME_SIZE)) {
+	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_NO_LEAP, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_NOLEAP, OPH_ODB_DIM_TIME_SIZE)) {
 		y = g / 365;
 		ddd = g - 365 * y;
 		if (ddd < 0) {
@@ -279,7 +279,7 @@ int oph_day_to_date(long long g, int *yy, int *mm, int *dd, int *wd, int *yd, op
 		*mm = (mi + 2) % 12 + 1;
 		*yy = y + (mi + 2) / 12;
 		*dd = ddd - (mi * 306 + 5) / 10 + 1;
-	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALL_LEAP, OPH_ODB_DIM_TIME_SIZE)) {
+	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALL_LEAP, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALLLEAP, OPH_ODB_DIM_TIME_SIZE)) {
 		y = g / 366;
 		ddd = g - 366 * y;
 		if (ddd < 0) {
@@ -488,11 +488,13 @@ int oph_dim_get_month_size_of(struct tm *tm_time, oph_odb_dimension * dim)
 					int leap = 0, y = tm_time->tm_year;
 					if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_GREGORIAN, OPH_ODB_DIM_TIME_SIZE)
 					    || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_STANDARD, OPH_ODB_DIM_TIME_SIZE)
-					    || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN, OPH_ODB_DIM_TIME_SIZE))
+					    || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN, OPH_ODB_DIM_TIME_SIZE)
+					    || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN2, OPH_ODB_DIM_TIME_SIZE))
 						leap = !(y % 4) && (y % 100) && !(y % 400);
 					else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_JULIAN, OPH_ODB_DIM_TIME_SIZE))
 						leap = !(y % 4);
-					else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALL_LEAP, OPH_ODB_DIM_TIME_SIZE))
+					else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALL_LEAP, OPH_ODB_DIM_TIME_SIZE)
+						 || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALLLEAP, OPH_ODB_DIM_TIME_SIZE))
 						leap = 1;
 					return leap ? 29 : 28;
 				}
