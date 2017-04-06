@@ -785,7 +785,7 @@ int task_init(oph_operator_struct * handle)
 
 		char *dim_row;
 		int compressed = 0, n;
-		char dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[OPH_COMMON_BUFFER_LEN];
+		char dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[1 + OPH_COMMON_BUFFER_LEN];
 		snprintf(dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0]);
 		char o_dimension_table_name[OPH_COMMON_BUFFER_LEN];
 		snprintf(o_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_output_container);

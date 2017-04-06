@@ -92,7 +92,7 @@ int _oph_hier_get_attribute(xmlNodePtr node, oph_hier_attribute * attribute)
 			result = OPH_HIER_XML_ERR;
 		} else {
 			strncpy(attribute->long_name, (char *) name_attr->children->content, OPH_HIER_MAX_STRING_LENGTH);
-			attribute->long_name[OPH_HIER_MAX_STRING_LENGTH] = 0;
+			attribute->long_name[OPH_HIER_MAX_STRING_LENGTH - 1] = 0;
 			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Property '%s' for attribute '%s' read\n", OPH_HIER_STR_LONG_NAME, attribute->long_name);
 		}
 	}
@@ -116,7 +116,7 @@ int _oph_hier_get_attribute(xmlNodePtr node, oph_hier_attribute * attribute)
 		} else {
 			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Property '%s' for attribute '%s' read\n", OPH_HIER_STR_AGGREGATE_FIELD, attribute->long_name);
 			strncpy(attribute->aggregate_field, (char *) name_attr->children->content, OPH_HIER_MAX_STRING_LENGTH);
-			attribute->aggregate_field[OPH_HIER_MAX_STRING_LENGTH] = 0;
+			attribute->aggregate_field[OPH_HIER_MAX_STRING_LENGTH - 1] = 0;
 		}
 	}
 
@@ -143,7 +143,7 @@ int _oph_hier_get_attribute(xmlNodePtr node, oph_hier_attribute * attribute)
 		if (!name_attr || !strlen((char *) name_attr->children->content))
 			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Missed property '%s'\n", OPH_HIER_STR_AGGREGATE_OPERATION);
 		else {
-			char aggregate_op[OPH_HIER_MAX_STRING_LENGTH];
+			char aggregate_op[1 + OPH_HIER_MAX_STRING_LENGTH];
 			strncpy(aggregate_op, (char *) name_attr->children->content, OPH_HIER_MAX_STRING_LENGTH);
 			aggregate_op[OPH_HIER_MAX_STRING_LENGTH] = 0;
 			oph_hier_list *list = attribute->aggregate_operation_list = (oph_hier_list *) malloc(sizeof(oph_hier_list));

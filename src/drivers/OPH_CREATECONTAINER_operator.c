@@ -595,7 +595,7 @@ int task_execute(oph_operator_struct * handle)
 			dim.units[OPH_ODB_DIM_TIME_SIZE] = 0;
 			strncpy(dim.calendar, ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->calendar, OPH_ODB_DIM_TIME_SIZE);
 			dim.calendar[OPH_ODB_DIM_TIME_SIZE] = 0;
-			char *tmp = NULL, *save_pointer = NULL, month_lengths[OPH_ODB_DIM_TIME_SIZE];
+			char *tmp = NULL, *save_pointer = NULL, month_lengths[1 + OPH_ODB_DIM_TIME_SIZE];
 			strncpy(month_lengths, ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->month_lengths, OPH_ODB_DIM_TIME_SIZE);
 			month_lengths[OPH_ODB_DIM_TIME_SIZE] = 0;
 			while ((tmp = strtok_r(tmp ? NULL : month_lengths, ",", &save_pointer)) && (j < OPH_ODB_DIM_MONTH_NUMBER))

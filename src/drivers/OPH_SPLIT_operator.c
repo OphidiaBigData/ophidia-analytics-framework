@@ -700,7 +700,7 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	//char insertQuery[OPH_COMMON_BUFFER_LEN];
-	char frag_name_in[OPH_ODB_STGE_FRAG_NAME_SIZE], frag_name_out[OPH_ODB_STGE_FRAG_NAME_SIZE];
+	char frag_name_in[1 + OPH_ODB_STGE_FRAG_NAME_SIZE], frag_name_out[OPH_ODB_STGE_FRAG_NAME_SIZE];
 	char myquery[OPH_COMMON_BUFFER_LEN];
 	int n, txfrag;
 
