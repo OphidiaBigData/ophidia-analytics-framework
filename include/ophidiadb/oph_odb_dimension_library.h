@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -55,10 +55,14 @@
 #define OPH_DIM_TIME_CALENDAR_STANDARD "standard"
 #define OPH_DIM_TIME_CALENDAR_GREGORIAN "gregorian"
 #define OPH_DIM_TIME_CALENDAR_PGREGORIAN "proleptic_gregorian"
+#define OPH_DIM_TIME_CALENDAR_PGREGORIAN2 "prolepticgregorian"
 #define OPH_DIM_TIME_CALENDAR_JULIAN "julian"
 #define OPH_DIM_TIME_CALENDAR_360_DAY "360_day"
+#define OPH_DIM_TIME_CALENDAR_360DAY "360day"
 #define OPH_DIM_TIME_CALENDAR_NO_LEAP "no_leap"
+#define OPH_DIM_TIME_CALENDAR_NOLEAP "noleap"
 #define OPH_DIM_TIME_CALENDAR_ALL_LEAP "all_leap"
+#define OPH_DIM_TIME_CALENDAR_ALLLEAP "allleap"
 #define OPH_DIM_TIME_CALENDAR_USER_DEFINED "user_defined"
 
 #define OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR "since"

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,22 +39,21 @@
  * \param sessionid SessionID
  * \param base64 Flag used in representation of output data
  */
-struct _OPH_CUBESCHEMA_operator_handle
-{
-  ophidiadb oDB;
-  int id_input_container;
-  int id_input_datacube;
-  int level;
-  char **dimension_name;
-  char *datacube_name;
-  int dimension_name_number;
-  short int show_index;
-  short int show_time;
-  char **objkeys;
-  int objkeys_num;
-  char *sessionid;
-  int base64;
+struct _OPH_CUBESCHEMA_operator_handle {
+	ophidiadb oDB;
+	int id_input_container;
+	int id_input_datacube;
+	int level;
+	char **dimension_name;
+	char *datacube_name;
+	int dimension_name_number;
+	short int show_index;
+	short int show_time;
+	char **objkeys;
+	int objkeys_num;
+	char *sessionid;
+	int base64;
 };
 typedef struct _OPH_CUBESCHEMA_operator_handle OPH_CUBESCHEMA_operator_handle;
 
-#endif  //__OPH_CUBESCHEMA_OPERATOR_H
+#endif				//__OPH_CUBESCHEMA_OPERATOR_H

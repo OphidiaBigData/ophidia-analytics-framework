@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@
 
 #include "oph_idstring_library.h"
 #include "oph_pid_library.h"
-#include "oph_datacube2_library.h"
+#include "oph_datacube_library.h"
 
 #include "debug.h"
 
@@ -189,14 +189,14 @@ int main(int argc, char **argv)
 	int frag_count = 0;
 	int result = 0;
 
-	if (oph_dc2_setup_dbms(&server, (dbmss.value[i]).io_server_type)) {
+	if (oph_dc_setup_dbms(&server, (dbmss.value[i]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		result = -2;
 	}
 	//For each DBMS
 	for (i = 0; (i < dbmss.size) && (result == 0); i++) {
 
-		if (oph_dc2_connect_to_dbms(server, &(dbmss.value[i]), 0)) {
+		if (oph_dc_connect_to_dbms(server, &(dbmss.value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 			result = -2;
 		}
@@ -206,7 +206,7 @@ int main(int argc, char **argv)
 			if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
 				continue;
 
-			if (oph_dc2_use_db_of_dbms(server, &(dbmss.value[i]), &(dbs.value[j]))) {
+			if (oph_dc_use_db_of_dbms(server, &(dbmss.value[i]), &(dbs.value[j]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 				result = -2;
 				break;
@@ -217,13 +217,13 @@ int main(int argc, char **argv)
 				if (frags.value[k].db_instance != &(dbs.value[j]))
 					continue;
 
-				if (oph_dc2_generate_fragment_name(NULL, id_output_datacube, 0, (frag_count + 1), &frag_name_out)) {
+				if (oph_dc_generate_fragment_name(NULL, id_output_datacube, 0, (frag_count + 1), &frag_name_out)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag  name exceed limit.\n");
 					result = -1;
 					break;
 				}
 				//Duplicate fragment
-				if (oph_dc2_create_fragment_from_query(server, &(frags.value[k]), frag_name_out, MYSQL_FRAG_MEASURE, 0, 0, 0)) {
+				if (oph_dc_create_fragment_from_query(server, &(frags.value[k]), frag_name_out, MYSQL_FRAG_MEASURE, 0, 0, 0)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
 					result = -1;
 					break;
@@ -242,10 +242,10 @@ int main(int argc, char **argv)
 				frag_count++;
 			}
 		}
-		oph_dc2_disconnect_from_dbms(server, &(dbmss.value[i]));
+		oph_dc_disconnect_from_dbms(server, &(dbmss.value[i]));
 	}
 
-	if (oph_dc2_cleanup_dbms(server)) {
+	if (oph_dc_cleanup_dbms(server)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
 		result = -2;
 	}

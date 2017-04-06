@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@
 #include "oph_common.h"
 
 #define OPH_CUBEIO_BRANCH_BOTH 0
-#define OPH_CUBEIO_BRANCH_IN 1 
-#define OPH_CUBEIO_BRANCH_OUT 2 
+#define OPH_CUBEIO_BRANCH_IN 1
+#define OPH_CUBEIO_BRANCH_OUT 2
 #define OPH_CUBEIO_PARENT_VALUE "parent"
 #define OPH_CUBEIO_CHILDREN_VALUE "children"
 
@@ -40,17 +40,16 @@
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
  */
-struct _OPH_CUBEIO_operator_handle
-{
-  ophidiadb oDB;
-  char *datacube_name;
-  int id_input_container;
-  int id_input_datacube;
-  int direction;
-  char **objkeys;
-  int objkeys_num;
-  char *sessionid;
+struct _OPH_CUBEIO_operator_handle {
+	ophidiadb oDB;
+	char *datacube_name;
+	int id_input_container;
+	int id_input_datacube;
+	int direction;
+	char **objkeys;
+	int objkeys_num;
+	char *sessionid;
 };
 typedef struct _OPH_CUBEIO_operator_handle OPH_CUBEIO_operator_handle;
 
-#endif  //__OPH_CUBEIO_OPERATOR_H
+#endif				//__OPH_CUBEIO_OPERATOR_H

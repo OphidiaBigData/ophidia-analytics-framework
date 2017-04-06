@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@
 #include "oph_hierarchy_library.h"
 #include "oph_pid_library.h"
 #include "oph_json_library.h"
-#include "oph_datacube2_library.h"
+#include "oph_datacube_library.h"
 
 #include "debug.h"
 
@@ -235,7 +235,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (oph_dc2_check_data_type(value)) {
+	if (oph_dc_check_data_type(value)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid measure type %s\n", value);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MEASURE_TYPE_ERROR, container_name, value);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
@@ -1164,7 +1164,7 @@ int task_init(oph_operator_struct * handle)
 			db.dbms_instance = &dbms;
 
 			if (!((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server) {
-				if (oph_dc2_setup_dbms(&(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server), dbms.io_server_type)) {
+				if (oph_dc_setup_dbms(&(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server), dbms.io_server_type)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_IOPLUGIN_SETUP_ERROR, db.id_dbms);
 					free(id_dbmss);
@@ -1172,28 +1172,29 @@ int task_init(oph_operator_struct * handle)
 				}
 			}
 
-			if (oph_dc2_connect_to_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbms), 0)) {
+			if (oph_dc_connect_to_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbms), 0)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DBMS_CONNECTION_ERROR, dbms.id_dbms);
-				oph_dc2_disconnect_from_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbms));
+				oph_dc_disconnect_from_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbms));
 				free(id_dbmss);
 				goto __OPH_EXIT_1;
 			}
 
 			for (i = 0; i < ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbxdbms_number; i++) {
-				if (oph_dc2_generate_db_name(oDB->name, id_datacube_out, db.id_dbms, 0, i + 1, &db_name)) {
+
+				if (oph_dc_generate_db_name(oDB->name, id_datacube_out, db.id_dbms, 0, i + 1, &db_name)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of Db instance  name exceed limit.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_STRING_BUFFER_OVERFLOW, "DB instance name", db_name);
 					free(id_dbmss);
-					oph_dc2_disconnect_from_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbms));
+					oph_dc_disconnect_from_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbms));
 					goto __OPH_EXIT_1;
 				}
 				strcpy(db.db_name, db_name);
-				if (oph_dc2_create_db(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &db)) {
+				if (oph_dc_create_db(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &db)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create new db\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_NEW_DB_ERROR, db.db_name);
 					free(id_dbmss);
-					oph_dc2_disconnect_from_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbms));
+					oph_dc_disconnect_from_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbms));
 					goto __OPH_EXIT_1;
 				}
 				//Insert new database instance and partitions
@@ -1201,11 +1202,11 @@ int task_init(oph_operator_struct * handle)
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update dbinstance table\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DB_INSERT_ERROR, db.db_name);
 					free(id_dbmss);
-					oph_dc2_disconnect_from_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbms));
+					oph_dc_disconnect_from_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbms));
 					goto __OPH_EXIT_1;
 				}
 			}
-			oph_dc2_disconnect_from_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbms));
+			oph_dc_disconnect_from_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbms));
 		}
 		free(id_dbmss);
 	  /********************************
@@ -1352,7 +1353,7 @@ int task_execute(oph_operator_struct * handle)
 	int result = OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	if (!((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server) {
-		if (oph_dc2_setup_dbms(&(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
+		if (oph_dc_setup_dbms(&(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_IOPLUGIN_SETUP_ERROR,
 				(dbmss.value[0]).id_dbms);
@@ -1362,7 +1363,7 @@ int task_execute(oph_operator_struct * handle)
 	//For each DBMS
 	for (i = 0; (i < dbmss.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
 
-		if (oph_dc2_connect_to_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
+		if (oph_dc_connect_to_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_DBMS_CONNECTION_ERROR,
 				(dbmss.value[i]).id_dbms);
@@ -1374,7 +1375,7 @@ int task_execute(oph_operator_struct * handle)
 			if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
 				continue;
 
-			if (oph_dc2_use_db_of_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
+			if (oph_dc_use_db_of_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_DB_SELECTION_ERROR,
 					(dbs.value[j]).db_name);
@@ -1402,7 +1403,7 @@ int task_execute(oph_operator_struct * handle)
 				    ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 				new_frag.db_instance = &(dbs.value[j]);
 
-				if (oph_dc2_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &fragment_name)) {
+				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &fragment_name)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag  name exceed limit.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container,
 						OPH_LOG_OPH_RANDCUBE_STRING_BUFFER_OVERFLOW, "fragment name", fragment_name);
@@ -1412,7 +1413,7 @@ int task_execute(oph_operator_struct * handle)
 				strcpy(new_frag.fragment_name, fragment_name);
 
 				//Create Empty fragment
-				if (oph_dc2_create_empty_fragment(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &new_frag)) {
+				if (oph_dc_create_empty_fragment(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &new_frag)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container,
 						OPH_LOG_OPH_RANDCUBE_FRAGMENT_CREATION_ERROR, new_frag.fragment_name);
@@ -1421,7 +1422,7 @@ int task_execute(oph_operator_struct * handle)
 				}
 				//Populate fragment
 				if (compr_flag) {
-					if (oph_dc2_populate_fragment_with_rand_data
+					if (oph_dc_populate_fragment_with_rand_data
 					    (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &new_frag,
 					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->array_length,
 					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->measure_type, 1)) {
@@ -1432,7 +1433,7 @@ int task_execute(oph_operator_struct * handle)
 						break;
 					}
 				} else {
-					if (oph_dc2_populate_fragment_with_rand_data
+					if (oph_dc_populate_fragment_with_rand_data
 					    (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &new_frag,
 					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->array_length,
 					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->measure_type, 0)) {
@@ -1458,7 +1459,7 @@ int task_execute(oph_operator_struct * handle)
 			}
 			start_position++;
 		}
-		oph_dc2_disconnect_from_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+		oph_dc_disconnect_from_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 
 	}
 	oph_odb_stge_free_db_list(&dbs);
@@ -1559,7 +1560,7 @@ int env_unset(oph_operator_struct * handle)
 	}
 
 	if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server)
-		oph_dc2_cleanup_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server);
+		oph_dc_cleanup_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server);
 
 	if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->user) {
 		free((char *) ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->user);

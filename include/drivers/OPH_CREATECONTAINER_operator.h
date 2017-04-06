@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,29 +46,28 @@
  * \param leap_year Value of the first leap year
  * \param leap_month Value of the leap month
  */
-struct _OPH_CREATECONTAINER_operator_handle
-{
-  ophidiadb oDB;
-  char *container_output;
-  char *user;
-  int id_output_container;
-  int number_of_dimensions;
-  char **dimension_name;
-  char **dimension_type;
-  char *cwd;
-  int *id_dimension_hierarchy;
-  int compressed;
-  int id_vocabulary;
-  char **objkeys;
-  int objkeys_num;
-  char *sessionid;
-  char* base_time;
-  char* units;
-  char* calendar;
-  char* month_lengths;
-  int leap_year;
-  int leap_month;
+struct _OPH_CREATECONTAINER_operator_handle {
+	ophidiadb oDB;
+	char *container_output;
+	char *user;
+	int id_output_container;
+	int number_of_dimensions;
+	char **dimension_name;
+	char **dimension_type;
+	char *cwd;
+	int *id_dimension_hierarchy;
+	int compressed;
+	int id_vocabulary;
+	char **objkeys;
+	int objkeys_num;
+	char *sessionid;
+	char *base_time;
+	char *units;
+	char *calendar;
+	char *month_lengths;
+	int leap_year;
+	int leap_month;
 };
 typedef struct _OPH_CREATECONTAINER_operator_handle OPH_CREATECONTAINER_operator_handle;
 
-#endif  //__OPH_CREATECONTAINER_OPERATOR_H
+#endif				//__OPH_CREATECONTAINER_OPERATOR_H
