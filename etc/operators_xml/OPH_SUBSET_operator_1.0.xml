@@ -20,7 +20,7 @@ Dimension values are used as input filters.
                   Multiple-value field: list of filters separated by &quot;|&quot; can be provided.
                   Must be the same number of &quot;subset_dims&quot; .
                   In case &quot;subset_type&quot; is &quot;index&quot; a filter can be expressed as
-                  -- start_index : select a single value, specified by its index;
+                  -- index : select a single value, specified by its index;
                   -- start_index:stop_index : select elements from start_index to stop_index;
                   -- start_index:stride:stop_index : select elements from start_index to stop_index with a step of stride.
                   Indexes are integers from 1 to the dimension size. It can be also used &quot;end&quot; to specify the index of the last element.
