@@ -133,6 +133,7 @@
 #define OPH_JSON_OBJKEY_INTERCUBE					"intercube"
 #define OPH_JSON_OBJKEY_MERGECUBES					"mergecubes"
 #define OPH_JSON_OBJKEY_SCRIPT						"script"
+#define OPH_JSON_OBJKEY_FS						"fs"
 
 
 #endif

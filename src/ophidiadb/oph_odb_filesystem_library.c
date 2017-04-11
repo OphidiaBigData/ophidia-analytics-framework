@@ -36,11 +36,11 @@ static char oph_odb_fs_chars[OPH_ODB_FS_CHARS_NUM] = { '\'', '\"', '?', '|', '\\
 int oph_odb_fs_path_parsing(char *inpath, char *cwd, int *folder_id, char **output_path, ophidiadb * oDB)
 {
 
-	if (!oDB || !inpath || !cwd || !folder_id) {
+	if (!inpath || !cwd) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
-	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+	if (oDB && oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
 		return OPH_ODB_MYSQL_ERROR;
 	}
@@ -166,50 +166,16 @@ int oph_odb_fs_path_parsing(char *inpath, char *cwd, int *folder_id, char **outp
 			n += snprintf((*output_path) + n, MYSQL_BUFLEN, "%s/", list[j]);
 		}
 	}
-	char query[MYSQL_BUFLEN];
-	MYSQL_RES *res;
-	MYSQL_ROW row;
-	int num_rows;
 
-	// retrieve root id
-	snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_RETRIEVE_ROOT_ID);
-	if (mysql_query(oDB->conn, query)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		for (j = 0; j < list_size; j++) {
-			free(list[j]);
-		}
-		if (list)
-			free(list);
-		if (output_path) {
-			free(*output_path);
-			*output_path = NULL;
-		}
-		return OPH_ODB_MYSQL_ERROR;
-	}
-	res = mysql_store_result(oDB->conn);
-	num_rows = mysql_num_rows(res);
-	if (num_rows != 1) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find id of root folder\n");
-		mysql_free_result(res);
-		for (j = 0; j < list_size; j++) {
-			free(list[j]);
-		}
-		if (list)
-			free(list);
-		if (output_path) {
-			free(*output_path);
-			*output_path = NULL;
-		}
-		return OPH_ODB_ERROR;
-	}
-	row = mysql_fetch_row(res);
-	*folder_id = (int) strtol(row[0], NULL, 10);
-	mysql_free_result(res);
+	if (oDB && folder_id) {
 
-	// retrieve folder id
-	int k;
-	for (k = 0; k < i; k++) {
-		snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_PATH_PARSING_ID, *folder_id, list[k]);
+		char query[MYSQL_BUFLEN];
+		MYSQL_RES *res;
+		MYSQL_ROW row;
+		int num_rows;
+
+		// retrieve root id
+		snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_RETRIEVE_ROOT_ID);
 		if (mysql_query(oDB->conn, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 			for (j = 0; j < list_size; j++) {
@@ -226,7 +192,7 @@ int oph_odb_fs_path_parsing(char *inpath, char *cwd, int *folder_id, char **outp
 		res = mysql_store_result(oDB->conn);
 		num_rows = mysql_num_rows(res);
 		if (num_rows != 1) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find id of folder %s\n", list[k]);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find id of root folder\n");
 			mysql_free_result(res);
 			for (j = 0; j < list_size; j++) {
 				free(list[j]);
@@ -242,6 +208,44 @@ int oph_odb_fs_path_parsing(char *inpath, char *cwd, int *folder_id, char **outp
 		row = mysql_fetch_row(res);
 		*folder_id = (int) strtol(row[0], NULL, 10);
 		mysql_free_result(res);
+
+		// retrieve folder id
+		int k;
+		for (k = 0; k < i; k++) {
+			snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_PATH_PARSING_ID, *folder_id, list[k]);
+			if (mysql_query(oDB->conn, query)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+				for (j = 0; j < list_size; j++) {
+					free(list[j]);
+				}
+				if (list)
+					free(list);
+				if (output_path) {
+					free(*output_path);
+					*output_path = NULL;
+				}
+				return OPH_ODB_MYSQL_ERROR;
+			}
+			res = mysql_store_result(oDB->conn);
+			num_rows = mysql_num_rows(res);
+			if (num_rows != 1) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find id of folder %s\n", list[k]);
+				mysql_free_result(res);
+				for (j = 0; j < list_size; j++) {
+					free(list[j]);
+				}
+				if (list)
+					free(list);
+				if (output_path) {
+					free(*output_path);
+					*output_path = NULL;
+				}
+				return OPH_ODB_ERROR;
+			}
+			row = mysql_fetch_row(res);
+			*folder_id = (int) strtol(row[0], NULL, 10);
+			mysql_free_result(res);
+		}
 	}
 
 	// cleanup

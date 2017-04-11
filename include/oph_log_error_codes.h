@@ -1828,14 +1828,26 @@
 #define OPH_LOG_OPH_FOLDER_CANNOT_REMOVE_HIDDEN_ERROR                    "Cannot remove hidden container\n"
 #define OPH_LOG_OPH_FOLDER_EMPTY_CHECK_ERROR                             "Unable to check folder emptiness\n"
 #define OPH_LOG_OPH_FOLDER_FOLDER_NOT_EMPTY_ERROR                        "Folder is not empty\n"
-#define OPH_LOG_OPH_FOLDER_PID_URI_ERROR								 OPH_LOG_GENERIC_PID_URI_ERROR
-#define OPH_LOG_OPH_FOLDER_PID_CREATE_ERROR								 OPH_LOG_GENERIC_PID_CREATION
-#define OPH_LOG_OPH_FOLDER_NO_FOLDER_ERROR				 				 "%s is not a folder\n"
-#define OPH_LOG_OPH_FOLDER_INSERT_ERROR				 				 	 "Unable to create new folder\n"
-#define OPH_LOG_OPH_FOLDER_DELETE_ERROR				 				 	 "Unable to delete the folder\n"
-#define OPH_LOG_OPH_FOLDER_UPDATE_ERROR				 				 	 "Unable to update the folder\n"
-#define OPH_LOG_OPH_FOLDER_ASC_CHECK_ERROR								 "Unable to check ascendants\n"
-#define OPH_LOG_OPH_FOLDER_SUBFOLDER_ERROR								 "It is not possible to move a folder into one of its subfolders\n"
+#define OPH_LOG_OPH_FOLDER_PID_URI_ERROR                                 OPH_LOG_GENERIC_PID_URI_ERROR
+#define OPH_LOG_OPH_FOLDER_PID_CREATE_ERROR                              OPH_LOG_GENERIC_PID_CREATION
+#define OPH_LOG_OPH_FOLDER_NO_FOLDER_ERROR                               "%s is not a folder\n"
+#define OPH_LOG_OPH_FOLDER_INSERT_ERROR                                  "Unable to create new folder\n"
+#define OPH_LOG_OPH_FOLDER_DELETE_ERROR                                  "Unable to delete the folder\n"
+#define OPH_LOG_OPH_FOLDER_UPDATE_ERROR                                  "Unable to update the folder\n"
+#define OPH_LOG_OPH_FOLDER_ASC_CHECK_ERROR                               "Unable to check ascendants\n"
+#define OPH_LOG_OPH_FOLDER_SUBFOLDER_ERROR                               "It is not possible to move a folder into one of its subfolders\n"
+
+/*OPH_FOLDER OPERATOR LOG ERRORS*/
+#define OPH_LOG_OPH_FS_NULL_OPERATOR_HANDLE                          OPH_LOG_GENERIC_NULL_OPERATOR_HANDLE
+#define OPH_LOG_OPH_FS_NULL_TASK_TABLE                               OPH_LOG_GENERIC_NULL_TASK_TABLE
+#define OPH_LOG_OPH_FS_HANDLE_ALREADY_INITIALIZED                    OPH_LOG_GENERIC_HANDLE_ALREADY_INITIALIZED
+#define OPH_LOG_OPH_FS_MEMORY_ERROR_HANDLE                           OPH_LOG_GENERIC_MEMORY_ERROR_HANDLE
+#define OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER                       OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER
+#define OPH_LOG_OPH_FS_INVALID_INPUT_PARAMETER                       OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER
+#define OPH_LOG_OPH_FS_MEMORY_ERROR_INPUT                            OPH_LOG_GENERIC_MEMORY_ERROR_INPUT
+#define OPH_LOG_OPH_FS_PATH_PARSING_ERROR                            OPH_LOG_GENERIC_PATH_PARSING_ERROR
+#define OPH_LOG_OPH_FS_PATH_NOT_ALLOWED_ERROR                        OPH_LOG_GENERIC_PATH_NOT_ALLOWED_ERROR
+#define OPH_LOG_OPH_FS_INVALID_INPUT_STRING                          OPH_LOG_GENERIC_INVALID_INPUT_STRING
 
 /*++++++++++++++++++++++MISCELLANEOUS OPERATORS++++++++++++++++++++++*/
 

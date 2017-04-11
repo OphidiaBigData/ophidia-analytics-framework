@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_FS" version="1.0">
+    <info>
+        <abstract>[Type]
+Metadata Process.
+ 
+[Behaviour]
+It manages folders of the Ophidia filesystem.
+ 
+[Parameters]
+- command : command to be executed among these:
+            -- ls : list the files in a directory (default)
+            -- cd : change directory
+- path : 0 or 1 path needed by commands.
+         In case of cd, without a path the new directory will be the session folder.
+         In all other cases, it can be used only 1 path.
+- pwd : absolute path corresponding to the current working directory on file system.
+        
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  fs : show the new working directory and the related file list.
+        
+[Examples]       
+- Change directory to &quot;/absolute/path/folder1&quot; :
+OPH_TERM: oph_fs command=cd;path=folder1;pwd=/absolute/path;
+SUBMISSION STRING: &quot;operator=oph_fs;command=cd;path=folder1;pwd=/absolute/path;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <creationdate>12/04/2017</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+	<permission>read</permission>
+    </info>
+    <args>
+        <argument type="string" mandatory="no" default="ls" values="ls|cd">command</argument>
+        <argument type="string" mandatory="no" default="-">path</argument>
+        <argument type="string" mandatory="yes">pwd</argument>
+        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+        <argument type="string" mandatory="no" default="null">sessionid</argument>
+        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+	<argument type="string" mandatory="no" default="all" values="all|none|fs">objkey_filter</argument>
+    </args>
+</operator>
