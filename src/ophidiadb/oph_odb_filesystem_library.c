@@ -247,7 +247,6 @@ int oph_odb_fs_path_parsing(char *inpath, char *cwd, int *folder_id, char **outp
 			mysql_free_result(res);
 		}
 	}
-
 	// cleanup
 	for (j = 0; j < list_size; j++) {
 		free(list[j]);

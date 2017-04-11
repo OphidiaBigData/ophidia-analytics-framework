@@ -186,7 +186,9 @@ int task_execute(oph_operator_struct * handle)
 		abs_path = strdup("/");
 
 	char *rel_path = NULL;
-	if (oph_odb_fs_path_parsing(strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->path, OPH_FRAMEWORK_FS_DEFAULT_PATH) ? ((OPH_FS_operator_handle *) handle->operator_handle)->path : "/", ((OPH_FS_operator_handle *) handle->operator_handle)->cwd, NULL, &rel_path, NULL)) {
+	if (oph_odb_fs_path_parsing
+	    (strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->path, OPH_FRAMEWORK_FS_DEFAULT_PATH) ? ((OPH_FS_operator_handle *) handle->operator_handle)->path : "/",
+	     ((OPH_FS_operator_handle *) handle->operator_handle)->cwd, NULL, &rel_path, NULL)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse path\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_PATH_PARSING_ERROR);
 		if (abs_path) {
@@ -197,7 +199,7 @@ int task_execute(oph_operator_struct * handle)
 	}
 	size_t len = strlen(rel_path);
 	if (len > 1)
-		rel_path[len - 1] = 0;		
+		rel_path[len - 1] = 0;
 
 	char path[OPH_COMMON_BUFFER_LEN];
 	snprintf(path, OPH_COMMON_BUFFER_LEN, "%s%s", abs_path, rel_path);
@@ -218,7 +220,6 @@ int task_execute(oph_operator_struct * handle)
 					break;
 				}
 			}
-
 			// ADD OUTPUT CWD TO NOTIFICATION STRING
 			char tmp_string[OPH_COMMON_BUFFER_LEN];
 			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_PWD, rel_path);
@@ -429,7 +430,7 @@ int task_execute(oph_operator_struct * handle)
 				}
 				closedir(dirp);
 			}
-			
+
 			break;
 
 		default:
