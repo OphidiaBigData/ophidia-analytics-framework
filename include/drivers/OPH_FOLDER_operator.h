@@ -33,7 +33,7 @@
 #define OPH_FOLDER_MODE_MV              2
 #define OPH_FOLDER_MODE_RM              3
 
-#define OPH_FOLDER_CD_MESSAGE "Current working directory is: "
+#define OPH_FOLDER_CD_MESSAGE "Current Working Directory"
 
 /**
  * \brief Structure of parameters needed by the operator OPH_FOLDER. It manages the Ophidia filesystem folders.

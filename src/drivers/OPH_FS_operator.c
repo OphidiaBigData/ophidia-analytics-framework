@@ -82,7 +82,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	// retrieve objkeys
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OBJKEY_FILTER);
 	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OBJKEY_FILTER);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_OBJKEY_FILTER);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OBJKEY_FILTER);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
@@ -95,7 +95,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SYSTEM_COMMAND);
 	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SYSTEM_COMMAND);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_SYSTEM_COMMAND);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SYSTEM_COMMAND);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
@@ -111,7 +111,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_PATH);
 	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_PATH);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_PATH);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_PATH);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
@@ -121,21 +121,21 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_PWD);
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CCD);
 	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_PWD);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_PWD);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CCD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CCD);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!(((OPH_FS_operator_handle *) handle->operator_handle)->cwd = (char *) strdup(value))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MEMORY_ERROR_INPUT, OPH_IN_PARAM_PWD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MEMORY_ERROR_INPUT, OPH_IN_PARAM_CCD);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_ARG_USERNAME);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
@@ -186,9 +186,8 @@ int task_execute(oph_operator_struct * handle)
 		abs_path = strdup("/");
 
 	char *rel_path = NULL;
-	if (oph_odb_fs_path_parsing
-	    (strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->path, OPH_FRAMEWORK_FS_DEFAULT_PATH) ? ((OPH_FS_operator_handle *) handle->operator_handle)->path : "/",
-	     ((OPH_FS_operator_handle *) handle->operator_handle)->cwd, NULL, &rel_path, NULL)) {
+	char is_valid = strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->path, OPH_FRAMEWORK_FS_DEFAULT_PATH);
+	if (oph_odb_fs_path_parsing(is_valid ? ((OPH_FS_operator_handle *) handle->operator_handle)->path : "", ((OPH_FS_operator_handle *) handle->operator_handle)->cwd, NULL, &rel_path, NULL)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse path\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_PATH_PARSING_ERROR);
 		if (abs_path) {
@@ -203,7 +202,7 @@ int task_execute(oph_operator_struct * handle)
 
 	char path[OPH_COMMON_BUFFER_LEN];
 	snprintf(path, OPH_COMMON_BUFFER_LEN, "%s%s", abs_path, rel_path);
-	printf(OPH_FS_CD_MESSAGE "%s\n", path);
+	printf(OPH_FS_CD_MESSAGE " is: %s from %s and %s\n", path, ((OPH_FS_operator_handle *) handle->operator_handle)->path, ((OPH_FS_operator_handle *) handle->operator_handle)->cwd);
 	int result = OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	switch (((OPH_FS_operator_handle *) handle->operator_handle)->mode) {
@@ -213,7 +212,7 @@ int task_execute(oph_operator_struct * handle)
 			// ADD OUTPUT TO JSON AS TEXT
 			if (oph_json_is_objkey_printable
 			    (((OPH_FS_operator_handle *) handle->operator_handle)->objkeys, ((OPH_FS_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_FS)) {
-				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_FS, "Current Working Directory", rel_path)) {
+				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_FS, OPH_FS_CD_MESSAGE, rel_path)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
 					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -222,7 +221,7 @@ int task_execute(oph_operator_struct * handle)
 			}
 			// ADD OUTPUT CWD TO NOTIFICATION STRING
 			char tmp_string[OPH_COMMON_BUFFER_LEN];
-			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_PWD, rel_path);
+			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_CCD, rel_path);
 			if (handle->output_string) {
 				strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
 				free(handle->output_string);

@@ -28,7 +28,7 @@
 #define OPH_FS_MODE_LS	0
 #define OPH_FS_MODE_CD	1
 
-#define OPH_FS_CD_MESSAGE "Current working directory is: "
+#define OPH_FS_CD_MESSAGE "Current Data Directory"
 
 /**
  * \brief Structure of parameters needed by the operator OPH_FS. It manages the Ophidia filesystem FSs.
