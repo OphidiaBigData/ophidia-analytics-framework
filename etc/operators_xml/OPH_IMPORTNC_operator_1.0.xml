@@ -32,6 +32,7 @@ WARNING: It imports only mono-dimensional coordinate variables.
 - run : If set to &apos;no&apos; the operator simulates the import and computes the fragmentation parameters 
         that would be used, else if set to &apos;yes&apos; the actual import operation is executed.
 - src_path : path or OPeNDAP URL of the NetCDF file.
+- cdd : absolute path corresponding to the current directory on data repository.
 - exp_dim : names of explicit dimensions.
             Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
             It implicitly defines explicit dimension number and level (order). 
@@ -126,6 +127,7 @@ SUBMISSION STRING: &quot;operator=oph_importnc;cwd=/session-code1;container=cont
 		<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
 		<argument type="string" mandatory="yes">measure</argument>
 		<argument type="string" mandatory="yes">src_path</argument>
+	        <argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="auto">exp_dim</argument>
 		<argument type="string" mandatory="no" default="auto">imp_dim</argument>
 		<argument type="string" mandatory="no" default="none">subset_dims</argument>

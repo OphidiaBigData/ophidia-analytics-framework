@@ -314,17 +314,41 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MEMORY_ERROR_INPUT, "output path");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
+		if (strstr(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path, "..")) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
 		char *pointer = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path;
 		while (pointer && (*pointer == ' '))
 			pointer++;
-		if (pointer && (*pointer != '/')) {
+		if (pointer) {
+			char tmp[OPH_COMMON_BUFFER_LEN];
+			if (*pointer != '/') {
+				value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
+				if (!value) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (*value != '/') {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", value);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", value);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (strlen(value) > 1) {
+					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value + 1, pointer);
+					free(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path);
+					((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
+					pointer = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path;
+				}
+			}
 			if (oph_pid_get_base_src_path(&value)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, "Unable to read base src_path\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
 			if (value) {
-				char tmp[OPH_COMMON_BUFFER_LEN];
 				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value, pointer);
 				free(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path);
 				((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);

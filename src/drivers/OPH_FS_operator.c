@@ -121,15 +121,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CCD);
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
 	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CCD);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CCD);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!(((OPH_FS_operator_handle *) handle->operator_handle)->cwd = (char *) strdup(value))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MEMORY_ERROR_INPUT, OPH_IN_PARAM_CCD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MEMORY_ERROR_INPUT, OPH_IN_PARAM_CDD);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
@@ -221,7 +221,7 @@ int task_execute(oph_operator_struct * handle)
 			}
 			// ADD OUTPUT CWD TO NOTIFICATION STRING
 			char tmp_string[OPH_COMMON_BUFFER_LEN];
-			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_CCD, rel_path);
+			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_CDD, rel_path);
 			if (handle->output_string) {
 				strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
 				free(handle->output_string);

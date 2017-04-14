@@ -87,7 +87,7 @@
 #define OPH_IN_PARAM_SHOW_INDEX					"show_index"
 #define OPH_IN_PARAM_SHOW_TIME					"show_time"
 #define OPH_IN_PARAM_CWD					"cwd"
-#define OPH_IN_PARAM_CCD					"cdd"
+#define OPH_IN_PARAM_CDD					"cdd"
 #define OPH_IN_PARAM_HIDDEN					"hidden"
 #define OPH_IN_PARAM_DELETE_TYPE				"delete_type"
 #define OPH_IN_PARAM_DBMS_STATUS				"dbms_status"
