@@ -376,7 +376,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
 			if (value) {
-				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value, pointer);
+				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value, *pointer != '/' ? "/" : "", pointer);
 				free(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path);
 				((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
 				free(value);
