@@ -647,6 +647,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 				}
 				if (strlen(value) > 1) {
+					if (strstr(value, "..")) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					}
 					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value + 1, pointer);
 					free(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path);
 					((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
