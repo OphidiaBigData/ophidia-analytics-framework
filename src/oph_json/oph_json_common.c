@@ -1862,7 +1862,7 @@ int _oph_json_to_json_file(oph_json * json, char *filename, char **jstring)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_JSON_LOG_MEMORY_ERROR, "json string");
 		return OPH_JSON_MEMORY_ERROR;
 	}
-
+#ifdef OPH_JSON_SAVE
 	if (*jstring) {
 		FILE *fp = fopen(filename, "w");
 		if (!fp) {
@@ -1875,6 +1875,7 @@ int _oph_json_to_json_file(oph_json * json, char *filename, char **jstring)
 		fprintf(fp, "%s\n", *jstring);
 		fclose(fp);
 	}
+#endif
 
 	return OPH_JSON_SUCCESS;
 }
