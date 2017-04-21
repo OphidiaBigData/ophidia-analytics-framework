@@ -3,7 +3,7 @@
 <primitive name="oph_extend" version="1.0">
     <info>
         <abstract>[Behaviour]
-Return an array obtained by concatenating input array more times.
+Return an array obtained by concatenating input array more times. Append mode concatenates arrays in sequence, Interlace mode replies each element in place one by one.
 
 [Parameters]
 - input measure type : Ophidia typing. Supported types are:
@@ -22,6 +22,7 @@ Return an array obtained by concatenating input array more times.
 					&apos;oph_byte&apos;.
 - measure : list of input measure.
 - number : number of replies.
+- mode   : mode of replica ('a' append, 'i' interlace)
 
 [Return type]
 Binary-array.
@@ -40,5 +41,6 @@ oph_extend(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,4)</abstract>
         <argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
 	<argument type="binary-array" mandatory="yes">measure</argument>
 	<argument type="int" mandatory="no" default="1">number</argument>
+	<argument type="string" mandatory="no" default="a" values="'a'|'i'">mode</argument>
     </args>
 </primitive>
