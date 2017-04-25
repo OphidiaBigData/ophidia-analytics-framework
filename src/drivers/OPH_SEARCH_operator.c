@@ -38,6 +38,8 @@
 #include "oph_log_error_codes.h"
 #include "oph_pid_library.h"
 
+#define OPH_SEARCH_AND_SEPARATOR	","
+
 int recursive_search(const char *folder_abs_path, int folderid, const char *filters, ophidiadb * oDB, int *max_lengths, int max_lengths_size, char *query, char *path, int is_start,
 		     oph_json * oper_json, int is_objkey_printable)
 {
@@ -426,55 +428,67 @@ int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char 
 int get_filters_string(char **container_filter, int container_filter_num, char **metadata_key_filter, int metadata_key_filter_num, char **metadata_value_filter, int metadata_value_filter_num,
 		       char **filters_string)
 {
-	int n = 0;
-	int i;
+	int n = 0, m = 0;
+	int i, j = 0, k, t;
+
 	*filters_string = (char *) malloc(MYSQL_BUFLEN);
 	if (!(*filters_string)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory for filters\n");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
+	(*filters_string)[n] = 0;
 
-	if (!strcasecmp(container_filter[0], OPH_COMMON_ALL_FILTER)) {
-		(*filters_string)[n] = 0;
-	} else {
+	char query[MYSQL_BUFLEN], tmp[MYSQL_BUFLEN], *_tmp, *pch, *sp;
+	*query = 0;
+
+	if (strcasecmp(container_filter[0], OPH_COMMON_ALL_FILTER)) {
 		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "AND (");
+		m += snprintf(query + m, MYSQL_BUFLEN - m, m ? "AND (" : "(");
 		for (i = 0; i < container_filter_num; i++) {
-			if (i == 0) {
-				n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "container.containername LIKE '%s'", container_filter[i]);
-			} else {
-				n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, " OR container.containername LIKE '%s'", container_filter[i]);
-			}
+			n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "%scontainer.containername LIKE '%s'", i ? " OR " : "", container_filter[i]);
+			m += snprintf(query + m, MYSQL_BUFLEN - m, "%scontainer=%s", i ? " OR " : "", container_filter[i]);
 		}
 		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, ") ");
+		m += snprintf(query + m, MYSQL_BUFLEN - m, ") ");
 	}
 
-	if (!strcasecmp(metadata_key_filter[0], OPH_COMMON_ALL_FILTER)) {
-		(*filters_string)[n] = 0;
-	} else {
+	if (strcasecmp(metadata_key_filter[0], OPH_COMMON_ALL_FILTER)) {
 		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "AND (");
-		for (i = 0; i < metadata_key_filter_num; i++) {
-			if (i == 0) {
-				n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "metadatakey.label LIKE '%s'", metadata_key_filter[i]);
-			} else {
-				n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, " OR metadatakey.label LIKE '%s'", metadata_key_filter[i]);
+		m += snprintf(query + m, MYSQL_BUFLEN - m, m ? "AND (" : "(");
+		for (i = k = t = 0; i < metadata_key_filter_num; i++, t = 0) {
+			strcpy(tmp, metadata_key_filter[i]);
+			for (_tmp = tmp, sp = NULL; (pch = strtok_r(_tmp, OPH_SEARCH_AND_SEPARATOR, &sp)); _tmp = NULL, k++, t++) {
+				n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "%s(metadatakey.label LIKE '%s'", k ? (t ? " AND " : " OR ") : "", pch);
+				m += snprintf(query + m, MYSQL_BUFLEN - m, "%s(key=%s", k ? (t ? " AND " : " OR ") : "", pch);
+				if (strcasecmp(metadata_value_filter[0], OPH_COMMON_ALL_FILTER) && (j < metadata_value_filter_num)) {
+					n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, " AND CONVERT(metadatainstance.value USING latin1) LIKE '%%%s%%')", metadata_value_filter[j]);
+					m += snprintf(query + m, MYSQL_BUFLEN - m, " AND value=%s)", metadata_value_filter[j]);
+					j++;
+				} else {
+					n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, ")");
+					m += snprintf(query + m, MYSQL_BUFLEN - m, ")");
+				}
 			}
 		}
 		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, ") ");
+		m += snprintf(query + m, MYSQL_BUFLEN - m, ") ");
 	}
 
-	if (!strcasecmp(metadata_value_filter[0], OPH_COMMON_ALL_FILTER)) {
-		(*filters_string)[n] = 0;
-	} else {
+	if (strcasecmp(metadata_value_filter[0], OPH_COMMON_ALL_FILTER) && (j < metadata_value_filter_num)) {
 		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "AND (");
-		for (i = 0; i < metadata_value_filter_num; i++) {
-			if (i == 0) {
-				n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "CONVERT(metadatainstance.value USING latin1) LIKE '%%%s%%'", metadata_value_filter[i]);
-			} else {
-				n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, " OR CONVERT(metadatainstance.value USING latin1) LIKE '%%%s%%'", metadata_value_filter[i]);
-			}
+		m += snprintf(query + m, MYSQL_BUFLEN - m, m ? "AND (" : "(");
+		for (i = j, k = 0; i < metadata_value_filter_num; i++, k++) {
+			n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "%sCONVERT(metadatainstance.value USING latin1) LIKE '%%%s%%'", k ? " OR " : "", metadata_value_filter[i]);
+			m += snprintf(query + m, MYSQL_BUFLEN - m, "%svalue=%s", k ? " OR " : "", metadata_value_filter[i]);
 		}
 		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, ") ");
+		m += snprintf(query + m, MYSQL_BUFLEN - m, ") ");
 	}
+
+	(*filters_string)[n] = 0;
+	query[m] = 0;
+
+	pmesg(LOG_INFO, __FILE__, __LINE__, "Search query: %s\n", query);
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -635,6 +649,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 						      ((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_value_filter_num);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	int i;
+	for (i = 0; i < ((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_value_filter_num; ++i)
+		if (strstr(((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_value_filter[i], OPH_SEARCH_AND_SEPARATOR)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Separator '%s' cannot be used in filter for values: use it in filter for keys as 'AND'\n", OPH_SEARCH_AND_SEPARATOR);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Separator '%s' cannot be used in filter for values: use it in filter for keys as 'AND'\n", OPH_SEARCH_AND_SEPARATOR);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
 
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
@@ -683,8 +704,6 @@ int task_execute(oph_operator_struct * handle)
 	//Only master process has to continue
 	if (handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
-
-	logging(LOG_INFO, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_INFO_START);
 
 	int folderid;
 	char *abs_path = NULL;
@@ -792,8 +811,6 @@ int task_execute(oph_operator_struct * handle)
 		free(max_lengths);
 		max_lengths = NULL;
 	}
-
-	logging(LOG_INFO, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_INFO_END);
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
