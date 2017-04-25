@@ -653,7 +653,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	for (i = 0; i < ((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_value_filter_num; ++i)
 		if (strstr(((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_value_filter[i], OPH_SEARCH_AND_SEPARATOR)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Separator '%s' cannot be used in filter for values: use it in filter for keys as 'AND'\n", OPH_SEARCH_AND_SEPARATOR);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Separator '%s' cannot be used in filter for values: use it in filter for keys as 'AND'\n", OPH_SEARCH_AND_SEPARATOR);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Separator '%s' cannot be used in filter for values: use it in filter for keys as 'AND'\n",
+				OPH_SEARCH_AND_SEPARATOR);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 
