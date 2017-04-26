@@ -3099,32 +3099,36 @@ int task_init (oph_operator_struct *handle)
 			goto __OPH_EXIT_1;
 		}
 		char card[80];
-		fits_read_card(fptr, "FLT_ID", card, &status);
-  		if (status){
-			fits_get_errstatus(status, err_text);
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get FLT_ID attribute value from file: %s\n", err_text);
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get FLT_ID attribute value from file\n");
-			free(dimvar_ids);
-			goto __OPH_EXIT_1;
-  		}
-		//NOTE: the type of the key values is fixed to text
-		//Retrieve 'text' type id
-		char key_type[OPH_COMMON_TYPE_SIZE]; snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_METADATA_TYPE_TEXT);
-		int id_key_type = 0, sid_key_type;
-		if(oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &id_key_type)){
-			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_METADATATYPE_ID_ERROR);
-			free(dimvar_ids);
-			goto __OPH_EXIT_1;
-		}
-		sid_key_type = id_key_type;
-		int id_metadatainstance;
-		//if(oph_odb_meta_insert_into_metadatainstance_manage_tables(oDB, id_datacube_out, id_key ? (int)strtol(id_key, NULL, 10) : -1, id_key ? NULL : key, NULL, sid_key_type, id_user, svalue, &id_metadatainstance)){
-		if(oph_odb_meta_insert_into_metadatainstance_manage_tables(oDB, id_datacube_out, -1, "FLT_ID", NULL, sid_key_type, id_user, card, &id_metadatainstance)){
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
-			free(dimvar_ids);
-			goto __OPH_EXIT_1;
+		char *attr[2] = {"FLT_ID","OBS-TYPE"};
+		int mya;
+		for (mya=0; mya<2; mya++){
+			fits_read_card(fptr, attr[mya], card, &status);
+  			if (status){
+				fits_get_errstatus(status, err_text);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get %s attribute value from file: %s\n", attr[mya], err_text);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get %s attribute value from file\n", attr[mya]);
+				free(dimvar_ids);
+				goto __OPH_EXIT_1;
+  			}
+			//NOTE: the type of the key values is fixed to text
+			//Retrieve 'text' type id
+			char key_type[OPH_COMMON_TYPE_SIZE]; snprintf(key_type,OPH_COMMON_TYPE_SIZE,OPH_COMMON_METADATA_TYPE_TEXT);
+			int id_key_type = 0, sid_key_type;
+			if(oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &id_key_type)){
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+				logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_METADATATYPE_ID_ERROR);
+				free(dimvar_ids);
+				goto __OPH_EXIT_1;
+			}
+			sid_key_type = id_key_type;
+			int id_metadatainstance;
+			//if(oph_odb_meta_insert_into_metadatainstance_manage_tables(oDB, id_datacube_out, id_key ? (int)strtol(id_key, NULL, 10) : -1, id_key ? NULL : key, NULL, sid_key_type, id_user, svalue, &id_metadatainstance)){
+			if(oph_odb_meta_insert_into_metadatainstance_manage_tables(oDB, id_datacube_out, -1, attr[mya], NULL, sid_key_type, id_user, card, &id_metadatainstance)){
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
+				free(dimvar_ids);
+				goto __OPH_EXIT_1;
+			}
 		}
 	  }
 	#if 0
