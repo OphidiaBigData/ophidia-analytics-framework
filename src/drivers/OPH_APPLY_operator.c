@@ -58,7 +58,7 @@
 #define OPH_APPLY_PRIMITIVE_RETURN_STR "binary-array"
 
 #define OPH_APPLY_DATATYPE_PREFIX "oph_"
-#define OPH_APPLY_COMPLEX_DATATYPE_PREFIX "oph_complex_"
+#define OPH_APPLY_COMPLEX_DATATYPE_PREFIX "complex_"
 
 // XPath
 #define OPH_APPLY_XPATH_RETURN "/primitive/info/return"
@@ -703,7 +703,7 @@ int oph_apply_parse_query(oph_operator_struct * handle, char *data_type, const c
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container,
 						"Complex data types are partially supported: data will be considered as simple\n");
 					char new_type[strlen(p->primitive[0].output_datatype)];
-					sprintf(new_type, OPH_APPLY_DATATYPE_PREFIX "%s", p->primitive[0].output_datatype + strlen(OPH_APPLY_COMPLEX_DATATYPE_PREFIX));
+					strcpy(new_type, p->primitive[0].output_datatype + strlen(OPH_APPLY_COMPLEX_DATATYPE_PREFIX));
 					snprintf(data_type, OPH_ODB_CUBE_MEASURE_TYPE_SIZE, "%s", new_type);
 				} else
 					snprintf(data_type, OPH_ODB_CUBE_MEASURE_TYPE_SIZE, "%s", p->primitive[0].output_datatype);
