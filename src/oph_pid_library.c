@@ -176,6 +176,25 @@ int oph_pid_get_base_src_path(char *suffix, char **base_src_path)
 	return OPH_PID_SUCCESS;
 }
 
+int oph_pid_get_user_space(char *user_space)
+{
+	if (!user_space) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_PID_NULL_PARAM;
+	}
+	*user_space = -1;
+
+	if (oph_user_space < 0) {
+		int res;
+		if ((res = _oph_pid_load_data()))
+			return res;
+	}
+
+	*user_space = oph_user_space;
+
+	return OPH_PID_SUCCESS;
+}
+
 int oph_pid_get_uri(char **uri)
 {
 	if (!uri) {

@@ -136,7 +136,12 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	char *username = value;
+	char *username = value, user_space, user_space_default[] = "/";
+	if (oph_pid_get_user_space(&user_space)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read user_space\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read user_space\n");
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	};
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXPORT_METADATA);
 	if (!value) {
@@ -254,6 +259,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	char session_code[OPH_COMMON_BUFFER_LEN];
 	oph_pid_get_session_code(hashtbl_get(task_tbl, OPH_ARG_SESSIONID), session_code);
+	if (user_space && !strcmp(value, "default"))
+		value = &user_space_default;
 	if (!strcmp(value, "default")) {
 		if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->misc) {
 			value = hashtbl_get(task_tbl, OPH_ARG_WORKFLOWID);

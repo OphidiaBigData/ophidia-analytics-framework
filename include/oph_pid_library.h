@@ -51,10 +51,18 @@ int oph_pid_get_memory_size(long long *memory_size);
 
 /** 
  * \brief Function to load configuration data
+ * \brief username User that has submitted the task
  * \brief base_src_path Pointer to the memory area where base_src_path will be written; it has to be freed
  * \return 0 if successfull, N otherwise
  */
 int oph_pid_get_base_src_path(char *username, char **base_src_path);
+
+/** 
+ * \brief Function to load configuration data
+ * \brief user_space Pointer to the space to store the flag
+ * \return 0 if successfull, N otherwise
+ */
+int oph_pid_get_user_space(char *user_space);
 
 /** 
  * \brief Function to create a new pid given container and datacube id
