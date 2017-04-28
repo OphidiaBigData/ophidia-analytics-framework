@@ -40,6 +40,7 @@ char *oph_web_server_name = NULL;
 char *oph_web_server_location = NULL;
 long long oph_memory_size = -1;
 char *oph_base_src_path = NULL;
+char oph_user_space = -1;
 
 int oph_pid_create_pid(const char *url, int id_container, int id_datacube, char **pid)
 {
@@ -109,6 +110,9 @@ int _oph_pid_load_data()
 				}
 				strncpy(oph_base_src_path, position, strlen(position) + 1);
 				oph_base_src_path[strlen(position)] = '\0';
+			} else if (!strncmp(buffer, OPH_PID_USER_SPACE, strlen(OPH_PID_USER_SPACE)) && !strncmp(buffer, OPH_PID_USER_SPACE, strlen(buffer))) {
+				if (!strcasecmp(position, "yes"))
+					oph_user_space = 1;
 			}
 		}
 	}
@@ -116,6 +120,9 @@ int _oph_pid_load_data()
 
 	if (oph_memory_size < 0)
 		oph_memory_size = 0;
+
+	if (oph_user_space < 0)
+		oph_user_space = 0;
 
 	return OPH_PID_SUCCESS;
 }
@@ -138,7 +145,7 @@ int oph_pid_get_memory_size(long long *memory_size)
 	return OPH_PID_SUCCESS;
 }
 
-int oph_pid_get_base_src_path(char **base_src_path)
+int oph_pid_get_base_src_path(char *suffix, char **base_src_path)
 {
 	if (!base_src_path) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -154,7 +161,14 @@ int oph_pid_get_base_src_path(char **base_src_path)
 	if (!oph_base_src_path)
 		return OPH_PID_SUCCESS;
 
-	if (!(*base_src_path = strdup(oph_base_src_path))) {
+	if (oph_user_space && suffix) {
+		char tmp[strlen(oph_base_src_path) + strlen(suffix) + 1];
+		sprintf(tmp, "%s/%s", oph_base_src_path, suffix);
+		if (!(*base_src_path = strdup(tmp))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			return OPH_PID_MEMORY_ERROR;
+		}
+	} else if (!(*base_src_path = strdup(oph_base_src_path))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		return OPH_PID_MEMORY_ERROR;
 	}

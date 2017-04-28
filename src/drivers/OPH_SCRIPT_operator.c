@@ -193,6 +193,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
+	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
+	if (value && !(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->user = (char *) strdup(value))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_INPUT, OPH_ARG_USERNAME);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -485,7 +492,7 @@ int task_execute(oph_operator_struct * handle)
 	}
 
 	char *base_src_path = NULL;
-	if (oph_pid_get_base_src_path(&base_src_path)) {
+	if (oph_pid_get_base_src_path(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->user, &base_src_path)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, 0, "Unable to read OphidiaDB configuration\n");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -641,6 +648,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->marker_id) {
 		free((char *) ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->marker_id);
 		((OPH_SCRIPT_operator_handle *) handle->operator_handle)->marker_id = NULL;
+	}
+	if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->user) {
+		free((char *) ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->user);
+		((OPH_SCRIPT_operator_handle *) handle->operator_handle)->user = NULL;
 	}
 	if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys) {
 		oph_tp_free_multiple_value_param_list(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys, ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys_num);

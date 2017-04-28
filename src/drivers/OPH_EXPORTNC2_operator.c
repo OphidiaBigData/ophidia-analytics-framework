@@ -370,7 +370,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					pointer = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path;
 				}
 			}
-			if (oph_pid_get_base_src_path(&value)) {
+			if (oph_pid_get_base_src_path(username, &value)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;

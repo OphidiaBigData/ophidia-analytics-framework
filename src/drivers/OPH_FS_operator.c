@@ -68,6 +68,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	//1 - Set up struct to empty values
 	((OPH_FS_operator_handle *) handle->operator_handle)->cwd = NULL;
+	((OPH_FS_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_FS_operator_handle *) handle->operator_handle)->mode = -1;
 	((OPH_FS_operator_handle *) handle->operator_handle)->path = NULL;
 	((OPH_FS_operator_handle *) handle->operator_handle)->objkeys = NULL;
@@ -139,6 +140,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	if (!(((OPH_FS_operator_handle *) handle->operator_handle)->user = (char *) strdup(value))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MEMORY_ERROR_INPUT, OPH_IN_PARAM_CDD);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -177,7 +183,7 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	char *abs_path = NULL;
-	if (oph_pid_get_base_src_path(&abs_path)) {
+	if (oph_pid_get_base_src_path(((OPH_FS_operator_handle *) handle->operator_handle)->user, &abs_path)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -481,6 +487,14 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_FS_operator_handle *) handle->operator_handle)->path) {
 		free((char *) ((OPH_FS_operator_handle *) handle->operator_handle)->path);
 		((OPH_FS_operator_handle *) handle->operator_handle)->path = NULL;
+	}
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->cwd) {
+		free((char *) ((OPH_FS_operator_handle *) handle->operator_handle)->cwd);
+		((OPH_FS_operator_handle *) handle->operator_handle)->cwd = NULL;
+	}
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->user) {
+		free((char *) ((OPH_FS_operator_handle *) handle->operator_handle)->user);
+		((OPH_FS_operator_handle *) handle->operator_handle)->user = NULL;
 	}
 	if (((OPH_FS_operator_handle *) handle->operator_handle)->objkeys) {
 		oph_tp_free_multiple_value_param_list(((OPH_FS_operator_handle *) handle->operator_handle)->objkeys, ((OPH_FS_operator_handle *) handle->operator_handle)->objkeys_num);
