@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -184,7 +184,7 @@ int oph_date_to_day(int y, int m, int d, long long *g, oph_odb_dimension * dim)
 		m = (m + 9) % 12;
 		y = y - m / 10;
 		*g = 365L * y + y / 4 + (offset > 0 ? -y / 100 + y / 400 : 0) + (m * 306L + 5) / 10 + (d + offset - 2);
-	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN, OPH_ODB_DIM_TIME_SIZE)) {
+	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN2, OPH_ODB_DIM_TIME_SIZE)) {
 		m = (m + 9) % 12;
 		y = y - m / 10;
 		*g = 365L * y + y / 4 - y / 100 + y / 400 + (m * 306L + 5) / 10 + (d - 1);
@@ -192,13 +192,13 @@ int oph_date_to_day(int y, int m, int d, long long *g, oph_odb_dimension * dim)
 		m = (m + 9) % 12;
 		y = y - m / 10;
 		*g = 365L * y + y / 4 + (m * 306L + 5) / 10 + (d - 1);
-	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_360_DAY, OPH_ODB_DIM_TIME_SIZE)) {
+	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_360_DAY, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_360DAY, OPH_ODB_DIM_TIME_SIZE)) {
 		*g = 360L * y + 30L * (m - 1) + (d - 1);
-	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_NO_LEAP, OPH_ODB_DIM_TIME_SIZE)) {
+	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_NO_LEAP, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_NOLEAP, OPH_ODB_DIM_TIME_SIZE)) {
 		m = (m + 9) % 12;
 		y = y - m / 10;
 		*g = 365L * y + (m * 306L + 5) / 10 + (d - 1);
-	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALL_LEAP, OPH_ODB_DIM_TIME_SIZE)) {
+	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALL_LEAP, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALLLEAP, OPH_ODB_DIM_TIME_SIZE)) {
 		m = (m + 9) % 12;
 		y = y - m / 10;
 		*g = 366L * y + (m * 306L + 5) / 10 + (d - 1);
@@ -219,7 +219,7 @@ int oph_date_to_day(int y, int m, int d, long long *g, oph_odb_dimension * dim)
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_day_to_date(long long g, int *yy, int *mm, int *dd, oph_odb_dimension * dim)
+int oph_day_to_date(long long g, int *yy, int *mm, int *dd, int *wd, int *yd, oph_odb_dimension * dim)
 {
 	if (!yy || !mm || !dd || !dim)
 		return OPH_DIM_NULL_PARAM;
@@ -240,7 +240,7 @@ int oph_day_to_date(long long g, int *yy, int *mm, int *dd, oph_odb_dimension * 
 		*mm = (mi + 2) % 12 + 1;
 		*yy = y + (mi + 2) / 12;
 		*dd = ddd - (mi * 306 + 5) / 10 + 1;
-	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN, OPH_ODB_DIM_TIME_SIZE)) {
+	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN2, OPH_ODB_DIM_TIME_SIZE)) {
 		y = (10000 * g + 14780) / 3652425;
 		ddd = g - (365 * y + y / 4 - y / 100 + y / 400);
 		if (ddd < 0) {
@@ -262,13 +262,13 @@ int oph_day_to_date(long long g, int *yy, int *mm, int *dd, oph_odb_dimension * 
 		*mm = (mi + 2) % 12 + 1;
 		*yy = y + (mi + 2) / 12;
 		*dd = ddd - (mi * 306 + 5) / 10 + 1;
-	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_360_DAY, OPH_ODB_DIM_TIME_SIZE)) {
+	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_360_DAY, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_360DAY, OPH_ODB_DIM_TIME_SIZE)) {
 		*dd = g % OPH_ODB_DIM_DAY_NUMBER + 1;
 		g /= OPH_ODB_DIM_DAY_NUMBER;
 		*mm = g % OPH_ODB_DIM_MONTH_NUMBER + 1;
 		g /= OPH_ODB_DIM_MONTH_NUMBER;
 		*yy = g;
-	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_NO_LEAP, OPH_ODB_DIM_TIME_SIZE)) {
+	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_NO_LEAP, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_NOLEAP, OPH_ODB_DIM_TIME_SIZE)) {
 		y = g / 365;
 		ddd = g - 365 * y;
 		if (ddd < 0) {
@@ -279,7 +279,7 @@ int oph_day_to_date(long long g, int *yy, int *mm, int *dd, oph_odb_dimension * 
 		*mm = (mi + 2) % 12 + 1;
 		*yy = y + (mi + 2) / 12;
 		*dd = ddd - (mi * 306 + 5) / 10 + 1;
-	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALL_LEAP, OPH_ODB_DIM_TIME_SIZE)) {
+	} else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALL_LEAP, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALLLEAP, OPH_ODB_DIM_TIME_SIZE)) {
 		y = g / 366;
 		ddd = g - 366 * y;
 		if (ddd < 0) {
@@ -311,6 +311,22 @@ int oph_day_to_date(long long g, int *yy, int *mm, int *dd, oph_odb_dimension * 
 		*dd = ddd - (mi * days + 5) / 10 + 1;
 	} else
 		return OPH_DIM_DATA_ERROR;
+
+	if (wd || yd) {
+		time_t rawtime;
+		time(&rawtime);
+		struct tm timeinfo;
+		if (!localtime_r(&rawtime, &timeinfo))
+			return OPH_DIM_SYSTEM_ERROR;
+		timeinfo.tm_year = *yy - 1900;
+		timeinfo.tm_mon = *mm - 1;
+		timeinfo.tm_mday = *dd;
+		mktime(&timeinfo);
+		if (wd)
+			*wd = (timeinfo.tm_wday ? timeinfo.tm_wday : OPH_ODB_DIM_WEEK_NUMBER) - 1;	// Sunday will be marked with the last index
+		if (yd)
+			*yd = timeinfo.tm_yday;
+	}
 
 	return OPH_DIM_SUCCESS;
 }
@@ -371,7 +387,7 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 	value /= OPH_ODB_DIM_MINUTE_NUMBER;	// hours
 	tm_base->tm_hour = value % OPH_ODB_DIM_HOUR_NUMBER;
 	value /= OPH_ODB_DIM_HOUR_NUMBER;	// days
-	if (oph_day_to_date(value, &tm_base->tm_year, &tm_base->tm_mon, &tm_base->tm_mday, dim)) {
+	if (oph_day_to_date(value, &tm_base->tm_year, &tm_base->tm_mon, &tm_base->tm_mday, &tm_base->tm_wday, &tm_base->tm_yday, dim)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
 		return OPH_DIM_DATA_ERROR;
 	}
@@ -472,11 +488,13 @@ int oph_dim_get_month_size_of(struct tm *tm_time, oph_odb_dimension * dim)
 					int leap = 0, y = tm_time->tm_year;
 					if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_GREGORIAN, OPH_ODB_DIM_TIME_SIZE)
 					    || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_STANDARD, OPH_ODB_DIM_TIME_SIZE)
-					    || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN, OPH_ODB_DIM_TIME_SIZE))
+					    || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN, OPH_ODB_DIM_TIME_SIZE)
+					    || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_PGREGORIAN2, OPH_ODB_DIM_TIME_SIZE))
 						leap = !(y % 4) && (y % 100) && !(y % 400);
 					else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_JULIAN, OPH_ODB_DIM_TIME_SIZE))
 						leap = !(y % 4);
-					else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALL_LEAP, OPH_ODB_DIM_TIME_SIZE))
+					else if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALL_LEAP, OPH_ODB_DIM_TIME_SIZE)
+						 || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_ALLLEAP, OPH_ODB_DIM_TIME_SIZE))
 						leap = 1;
 					return leap ? 29 : 28;
 				}
@@ -514,7 +532,7 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 	long long base_time;
 	if (oph_dim_get_time_value_of(dim_row, kk, dim, &tm_base, &base_time))
 		return OPH_DIM_DATA_ERROR;
-	int msize;
+	int msize, prev_week, base_week;
 
 	// Check for group
 	int first_element = tm_prev->tm_year < 0;
@@ -598,39 +616,63 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 			if ((midnight && (tm_prev->tm_mday == tm_base.tm_mday) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour)
 			    || ((tm_prev->tm_mday != tm_base.tm_mday) && (!midnight || ((tm_prev->tm_mday + 1) % msize != tm_base.tm_mday) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour)))
 				break;
+		case 'w':
+			if (centroid) {
+				tm_centroid.tm_mday += 3 - tm_centroid.tm_wday;
+				tm_centroid.tm_wday = 3;
+				tm_centroid.tm_hour = 12;
+				tm_centroid.tm_min = 0;
+				tm_centroid.tm_sec = 0;
+				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
+					return OPH_DIM_DATA_ERROR;
+				}
+				centroid = 0;
+			}
+			if (first_element)
+				break;
+			prev_week = (tm_prev->tm_yday + (tm_prev->tm_wday + OPH_ODB_DIM_WEEK_NUMBER - tm_prev->tm_yday % OPH_ODB_DIM_WEEK_NUMBER) % OPH_ODB_DIM_WEEK_NUMBER) / OPH_ODB_DIM_WEEK_NUMBER;
+			base_week = (tm_base.tm_yday + (tm_base.tm_wday + OPH_ODB_DIM_WEEK_NUMBER - tm_base.tm_yday % OPH_ODB_DIM_WEEK_NUMBER) % OPH_ODB_DIM_WEEK_NUMBER) / OPH_ODB_DIM_WEEK_NUMBER;
+			if ((midnight && (prev_week == base_week) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && !tm_prev->tm_wday)
+			    || ((prev_week != base_week) && (!midnight || ((prev_week + 1) % 53 != base_week) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || tm_base.tm_wday)))
+				break;
 		case 'M':
-			if (centroid) {
-				tm_centroid.tm_mday = 15;
-				tm_centroid.tm_hour = 0;
-				tm_centroid.tm_min = 0;
-				tm_centroid.tm_sec = 0;
-				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
-					return OPH_DIM_DATA_ERROR;
+			if (concept_level_out != 'w') {
+				if (centroid) {
+					tm_centroid.tm_mday = 15;
+					tm_centroid.tm_hour = 0;
+					tm_centroid.tm_min = 0;
+					tm_centroid.tm_sec = 0;
+					if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
+						return OPH_DIM_DATA_ERROR;
+					}
+					centroid = 0;
 				}
-				centroid = 0;
+				if (first_element || (midnight && (tm_prev->tm_mon == tm_base.tm_mon) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1))
+				    || ((tm_prev->tm_mon != tm_base.tm_mon)
+					&& (!midnight || ((tm_prev->tm_mon + 1) % 12 != tm_base.tm_mon) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1))))
+					break;
 			}
-			if (first_element || (midnight && (tm_prev->tm_mon == tm_base.tm_mon) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1))
-			    || ((tm_prev->tm_mon != tm_base.tm_mon)
-				&& (!midnight || ((tm_prev->tm_mon + 1) % 12 != tm_base.tm_mon) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1))))
-				break;
 		case 'q':
-			if (centroid) {
-				tm_centroid.tm_mon = 1 + 3 * (tm_centroid.tm_mon / 3);
-				tm_centroid.tm_mday = 15;
-				tm_centroid.tm_hour = 0;
-				tm_centroid.tm_min = 0;
-				tm_centroid.tm_sec = 0;
-				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
-					return OPH_DIM_DATA_ERROR;
+			if (concept_level_out != 'w') {
+				if (centroid) {
+					tm_centroid.tm_mon = 1 + 3 * (tm_centroid.tm_mon / 3);
+					tm_centroid.tm_mday = 15;
+					tm_centroid.tm_hour = 0;
+					tm_centroid.tm_min = 0;
+					tm_centroid.tm_sec = 0;
+					if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
+						return OPH_DIM_DATA_ERROR;
+					}
+					centroid = 0;
 				}
-				centroid = 0;
+				if (first_element || (midnight && (tm_prev->tm_mon / 3 == tm_base.tm_mon / 3) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1))
+				    || ((tm_prev->tm_mon / 3 != tm_base.tm_mon / 3)
+					&& (!midnight || ((tm_prev->tm_mon / 3 + 1) % 4 != tm_base.tm_mon / 3) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1))))
+					break;
 			}
-			if (first_element || (midnight && (tm_prev->tm_mon / 3 == tm_base.tm_mon / 3) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1))
-			    || ((tm_prev->tm_mon / 3 != tm_base.tm_mon / 3)
-				&& (!midnight || ((tm_prev->tm_mon / 3 + 1) % 4 != tm_base.tm_mon / 3) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1))))
-				break;
 		case 'y':
 			if (centroid) {
 				tm_centroid.tm_mon = 6;

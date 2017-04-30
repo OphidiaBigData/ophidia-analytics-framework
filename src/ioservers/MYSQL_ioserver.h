@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -63,10 +63,10 @@
  * \param stmt   Pointer to mysql statement struct
  * \param bind   Pointer to mysql bind struct
  */
-typedef struct{
-  MYSQL_STMT *stmt;
-  MYSQL_BIND *bind;
-}_mysql_query_struct;
+typedef struct {
+	MYSQL_STMT *stmt;
+	MYSQL_BIND *bind;
+} _mysql_query_struct;
 
 
 /**
@@ -74,7 +74,7 @@ typedef struct{
  * \param handle        Address to pointer for dynamic server plugin handle
  * \return              0 if successfull, non-0 otherwise
  */
-int _mysql_setup (oph_ioserver_handler *handle);
+int _mysql_setup(oph_ioserver_handler * handle);
 
 /**
  * \brief               Function to connect or reconnect to data store server.
@@ -83,7 +83,7 @@ int _mysql_setup (oph_ioserver_handler *handle);
  * \param connection    Adress of pointer to server-specific connection structure
  * \return              0 if successfull, non-0 otherwise
  */
-int _mysql_connect (oph_ioserver_handler *handle, oph_ioserver_params* conn_params, void **connection);
+int _mysql_connect(oph_ioserver_handler * handle, oph_ioserver_params * conn_params, void **connection);
 
 /**
  * \brief               Function to set default database for specified server.
@@ -92,7 +92,7 @@ int _mysql_connect (oph_ioserver_handler *handle, oph_ioserver_params* conn_para
  * \param connection    Pointer to server-specific connection structure
  * \return              0 if successfull, non-0 otherwise
  */
-int _mysql_use_db (oph_ioserver_handler *handle, const char *db_name, void *connection);
+int _mysql_use_db(oph_ioserver_handler * handle, const char *db_name, void *connection);
 
 /**
  * \brief               Function to execute an operation on data stored into server.
@@ -101,7 +101,7 @@ int _mysql_use_db (oph_ioserver_handler *handle, const char *db_name, void *conn
  * \param query         Pointer to query to be executed
  * \return              0 if successfull, non-0 otherwise
  */
-int _mysql_execute_query (oph_ioserver_handler* handle, void *connection, oph_ioserver_query *query); 
+int _mysql_execute_query(oph_ioserver_handler * handle, void *connection, oph_ioserver_query * query);
 
 /**
  * \brief               Function to setup the query structure with given operation and array argument
@@ -113,7 +113,7 @@ int _mysql_execute_query (oph_ioserver_handler* handle, void *connection, oph_io
  * \param query         Pointer to query to be built
  * \return              0 if successfull, non-0 otherwise
  */
-int _mysql_setup_query (oph_ioserver_handler* handle, void *connection, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg **args, oph_ioserver_query **query); 
+int _mysql_setup_query(oph_ioserver_handler * handle, void *connection, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg ** args, oph_ioserver_query ** query);
 
 /**
  * \brief               Function to release resources allocated for query
@@ -121,7 +121,7 @@ int _mysql_setup_query (oph_ioserver_handler* handle, void *connection, const ch
  * \param query         Pointer to query to be executed
  * \return              0 if successfull, non-0 otherwise
  */
-int _mysql_free_query (oph_ioserver_handler* handle, oph_ioserver_query *query); 
+int _mysql_free_query(oph_ioserver_handler * handle, oph_ioserver_query * query);
 
 /**
  * \brief               Function to close connection established towards data store server.
@@ -129,14 +129,14 @@ int _mysql_free_query (oph_ioserver_handler* handle, oph_ioserver_query *query);
  * \param connection    Pointer to server-specific connection structure
  * \return              0 if successfull, non-0 otherwise
  */
-int _mysql_close (oph_ioserver_handler* handle, void *connection);
+int _mysql_close(oph_ioserver_handler * handle, void *connection);
 
 /**
  * \brief               Function to finalize library of data store server and release all dynamic loading resources.
  * \param handle        Dynamic server plugin handle
  * \return              0 if successfull, non-0 otherwise
  */
-int _mysql_cleanup (oph_ioserver_handler *handle);
+int _mysql_cleanup(oph_ioserver_handler * handle);
 
 /**
  * \brief               Function to get result set after executing a query.
@@ -145,7 +145,7 @@ int _mysql_cleanup (oph_ioserver_handler *handle);
  * \param result        Pointer to the result set structure to be filled
  * \return              0 if successfull, non-0 otherwise
  */
-int _mysql_get_result(oph_ioserver_handler* handle, void *connection,  oph_ioserver_result **result);
+int _mysql_get_result(oph_ioserver_handler * handle, void *connection, oph_ioserver_result ** result);
 
 /**
  * \brief               Function to fetch the next row in a result set.
@@ -154,7 +154,7 @@ int _mysql_get_result(oph_ioserver_handler* handle, void *connection,  oph_ioser
  * \param current_row	Pointer to the next row structure in the result set
  * \return              0 if successfull, non-0 otherwise
  */
-int _mysql_fetch_row(oph_ioserver_handler* handle, oph_ioserver_result *result,  oph_ioserver_row **current_row);
+int _mysql_fetch_row(oph_ioserver_handler * handle, oph_ioserver_result * result, oph_ioserver_row ** current_row);
 
 /**
  * \brief               Function to free the allocated result set.
@@ -162,6 +162,6 @@ int _mysql_fetch_row(oph_ioserver_handler* handle, oph_ioserver_result *result, 
  * \param result        Pointer to the result set structure to free
  * \return              0 if successfull, non-0 otherwise
  */
-int _mysql_free_result(oph_ioserver_handler* handle, oph_ioserver_result *result);
+int _mysql_free_result(oph_ioserver_handler * handle, oph_ioserver_result * result);
 
-#endif  //__MYSQL_IOSERVER_H
+#endif				//__MYSQL_IOSERVER_H

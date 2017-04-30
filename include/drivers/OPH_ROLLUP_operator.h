@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -52,28 +52,27 @@
  * \param id_user ID of submitter
  * \param description Free description to be associated with output cube
  */
-struct _OPH_ROLLUP_operator_handle
-{
-  ophidiadb oDB;
-  int id_input_datacube;
-  int id_input_container;
-  int id_output_datacube;
-  int id_output_container;
-  int id_job;
-  int schedule_algo;
-  char* fragment_ids;
-  int fragment_number;
-  int fragment_id_start_position;
-  int size;
-  char* measure_type;
-  int compressed;
-  char **objkeys;
-  int objkeys_num;
-  oph_ioserver_handler *server;
-  char *sessionid;
-  int id_user;
-  char* description;
+struct _OPH_ROLLUP_operator_handle {
+	ophidiadb oDB;
+	int id_input_datacube;
+	int id_input_container;
+	int id_output_datacube;
+	int id_output_container;
+	int id_job;
+	int schedule_algo;
+	char *fragment_ids;
+	int fragment_number;
+	int fragment_id_start_position;
+	int size;
+	char *measure_type;
+	int compressed;
+	char **objkeys;
+	int objkeys_num;
+	oph_ioserver_handler *server;
+	char *sessionid;
+	int id_user;
+	char *description;
 };
 typedef struct _OPH_ROLLUP_operator_handle OPH_ROLLUP_operator_handle;
 
-#endif  //__OPH_ROLLUP_OPERATOR_H
+#endif				//__OPH_ROLLUP_OPERATOR_H

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #define __OPH_IOSERVER_LOG_ERROR_CODES_H
 
 /*MYSQL IOSERVER LOG ERRORS*/
-#define OPH_IOSERVER_LOG_MYSQL_LIB_INIT_ERROR   "MySQL lib initialization error\n" 
+#define OPH_IOSERVER_LOG_MYSQL_LIB_INIT_ERROR   "MySQL lib initialization error\n"
 #define OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM "Null input parameter\n"
 #define OPH_IOSERVER_LOG_MYSQL_INIT_ERROR       "MySQL initialization error: %s\n"
 #define OPH_IOSERVER_LOG_MYSQL_CONN_ERROR       "MySQL connection error: %s\n"
@@ -37,8 +37,8 @@
 #define OPH_IOSERVER_LOG_MYSQL_STMT_EXEC_ERROR  "Error in mysql_stmt_execute() failed: %s\n"
 #define OPH_IOSERVER_LOG_MYSQL_UNKNOWN_KEYWORD  "Unknown keyword '%s'\n"
 #define OPH_IOSERVER_LOG_MYSQL_UNKNOWN_OPERATION "Unknown operation '%s'\n"
-#define OPH_IOSERVER_LOG_MYSQL_ERROR_PARSING    "Error parsing submission query!\n" 
-#define OPH_IOSERVER_LOG_MYSQL_QUERY_NOT_VALID  "Submission string is not valid!\n" 
+#define OPH_IOSERVER_LOG_MYSQL_ERROR_PARSING    "Error parsing submission query!\n"
+#define OPH_IOSERVER_LOG_MYSQL_QUERY_NOT_VALID  "Submission string is not valid!\n"
 #define OPH_IOSERVER_LOG_MYSQL_ARG_COUNT_ERROR  "Unable to count query arguments!\n"
 #define OPH_IOSERVER_LOG_MYSQL_HASHTBL_ERROR    "Unable to create hash table\n"
 #define OPH_IOSERVER_LOG_MYSQL_LOAD_ARGS_ERROR  "Unable to load query arguments\n"
@@ -55,10 +55,10 @@
 #define OPH_IOSERVER_LOG_OPHIDIAIO_EXEC_QUERY_ERROR "OPHIDIAIO execute query error\n"
 #define OPH_IOSERVER_LOG_OPHIDIAIO_MEMORY_ERROR	"Memory allocation error\n"
 #define OPH_IOSERVER_LOG_OPHIDIAIO_ERROR_PARSING    "Error parsing submission query!\n"
-#define OPH_IOSERVER_LOG_OPHIDIAIO_SETUP_QUERY_ERROR "OPHIDIAIO setup query error\n" 
+#define OPH_IOSERVER_LOG_OPHIDIAIO_SETUP_QUERY_ERROR "OPHIDIAIO setup query error\n"
 #define OPH_IOSERVER_LOG_OPHIDIAIO_GET_RESULT_ERROR "OPHIDIAIO get result error\n"
 #define OPH_IOSERVER_LOG_OPHIDIAIO_NOT_NULL_INPUT_PARAM OPH_IOSERVER_LOG_MYSQL_NOT_NULL_INPUT_PARAM
 #define OPH_IOSERVER_LOG_OPHIDIAIO_FETCH_ROW_ERROR  "OPHIDIAIO fetch row error\n"
 #define OPH_IOSERVER_LOG_OPHIDIAIO_EXEC_QUERY_TYPE_ERROR "MySQL query type not defined\n"
 
-#endif  //__OPH_IOSERVER_LOG_ERROR_CODES_H
+#endif				//__OPH_IOSERVER_LOG_ERROR_CODES_H

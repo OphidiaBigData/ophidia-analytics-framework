@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -82,32 +82,33 @@ int _oph_pid_load_data()
 		position = strchr(buffer, '=');
 		if (position != NULL) {
 			*position = '\0';
+			position++;
 			if (!oph_web_server_name && !strncmp(buffer, OPH_PID_WEBSERVER_NAME, strlen(OPH_PID_WEBSERVER_NAME))) {
-				if (!(oph_web_server_name = (char *) malloc((strlen(position + 1) + 1) * sizeof(char)))) {
+				if (!(oph_web_server_name = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 					fclose(file);
 					return OPH_PID_MEMORY_ERROR;
 				}
-				strncpy(oph_web_server_name, position + 1, strlen(position + 1) + 1);
-				oph_web_server_name[strlen(position + 1)] = '\0';
+				strncpy(oph_web_server_name, position, strlen(position) + 1);
+				oph_web_server_name[strlen(position)] = '\0';
 			} else if (!oph_web_server_location && !strncmp(buffer, OPH_PID_WEBSERVER_LOCATION, strlen(OPH_PID_WEBSERVER_LOCATION))) {
-				if (!(oph_web_server_location = (char *) malloc((strlen(position + 1) + 1) * sizeof(char)))) {
+				if (!(oph_web_server_location = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 					fclose(file);
 					return OPH_PID_MEMORY_ERROR;
 				}
-				strncpy(oph_web_server_location, position + 1, strlen(position + 1) + 1);
-				oph_web_server_location[strlen(position + 1)] = '\0';
+				strncpy(oph_web_server_location, position, strlen(position) + 1);
+				oph_web_server_location[strlen(position)] = '\0';
 			} else if (!strncmp(buffer, OPH_PID_MEMORY, strlen(OPH_PID_MEMORY)) && !strncmp(buffer, OPH_PID_MEMORY, strlen(buffer))) {
-				oph_memory_size = (long long) strtoll(position + 1, NULL, 10);
+				oph_memory_size = (long long) strtoll(position, NULL, 10);
 			} else if (!strncmp(buffer, OPH_PID_BASE_SRC_PATH, strlen(OPH_PID_BASE_SRC_PATH)) && !strncmp(buffer, OPH_PID_BASE_SRC_PATH, strlen(buffer))) {
-				if (!(oph_base_src_path = (char *) malloc((strlen(position + 1) + 1) * sizeof(char)))) {
+				if (!(oph_base_src_path = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 					fclose(file);
 					return OPH_PID_MEMORY_ERROR;
 				}
-				strncpy(oph_base_src_path, position + 1, strlen(position + 1) + 1);
-				oph_base_src_path[strlen(position + 1)] = '\0';
+				strncpy(oph_base_src_path, position, strlen(position) + 1);
+				oph_base_src_path[strlen(position)] = '\0';
 			}
 		}
 	}
@@ -316,8 +317,9 @@ int oph_pid_get_session_code(const char *sessionid, char *code)
 			return res;
 	}
 
-	char tmp[OPH_COMMON_BUFFER_LEN];
+	char tmp[1 + OPH_COMMON_BUFFER_LEN];
 	strncpy(tmp, sessionid, OPH_COMMON_BUFFER_LEN);
+	tmp[OPH_COMMON_BUFFER_LEN] = 0;
 
 	char *tmp2 = tmp, *savepointer = NULL;
 	unsigned short i, max = 3;

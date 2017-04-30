@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@
 
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
-#include "oph_datacube2_library.h"
+#include "oph_datacube_library.h"
 
 #define OPH_APPLY_BLACK_LIST {"oph_compress","oph_uncompress"}
 #define OPH_APPLY_BLACK_LIST_SIZE 2
@@ -58,6 +58,7 @@
 #define OPH_APPLY_PRIMITIVE_RETURN_STR "binary-array"
 
 #define OPH_APPLY_DATATYPE_PREFIX "oph_"
+#define OPH_APPLY_COMPLEX_DATATYPE_PREFIX "complex_"
 
 // XPath
 #define OPH_APPLY_XPATH_RETURN "/primitive/info/return"
@@ -696,9 +697,17 @@ int oph_apply_parse_query(oph_operator_struct * handle, char *data_type, const c
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_INVALID_INPUT_STRING);
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
-			} else if (p && p->size && p->primitive[0].output_datatype)
-				snprintf(data_type, OPH_ODB_CUBE_MEASURE_TYPE_SIZE, "%s", p->primitive[0].output_datatype);
-			else {
+			} else if (p && p->size && p->primitive[0].output_datatype) {
+				if (strcasestr(p->primitive[0].output_datatype, OPH_APPLY_COMPLEX_DATATYPE_PREFIX)) {
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Complex data types are partially supported: data will be considered as simple\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container,
+						"Complex data types are partially supported: data will be considered as simple\n");
+					char new_type[strlen(p->primitive[0].output_datatype)];
+					strcpy(new_type, p->primitive[0].output_datatype + strlen(OPH_APPLY_COMPLEX_DATATYPE_PREFIX));
+					snprintf(data_type, OPH_ODB_CUBE_MEASURE_TYPE_SIZE, "%s", new_type);
+				} else
+					snprintf(data_type, OPH_ODB_CUBE_MEASURE_TYPE_SIZE, "%s", p->primitive[0].output_datatype);
+			} else {
 				oph_apply_primitives_free(&p);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong parameter %s: output data type cannot be set\n", OPH_IN_PARAM_APPLY_QUERY);
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_INVALID_INPUT_STRING);
@@ -1586,7 +1595,7 @@ int task_execute(oph_operator_struct * handle)
 	int size = ((OPH_APPLY_operator_handle *) handle->operator_handle)->expl_size;
 	long long size_;
 
-	if (oph_dc2_setup_dbms(&(((OPH_APPLY_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
+	if (oph_dc_setup_dbms(&(((OPH_APPLY_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -1594,7 +1603,7 @@ int task_execute(oph_operator_struct * handle)
 	//For each DBMS
 	for (i = 0; (i < dbmss.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
 
-		if (oph_dc2_connect_to_dbms(((OPH_APPLY_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
+		if (oph_dc_connect_to_dbms(((OPH_APPLY_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_DBMS_CONNECTION_ERROR,
 				(dbmss.value[i]).id_dbms);
@@ -1606,7 +1615,7 @@ int task_execute(oph_operator_struct * handle)
 			if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
 				continue;
 
-			if (oph_dc2_use_db_of_dbms(((OPH_APPLY_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
+			if (oph_dc_use_db_of_dbms(((OPH_APPLY_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_DB_SELECTION_ERROR,
 					(dbs.value[j]).db_name);
@@ -1630,7 +1639,7 @@ int task_execute(oph_operator_struct * handle)
 					}
 				}
 
-				if (oph_dc2_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &frag_name_out)) {
+				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &frag_name_out)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag  name exceed limit.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_STRING_BUFFER_OVERFLOW,
 						"fragment name", frag_name_out);
@@ -1641,7 +1650,7 @@ int task_execute(oph_operator_struct * handle)
 				size_ = size;
 				if (((OPH_APPLY_operator_handle *) handle->operator_handle)->num_reference_to_dim && ((OPH_APPLY_operator_handle *) handle->operator_handle)->array_values
 				    && ((OPH_APPLY_operator_handle *) handle->operator_handle)->array_length) {
-					if (oph_dc2_create_fragment_from_query_with_params
+					if (oph_dc_create_fragment_from_query_with_params
 					    (((OPH_APPLY_operator_handle *) handle->operator_handle)->server, &(frags.value[k]), frag_name_out, array_operation, 0,
 					     ((OPH_APPLY_operator_handle *) handle->operator_handle)->expl_size_update ? &size_ : 0, 0,
 					     ((OPH_APPLY_operator_handle *) handle->operator_handle)->array_values, ((OPH_APPLY_operator_handle *) handle->operator_handle)->array_length,
@@ -1653,7 +1662,7 @@ int task_execute(oph_operator_struct * handle)
 						break;
 					}
 				} else
-				    if (oph_dc2_create_fragment_from_query
+				    if (oph_dc_create_fragment_from_query
 					(((OPH_APPLY_operator_handle *) handle->operator_handle)->server, &(frags.value[k]), frag_name_out, array_operation, 0,
 					 ((OPH_APPLY_operator_handle *) handle->operator_handle)->expl_size_update ? &size_ : 0, 0)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
@@ -1672,7 +1681,7 @@ int task_execute(oph_operator_struct * handle)
 				// Extract the number of elements of resulting array
 				if (!handle->proc_rank && first) {
 					long long old_impl_size = ((OPH_APPLY_operator_handle *) handle->operator_handle)->impl_size, new_impl_size = 0;
-					if (oph_dc2_get_number_of_elements_in_fragment_row
+					if (oph_dc_get_number_of_elements_in_fragment_row
 					    (((OPH_APPLY_operator_handle *) handle->operator_handle)->server, &(frags.value[k]), ((OPH_APPLY_operator_handle *) handle->operator_handle)->measure_type,
 					     ((OPH_APPLY_operator_handle *) handle->operator_handle)->compressed, &new_impl_size) || !new_impl_size) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to extract the number of element of resulting rows.\n");
@@ -1687,7 +1696,7 @@ int task_execute(oph_operator_struct * handle)
 					}
 
 					long long new_expl_size = 0;
-					if (oph_dc2_get_total_number_of_rows_in_fragment
+					if (oph_dc_get_total_number_of_rows_in_fragment
 					    (((OPH_APPLY_operator_handle *) handle->operator_handle)->server, &(frags.value[k]), ((OPH_APPLY_operator_handle *) handle->operator_handle)->measure_type,
 					     &new_expl_size) || !new_expl_size) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to extract the number of rows of resulting fragment.\n");
@@ -1726,11 +1735,11 @@ int task_execute(oph_operator_struct * handle)
 				frag_count++;
 			}
 		}
-		oph_dc2_disconnect_from_dbms(((OPH_APPLY_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+		oph_dc_disconnect_from_dbms(((OPH_APPLY_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 
 	}
 
-	if (oph_dc2_cleanup_dbms(((OPH_APPLY_operator_handle *) handle->operator_handle)->server)) {
+	if (oph_dc_cleanup_dbms(((OPH_APPLY_operator_handle *) handle->operator_handle)->server)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_IOPLUGIN_CLEANUP_ERROR, (dbmss.value[0]).id_dbms);
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;

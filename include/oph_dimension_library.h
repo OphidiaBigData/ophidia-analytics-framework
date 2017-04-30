@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@
 #define OPH_DIM_MYSQL_ERROR		2
 #define OPH_DIM_DATA_ERROR 		3
 #define OPH_DIM_TIME_PARSING_ERROR	4
+#define OPH_DIM_SYSTEM_ERROR	5
 
 #define OPH_DIM_DOUBLE_TYPE		OPH_COMMON_DOUBLE_TYPE
 #define OPH_DIM_FLOAT_TYPE 		OPH_COMMON_FLOAT_TYPE

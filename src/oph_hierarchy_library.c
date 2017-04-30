@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -88,18 +88,18 @@ int _oph_hier_get_attribute(xmlNodePtr node, oph_hier_attribute * attribute)
 	if (result == OPH_HIER_OK) {
 		name_attr = xmlHasProp(node, (xmlChar *) OPH_HIER_STR_LONG_NAME);
 		if (!name_attr || !strlen((char *) name_attr->children->content)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missed property '%s' for attribute '%s'\n", attribute->long_name);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missed property '%s'\n", OPH_HIER_STR_LONG_NAME);
 			result = OPH_HIER_XML_ERR;
 		} else {
-			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Property '%s' for attribute '%s' read\n", OPH_HIER_STR_LONG_NAME, attribute->long_name);
 			strncpy(attribute->long_name, (char *) name_attr->children->content, OPH_HIER_MAX_STRING_LENGTH);
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Property '%s' for attribute '%s' read\n", OPH_HIER_STR_LONG_NAME, attribute->long_name);
 		}
 	}
 
 	if (result == OPH_HIER_OK) {
 		name_attr = xmlHasProp(node, (xmlChar *) OPH_HIER_STR_SHORT_NAME);
 		if (!name_attr || !strlen((char *) name_attr->children->content)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missed property '%s' for attribute '%s'\n", attribute->long_name);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missed property '%s' for attribute '%s'\n", OPH_HIER_STR_SHORT_NAME, attribute->long_name);
 			result = OPH_HIER_XML_ERR;
 		} else {
 			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Property '%s' for attribute '%s' read\n", OPH_HIER_STR_SHORT_NAME, attribute->long_name);
@@ -110,11 +110,11 @@ int _oph_hier_get_attribute(xmlNodePtr node, oph_hier_attribute * attribute)
 	if (result == OPH_HIER_OK) {
 		name_attr = xmlHasProp(node, (xmlChar *) OPH_HIER_STR_AGGREGATE_FIELD);
 		if (!name_attr || !strlen((char *) name_attr->children->content)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missed property '%s' for attribute '%s'\n", attribute->long_name);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missed property '%s' for attribute '%s'\n", OPH_HIER_STR_AGGREGATE_FIELD, attribute->long_name);
 			result = OPH_HIER_XML_ERR;
 		} else {
 			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Property '%s' for attribute '%s' read\n", OPH_HIER_STR_AGGREGATE_FIELD, attribute->long_name);
-			attribute->aggregate_field = *((char *) name_attr->children->content);
+			strncpy(attribute->aggregate_field, (char *) name_attr->children->content, OPH_HIER_MAX_STRING_LENGTH);
 		}
 	}
 
@@ -321,12 +321,9 @@ int oph_hier_get_hierarchy(oph_hier_hierarchy * hierarchy, oph_hier_document * d
 			}
 			last_kk = kk;
 			if (result == OPH_HIER_OK) {
-				int ordered_list[hierarchy->attribute_number];
-				if ((result = _oph_hier_order_list(ordered_list, saved_names, hierarchy->attribute_number)) == OPH_HIER_OK) {
-					for (kk = 0; kk < hierarchy->attribute_number; ++kk) {
-						if ((result = _oph_hier_get_attribute(saved_names[kk], hierarchy->attributes[ordered_list[kk]])) != OPH_HIER_OK)
-							break;
-					}
+				for (kk = 0; kk < hierarchy->attribute_number; ++kk) {
+					if ((result = _oph_hier_get_attribute(saved_names[kk], hierarchy->attributes[kk])) != OPH_HIER_OK)
+						break;
 				}
 			}
 			if (result != OPH_HIER_OK)	// Free - roll-back
@@ -617,8 +614,10 @@ int oph_hier_retrieve_available_op(const char *filename, char concept_level_in, 
 		result->names[k] = strndup(hierarchy->attributes[j]->aggregate_operation_list->names[k], OPH_HIER_MAX_STRING_LENGTH);
 
 	if (j)
-		for (*aggregate_set = 1, --i; i >= j; --i)
-			*aggregate_set *= hierarchy->attributes[i]->aggregate_set;
+		for (*aggregate_set = 1, --i; i >= j; --i) {
+			if ((hierarchy->attributes[i]->short_name != 'w') || (hierarchy->attributes[j]->short_name == 'w'))
+				*aggregate_set *= hierarchy->attributes[i]->aggregate_set;
+		}
 
 	oph_hier_free_hierarchy(hierarchy);
 	oph_hier_close(document);

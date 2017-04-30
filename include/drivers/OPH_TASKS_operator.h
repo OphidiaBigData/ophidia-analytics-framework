@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,19 +36,18 @@
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
  */
-struct _OPH_TASKS_operator_handle
-{
-  ophidiadb oDB;
-  char *datacube_name;
-  char *path;
-  char *cwd;
-  char *container_name;
-  char *user;
-  char *operator;
-  char **objkeys;
-  int objkeys_num;
-  char *sessionid;
+struct _OPH_TASKS_operator_handle {
+	ophidiadb oDB;
+	char *datacube_name;
+	char *path;
+	char *cwd;
+	char *container_name;
+	char *user;
+	char *operator;
+	char **objkeys;
+	int objkeys_num;
+	char *sessionid;
 };
 typedef struct _OPH_TASKS_operator_handle OPH_TASKS_operator_handle;
 
-#endif  //__OPH_TASKS_OPERATOR_H
+#endif				//__OPH_TASKS_OPERATOR_H

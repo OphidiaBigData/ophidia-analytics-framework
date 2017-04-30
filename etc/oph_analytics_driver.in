@@ -25,9 +25,6 @@ LIB	@MYSQL_LDFLAGS@
 [OPH_AGGREGATE2]
 @DRIVER_PATH@/liboph_aggregate2operator.so
 LIB	@MYSQL_LDFLAGS@
-[OPH_INTERCOMPARISON]
-@DRIVER_PATH@/liboph_intercomparisonoperator.so
-LIB	@MYSQL_LDFLAGS@
 [OPH_DRILLDOWN]
 @DRIVER_PATH@/liboph_drilldownoperator.so
 LIB	@MYSQL_LDFLAGS@
@@ -79,8 +76,8 @@ LIB	@MYSQL_LDFLAGS@
 [OPH_TASKS]
 @DRIVER_PATH@/liboph_tasksoperator.so
 LIB	@MYSQL_LDFLAGS@
-[OPH_IMPORTNC3]
-@DRIVER_PATH@/liboph_importnc3operator.so
+[OPH_IMPORTNC]
+@DRIVER_PATH@/liboph_importncoperator.so
 LIB     @MYSQL_LDFLAGS@
 [OPH_CONCATNC]
 @DRIVER_PATH@/liboph_concatncoperator.so

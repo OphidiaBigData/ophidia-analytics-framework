@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@
 
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
-#include "oph_datacube2_library.h"
+#include "oph_datacube_library.h"
 
 #define OPH_MERGECUBES_ARG_BUFFER 100
 
@@ -1150,7 +1150,7 @@ int task_execute(oph_operator_struct * handle)
 	char **input_db = (char **) malloc(datacube_num * sizeof(char *));
 	char *query = NULL;
 
-	if (oph_dc2_setup_dbms(&(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server), (dbmss[0].value[0]).io_server_type)) {
+	if (oph_dc_setup_dbms(&(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server), (dbmss[0].value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_IOPLUGIN_SETUP_ERROR,
 			(dbmss[0].value[i]).id_dbms);
@@ -1173,7 +1173,7 @@ int task_execute(oph_operator_struct * handle)
 				break;
 		}
 
-		if (oph_dc2_connect_to_dbms(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server, &(dbmss[0].value[i]), 0)) {
+		if (oph_dc_connect_to_dbms(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server, &(dbmss[0].value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_DBMS_CONNECTION_ERROR,
 				(dbmss[0].value[i]).id_dbms);
@@ -1185,7 +1185,7 @@ int task_execute(oph_operator_struct * handle)
 			if (dbs[0].value[j].dbms_instance != &(dbmss[0].value[i]))
 				continue;
 
-			if (oph_dc2_use_db_of_dbms(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server, &(dbmss[0].value[i]), &(dbs[0].value[j]))) {
+			if (oph_dc_use_db_of_dbms(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server, &(dbmss[0].value[i]), &(dbs[0].value[j]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_DB_SELECTION_ERROR,
 					(dbs[0].value[j]).db_name);
@@ -1221,7 +1221,7 @@ int task_execute(oph_operator_struct * handle)
 					}
 				}
 
-				if (oph_dc2_generate_fragment_name(dbs[0].value[j].db_name, id_datacube_out, handle->proc_rank, (frag_count + 1), &frag_name_out)) {
+				if (oph_dc_generate_fragment_name(dbs[0].value[j].db_name, id_datacube_out, handle->proc_rank, (frag_count + 1), &frag_name_out)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag name exceed limit.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
 						OPH_LOG_OPH_MERGECUBES_STRING_BUFFER_OVERFLOW, "fragment name", frag_name_out);
@@ -1279,7 +1279,7 @@ int task_execute(oph_operator_struct * handle)
 					break;
 				}
 				//MERGECUBES fragment
-				if (oph_dc2_create_fragment_from_query(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server, &(frags[0].value[k]), NULL, query, 0, 0, 0)) {
+				if (oph_dc_create_fragment_from_query(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server, &(frags[0].value[k]), NULL, query, 0, 0, 0)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
 						OPH_LOG_OPH_MERGECUBES_NEW_FRAG_ERROR, frag_name_out);
@@ -1307,10 +1307,10 @@ int task_execute(oph_operator_struct * handle)
 				frag_count++;
 			}
 		}
-		oph_dc2_disconnect_from_dbms(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server, &(dbmss[0].value[i]));
+		oph_dc_disconnect_from_dbms(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server, &(dbmss[0].value[i]));
 	}
 
-	if (oph_dc2_cleanup_dbms(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server)) {
+	if (oph_dc_cleanup_dbms(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_IOPLUGIN_CLEANUP_ERROR,
 			(dbmss[0].value[0]).id_dbms);

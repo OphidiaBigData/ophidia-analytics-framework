@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -70,7 +70,7 @@ int oph_subset_double_init(oph_subset_double ** subset)
 
 int oph_subset_double_parse(const char *cond, unsigned long long len, oph_subset_double * subset, double min, double max, double offset)
 {
-	char *result, *result2, temp0[OPH_SUBSET_LIB_MAX_STRING_LENGTH], temp1[OPH_SUBSET_LIB_MAX_STRING_LENGTH], temp2[OPH_SUBSET_LIB_MAX_STRING_LENGTH], *next, *temp, *savepointer = NULL;
+	char *result, *result2, temp0[1 + len], temp1[1 + len], temp2[1 + len], *next, *temp, *savepointer = NULL;
 	unsigned int number;
 
 	if (!subset) {
@@ -113,7 +113,7 @@ int oph_subset_double_parse(const char *cond, unsigned long long len, oph_subset
 		next = temp;
 
 		number = 0;
-		strncpy(temp1, result, OPH_SUBSET_LIB_MAX_STRING_LENGTH);
+		strcpy(temp1, result);
 		result2 = strtok_r(temp1, OPH_SUBSET_LIB_PARAM_SEPARATOR, &savepointer);
 		while (result2 && (retval == OPH_SUBSET_LIB_OK)) {
 			switch (number) {
@@ -251,7 +251,7 @@ int oph_subset_init(oph_subset ** subset)
 
 int oph_subset_parse(const char *cond, unsigned long long len, oph_subset * subset, unsigned long long max)
 {
-	char *result, *result2, temp0[OPH_SUBSET_LIB_MAX_STRING_LENGTH], temp1[OPH_SUBSET_LIB_MAX_STRING_LENGTH], temp2[OPH_SUBSET_LIB_MAX_STRING_LENGTH], *next, *temp, *savepointer = NULL;
+	char *result, *result2, temp0[1 + len], temp1[1 + len], temp2[1 + len], *next, *temp, *savepointer = NULL;
 	unsigned int number;
 
 	if (!subset) {
@@ -296,7 +296,7 @@ int oph_subset_parse(const char *cond, unsigned long long len, oph_subset * subs
 		next = temp;
 
 		number = 0;
-		strncpy(temp1, result, OPH_SUBSET_LIB_MAX_STRING_LENGTH);
+		strcpy(temp1, result);
 		result2 = strtok_r(temp1, OPH_SUBSET_LIB_PARAM_SEPARATOR, &savepointer);
 		while (result2 && (retval == OPH_SUBSET_LIB_OK)) {
 			switch (number) {

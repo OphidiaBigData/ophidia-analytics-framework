@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ typedef struct {
 typedef struct {
 	char long_name[OPH_HIER_MAX_STRING_LENGTH];
 	char short_name;
-	char aggregate_field;
+	char aggregate_field[OPH_HIER_MAX_STRING_LENGTH];
 	unsigned int aggregate_set;
 	oph_hier_list *aggregate_operation_list;
 } oph_hier_attribute;

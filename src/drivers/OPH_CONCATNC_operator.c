@@ -1841,7 +1841,7 @@ int task_execute(oph_operator_struct * handle)
 	int result = OPH_ANALYTICS_OPERATOR_SUCCESS, frag_count = 0;
 	oph_odb_fragment tmp_frag;
 
-	if (oph_dc2_setup_dbms(&(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
+	if (oph_dc_setup_dbms(&(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CONCATNC_IOPLUGIN_SETUP_ERROR,
 			(dbmss.value[0]).id_dbms);
@@ -1850,7 +1850,7 @@ int task_execute(oph_operator_struct * handle)
 	//For each DBMS
 	for (i = 0; (i < dbmss.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
 
-		if (oph_dc2_connect_to_dbms(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
+		if (oph_dc_connect_to_dbms(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CONCATNC_DBMS_CONNECTION_ERROR,
 				(dbmss.value[i]).id_dbms);
@@ -1862,7 +1862,7 @@ int task_execute(oph_operator_struct * handle)
 			if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
 				continue;
 
-			if (oph_dc2_use_db_of_dbms(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
+			if (oph_dc_use_db_of_dbms(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CONCATNC_DB_SELECTION_ERROR,
 					(dbs.value[j]).db_name);
@@ -1882,7 +1882,7 @@ int task_execute(oph_operator_struct * handle)
 				tmp_frag.key_start = frags.value[k].key_start;
 
 				//Connection string
-				if (oph_dc2_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &tmp_frag.fragment_name)) {
+				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &tmp_frag.fragment_name)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag name exceed limit.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container,
 						OPH_LOG_OPH_CONCATNC_STRING_BUFFER_OVERFLOW, "fragment name", tmp_frag.fragment_name);
@@ -1890,7 +1890,7 @@ int task_execute(oph_operator_struct * handle)
 					break;
 				}
 				//Create Empty fragment
-				if (oph_dc2_create_empty_fragment(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->server, &tmp_frag)) {
+				if (oph_dc_create_empty_fragment(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->server, &tmp_frag)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container,
 						OPH_LOG_OPH_CONCATNC_FRAGMENT_CREATION_ERROR, tmp_frag.fragment_name);
@@ -1918,9 +1918,9 @@ int task_execute(oph_operator_struct * handle)
 				frag_count++;
 			}
 		}
-		oph_dc2_disconnect_from_dbms(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+		oph_dc_disconnect_from_dbms(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 	}
-	if (oph_dc2_cleanup_dbms(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->server)) {
+	if (oph_dc_cleanup_dbms(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->server)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CONCATNC_IOPLUGIN_CLEANUP_ERROR,
 			(dbmss.value[0]).id_dbms);

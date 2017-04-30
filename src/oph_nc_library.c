@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -107,7 +107,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 		return OPH_NC_ERROR;
 	}
 
-	if (oph_dc2_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
+	if (oph_dc_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
 		return OPH_NC_ERROR;
 	}
@@ -680,7 +680,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 
-	if (oph_dc2_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
+	if (oph_dc_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
 		return OPH_NC_ERROR;
 	}
@@ -1373,7 +1373,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 
-	if (oph_dc2_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
+	if (oph_dc_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
 		return OPH_NC_ERROR;
 	}
@@ -2255,11 +2255,13 @@ int _oph_nc_get_dimension_id(unsigned long residual, unsigned long total, unsign
 
 int oph_nc_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n, size_t ** id)
 {
-	int i;
-	unsigned long total = 1;
-	for (i = 0; i < n; ++i)
-		total *= sizemax[i];
-	_oph_nc_get_dimension_id(ID - 1, total, sizemax, id, 0, n);
+	if (n > 0) {
+		int i;
+		unsigned long total = 1;
+		for (i = 0; i < n; ++i)
+			total *= sizemax[i];
+		_oph_nc_get_dimension_id(ID - 1, total, sizemax, id, 0, n);
+	}
 	return 0;
 }
 
@@ -2353,7 +2355,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		return OPH_NC_ERROR;
 	}
 
-	if (oph_dc2_check_connection_to_db(server, old_frag->db_instance->dbms_instance, old_frag->db_instance, 0)) {
+	if (oph_dc_check_connection_to_db(server, old_frag->db_instance->dbms_instance, old_frag->db_instance, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
 		return OPH_NC_ERROR;
 	}

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -39,7 +39,7 @@
 #include "oph_pid_library.h"
 #include "oph_directory_library.h"
 #include "oph_json_library.h"
-#include "oph_datacube2_library.h"
+#include "oph_datacube_library.h"
 
 #include <errno.h>
 
@@ -1301,7 +1301,7 @@ int task_execute(oph_operator_struct * handle)
 		oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 		oph_dim_unload_dim_dbinstance(db_dimension);
 
-		if (oph_dc2_setup_dbms(&(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
+		if (oph_dc_setup_dbms(&(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_IOPLUGIN_SETUP_ERROR,
 				(dbmss.value[0]).id_dbms);
@@ -1367,11 +1367,11 @@ int task_execute(oph_operator_struct * handle)
 		//For each DBMS
 		for (i = 0; i < dbmss.size; i++) {
 
-			if (oph_dc2_connect_to_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
+			if (oph_dc_connect_to_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_DBMS_CONNECTION_ERROR,
 					(dbmss.value[i]).id_dbms);
-				oph_dc2_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+				oph_dc_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 				oph_odb_stge_free_fragment_list(&frags);
 				oph_odb_stge_free_db_list(&dbs);
 				oph_odb_stge_free_dbms_list(&dbmss);
@@ -1395,11 +1395,11 @@ int task_execute(oph_operator_struct * handle)
 				if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
 					continue;
 
-				if (oph_dc2_use_db_of_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
+				if (oph_dc_use_db_of_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_DB_SELECTION_ERROR,
 						(dbs.value[j]).db_name);
-					oph_dc2_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+					oph_dc_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 					oph_odb_stge_free_fragment_list(&frags);
 					free(dims);
 					oph_odb_stge_free_db_list(&dbs);
@@ -1428,7 +1428,7 @@ int task_execute(oph_operator_struct * handle)
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of output path exceeded limit.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_PUBLISH_STRING_BUFFER_OVERFLOW, "path", file_name);
-						oph_dc2_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+						oph_dc_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
 						free(dims);
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
@@ -1460,7 +1460,7 @@ int task_execute(oph_operator_struct * handle)
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open file %s\n", file_name);
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_PUBLISH_FILE_OPEN_ERROR, file_name);
-						oph_dc2_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+						oph_dc_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
 						free(dims);
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
@@ -1569,14 +1569,14 @@ int task_execute(oph_operator_struct * handle)
 						}
 						fprintf(fp, " <th>%s</th> \n  </tr>\n", var);
 
-						if (oph_dc2_read_fragment_data
+						if (oph_dc_read_fragment_data
 						    (((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, &(frags.value[k]), data_type, compressed, dimension_index, NULL, NULL, 0, 0,
 						     &frag_rows)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read fragment.\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container,
 								OPH_LOG_OPH_PUBLISH_READ_FRAG_ERROR, (frags.value[k]).fragment_name);
 							oph_ioserver_free_result(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frag_rows);
-							oph_dc2_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+							oph_dc_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
 							oph_odb_stge_free_fragment_list(&frags);
 							oph_odb_stge_free_db_list(&dbs);
 							oph_odb_stge_free_dbms_list(&dbmss);
@@ -1609,7 +1609,7 @@ int task_execute(oph_operator_struct * handle)
 							logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container,
 								OPH_LOG_OPH_PUBLISH_MISSING_FIELDS);
 							oph_ioserver_free_result(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frag_rows);
-							oph_dc2_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+							oph_dc_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
 							oph_odb_stge_free_fragment_list(&frags);
 							oph_odb_stge_free_db_list(&dbs);
 							oph_odb_stge_free_dbms_list(&dbmss);
@@ -1633,7 +1633,7 @@ int task_execute(oph_operator_struct * handle)
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PUBLISH_IOPLUGIN_FETCH_ROW_ERROR);
 							oph_ioserver_free_result(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frag_rows);
-							oph_dc2_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+							oph_dc_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
 							oph_odb_stge_free_fragment_list(&frags);
 							oph_odb_stge_free_db_list(&dbs);
 							oph_odb_stge_free_dbms_list(&dbmss);
@@ -1673,8 +1673,8 @@ int task_execute(oph_operator_struct * handle)
 													((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container,
 													OPH_LOG_OPH_PUBLISH_DIM_READ_ERROR);
 												oph_ioserver_free_result(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frag_rows);
-												oph_dc2_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server,
-															     frags.value[k].db_instance->dbms_instance);
+												oph_dc_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server,
+															    frags.value[k].db_instance->dbms_instance);
 												oph_odb_stge_free_fragment_list(&frags);
 												oph_odb_stge_free_db_list(&dbs);
 												oph_odb_stge_free_dbms_list(&dbmss);
@@ -1739,8 +1739,8 @@ int task_execute(oph_operator_struct * handle)
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
 								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PUBLISH_IOPLUGIN_FETCH_ROW_ERROR);
 								oph_ioserver_free_result(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frag_rows);
-								oph_dc2_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server,
-											     frags.value[k].db_instance->dbms_instance);
+								oph_dc_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server,
+											    frags.value[k].db_instance->dbms_instance);
 								oph_odb_stge_free_fragment_list(&frags);
 								oph_odb_stge_free_db_list(&dbs);
 								oph_odb_stge_free_dbms_list(&dbmss);
@@ -1814,7 +1814,7 @@ int task_execute(oph_operator_struct * handle)
 					frag_count++;
 				}
 			}
-			oph_dc2_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+			oph_dc_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 		}
 
 		free(dims);
@@ -2066,7 +2066,7 @@ int env_unset(oph_operator_struct * handle)
 		oph_odb_free_ophidiadb(&((OPH_PUBLISH_operator_handle *) handle->operator_handle)->oDB);
 	}
 	if (((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server)
-		oph_dc2_cleanup_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server);
+		oph_dc_cleanup_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server);
 
 	if (((OPH_PUBLISH_operator_handle *) handle->operator_handle)->output_path) {
 		free((char *) ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->output_path);

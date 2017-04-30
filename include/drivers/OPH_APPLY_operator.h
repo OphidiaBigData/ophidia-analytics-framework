@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -60,42 +60,41 @@
  * \param array_values Pointer to value of main implicit dimension of input cube
  * \param description Free description to be associated with output cube
  */
-struct _OPH_APPLY_operator_handle
-{
-  ophidiadb oDB;
-  int id_input_container;
-  int id_input_datacube;
-  int id_output_datacube;
-  int id_output_container;
-  int id_job;
-  int schedule_algo;
-  char *fragment_ids;
-  char *array_operation;
-  char *dimension_operation;
-  int fragment_number;
-  int fragment_id_start_position;
-  char **objkeys;
-  int objkeys_num;
-  oph_ioserver_handler *server;
-  char* measure;
-  char* measure_type;
-  char* dimension_type;
-  int compressed;
-  int expl_size;
-  int expl_size_update;
-  int impl_size;
-  int impl_size_update;
-  int operation_type;
-  int set_measure_type;
-  int set_dimension_type;
-  int check_measure_type;
-  char *sessionid;
-  int id_user;
-  int num_reference_to_dim;
-  char* array_values;
-  long long array_length;
-  char* description;
+struct _OPH_APPLY_operator_handle {
+	ophidiadb oDB;
+	int id_input_container;
+	int id_input_datacube;
+	int id_output_datacube;
+	int id_output_container;
+	int id_job;
+	int schedule_algo;
+	char *fragment_ids;
+	char *array_operation;
+	char *dimension_operation;
+	int fragment_number;
+	int fragment_id_start_position;
+	char **objkeys;
+	int objkeys_num;
+	oph_ioserver_handler *server;
+	char *measure;
+	char *measure_type;
+	char *dimension_type;
+	int compressed;
+	int expl_size;
+	int expl_size_update;
+	int impl_size;
+	int impl_size_update;
+	int operation_type;
+	int set_measure_type;
+	int set_dimension_type;
+	int check_measure_type;
+	char *sessionid;
+	int id_user;
+	int num_reference_to_dim;
+	char *array_values;
+	long long array_length;
+	char *description;
 };
 typedef struct _OPH_APPLY_operator_handle OPH_APPLY_operator_handle;
 
-#endif  //__OPH_APPLY_OPERATOR_H
+#endif				//__OPH_APPLY_OPERATOR_H

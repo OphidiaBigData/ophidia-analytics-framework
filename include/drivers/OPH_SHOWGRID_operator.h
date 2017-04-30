@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,20 +40,19 @@
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
  */
-struct _OPH_SHOWGRID_operator_handle
-{
-  ophidiadb oDB;
-  int id_input_container;
-  char *grid_name;
-  char *cwd;
-  char **dimension_names;
-  int dimension_names_num;
-  short int show_index;
-  char *user;
-  char **objkeys;
-  int objkeys_num;
-  char *sessionid;
+struct _OPH_SHOWGRID_operator_handle {
+	ophidiadb oDB;
+	int id_input_container;
+	char *grid_name;
+	char *cwd;
+	char **dimension_names;
+	int dimension_names_num;
+	short int show_index;
+	char *user;
+	char **objkeys;
+	int objkeys_num;
+	char *sessionid;
 };
 typedef struct _OPH_SHOWGRID_operator_handle OPH_SHOWGRID_operator_handle;
 
-#endif  //__OPH_SHOWGRID_OPERATOR_H
+#endif				//__OPH_SHOWGRID_OPERATOR_H
