@@ -250,7 +250,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (user_space && !strcmp(value, "default"))
-		value = &user_space_default;
+		value = user_space_default;
 	if (strcmp(value, "default")) {
 		if (!(handle->output_path = (char *) strdup(value))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");

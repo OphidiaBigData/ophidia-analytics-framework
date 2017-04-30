@@ -260,7 +260,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	char session_code[OPH_COMMON_BUFFER_LEN];
 	oph_pid_get_session_code(hashtbl_get(task_tbl, OPH_ARG_SESSIONID), session_code);
 	if (user_space && !strcmp(value, "default"))
-		value = &user_space_default;
+		value = user_space_default;
 	if (!strcmp(value, "default")) {
 		if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->misc) {
 			value = hashtbl_get(task_tbl, OPH_ARG_WORKFLOWID);
