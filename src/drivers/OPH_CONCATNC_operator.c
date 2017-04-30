@@ -89,6 +89,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->time_filter = 1;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset = NULL;
+	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_continue = 0;
 
 	char *value;
 	char *datacube_in = NULL;
@@ -862,6 +863,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		*((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset = (double) strtod(value, NULL);
 	}
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DIM_CONTINUE);
+	if (value && !strcmp(value, OPH_COMMON_YES_VALUE))
+		((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_continue = 1;
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -1197,12 +1202,14 @@ int task_init(oph_operator_struct * handle)
 						free(dim_array);
 						goto __OPH_EXIT_1;
 					}
-					int i_tmp_start, i_tmp;
-					i_tmp_start = *(int *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(int));
-					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
-						i_tmp_start += (int) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
-					else if (dim_inst[l].size > 1)
-						i_tmp_start = (3 * i_tmp_start - *(char *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(int))) / 2;
+					int i_tmp_start = 0, i_tmp;
+					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_continue) {
+						i_tmp_start = *(int *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(int));
+						if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
+							i_tmp_start += (int) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
+						else if (dim_inst[l].size > 1)
+							i_tmp_start = (3 * i_tmp_start - *(char *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(int))) / 2;
+					}
 					for (k = 0; k < tmp_var.varsize; k++) {
 						i_tmp = i_tmp_start + *(int *) (dim_array + (k) * sizeof(int));
 						memcpy((char *) (dim_rows[imp_dim_count] + (k + dim_inst[l].size) * sizeof(int)), (int *) &i_tmp, sizeof(int));
@@ -1219,12 +1226,14 @@ int task_init(oph_operator_struct * handle)
 						free(dim_array);
 						goto __OPH_EXIT_1;
 					}
-					long long i_tmp_start, i_tmp;
-					i_tmp_start = *(long long *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(long long));
-					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
-						i_tmp_start += (long long) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
-					else if (dim_inst[l].size > 1)
-						i_tmp_start = (3 * i_tmp_start - *(char *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(long long))) / 2;
+					long long i_tmp_start = 0, i_tmp;
+					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_continue) {
+						i_tmp_start = *(long long *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(long long));
+						if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
+							i_tmp_start += (long long) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
+						else if (dim_inst[l].size > 1)
+							i_tmp_start = (3 * i_tmp_start - *(char *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(long long))) / 2;
+					}
 					for (k = 0; k < tmp_var.varsize; k++) {
 						i_tmp = i_tmp_start + *(long long *) (dim_array + (k) * sizeof(long long));
 						memcpy((char *) (dim_rows[imp_dim_count] + (k + dim_inst[l].size) * sizeof(long long)), (long long *) &i_tmp, sizeof(long long));
@@ -1241,12 +1250,14 @@ int task_init(oph_operator_struct * handle)
 						free(dim_array);
 						goto __OPH_EXIT_1;
 					}
-					short i_tmp_start, i_tmp;
-					i_tmp_start = *(short *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(short));
-					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
-						i_tmp_start += (short) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
-					else if (dim_inst[l].size > 1)
-						i_tmp_start = (3 * i_tmp_start - *(char *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(short))) / 2;
+					short i_tmp_start = 0, i_tmp;
+					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_continue) {
+						i_tmp_start = *(short *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(short));
+						if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
+							i_tmp_start += (short) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
+						else if (dim_inst[l].size > 1)
+							i_tmp_start = (3 * i_tmp_start - *(char *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(short))) / 2;
+					}
 					for (k = 0; k < tmp_var.varsize; k++) {
 						i_tmp = i_tmp_start + *(short *) (dim_array + (k) * sizeof(short));
 						memcpy((char *) (dim_rows[imp_dim_count] + (k + dim_inst[l].size) * sizeof(short)), (short *) &i_tmp, sizeof(short));
@@ -1263,12 +1274,14 @@ int task_init(oph_operator_struct * handle)
 						free(dim_array);
 						goto __OPH_EXIT_1;
 					}
-					char i_tmp_start, i_tmp;
-					i_tmp_start = *(char *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(char));
-					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
-						i_tmp_start += (char) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
-					else if (dim_inst[l].size > 1)
-						i_tmp_start = (3 * i_tmp_start - *(char *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(char))) / 2;
+					char i_tmp_start = 0, i_tmp;
+					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_continue) {
+						i_tmp_start = *(char *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(char));
+						if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
+							i_tmp_start += (char) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
+						else if (dim_inst[l].size > 1)
+							i_tmp_start = (3 * i_tmp_start - *(char *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(char))) / 2;
+					}
 					for (k = 0; k < tmp_var.varsize; k++) {
 						i_tmp = i_tmp_start + *(char *) (dim_array + (k) * sizeof(char));
 						memcpy((char *) (dim_rows[imp_dim_count] + (k + dim_inst[l].size) * sizeof(char)), (char *) &i_tmp, sizeof(char));
@@ -1285,12 +1298,14 @@ int task_init(oph_operator_struct * handle)
 						free(dim_array);
 						goto __OPH_EXIT_1;
 					}
-					float f_tmp_start, f_tmp;
-					f_tmp_start = *(float *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(float));
-					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
-						f_tmp_start += (float) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
-					else if (dim_inst[l].size > 1)
-						f_tmp_start = (3.0 * f_tmp_start - *(float *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(float))) / 2.0;
+					float f_tmp_start = 0, f_tmp;
+					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_continue) {
+						f_tmp_start = *(float *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(float));
+						if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
+							f_tmp_start += (float) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
+						else if (dim_inst[l].size > 1)
+							f_tmp_start = (3.0 * f_tmp_start - *(float *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(float))) / 2.0;
+					}
 					for (k = 0; k < tmp_var.varsize; k++) {
 						f_tmp = f_tmp_start + *(float *) (dim_array + (k) * sizeof(float));
 						memcpy((char *) (dim_rows[imp_dim_count] + (k + dim_inst[l].size) * sizeof(float)), (float *) &f_tmp, sizeof(float));
@@ -1307,12 +1322,14 @@ int task_init(oph_operator_struct * handle)
 						free(dim_array);
 						goto __OPH_EXIT_1;
 					}
-					double d_tmp_start, d_tmp;
-					d_tmp_start = *(double *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(double));
-					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
-						d_tmp_start += (double) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
-					else if (dim_inst[l].size > 1)
-						d_tmp_start = (3.0 * d_tmp_start - *(double *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(double))) / 2.0;
+					double d_tmp_start = 0, d_tmp;
+					if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_continue) {
+						d_tmp_start = *(double *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 1) * sizeof(double));
+						if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset)
+							d_tmp_start += (double) *((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset;
+						else if (dim_inst[l].size > 1)
+							d_tmp_start = (3.0 * d_tmp_start - *(double *) (dim_rows[imp_dim_count] + (dim_inst[l].size - 2) * sizeof(double))) / 2.0;
+					}
 					for (k = 0; k < tmp_var.varsize; k++) {
 						d_tmp = d_tmp_start + *(double *) (dim_array + (k) * sizeof(double));
 						memcpy((char *) (dim_rows[imp_dim_count] + (k + dim_inst[l].size) * sizeof(double)), (double *) &d_tmp, sizeof(double));

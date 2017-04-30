@@ -57,6 +57,7 @@
  * \param description Free description to be associated with output cube
  * \param time_filter Flag used in case time filters are expressed as dates
  * \param dim_offset Offset to be added to dimension values of imported data
+ * \param dim_continue If enabled the last value of implicit dimension of input cube is used to evaluate the new values of the dimension.
  */
 struct _OPH_CONCATNC_operator_handle {
 	ophidiadb oDB;
@@ -84,6 +85,7 @@ struct _OPH_CONCATNC_operator_handle {
 	char *description;
 	int time_filter;
 	double *dim_offset;
+	char dim_continue;
 };
 typedef struct _OPH_CONCATNC_operator_handle OPH_CONCATNC_operator_handle;
 

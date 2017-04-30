@@ -164,6 +164,7 @@
 #define OPH_IN_PARAM_LIST					"list"
 #define OPH_IN_PARAM_MISSINGVALUE				"missingvalue"
 #define OPH_IN_PARAM_DIM_OFFSET					"dim_offset"
+#define OPH_IN_PARAM_DIM_CONTINUE				"dim_continue"
 
 #define OPH_IN_PARAM_SCRIPT					"script"
 #define OPH_IN_PARAM_ARGS					"args"
