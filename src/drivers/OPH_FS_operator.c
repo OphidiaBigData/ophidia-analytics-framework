@@ -41,6 +41,13 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
+int cmpfunc(const void *a, const void *b)
+{
+	char const *aa = (char const *) a;
+	char const *bb = (char const *) b;
+	return strcmp(aa, bb);
+}
+
 int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
 	if (!handle) {
@@ -242,7 +249,7 @@ int task_execute(oph_operator_struct * handle)
 			if (oph_json_is_objkey_printable
 			    (((OPH_FS_operator_handle *) handle->operator_handle)->objkeys, ((OPH_FS_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_FS)) {
 
-				int num_fields = 2, iii, jjj = 0;
+				int num_fields = 2, ii = 0, jj = 0, iii, jjj = 0;
 
 				// Header
 				char **jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
@@ -364,73 +371,86 @@ int task_execute(oph_operator_struct * handle)
 					break;
 				}
 
+				char full_filename[OPH_COMMON_BUFFER_LEN];
 				struct dirent *entry = NULL, save_entry;
 				struct stat file_stat;
-				char full_filename[OPH_COMMON_BUFFER_LEN];
 
-				jjj = 0;
-				while (!readdir_r(dirp, &save_entry, &entry) && entry) {
-
+				while (!readdir_r(dirp, &save_entry, &entry) && entry)
 					if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
-
 						snprintf(full_filename, OPH_COMMON_BUFFER_LEN, "%s/%s", path, entry->d_name);
 						lstat(full_filename, &file_stat);
-						if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode)) {
+						if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode))
+							jj++;
+					}
 
-							jsonvalues = (char **) calloc(num_fields, sizeof(char *));
-							if (!jsonvalues) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MEMORY_ERROR_INPUT, "values");
-								result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-								break;
-							}
-							jjj = 0;
-							jsonvalues[jjj] = strdup(S_ISDIR(file_stat.st_mode) ? "d" : "f");
-							if (!jsonvalues[jjj]) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "value");
-								for (iii = 0; iii < jjj; iii++)
-									if (jsonvalues[iii])
-										free(jsonvalues[iii]);
-								if (jsonvalues)
-									free(jsonvalues);
-								result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-								break;
-							}
-							jjj++;
-							if (S_ISDIR(file_stat.st_mode)) {
-								snprintf(full_filename, OPH_COMMON_BUFFER_LEN, "%s/", entry->d_name);
-								jsonvalues[jjj] = strdup(full_filename);
-							} else
-								jsonvalues[jjj] = strdup(entry->d_name);
-							if (!jsonvalues[jjj]) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "value");
-								for (iii = 0; iii < jjj; iii++)
-									if (jsonvalues[iii])
-										free(jsonvalues[iii]);
-								if (jsonvalues)
-									free(jsonvalues);
-								result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-								break;
-							}
-							if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_FS, jsonvalues)) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
-								for (iii = 0; iii < num_fields; iii++)
-									if (jsonvalues[iii])
-										free(jsonvalues[iii]);
-								if (jsonvalues)
-									free(jsonvalues);
-								result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-								break;
-							}
+				if (jj) {
+					rewinddir(dirp);
+
+					char filenames[jj][OPH_COMMON_BUFFER_LEN];
+					while (!readdir_r(dirp, &save_entry, &entry) && entry)
+						if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+							snprintf(full_filename, OPH_COMMON_BUFFER_LEN, "%s/%s", path, entry->d_name);
+							lstat(full_filename, &file_stat);
+							if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode))
+								snprintf(filenames[ii++], OPH_COMMON_BUFFER_LEN, "%s%s", S_ISDIR(file_stat.st_mode) ? "/" : "", entry->d_name);
+						}
+
+					qsort(filenames, jj, OPH_COMMON_BUFFER_LEN, cmpfunc);
+
+					for (ii = 0; ii < jj; ++ii) {
+						jsonvalues = (char **) calloc(num_fields, sizeof(char *));
+						if (!jsonvalues) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MEMORY_ERROR_INPUT, "values");
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
+						jjj = 0;
+						jsonvalues[jjj] = strdup(*filenames[ii] == '/' ? "d" : "f");
+						if (!jsonvalues[jjj]) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "value");
+							for (iii = 0; iii < jjj; iii++)
+								if (jsonvalues[iii])
+									free(jsonvalues[iii]);
+							if (jsonvalues)
+								free(jsonvalues);
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
+						jjj++;
+						if (*filenames[ii] == '/') {
+							snprintf(full_filename, OPH_COMMON_BUFFER_LEN, "%s/", filenames[ii] + 1);
+							jsonvalues[jjj] = strdup(full_filename);
+						} else
+							jsonvalues[jjj] = strdup(filenames[ii]);
+						if (!jsonvalues[jjj]) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "value");
+							for (iii = 0; iii < jjj; iii++)
+								if (jsonvalues[iii])
+									free(jsonvalues[iii]);
+							if (jsonvalues)
+								free(jsonvalues);
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
+						if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_FS, jsonvalues)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
 							for (iii = 0; iii < num_fields; iii++)
 								if (jsonvalues[iii])
 									free(jsonvalues[iii]);
 							if (jsonvalues)
 								free(jsonvalues);
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
 						}
+						for (iii = 0; iii < num_fields; iii++)
+							if (jsonvalues[iii])
+								free(jsonvalues[iii]);
+						if (jsonvalues)
+							free(jsonvalues);
 					}
 				}
 				closedir(dirp);
