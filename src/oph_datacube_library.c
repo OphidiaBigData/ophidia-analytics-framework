@@ -16,6 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#define _GNU_SOURCE
+
 #include "oph_datacube_library.h"
 
 /* Standard C99 headers */
@@ -34,11 +36,21 @@
 
 #define OPH_DC_MAX_SIZE 100
 #define OPH_DC_MIN_SIZE 50
+#define OPH_DC_COMPLEX_DATATYPE_PREFIX "complex_"
 
 extern int msglevel;
 
 char oph_dc_typeof(char *data_type)
 {
+	if (!data_type)
+		return 0;
+
+	char new_type[strlen(data_type)];
+	if (strcasestr(data_type, OPH_DC_COMPLEX_DATATYPE_PREFIX)) {
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Complex data types are partially supported: data will be considered as simple\n");
+		strcpy(new_type, data_type + strlen(OPH_DC_COMPLEX_DATATYPE_PREFIX));
+		data_type = new_type;
+	}
 	if (!strcasecmp(data_type, OPH_DC_BYTE_TYPE))
 		return OPH_DC_BYTE_FLAG;
 	else if (!strcasecmp(data_type, OPH_DC_SHORT_TYPE))
@@ -2339,6 +2351,13 @@ int oph_dc_check_data_type(char *input_type)
 	if (!input_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DC_NULL_PARAM;
+	}
+
+	char new_type[strlen(input_type)];
+	if (strcasestr(input_type, OPH_DC_COMPLEX_DATATYPE_PREFIX)) {
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Complex data types are partially supported: data will be considered as simple\n");
+		sprintf(new_type, "oph_%s", input_type + strlen(OPH_DC_COMPLEX_DATATYPE_PREFIX));
+		input_type = new_type;
 	}
 
 	if (!strncmp(input_type, OPH_DC_DOUBLE_TYPE, sizeof(OPH_DC_DOUBLE_TYPE)))

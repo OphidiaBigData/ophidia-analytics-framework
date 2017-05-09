@@ -400,7 +400,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		// Checking data types
-		if (strcmp(cube.measure_type, cube2.measure_type)) {
+		if (strcasecmp(cube.measure_type, cube2.measure_type)) {
 			oph_odb_cube_free_datacube(&cube);
 			oph_odb_cube_free_datacube(&cube2);
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Datacube types are not comparable\n");
