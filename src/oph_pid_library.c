@@ -79,7 +79,7 @@ int _oph_pid_load_data()
 
 	char buffer[OPH_PID_BUFFER_SIZE];
 	char *position;
-	size_t size;
+	int size;
 
 	while (fscanf(file, "%s", buffer) != EOF) {
 		position = strchr(buffer, '=');
