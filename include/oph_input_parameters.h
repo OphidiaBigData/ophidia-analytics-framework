@@ -128,6 +128,7 @@
 #define OPH_IN_PARAM_METADATA_VALUE_FILTER			"metadata_value_filter"
 #define OPH_IN_PARAM_METADATA_KEY_FILTER			"metadata_key_filter"
 #define OPH_IN_PARAM_PATH					"path"
+#define OPH_IN_PARAM_DATA_PATH					"dpath"
 #define OPH_IN_PARAM_OBJKEY_FILTER				"objkey_filter"
 #define OPH_IN_PARAM_SUBSET_FILTER_TYPE				"subset_type"
 #define OPH_IN_PARAM_OUTPUT_PATH				"output_path"
