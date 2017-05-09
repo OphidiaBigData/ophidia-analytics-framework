@@ -522,14 +522,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	measure->nimp = imp_number_of_dim_names;
 	measure->ndims = measure->nexp + measure->nimp;
 
-	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	char *username = value;
-
 	//Open netcdf file
 	int retval, j;
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SRC_FILE_PATH);
@@ -590,19 +582,17 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					pointer = ((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path;
 				}
 			}
-			if (oph_pid_get_base_src_path(username, &value)) {
+			if (oph_pid_get_base_src_path(&value)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
-			if (value) {
-				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value, *pointer != '/' ? "/" : "", pointer);
-				free(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path);
-				((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
-				free(value);
-			}
+			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
+			free(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path);
+			((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
+			free(value);
 		}
 	}
 

@@ -339,8 +339,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 				}
 				if (*value != '/') {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", value);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", value);
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
 					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 				}
 				if (strlen(value) > 1) {
@@ -355,17 +355,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					pointer = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path;
 				}
 			}
-			if (oph_pid_get_base_src_path(username, &value)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
+			if (oph_pid_get_base_src_path(&value)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base user_path\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base user path\n");
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
-			if (value) {
-				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value, *pointer != '/' ? "/" : "", pointer);
-				free(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path);
-				((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
-				free(value);
-			}
+			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
+			free(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path);
+			((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
+			free(value);
 		}
 		((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user_defined = 1;
 	}

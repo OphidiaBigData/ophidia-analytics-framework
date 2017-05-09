@@ -190,7 +190,7 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	char *abs_path = NULL;
-	if (oph_pid_get_base_src_path(((OPH_FS_operator_handle *) handle->operator_handle)->user, &abs_path)) {
+	if (oph_pid_get_base_src_path(&abs_path)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;

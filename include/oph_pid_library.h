@@ -20,27 +20,28 @@
 #define __OPH_PID_H__
 
 #define OPH_PID_OUTPUT_MESSAGE		"PID of output datacube is: "
-#define OPH_PID_FORMAT				"%s/%d/%d"
+#define OPH_PID_FORMAT			"%s/%d/%d"
 
 #define OPH_PID_OUTPUT_MESSAGE2		"PID of output container is: "
-#define OPH_PID_FORMAT2				"%s/%d"
+#define OPH_PID_FORMAT2			"%s/%d"
 
 #define OPH_PID_WEBSERVER_NAME		"WEB_SERVER"
 #define OPH_PID_WEBSERVER_LOCATION	"WEB_SERVER_LOCATION"
-#define OPH_PID_MEMORY				"MEMORY"
+#define OPH_PID_MEMORY			"MEMORY"
 #define OPH_PID_BASE_SRC_PATH		"BASE_SRC_PATH"
-#define OPH_PID_USER_SPACE			"USER_SPACE"
+#define OPH_PID_BASE_USER_PATH		"BASE_USER_PATH"
+#define OPH_PID_USER_SPACE		"USER_SPACE"
 
-#define OPH_PID_SLASH				"/"
+#define OPH_PID_SLASH			"/"
 
-#define OPH_PID_SUCCESS				0
-#define OPH_PID_NULL_PARAM			1
+#define OPH_PID_SUCCESS			0
+#define OPH_PID_NULL_PARAM		1
 #define OPH_PID_MEMORY_ERROR		2
 #define OPH_PID_GENERIC_ERROR		3
 
-#define OPH_PID_SIZE				512
+#define OPH_PID_SIZE			512
 
-#define OPH_PID_BUFFER_SIZE			256
+#define OPH_PID_BUFFER_SIZE		256
 
 /** 
  * \brief Function to load configuration data
@@ -51,11 +52,18 @@ int oph_pid_get_memory_size(long long *memory_size);
 
 /** 
  * \brief Function to load configuration data
+ * \brief base_src_path Pointer to the memory area where base_src_path will be written; it has to be freed
+ * \return 0 if successfull, N otherwise
+ */
+int oph_pid_get_base_src_path(char **base_src_path);
+
+/** 
+ * \brief Function to load configuration data
  * \brief username User that has submitted the task
  * \brief base_src_path Pointer to the memory area where base_src_path will be written; it has to be freed
  * \return 0 if successfull, N otherwise
  */
-int oph_pid_get_base_src_path(char *username, char **base_src_path);
+int oph_pid_get_base_user_path(char *username, char **base_user_path);
 
 /** 
  * \brief Function to load configuration data

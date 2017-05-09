@@ -492,7 +492,7 @@ int task_execute(oph_operator_struct * handle)
 	}
 
 	char *base_src_path = NULL;
-	if (oph_pid_get_base_src_path(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->user, &base_src_path)) {
+	if (oph_pid_get_base_src_path(&base_src_path)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, 0, "Unable to read OphidiaDB configuration\n");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
