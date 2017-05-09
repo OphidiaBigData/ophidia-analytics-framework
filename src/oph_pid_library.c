@@ -79,6 +79,7 @@ int _oph_pid_load_data()
 
 	char buffer[OPH_PID_BUFFER_SIZE];
 	char *position;
+	size_t size;
 
 	while (fscanf(file, "%s", buffer) != EOF) {
 		position = strchr(buffer, '=');
@@ -101,6 +102,8 @@ int _oph_pid_load_data()
 				}
 				strncpy(oph_web_server_location, position, strlen(position) + 1);
 				oph_web_server_location[strlen(position)] = '\0';
+				while (((size = strlen(oph_web_server_location) - 1) >= 0) && oph_web_server_location[size] == '/')
+					oph_web_server_location[size] = '\0';
 			} else if (!strncmp(buffer, OPH_PID_MEMORY, strlen(OPH_PID_MEMORY)) && !strncmp(buffer, OPH_PID_MEMORY, strlen(buffer))) {
 				oph_memory_size = (long long) strtoll(position, NULL, 10);
 			} else if (!strncmp(buffer, OPH_PID_BASE_SRC_PATH, strlen(OPH_PID_BASE_SRC_PATH)) && !strncmp(buffer, OPH_PID_BASE_SRC_PATH, strlen(buffer))) {
@@ -111,6 +114,8 @@ int _oph_pid_load_data()
 				}
 				strncpy(oph_base_src_path, position, strlen(position) + 1);
 				oph_base_src_path[strlen(position)] = '\0';
+				while (((size = strlen(oph_base_src_path) - 1) >= 0) && oph_base_src_path[size] == '/')
+					oph_base_src_path[size] = '\0';
 			} else if (!strncmp(buffer, OPH_PID_BASE_USER_PATH, strlen(OPH_PID_BASE_USER_PATH)) && !strncmp(buffer, OPH_PID_BASE_USER_PATH, strlen(buffer))) {
 				if (!(oph_base_user_path = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -119,6 +124,8 @@ int _oph_pid_load_data()
 				}
 				strncpy(oph_base_user_path, position, strlen(position) + 1);
 				oph_base_user_path[strlen(position)] = '\0';
+				while (((size = strlen(oph_base_user_path) - 1) >= 0) && oph_base_user_path[size] == '/')
+					oph_base_user_path[size] = '\0';
 			} else if (!strncmp(buffer, OPH_PID_USER_SPACE, strlen(OPH_PID_USER_SPACE)) && !strncmp(buffer, OPH_PID_USER_SPACE, strlen(buffer))) {
 				if (!strcasecmp(position, "yes"))
 					oph_user_space = 1;
