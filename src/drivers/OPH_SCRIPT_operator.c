@@ -414,6 +414,8 @@ int task_execute(oph_operator_struct * handle)
 			logging(LOG_WARNING, __FILE__, __LINE__, 0, OPH_LOG_GENERIC_DIR_CREATION_ERROR, ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path);
 			free(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path);
 			((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path = NULL;
+			free(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url);
+			((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url = NULL;
 		}
 	}
 
@@ -505,7 +507,8 @@ int task_execute(oph_operator_struct * handle)
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_DATA_PATH='%s' ", base_src_path ? base_src_path : "");
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_SESSION_PATH='%s' ",
 		      ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path ? ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path : "");
-	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_SESSION_URL='%s' ", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url);
+	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_SESSION_URL='%s' ",
+		      ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url ? ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url : "");
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_SESSION_CODE='%s' ", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_code);
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_WORKFLOW_ID=%s ",
 		      ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->workflow_id ? ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->workflow_id : 0);
@@ -586,13 +589,15 @@ int task_execute(oph_operator_struct * handle)
 	}
 
 	// ADD OUTPUT PID TO NOTIFICATION STRING
-	char tmp_string[OPH_COMMON_BUFFER_LEN];
-	snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_LINK, s ? system_output : ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url);
-	if (handle->output_string) {
-		strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
-		free(handle->output_string);
+	if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url) {
+		char tmp_string[OPH_COMMON_BUFFER_LEN];
+		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_LINK, s ? system_output : ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url);
+		if (handle->output_string) {
+			strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
+			free(handle->output_string);
+		}
+		handle->output_string = strdup(tmp_string);
 	}
-	handle->output_string = strdup(tmp_string);
 
 	if (error == -1) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "System command failed\n");
