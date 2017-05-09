@@ -30,7 +30,7 @@
 #include "debug.h"
 
 #define OPH_METADATA_LOCK_ERROR 1213
-#define OPH_METADATA_MAX_ATTEMPTS 3
+#define OPH_METADATA_MAX_ATTEMPTS 5
 #define OPH_METADATA_WAITING_TIME 1
 
 extern int msglevel;
@@ -727,7 +727,7 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 
 		if ((n = mysql_query(oDB->conn, insertQuery))) {
 			if ((n == OPH_METADATA_LOCK_ERROR) && --attempt_left) {
-				sleep(OPH_METADATA_WAITING_TIME * (OPH_METADATA_MAX_ATTEMPTS - attempt_left));
+				sleep(rand() % (1 + OPH_METADATA_WAITING_TIME * (OPH_METADATA_MAX_ATTEMPTS - attempt_left)));
 				continue;
 			}
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
@@ -744,7 +744,7 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 
 		if (mysql_query(oDB->conn, insertQuery)) {
 			if ((n == OPH_METADATA_LOCK_ERROR) && --attempt_left) {
-				sleep(OPH_METADATA_WAITING_TIME * (OPH_METADATA_MAX_ATTEMPTS - attempt_left));
+				sleep(rand() % (1 + OPH_METADATA_WAITING_TIME * (OPH_METADATA_MAX_ATTEMPTS - attempt_left)));
 				continue;
 			}
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));

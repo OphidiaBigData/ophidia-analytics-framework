@@ -1876,7 +1876,7 @@ int _oph_json_to_json_file(oph_json * json, char *filename, char **jstring)
 		fclose(fp);
 	}
 #else
-	(void)filename;
+	(void) filename;
 #endif
 
 	return OPH_JSON_SUCCESS;
