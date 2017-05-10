@@ -617,9 +617,12 @@ int task_init(oph_operator_struct * handle)
 				free(cubedims2);
 				goto __OPH_EXIT_1;
 			}
-			for (l = 0; l < number_of_dimensions; l++)
-				if ((cubedims[l].size != cubedims2[l].size) || (cubedims[l].explicit_dim != cubedims2[l].explicit_dim) || (cubedims[l].level != cubedims2[l].level))
+			for (l = 0; l < number_of_dimensions; l++) {
+				if ((cubedims[l].explicit_dim != cubedims2[l].explicit_dim) || (cubedims[l].level != cubedims2[l].level))
 					break;
+				if (!((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode && (cubedims[l].size != cubedims2[l].size))
+					break;
+			}
 			if (l < number_of_dimensions) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Datacube dimensions are not comparable.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
