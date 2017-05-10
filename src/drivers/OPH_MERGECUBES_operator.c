@@ -41,7 +41,7 @@
 
 #define OPH_MERGECUBES_ARG_BUFFER 100
 
-int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db, char **input_frag, char **input_type, int compressed, char **query)
+int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db, char **input_frag, char **input_type, int compressed, char mode, char **query)
 {
 	if (datacube_num < 2 || output_cube == NULL || input_db == NULL || input_frag == NULL || input_type == NULL || query == NULL) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -71,14 +71,14 @@ int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db,
 				buf_len += snprintf(NULL, 0, OPH_MERGECUBES_ARG_SELECT_SEPARATOR);
 			buf_len += snprintf(NULL, 0, OPH_MERGECUBES_ARG_SELECT_PART_CMPR, cc, MYSQL_FRAG_MEASURE);	// input_type[cc]
 		}
-		buf_len += snprintf(NULL, 0, OPH_MERGECUBES_ARG_SELECT_CMPR, 0, MYSQL_FRAG_ID, "", "", "");
+		buf_len += snprintf(NULL, 0, OPH_MERGECUBES_ARG_SELECT_CMPR, 0, MYSQL_FRAG_ID, mode ? OPH_MERGECUBES_APPEND : OPH_MERGECUBES_INTERLACE, "", "", "");
 	} else {
 		for (cc = 0; cc < datacube_num; cc++) {
 			if (cc != 0)
 				buf_len += snprintf(NULL, 0, OPH_MERGECUBES_ARG_SELECT_SEPARATOR);
 			buf_len += snprintf(NULL, 0, OPH_MERGECUBES_ARG_SELECT_PART, cc, MYSQL_FRAG_MEASURE);	// input_type[cc]
 		}
-		buf_len += snprintf(NULL, 0, OPH_MERGECUBES_ARG_SELECT, 0, MYSQL_FRAG_ID, "", "", "");
+		buf_len += snprintf(NULL, 0, OPH_MERGECUBES_ARG_SELECT, 0, MYSQL_FRAG_ID, mode ? OPH_MERGECUBES_APPEND : OPH_MERGECUBES_INTERLACE, "", "", "");
 	}
 
 	buf_len += snprintf(NULL, 0, OPH_MERGECUBES_QUERY_SELECT, "");
@@ -138,14 +138,18 @@ int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db,
 				tmp_len += snprintf(tmp_buffer2 + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES_ARG_SELECT_SEPARATOR);
 			tmp_len += snprintf(tmp_buffer2 + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES_ARG_SELECT_PART_CMPR, cc, MYSQL_FRAG_MEASURE);	// input_type[cc]
 		}
-		tmp_len = snprintf(tmp_buffer, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES_ARG_SELECT_CMPR, 0, MYSQL_FRAG_ID, tmp_buffer_it, tmp_buffer_ot, tmp_buffer2);
+		tmp_len =
+		    snprintf(tmp_buffer, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES_ARG_SELECT_CMPR, 0, MYSQL_FRAG_ID, mode ? OPH_MERGECUBES_APPEND : OPH_MERGECUBES_INTERLACE, tmp_buffer_it,
+			     tmp_buffer_ot, tmp_buffer2);
 	} else {
 		for (cc = 0; cc < datacube_num; cc++) {
 			if (cc != 0)
 				tmp_len += snprintf(tmp_buffer2 + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES_ARG_SELECT_SEPARATOR);
 			tmp_len += snprintf(tmp_buffer2 + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES_ARG_SELECT_PART, cc, MYSQL_FRAG_MEASURE);	// input_type[cc]
 		}
-		tmp_len = snprintf(tmp_buffer, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES_ARG_SELECT, 0, MYSQL_FRAG_ID, tmp_buffer_it, tmp_buffer_ot, tmp_buffer2);
+		tmp_len =
+		    snprintf(tmp_buffer, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES_ARG_SELECT, 0, MYSQL_FRAG_ID, mode ? OPH_MERGECUBES_APPEND : OPH_MERGECUBES_INTERLACE, tmp_buffer_it,
+			     tmp_buffer_ot, tmp_buffer2);
 	}
 
 	out_len += snprintf(out_buffer + out_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES_QUERY_SELECT, tmp_buffer);
@@ -224,6 +228,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server = NULL;
 	((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->sessionid = NULL;
 	((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_user = 0;
+	((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode = 0;
 	((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->description = NULL;
 
 	char **datacube_in;
@@ -460,10 +465,24 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
 		if (!(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->description = (char *) strndup(value, OPH_TP_TASKLEN))) {
-			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[0], OPH_LOG_OPH_MERGECUBES_MEMORY_ERROR_INPUT, "description");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[0], OPH_LOG_OPH_MERGECUBES_MEMORY_ERROR_INPUT, OPH_IN_PARAM_DESCRIPTION);
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_MODE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_MODE);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[0], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_MODE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (*value == 'a')
+		((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode = 1;
+	else if (*value != 'i') {
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[0], OPH_LOG_OPH_MERGECUBES_MEMORY_ERROR_INPUT, OPH_IN_PARAM_MODE);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -908,7 +927,8 @@ int task_init(oph_operator_struct * handle)
 
 		if (build_mergecubes_query
 		    (((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->input_datacube_num, "fact_out", input_db, input_frag,
-		     ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->compressed, &query)) {
+		     ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->compressed,
+		     ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error creating query\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_QUERY_BUILD_ERROR);
 			goto __OPH_EXIT_1;
@@ -1237,7 +1257,8 @@ int task_execute(oph_operator_struct * handle)
 				}
 
 				if (build_mergecubes_query
-				    (datacube_num, frag_name_out, input_db, input_frag, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type, compressed, &query)) {
+				    (datacube_num, frag_name_out, input_db, input_frag, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type, compressed,
+				     ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode, &query)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error creating query\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
 						OPH_LOG_OPH_MERGECUBES_QUERY_BUILD_ERROR);
@@ -1251,7 +1272,8 @@ int task_execute(oph_operator_struct * handle)
 #ifdef OPH_DEBUG_MYSQL
 				if (compressed)
 					printf("ORIGINAL QUERY: " OPH_MERGECUBES_QUERY2_COMPR_MYSQL "\n", frag_name_out, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags[0].value[k].fragment_name,
-					       MYSQL_FRAG_ID, MYSQL_FRAG_ID, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[0],
+					       MYSQL_FRAG_ID, MYSQL_FRAG_ID, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode ? OPH_MERGECUBES_APPEND : OPH_MERGECUBES_INTERLACE,
+					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[0],
 					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[1],
 					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[0],
 					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[1], frags[0].value[k].fragment_name, MYSQL_FRAG_MEASURE,
@@ -1259,7 +1281,8 @@ int task_execute(oph_operator_struct * handle)
 					       frags[1].value[k].db_instance->db_name, frags[1].value[k].fragment_name, frags[0].value[k].fragment_name, MYSQL_FRAG_ID, frags[1].value[k].fragment_name,
 					       MYSQL_FRAG_ID);
 				else
-					printf("ORIGINAL QUERY: " OPH_MERGECUBES_QUERY2_MYSQL "\n", frag_name_out, MYSQL_FRAG_ID,
+					printf("ORIGINAL QUERY: " OPH_MERGECUBES_QUERY2_MYSQL "\n", frag_name_out, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags[0].value[k].fragment_name,
+					       MYSQL_FRAG_ID, MYSQL_FRAG_ID, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode ? OPH_MERGECUBES_APPEND : OPH_MERGECUBES_INTERLACE,
 					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[0],
 					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[1],
 					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[0],

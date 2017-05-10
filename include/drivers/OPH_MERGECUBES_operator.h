@@ -24,17 +24,20 @@
 #include "oph_common.h"
 #include "oph_ioserver_library.h"
 
+#define OPH_MERGECUBES_INTERLACE	"interlace"
+#define OPH_MERGECUBES_APPEND		"append"
+
 #ifdef OPH_DEBUG_MYSQL
-#define OPH_MERGECUBES_QUERY2_COMPR_MYSQL "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT %s.%s AS %s, oph_compress('','',oph_interlace('oph_%s|oph_%s','oph_%s,oph_%s',oph_uncompress('','',%s.%s),oph_uncompress('','',%s.%s))) AS %s FROM %s.%s, %s.%s WHERE %s.%s = %s.%s"
-#define OPH_MERGECUBES_QUERY2_MYSQL "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT %s.%s AS %s, oph_interlace('oph_%s|oph_%s','oph_%s,oph_%s',%s.%s,%s.%s) AS %s FROM %s.%s, %s.%s WHERE %s.%s = %s.%s"
+#define OPH_MERGECUBES_QUERY2_COMPR_MYSQL "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT %s.%s AS %s, oph_compress('','',oph_%s('oph_%s|oph_%s','oph_%s,oph_%s',oph_uncompress('','',%s.%s),oph_uncompress('','',%s.%s))) AS %s FROM %s.%s, %s.%s WHERE %s.%s = %s.%s"
+#define OPH_MERGECUBES_QUERY2_MYSQL "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT %s.%s AS %s, oph_%s('oph_%s|oph_%s','oph_%s,oph_%s',%s.%s,%s.%s) AS %s FROM %s.%s, %s.%s WHERE %s.%s = %s.%s"
 #endif
 
 //Define dynamic query building blocks
 #define OPH_MERGECUBES_QUERY_OPERATION OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "%s")
 
 #define OPH_MERGECUBES_QUERY_SELECT  OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "%s")
-#define OPH_MERGECUBES_ARG_SELECT			"frag%d.%s|oph_interlace('%s','%s',%s)"
-#define OPH_MERGECUBES_ARG_SELECT_CMPR			"frag%d.%s|oph_compress('','',oph_interlace('%s','%s',%s))"
+#define OPH_MERGECUBES_ARG_SELECT			"frag%d.%s|oph_%s('%s','%s',%s)"
+#define OPH_MERGECUBES_ARG_SELECT_CMPR			"frag%d.%s|oph_compress('','',oph_%s('%s','%s',%s))"
 #define OPH_MERGECUBES_ARG_SELECT_TYPE			"oph_%s"
 #define OPH_MERGECUBES_ARG_SELECT_PART			"frag%d.%s"
 #define OPH_MERGECUBES_ARG_SELECT_PART_CMPR		"oph_uncompress('','',frag%d.%s)"
@@ -75,6 +78,7 @@
  * \param server Pointer to I/O server handler
  * \param sessionid SessionID
  * \param id_user ID of submitter
+ * \param mode Mode to combine input measures
  * \param description Free description to be associated with output cube
  */
 struct _OPH_MERGECUBES_operator_handle {
@@ -96,6 +100,7 @@ struct _OPH_MERGECUBES_operator_handle {
 	oph_ioserver_handler *server;
 	char *sessionid;
 	int id_user;
+	char mode;
 	char *description;
 };
 typedef struct _OPH_MERGECUBES_operator_handle OPH_MERGECUBES_operator_handle;
