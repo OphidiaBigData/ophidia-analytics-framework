@@ -529,7 +529,7 @@ int task_init(oph_operator_struct * handle)
 		}
 
 		oph_odb_cubehasdim *cubedims = NULL, *cubedims2 = NULL;
-		int number_of_dimensions = 0, number_of_dimensions2 = 0;
+		int number_of_dimensions = 0, number_of_dimensions2 = 0, append_size = 0, implicit_size;
 		int last_insertd_id = 0;
 		int l;
 
@@ -617,11 +617,14 @@ int task_init(oph_operator_struct * handle)
 				free(cubedims2);
 				goto __OPH_EXIT_1;
 			}
+			implicit_size = 0;
 			for (l = 0; l < number_of_dimensions; l++) {
 				if ((cubedims[l].explicit_dim != cubedims2[l].explicit_dim) || (cubedims[l].level != cubedims2[l].level))
 					break;
-				if (!((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode && (cubedims[l].size != cubedims2[l].size))
+				if ((!((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode || cubedims[l].explicit_dim) && (cubedims[l].size != cubedims2[l].size))
 					break;
+				if (((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode && !cubedims2[l].explicit_dim && !implicit_size)
+					implicit_size = cubedims2[l].size;
 			}
 			if (l < number_of_dimensions) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Datacube dimensions are not comparable.\n");
@@ -635,6 +638,8 @@ int task_init(oph_operator_struct * handle)
 				goto __OPH_EXIT_1;
 			}
 			free(cubedims2);
+			if (((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode)
+				append_size += implicit_size;
 		}
 
 		// Change the container id
@@ -744,9 +749,12 @@ int task_init(oph_operator_struct * handle)
 
 		// Change the size of first implicit dimension of the cube
 		for (l = 0; l < number_of_dimensions; l++)
-			if (!cubedims[l].explicit_dim) {
+			if (!cubedims[l].explicit_dim && cubedims[l].size) {
 				reduced_impl_dim = l;
-				cubedims[l].size *= ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->input_datacube_num;
+				if (((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode)
+					cubedims[l].size += append_size;
+				else
+					cubedims[l].size *= ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->input_datacube_num;
 				break;
 			}
 		if (l >= number_of_dimensions) {
