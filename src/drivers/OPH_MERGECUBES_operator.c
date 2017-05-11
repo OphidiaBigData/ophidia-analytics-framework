@@ -616,10 +616,10 @@ int task_init(oph_operator_struct * handle)
 				if ((l >= number_of_dimensions) || (ll >= number_of_dimensions2) || (cubedims[l].explicit_dim != cubedims2[ll].explicit_dim)
 				    || (cubedims[l].level != cubedims2[ll].level))
 					break;
-				if ((!((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode || cubedims[l].explicit_dim) && (cubedims[l].size != cubedims2[l].size))
+				if ((!((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode || cubedims[l].explicit_dim) && (cubedims[l].size != cubedims2[ll].size))
 					break;
-				if (((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode && !cubedims2[l].explicit_dim && !implicit_size)
-					implicit_size = cubedims2[l].size;
+				if (((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode && !cubedims2[ll].explicit_dim && !implicit_size)
+					implicit_size = cubedims2[ll].size;
 			}
 			for (; l < number_of_dimensions; l++)
 				if (cubedims[l].size)
