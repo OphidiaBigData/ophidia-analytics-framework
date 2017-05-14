@@ -175,13 +175,15 @@ int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db,
 	}
 	out_len += snprintf(out_buffer + out_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_QUERY_WHERE, tmp_buffer);
 
-	*query = out_buffer;
-
 	free(tmp_buffer);
 	free(tmp_buffer2);
 
-	if (out_len > buf_len)
-		pmesg(LOG_WARNING, __FILE__, __LINE__, "Error in handling memory\n");
+	if (out_len > buf_len) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size %d is not enough for query '%s'\n", buf_len, out_buffer);
+		return 2;
+	}
+
+	*query = out_buffer;
 
 	return 0;
 }
