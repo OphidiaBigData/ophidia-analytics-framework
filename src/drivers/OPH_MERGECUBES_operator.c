@@ -118,7 +118,7 @@ int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db,
 	buf_len += snprintf(NULL, 0, OPH_MERGECUBES_QUERY_WHERE, tmp_buffer[3]);
 
 	//Build structures for output quey
-	char *out_buffer = (char *) malloc((buf_len + 1) * sizeof(char));
+	char *out_buffer = (char *) malloc(++buf_len * sizeof(char));
 	if (!(out_buffer)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		return 1;
@@ -131,8 +131,8 @@ int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db,
 	out_len += snprintf(out_buffer + out_len, buf_len - out_len, OPH_MERGECUBES_QUERY_FROM_ALIAS, tmp_buffer[2]);
 	out_len += snprintf(out_buffer + out_len, buf_len - out_len, OPH_MERGECUBES_QUERY_WHERE, tmp_buffer[3]);
 
-	if (out_len > buf_len) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size %d is not enough for query '%s'\n", buf_len, out_buffer);
+	if (out_len >= buf_len) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size %d is not enough for query '%s'\n", buf_len - 1, out_buffer);
 		free(out_buffer);
 		return 2;
 	}
