@@ -75,12 +75,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->fragment_ids = NULL;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->ncid = 0;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_job = 0;
-	((NETCDF_var) (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->measure)).dims_name = NULL;
-	((NETCDF_var) (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->measure)).dims_id = NULL;
-	((NETCDF_var) (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->measure)).dims_length = NULL;
-	((NETCDF_var) (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->measure)).dims_type = NULL;
-	((NETCDF_var) (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->measure)).dims_oph_level = NULL;
-	((NETCDF_var) (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->measure)).dims_concept_level = NULL;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->objkeys_num = -1;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->server = NULL;
@@ -90,6 +84,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->time_filter = 1;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset = NULL;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_continue = 0;
+
+	NETCDF_var *nc_measure = &(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->measure);
+	nc_measure->dims_name = NULL;
+	nc_measure->dims_id = NULL;
+	nc_measure->dims_length = NULL;
+	nc_measure->dims_type = NULL;
+	nc_measure->dims_oph_level = NULL;
+	nc_measure->dims_concept_level = NULL;
 
 	char *value;
 	char *datacube_in = NULL;
