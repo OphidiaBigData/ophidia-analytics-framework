@@ -16,6 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#define _GNU_SOURCE
+
 #include "oph_datacube_library.h"
 
 /* Standard C99 headers */
@@ -34,11 +36,21 @@
 
 #define OPH_DC_MAX_SIZE 100
 #define OPH_DC_MIN_SIZE 50
+#define OPH_DC_COMPLEX_DATATYPE_PREFIX "complex_"
 
 extern int msglevel;
 
 char oph_dc_typeof(char *data_type)
 {
+	if (!data_type)
+		return 0;
+
+	char new_type[strlen(data_type)];
+	if (strcasestr(data_type, OPH_DC_COMPLEX_DATATYPE_PREFIX)) {
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Complex data types are partially supported: data will be considered as simple\n");
+		strcpy(new_type, data_type + strlen(OPH_DC_COMPLEX_DATATYPE_PREFIX));
+		data_type = new_type;
+	}
 	if (!strcasecmp(data_type, OPH_DC_BYTE_TYPE))
 		return OPH_DC_BYTE_FLAG;
 	else if (!strcasecmp(data_type, OPH_DC_SHORT_TYPE))
@@ -388,7 +400,7 @@ int oph_dc_create_fragment_from_query(oph_ioserver_handler * server, oph_odb_fra
 
 //Removed multiple statement execution
 int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id,
-					long long *block_size)
+				       long long *block_size)
 {
 	UNUSED(start_id)
 
@@ -501,26 +513,26 @@ int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fr
 }
 
 int oph_dc_create_fragment_from_query_with_param(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
-						  long long *start_id, char *param, long long param_size)
+						 long long *start_id, char *param, long long param_size)
 {
 	return oph_dc_create_fragment_from_query_with_params2(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, NULL, param, param_size, 1);
 }
 
 int oph_dc_create_fragment_from_query_with_param2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
-						   long long *start_id, long long *block_size, char *param, long long param_size)
+						  long long *start_id, long long *block_size, char *param, long long param_size)
 {
 	return oph_dc_create_fragment_from_query_with_params2(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, block_size, param, param_size, 1);
 }
 
 int oph_dc_create_fragment_from_query_with_params(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
-						   long long *start_id, char *param, long long param_size, int num)
+						  long long *start_id, char *param, long long param_size, int num)
 {
 	return oph_dc_create_fragment_from_query_with_params2(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, NULL, param, param_size, num);
 }
 
 //Removed multiple statement execution
 int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
-						    long long *start_id, long long *block_size, char *param, long long param_size, int num)
+						   long long *start_id, long long *block_size, char *param, long long param_size, int num)
 {
 	UNUSED(start_id)
 
@@ -695,14 +707,14 @@ int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server
 }
 
 int oph_dc_create_fragment_from_query_with_aggregation(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
-							long long *start_id, char *param, long long param_size)
+						       long long *start_id, char *param, long long param_size)
 {
 	return oph_dc_create_fragment_from_query_with_aggregation2(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, NULL, param, param_size);
 }
 
 //Removed multiple statement execution
 int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
-							 long long *start_id, long long *block_size, char *param, long long param_size)
+							long long *start_id, long long *block_size, char *param, long long param_size)
 {
 	UNUSED(start_id)
 
@@ -1085,7 +1097,7 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 }
 
 int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned long long tot_rows, short int exec_flag, oph_odb_fragment * new_frag, oph_odb_fragment * old_frag, long long *first_id,
-					long long *last_id, oph_ioserver_query ** exec_query, oph_ioserver_query_arg *** exec_args)
+				       long long *last_id, oph_ioserver_query ** exec_query, oph_ioserver_query_arg *** exec_args)
 {
 	if (!new_frag || !old_frag || !first_id || !last_id || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1385,7 +1397,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 }
 
 int oph_dc_copy_and_process_fragment(oph_ioserver_handler * server, unsigned long long tot_rows, oph_odb_fragment * old_frag1, oph_odb_fragment * old_frag2, const char *frag_name, int compressed,
-				      const char *operation, const char *measure_type)
+				     const char *operation, const char *measure_type)
 {
 	if (!old_frag1 || !old_frag2 || !frag_name || !server || !operation || !measure_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1674,7 +1686,7 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * server, unsigned lon
 }
 
 int oph_dc_read_fragment_data(oph_ioserver_handler * server, oph_odb_fragment * frag, char *data_type, int compressed, char *id_clause, char *array_clause, char *where_clause, int limit,
-			       int raw_format, oph_ioserver_result ** frag_rows)
+			      int raw_format, oph_ioserver_result ** frag_rows)
 {
 	if (!frag || !frag_rows || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2339,6 +2351,13 @@ int oph_dc_check_data_type(char *input_type)
 	if (!input_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DC_NULL_PARAM;
+	}
+
+	char new_type[strlen(input_type)];
+	if (strcasestr(input_type, OPH_DC_COMPLEX_DATATYPE_PREFIX)) {
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Complex data types are partially supported: data will be considered as simple\n");
+		sprintf(new_type, "oph_%s", input_type + strlen(OPH_DC_COMPLEX_DATATYPE_PREFIX));
+		input_type = new_type;
 	}
 
 	if (!strncmp(input_type, OPH_DC_DOUBLE_TYPE, sizeof(OPH_DC_DOUBLE_TYPE)))

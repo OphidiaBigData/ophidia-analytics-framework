@@ -1674,7 +1674,7 @@ int task_execute(oph_operator_struct * handle)
 													OPH_LOG_OPH_PUBLISH_DIM_READ_ERROR);
 												oph_ioserver_free_result(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frag_rows);
 												oph_dc_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server,
-															     frags.value[k].db_instance->dbms_instance);
+															    frags.value[k].db_instance->dbms_instance);
 												oph_odb_stge_free_fragment_list(&frags);
 												oph_odb_stge_free_db_list(&dbs);
 												oph_odb_stge_free_dbms_list(&dbmss);
@@ -1740,7 +1740,7 @@ int task_execute(oph_operator_struct * handle)
 								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PUBLISH_IOPLUGIN_FETCH_ROW_ERROR);
 								oph_ioserver_free_result(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frag_rows);
 								oph_dc_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server,
-											     frags.value[k].db_instance->dbms_instance);
+											    frags.value[k].db_instance->dbms_instance);
 								oph_odb_stge_free_fragment_list(&frags);
 								oph_odb_stge_free_db_list(&dbs);
 								oph_odb_stge_free_dbms_list(&dbmss);

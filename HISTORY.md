@@ -1,9 +1,9 @@
 
-## v1.0.0 - 2017-03-21
+## v1.0.0 - 2017-03-23
 
 ### Fixed:
 
-- Typos in OPH_EXPLORENC, OPH_MERGECUBES and OPH_MERGECUBES2
+- Typos in OPH_EXPLORENC, OPH_MERGECUBES and OPH_MERGECUBES2 XML files
 - Subset library to handle large filters
 - Bug in evaluating monthly reductions
 

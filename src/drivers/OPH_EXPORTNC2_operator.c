@@ -1533,7 +1533,7 @@ int task_execute(oph_operator_struct * handle)
 								logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container,
 									OPH_LOG_OPH_EXPORTNC_VAR_TYPE_NOT_SUPPORTED, dims[m].dimtype);
 								oph_dc_disconnect_from_dbms(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->server,
-											     frags.value[k].db_instance->dbms_instance);
+											    frags.value[k].db_instance->dbms_instance);
 								oph_dc_cleanup_dbms(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->server);
 								oph_odb_stge_free_fragment_list(&frags);
 								oph_odb_stge_free_db_list(&dbs);
@@ -1714,7 +1714,7 @@ int task_execute(oph_operator_struct * handle)
 									OPH_LOG_OPH_EXPORTNC_VAR_TYPE_NOT_SUPPORTED, data_type);
 								oph_ioserver_free_result(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->server, frag_rows);
 								oph_dc_disconnect_from_dbms(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->server,
-											     frags.value[k].db_instance->dbms_instance);
+											    frags.value[k].db_instance->dbms_instance);
 								oph_dc_cleanup_dbms(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->server);
 								oph_odb_stge_free_fragment_list(&frags);
 								oph_odb_stge_free_db_list(&dbs);
