@@ -400,7 +400,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		// Checking data types
-		if (strcmp(cube.measure_type, cube2.measure_type)) {
+		if (strcasecmp(cube.measure_type, cube2.measure_type)) {
 			oph_odb_cube_free_datacube(&cube);
 			oph_odb_cube_free_datacube(&cube2);
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Datacube types are not comparable\n");
@@ -444,7 +444,7 @@ int task_init(oph_operator_struct * handle)
 		oph_odb_cubehasdim *cubedims = NULL, *cubedims2 = NULL;
 		int number_of_dimensions = 0, number_of_dimensions2 = 0;
 		int last_insertd_id = 0;
-		int l;
+		int l, ll;
 
 		//Read old cube - dimension relation rows
 		if (oph_odb_cube_retrieve_cubehasdim_list(oDB, datacube_id1, &cubedims, &number_of_dimensions)) {
@@ -463,20 +463,22 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		// Dimension comparison
-		if (number_of_dimensions != number_of_dimensions2) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve datacube2 - dimension relations.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_INTERCUBE_DATACUBE_COMPARISON_ERROR,
-				"number of dimensions");
-			oph_odb_cube_free_datacube(&cube);
-			free(cubedims);
-			free(cubedims2);
-			goto __OPH_EXIT_1;
-		}
-		for (l = 0; l < number_of_dimensions; l++)
-			if ((cubedims[l].size != cubedims2[l].size) || (cubedims[l].explicit_dim != cubedims2[l].explicit_dim) || (cubedims[l].level != cubedims2[l].level)
-			    )
+		for (l = ll = 0; (l < number_of_dimensions) && (ll < number_of_dimensions2); l++, ll++) {
+			while (!cubedims[l].size && (l < number_of_dimensions))
+				l++;
+			while (!cubedims2[ll].size && (ll < number_of_dimensions2))
+				ll++;
+			if ((l >= number_of_dimensions) || (ll >= number_of_dimensions2) || (cubedims[l].size != cubedims2[ll].size) || (cubedims[l].explicit_dim != cubedims2[ll].explicit_dim)
+			    || (cubedims[l].level != cubedims2[ll].level))
 				break;
-		if (l < number_of_dimensions) {
+		}
+		for (; l < number_of_dimensions; l++)
+			if (cubedims[l].size)
+				break;
+		for (; ll < number_of_dimensions2; ll++)
+			if (cubedims2[ll].size)
+				break;
+		if ((l < number_of_dimensions) || (ll < number_of_dimensions2)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Datacube dimensions are not comparable.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_INTERCUBE_DATACUBE_COMPARISON_ERROR,
 				"dimensions");
