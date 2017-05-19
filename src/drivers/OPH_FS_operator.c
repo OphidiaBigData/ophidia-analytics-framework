@@ -378,7 +378,7 @@ int task_execute(oph_operator_struct * handle)
 				struct stat file_stat;
 
 				while (!readdir_r(dirp, &save_entry, &entry) && entry)
-					if (*entry->d_name == OPH_FS_HPREFIX) {
+					if (*entry->d_name != OPH_FS_HPREFIX) {
 						snprintf(full_filename, OPH_COMMON_BUFFER_LEN, "%s/%s", path, entry->d_name);
 						lstat(full_filename, &file_stat);
 						if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode))
@@ -390,7 +390,7 @@ int task_execute(oph_operator_struct * handle)
 
 					char filenames[jj][OPH_COMMON_BUFFER_LEN];
 					while (!readdir_r(dirp, &save_entry, &entry) && entry)
-						if (*entry->d_name == OPH_FS_HPREFIX) {
+						if (*entry->d_name != OPH_FS_HPREFIX) {
 							snprintf(full_filename, OPH_COMMON_BUFFER_LEN, "%s/%s", path, entry->d_name);
 							lstat(full_filename, &file_stat);
 							if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode))
