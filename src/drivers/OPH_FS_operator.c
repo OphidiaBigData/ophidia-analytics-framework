@@ -41,6 +41,8 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
+#define OPH_FS_HPREFIX '.'
+
 int cmpfunc(const void *a, const void *b)
 {
 	char const *aa = (char const *) a;
@@ -376,7 +378,7 @@ int task_execute(oph_operator_struct * handle)
 				struct stat file_stat;
 
 				while (!readdir_r(dirp, &save_entry, &entry) && entry)
-					if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+					if (*entry->d_name == OPH_FS_HPREFIX) {
 						snprintf(full_filename, OPH_COMMON_BUFFER_LEN, "%s/%s", path, entry->d_name);
 						lstat(full_filename, &file_stat);
 						if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode))
@@ -388,7 +390,7 @@ int task_execute(oph_operator_struct * handle)
 
 					char filenames[jj][OPH_COMMON_BUFFER_LEN];
 					while (!readdir_r(dirp, &save_entry, &entry) && entry)
-						if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+						if (*entry->d_name == OPH_FS_HPREFIX) {
 							snprintf(full_filename, OPH_COMMON_BUFFER_LEN, "%s/%s", path, entry->d_name);
 							lstat(full_filename, &file_stat);
 							if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode))

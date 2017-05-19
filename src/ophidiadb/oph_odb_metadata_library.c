@@ -30,7 +30,7 @@
 #include "debug.h"
 
 #define OPH_METADATA_LOCK_ERROR 1213
-#define OPH_METADATA_MAX_ATTEMPTS 5
+#define OPH_METADATA_MAX_ATTEMPTS 10
 #define OPH_METADATA_WAITING_TIME 1
 
 extern int msglevel;
