@@ -39,7 +39,7 @@
  * \param create_container Flag indicating if the container has to be created
  * \param cwd Absolute path where the container is
  * \param run Simulate the run of operator to compute distribution parameters
- * \param nc_file_path Path of the nc file to import
+ * \param sac_file_path Path of the nc file to import
  * \param partition_input Name of the host partition used to store data
  * \param grid_name Name of the grid used to specify dimensions
  * \param fs_type Type of file system used
@@ -84,6 +84,7 @@ struct _OPH_IMPORTSAC_operator_handle
   char *cwd;
   int run;
   char *sac_file_path;
+  char *sac_file_path_orig;
   char *partition_input;
   char *grid_name;
   int fs_type;
