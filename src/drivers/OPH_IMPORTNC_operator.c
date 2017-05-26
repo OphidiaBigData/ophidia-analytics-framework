@@ -432,6 +432,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->grid_name = NULL;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path = NULL;
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path_orig = NULL;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_output_datacube = 0;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container = 0;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->compressed = 0;
@@ -599,6 +600,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, value, "nc file path");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
+	if (!(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path_orig = strdup(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "nc file path");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT);
 	if (!value) {
@@ -631,7 +637,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->user = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "username");
-
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
@@ -2847,7 +2852,7 @@ int task_init(oph_operator_struct * handle)
 		//Import source name
 		oph_odb_source src;
 		int id_src = 0;
-		strncpy(src.uri, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, OPH_ODB_CUBE_SOURCE_URI_SIZE);
+		strncpy(src.uri, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path_orig, OPH_ODB_CUBE_SOURCE_URI_SIZE);
 		if (oph_odb_cube_insert_into_source_table(oDB, &src, &id_src)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert source URI\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_SOURCE_URI_ERROR, src.uri);
@@ -4002,6 +4007,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path) {
 		free((char *) ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path);
 		((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path = NULL;
+	}
+	if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path_orig) {
+		free((char *) ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path_orig);
+		((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path_orig = NULL;
 	}
 	if ((retval = nc_close(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->ncid)))
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", nc_strerror(retval));

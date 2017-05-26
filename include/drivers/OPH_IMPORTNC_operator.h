@@ -40,6 +40,7 @@
  * \param cwd Absolute path where the container is
  * \param run Simulate the run of operator to compute distribution parameters
  * \param nc_file_path Path of the nc file to import
+ * \param nc_file_path_orig Original value of nc_file_path
  * \param partition_input Name of the host partition used to store data
  * \param grid_name Name of the grid used to specify dimensions
  * \param fs_type Type of file system used
@@ -83,6 +84,7 @@ struct _OPH_IMPORTNC_operator_handle {
 	char *cwd;
 	int run;
 	char *nc_file_path;
+	char *nc_file_path_orig;
 	char *partition_input;
 	char *grid_name;
 	int fs_type;
