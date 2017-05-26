@@ -37,6 +37,7 @@
  * \param oDB Contains the parameters and the connection to OphidiaDB
  * \param id_input_datacube ID of the input datacube used
  * \param nc_file_path Path of the nc file to import
+ * \param nc_file_path_orig Original value of nc_file_path
  * \param grid_name Name of the grid used to specify dimensions
  * \param id_output_datacube ID of the output datacube created
  * \param id_input_container ID of the output container used/created
@@ -62,6 +63,7 @@
 struct _OPH_CONCATNC_operator_handle {
 	ophidiadb oDB;
 	char *nc_file_path;
+	char *nc_file_path_orig;
 	char *grid_name;
 	int id_input_datacube;
 	int id_output_datacube;

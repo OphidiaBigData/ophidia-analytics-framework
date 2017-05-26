@@ -67,6 +67,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->grid_name = NULL;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path = NULL;
+	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path_orig = NULL;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_datacube = 0;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_output_datacube = 0;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container = 0;
@@ -269,13 +270,19 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_INPUT_NO_CONTAINER, value, "nc file path");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
+	if (!(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path_orig = strdup(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_INPUT_NO_CONTAINER, value, "nc file path");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
 
 	if (strstr(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path, "..")) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (!strstr(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path, "http")) {
+	if (!strstr(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path, "http://")
+	    && !strstr(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path, "https://")) {
 		char *pointer = ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path;
 		while (pointer && (*pointer == ' '))
 			pointer++;
@@ -1572,7 +1579,7 @@ int task_init(oph_operator_struct * handle)
 		//Import source name
 		oph_odb_source src;
 		int id_src = 0;
-		strncpy(src.uri, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path, OPH_ODB_CUBE_SOURCE_URI_SIZE);
+		strncpy(src.uri, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path_orig, OPH_ODB_CUBE_SOURCE_URI_SIZE);
 		if (oph_odb_cube_insert_into_source_table(oDB, &src, &id_src)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert source URI\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATNC_INSERT_SOURCE_URI_ERROR, src.uri);
@@ -2093,6 +2100,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path) {
 		free((char *) ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path);
 		((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path = NULL;
+	}
+	if (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path_orig) {
+		free((char *) ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path_orig);
+		((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path_orig = NULL;
 	}
 	if ((retval = nc_close(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->ncid)))
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", nc_strerror(retval));
