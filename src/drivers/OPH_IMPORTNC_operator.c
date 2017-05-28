@@ -2658,7 +2658,6 @@ int task_init(oph_operator_struct * handle)
 				id_grid = 0;
 
 			//For each input dimension
-			int create_dimension;
 			for (i = 0; i < measure->ndims; i++) {
 				//Find container dimension
 				for (j = 0; j < number_of_dimensions_c; j++) {
@@ -2683,7 +2682,6 @@ int task_init(oph_operator_struct * handle)
 				tmp_var.dims_id = NULL;
 				tmp_var.dims_length = NULL;
 
-				create_dimension = 0;
 				if ((retval = oph_nc_get_nc_var(id_container_out, measure->dims_name[i], ncid, 1, &tmp_var))) {
 					if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
@@ -2700,7 +2698,7 @@ int task_init(oph_operator_struct * handle)
 						free(dimvar_ids);
 						goto __OPH_EXIT_1;
 					} else
-						create_dimension = 1;
+						tmp_var.varid = -1;
 				}
 				dimvar_ids[i] = tmp_var.varid;
 				if (tmp_var.dims_id)

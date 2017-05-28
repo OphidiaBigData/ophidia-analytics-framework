@@ -3516,6 +3516,7 @@ int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_NC_ERROR;
 	}
+	var->varid = -1;
 	int retval = 0;
 
 	//Get id from dimension name
