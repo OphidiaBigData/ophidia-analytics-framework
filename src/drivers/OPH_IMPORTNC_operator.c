@@ -1371,8 +1371,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 						free(offset);
 					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 				}
-				free(tmp_var.dims_id);
-				free(tmp_var.dims_length);
+				if (tmp_var.dims_id)
+					free(tmp_var.dims_id);
+				if (tmp_var.dims_length)
+					free(tmp_var.dims_length);
 
 				if (oph_nc_get_c_type(tmp_var.vartype, dim.dimension_type)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
@@ -2209,8 +2211,10 @@ int task_init(oph_operator_struct * handle)
 						free(tmp_var.dims_length);
 					goto __OPH_EXIT_1;
 				}
-				free(tmp_var.dims_id);
-				free(tmp_var.dims_length);
+				if (tmp_var.dims_id)
+					free(tmp_var.dims_id);
+				if (tmp_var.dims_length)
+					free(tmp_var.dims_length);
 
 				// Load dimension names and types
 				strncpy(dim.dimension_name, measure->dims_name[i], OPH_ODB_DIM_DIMENSION_SIZE);
@@ -2654,6 +2658,7 @@ int task_init(oph_operator_struct * handle)
 				id_grid = 0;
 
 			//For each input dimension
+			int create_dimension;
 			for (i = 0; i < measure->ndims; i++) {
 				//Find container dimension
 				for (j = 0; j < number_of_dimensions_c; j++) {
@@ -2674,27 +2679,34 @@ int task_init(oph_operator_struct * handle)
 					goto __OPH_EXIT_1;
 				}
 
+				tmp_var.varid = -1;
 				tmp_var.dims_id = NULL;
 				tmp_var.dims_length = NULL;
 
+				create_dimension = 0;
 				if ((retval = oph_nc_get_nc_var(id_container_out, measure->dims_name[i], ncid, 1, &tmp_var))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, nc_strerror(retval));
-					free(tot_dims);
-					free(dims);
-					free(dim_inst);
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					if (tmp_var.dims_id)
-						free(tmp_var.dims_id);
-					if (tmp_var.dims_length)
-						free(tmp_var.dims_length);
-					free(dimvar_ids);
-					goto __OPH_EXIT_1;
+					if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, nc_strerror(retval));
+						free(tot_dims);
+						free(dims);
+						free(dim_inst);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						if (tmp_var.dims_id)
+							free(tmp_var.dims_id);
+						if (tmp_var.dims_length)
+							free(tmp_var.dims_length);
+						free(dimvar_ids);
+						goto __OPH_EXIT_1;
+					} else
+						create_dimension = 1;
 				}
 				dimvar_ids[i] = tmp_var.varid;
-				free(tmp_var.dims_id);
-				free(tmp_var.dims_length);
+				if (tmp_var.dims_id)
+					free(tmp_var.dims_id);
+				if (tmp_var.dims_length)
+					free(tmp_var.dims_length);
 
 				dim_array = NULL;
 
@@ -2711,10 +2723,7 @@ int task_init(oph_operator_struct * handle)
 				dim_inst[i].id_grid = id_grid;
 				dim_inst[i].id_dimensioninst = 0;
 				//Modified to allow subsetting
-				if (measure->dims_start_index[i] == measure->dims_end_index[i])
-					tmp_var.varsize = 1;
-				else
-					tmp_var.varsize = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
+				tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
 				dim_inst[i].size = tmp_var.varsize;
 				dim_inst[i].concept_level = measure->dims_concept_level[i];
 				dim_inst[i].unlimited = measure->dims_unlim[i];
