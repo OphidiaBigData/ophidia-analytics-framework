@@ -3147,6 +3147,8 @@ int task_init(oph_operator_struct * handle)
 			//Get local attributes from nc file for each dimension variable
 			int ii;
 			for (ii = 0; ii < measure->ndims; ii++) {
+				if (dimvar_ids[ii] < 0)
+					continue;
 				natts = 0;
 				if (nc_inq_varnatts(ncid, dimvar_ids[ii], &natts)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering number of local attributes\n");
