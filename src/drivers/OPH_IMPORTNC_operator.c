@@ -1313,6 +1313,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (oph_odb_read_ophidiadb_config_file(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONFIGURATION_FILE, container_name);
+			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)
 				free(offset);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -1321,6 +1323,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (oph_odb_connect_to_ophidiadb(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONNECTION_ERROR, container_name);
+			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)
 				free(offset);
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -1330,6 +1334,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (!value) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_VOCABULARY);
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_VOCABULARY);
+			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)
 				free(offset);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
@@ -1338,6 +1344,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			if ((oph_odb_meta_retrieve_vocabulary_id(oDB, value, &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_vocabulary))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input vocabulary\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NO_VOCABULARY_NO_CONTAINER, container_name, value);
+				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 				if (offset)
 					free(offset);
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
@@ -1349,7 +1357,52 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		oph_odb_dimension dim;
 		oph_odb_dimension *time_dim = &dim, *tot_dims = NULL;
 
-		if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container) {
+		int permission = 0, folder_id = 0, container_exists;
+		ophidiadb *oDB = &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB;
+
+		if (handle->proc_rank == 0) {
+
+			char *cwd = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->cwd;
+			char *user = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->user;
+
+			//Check if input path exists
+			if ((oph_odb_fs_path_parsing("", cwd, &folder_id, NULL, oDB))) {
+				//Check if user can work on datacube
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Path %s doesn't exists\n", cwd);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_CWD_ERROR, container_name, cwd);
+				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+				if (offset)
+					free(offset);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+			if ((oph_odb_fs_check_folder_session(folder_id, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->sessionid, oDB, &permission)) || !permission) {
+				//Check if user can work on datacube
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "User %s is not allowed to work in this folder\n", user);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DATACUBE_PERMISSION_ERROR, container_name, user);
+				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+				if (offset)
+					free(offset);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+			//Check if container exists
+			if ((oph_odb_fs_check_if_container_not_present(oDB, container_name, folder_id, &container_exists))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check output container\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
+				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+				if (offset)
+					free(offset);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+		}
+
+		int create_container = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container;
+		if (container_exists)
+			create_container = 0;
+
+		if (create_container) {
 			if (!((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->import_metadata || !handle->proc_rank) {
 				strncpy(dim.base_time, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->base_time, OPH_ODB_DIM_TIME_SIZE);
 				dim.leap_year = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->leap_year;
@@ -1429,23 +1482,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			char buffer[packet_size];
 
 			if (handle->proc_rank == 0) {
-				int flag = 1, folder_id = 0, permission = 0, id_container_out = 0, number_of_dimensions_c = 0;
+				int flag = 1, id_container_out = 0, number_of_dimensions_c = 0;
 				while (flag) {
-					ophidiadb *oDB = &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB;
 
-					if ((oph_odb_fs_path_parsing("", ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->cwd, &folder_id, NULL, oDB))) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Path %s doesn't exists\n", ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->cwd);
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_CWD_ERROR, container_name,
-							((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->cwd);
-						break;
-					}
-					if ((oph_odb_fs_check_folder_session(folder_id, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->sessionid, oDB, &permission)) || !permission) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "User %s is not allowed to work in this folder\n",
-						      ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->user);
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DATACUBE_PERMISSION_ERROR, container_name,
-							((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->user);
-						break;
-					}
 					if (oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, 0, &id_container_out) && !id_container_out) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container or it is hidden\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
@@ -1827,15 +1866,15 @@ int task_init(oph_operator_struct * handle)
 		}
 	}
 
+	int container_exists = 0;
 	char *container_name = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->container_input;
+	int create_container = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container;
 
 	if (handle->proc_rank == 0) {
 		ophidiadb *oDB = &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB;
 
 		int i, j;
 		char id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
-
-		int container_exists = 0;
 		int last_insertd_id = 0;
 		int *host_number = &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->host_number;
 		int *dbmsxhost_number = &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->dbmsxhost_number;
@@ -2146,31 +2185,27 @@ int task_init(oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
 		}
-		if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container) {
-			if (container_exists) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Input container already exist\n");
+		if (container_exists)
+			create_container = 0;
+		if (create_container) {
+
+			if (!oph_odb_fs_is_allowed_name(container_name)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "%s not allowed for new folders/containers\n", container_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_NAME_NOT_ALLOWED_ERROR, container_name);
+				goto __OPH_EXIT_1;
+			}
+			//Check if non-hidden container exists in folder
+			int container_unique = 0;
+			if ((oph_odb_fs_is_unique(folder_id, container_name, oDB, &container_unique))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check output container\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OUTPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
+				goto __OPH_EXIT_1;
+			}
+			if (!container_unique) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Container '%s' already exists in this path or a folder has the same name\n", container_name);
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OUTPUT_CONTAINER_EXIST_ERROR, container_name, container_name);
 				goto __OPH_EXIT_1;
-			} else {
-				if (!oph_odb_fs_is_allowed_name(container_name)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "%s not allowed for new folders/containers\n", container_name);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_NAME_NOT_ALLOWED_ERROR, container_name);
-					goto __OPH_EXIT_1;
-				}
-				//Check if non-hidden container exists in folder
-				int container_unique = 0;
-				if ((oph_odb_fs_is_unique(folder_id, container_name, oDB, &container_unique))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check output container\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OUTPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
-					goto __OPH_EXIT_1;
-				}
-				if (!container_unique) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Container '%s' already exists in this path or a folder has the same name\n", container_name);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OUTPUT_CONTAINER_EXIST_ERROR, container_name, container_name);
-					goto __OPH_EXIT_1;
-				}
 			}
-
 			//If it doesn't then create new container and get last id
 			oph_odb_container cont;
 			strncpy(cont.container_name, container_name, OPH_ODB_FS_CONTAINER_SIZE);
@@ -2306,8 +2341,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		//Else retreive container ID and check for dimension table
-		if (!((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container
-		    && oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, 0, &id_container_out)) {
+		if (!create_container && oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, 0, &id_container_out)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container or it is hidden\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
@@ -2683,7 +2717,7 @@ int task_init(oph_operator_struct * handle)
 				tmp_var.dims_length = NULL;
 
 				if ((retval = oph_nc_get_nc_var(id_container_out, measure->dims_name[i], ncid, 1, &tmp_var))) {
-					if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container) {
+					if (create_container) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, nc_strerror(retval));
 						free(tot_dims);
@@ -3452,7 +3486,7 @@ int task_init(oph_operator_struct * handle)
 			hashtbl_destroy(key_tbl);
 			hashtbl_destroy(required_tbl);
 
-			if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container)	// Check for time dimensions
+			if (create_container)	// Check for time dimensions
 			{
 				for (i = 0; i < measure->ndims; i++) {
 					ii = oph_odb_dim_set_time_dimension(oDB, id_datacube_out, measure->dims_name[i]);
@@ -3568,7 +3602,7 @@ int task_init(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	if (!handle->proc_rank && flush) {
-		while (id_container_out && ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container) {
+		while (id_container_out && create_container) {
 			ophidiadb *oDB = &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB;
 
 			//Remove also grid related to container dimensions
