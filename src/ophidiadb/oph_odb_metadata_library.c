@@ -746,7 +746,7 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 			return OPH_ODB_STR_BUFF_OVERFLOW;
 		}
 
-		if (mysql_query(oDB->conn, insertQuery)) {
+		if ((n = mysql_query(oDB->conn, insertQuery))) {
 			mysql_autocommit(oDB->conn, 1);
 			if ((n == OPH_METADATA_LOCK_ERROR) && --attempt_left) {
 				sleep(rand() % (1 + OPH_METADATA_WAITING_TIME * (OPH_METADATA_MAX_ATTEMPTS - attempt_left)));
