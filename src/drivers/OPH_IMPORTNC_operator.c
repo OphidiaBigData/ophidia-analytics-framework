@@ -2718,7 +2718,7 @@ int task_init(oph_operator_struct * handle)
 
 				if ((retval = oph_nc_get_nc_var(id_container_out, measure->dims_name[i], ncid, 1, &tmp_var))) {
 					if (create_container) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read information of dimension '%s': %s\n", measure->dims_name[i], nc_strerror(retval));
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, nc_strerror(retval));
 						free(tot_dims);
 						free(dims);
@@ -2731,8 +2731,11 @@ int task_init(oph_operator_struct * handle)
 							free(tmp_var.dims_length);
 						free(dimvar_ids);
 						goto __OPH_EXIT_1;
-					} else
+					} else {
 						tmp_var.varid = -1;
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "Fill dimension '%s' with integers\n", measure->dims_name[i]);
+						logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, "Fill dimension '%s' with integers\n", measure->dims_name[i]);
+					}
 				}
 				dimvar_ids[i] = tmp_var.varid;
 				if (tmp_var.dims_id)

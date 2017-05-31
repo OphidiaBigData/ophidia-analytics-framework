@@ -726,12 +726,16 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 		}
 
 		if ((n = mysql_query(oDB->conn, insertQuery))) {
+			mysql_autocommit(oDB->conn, 1);
 			if ((n == OPH_METADATA_LOCK_ERROR) && --attempt_left) {
 				sleep(rand() % (1 + OPH_METADATA_WAITING_TIME * (OPH_METADATA_MAX_ATTEMPTS - attempt_left)));
+				if (mysql_autocommit(oDB->conn, 0)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+					return OPH_ODB_MYSQL_ERROR;
+				}
 				continue;
 			}
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-			mysql_autocommit(oDB->conn, 1);
 			return OPH_ODB_MYSQL_ERROR;
 		}
 
@@ -743,12 +747,16 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 		}
 
 		if (mysql_query(oDB->conn, insertQuery)) {
+			mysql_autocommit(oDB->conn, 1);
 			if ((n == OPH_METADATA_LOCK_ERROR) && --attempt_left) {
 				sleep(rand() % (1 + OPH_METADATA_WAITING_TIME * (OPH_METADATA_MAX_ATTEMPTS - attempt_left)));
+				if (mysql_autocommit(oDB->conn, 0)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+					return OPH_ODB_MYSQL_ERROR;
+				}
 				continue;
 			}
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-			mysql_autocommit(oDB->conn, 1);
 			return OPH_ODB_MYSQL_ERROR;
 		}
 

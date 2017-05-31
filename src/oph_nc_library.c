@@ -3521,8 +3521,8 @@ int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE
 
 	//Get id from dimension name
 	if ((retval = nc_inq_varid(ncid, var_name, &(var->varid)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+		logging(LOG_WARNING, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
 		return OPH_NC_ERROR;
 	}
 	//Get information from id
