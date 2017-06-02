@@ -80,6 +80,8 @@ int main(int argc, char *argv[])
 
 		char task_string[OPH_COMMON_BUFFER_LEN];
 		strncpy(task_string, argv[1], OPH_COMMON_BUFFER_LEN);
+		if (!myrank)
+			pmesg(LOG_INFO, __FILE__, __LINE__, "Task string:\n%s\n", task_string);
 
 		if ((res = oph_af_execute_framework(task_string, size, myrank))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Framework execution failed! ERROR: %d\n", res);
