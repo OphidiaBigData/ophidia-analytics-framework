@@ -29,10 +29,6 @@
 #include <mysql.h>
 #include "debug.h"
 
-#define OPH_METADATA_LOCK_ERROR 1213
-#define OPH_METADATA_MAX_ATTEMPTS 10
-#define OPH_METADATA_WAITING_TIME 1
-
 extern int msglevel;
 
 int oph_odb_meta_find_metadatakey_list(ophidiadb * oDB, int vocabulary_id, MYSQL_RES ** information_list)
@@ -711,53 +707,27 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 	}
 
 	char insertQuery[MYSQL_BUFLEN];
-	int n, attempt_left = OPH_METADATA_MAX_ATTEMPTS;
+	int n;
 
-	if (mysql_autocommit(oDB->conn, 0)) {
+	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_COPY_INSTANCE, id_datacube_output, id_datacube_input);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, insertQuery)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
-	do {
-		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_COPY_INSTANCE, id_datacube_output, id_datacube_input);
-		if (n >= MYSQL_BUFLEN) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-			return OPH_ODB_STR_BUFF_OVERFLOW;
-		}
+	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_COPY_MANAGE, id_user, id_datacube_output);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		mysql_autocommit(oDB->conn, 1);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
 
-		if ((n = mysql_query(oDB->conn, insertQuery))) {
-			if ((n == OPH_METADATA_LOCK_ERROR) && --attempt_left) {
-				sleep(rand() % (1 + OPH_METADATA_WAITING_TIME * (OPH_METADATA_MAX_ATTEMPTS - attempt_left)));
-				continue;
-			}
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-			mysql_autocommit(oDB->conn, 1);
-			return OPH_ODB_MYSQL_ERROR;
-		}
-
-		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_COPY_MANAGE, id_user, id_datacube_output);
-		if (n >= MYSQL_BUFLEN) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-			mysql_autocommit(oDB->conn, 1);
-			return OPH_ODB_STR_BUFF_OVERFLOW;
-		}
-
-		if (mysql_query(oDB->conn, insertQuery)) {
-			if ((n == OPH_METADATA_LOCK_ERROR) && --attempt_left) {
-				sleep(rand() % (1 + OPH_METADATA_WAITING_TIME * (OPH_METADATA_MAX_ATTEMPTS - attempt_left)));
-				continue;
-			}
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-			mysql_autocommit(oDB->conn, 1);
-			return OPH_ODB_MYSQL_ERROR;
-		}
-
-		mysql_commit(oDB->conn);
-		break;
-
-	} while (attempt_left > 0);
-
-	if (mysql_autocommit(oDB->conn, 1)) {
+	if (mysql_query(oDB->conn, insertQuery)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}

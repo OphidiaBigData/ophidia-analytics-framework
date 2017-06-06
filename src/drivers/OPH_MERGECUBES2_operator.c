@@ -1173,14 +1173,14 @@ int task_execute(oph_operator_struct * handle)
 			(dbmss[0].value[i]).id_dbms);
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
-	// This implementation assume a perfect correspondence between datacube structures
+	// This implementation assumes a perfect correspondence between datacube structures
 
 	//For each DBMS
 	for (i = 0; (i < dbmss[0].size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
 		// Current implementation considers data exchange within the same dbms, databases could be different
 		for (cc = 1; cc < datacube_num; cc++) {
 			if (dbmss[0].value[i].id_dbms != dbmss[cc].value[i].id_dbms) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Connot compare datacube in different dbms\n");
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to compare datacubes in different dbms\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
 					OPH_LOG_OPH_MERGECUBES_DIFFERENT_DBMS_ERROR);
 				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
