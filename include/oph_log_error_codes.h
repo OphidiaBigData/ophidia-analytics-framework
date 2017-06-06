@@ -109,7 +109,8 @@
 #define OPH_LOG_GENERIC_DIMENSION_READ_ERROR						"Unable to retrieve datacube - dimension relations.\n"
 #define OPH_LOG_GENERIC_NO_INPUT_CONTAINER_UNKNOWN					"Unknown input container %s.\n"
 #define OPH_LOG_GENERIC_NO_INPUT_DATACUBE_UNKNOWN  					"Unknown input datacube %s.\n"
-#define OPH_LOG_GENERIC_DIMENSION_READ_ERROR2 						"Unable to retrieve dimensions .\n"
+#define OPH_LOG_GENERIC_DIMENSION_READ_ERROR2 						"Unable to retrieve dimensions.\n"
+#define OPH_LOG_GENERIC_PERMISSION_ERROR						"Permission denied to %s\n"
 #define OPH_LOG_GENERIC_DIR_CREATION_ERROR 							"Unable to create dir %s\n"
 #define OPH_LOG_GENERIC_DATACUBE_PUBLISHED 							"Cuboid has been already published %s\n"
 #define OPH_LOG_GENERIC_FILE_OPEN_ERROR 							"Unable to open file %s\n"
@@ -485,6 +486,7 @@
 #define OPH_LOG_OPH_EXPORTNC_DBMS_CONNECTION_ERROR 					OPH_LOG_GENERIC_DBMS_CONNECTION_ERROR
 #define OPH_LOG_OPH_EXPORTNC_DB_SELECTION_ERROR 					OPH_LOG_GENERIC_DB_SELECTION_ERROR
 #define OPH_LOG_OPH_EXPORTNC_STRING_BUFFER_OVERFLOW					OPH_LOG_GENERIC_STRING_BUFFER_OVERFLOW
+#define OPH_LOG_OPH_EXPORTNC_PERMISSION_ERROR 					OPH_LOG_GENERIC_PERMISSION_ERROR
 #define OPH_LOG_OPH_EXPORTNC_DIR_CREATION_ERROR 					OPH_LOG_GENERIC_DIR_CREATION_ERROR
 #define OPH_LOG_OPH_EXPORTNC_DATACUBE_EXPORTED 						"Dataset has been already exported\n"
 #define OPH_LOG_OPH_EXPORTNC_READ_FRAG_ERROR 						OPH_LOG_GENERIC_READ_FRAG_ERROR
