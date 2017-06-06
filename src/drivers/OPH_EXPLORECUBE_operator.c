@@ -236,7 +236,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	char *username = value, user_space, user_space_default[] = "/";
+	char *username = value, user_space, user_space_default = 0;
 	if (oph_pid_get_user_space(&user_space)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read user_space\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read user_space\n");
@@ -250,7 +250,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (user_space && !strcmp(value, "default"))
-		value = user_space_default;
+		value = &user_space_default;
 	if (strcmp(value, "default")) {
 		if (!(handle->output_path = (char *) strdup(value))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
