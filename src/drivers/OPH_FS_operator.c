@@ -219,11 +219,19 @@ int task_execute(oph_operator_struct * handle)
 	snprintf(path, OPH_COMMON_BUFFER_LEN, "%s%s", abs_path, rel_path);
 	printf(OPH_FS_CD_MESSAGE " is: %s from %s and %s\n", path, ((OPH_FS_operator_handle *) handle->operator_handle)->path, ((OPH_FS_operator_handle *) handle->operator_handle)->cwd);
 	int result = OPH_ANALYTICS_OPERATOR_SUCCESS;
+	DIR *dirp = NULL;
+	struct stat file_stat;
 
 	switch (((OPH_FS_operator_handle *) handle->operator_handle)->mode) {
 
 		case OPH_FS_MODE_CD:
 
+			if (stat(path, &file_stat) || !S_ISDIR(file_stat.st_mode)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to access '%s'\n", rel_path);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to access '%s'\n", rel_path);
+				result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				break;
+			}
 			// ADD OUTPUT TO JSON AS TEXT
 			if (oph_json_is_objkey_printable
 			    (((OPH_FS_operator_handle *) handle->operator_handle)->objkeys, ((OPH_FS_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_FS)) {
@@ -365,8 +373,7 @@ int task_execute(oph_operator_struct * handle)
 
 				// Data
 				char **jsonvalues = NULL;
-				DIR *dirp = opendir(path);
-				if (!dirp) {
+				if (!(dirp = opendir(path))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to access '%s'\n", rel_path);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to access '%s'\n", rel_path);
 					result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
@@ -375,7 +382,6 @@ int task_execute(oph_operator_struct * handle)
 
 				char full_filename[OPH_COMMON_BUFFER_LEN];
 				struct dirent *entry = NULL, save_entry;
-				struct stat file_stat;
 
 				while (!readdir_r(dirp, &save_entry, &entry) && entry)
 					if (*entry->d_name != OPH_FS_HPREFIX) {
