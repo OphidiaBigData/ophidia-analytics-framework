@@ -755,10 +755,12 @@ int task_execute(oph_operator_struct * handle)
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
 			if (dim_inst[l].fk_id_dimension_label) {
-				if (oph_dim_read_dimension_filtered_data(db, label_dimension_table_name, dim_inst[l].fk_id_dimension_label, operation, 0, &dim_row, dim[l].dimension_type, dim_inst[l].size)
+				if (oph_dim_read_dimension_filtered_data
+				    (db, label_dimension_table_name, dim_inst[l].fk_id_dimension_label, operation, 0, &dim_row, dim[l].dimension_type, dim_inst[l].size)
 				    || !dim_row) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading a row from dimension table.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR);
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR);
 					if (dim_row)
 						free(dim_row);
 					oph_dim_disconnect_from_dbms(db->dbms_instance);
