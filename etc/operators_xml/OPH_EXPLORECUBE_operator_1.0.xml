@@ -16,20 +16,28 @@ Dimension values are used as input filters for subsetting.
 - subset_dims : dimension names of the datacube used for the subsetting.
 			Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
 			Must be the same number of &quot;subset_filter&quot; 
-- subset_filter : enumeration of comma-separated elementary filters (1 series of filters for each dimension):
-			-- value : select a specific value;
-			-- start_value:stop_value : select elements from start_value to stop_value; return an error if this set is empty.
-     			Values should be numbers. Example: subset_dims=lat|lon;subset_filter=35:45|15:20;
-			For time dimensions the option &quot;time_filter&quot; can be enabled, so that the following date formats can be also used:
-				-- yyyy
-				-- yyyy-mm
-				-- yyyy-mm-dd
-				-- yyyy-mm-dd hh
-				-- yyyy-mm-dd hh:mm
-				-- yyyy-mm-dd hh:mm:ss
-			In this case, interval bounds must be separated with &quot;_&quot;.
-			Multiple-value field: list of filters separated by &quot;|&quot; can be provided;
-				it must be the same number of &quot;subset_dims&quot;
+- subset_filter : enumeration of comma-separated elementary filters (1 series of filters for each dimension).
+                  Multiple-value field: list of filters separated by &quot;|&quot; can be provided; it must be the same number of &quot;subset_dims&quot;
+                  In case &quot;subset_type&quot; is &quot;index&quot; a filter can be expressed as
+                  -- index : select a single value, specified by its index;
+                  -- start_index:stop_index : select elements from start_index to stop_index;
+                  -- start_index:stride:stop_index : select elements from start_index to stop_index with a step of stride.
+                  Indexes are integers from 1 to the dimension size. It can be also used &quot;end&quot; to specify the index of the last element.
+                  Example: subset_dims=lat|lon;subset_filter=1:10|20:end;
+                  In case &quot;subset_type&quot; is &quot;coord&quot; a filter can be expressed as
+                  -- value : select a specific value;
+                  -- start_value:stop_value : select elements from start_value to stop_value; return an error if this set is empty.
+                  Values should be numbers. Example: subset_dims=lat|lon;subset_filter=35:45|15:20;
+                  For time dimensions the option &quot;time_filter&quot; can be enabled, so that the following date formats can be also used:
+                  -- yyyy
+                  -- yyyy-mm
+                  -- yyyy-mm-dd
+                  -- yyyy-mm-dd hh
+                  -- yyyy-mm-dd hh:mm
+                  -- yyyy-mm-dd hh:mm:ss
+                  In this case, interval bounds must be separated with &quot;_&quot;.
+- subset_type : if set to &quot;index&quot; (default), the subset_filter is considered on dimension index. 
+                With &quot;coord&quot;, filter is considered on dimension values.
 - time_filter : enable filters using dates for time dimensions; enabled by default.
 - limit_filter : optional filter on the maximum number of rows.
 - show_id : if &quot;no&quot; (default), it won't show fragment row ID.
@@ -74,6 +82,7 @@ SUBMISSION STRING: &quot;operator=oph_explorecube;cube=http://www.example.com/1/
 		<argument type="string" mandatory="no" default="none">subset_dims</argument>
 		<argument type="string" mandatory="no" default="all">subset_filter</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">time_filter</argument>
+		<argument type="string" mandatory="no" default="index" values="index|coord">subset_type</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">show_index</argument>
         	<argument type="string" mandatory="no" default="no" values="yes|no">show_id</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">show_time</argument>
