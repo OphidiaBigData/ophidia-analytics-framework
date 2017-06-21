@@ -2312,6 +2312,7 @@ int oph_nc_get_c_type(nc_type type_nc, char *out_c_type)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
 			return -1;
 	}
+	out_c_type[OPH_ODB_CUBE_MEASURE_TYPE_SIZE] = 0;
 	return 0;
 
 }

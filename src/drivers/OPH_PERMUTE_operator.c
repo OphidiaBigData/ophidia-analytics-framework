@@ -42,11 +42,12 @@
 int oph_permute_parse(const char *cond, unsigned int *permutation_indexes, unsigned int max)
 {
 	unsigned int i;
-	char *result, temp[OPH_TP_TASKLEN], flags[max], *savepointer;
+	char *result, temp[1 + OPH_TP_TASKLEN], flags[max], *savepointer;
 	for (i = 0; i < max; ++i)
 		flags[i] = 0;
 
 	strncpy(temp, cond, OPH_TP_TASKLEN);
+	temp[OPH_TP_TASKLEN] = 0;
 	result = strtok_r(temp, OPH_PERMUTE_SEPARATOR, &savepointer);
 	i = 0;
 	while (result && (i < max)) {
@@ -552,8 +553,10 @@ int task_init(oph_operator_struct * handle)
 							free(cubedims);
 							goto __OPH_EXIT_1;
 						}
-					} else
+					} else {
 						strncpy(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);	// A reduced dimension is handled by indexes
+						dim[l].dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
+					}
 					// Store output labels
 					if (oph_dim_insert_into_dimension_table
 					    (db, o_label_dimension_table_name, dim[l].dimension_type, dim_inst[l].size, dim_row, &(dim_inst[l].fk_id_dimension_label))) {
@@ -647,6 +650,7 @@ int task_init(oph_operator_struct * handle)
 		new_task.id_job = ((OPH_PERMUTE_operator_handle *) handle->operator_handle)->id_job;
 		memset(new_task.query, 0, OPH_ODB_CUBE_OPERATION_QUERY_SIZE);
 		strncpy(new_task.operator, handle->operator_type, OPH_ODB_CUBE_OPERATOR_SIZE);
+		new_task.operator[OPH_ODB_CUBE_OPERATOR_SIZE] = 0;
 		if (((OPH_PERMUTE_operator_handle *) handle->operator_handle)->compressed)
 			snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_PERMUTE_QUERY_COMPR, MYSQL_FRAG_ID, ((OPH_PERMUTE_operator_handle *) handle->operator_handle)->measure_type,
 				 ((OPH_PERMUTE_operator_handle *) handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, ((OPH_PERMUTE_operator_handle *) handle->operator_handle)->imppermutation,
@@ -896,6 +900,7 @@ int task_execute(oph_operator_struct * handle)
 				//Change fragment fields
 				frags.value[k].id_datacube = id_datacube_out;
 				strncpy(frags.value[k].fragment_name, frag_name_out, OPH_ODB_STGE_FRAG_NAME_SIZE);
+				frags.value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
 
 				//Insert new fragment
 				if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &(frags.value[k]))) {

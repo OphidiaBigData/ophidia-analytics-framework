@@ -746,8 +746,11 @@ int task_init(oph_operator_struct * handle)
 		cube.tuplexfragment = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 		cube.id_container = id_container_out;
 		strncpy(cube.measure, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->measure, OPH_ODB_CUBE_MEASURE_SIZE);
+		cube.measure[OPH_ODB_CUBE_MEASURE_SIZE] = 0;
 		strncpy(cube.measure_type, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->measure_type, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
+		cube.measure_type[OPH_ODB_CUBE_MEASURE_TYPE_SIZE] = 0;
 		strncpy(cube.frag_relative_index_set, id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
+		cube.frag_relative_index_set[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE] = 0;
 		cube.db_number = cube.hostxdatacube * cube.dbmsxhost * cube.dbxdbms;
 		cube.compressed = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->compressed;
 		cube.id_db = NULL;
@@ -984,6 +987,7 @@ int task_init(oph_operator_struct * handle)
 			if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->grid_name) {
 				oph_odb_dimension_grid new_grid;
 				strncpy(new_grid.grid_name, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->grid_name, OPH_ODB_DIM_GRID_SIZE);
+				new_grid.grid_name[OPH_ODB_DIM_GRID_SIZE] = 0;
 				int last_inserted_grid_id = 0;
 
 				if (oph_odb_dim_insert_into_grid_table(oDB, &new_grid, &last_inserted_grid_id)) {
@@ -1152,8 +1156,7 @@ int task_init(oph_operator_struct * handle)
 
 		oph_odb_db_instance db;
 		oph_odb_dbms_instance dbms;
-
-
+		char db_name[OPH_ODB_STGE_DB_NAME_SIZE];
 
 		for (j = 0; j < dbmss_length; j++) {
 			db.id_dbms = id_dbmss[j];
@@ -1184,13 +1187,15 @@ int task_init(oph_operator_struct * handle)
 			}
 
 			for (i = 0; i < ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbxdbms_number; i++) {
-				if (oph_dc_generate_db_name(oDB->name, id_datacube_out, db.id_dbms, 0, i + 1, &db.db_name)) {
+
+				if (oph_dc_generate_db_name(oDB->name, id_datacube_out, db.id_dbms, 0, i + 1, &db_name)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of Db instance  name exceed limit.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_STRING_BUFFER_OVERFLOW, "DB instance name", db.db_name);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_STRING_BUFFER_OVERFLOW, "DB instance name", db_name);
 					free(id_dbmss);
 					oph_dc_disconnect_from_dbms(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &(dbms));
 					goto __OPH_EXIT_1;
 				}
+				strcpy(db.db_name, db_name);
 				if (oph_dc_create_db(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &db)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create new db\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_NEW_DB_ERROR, db.db_name);
@@ -1365,6 +1370,7 @@ int task_execute(oph_operator_struct * handle)
 	}
 
 	oph_odb_fragment new_frag;
+	char fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE];
 
 	int frag_to_insert = 0;
 	int frag_count = 0;
@@ -1421,13 +1427,15 @@ int task_execute(oph_operator_struct * handle)
 				    ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 				new_frag.db_instance = &(dbs.value[j]);
 
-				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &(new_frag.fragment_name))) {
+				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &fragment_name)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag  name exceed limit.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_RANDCUBE_STRING_BUFFER_OVERFLOW, "fragment name", new_frag.fragment_name);
+						OPH_LOG_OPH_RANDCUBE_STRING_BUFFER_OVERFLOW, "fragment name", fragment_name);
 					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					break;
 				}
+				strcpy(new_frag.fragment_name, fragment_name);
+
 				//Create Empty fragment
 				if (oph_dc_create_empty_fragment(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &new_frag)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating fragment.\n");
