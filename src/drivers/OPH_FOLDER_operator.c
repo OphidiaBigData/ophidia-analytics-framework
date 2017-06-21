@@ -289,11 +289,11 @@ int task_execute(oph_operator_struct * handle)
 
 			if (strlen(new_folder_to_be_printed) > 1)
 				new_folder_to_be_printed[strlen(new_folder_to_be_printed) - 1] = 0;
-			printf(OPH_FOLDER_CD_MESSAGE "%s\n", new_folder_to_be_printed);
+			printf(OPH_FOLDER_CD_MESSAGE " is: %s\n", new_folder_to_be_printed);
 			// ADD OUTPUT TO JSON AS TEXT
 			if (oph_json_is_objkey_printable
 			    (((OPH_FOLDER_operator_handle *) handle->operator_handle)->objkeys, ((OPH_FOLDER_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_FOLDER)) {
-				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_FOLDER, "Current Working Directory", new_folder_to_be_printed)) {
+				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_FOLDER, OPH_FOLDER_CD_MESSAGE, new_folder_to_be_printed)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
 					if (abs_path1) {

@@ -432,6 +432,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->grid_name = NULL;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path = NULL;
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path_orig = NULL;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_output_datacube = 0;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container = 0;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->compressed = 0;
@@ -599,6 +600,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, value, "nc file path");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
+	if (!(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path_orig = strdup(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "nc file path");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT);
 	if (!value) {
@@ -622,30 +628,66 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
+	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_ARG_USERNAME);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->user = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "username");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+
 	if (strstr(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, "..")) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (!strstr(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, "http")) {
+	if (!strstr(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, "http://")
+	    && !strstr(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, "https://")) {
 		char *pointer = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path;
 		while (pointer && (*pointer == ' '))
 			pointer++;
-		if (pointer && (*pointer != '/')) {
+		if (pointer) {
+			char tmp[OPH_COMMON_BUFFER_LEN];
+			if (*pointer != '/') {
+				value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
+				if (!value) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (*value != '/') {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", value);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", value);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (strlen(value) > 1) {
+					if (strstr(value, "..")) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					}
+					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value + 1, pointer);
+					free(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path);
+					((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
+					pointer = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path;
+				}
+			}
 			if (oph_pid_get_base_src_path(&value)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
-			if (value) {
-				char tmp[OPH_COMMON_BUFFER_LEN];
-				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value, pointer);
-				free(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path);
-				((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
-				free(value);
-			}
+			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
+			free(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path);
+			((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
+			free(value);
 		}
 	}
+
 	if (oph_pid_get_memory_size(&(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->memory_size))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONFIGURATION_FILE, container_name);
@@ -661,19 +703,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->cwd = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "cwd");
-
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
-
-	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_ARG_USERNAME);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (!(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->user = (char *) strndup(value, OPH_TP_TASKLEN))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "username");
 
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
@@ -2885,8 +2914,9 @@ int task_init(oph_operator_struct * handle)
 		//Import source name
 		oph_odb_source src;
 		int id_src = 0;
-		strncpy(src.uri, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, OPH_ODB_CUBE_SOURCE_URI_SIZE);
+		strncpy(src.uri, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path_orig, OPH_ODB_CUBE_SOURCE_URI_SIZE);
 		src.uri[OPH_ODB_CUBE_SOURCE_URI_SIZE] = 0;
+
 		if (oph_odb_cube_insert_into_source_table(oDB, &src, &id_src)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert source URI\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_SOURCE_URI_ERROR, src.uri);
@@ -4070,6 +4100,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path) {
 		free((char *) ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path);
 		((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path = NULL;
+	}
+	if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path_orig) {
+		free((char *) ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path_orig);
+		((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path_orig = NULL;
 	}
 	if ((retval = nc_close(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->ncid)))
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", nc_strerror(retval));

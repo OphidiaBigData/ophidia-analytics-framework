@@ -193,6 +193,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
+	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
+	if (value && !(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->user = (char *) strdup(value))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_INPUT, OPH_ARG_USERNAME);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -403,9 +410,12 @@ int task_execute(oph_operator_struct * handle)
 	struct stat st;
 	if (stat(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path, &st)) {
 		if (oph_dir_r_mkdir(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create dir %s\n", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path);
-			logging(LOG_ERROR, __FILE__, __LINE__, 0, OPH_LOG_GENERIC_DIR_CREATION_ERROR, ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to create dir %s\n", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path);
+			logging(LOG_WARNING, __FILE__, __LINE__, 0, OPH_LOG_GENERIC_DIR_CREATION_ERROR, ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path);
+			free(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path);
+			((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path = NULL;
+			free(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url);
+			((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url = NULL;
 		}
 	}
 
@@ -495,8 +505,10 @@ int task_execute(oph_operator_struct * handle)
 	char command[OPH_COMMON_BUFFER_LEN];
 	memset(command, 0, OPH_COMMON_BUFFER_LEN);
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_DATA_PATH='%s' ", base_src_path ? base_src_path : "");
-	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_SESSION_PATH='%s' ", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path);
-	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_SESSION_URL='%s' ", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url);
+	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_SESSION_PATH='%s' ",
+		      ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path ? ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path : "");
+	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_SESSION_URL='%s' ",
+		      ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url ? ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url : "");
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_SESSION_CODE='%s' ", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_code);
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_WORKFLOW_ID=%s ",
 		      ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->workflow_id ? ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->workflow_id : 0);
@@ -515,20 +527,22 @@ int task_execute(oph_operator_struct * handle)
 		n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "2>>%s", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->err_redir);
 	}
 	// Dynamic creation of the folders
-	char dirname[OPH_COMMON_BUFFER_LEN];
-	snprintf(dirname, OPH_COMMON_BUFFER_LEN, "%s/%s", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path,
-		 ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->workflow_id);
-	struct stat ss;
-	if (stat(dirname, &ss) && (errno == ENOENT)) {
-		int i;
-		for (i = 0; dirname[i]; ++i) {
-			if (dirname[i] == '/') {
-				dirname[i] = 0;
-				mkdir(dirname, 0755);
-				dirname[i] = '/';
+	if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path) {
+		char dirname[OPH_COMMON_BUFFER_LEN];
+		snprintf(dirname, OPH_COMMON_BUFFER_LEN, "%s/%s", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path,
+			 ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->workflow_id);
+		struct stat ss;
+		if (stat(dirname, &ss) && (errno == ENOENT)) {
+			int i;
+			for (i = 0; dirname[i]; ++i) {
+				if (dirname[i] == '/') {
+					dirname[i] = 0;
+					mkdir(dirname, 0755);
+					dirname[i] = '/';
+				}
 			}
+			mkdir(dirname, 0755);
 		}
-		mkdir(dirname, 0755);
 	}
 
 	char system_output[MAX_OUT_LEN];
@@ -536,7 +550,7 @@ int task_execute(oph_operator_struct * handle)
 	char line[OPH_COMMON_BUFFER_LEN];
 	snprintf(system_output, MAX_OUT_LEN, "Command: %s\n\n", command);
 
-	int s = 0;
+	int s = 0, so = 1;
 	FILE *fp = popen(command, "r");
 	if (!fp)
 		error = -1;
@@ -555,24 +569,35 @@ int task_execute(oph_operator_struct * handle)
 		pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
 		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
 	}
+	so = 0;
 #endif
-	if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->workflow_id)
-		snprintf(system_output, MAX_OUT_LEN, "%s/%s", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url,
-			 ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->workflow_id);
-	else
-		snprintf(system_output, MAX_OUT_LEN, "%s", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url);
-	if (s && oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_SCRIPT, "Output URL", system_output)) {
-		pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
-		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+	if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path) {
+		if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->workflow_id)
+			snprintf(system_output, MAX_OUT_LEN, "%s/%s", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url,
+				 ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->workflow_id);
+		else
+			snprintf(system_output, MAX_OUT_LEN, "%s", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url);
+		if (s && oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_SCRIPT, "Output URL", system_output)) {
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
+			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+		}
+	} else {
+		if (so && s && oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_SCRIPT, "SUCCESS", NULL)) {
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
+			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+		}
 	}
+
 	// ADD OUTPUT PID TO NOTIFICATION STRING
-	char tmp_string[OPH_COMMON_BUFFER_LEN];
-	snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_LINK, s ? system_output : ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url);
-	if (handle->output_string) {
-		strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
-		free(handle->output_string);
+	if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url) {
+		char tmp_string[OPH_COMMON_BUFFER_LEN];
+		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_LINK, s ? system_output : ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url);
+		if (handle->output_string) {
+			strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
+			free(handle->output_string);
+		}
+		handle->output_string = strdup(tmp_string);
 	}
-	handle->output_string = strdup(tmp_string);
 
 	if (error == -1) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "System command failed\n");
@@ -641,6 +666,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->marker_id) {
 		free((char *) ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->marker_id);
 		((OPH_SCRIPT_operator_handle *) handle->operator_handle)->marker_id = NULL;
+	}
+	if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->user) {
+		free((char *) ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->user);
+		((OPH_SCRIPT_operator_handle *) handle->operator_handle)->user = NULL;
 	}
 	if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys) {
 		oph_tp_free_multiple_value_param_list(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys, ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys_num);

@@ -136,7 +136,12 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	char *username = value;
+	char *username = value, user_space, user_space_default = 0;
+	if (oph_pid_get_user_space(&user_space)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read user_space\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read user_space\n");
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	};
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXPORT_METADATA);
 	if (!value) {
@@ -254,6 +259,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	char session_code[OPH_COMMON_BUFFER_LEN];
 	oph_pid_get_session_code(hashtbl_get(task_tbl, OPH_ARG_SESSIONID), session_code);
+	if (user_space && !strcmp(value, "default"))
+		value = &user_space_default;
 	if (!strcmp(value, "default")) {
 		if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->misc) {
 			value = hashtbl_get(task_tbl, OPH_ARG_WORKFLOWID);
@@ -314,22 +321,49 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MEMORY_ERROR_INPUT, "output path");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
+		if (strstr(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path, "..")) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
 		char *pointer = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path;
 		while (pointer && (*pointer == ' '))
 			pointer++;
-		if (pointer && (*pointer != '/')) {
+		if (pointer) {
+			char tmp[OPH_COMMON_BUFFER_LEN];
+			if (*pointer != '/') {
+				value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
+				if (!value) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (*value != '/') {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (strlen(value) > 1) {
+					if (strstr(value, "..")) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					}
+					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value + 1, pointer);
+					free(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path);
+					((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
+					pointer = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path;
+				}
+			}
 			if (oph_pid_get_base_src_path(&value)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, "Unable to read base src_path\n");
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base user_path\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base user path\n");
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
-			if (value) {
-				char tmp[OPH_COMMON_BUFFER_LEN];
-				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value, pointer);
-				free(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path);
-				((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
-				free(value);
-			}
+			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
+			free(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path);
+			((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
+			free(value);
 		}
 		((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user_defined = 1;
 	}
@@ -451,9 +485,15 @@ int task_init(oph_operator_struct * handle)
 
 		//Create dir if not exist
 		if (stat(path, &st)) {
-			if (oph_dir_r_mkdir(path)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create dir %s\n", path);
+			if (errno == EACCES) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_PERMISSION_ERROR, path);
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_PERMISSION_ERROR, path);
+				free(stream_broad);
+				goto __OPH_EXIT_1;
+			} else if ((errno != ENOENT) || oph_dir_r_mkdir(path)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_DIR_CREATION_ERROR, path);
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_DIR_CREATION_ERROR, path);
+				free(stream_broad);
 				goto __OPH_EXIT_1;
 			}
 		}

@@ -38,6 +38,7 @@
 #include "oph_idstring_library.h"
 #include "oph_task_parser_library.h"
 #include "oph_dimension_library.h"
+#include "oph_pid_library.h"
 #include "oph_json_library.h"
 
 #include "debug.h"
@@ -538,6 +539,62 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+
+	if (strstr(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path, "..")) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strstr(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path, "http://")
+	    && !strstr(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path, "https://")) {
+		char *pointer = ((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path;
+		while (pointer && (*pointer == ' '))
+			pointer++;
+		if (pointer) {
+			char tmp[OPH_COMMON_BUFFER_LEN];
+			if (*pointer != '/') {
+				value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
+				if (!value) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
+					oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+					oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (*value != '/') {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", value);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", value);
+					oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+					oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (strlen(value) > 1) {
+					if (strstr(value, "..")) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					}
+					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value + 1, pointer);
+					free(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path);
+					((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
+					pointer = ((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path;
+				}
+			}
+			if (oph_pid_get_base_src_path(&value)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
+				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
+			free(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path);
+			((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
+			free(value);
+		}
 	}
 
 	if ((retval = nc_open(value, NC_NOWRITE, &(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->ncid)))) {
