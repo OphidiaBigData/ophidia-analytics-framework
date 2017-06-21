@@ -28,7 +28,9 @@ It performs a reduction operation based on hierarchy on a datacube.
               &quot;acmoment&quot; to evaluate the absolute central moment;
               &quot;rmoment&quot; to evaluate the raw moment;
               &quot;armoment&quot; to evaluate the absolute raw moment;
-              &quot;quantile&quot; to evaluate the quantile.
+              &quot;quantile&quot; to evaluate the quantile;
+              &quot;arg_max&quot; to evaluate the index of the maximum value;
+              &quot;arg_min&quot; to evaluate the index of the minimum value.
 - order : order used in evaluation the moments or value of the quantile in range [0, 1].
 - missingvalue : value to be considered as missing value; by default it is NAN (for float and double).
 - grid : optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
@@ -64,7 +66,7 @@ SUBMISSION STRING: &quot;operator=oph_reduce2;operation=max;dim=time;concept_lev
 		<argument type="string" mandatory="yes">dim</argument>
 		<argument type="char" mandatory="no" default="A">concept_level</argument>
 		<argument type="char" mandatory="no" default="24" values="00|24">midnight</argument>
-		<argument type="string" mandatory="yes" values="count|max|min|avg|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile">operation</argument>
+		<argument type="string" mandatory="yes" values="count|max|min|avg|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min">operation</argument>
 		<argument type="real" mandatory="no" default="2" minvalue="0">order</argument>
 		<argument type="real" mandatory="no" default="NAN">missingvalue</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
