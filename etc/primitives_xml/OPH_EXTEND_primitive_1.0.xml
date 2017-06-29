@@ -39,6 +39,6 @@ oph_extend(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,4)</abstract>
         <argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
         <argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
 	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="int" mandatory="no" default="1">number</argument>
+	<argument type="int" mandatory="no" default="1" minvalue="1">number</argument>
     </args>
 </primitive>
