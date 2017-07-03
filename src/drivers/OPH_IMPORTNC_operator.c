@@ -1861,9 +1861,8 @@ int task_init(oph_operator_struct * handle)
 	int i, retval = 0, flush = 1, id_datacube_out = 0, id_container_out = 0;
 
 	NETCDF_var *measure = &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->measure;
-	//****COMPUTE DEFAULT fragxdb AND tuplexfrag NUMBER (START)*********//
-	//Compute tuplexfragment as the number of values of last (internal) explicit dimension
-	//Compute fragxdb_number as the number of values of the explicit dimensions excluding the last one
+
+	//Compute tuple per fragment as the number of values of last (internal) explicit dimension
 	//Find the last explicit dimension checking oph_value
 	short int max_lev = 0;
 	short int last_dimid = 0;
@@ -1873,7 +1872,6 @@ int task_init(oph_operator_struct * handle)
 			if (measure->dims_oph_level[i] > max_lev) {
 				last_dimid = measure->dims_id[i];
 				max_lev = measure->dims_oph_level[i];
-				//Modified to allow subsetting
 				if (measure->dims_end_index[i] == measure->dims_start_index[i])
 					((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 				else
@@ -1882,23 +1880,21 @@ int task_init(oph_operator_struct * handle)
 		}
 	}
 
+	//Compute total fragment as the number of values of the explicit dimensions excluding the last one
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number = 1;
 	for (i = 0; i < measure->ndims; i++) {
 		//Consider only explicit dimensions
-		//Modified to allow subsetting
 		if (measure->dims_type[i] && measure->dims_id[i] != last_dimid) {
 			if (measure->dims_end_index[i] == measure->dims_start_index[i])
 				continue;
 			((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 		}
 	}
-	//****COMPUTE DEFAULT fragxdb AND tuplexfrag NUMBER (END)*********//
 
-	// Compute array_length
+	// Compute array length
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->array_length = 1;
 	for (i = 0; i < measure->ndims; i++) {
 		//Consider only implicit dimensions
-		//Modified to allow subsetting
 		if (!measure->dims_type[i]) {
 			if (measure->dims_end_index[i] == measure->dims_start_index[i])
 				continue;
@@ -1994,144 +1990,165 @@ int task_init(oph_operator_struct * handle)
 					frag_param_error = 1;
 				}
 			}
+		}
 
-			if (*fragxdb_number <= 0) {
-				user_arg_prod = (1 * (*dbmsxhost_number) * (*dbxdbms_number) * 1);
-				if (final_frag_number < user_arg_prod) {
-					//If import is executed then return error, else simply return a message
-					if (run) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name,
-							final_frag_number);
-						goto __OPH_EXIT_1;
-					} else {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-						frag_param_error = 1;
-					}
-				} else {
-					if (final_frag_number % user_arg_prod != 0) {
+		if (*dbmsxhost_number != 1 || *dbxdbms_number != 1 || *host_number > 0 || *fragxdb_number > 0) {
+			//At least one argument is specified
+			if (*host_number <= 0) {
+				if (*fragxdb_number <= 0) {
+					user_arg_prod = (1 * (*dbmsxhost_number) * (*dbxdbms_number) * 1);
+					if (final_frag_number < user_arg_prod) {
+						//If import is executed then return error, else simply return a message
 						if (run) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name,
+								final_frag_number);
 							goto __OPH_EXIT_1;
 						} else {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
 							frag_param_error = 1;
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
 						}
 					} else {
-						admissible_frag_number = final_frag_number / user_arg_prod;
-						if (admissible_frag_number <= nhost) {
-							*host_number = admissible_frag_number;
-							*fragxdb_number = 1;
-						} else {
-							//Get highest divisor for host_number
-							int ii = 0;
-							for (ii = nhost; ii > 0; ii--) {
-								if (admissible_frag_number % ii == 0)
-									break;
+						if (final_frag_number % user_arg_prod != 0) {
+							if (run) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
+								goto __OPH_EXIT_1;
+							} else {
+								frag_param_error = 1;
+								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
 							}
-							*host_number = ii;
-							*fragxdb_number = (int) admissible_frag_number / (*host_number);
+						} else {
+							admissible_frag_number = final_frag_number / user_arg_prod;
+							if (admissible_frag_number <= nhost) {
+								*host_number = admissible_frag_number;
+								*fragxdb_number = 1;
+							} else {
+								//Get highest divisor for host_number
+								int ii = 0;
+								for (ii = nhost; ii > 0; ii--) {
+									if (admissible_frag_number % ii == 0)
+										break;
+								}
+								*host_number = ii;
+								*fragxdb_number = (int) admissible_frag_number / (*host_number);
+							}
+						}
+					}
+				} else {
+					//If user specified at least one between dbmsxhost_number, dbxdbms_number or fragxdb_number then check if frag number is lower than product of parameters                       
+					user_arg_prod = (1 * (*dbmsxhost_number) * (*dbxdbms_number) * (*fragxdb_number));
+					if (final_frag_number < user_arg_prod) {
+						//If import is executed then return error, else simply return a message
+						if (run) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name,
+								final_frag_number);
+							goto __OPH_EXIT_1;
+						} else {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
+							frag_param_error = 1;
+						}
+					} else {
+						if (final_frag_number % user_arg_prod != 0) {
+							if (run) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
+								goto __OPH_EXIT_1;
+							} else {
+								frag_param_error = 1;
+								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
+							}
+						} else {
+							admissible_frag_number = final_frag_number / user_arg_prod;
+							if (admissible_frag_number <= nhost) {
+								*host_number = admissible_frag_number;
+							} else {
+								//Get highest divisor for host_number
+								int ii = 0;
+								for (ii = nhost; ii > 0; ii--) {
+									if (admissible_frag_number % ii == 0)
+										break;
+								}
+								*host_number = ii;
+								//Since fragxdb is fixed recompute tuplexfrag
+								((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number =
+								    (int) ceilf((float) max_frag_number / ((*host_number) * user_arg_prod));
+								((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number =
+								    ((*host_number) * (*dbmsxhost_number) * (*dbxdbms_number) * (*fragxdb_number));
+							}
 						}
 					}
 				}
 			} else {
-				//If user specified at least one between dbmsxhost_number, dbxdbms_number or fragxdb_number then check if frag number is lower than product of parameters                       
-				user_arg_prod = (1 * (*dbmsxhost_number) * (*dbxdbms_number) * (*fragxdb_number));
-				if (final_frag_number < user_arg_prod) {
-					//If import is executed then return error, else simply return a message
-					if (run) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name,
-							final_frag_number);
-						goto __OPH_EXIT_1;
-					} else {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-						frag_param_error = 1;
-					}
-				} else {
-					if (final_frag_number % user_arg_prod != 0) {
+				if (*fragxdb_number <= 0) {
+					user_arg_prod = ((*host_number) * (*dbmsxhost_number) * (*dbxdbms_number) * 1);
+					if (final_frag_number < user_arg_prod) {
+						//If import is executed then return error, else simply return a message
 						if (run) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name,
+								final_frag_number);
 							goto __OPH_EXIT_1;
 						} else {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
 							frag_param_error = 1;
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
 						}
 					} else {
-						admissible_frag_number = final_frag_number / user_arg_prod;
-						if (admissible_frag_number <= nhost) {
-							*host_number = admissible_frag_number;
-						} else {
-							//Get highest divisor for host_number
-							int ii = 0;
-							for (ii = nhost; ii > 0; ii--) {
-								if (admissible_frag_number % ii == 0)
-									break;
+						if (final_frag_number % user_arg_prod != 0) {
+							if (run) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
+								goto __OPH_EXIT_1;
+							} else {
+								frag_param_error = 1;
+								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
 							}
-							*host_number = ii;
-							//Since fragxdb is fixed recompute tuplexfrag
-							((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number =
-							    (int) ceilf((float) max_frag_number / ((*host_number) * user_arg_prod));
+						} else
+							*fragxdb_number = final_frag_number / user_arg_prod;
+					}
+				} else {
+					//User has set all parameters - in this case allow further fragmentation
+					user_arg_prod = ((*host_number) * (*dbmsxhost_number) * (*dbxdbms_number) * (*fragxdb_number));
+					if (max_frag_number < user_arg_prod) {
+						//If import is executed then return error, else simply return a message
+						if (run) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, max_frag_number);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name,
+								max_frag_number);
+							goto __OPH_EXIT_1;
+						} else {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, max_frag_number);
+							frag_param_error = 1;
+						}
+					} else {
+						if (max_frag_number % user_arg_prod != 0) {
+							if (run) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
+								goto __OPH_EXIT_1;
+							} else {
+								frag_param_error = 1;
+								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
+							}
+						} else {
+							((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number = (int) ceilf((float) max_frag_number / user_arg_prod);
+							((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number =
+							    ((*host_number) * (*dbmsxhost_number) * (*dbxdbms_number) * (*fragxdb_number));
 						}
 					}
 				}
 			}
 		} else {
-			if (*fragxdb_number <= 0) {
-				user_arg_prod = ((*host_number) * (*dbmsxhost_number) * (*dbxdbms_number) * 1);
-				if (final_frag_number < user_arg_prod) {
-					//If import is executed then return error, else simply return a message
-					if (run) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name,
-							final_frag_number);
-						goto __OPH_EXIT_1;
-					} else {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-						frag_param_error = 1;
-					}
-				} else {
-					if (final_frag_number % user_arg_prod != 0) {
-						if (run) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-							goto __OPH_EXIT_1;
-						} else {
-							frag_param_error = 1;
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-						}
-					} else
-						*fragxdb_number = final_frag_number / user_arg_prod;
-				}
+			//Default case
+			user_arg_prod = 1;
+			admissible_frag_number = final_frag_number / user_arg_prod;
+			if (admissible_frag_number <= nhost) {
+				*host_number = admissible_frag_number;
+				*fragxdb_number = 1;
 			} else {
-				//User has set all parameters - in this case allow further fragmentation
-				user_arg_prod = ((*host_number) * (*dbmsxhost_number) * (*dbxdbms_number) * (*fragxdb_number));
-				if (max_frag_number < user_arg_prod) {
-					//If import is executed then return error, else simply return a message
-					if (run) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, max_frag_number);
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name,
-							max_frag_number);
-						goto __OPH_EXIT_1;
-					} else {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, max_frag_number);
-						frag_param_error = 1;
-					}
-				} else {
-					if (max_frag_number % user_arg_prod != 0) {
-						if (run) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-							goto __OPH_EXIT_1;
-						} else {
-							frag_param_error = 1;
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-						}
-					} else
-						((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number = (int) ceilf((float) max_frag_number / user_arg_prod);
-				}
+				*host_number = nhost;
+				*fragxdb_number = (int) ceilf((float) admissible_frag_number / (*host_number));
 			}
 		}
 
@@ -2154,8 +2171,6 @@ int task_init(oph_operator_struct * handle)
 			*dbmsxhost_number = 1;
 			*dbxdbms_number = 1;
 			*fragxdb_number = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number / ii;
-		} else {
-			((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*dbmsxhost_number) * (*dbxdbms_number) * (*fragxdb_number));
 		}
 
 		if (!((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->run) {
