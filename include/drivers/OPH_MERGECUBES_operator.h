@@ -81,6 +81,7 @@
  * \param mode Mode to combine input measures
  * \param description Free description to be associated with output cube
  * \param hold_values Flag used to enable the copy of dimension values
+ * \param number Number of replies of the first cube to be considered
  */
 struct _OPH_MERGECUBES_operator_handle {
 	ophidiadb oDB;
@@ -104,6 +105,7 @@ struct _OPH_MERGECUBES_operator_handle {
 	char mode;
 	char *description;
 	char hold_values;
+	int number;
 };
 typedef struct _OPH_MERGECUBES_operator_handle OPH_MERGECUBES_operator_handle;
 
