@@ -740,7 +740,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_MEASURE_NAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	strncpy(measure->varname, value, strlen(value));
+	strncpy(measure->varname, value, NC_MAX_NAME);
+	measure->varname[NC_MAX_NAME] = 0;
 
 	int i;
 	char **exp_dim_names = NULL;
@@ -1405,6 +1406,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (create_container) {
 			if (!((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->import_metadata || !handle->proc_rank) {
 				strncpy(dim.base_time, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->base_time, OPH_ODB_DIM_TIME_SIZE);
+				dim.base_time[OPH_ODB_DIM_TIME_SIZE] = 0;
 				dim.leap_year = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->leap_year;
 				dim.leap_month = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->leap_month;
 
@@ -1441,9 +1443,12 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 				j = 0;
 				strncpy(dim.units, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->units, OPH_ODB_DIM_TIME_SIZE);
+				dim.units[OPH_ODB_DIM_TIME_SIZE] = 0;
 				strncpy(dim.calendar, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->calendar, OPH_ODB_DIM_TIME_SIZE);
-				char *tmp = NULL, *save_pointer = NULL, month_lengths[OPH_ODB_DIM_TIME_SIZE];
+				dim.calendar[OPH_ODB_DIM_TIME_SIZE] = 0;
+				char *tmp = NULL, *save_pointer = NULL, month_lengths[1 + OPH_ODB_DIM_TIME_SIZE];
 				strncpy(month_lengths, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->month_lengths, OPH_ODB_DIM_TIME_SIZE);
+				month_lengths[OPH_ODB_DIM_TIME_SIZE] = 0;
 				while ((tmp = strtok_r(tmp ? NULL : month_lengths, ",", &save_pointer)) && (j < OPH_ODB_DIM_MONTH_NUMBER))
 					dim.month_lengths[j++] = (int) strtol(tmp, NULL, 10);
 				while (j < OPH_ODB_DIM_MONTH_NUMBER)
@@ -1803,6 +1808,12 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_dimension_hierarchy[i] = id_hierarchy;
 		}
 	}
+
+	value = hashtbl_get(task_tbl, OPH_ARG_IDJOB);
+	if (!value)
+		((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_job = 0;
+	else
+		((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_job = (int) strtol(value, NULL, 10);
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -2209,6 +2220,7 @@ int task_init(oph_operator_struct * handle)
 			//If it doesn't then create new container and get last id
 			oph_odb_container cont;
 			strncpy(cont.container_name, container_name, OPH_ODB_FS_CONTAINER_SIZE);
+			cont.container_name[OPH_ODB_FS_CONTAINER_SIZE] = 0;
 			cont.id_parent = 0;
 			cont.id_folder = folder_id;
 			cont.operation[0] = 0;
@@ -2230,6 +2242,7 @@ int task_init(oph_operator_struct * handle)
 			oph_odb_dimension dim;
 			dim.id_container = id_container_out;
 			strncpy(dim.base_time, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->base_time, OPH_ODB_DIM_TIME_SIZE);
+			dim.base_time[OPH_ODB_DIM_TIME_SIZE] = 0;
 			dim.leap_year = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->leap_year;
 			dim.leap_month = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->leap_month;
 
@@ -2253,6 +2266,7 @@ int task_init(oph_operator_struct * handle)
 
 				// Load dimension names and types
 				strncpy(dim.dimension_name, measure->dims_name[i], OPH_ODB_DIM_DIMENSION_SIZE);
+				dim.dimension_name[OPH_ODB_DIM_DIMENSION_SIZE] = 0;
 				if (oph_nc_get_c_type(tmp_var.vartype, dim.dimension_type)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, "type cannot be converted");
@@ -2265,9 +2279,12 @@ int task_init(oph_operator_struct * handle)
 					int j = 0;
 					dim.id_hierarchy *= -1;
 					strncpy(dim.units, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->units, OPH_ODB_DIM_TIME_SIZE);
+					dim.units[OPH_ODB_DIM_TIME_SIZE] = 0;
 					strncpy(dim.calendar, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->calendar, OPH_ODB_DIM_TIME_SIZE);
-					char *tmp = NULL, *save_pointer = NULL, month_lengths[OPH_ODB_DIM_TIME_SIZE];
+					dim.calendar[OPH_ODB_DIM_TIME_SIZE] = 0;
+					char *tmp = NULL, *save_pointer = NULL, month_lengths[1 + OPH_ODB_DIM_TIME_SIZE];
 					strncpy(month_lengths, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->month_lengths, OPH_ODB_DIM_TIME_SIZE);
+					month_lengths[OPH_ODB_DIM_TIME_SIZE] = 0;
 					while ((tmp = strtok_r(tmp ? NULL : month_lengths, ",", &save_pointer)) && (j < OPH_ODB_DIM_MONTH_NUMBER))
 						dim.month_lengths[j++] = (int) strtol(tmp, NULL, 10);
 					while (j < OPH_ODB_DIM_MONTH_NUMBER)
@@ -2675,6 +2692,7 @@ int task_init(oph_operator_struct * handle)
 			int id_grid;
 			if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->grid_name) {
 				strncpy(new_grid.grid_name, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->grid_name, OPH_ODB_DIM_GRID_SIZE);
+				new_grid.grid_name[OPH_ODB_DIM_GRID_SIZE] = 0;
 				int last_inserted_grid_id = 0;
 				if (oph_odb_dim_insert_into_grid_table(oDB, &new_grid, &last_inserted_grid_id)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert grid in OphidiaDB, or grid already exists.\n");
@@ -2868,6 +2886,7 @@ int task_init(oph_operator_struct * handle)
 		oph_odb_source src;
 		int id_src = 0;
 		strncpy(src.uri, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, OPH_ODB_CUBE_SOURCE_URI_SIZE);
+		src.uri[OPH_ODB_CUBE_SOURCE_URI_SIZE] = 0;
 		if (oph_odb_cube_insert_into_source_table(oDB, &src, &id_src)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert source URI\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_SOURCE_URI_ERROR, src.uri);
@@ -2885,6 +2904,7 @@ int task_init(oph_operator_struct * handle)
 		cube.tuplexfragment = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 		cube.id_container = id_container_out;
 		strncpy(cube.measure, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->measure.varname, OPH_ODB_CUBE_MEASURE_SIZE);
+		cube.measure[OPH_ODB_CUBE_MEASURE_SIZE] = 0;
 		if (oph_nc_get_c_type(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->measure.vartype, cube.measure_type)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_VAR_TYPE_NOT_SUPPORTED, cube.measure_type);
@@ -2895,6 +2915,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		strncpy(cube.frag_relative_index_set, id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
+		cube.frag_relative_index_set[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE] = 0;
 		cube.db_number = cube.hostxdatacube * cube.dbmsxhost * cube.dbxdbms;
 		cube.compressed = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->compressed;
 		cube.id_db = NULL;
@@ -3529,6 +3550,8 @@ int task_init(oph_operator_struct * handle)
 
 		oph_odb_db_instance db;
 		oph_odb_dbms_instance dbms;
+		char db_name[OPH_ODB_STGE_DB_NAME_SIZE];
+
 		for (j = 0; j < dbmss_length; j++) {
 
 			db.id_dbms = id_dbmss[j];
@@ -3559,13 +3582,14 @@ int task_init(oph_operator_struct * handle)
 			}
 
 			for (i = 0; i < ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->dbxdbms_number; i++) {
-				if (oph_dc_generate_db_name(oDB->name, id_datacube_out, db.id_dbms, 0, i + 1, &db.db_name)) {
+				if (oph_dc_generate_db_name(oDB->name, id_datacube_out, db.id_dbms, 0, i + 1, &db_name)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of Db instance  name exceed limit.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_STRING_BUFFER_OVERFLOW, "DB instance name", db.db_name);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_STRING_BUFFER_OVERFLOW, "DB instance name", db_name);
 					free(id_dbmss);
 					oph_dc_disconnect_from_dbms(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server, &(dbms));
 					goto __OPH_EXIT_1;
 				}
+				strcpy(db.db_name, db_name);
 				if (oph_dc_create_db(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server, &db)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create new db\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_NEW_DB_ERROR, db.db_name);
@@ -3588,6 +3612,26 @@ int task_init(oph_operator_struct * handle)
 	  /********************************
 	   *  DB INSTANCE CREATION - END  *
 	   ********************************/
+
+		last_insertd_id = 0;
+		oph_odb_task new_task;
+		new_task.id_outputcube = id_datacube_out;
+		new_task.id_job = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_job;
+		memset(new_task.query, 0, OPH_ODB_CUBE_OPERATION_QUERY_SIZE);
+		strncpy(new_task.operator, handle->operator_type, OPH_ODB_CUBE_OPERATOR_SIZE);
+		i = snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_DC_SQ_MULTI_INSERT_FRAG, "frag") - 1;
+		if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->compressed)
+			i += snprintf(new_task.query + i, OPH_ODB_CUBE_OPERATION_QUERY_SIZE - i, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW) - 1;
+		else
+			i += snprintf(new_task.query + i, OPH_ODB_CUBE_OPERATION_QUERY_SIZE - i, OPH_DC_SQ_MULTI_INSERT_ROW) - 1;
+		snprintf(new_task.query + i, OPH_ODB_CUBE_OPERATION_QUERY_SIZE - i, ";");
+		new_task.input_cube_number = 0;
+		new_task.id_inputcube = NULL;
+		if (oph_odb_cube_insert_into_task_table(oDB, &new_task, &last_insertd_id)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new task.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_TASK_INSERT_ERROR, new_task.operator);
+			goto __OPH_EXIT_1;
+		}
 
 		id_datacube[0] = id_datacube_out;
 		id_datacube[1] = id_container_out;
@@ -3791,6 +3835,7 @@ int task_execute(oph_operator_struct * handle)
 	}
 
 	oph_odb_fragment new_frag;
+	char fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE];
 
 	int frag_to_insert = 0;
 	int frag_count = 0;
@@ -3856,16 +3901,17 @@ int task_execute(oph_operator_struct * handle)
 				    ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 				new_frag.db_instance = &(dbs.value[j]);
 
-				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &(new_frag.fragment_name))) {
+				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &fragment_name)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag  name exceed limit.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_IMPORTNC_STRING_BUFFER_OVERFLOW, "fragment name", new_frag.fragment_name);
+						OPH_LOG_OPH_IMPORTNC_STRING_BUFFER_OVERFLOW, "fragment name", fragment_name);
 					oph_dc_disconnect_from_dbms(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
+				strcpy(new_frag.fragment_name, fragment_name);
 				//Create Empty fragment
 				if (oph_dc_create_empty_fragment(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server, &new_frag)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating fragment.\n");

@@ -812,7 +812,7 @@ int task_init(oph_operator_struct * handle)
 
 		char *dim_row;
 		int compressed = 0, n;
-		char dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[OPH_COMMON_BUFFER_LEN];
+		char dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[1 + OPH_COMMON_BUFFER_LEN];
 		snprintf(dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0]);
 		char o_dimension_table_name[OPH_COMMON_BUFFER_LEN];
 		snprintf(o_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_output_container);
@@ -836,8 +836,10 @@ int task_init(oph_operator_struct * handle)
 				}
 				if (!((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->hold_values)
 					dim_inst[l].fk_id_dimension_label = 0;
-			} else
+			} else {
 				strncpy(operation, MYSQL_DIMENSION, OPH_COMMON_BUFFER_LEN);
+				operation[OPH_COMMON_BUFFER_LEN] = 0;
+			}
 
 			if (dim_inst[l].size)	// Extract the subset only in case the dimension is not collapsed
 			{
@@ -1038,7 +1040,7 @@ int task_init(oph_operator_struct * handle)
 		memset(new_task.query, 0, OPH_ODB_CUBE_OPERATION_QUERY_SIZE);
 		new_task.id_job = ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_job;
 		strncpy(new_task.operator, handle->operator_type, OPH_ODB_CUBE_OPERATOR_SIZE);
-
+		new_task.operator[OPH_ODB_CUBE_OPERATOR_SIZE] = 0;
 		char *query = NULL;
 		char **input_frag = (char **) malloc(input_datacube_num * sizeof(char *));
 		char **input_db = (char **) malloc(input_datacube_num * sizeof(char *));
@@ -1444,6 +1446,7 @@ int task_execute(oph_operator_struct * handle)
 				//Change fragment fields
 				frags[0].value[k].id_datacube = id_datacube_out;
 				strncpy(frags[0].value[k].fragment_name, 1 + strchr(frag_name_out, '.'), OPH_ODB_STGE_FRAG_NAME_SIZE);
+				frags[0].value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
 
 				//Insert new fragment
 				if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &(frags[0].value[k]))) {

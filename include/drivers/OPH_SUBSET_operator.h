@@ -25,18 +25,22 @@
 #include "oph_subset_library.h"
 #include "oph_ioserver_library.h"
 
-#define OPH_SUBSET_ISINSUBSET_PLUGIN  "mysql.oph_is_in_subset(mysql.oph_id_to_index2(%s,%s),%lld,%lld,%lld)"
-#define OPH_SUBSET_PLUGIN_COMPR "oph_get_subarray3(%s,oph_uncompress('','',%s),%s))"
-#define OPH_SUBSET_PLUGIN "oph_get_subarray3(%s,%s,%s)"
+#define OPH_SUBSET_ISINSUBSET_PLUGIN "mysql.oph_is_in_subset(mysql.oph_id_to_index2(%s,%s),%lld,%lld,%lld)"
+#define OPH_SUBSET_PLUGIN_COMPR "oph_get_subarray3('oph_%s','oph_%s',oph_uncompress('','',%s),%s)"
 #define OPH_SUBSET_PLUGIN_COMPR2 "oph_compress('','',oph_get_subarray3(%s,oph_uncompress('','',%s),%s))"
+#define OPH_SUBSET_PLUGIN2 "oph_get_subarray3(%s,%s,%s)"
+#define OPH_SUBSET_PLUGIN "oph_get_subarray3('oph_%s','oph_%s',%s,%s)"
 
-#define OPH_SUBSET_QUERY_TASK OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_FUNCTION) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FUNC, "mysql.oph_subset") OPH_IOSERVER_SQ_BLOCK (OPH_IOSERVER_SQ_ARG_ARG, "'fact_in'|%s|\"%s\"|'fact_out'|\"%s\"")
+#define OPH_SUBSET_QUERY OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_FUNCTION) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FUNC, "mysql.oph_subset") OPH_IOSERVER_SQ_BLOCK (OPH_IOSERVER_SQ_ARG_ARG, "'fact_in'|%s|\"%s\"|'fact_out'|\"%s\"")
 
 #ifdef OPH_DEBUG_MYSQL
-#define OPH_SUBSET_QUERY_MYSQL "CALL mysql.oph_subset('%s.%s',%d,\"%s\",'%s.%s',\"%s\");"
+#define OPH_SUBSET_QUERY2_MYSQL "CALL mysql.oph_subset('%s.%s',%d,\"%s\",'%s.%s',\"%s\");"
 #endif
 
-#define OPH_SUBSET_QUERY OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_FUNCTION) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FUNC, "mysql.oph_subset") OPH_IOSERVER_SQ_BLOCK (OPH_IOSERVER_SQ_ARG_ARG, "'%s.%s'|%d|\"%s\"|'%s.%s'|\"%s\"")
+#define OPH_SUBSET_QUERY2 OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_FUNCTION) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FUNC, "mysql.oph_subset") OPH_IOSERVER_SQ_BLOCK (OPH_IOSERVER_SQ_ARG_ARG, "'%s.%s'|%d|\"%s\"|'%s.%s'|\"%s\"")
+
+#define OPH_SUBSET_TYPE_INDEX "index"
+#define OPH_SUBSET_TYPE_COORD "coord"
 
 /**
  * \brief Structure of parameters needed by the operator OPH_SUBSET. It generate a cube by selecting a subset of measure values based on a subset string related to a dimension.
@@ -62,7 +66,11 @@
  * \param server Pointer to I/O server handler
  * \param sessionid SessionID
  * \param id_user ID of submitter
+ * \param time_filter Flag used in case time filters are expressed as dates
  * \param description Free description to be associated with output cube
+ * \param offset List of offsets used to enlarge subset intervals
+ * \param offset_num Number of offsets
+ * \param subset_type Flag indicating whether filters are expressed as indexes or values
  */
 struct _OPH_SUBSET_operator_handle {
 	ophidiadb oDB;
@@ -77,7 +85,6 @@ struct _OPH_SUBSET_operator_handle {
 	int fragment_id_start_position;
 	char *task[OPH_SUBSET_LIB_MAX_DIM];
 	char *dim_task[OPH_SUBSET_LIB_MAX_DIM];
-	char *dim_task_type[OPH_SUBSET_LIB_MAX_DIM];
 	int id_dimension[OPH_SUBSET_LIB_MAX_DIM];
 	int compressed;
 	int explicited[OPH_SUBSET_LIB_MAX_DIM];
@@ -93,7 +100,11 @@ struct _OPH_SUBSET_operator_handle {
 	oph_ioserver_handler *server;
 	char *sessionid;
 	int id_user;
+	int time_filter;
 	char *description;
+	double *offset;
+	int offset_num;
+	int subset_type;
 };
 typedef struct _OPH_SUBSET_operator_handle OPH_SUBSET_operator_handle;
 

@@ -851,7 +851,7 @@ int task_execute(oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 		if (dims[m].dimfklabel) {
-			char dimtype[OPH_ODB_DIM_DIMENSION_TYPE_SIZE];
+			char dimtype[OPH_ODB_DIM_DIMENSION_TYPE_SIZE + 1];
 			switch (dims[m].dimtype) {
 				case NC_BYTE:
 				case NC_CHAR:
@@ -889,6 +889,7 @@ int task_execute(oph_operator_struct * handle)
 					free(dim_rows);
 					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
+			dimtype[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
 			if (oph_dim_read_dimension_filtered_data(db_dimension, label_dimension_table_name, dims[m].dimfklabel, operation, 0, &(dim_rows[m]), dimtype, dims[m].dimsize) || !dim_rows[m]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve dimension data\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_DIM_READ_ERROR);
