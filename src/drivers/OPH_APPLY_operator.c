@@ -58,6 +58,7 @@
 #define OPH_APPLY_PRIMITIVE_RETURN_STR "binary-array"
 
 #define OPH_APPLY_DATATYPE_PREFIX "oph_"
+#define OPH_APPLY_COMPLEX_DATATYPE_PREFIX "complex_"
 
 // XPath
 #define OPH_APPLY_XPATH_RETURN "/primitive/info/return"
@@ -696,9 +697,17 @@ int oph_apply_parse_query(oph_operator_struct * handle, char *data_type, const c
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_INVALID_INPUT_STRING);
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
-			} else if (p && p->size && p->primitive[0].output_datatype)
-				snprintf(data_type, OPH_ODB_CUBE_MEASURE_TYPE_SIZE, "%s", p->primitive[0].output_datatype);
-			else {
+			} else if (p && p->size && p->primitive[0].output_datatype) {
+				if (strcasestr(p->primitive[0].output_datatype, OPH_APPLY_COMPLEX_DATATYPE_PREFIX)) {
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Complex data types are partially supported: data will be considered as simple\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container,
+						"Complex data types are partially supported: data will be considered as simple\n");
+					char new_type[strlen(p->primitive[0].output_datatype)];
+					strcpy(new_type, p->primitive[0].output_datatype + strlen(OPH_APPLY_COMPLEX_DATATYPE_PREFIX));
+					snprintf(data_type, OPH_ODB_CUBE_MEASURE_TYPE_SIZE, "%s", new_type);
+				} else
+					snprintf(data_type, OPH_ODB_CUBE_MEASURE_TYPE_SIZE, "%s", p->primitive[0].output_datatype);
+			} else {
 				oph_apply_primitives_free(&p);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong parameter %s: output data type cannot be set\n", OPH_IN_PARAM_APPLY_QUERY);
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_INVALID_INPUT_STRING);
@@ -1330,8 +1339,10 @@ int task_init(oph_operator_struct * handle)
 							free(old_measure);
 						goto __OPH_EXIT_1;
 					}
-				} else
+				} else {
 					strncpy(dim.dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);	// A reduced dimension is handled by indexes
+					dim.dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
+				}
 				oph_dim_disconnect_from_dbms(db->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db);
 
@@ -1389,6 +1400,7 @@ int task_init(oph_operator_struct * handle)
 		new_task.id_outputcube = ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_output_datacube;
 		new_task.id_job = ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_job;
 		strncpy(new_task.operator, handle->operator_type, OPH_ODB_CUBE_OPERATOR_SIZE);
+		new_task.operator[OPH_ODB_CUBE_OPERATOR_SIZE] = 0;
 		memset(new_task.query, 0, OPH_ODB_CUBE_OPERATION_QUERY_SIZE);
 		snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_APPLY_QUERY, MYSQL_FRAG_ID, array_operation, MYSQL_FRAG_MEASURE);
 		new_task.input_cube_number = 1;
@@ -1665,6 +1677,7 @@ int task_execute(oph_operator_struct * handle)
 				//Change fragment fields
 				frags.value[k].id_datacube = id_datacube_out;
 				strncpy(frags.value[k].fragment_name, frag_name_out, OPH_ODB_STGE_FRAG_NAME_SIZE);
+				frags.value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
 				if (((OPH_APPLY_operator_handle *) handle->operator_handle)->expl_size_update && frags.value[k].key_end) {
 					frags.value[k].key_start = 1 + (frags.value[k].key_start - 1) / size;
 					frags.value[k].key_end = 1 + (frags.value[k].key_end - 1) / size;
@@ -1929,7 +1942,7 @@ int task_reduce(oph_operator_struct * handle)
 		char *dim_row;
 		int updated_dim = -1, compressed = 0, n;
 
-		char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[OPH_COMMON_BUFFER_LEN];
+		char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[1 + OPH_COMMON_BUFFER_LEN];
 		snprintf(index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container);
 		snprintf(label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container);
 		char o_index_dimension_table_name[OPH_COMMON_BUFFER_LEN], o_label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
@@ -1964,8 +1977,10 @@ int task_reduce(oph_operator_struct * handle)
 							free(cubedims);
 							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						}
-					} else
+					} else {
 						strncpy(operation, MYSQL_DIMENSION, OPH_COMMON_BUFFER_LEN);
+						operation[OPH_COMMON_BUFFER_LEN] = 0;
+					}
 					if (oph_dim_read_dimension_data(db, index_dimension_table_name, dim_inst[l].fk_id_dimension_index, operation, 0, &dim_row) || !dim_row) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading a row from dimension table.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_DIM_READ_ERROR);
@@ -1990,8 +2005,10 @@ int task_reduce(oph_operator_struct * handle)
 							free(cubedims);
 							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						}
-					} else
+					} else {
 						strncpy(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);	// A reduced dimension is handled by indexes
+						dim[l].dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
+					}
 
 					// Store output labels
 					if (oph_dim_insert_into_dimension_table_from_query
@@ -2028,8 +2045,10 @@ int task_reduce(oph_operator_struct * handle)
 
 					if (l != updated_dim)
 						dim_inst[l].fk_id_dimension_label = 0;
-				} else
+				} else {
 					strncpy(operation, MYSQL_DIMENSION, OPH_COMMON_BUFFER_LEN);
+					operation[OPH_COMMON_BUFFER_LEN] = 0;
+				}
 
 				if (oph_dim_read_dimension_data(db, index_dimension_table_name, dim_inst[l].fk_id_dimension_index, operation, compressed, &dim_row)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading a row from dimension table.\n");

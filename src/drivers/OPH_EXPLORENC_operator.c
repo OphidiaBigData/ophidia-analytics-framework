@@ -485,7 +485,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MISSING_INPUT_PARAMETER, "", OPH_IN_PARAM_MEASURE_NAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	strncpy(measure->varname, value, strlen(value));
+	strncpy(measure->varname, value, NC_MAX_NAME);
+	measure->varname[NC_MAX_NAME] = 0;
 
 	char **exp_dim_names, **imp_dim_names;
 	int i, exp_number_of_dim_names = 0, imp_number_of_dim_names = 0;

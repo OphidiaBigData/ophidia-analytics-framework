@@ -444,7 +444,7 @@ int task_init(oph_operator_struct * handle)
 		oph_odb_cubehasdim *cubedims = NULL, *cubedims2 = NULL;
 		int number_of_dimensions = 0, number_of_dimensions2 = 0;
 		int last_insertd_id = 0;
-		int l;
+		int l, ll;
 
 		//Read old cube - dimension relation rows
 		if (oph_odb_cube_retrieve_cubehasdim_list(oDB, datacube_id1, &cubedims, &number_of_dimensions)) {
@@ -463,20 +463,22 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		// Dimension comparison
-		if (number_of_dimensions != number_of_dimensions2) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve datacube2 - dimension relations.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_INTERCUBE_DATACUBE_COMPARISON_ERROR,
-				"number of dimensions");
-			oph_odb_cube_free_datacube(&cube);
-			free(cubedims);
-			free(cubedims2);
-			goto __OPH_EXIT_1;
-		}
-		for (l = 0; l < number_of_dimensions; l++)
-			if ((cubedims[l].size != cubedims2[l].size) || (cubedims[l].explicit_dim != cubedims2[l].explicit_dim) || (cubedims[l].level != cubedims2[l].level)
-			    )
+		for (l = ll = 0; (l < number_of_dimensions) && (ll < number_of_dimensions2); l++, ll++) {
+			while (!cubedims[l].size && (l < number_of_dimensions))
+				l++;
+			while (!cubedims2[ll].size && (ll < number_of_dimensions2))
+				ll++;
+			if ((l >= number_of_dimensions) || (ll >= number_of_dimensions2) || (cubedims[l].size != cubedims2[ll].size) || (cubedims[l].explicit_dim != cubedims2[ll].explicit_dim)
+			    || (cubedims[l].level != cubedims2[ll].level))
 				break;
-		if (l < number_of_dimensions) {
+		}
+		for (; l < number_of_dimensions; l++)
+			if (cubedims[l].size)
+				break;
+		for (; ll < number_of_dimensions2; ll++)
+			if (cubedims2[ll].size)
+				break;
+		if ((l < number_of_dimensions) || (ll < number_of_dimensions2)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Datacube dimensions are not comparable.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_INTERCUBE_DATACUBE_COMPARISON_ERROR,
 				"dimensions");
@@ -627,8 +629,10 @@ int task_init(oph_operator_struct * handle)
 								free(old_measure);
 							goto __OPH_EXIT_1;
 						}
-					} else
+					} else {
 						strncpy(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);	// A reduced dimension is handled by indexes
+						dim[l].dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
+					}
 					// Store output labels
 					if (oph_dim_insert_into_dimension_table
 					    (db, o_label_dimension_table_name, dim[l].dimension_type, dim_inst[l].size, dim_row, &(dim_inst[l].fk_id_dimension_label))) {
@@ -747,7 +751,7 @@ int task_init(oph_operator_struct * handle)
 		memset(new_task.query, 0, OPH_ODB_CUBE_OPERATION_QUERY_SIZE);
 		new_task.id_job = ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->id_job;
 		strncpy(new_task.operator, handle->operator_type, OPH_ODB_CUBE_OPERATOR_SIZE);
-
+		new_task.operator[OPH_ODB_CUBE_OPERATOR_SIZE] = 0;
 		char _ms[OPH_COMMON_MAX_DOUBLE_LENGHT];
 		if (isnan(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->ms))
 			snprintf(_ms, OPH_COMMON_MAX_DOUBLE_LENGHT, "NULL");
@@ -1252,6 +1256,7 @@ int task_execute(oph_operator_struct * handle)
 
 					frags.value[k].id_datacube = id_datacube_out;
 					strncpy(frags.value[k].fragment_name, 1 + strchr(frag_name_out, '.'), OPH_ODB_STGE_FRAG_NAME_SIZE);
+					frags.value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
 
 					// Insert new fragment in OphDB
 					if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &(frags.value[k]))) {
@@ -1621,6 +1626,7 @@ int task_execute(oph_operator_struct * handle)
 					//Change fragment fields
 					frags.value[k].id_datacube = id_datacube_out;
 					strncpy(frags.value[k].fragment_name, 1 + strchr(frag_name_out, '.'), OPH_ODB_STGE_FRAG_NAME_SIZE);
+					frags.value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
 
 					//Insert new fragment
 					if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &(frags.value[k]))) {
