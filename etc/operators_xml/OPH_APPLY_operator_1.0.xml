@@ -61,7 +61,7 @@ SUBMISSION STRING: &quot;operator=oph_apply;cube=http://www.example.com/1/1;quer
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="yes">cube</argument>
-		<argument type="string" mandatory="yes">query</argument>
+		<argument type="string" mandatory="no" default="measure">query</argument>
 		<argument type="string" mandatory="no" default="null">dim_query</argument>
 		<argument type="string" mandatory="no" default="null">measure</argument>
 		<argument type="string" mandatory="no" default="manual" values="auto|manual">measure_type</argument>

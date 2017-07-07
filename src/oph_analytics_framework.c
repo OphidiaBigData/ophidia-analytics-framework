@@ -371,6 +371,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+	hashtbl_insert(task_tbl, OPH_ARG_IDJOB, notify_jobid);
 
 	char tmp_value[OPH_TP_TASKLEN];
 #ifndef OPH_STANDALONE_MODE

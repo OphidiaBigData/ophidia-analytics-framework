@@ -78,18 +78,18 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensionin
 
 	if ((row = mysql_fetch_row(res)) != NULL) {
 		hier->id_hierarchy = (row[0] ? (int) strtol(row[0], NULL, 10) : 0);
-		memset(&(hier->hierarchy_name), 0, OPH_ODB_DIM_HIERARCHY_SIZE);
+		memset(&(hier->hierarchy_name), 0, OPH_ODB_DIM_HIERARCHY_SIZE + 1);
 		if (row[1])
 			strncpy(hier->hierarchy_name, row[1], OPH_ODB_DIM_HIERARCHY_SIZE);
-		memset(&(hier->filename), 0, OPH_ODB_DIM_HIERARCHY_FILENAME_SIZE);
+		memset(&(hier->filename), 0, OPH_ODB_DIM_HIERARCHY_FILENAME_SIZE + 1);
 		if (row[2])
 			strncpy(hier->filename, row[2], OPH_ODB_DIM_HIERARCHY_FILENAME_SIZE);
 		dim->id_dimension = (row[3] ? (int) strtol(row[3], NULL, 10) : 0);
 		dim->id_container = (row[4] ? (int) strtol(row[4], NULL, 10) : 0);
-		memset(&(dim->dimension_name), 0, OPH_ODB_DIM_DIMENSION_SIZE);
+		memset(&(dim->dimension_name), 0, OPH_ODB_DIM_DIMENSION_SIZE + 1);
 		if (row[5])
 			strncpy(dim->dimension_name, row[5], OPH_ODB_DIM_DIMENSION_SIZE);
-		memset(&(dim->dimension_type), 0, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
+		memset(&(dim->dimension_type), 0, OPH_ODB_DIM_DIMENSION_TYPE_SIZE + 1);
 		dim->id_hierarchy = (row[0] ? (int) strtol(row[0], NULL, 10) : 0);
 		dim_inst->id_dimensioninst = (row[7] ? (int) strtol(row[7], NULL, 10) : 0);
 		dim_inst->id_dimension = (row[3] ? (int) strtol(row[3], NULL, 10) : 0);
@@ -105,16 +105,16 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensionin
 		}
 		dim_inst->id_grid = dim_grid->id_grid = row[12] ? (int) strtol(row[12], NULL, 10) : 0;
 		dim_inst->unlimited = row[20] ? (char) row[20][0] : 0;
-		memset(&(dim_grid->grid_name), 0, OPH_ODB_DIM_GRID_SIZE);
+		memset(&(dim_grid->grid_name), 0, OPH_ODB_DIM_GRID_SIZE + 1);
 		if (row[13])
 			strncpy(dim_grid->grid_name, row[13], OPH_ODB_DIM_GRID_SIZE);
-		memset(&(dim->base_time), 0, OPH_ODB_DIM_TIME_SIZE);
+		memset(&(dim->base_time), 0, OPH_ODB_DIM_TIME_SIZE + 1);
 		if (row[14])
 			strncpy(dim->base_time, row[14], OPH_ODB_DIM_TIME_SIZE);
-		memset(&(dim->units), 0, OPH_ODB_DIM_TIME_SIZE);
+		memset(&(dim->units), 0, OPH_ODB_DIM_TIME_SIZE + 1);
 		if (row[15])
 			strncpy(dim->units, row[15], OPH_ODB_DIM_TIME_SIZE);
-		memset(&(dim->calendar), 0, OPH_ODB_DIM_TIME_SIZE);
+		memset(&(dim->calendar), 0, OPH_ODB_DIM_TIME_SIZE + 1);
 		if (row[16])
 			strncpy(dim->calendar, row[16], OPH_ODB_DIM_TIME_SIZE);
 		memset(&query, 0, MYSQL_BUFLEN);
@@ -231,7 +231,7 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
-	char hierarchy_name[OPH_ODB_DIM_HIERARCHY_SIZE];
+	char hierarchy_name[OPH_ODB_DIM_HIERARCHY_SIZE + 1];
 	char query[MYSQL_BUFLEN];
 	int n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_DIM_RETRIEVE_DIMENSION, id_dimension);
 	if (n >= MYSQL_BUFLEN) {
@@ -263,18 +263,18 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 	if ((row = mysql_fetch_row(res)) != NULL) {
 		dim->id_dimension = (row[0] ? (int) strtol(row[0], NULL, 10) : 0);
 		dim->id_container = (row[1] ? (int) strtol(row[1], NULL, 10) : 0);
-		memset(&(dim->dimension_name), 0, OPH_ODB_DIM_DIMENSION_SIZE);
+		memset(&(dim->dimension_name), 0, OPH_ODB_DIM_DIMENSION_SIZE + 1);
 		strncpy(dim->dimension_name, row[2], OPH_ODB_DIM_DIMENSION_SIZE);
-		memset(&(dim->dimension_type), 0, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
+		memset(&(dim->dimension_type), 0, OPH_ODB_DIM_DIMENSION_TYPE_SIZE + 1);
 		strncpy(dim->dimension_type, row[3], OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
 		dim->id_hierarchy = (row[4] ? (int) strtol(row[4], NULL, 10) : 0);
-		memset(&(dim->base_time), 0, OPH_ODB_DIM_TIME_SIZE);
+		memset(&(dim->base_time), 0, OPH_ODB_DIM_TIME_SIZE + 1);
 		if (row[5])
 			strncpy(dim->base_time, row[5], OPH_ODB_DIM_TIME_SIZE);
-		memset(&(dim->units), 0, OPH_ODB_DIM_TIME_SIZE);
+		memset(&(dim->units), 0, OPH_ODB_DIM_TIME_SIZE + 1);
 		if (row[6])
 			strncpy(dim->units, row[6], OPH_ODB_DIM_TIME_SIZE);
-		memset(&(dim->calendar), 0, OPH_ODB_DIM_TIME_SIZE);
+		memset(&(dim->calendar), 0, OPH_ODB_DIM_TIME_SIZE + 1);
 		if (row[7])
 			strncpy(dim->calendar, row[7], OPH_ODB_DIM_TIME_SIZE);
 		memset(&query, 0, MYSQL_BUFLEN);
@@ -290,7 +290,7 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 		dim->leap_year = (row[9] ? (int) strtol(row[9], NULL, 10) : 0);
 		dim->leap_month = (row[10] ? (int) strtol(row[10], NULL, 10) : 2);
 
-		memset(hierarchy_name, 0, OPH_ODB_DIM_HIERARCHY_SIZE);
+		memset(hierarchy_name, 0, OPH_ODB_DIM_HIERARCHY_SIZE + 1);
 		if (row[11])
 			strncpy(hierarchy_name, row[11], OPH_ODB_DIM_HIERARCHY_SIZE);
 	}
@@ -456,9 +456,9 @@ int oph_odb_dim_retrieve_hierarchy(ophidiadb * oDB, int id_hierarchy, oph_odb_hi
 
 	if ((row = mysql_fetch_row(res)) != NULL) {
 		hier->id_hierarchy = id_hierarchy;
-		memset(&(hier->hierarchy_name), 0, OPH_ODB_DIM_HIERARCHY_SIZE);
+		memset(&(hier->hierarchy_name), 0, OPH_ODB_DIM_HIERARCHY_SIZE + 1);
 		strncpy(hier->hierarchy_name, row[0], OPH_ODB_DIM_HIERARCHY_SIZE);
-		memset(&(hier->filename), 0, OPH_ODB_DIM_HIERARCHY_FILENAME_SIZE);
+		memset(&(hier->filename), 0, OPH_ODB_DIM_HIERARCHY_FILENAME_SIZE + 1);
 		strncpy(hier->filename, row[1], OPH_ODB_DIM_HIERARCHY_FILENAME_SIZE);
 	}
 	mysql_free_result(res);
@@ -587,8 +587,8 @@ int oph_odb_dim_retrieve_dimension_instance(ophidiadb * oDB, int id_dimensionins
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
-	char dimension_name[OPH_ODB_DIM_DIMENSION_SIZE];
-	memset(dimension_name, 0, OPH_ODB_DIM_DIMENSION_SIZE);
+	char dimension_name[OPH_ODB_DIM_DIMENSION_SIZE + 1];
+	memset(dimension_name, 0, OPH_ODB_DIM_DIMENSION_SIZE + 1);
 	char filename[MYSQL_BUFLEN];
 	memset(filename, 0, MYSQL_BUFLEN);
 	char query[MYSQL_BUFLEN];
@@ -719,20 +719,20 @@ int oph_odb_dim_retrieve_dimension_list_from_container(ophidiadb * oDB, int id_c
 	while ((row = mysql_fetch_row(res)) != NULL) {
 		(*dims)[i].id_dimension = (row[0] ? (int) strtol(row[0], NULL, 10) : 0);
 		(*dims)[i].id_container = (row[1] ? (int) strtol(row[1], NULL, 10) : 0);
-		memset(&((*dims)[i].dimension_name), 0, OPH_ODB_DIM_DIMENSION_SIZE);
+		memset(&((*dims)[i].dimension_name), 0, OPH_ODB_DIM_DIMENSION_SIZE + 1);
 		strncpy((*dims)[i].dimension_name, row[2], OPH_ODB_DIM_DIMENSION_SIZE);
-		memset(&((*dims)[i].dimension_type), 0, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
+		memset(&((*dims)[i].dimension_type), 0, OPH_ODB_DIM_DIMENSION_TYPE_SIZE + 1);
 		strncpy((*dims)[i].dimension_type, row[3], OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
 		(*dims)[i].id_hierarchy = (row[4] ? (int) strtol(row[4], NULL, 10) : 0);
 		memset(&((*dims)[i].base_time), 0, OPH_ODB_DIM_TIME_SIZE);
 		if (row[5])
-			strncpy((*dims)[i].base_time, row[5], OPH_ODB_DIM_TIME_SIZE);
+			strncpy((*dims)[i].base_time, row[5], OPH_ODB_DIM_TIME_SIZE + 1);
 		memset(&((*dims)[i].units), 0, OPH_ODB_DIM_TIME_SIZE);
 		if (row[6])
-			strncpy((*dims)[i].units, row[6], OPH_ODB_DIM_TIME_SIZE);
+			strncpy((*dims)[i].units, row[6], OPH_ODB_DIM_TIME_SIZE + 1);
 		memset(&((*dims)[i].calendar), 0, OPH_ODB_DIM_TIME_SIZE);
 		if (row[7])
-			strncpy((*dims)[i].calendar, row[7], OPH_ODB_DIM_TIME_SIZE);
+			strncpy((*dims)[i].calendar, row[7], OPH_ODB_DIM_TIME_SIZE + 1);
 		memset(&query, 0, MYSQL_BUFLEN);
 		if (row[8]) {
 			int j = 0;
@@ -809,9 +809,9 @@ int oph_odb_dim_retrieve_dimension_list_from_grid_in_container(ophidiadb * oDB, 
 	while ((row = mysql_fetch_row(res)) != NULL) {
 		(*dims)[i].id_dimension = (int) strtol(row[0], NULL, 10);
 		(*dims)[i].id_container = id_container;
-		memset(&((*dims)[i].dimension_name), 0, OPH_ODB_DIM_DIMENSION_SIZE);
+		memset(&((*dims)[i].dimension_name), 0, OPH_ODB_DIM_DIMENSION_SIZE + 1);
 		strncpy((*dims)[i].dimension_name, row[1], OPH_ODB_DIM_DIMENSION_SIZE);
-		memset(&((*dims)[i].dimension_type), 0, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
+		memset(&((*dims)[i].dimension_type), 0, OPH_ODB_DIM_DIMENSION_TYPE_SIZE + 1);
 		strncpy((*dims)[i].dimension_type, row[2], OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
 		(*dims)[i].id_hierarchy = (row[3] ? (int) strtol(row[3], NULL, 10) : 0);
 		(*dim_insts)[i].id_dimensioninst = (row[4] ? (int) strtol(row[4], NULL, 10) : 0);
@@ -821,13 +821,13 @@ int oph_odb_dim_retrieve_dimension_list_from_grid_in_container(ophidiadb * oDB, 
 		(*dim_insts)[i].fk_id_dimension_index = (row[7] ? (int) strtol(row[7], NULL, 10) : 0);
 		(*dim_insts)[i].concept_level = (char) row[8][0];
 		(*dim_insts)[i].fk_id_dimension_label = (row[9] ? (int) strtol(row[9], NULL, 10) : 0);
-		memset(&((*dims)[i].base_time), 0, OPH_ODB_DIM_TIME_SIZE);
+		memset(&((*dims)[i].base_time), 0, OPH_ODB_DIM_TIME_SIZE + 1);
 		if (row[10])
 			strncpy((*dims)[i].base_time, row[10], OPH_ODB_DIM_TIME_SIZE);
-		memset(&((*dims)[i].units), 0, OPH_ODB_DIM_TIME_SIZE);
+		memset(&((*dims)[i].units), 0, OPH_ODB_DIM_TIME_SIZE + 1);
 		if (row[11])
 			strncpy((*dims)[i].units, row[11], OPH_ODB_DIM_TIME_SIZE);
-		memset(&((*dims)[i].calendar), 0, OPH_ODB_DIM_TIME_SIZE);
+		memset(&((*dims)[i].calendar), 0, OPH_ODB_DIM_TIME_SIZE + 1);
 		if (row[12])
 			strncpy((*dims)[i].calendar, row[12], OPH_ODB_DIM_TIME_SIZE);
 		memset(&query, 0, MYSQL_BUFLEN);
@@ -1383,9 +1383,9 @@ int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb * oDB, i
 
 		if ((row = mysql_fetch_row(res)) != NULL) {
 			hier->id_hierarchy = (int) strtol(row[0], NULL, 10);
-			memset(&(hier->hierarchy_name), 0, OPH_ODB_DIM_HIERARCHY_SIZE);
+			memset(&(hier->hierarchy_name), 0, OPH_ODB_DIM_HIERARCHY_SIZE + 1);
 			strncpy(hier->hierarchy_name, row[1], OPH_ODB_DIM_HIERARCHY_SIZE);
-			memset(&(hier->filename), 0, OPH_ODB_DIM_HIERARCHY_FILENAME_SIZE);
+			memset(&(hier->filename), 0, OPH_ODB_DIM_HIERARCHY_FILENAME_SIZE + 1);
 			strncpy(hier->filename, row[2], OPH_ODB_DIM_HIERARCHY_FILENAME_SIZE);
 			if (concept_level)
 				*concept_level = (char) row[3][0];

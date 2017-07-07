@@ -1049,6 +1049,7 @@ int task_execute(oph_operator_struct * handle)
 					}
 				} else {
 					strncpy(dims[i].dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
+					dims[i].dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
 					if (oph_dim_read_dimension_data(db_dimension, index_dimension_table_name, dim_insts[i].fk_id_dimension_index, MYSQL_DIMENSION, 0, &dim_row)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve dimension data\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_SHOWGRID_DIM_READ_ERROR);

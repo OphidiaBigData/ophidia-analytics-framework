@@ -312,7 +312,7 @@ int oph_odb_cube_retrieve_source(ophidiadb * oDB, int id_src, oph_odb_source * s
 
 	if ((row = mysql_fetch_row(res)) != NULL) {
 		src->id_source = id_src;
-		memset(&(src->uri), 0, OPH_ODB_CUBE_SOURCE_URI_SIZE);
+		memset(&(src->uri), 0, OPH_ODB_CUBE_SOURCE_URI_SIZE + 1);
 		strncpy(src->uri, row[0], OPH_ODB_CUBE_SOURCE_URI_SIZE);
 	}
 	mysql_free_result(res);
@@ -369,11 +369,11 @@ int _oph_odb_cube_retrieve_datacube(ophidiadb * oDB, int id_datacube, oph_odb_da
 		cube->dbxdbms = (row[4] ? (int) strtol(row[4], NULL, 10) : 0);
 		cube->fragmentxdb = (row[5] ? (int) strtol(row[5], NULL, 10) : 0);
 		cube->tuplexfragment = (row[6] ? (int) strtol(row[6], NULL, 10) : 0);
-		memset(&(cube->measure), 0, OPH_ODB_CUBE_MEASURE_SIZE);
+		memset(&(cube->measure), 0, OPH_ODB_CUBE_MEASURE_SIZE + 1);
 		strncpy(cube->measure, row[7], OPH_ODB_CUBE_MEASURE_SIZE);
-		memset(&(cube->measure_type), 0, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
+		memset(&(cube->measure_type), 0, OPH_ODB_CUBE_MEASURE_TYPE_SIZE + 1);
 		strncpy(cube->measure_type, row[8], OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
-		memset(&(cube->frag_relative_index_set), 0, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
+		memset(&(cube->frag_relative_index_set), 0, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE + 1);
 		strncpy(cube->frag_relative_index_set, row[9], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
 		cube->compressed = (row[10] ? (int) strtol(row[10], NULL, 10) : 0);
 		cube->level = (row[11] ? (int) strtol(row[11], NULL, 10) : 0);
@@ -760,10 +760,11 @@ int oph_odb_cube_find_task_list(ophidiadb * oDB, int folder_id, int datacube_id,
 
 int oph_odb_cube_insert_into_source_table(ophidiadb * oDB, oph_odb_source * src, int *last_insertd_id)
 {
-	if (!oDB || !src) {
+	if (!oDB || !src || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+	*last_insertd_id = 0;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -773,28 +774,6 @@ int oph_odb_cube_insert_into_source_table(ophidiadb * oDB, oph_odb_source * src,
 	char insertQuery[MYSQL_BUFLEN];
 	int n;
 
-	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_RETRIEVE_SOURCE_ID, src->uri);
-	if (n >= MYSQL_BUFLEN) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_ODB_STR_BUFF_OVERFLOW;
-	}
-
-	if (mysql_query(oDB->conn, insertQuery)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		return OPH_ODB_MYSQL_ERROR;
-	}
-
-	MYSQL_RES *res;
-	MYSQL_ROW row;
-	res = mysql_store_result(oDB->conn);
-	if (mysql_num_rows(res) == 1 && mysql_field_count(oDB->conn) == 1) {
-		row = mysql_fetch_row(res);
-		*last_insertd_id = (int) strtol(row[0], NULL, 10);
-		mysql_free_result(res);
-		return OPH_ODB_SUCCESS;
-	}
-	mysql_free_result(res);
-
 	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_SOURCE, src->uri);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
@@ -802,11 +781,35 @@ int oph_odb_cube_insert_into_source_table(ophidiadb * oDB, oph_odb_source * src,
 	}
 
 	if (mysql_query(oDB->conn, insertQuery)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		return OPH_ODB_MYSQL_ERROR;
-	}
 
-	if (!(*last_insertd_id = mysql_insert_id(oDB->conn))) {
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+
+		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_RETRIEVE_SOURCE_ID, src->uri);
+		if (n >= MYSQL_BUFLEN) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+			return OPH_ODB_STR_BUFF_OVERFLOW;
+		}
+
+		if (mysql_query(oDB->conn, insertQuery)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			return OPH_ODB_MYSQL_ERROR;
+		}
+
+		MYSQL_RES *res;
+		MYSQL_ROW row;
+		res = mysql_store_result(oDB->conn);
+		if (mysql_num_rows(res) == 1 && mysql_field_count(oDB->conn) == 1) {
+			row = mysql_fetch_row(res);
+			*last_insertd_id = (int) strtol(row[0], NULL, 10);
+		}
+		mysql_free_result(res);
+
+		if (!*last_insertd_id) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted datacube id\n");
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+	} else if (!(*last_insertd_id = mysql_insert_id(oDB->conn))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted datacube id\n");
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
