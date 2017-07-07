@@ -165,8 +165,8 @@
 #define OPH_LOG_GENERIC_IOPLUGIN_CLEANUP_ERROR					"Unable to cleanup I/O server plugin %d\n"
 #define OPH_LOG_GENERIC_IOPLUGIN_FETCH_ROW_ERROR					"Unable to fetch row from I/O server\n"
 #define OPH_LOG_GENERIC_INVALID_USERROLE_ERROR					"At least \"%s\" permission is needed for this particular operation\n"
-#define OPH_LOG_GENERIC_METADATA_COPY_ERROR					"Unable to copy metadata"
-#define OPH_LOG_GENERIC_METADATA_UPDATE_ERROR					"Unable to update metadata"
+#define OPH_LOG_GENERIC_METADATA_COPY_ERROR					"Unable to copy metadata\n"
+#define OPH_LOG_GENERIC_METADATA_UPDATE_ERROR					"Unable to update metadata\n"
 #define OPH_LOG_GENERIC_USER_ID_ERROR						"Unable to retreive user id\n"
 #define OPH_LOG_GENERIC_READ_METADATA_ERROR					"Unable to read metadata table\n"
 #define OPH_LOG_GENERIC_WRITE_METADATA_ERROR					"Unable to write metadata '%s:%s': %s\n"
@@ -608,6 +608,7 @@
 #define OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR				"Error unable to generate this number of fragments\n"
 #define OPH_LOG_OPH_IMPORTNC_UPDATE_TIME_ERROR						"Error while updating time dimension metadata\n"
 #define OPH_LOG_OPH_IMPORTNC_SET_TIME_ERROR						"Error while setting time dimension metadata\n"
+#define OPH_LOG_OPH_IMPORTNC_TASK_INSERT_ERROR 						OPH_LOG_GENERIC_TASK_INSERT_ERROR
 
 /*OPH_EXPLORENC OPERATOR LOG ERRORS*/
 #define OPH_LOG_OPH_EXPLORENC_TASK_STRING_ERROR_NO_CONTAINER 			"[CONTAINER: %s] Task string not properly setted\n"
@@ -1035,6 +1036,7 @@
 #define OPH_LOG_OPH_RANDCUBE_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER "[CONTAINER: %s] Unable to retreive number of host or dbms or server type and partition %s are not available!\n"
 #define OPH_LOG_OPH_RANDCUBE_IOPLUGIN_SETUP_ERROR						OPH_LOG_GENERIC_IOPLUGIN_SETUP_ERROR
 #define OPH_LOG_OPH_RANDCUBE_IOPLUGIN_CLEANUP_ERROR					OPH_LOG_GENERIC_IOPLUGIN_CLEANUP_ERROR
+#define OPH_LOG_OPH_RANDCUBE_TASK_INSERT_ERROR 						OPH_LOG_GENERIC_TASK_INSERT_ERROR
 
 /*OPH_REDUCE OPERATOR LOG ERRORS*/
 #define OPH_LOG_OPH_REDUCE_MEMORY_ERROR_HANDLE					OPH_LOG_GENERIC_MEMORY_ERROR_HANDLE

@@ -75,6 +75,7 @@
  * \param memory_size Maximum amount of memory available
  * \param description Free description to be associated with output cube
  * \param time_filter Flag used in case time filters are expressed as dates
+ * \param id_job ID of the job related to the task
  */
 struct _OPH_IMPORTNC_operator_handle {
 	ophidiadb oDB;
@@ -120,6 +121,7 @@ struct _OPH_IMPORTNC_operator_handle {
 	long long memory_size;
 	char *description;
 	int time_filter;
+	int id_job;
 };
 typedef struct _OPH_IMPORTNC_operator_handle OPH_IMPORTNC_operator_handle;
 

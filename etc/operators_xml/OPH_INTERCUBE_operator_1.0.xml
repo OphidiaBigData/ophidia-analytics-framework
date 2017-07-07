@@ -14,7 +14,7 @@ returns a new datacube as result of the specified operation applied element by e
 - cube2 : name of the second operand datacube. The name must be in PID format.
 - operation : type of inter-cube operation among these (default is sub):
               -- sum : sum correspondent elements one by one;
-              -- sub : subtract the elements of the second operand from the first operand one by one;
+              -- sub : subtract the elements of the second operand from the first operand one by one (default);
               -- mul : multiply correspondent elements one by one;
               -- div : divide the elements of the first operand by the elements of the second operand one by one;
               -- abs : compute the modulus of corresponding elements one by one;
@@ -56,7 +56,7 @@ SUBMISSION STRING: &quot;operator=oph_intercube;cube=http://www.example.com/1/1;
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="yes">cube</argument>
 		<argument type="string" mandatory="yes">cube2</argument>
-		<argument type="string" mandatory="yes" default="sub" values="sum|sub|mul|div|abs|arg|corr|mask|max|min">operation</argument>
+		<argument type="string" mandatory="no" default="sub" values="sum|sub|mul|div|abs|arg|corr|mask|max|min">operation</argument>
 		<argument type="real" mandatory="no" default="NAN">missingvalue</argument>
 		<argument type="string" mandatory="no" default="null">measure</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
