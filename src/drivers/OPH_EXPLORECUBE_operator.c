@@ -546,7 +546,7 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
-	char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[OPH_COMMON_BUFFER_LEN], operation2[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
+	char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[1 + OPH_COMMON_BUFFER_LEN], operation2[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
 	snprintf(index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container);
 	snprintf(label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container);
 	int n, compressed = 0, non_empty_set = 1;
@@ -665,7 +665,6 @@ int task_execute(oph_operator_struct * handle)
 			oph_dim_unload_dim_dbinstance(db);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-
 		if (((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->subset_type) {
 
 			if (compressed) {
@@ -681,10 +680,13 @@ int task_execute(oph_operator_struct * handle)
 					oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
-			} else
+			} else  {
 				strncpy(operation, MYSQL_DIMENSION, OPH_COMMON_BUFFER_LEN);
+				operation[OPH_COMMON_BUFFER_LEN] = 0;
+			}
 			dim_row = 0;
 			if (oph_dim_read_dimension_data(db, index_dimension_table_name, dim_inst[l].fk_id_dimension_index, operation, 0, &dim_row) || !dim_row) {
+
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading a row from dimension table.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR);
 				if (dim_row)
@@ -697,9 +699,8 @@ int task_execute(oph_operator_struct * handle)
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
 			if (dim_inst[l].fk_id_dimension_label) {
-				if (oph_dim_read_dimension_filtered_data
-				    (db, label_dimension_table_name, dim_inst[l].fk_id_dimension_label, operation, 0, &dim_row, dim[l].dimension_type, dim_inst[l].size)
-				    || !dim_row) {
+				if (oph_dim_read_dimension_filtered_data(db, label_dimension_table_name, dim_inst[l].fk_id_dimension_label, operation, 0, &dim_row, dim[l].dimension_type, dim_inst[l].size)
+					|| !dim_row) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading a row from dimension table.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container,
 						OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR);
@@ -1169,6 +1170,7 @@ int task_execute(oph_operator_struct * handle)
 					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				}
 				strncpy(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
+				dim[l].dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
 				//Since index is always long we can assure that lenght is size*SIZEOF(long)
 				dim_rows[l] = (char *) malloc(dim_inst[l].size * sizeof(long long));
 				if (!dim_rows[l]) {
