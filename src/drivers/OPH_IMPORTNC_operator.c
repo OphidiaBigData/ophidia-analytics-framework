@@ -1804,6 +1804,12 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 	}
 
+	value = hashtbl_get(task_tbl, OPH_ARG_IDJOB);
+	if (!value)
+		((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_job = 0;
+	else
+		((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_job = (int) strtol(value, NULL, 10);
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -3588,6 +3594,26 @@ int task_init(oph_operator_struct * handle)
 	  /********************************
 	   *  DB INSTANCE CREATION - END  *
 	   ********************************/
+
+		last_insertd_id = 0;
+		oph_odb_task new_task;
+		new_task.id_outputcube = id_datacube_out;
+		new_task.id_job = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_job;
+		memset(new_task.query, 0, OPH_ODB_CUBE_OPERATION_QUERY_SIZE);
+		strncpy(new_task.operator, handle->operator_type, OPH_ODB_CUBE_OPERATOR_SIZE);
+		i = snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_DC_SQ_MULTI_INSERT_FRAG, "frag") - 1;
+		if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->compressed)
+			i += snprintf(new_task.query + i, OPH_ODB_CUBE_OPERATION_QUERY_SIZE - i, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW) - 1;
+		else
+			i += snprintf(new_task.query + i, OPH_ODB_CUBE_OPERATION_QUERY_SIZE - i, OPH_DC_SQ_MULTI_INSERT_ROW) - 1;
+		snprintf(new_task.query + i, OPH_ODB_CUBE_OPERATION_QUERY_SIZE - i, ";");
+		new_task.input_cube_number = 0;
+		new_task.id_inputcube = NULL;
+		if (oph_odb_cube_insert_into_task_table(oDB, &new_task, &last_insertd_id)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new task.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_TASK_INSERT_ERROR, new_task.operator);
+			goto __OPH_EXIT_1;
+		}
 
 		id_datacube[0] = id_datacube_out;
 		id_datacube[1] = id_container_out;
