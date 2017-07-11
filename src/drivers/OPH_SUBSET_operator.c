@@ -532,7 +532,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 
-		char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[1 + OPH_COMMON_BUFFER_LEN], operation2[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
+		char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[OPH_COMMON_BUFFER_LEN + 1], operation2[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
 		snprintf(index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container);
 		snprintf(label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container);
 		char o_index_dimension_table_name[OPH_COMMON_BUFFER_LEN], o_label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
@@ -1359,9 +1359,7 @@ int task_init(oph_operator_struct * handle)
 					strncpy(operation, MYSQL_DIMENSION, OPH_COMMON_BUFFER_LEN);
 					operation[OPH_COMMON_BUFFER_LEN] = 0;
 				}
-
 				strncpy(operation2, operation, OPH_COMMON_BUFFER_LEN);
-
 			} else	// Subsetted dimension
 			{
 				if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->dim_task[d] && strlen(((OPH_SUBSET_operator_handle *) handle->operator_handle)->dim_task[d])) {

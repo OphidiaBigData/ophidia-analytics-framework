@@ -1,4 +1,4 @@
-<h4>Ophidia Core Contributors - ophidia-info AT lists DOT cmcc DOT it</h4>
+<h4>Ophidia Core Contributors - ophidia-info AT cmcc DOT it</h4>
 Donatello Elia</br>
 Sandro Fiore</br>
 Alessandro D'Anca</br>
