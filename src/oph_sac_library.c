@@ -1438,14 +1438,7 @@ int oph_sac_populate_fragment_from_sac3(oph_ioserver_handler * server, oph_odb_f
 
 	char type_flag = '\0';
 	switch (measure->vartype) {
-/*	    case BYTE_IMG:
-	    //case NC_CHAR:
-		type_flag = OPH_FITS_BYTE_FLAG;
-                    break;
-	    case SHORT_IMG:
-		type_flag = OPH_FITS_SHORT_FLAG;
-				                    break;
-*/ case INT_SAC:
+		case INT_SAC:
 			type_flag = OPH_SAC_INT_FLAG;
 			break;
 		case FLOAT_SAC:
@@ -1460,15 +1453,8 @@ int oph_sac_populate_fragment_from_sac3(oph_ioserver_handler * server, oph_odb_f
 
 	long long sizeof_var = 0;
 
-/*	if(type_flag == OPH_FITS_BYTE_FLAG)
-		sizeof_var = (array_length)*sizeof(char);
-	else if(type_flag == OPH_FITS_SHORT_FLAG)
-		sizeof_var = (array_length)*sizeof(short);
-	else 
-*/ if (type_flag == OPH_SAC_INT_FLAG)
+	if (type_flag == OPH_SAC_INT_FLAG)
 		sizeof_var = (array_length) * sizeof(int);
-//      else if(type_flag == OPH_FITS_LONG_FLAG)
-//              sizeof_var = (array_length)*sizeof(long long);
 	else if (type_flag == OPH_SAC_FLOAT_FLAG)
 		sizeof_var = (array_length) * sizeof(float);
 	else if (type_flag == OPH_SAC_DOUBLE_FLAG)
@@ -2395,21 +2381,10 @@ int oph_sac_get_c_type(int type_sac, char *out_c_type)
 {
 
 	switch (type_sac) {
-/*	case BYTE_IMG:
-	//case NC_CHAR:
-        	strncpy(out_c_type, OPH_FITS_BYTE_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
-                break;
-	case SHORT_IMG:
-// CHECK: NEED TO DEFINE OTHER TYPES? USHORT, ULONG, ETC
-        	strncpy(out_c_type, OPH_FITS_SHORT_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
-				                break;
-*/ case INT_SAC:
+		case INT_SAC:
 			strncpy(out_c_type, OPH_SAC_INT_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
 			break;
-/*	case LONGLONG_IMG:
-        	strncpy(out_c_type, OPH_FITS_LONG_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
-				                break;
-*/ case FLOAT_SAC:
+		case FLOAT_SAC:
 			strncpy(out_c_type, OPH_SAC_FLOAT_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
 			break;
 		case DOUBLE_SAC:

@@ -321,6 +321,50 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				"output path");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
+		if (strstr(((OPH_EXPORTFITS_operator_handle *) handle->operator_handle)->output_path, "..")) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		char *pointer = ((OPH_EXPORTFITS_operator_handle *) handle->operator_handle)->output_path;
+		while (pointer && (*pointer == ' '))
+			pointer++;
+		if (pointer) {
+			char tmp[OPH_COMMON_BUFFER_LEN];
+			if (*pointer != '/') {
+				value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
+				if (!value) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (*value != '/') {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (strlen(value) > 1) {
+					if (strstr(value, "..")) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					}
+					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value + 1, pointer);
+					free(((OPH_EXPORTFITS_operator_handle *) handle->operator_handle)->output_path);
+					((OPH_EXPORTFITS_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
+					pointer = ((OPH_EXPORTFITS_operator_handle *) handle->operator_handle)->output_path;
+				}
+			}
+			if (oph_pid_get_base_src_path(&value)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base user_path\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base user path\n");
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
+			free(((OPH_EXPORTFITS_operator_handle *) handle->operator_handle)->output_path);
+			((OPH_EXPORTFITS_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
+			free(value);
+		}
 		((OPH_EXPORTFITS_operator_handle *) handle->operator_handle)->output_path_user_defined = 1;
 	}
 
@@ -1718,11 +1762,10 @@ int task_execute(oph_operator_struct * handle)
 								for(hh=0; hh<num_of_dims; hh++){
 									mystart[hh] = start[kk] + 1;
 //									mycount[hh] = count[kk];
-									kk--;
-																										}
-*///mystart[0]=start[0];
-									//mystart[1]=start[1];
-/*								for (hh=0; hh<num_of_dims; hh++){
+									kk--;																																																																																									}
+									mystart[0]=start[0];
+									mystart[1]=start[1];
+								for (hh=0; hh<num_of_dims; hh++){
 									pmesg(LOG_ERROR, __FILE__, __LINE__, "XXXXXXXX mystart: %d\n",mystart[hh]);
 									pmesg(LOG_ERROR, __FILE__, __LINE__, "XXXXXXXX mycount: %d\n",mycount[hh]);
 								}
