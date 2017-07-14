@@ -646,7 +646,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	if (!strstr(((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->sac_file_path, "http://")
 	    && !strstr(((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->sac_file_path, "https://")) {
-		char *pointer = ((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->nc_file_path;
+		char *pointer = ((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->sac_file_path;
 		while (pointer && (*pointer == ' '))
 			pointer++;
 		if (pointer) {
@@ -670,9 +670,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 					}
 					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value + 1, pointer);
-					free(((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->nc_file_path);
-					((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
-					pointer = ((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->nc_file_path;
+					free(((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->sac_file_path);
+					((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->sac_file_path = strdup(tmp);
+					pointer = ((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->sac_file_path;
 				}
 			}
 			if (oph_pid_get_base_src_path(&value)) {
@@ -681,8 +681,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
 			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
-			free(((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->nc_file_path);
-			((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
+			free(((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->sac_file_path);
+			((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->sac_file_path = strdup(tmp);
 			free(value);
 		}
 	}
