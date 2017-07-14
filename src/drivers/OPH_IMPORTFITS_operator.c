@@ -645,18 +645,43 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	if (!strstr(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path, "http://")
 	    && !strstr(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path, "https://")) {
-		if (oph_pid_get_base_src_path(&value)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_OPHIDIADB_CONFIGURATION_FILE, container_name);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
-		if (value) {
-			if (*(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path) != '/') {
-				char tmp[OPH_COMMON_BUFFER_LEN];
-				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path);
-				free(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path);
-				((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path = strdup(tmp);
+		char *pointer = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->nc_file_path;
+		while (pointer && (*pointer == ' '))
+			pointer++;
+		if (pointer) {
+			char tmp[OPH_COMMON_BUFFER_LEN];
+			if (*pointer != '/') {
+				value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
+				if (!value) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (*value != '/') {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", value);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", value);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (strlen(value) > 1) {
+					if (strstr(value, "..")) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					}
+					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value + 1, pointer);
+					free(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->nc_file_path);
+					((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
+					pointer = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->nc_file_path;
+				}
 			}
+			if (oph_pid_get_base_src_path(&value)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
+			free(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->nc_file_path);
+			((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
 			free(value);
 		}
 	}
@@ -3938,7 +3963,6 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_free_ophidiadb(&oDB_slave);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
-
 	//retrieve connection string
 	if (oph_odb_stge_fetch_db_connection_string(&oDB_slave, id_datacube_out, start_position, row_number, &dbs, &dbmss)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");
@@ -3963,7 +3987,6 @@ int task_execute(oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 	}
-
 	//For each DBMS
 	for (i = 0; i < dbmss.size; i++) {
 

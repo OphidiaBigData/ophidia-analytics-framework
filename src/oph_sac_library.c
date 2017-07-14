@@ -1444,7 +1444,7 @@ int oph_sac_populate_fragment_from_sac3(oph_ioserver_handler * server, oph_odb_f
                     break;
 	    case SHORT_IMG:
 		type_flag = OPH_FITS_SHORT_FLAG;
-		                    break;
+				                    break;
 */ case INT_SAC:
 			type_flag = OPH_SAC_INT_FLAG;
 			break;
@@ -2402,13 +2402,13 @@ int oph_sac_get_c_type(int type_sac, char *out_c_type)
 	case SHORT_IMG:
 // CHECK: NEED TO DEFINE OTHER TYPES? USHORT, ULONG, ETC
         	strncpy(out_c_type, OPH_FITS_SHORT_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
-		                break;
+				                break;
 */ case INT_SAC:
 			strncpy(out_c_type, OPH_SAC_INT_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
 			break;
 /*	case LONGLONG_IMG:
         	strncpy(out_c_type, OPH_FITS_LONG_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
-		                break;
+				                break;
 */ case FLOAT_SAC:
 			strncpy(out_c_type, OPH_SAC_FLOAT_TYPE, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
 			break;

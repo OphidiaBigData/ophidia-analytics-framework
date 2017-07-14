@@ -17,6 +17,7 @@ It exports data of a datacube into a sinlge FITS file.
 - output_path : absolute path of the NetCDF output file. In case of default value, the file will be saved in the appropriate
                 directory corresponding to the related container and cube in the nc folder at the framework installation directory.
 - output_name : filename of the FITS output file. The default value is the measure name of input datacube.
+- cdd : absolute path corresponding to the current directory on data repository.
 - template_path : fits file path used as template for the output fits file. If not provided, a data-only file will be created.
 - force : flag used to force file creation. An existant file is overwritten with &quot;yes&quot; whereas
           the file is created only if it does not exist with &quot;no&quot; (default).
@@ -47,6 +48,7 @@ SUBMISSION STRING: &quot;operator=oph_exportfits;cube=http://www.example.com/1/1
 		<argument type="string" mandatory="no" default="no" values="yes|no">misc</argument>
 		<argument type="string" mandatory="no" default="default">output_path</argument>
 		<argument type="string" mandatory="no" default="default">output_name</argument>
+		<argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="default">template_path</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">export_metadata</argument>

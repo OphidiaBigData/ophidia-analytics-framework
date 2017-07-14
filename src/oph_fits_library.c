@@ -1512,7 +1512,6 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 		//return oph_nc_populate_fragment_from_nc2(server, frag, ncid, tuplexfrag_number, array_length, compressed, measure);
 		return oph_fits_populate_fragment_from_fits2(server, frag, fptr, tuplexfrag_number, array_length, compressed, measure);
 	}
-
 	//Compute number of tuples per insert (regular case)
 	long long regular_rows = 0;
 	long long regular_times = 0;
@@ -1695,7 +1694,6 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 		free(args);
 		return OPH_FITS_ERROR;
 	}
-
 	//idDim controls the start array
 	//start and count array must be sorted in base of the real order of dimensions in the fits file
 	//sizemax must be sorted in base of the oph_level value
