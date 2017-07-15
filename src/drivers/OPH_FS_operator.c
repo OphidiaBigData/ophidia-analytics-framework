@@ -95,11 +95,6 @@ int openDir(const char *path, int recursive, size_t * counter, char **buffer, ch
 		*counter += globbuf.gl_pathc;
 		size_t i;
 		for (i = 0; i < globbuf.gl_pathc; ++i) {
-			if (globbuf.gl_pathv[i][strlen(globbuf.gl_pathv[i]) - 1] == '/')	// Skip the subfolder
-			{
-				(*counter)--;
-				continue;
-			}
 			if (*buffer) {
 				sub = *buffer;
 				s = asprintf(buffer, "%s%s%s", sub, globbuf.gl_pathv[i], OPH_SEPARATOR_PARAM);
@@ -118,7 +113,7 @@ int openDir(const char *path, int recursive, size_t * counter, char **buffer, ch
 		if (*entry->d_name != OPH_FS_HPREFIX) {
 			snprintf(full_filename, PATH_MAX, "%s/%s", path, entry->d_name);
 			lstat(full_filename, &file_stat);
-			if (!file && (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode))) {
+			if (!file && (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode))) {
 				(*counter)++;
 				if (*buffer) {
 					sub = *buffer;
@@ -126,7 +121,8 @@ int openDir(const char *path, int recursive, size_t * counter, char **buffer, ch
 					free(sub);
 				} else
 					s = asprintf(buffer, "%s/%s%s", path, entry->d_name, OPH_SEPARATOR_PARAM);
-			} else if (recursive && S_ISDIR(file_stat.st_mode)) {
+			}
+			if (recursive && S_ISDIR(file_stat.st_mode)) {
 				sub = NULL;
 				s = asprintf(&sub, "%s/%s", path, entry->d_name);
 				if (!sub)
@@ -153,6 +149,8 @@ int write_json(char (*filenames)[OPH_COMMON_BUFFER_LEN], int jj, oph_json * oper
 	char **jsonvalues = NULL;
 	char full_filename[OPH_COMMON_BUFFER_LEN];
 
+	qsort(filenames, jj, OPH_COMMON_BUFFER_LEN, cmpfunc);
+
 	for (ii = 0; ii < jj; ++ii) {
 		jsonvalues = (char **) calloc(num_fields, sizeof(char *));
 		if (!jsonvalues) {
@@ -162,7 +160,7 @@ int write_json(char (*filenames)[OPH_COMMON_BUFFER_LEN], int jj, oph_json * oper
 			break;
 		}
 		jjj = 0;
-		jsonvalues[jjj] = strdup(*filenames[ii] == '/' ? "d" : "f");
+		jsonvalues[jjj] = strdup(filenames[ii][strlen(filenames[ii]) - 1] == '/' ? "d" : "f");
 		if (!jsonvalues[jjj]) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "value");
@@ -175,11 +173,7 @@ int write_json(char (*filenames)[OPH_COMMON_BUFFER_LEN], int jj, oph_json * oper
 			break;
 		}
 		jjj++;
-		if (*filenames[ii] == '/') {
-			snprintf(full_filename, OPH_COMMON_BUFFER_LEN, "%s/", filenames[ii] + 1);
-			jsonvalues[jjj] = strdup(full_filename);
-		} else
-			jsonvalues[jjj] = strdup(filenames[ii]);
+		jsonvalues[jjj] = strdup(filenames[ii]);
 		if (!jsonvalues[jjj]) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "value");
@@ -244,6 +238,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_FS_operator_handle *) handle->operator_handle)->path = NULL;
 	((OPH_FS_operator_handle *) handle->operator_handle)->file = NULL;
 	((OPH_FS_operator_handle *) handle->operator_handle)->recursive = 0;
+	((OPH_FS_operator_handle *) handle->operator_handle)->depth = 0;
 	((OPH_FS_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_FS_operator_handle *) handle->operator_handle)->objkeys_num = -1;
 
@@ -330,6 +325,19 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	} else if (strcmp(value, OPH_COMMON_NO_VALUE)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DEPTH);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_DEPTH);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DEPTH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_FS_operator_handle *) handle->operator_handle)->depth = (int) strtol(value, NULL, 10);
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->depth < 0) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid input parameter %s\n", value);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_PARAMETER, value);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
@@ -567,13 +575,8 @@ int task_execute(oph_operator_struct * handle)
 				int recursive = 0;
 				if (((OPH_FS_operator_handle *) handle->operator_handle)->recursive) {
 					recursive = 1;
-/*
-					if ((running_value = hashtbl_get(task_tbl, OPH_MF_ARG_DEPTH))) {
-						int rdepth = (int) strtol(running_value, NULL, 10);
-						if (rdepth > 0)
-							recursive = -rdepth;
-					}
-*/
+					if (((OPH_FS_operator_handle *) handle->operator_handle)->depth)
+						recursive = -((OPH_FS_operator_handle *) handle->operator_handle)->depth;
 				}
 
 				char real_path[PATH_MAX];
@@ -597,20 +600,10 @@ int task_execute(oph_operator_struct * handle)
 						}
 						break;
 					}
-					char *filename;
 					for (ii = 0; ii < globbuf.gl_pathc; ++ii) {
-						if (globbuf.gl_pathv[ii][strlen(globbuf.gl_pathv[ii]) - 1] == '/')	// Skip the subfolder
-							continue;
 						if (!realpath(globbuf.gl_pathv[ii], real_path)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong path name '%s'\n", globbuf.gl_pathv[ii]);
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Wrong path name '%s'\n", globbuf.gl_pathv[ii]);
-							result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-							break;
-						}
-						filename = strrchr(real_path, '/');
-						if (!filename) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong file name '%s'\n", globbuf.gl_pathv[ii]);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Wrong file name '%s'\n", globbuf.gl_pathv[ii]);
 							result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 							break;
 						}
@@ -624,16 +617,12 @@ int task_execute(oph_operator_struct * handle)
 					}
 					char filenames[jj][OPH_COMMON_BUFFER_LEN];
 					for (ii = jj = 0; ii < globbuf.gl_pathc; ++ii) {
-						if (globbuf.gl_pathv[ii][strlen(globbuf.gl_pathv[ii]) - 1] == '/')	// Skip the subfolder
-							continue;
 						realpath(globbuf.gl_pathv[ii], real_path);
 						lstat(real_path, &file_stat);
 						if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode))
-							snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s%s", S_ISDIR(file_stat.st_mode) ? "/" : "", strrchr(real_path, '/') + 1);
+							snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s%s", strrchr(real_path, '/') + 1, S_ISDIR(file_stat.st_mode) ? "/" : "");
 					}
 					globfree(&globbuf);
-
-					qsort(filenames, jj, OPH_COMMON_BUFFER_LEN, cmpfunc);
 
 					result = write_json(filenames, jj, handle->operator_json, num_fields);
 
@@ -656,16 +645,7 @@ int task_execute(oph_operator_struct * handle)
 
 					if (jj && tbuffer) {
 
-						char *value = NULL;
-						if (oph_pid_get_base_src_path(&value)) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
-							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-							break;
-						}
-						unsigned int nn = strlen(value) > 1, ni;
-						free(value);
-
+						unsigned int nn = strlen(abs_path) > 1, ni;
 						char *filename = real_path;
 						while ((filename = strchr(filename, '/'))) {
 							nn++;
@@ -678,7 +658,7 @@ int task_execute(oph_operator_struct * handle)
 							lstat(filename, &file_stat);
 							for (ni = 0; ni < nn; ++ni)
 								filename = strchr(filename, '/') + 1;
-							snprintf(filenames[ii], OPH_COMMON_BUFFER_LEN, "%s%s", S_ISDIR(file_stat.st_mode) ? "/" : "", filename);
+							snprintf(filenames[ii], OPH_COMMON_BUFFER_LEN, "%s%s", filename, S_ISDIR(file_stat.st_mode) ? "/" : "");
 						}
 						result = write_json(filenames, jj, handle->operator_json, num_fields);
 					}
