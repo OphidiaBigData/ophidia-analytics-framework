@@ -147,7 +147,6 @@ int write_json(char (*filenames)[OPH_COMMON_BUFFER_LEN], int jj, oph_json * oper
 {
 	int ii, iii, jjj, result = OPH_ANALYTICS_OPERATOR_SUCCESS;
 	char **jsonvalues = NULL;
-	char full_filename[OPH_COMMON_BUFFER_LEN];
 
 	qsort(filenames, jj, OPH_COMMON_BUFFER_LEN, cmpfunc);
 
@@ -239,6 +238,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_FS_operator_handle *) handle->operator_handle)->file = NULL;
 	((OPH_FS_operator_handle *) handle->operator_handle)->recursive = 0;
 	((OPH_FS_operator_handle *) handle->operator_handle)->depth = 0;
+	((OPH_FS_operator_handle *) handle->operator_handle)->realpath = 0;
 	((OPH_FS_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_FS_operator_handle *) handle->operator_handle)->objkeys_num = -1;
 
@@ -338,6 +338,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (((OPH_FS_operator_handle *) handle->operator_handle)->depth < 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid input parameter %s\n", value);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_PARAMETER, value);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_REALPATH);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_REALPATH);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_REALPATH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strcmp(value, OPH_COMMON_YES_VALUE)) {
+		((OPH_FS_operator_handle *) handle->operator_handle)->realpath = 1;
+	} else if (strcmp(value, OPH_COMMON_NO_VALUE)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
@@ -579,7 +593,7 @@ int task_execute(oph_operator_struct * handle)
 						recursive = -((OPH_FS_operator_handle *) handle->operator_handle)->depth;
 				}
 
-				char real_path[PATH_MAX];
+				char real_path[PATH_MAX], *_real_path;
 				if (strchr(path, '*') || strchr(path, '~') || strchr(path, '{') || strchr(path, '}'))	// Use glob
 				{
 					if (recursive) {
@@ -619,10 +633,25 @@ int task_execute(oph_operator_struct * handle)
 					for (ii = jj = 0; ii < globbuf.gl_pathc; ++ii) {
 						realpath(globbuf.gl_pathv[ii], real_path);
 						lstat(real_path, &file_stat);
-						if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode))
-							snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s%s", strrchr(real_path, '/') + 1, S_ISDIR(file_stat.st_mode) ? "/" : "");
+						if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode)) {
+							if (((OPH_FS_operator_handle *) handle->operator_handle)->realpath) {
+								_real_path = real_path;
+								if (strlen(abs_path) > 1)
+									for (iii = 0; _real_path && *_real_path && (*_real_path == abs_path[iii]); iii++, _real_path++);
+							} else
+								_real_path = strrchr(real_path, '/') + 1;
+							if (!_real_path || !*_real_path) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in handling real path of '%s'\n", globbuf.gl_pathv[ii]);
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error in handling real path of '%s'\n", globbuf.gl_pathv[ii]);
+								result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+								break;
+							}
+							snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s%s", _real_path, S_ISDIR(file_stat.st_mode) ? "/" : "");
+						}
 					}
 					globfree(&globbuf);
+					if (ii < globbuf.gl_pathc)
+						break;
 
 					result = write_json(filenames, jj, handle->operator_json, num_fields);
 

@@ -22,6 +22,7 @@ It manages folders of the Ophidia filesystem.
               -- no : research only in current path (default);
               -- yes : research recursively starting from current path.
 - depth : set to the maximum folder depth has to be explored in case of recursion; level &quot;1&quot; corresponds to &quot;no recursion&quot;; by default no limit is applied.
+- realpath : set to &quot;yes&quot; to list real paths to files; disabled by default.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -50,6 +51,7 @@ SUBMISSION STRING: &quot;operator=oph_fs;command=cd;dpath=folder1;cdd=/absolute/
         <argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">recursive</argument>
 		<argument type="int" mandatory="no" default="0" minvalue="0">depth</argument>
+        <argument type="string" mandatory="no" default="no" values="yes|no">realpath</argument>
         <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
         <argument type="string" mandatory="no" default="null">sessionid</argument>
         <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
