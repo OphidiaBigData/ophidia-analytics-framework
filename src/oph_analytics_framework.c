@@ -321,8 +321,8 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 #ifndef OPH_STANDALONE_MODE
 /* gSOAP notification start */
 			if (have_soap) {
-				snprintf(notify_message, OPH_COMMON_BUFFER_LEN, "%s=%d;%s=%s;%s=%s;%s=%s;%s=%s;", OPH_ARG_STATUS, OPH_ODB_JOB_STATUS_RUNNING_ERROR, OPH_ARG_IDJOB, notify_jobid,
-					 OPH_ARG_PARENTID, notify_parent_jobid, OPH_ARG_TASKINDEX, notify_task_index, OPH_ARG_LIGHTTASKINDEX, notify_light_task_index, OPH_ARG_SESSIONID,
+				snprintf(notify_message, OPH_COMMON_BUFFER_LEN, "%s=%d;%s=%s;%s=%s;%s=%s;%s=%s;%s=%s;%s=%s;", OPH_ARG_STATUS, OPH_ODB_JOB_STATUS_RUNNING_ERROR, OPH_ARG_IDJOB,
+					 notify_jobid, OPH_ARG_PARENTID, notify_parent_jobid, OPH_ARG_TASKINDEX, notify_task_index, OPH_ARG_LIGHTTASKINDEX, notify_light_task_index, OPH_ARG_SESSIONID,
 					 notify_sessionid, OPH_ARG_MARKERID, marker_id);
 				if (oph_notify(&soap, &data, notify_message, handle->output_json, &response))
 					pmesg(LOG_WARNING, __FILE__, __LINE__, "SOAP connection refused.\n");
