@@ -29,6 +29,8 @@
 #define OPH_PID_WEBSERVER_LOCATION	"WEB_SERVER_LOCATION"
 #define OPH_PID_MEMORY			"MEMORY"
 #define OPH_PID_BASE_SRC_PATH		"BASE_SRC_PATH"
+#define OPH_PID_BASE_USER_PATH		"BASE_USER_PATH"
+#define OPH_PID_USER_SPACE		"USER_SPACE"
 
 #define OPH_PID_SLASH			"/"
 
@@ -54,6 +56,21 @@ int oph_pid_get_memory_size(long long *memory_size);
  * \return 0 if successfull, N otherwise
  */
 int oph_pid_get_base_src_path(char **base_src_path);
+
+/** 
+ * \brief Function to load configuration data
+ * \brief username User that has submitted the task
+ * \brief base_src_path Pointer to the memory area where base_src_path will be written; it has to be freed
+ * \return 0 if successfull, N otherwise
+ */
+int oph_pid_get_base_user_path(char *username, char **base_user_path);
+
+/** 
+ * \brief Function to load configuration data
+ * \brief user_space Pointer to the space to store the flag
+ * \return 0 if successfull, N otherwise
+ */
+int oph_pid_get_user_space(char *user_space);
 
 /** 
  * \brief Function to create a new pid given container and datacube id

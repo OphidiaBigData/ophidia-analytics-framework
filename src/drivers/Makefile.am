@@ -82,6 +82,7 @@ DRIVER+=liboph_metadataoperator.la
 DRIVER+=liboph_createcontaineroperator.la
 DRIVER+=liboph_searchoperator.la
 DRIVER+=liboph_folderoperator.la
+DRIVER+=liboph_fsoperator.la
 DRIVER+=liboph_hierarchyoperator.la
 DRIVER+=liboph_restorecontaineroperator.la
 DRIVER+=liboph_movecontaineroperator.la
@@ -162,6 +163,11 @@ liboph_folderoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_folderoperator_la_SOURCES = OPH_FOLDER_operator.c
 liboph_folderoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_folderoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
+
+liboph_fsoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
+liboph_fsoperator_la_SOURCES = OPH_FS_operator.c
+liboph_fsoperator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_fsoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
 
 liboph_hierarchyoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
 liboph_hierarchyoperator_la_SOURCES = OPH_HIERARCHY_operator.c

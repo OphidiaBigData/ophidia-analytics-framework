@@ -37,6 +37,7 @@
  * \param workflow_id Workflow ID.
  * \param marker_id Marker ID.
  * \param list Flag used to list available scripts.
+ * \param user User that has submitted the task
  */
 struct _OPH_SCRIPT_operator_handle {
 	char *script;
@@ -52,6 +53,7 @@ struct _OPH_SCRIPT_operator_handle {
 	char *workflow_id;
 	char *marker_id;
 	int list;
+	char *user;
 };
 typedef struct _OPH_SCRIPT_operator_handle OPH_SCRIPT_operator_handle;
 

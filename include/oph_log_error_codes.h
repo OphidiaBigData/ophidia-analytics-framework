@@ -109,7 +109,8 @@
 #define OPH_LOG_GENERIC_DIMENSION_READ_ERROR						"Unable to retrieve datacube - dimension relations.\n"
 #define OPH_LOG_GENERIC_NO_INPUT_CONTAINER_UNKNOWN					"Unknown input container %s.\n"
 #define OPH_LOG_GENERIC_NO_INPUT_DATACUBE_UNKNOWN  					"Unknown input datacube %s.\n"
-#define OPH_LOG_GENERIC_DIMENSION_READ_ERROR2 						"Unable to retrieve dimensions .\n"
+#define OPH_LOG_GENERIC_DIMENSION_READ_ERROR2 						"Unable to retrieve dimensions.\n"
+#define OPH_LOG_GENERIC_PERMISSION_ERROR						"Permission denied to %s\n"
 #define OPH_LOG_GENERIC_DIR_CREATION_ERROR 							"Unable to create dir %s\n"
 #define OPH_LOG_GENERIC_DATACUBE_PUBLISHED 							"Cuboid has been already published %s\n"
 #define OPH_LOG_GENERIC_FILE_OPEN_ERROR 							"Unable to open file %s\n"
@@ -485,6 +486,7 @@
 #define OPH_LOG_OPH_EXPORTNC_DBMS_CONNECTION_ERROR 					OPH_LOG_GENERIC_DBMS_CONNECTION_ERROR
 #define OPH_LOG_OPH_EXPORTNC_DB_SELECTION_ERROR 					OPH_LOG_GENERIC_DB_SELECTION_ERROR
 #define OPH_LOG_OPH_EXPORTNC_STRING_BUFFER_OVERFLOW					OPH_LOG_GENERIC_STRING_BUFFER_OVERFLOW
+#define OPH_LOG_OPH_EXPORTNC_PERMISSION_ERROR 					OPH_LOG_GENERIC_PERMISSION_ERROR
 #define OPH_LOG_OPH_EXPORTNC_DIR_CREATION_ERROR 					OPH_LOG_GENERIC_DIR_CREATION_ERROR
 #define OPH_LOG_OPH_EXPORTNC_DATACUBE_EXPORTED 						"Dataset has been already exported\n"
 #define OPH_LOG_OPH_EXPORTNC_READ_FRAG_ERROR 						OPH_LOG_GENERIC_READ_FRAG_ERROR
@@ -608,6 +610,7 @@
 #define OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR				"Error unable to generate this number of fragments\n"
 #define OPH_LOG_OPH_IMPORTNC_UPDATE_TIME_ERROR						"Error while updating time dimension metadata\n"
 #define OPH_LOG_OPH_IMPORTNC_SET_TIME_ERROR						"Error while setting time dimension metadata\n"
+#define OPH_LOG_OPH_IMPORTNC_TASK_INSERT_ERROR 						OPH_LOG_GENERIC_TASK_INSERT_ERROR
 
 /*OPH_EXPLORENC OPERATOR LOG ERRORS*/
 #define OPH_LOG_OPH_EXPLORENC_TASK_STRING_ERROR_NO_CONTAINER 			"[CONTAINER: %s] Task string not properly setted\n"
@@ -1035,6 +1038,7 @@
 #define OPH_LOG_OPH_RANDCUBE_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER "[CONTAINER: %s] Unable to retreive number of host or dbms or server type and partition %s are not available!\n"
 #define OPH_LOG_OPH_RANDCUBE_IOPLUGIN_SETUP_ERROR						OPH_LOG_GENERIC_IOPLUGIN_SETUP_ERROR
 #define OPH_LOG_OPH_RANDCUBE_IOPLUGIN_CLEANUP_ERROR					OPH_LOG_GENERIC_IOPLUGIN_CLEANUP_ERROR
+#define OPH_LOG_OPH_RANDCUBE_TASK_INSERT_ERROR 						OPH_LOG_GENERIC_TASK_INSERT_ERROR
 
 /*OPH_REDUCE OPERATOR LOG ERRORS*/
 #define OPH_LOG_OPH_REDUCE_MEMORY_ERROR_HANDLE					OPH_LOG_GENERIC_MEMORY_ERROR_HANDLE
@@ -1828,14 +1832,26 @@
 #define OPH_LOG_OPH_FOLDER_CANNOT_REMOVE_HIDDEN_ERROR                    "Cannot remove hidden container\n"
 #define OPH_LOG_OPH_FOLDER_EMPTY_CHECK_ERROR                             "Unable to check folder emptiness\n"
 #define OPH_LOG_OPH_FOLDER_FOLDER_NOT_EMPTY_ERROR                        "Folder is not empty\n"
-#define OPH_LOG_OPH_FOLDER_PID_URI_ERROR								 OPH_LOG_GENERIC_PID_URI_ERROR
-#define OPH_LOG_OPH_FOLDER_PID_CREATE_ERROR								 OPH_LOG_GENERIC_PID_CREATION
-#define OPH_LOG_OPH_FOLDER_NO_FOLDER_ERROR				 				 "%s is not a folder\n"
-#define OPH_LOG_OPH_FOLDER_INSERT_ERROR				 				 	 "Unable to create new folder\n"
-#define OPH_LOG_OPH_FOLDER_DELETE_ERROR				 				 	 "Unable to delete the folder\n"
-#define OPH_LOG_OPH_FOLDER_UPDATE_ERROR				 				 	 "Unable to update the folder\n"
-#define OPH_LOG_OPH_FOLDER_ASC_CHECK_ERROR								 "Unable to check ascendants\n"
-#define OPH_LOG_OPH_FOLDER_SUBFOLDER_ERROR								 "It is not possible to move a folder into one of its subfolders\n"
+#define OPH_LOG_OPH_FOLDER_PID_URI_ERROR                                 OPH_LOG_GENERIC_PID_URI_ERROR
+#define OPH_LOG_OPH_FOLDER_PID_CREATE_ERROR                              OPH_LOG_GENERIC_PID_CREATION
+#define OPH_LOG_OPH_FOLDER_NO_FOLDER_ERROR                               "%s is not a folder\n"
+#define OPH_LOG_OPH_FOLDER_INSERT_ERROR                                  "Unable to create new folder\n"
+#define OPH_LOG_OPH_FOLDER_DELETE_ERROR                                  "Unable to delete the folder\n"
+#define OPH_LOG_OPH_FOLDER_UPDATE_ERROR                                  "Unable to update the folder\n"
+#define OPH_LOG_OPH_FOLDER_ASC_CHECK_ERROR                               "Unable to check ascendants\n"
+#define OPH_LOG_OPH_FOLDER_SUBFOLDER_ERROR                               "It is not possible to move a folder into one of its subfolders\n"
+
+/*OPH_FOLDER OPERATOR LOG ERRORS*/
+#define OPH_LOG_OPH_FS_NULL_OPERATOR_HANDLE                          OPH_LOG_GENERIC_NULL_OPERATOR_HANDLE
+#define OPH_LOG_OPH_FS_NULL_TASK_TABLE                               OPH_LOG_GENERIC_NULL_TASK_TABLE
+#define OPH_LOG_OPH_FS_HANDLE_ALREADY_INITIALIZED                    OPH_LOG_GENERIC_HANDLE_ALREADY_INITIALIZED
+#define OPH_LOG_OPH_FS_MEMORY_ERROR_HANDLE                           OPH_LOG_GENERIC_MEMORY_ERROR_HANDLE
+#define OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER                       OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER
+#define OPH_LOG_OPH_FS_INVALID_INPUT_PARAMETER                       OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER
+#define OPH_LOG_OPH_FS_MEMORY_ERROR_INPUT                            OPH_LOG_GENERIC_MEMORY_ERROR_INPUT
+#define OPH_LOG_OPH_FS_PATH_PARSING_ERROR                            OPH_LOG_GENERIC_PATH_PARSING_ERROR
+#define OPH_LOG_OPH_FS_PATH_NOT_ALLOWED_ERROR                        OPH_LOG_GENERIC_PATH_NOT_ALLOWED_ERROR
+#define OPH_LOG_OPH_FS_INVALID_INPUT_STRING                          OPH_LOG_GENERIC_INVALID_INPUT_STRING
 
 /*++++++++++++++++++++++MISCELLANEOUS OPERATORS++++++++++++++++++++++*/
 

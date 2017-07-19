@@ -46,7 +46,7 @@
  * \param memory Amount of RAM memory available on host
  */
 typedef struct {
-	char hostname[OPH_ODB_STGE_HOST_NAME_SIZE];
+	char hostname[OPH_ODB_STGE_HOST_NAME_SIZE + 1];
 	int id_host;
 	int cores;
 	int memory;
@@ -64,13 +64,13 @@ typedef struct {
  * \param conn Connection to dbms instance
  */
 typedef struct {
-	char hostname[OPH_ODB_STGE_HOST_NAME_SIZE];
+	char hostname[OPH_ODB_STGE_HOST_NAME_SIZE + 1];
 	int id_dbms;
-	char login[OPH_ODB_STGE_LOGIN_SIZE];
-	char pwd[OPH_ODB_STGE_PWD_SIZE];
+	char login[OPH_ODB_STGE_LOGIN_SIZE + 1];
+	char pwd[OPH_ODB_STGE_PWD_SIZE + 1];
 	int port;
 	int fs_type;
-	char io_server_type[OPH_ODB_STGE_SERVER_NAME_SIZE];
+	char io_server_type[OPH_ODB_STGE_SERVER_NAME_SIZE + 1];
 	void *conn;
 } oph_odb_dbms_instance;
 
@@ -84,7 +84,7 @@ typedef struct {
 	oph_odb_dbms_instance *dbms_instance;
 	int id_dbms;
 	int id_db;
-	char db_name[OPH_ODB_STGE_DB_NAME_SIZE];
+	char db_name[OPH_ODB_STGE_DB_NAME_SIZE + 1];
 } oph_odb_db_instance;
 
 /**
@@ -103,7 +103,7 @@ typedef struct {
 	int id_db;
 	int id_fragment;
 	int frag_relative_index;
-	char fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE];
+	char fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE + 1];
 	int key_start;
 	int key_end;
 } oph_odb_fragment;
