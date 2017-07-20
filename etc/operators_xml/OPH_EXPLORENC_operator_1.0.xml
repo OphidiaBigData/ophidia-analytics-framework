@@ -123,7 +123,7 @@ SUBMISSION STRING: &quot;operator=oph_explorenc;measure=pressure;src_path=/path/
 		<argument type="string" mandatory="no" default="no" values="yes|no">show_time</argument>
 		<argument type="string" mandatory="no" default="00000000000000">show_stats</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">show_fit</argument>
-		<argument type="int" mandatory="no" default="0" minvalue="1" maxvalue="2" values="0|1|2">level</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0" maxvalue="2" values="0|1|2">level</argument>
 		<argument type="int" mandatory="no" default="0" minvalue="0">imp_num_points</argument>
 		<argument type="real" mandatory="no" default="50" minvalue="0" maxvalue="100">offset</argument>
 		<argument type="string" mandatory="no" default="avg" values="max|min|avg|sum">operation</argument>
