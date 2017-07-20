@@ -631,7 +631,8 @@ int task_execute(oph_operator_struct * handle)
 					}
 					char filenames[jj][OPH_COMMON_BUFFER_LEN];
 					for (ii = jj = 0; ii < globbuf.gl_pathc; ++ii) {
-						realpath(globbuf.gl_pathv[ii], real_path);
+						if (!realpath(globbuf.gl_pathv[ii], real_path))
+							break;
 						lstat(real_path, &file_stat);
 						if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode)) {
 							if (((OPH_FS_operator_handle *) handle->operator_handle)->realpath) {
