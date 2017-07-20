@@ -6058,14 +6058,586 @@ int task_execute(oph_operator_struct * handle)
 
 	} else {
 
-		int success = 1, natts, j, nvars;
-		char key[OPH_COMMON_BUFFER_LEN], key_type[OPH_COMMON_TYPE_SIZE], value[OPH_COMMON_BUFFER_LEN], variable[OPH_COMMON_BUFFER_LEN], variable_attribute;
+		int success = 1, j, natts, ndims, nvars;
+		char key[OPH_COMMON_BUFFER_LEN], key_type[OPH_COMMON_TYPE_SIZE], value[OPH_COMMON_BUFFER_LEN], variable[OPH_COMMON_BUFFER_LEN], **dims = NULL, **vars = NULL;
 		nc_type xtype;
 
-		is_objkey_printable =
-		    oph_json_is_objkey_printable(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->objkeys_num,
-						 OPH_JSON_OBJKEY_EXPLORENC_DATA);
-		while (!result && is_objkey_printable) {
+		is_objkey_printable = !result && success
+		    && oph_json_is_objkey_printable(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->objkeys_num,
+						    OPH_JSON_OBJKEY_EXPLORENC_DIMVALUES);
+		while (is_objkey_printable) {
+
+			num_fields = 3;
+
+			// Header
+			jjj = 0;
+			jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
+			if (!jsonkeys) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "keys");
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+			jsonkeys[jjj] = strdup("DIMENSION");
+			if (!jsonkeys[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "key");
+				for (iii = 0; iii < jjj; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+			jjj++;
+			jsonkeys[jjj] = strdup("SIZE");
+			if (!jsonkeys[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "key");
+				for (iii = 0; iii < jjj; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+			jjj++;
+			jsonkeys[jjj] = strdup("UNLIMITED");
+			if (!jsonkeys[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "key");
+				for (iii = 0; iii < jjj; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+
+			jjj = 0;
+			fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
+			if (!fieldtypes) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "fieldtypes");
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+			if (!fieldtypes[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "fieldtype");
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				for (iii = 0; iii < jjj; iii++)
+					if (fieldtypes[iii])
+						free(fieldtypes[iii]);
+				if (fieldtypes)
+					free(fieldtypes);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+			jjj++;
+			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+			if (!fieldtypes[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "fieldtype");
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				for (iii = 0; iii < jjj; iii++)
+					if (fieldtypes[iii])
+						free(fieldtypes[iii]);
+				if (fieldtypes)
+					free(fieldtypes);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+			jjj++;
+			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+			if (!fieldtypes[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "fieldtype");
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				for (iii = 0; iii < jjj; iii++)
+					if (fieldtypes[iii])
+						free(fieldtypes[iii]);
+				if (fieldtypes)
+					free(fieldtypes);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+
+			if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_EXPLORENC_DIMVALUES, "Dimension list", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
+				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				for (iii = 0; iii < num_fields; iii++)
+					if (fieldtypes[iii])
+						free(fieldtypes[iii]);
+				if (fieldtypes)
+					free(fieldtypes);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+
+			for (iii = 0; iii < num_fields; iii++)
+				if (jsonkeys[iii])
+					free(jsonkeys[iii]);
+			if (jsonkeys)
+				free(jsonkeys);
+			for (iii = 0; iii < num_fields; iii++)
+				if (fieldtypes[iii])
+					free(fieldtypes[iii]);
+			if (fieldtypes)
+				free(fieldtypes);
+
+			// Data
+			int recid;
+			size_t size;
+			if (nc_inq_unlimdim(ncid, &recid)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get unlimited dimension\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get unlimited dimension\n");
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+
+			if (nc_inq_ndims(ncid, &ndims)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get number of dimensions\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get number of dimensions\n");
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+			if (ndims)
+				dims = (char **) calloc(ndims, sizeof(char *));
+
+			for (j = 0; j < ndims; j++) {
+
+				if (nc_inq_dim(ncid, j, key, &size)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get dimension name\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get dimension name\n");
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				dims[j] = strdup(key);
+
+				jjj = 0;
+				jsonvalues = (char **) malloc(sizeof(char *) * num_fields);
+				if (!jsonvalues) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "values");
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				jsonvalues[jjj] = strdup(key);
+				if (!jsonvalues[jjj]) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "value");
+					for (iii = 0; iii < jjj; iii++)
+						if (jsonvalues[iii])
+							free(jsonvalues[iii]);
+					if (jsonvalues)
+						free(jsonvalues);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				jjj++;
+				snprintf(tmp_value, OPH_COMMON_TYPE_SIZE, "%d", (int) size);
+				jsonvalues[jjj] = strdup(tmp_value);
+				if (!jsonvalues[jjj]) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "value");
+					for (iii = 0; iii < jjj; iii++)
+						if (jsonvalues[iii])
+							free(jsonvalues[iii]);
+					if (jsonvalues)
+						free(jsonvalues);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				jjj++;
+				jsonvalues[jjj] = strdup(j == recid ? "yes" : "no");
+				if (!jsonvalues[jjj]) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "value");
+					for (iii = 0; iii < jjj; iii++)
+						if (jsonvalues[iii])
+							free(jsonvalues[iii]);
+					if (jsonvalues)
+						free(jsonvalues);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+
+				if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_EXPLORENC_DIMVALUES, jsonvalues)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+					for (iii = 0; iii < num_fields; iii++)
+						if (jsonvalues[iii])
+							free(jsonvalues[iii]);
+					if (jsonvalues)
+						free(jsonvalues);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonvalues[iii])
+						free(jsonvalues[iii]);
+				if (jsonvalues)
+					free(jsonvalues);
+
+			}
+
+			if (!success) {
+				char message[OPH_COMMON_BUFFER_LEN];
+				snprintf(message, OPH_COMMON_BUFFER_LEN, "Unable to retrieve dimension sizes");
+				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_EXPLORENC_SUMMARY, "Error", message)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
+			}
+
+			break;
+		}
+
+		is_objkey_printable = !result && success
+		    && oph_json_is_objkey_printable(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->objkeys_num,
+						    OPH_JSON_OBJKEY_EXPLORENC_DATA);
+		while (is_objkey_printable) {
+
+			num_fields = 3;
+
+			// Header
+			jjj = 0;
+			jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
+			if (!jsonkeys) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "keys");
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+			jsonkeys[jjj] = strdup("VARIABLE");
+			if (!jsonkeys[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "key");
+				for (iii = 0; iii < jjj; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+			jjj++;
+			jsonkeys[jjj] = strdup("TYPE");
+			if (!jsonkeys[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "key");
+				for (iii = 0; iii < jjj; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+			jjj++;
+			jsonkeys[jjj] = strdup("DIMENSIONS");
+			if (!jsonkeys[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "key");
+				for (iii = 0; iii < jjj; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+
+			jjj = 0;
+			fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
+			if (!fieldtypes) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "fieldtypes");
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+			if (!fieldtypes[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "fieldtype");
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				for (iii = 0; iii < jjj; iii++)
+					if (fieldtypes[iii])
+						free(fieldtypes[iii]);
+				if (fieldtypes)
+					free(fieldtypes);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+			jjj++;
+			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+			if (!fieldtypes[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "fieldtype");
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				for (iii = 0; iii < jjj; iii++)
+					if (fieldtypes[iii])
+						free(fieldtypes[iii]);
+				if (fieldtypes)
+					free(fieldtypes);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+			jjj++;
+			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+			if (!fieldtypes[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "fieldtype");
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				for (iii = 0; iii < jjj; iii++)
+					if (fieldtypes[iii])
+						free(fieldtypes[iii]);
+				if (fieldtypes)
+					free(fieldtypes);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+
+			if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_EXPLORENC_DATA, "Variable list", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
+				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				for (iii = 0; iii < num_fields; iii++)
+					if (fieldtypes[iii])
+						free(fieldtypes[iii]);
+				if (fieldtypes)
+					free(fieldtypes);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+
+			for (iii = 0; iii < num_fields; iii++)
+				if (jsonkeys[iii])
+					free(jsonkeys[iii]);
+			if (jsonkeys)
+				free(jsonkeys);
+			for (iii = 0; iii < num_fields; iii++)
+				if (fieldtypes[iii])
+					free(fieldtypes[iii]);
+			if (fieldtypes)
+				free(fieldtypes);
+
+			// Data
+			if (nc_inq_nvars(ncid, &nvars)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get number of dimensions\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get number of dimensions\n");
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+			if (nvars)
+				vars = (char **) calloc(nvars, sizeof(char *));
+
+			for (j = 0; j < nvars; j++) {
+
+				if (nc_inq_varname(ncid, j, variable)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get variable name\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get variable name\n");
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				vars[j] = strdup(variable);
+				if (nc_inq_vartype(ncid, j, &xtype)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get variable name\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get variable name\n");
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				switch (xtype) {
+					case NC_CHAR:
+						snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_METADATA_TYPE_TEXT);
+						break;
+					case NC_BYTE:
+					case NC_UBYTE:
+						snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
+						break;
+					case NC_SHORT:
+					case NC_USHORT:
+						snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_SHORT_TYPE);
+						break;
+					case NC_INT:
+					case NC_UINT:
+						snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_INT_TYPE);
+						break;
+					case NC_UINT64:
+					case NC_INT64:
+						snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_LONG_TYPE);
+						break;
+					case NC_FLOAT:
+						snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_FLOAT_TYPE);
+						break;
+					case NC_DOUBLE:
+						snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_DOUBLE_TYPE);
+						break;
+					default:
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get variable type\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get variable type\n");
+						*key_type = 0;
+						result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+						break;
+				}
+				if (!strlen(key_type))
+					break;
+				if (nc_inq_varndims(ncid, j, &natts)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get number of dimensions of variable '%s'\n", vars[j]);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get number of dimension of variable '%s'\n", vars[j]);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+
+				*tmp_value = 0;
+				if (natts) {
+
+					int var_dims[natts], n = 0;
+					if (nc_inq_vardimid(ncid, j, var_dims)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get dimensions of variable '%s'\n", vars[j]);
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get dimension of variable '%s'\n", vars[j]);
+						result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+						break;
+					}
+					for (i = 0; i < natts; i++)
+						n += snprintf(tmp_value + n, OPH_COMMON_BUFFER_LEN - n, "%s%s", i ? "|" : "", dims[var_dims[i]]);
+				}
+
+
+				jjj = 0;
+				jsonvalues = (char **) malloc(sizeof(char *) * num_fields);
+				if (!jsonvalues) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "values");
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				jsonvalues[jjj] = strdup(variable);
+				if (!jsonvalues[jjj]) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "value");
+					for (iii = 0; iii < jjj; iii++)
+						if (jsonvalues[iii])
+							free(jsonvalues[iii]);
+					if (jsonvalues)
+						free(jsonvalues);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				jjj++;
+				jsonvalues[jjj] = strdup(key_type);
+				if (!jsonvalues[jjj]) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "value");
+					for (iii = 0; iii < jjj; iii++)
+						if (jsonvalues[iii])
+							free(jsonvalues[iii]);
+					if (jsonvalues)
+						free(jsonvalues);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				jjj++;
+				jsonvalues[jjj] = strdup(tmp_value);
+				if (!jsonvalues[jjj]) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "value");
+					for (iii = 0; iii < jjj; iii++)
+						if (jsonvalues[iii])
+							free(jsonvalues[iii]);
+					if (jsonvalues)
+						free(jsonvalues);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+
+				if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_EXPLORENC_DATA, jsonvalues)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+					for (iii = 0; iii < num_fields; iii++)
+						if (jsonvalues[iii])
+							free(jsonvalues[iii]);
+					if (jsonvalues)
+						free(jsonvalues);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonvalues[iii])
+						free(jsonvalues[iii]);
+				if (jsonvalues)
+					free(jsonvalues);
+
+			}
+
+			if (!success) {
+				char message[OPH_COMMON_BUFFER_LEN];
+				snprintf(message, OPH_COMMON_BUFFER_LEN, "Unable to retrieve variable information");
+				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_EXPLORENC_SUMMARY, "Error", message)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
+			}
+
+			break;
+		}
+
+		is_objkey_printable = !result && success
+		    && oph_json_is_objkey_printable(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->objkeys_num,
+						    OPH_JSON_OBJKEY_EXPLORENC_METADATA);
+		while (is_objkey_printable) {
 
 			num_fields = 4;
 
@@ -6215,7 +6787,7 @@ int task_execute(oph_operator_struct * handle)
 				break;
 			}
 
-			if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_EXPLORENC_DATA, "Metadata list", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
+			if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_EXPLORENC_METADATA, "Metadata list", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
 				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
 				for (iii = 0; iii < num_fields; iii++)
@@ -6243,24 +6815,16 @@ int task_execute(oph_operator_struct * handle)
 			if (fieldtypes)
 				free(fieldtypes);
 
-			if (nc_inq_nvars(ncid, &nvars)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get number of variables\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get number of variables\n");
-				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-				break;
-			}
+			// Data
+			int varid;
+			char variable_attribute;
 			for (j = 0; j <= nvars; j++) {
 
 				variable_attribute = j < nvars;
-				if (variable_attribute && nc_inq_varname(ncid, j, variable)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get variable name\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get variable name\n");
-					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					break;
-				}
+				varid = variable_attribute ? j : NC_GLOBAL;
 
 				natts = 0;
-				if (nc_inq_varnatts(ncid, variable_attribute ? j : NC_GLOBAL, &natts)) {
+				if (nc_inq_varnatts(ncid, varid, &natts)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get number of global attributes\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get number of global attributes\n");
 					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -6271,13 +6835,13 @@ int task_execute(oph_operator_struct * handle)
 					success = 0;
 					while (!success) {
 
-						if (nc_inq_attname(ncid, NC_GLOBAL, i, key)) {
+						if (nc_inq_attname(ncid, varid, i, key)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute name\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get attribute name\n");
 							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 							break;
 						}
-						if (nc_inq_atttype(ncid, NC_GLOBAL, key, &xtype)) {
+						if (nc_inq_atttype(ncid, varid, key, &xtype)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute type\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get attribute type\n");
 							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -6319,7 +6883,7 @@ int task_execute(oph_operator_struct * handle)
 						if (!strlen(key_type))
 							break;
 						memset(value, 0, OPH_COMMON_BUFFER_LEN);
-						if (nc_get_att(ncid, NC_GLOBAL, (const char *) key, (void *) &value)) {
+						if (nc_get_att(ncid, varid, (const char *) key, (void *) &value)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get attribute value from file\n");
 							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -6367,7 +6931,7 @@ int task_execute(oph_operator_struct * handle)
 							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 							break;
 						}
-						jsonvalues[jjj] = strdup(variable_attribute ? variable : "");
+						jsonvalues[jjj] = strdup(variable_attribute ? vars[j] : "");
 						if (!jsonvalues[jjj]) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "value");
@@ -6419,7 +6983,7 @@ int task_execute(oph_operator_struct * handle)
 							break;
 						}
 
-						if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_EXPLORENC_DATA, jsonvalues)) {
+						if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_EXPLORENC_METADATA, jsonvalues)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
 							logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
 							for (iii = 0; iii < num_fields; iii++)
@@ -6457,6 +7021,19 @@ int task_execute(oph_operator_struct * handle)
 			}
 
 			break;
+		}
+
+		if (dims) {
+			for (j = 0; j < ndims; j++)
+				if (dims[j])
+					free(dims[j]);
+			free(dims);
+		}
+		if (vars) {
+			for (j = 0; j < nvars; j++)
+				if (vars[j])
+					free(vars[j]);
+			free(vars);
 		}
 	}
 

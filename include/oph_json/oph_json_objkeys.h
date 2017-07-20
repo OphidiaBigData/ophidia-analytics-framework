@@ -89,6 +89,7 @@
 #define OPH_JSON_OBJKEY_EXPLORENC_WAVELET_COEFF				"explorenc_wavelet_coeff"
 #define OPH_JSON_OBJKEY_EXPLORENC_STATS					"explorenc_stats"
 #define OPH_JSON_OBJKEY_EXPLORENC_FIT					"explorenc_fit"
+#define OPH_JSON_OBJKEY_EXPLORENC_METADATA				"explorenc_metadata"
 
 #define OPH_JSON_OBJKEY_PERMUTE						"permute"
 #define OPH_JSON_OBJKEY_SUBSET						"subset"

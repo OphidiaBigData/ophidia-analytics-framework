@@ -93,7 +93,14 @@ WARNING: It handles only mono-dimensional coordinate variables.
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
-                  explorenc : show operator's output PID as text.
+                  explorenc_data: show data or variable-dimension dependences (only for level 0)
+                  explorenc_summary: show a summary
+                  explorenc_dimvalues: show dimension values or dimension sizes (only for level 0)
+                  explorenc_wavelet_data: show wavelet transform
+                  explorenc_wavelet_coeff: show wavelet coefficients
+                  explorenc_stats: show a number of statistics on data
+                  explorenc_fit: show fitted data
+                  explorenc_metadata: show file attributes (only for level 0).
 
 [Examples] 
 Read the NetCDF file /path/of/ncfile.nc:
@@ -130,6 +137,6 @@ SUBMISSION STRING: &quot;operator=oph_explorenc;measure=pressure;src_path=/path/
 		<argument type="string" mandatory="no" default="no" values="yes|no|only">wavelet</argument>
 		<argument type="real" mandatory="no" default="0" minvalue="0" maxvalue="100">wavelet_ratio</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">wavelet_coeff</argument>
-		<argument type="string" mandatory="no" default="all" values="all|none|explorenc">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|explorenc_data|explorenc_summary|explorenc_dimvalues|explorenc_wavelet_data|explorenc_wavelet_coeff|explorenc_stats|explorenc_fit|explorenc_metadata">objkey_filter</argument>
     </args>
 </operator>
