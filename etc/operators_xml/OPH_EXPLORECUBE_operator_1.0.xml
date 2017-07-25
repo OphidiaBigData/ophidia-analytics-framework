@@ -86,7 +86,7 @@ SUBMISSION STRING: &quot;operator=oph_explorecube;cube=http://www.example.com/1/
 		<argument type="string" mandatory="no" default="no" values="yes|no">show_index</argument>
         	<argument type="string" mandatory="no" default="no" values="yes|no">show_id</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">show_time</argument>
-		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="2">level</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="2" values="1|2">level</argument>
 		<argument type="string" mandatory="no" default="default">output_path</argument>
 		<argument type="string" mandatory="no" default="default">output_name</argument>
 	        <argument type="string" mandatory="no" default="/">cdd</argument>

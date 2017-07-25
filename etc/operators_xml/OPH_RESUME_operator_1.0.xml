@@ -13,7 +13,8 @@ Request the list of the commands submitted within a session or the output of a c
 - id            : identifier of the intended workflow or marker, by default no filter is applied.
 - id_type       : use &quot;workflow&quot; (default) or &quot;marker&quot; to set the filter &quot;id&quot;.
 - document_type : document type, &quot;request&quot; or &quot;response&quot;.
-- level         : use level &quot;1&quot; to ask for submitted commands (short version) or workflow output (default);
+- level         : use level &quot;0&quot; to ask for submitted commands (short version) or workflow progress ratio;
+                  use level &quot;1&quot; to ask for submitted commands (short version) or workflow output (default);
                   use level &quot;2&quot; to ask for submitted commands (extended version) or the list of workflow tasks;
                   use level &quot;3&quot; to ask for JSON Requests or the list of workflow task outputs;
                   use level &quot;4&quot; to ask for the list of commands associated to tasks of a workflow (valid only for a specific workflow);
@@ -55,7 +56,7 @@ SUBMISSION STRING: &quot;operator=oph_resume;id=1;&quot;</abstract>
 	<argument type="int" mandatory="no" default="0" minvalue="0">id</argument>
 	<argument type="string" mandatory="no" default="workflow" values="workflow|marker">id_type</argument>
 	<argument type="string" mandatory="no" default="response" values="request|response">document_type</argument>
-	<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="5">level</argument>
+	<argument type="int" mandatory="no" default="1" minvalue="0" maxvalue="5">level</argument>
 	<argument type="string" mandatory="no" default="">user</argument>
 	<argument type="string" mandatory="no" default="11111111">status_filter</argument>
 	<argument type="string" mandatory="no" default="no" values="yes|no">save</argument>

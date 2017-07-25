@@ -34,16 +34,24 @@
  * \brief Structure of parameters needed by the operator OPH_FS. It manages the Ophidia filesystem FSs.
  * \param mode : number corresponding to one of the provided commands
  * \param path : absolute or relative path given as input
+ * \param file : file filter
  * \param cwd : current working directory as an absolute path
  * \param user : user that has submitted the task
+ * \param recursive : flag used to recursive search
+ * \param depth : maximum folder depth has to be explored in case of recursion
+ * \param realpath : flag used to list real path of files
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
  */
 typedef struct _OPH_FS_operator_handle {
 	int mode;
 	char *path;
+	char *file;
 	char *cwd;
 	char *user;
+	int recursive;
+	int depth;
+	int realpath;
 	char **objkeys;
 	int objkeys_num;
 } OPH_FS_operator_handle;
