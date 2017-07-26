@@ -40,7 +40,8 @@ int main(int argc, char *argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
 	if (!myrank) {
-		fprintf(stdout, "%s%s", OPH_VERSION, OPH_DISCLAIMER);
+		fprintf(stdout, OPH_VERSION, PACKAGE_VERSION);
+		fprintf(stdout, "%s", OPH_DISCLAIMER);
 	}
 
 	if (argc != 2) {
