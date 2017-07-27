@@ -303,6 +303,45 @@ AC_ARG_ENABLE(parallel_netcdf,
         )
 AM_CONDITIONAL([HAVE_PARALLEL_NETCDF], [test "x$parallel_netcdf" = "xyes"])
 
+#Check if cfitsio is installed
+cfitsio="no"
+AC_ARG_ENABLE(cfitsio,
+        [  --enable-cfitsio
+            Turn on CFITSIO flags],
+        [cfitsio="yes"
+            AC_MSG_NOTICE("CFITSIO support enabled")],
+        [cfitsio="no"
+            AC_MSG_WARN("CFITSIO support disabled")]
+        )
+AM_CONDITIONAL([HAVE_CFITSIO], [test "x$cfitsio" = "xyes"])
+
+if test "x${cfitsio}" = "xyes"; then
+
+	PKG_CHECK_MODULES(CFITSIO, cfitsio >= 3.37)
+
+	AC_ARG_WITH(libcfitsio_header_path,
+        	[  --with-libcfitsio-header-path=PATH            Location of libcfitsio includes directory],
+           	[
+                	libcfitsio_header_path="$withval"
+           	],
+     		[
+    			libcfitsio_header_path="$CFITSIO_CFLAGS"
+     		])
+	AC_ARG_WITH(libcfitsio_lib_path,
+           	[  --with-libcfitsio-lib-path=PATH               Location of libcfitsio],
+           	[
+                	libcfitsio_lib_path="$withval"
+           	],
+     		[
+    			libcfitsio_lib_path="$CFITSIO_LIBS"
+     		])
+
+	LIBCFITSIO_INCLUDE="$libcfitsio_header_path"
+	AC_SUBST(LIBCFITSIO_INCLUDE)
+	LIBCFITSIO_LIB="$libcfitsio_lib_path"
+	AC_SUBST(LIBCFITSIO_LIB)
+fi
+
 #Enable stand-alone mode
 standalone_mode="no"
 AC_ARG_ENABLE(standalone_mode,

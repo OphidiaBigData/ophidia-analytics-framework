@@ -24,7 +24,7 @@
 #include "oph_datacube_library.h"
 #include "oph_ioserver_library.h"
 
-#define FITS_MAX_VAR_DIMS	4
+#define FITS_MAX_VAR_DIMS	99
 #define OPH_FITS_BYTE_TYPE	OPH_COMMON_BYTE_TYPE	// related value 8
 #define OPH_FITS_SHORT_TYPE	OPH_COMMON_SHORT_TYPE	// related value 16
 #define OPH_FITS_INT_TYPE	OPH_COMMON_INT_TYPE	// related value 32

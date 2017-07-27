@@ -3620,9 +3620,9 @@ int oph_fits_get_fits_var(int id_container, char *varname, long *dims_length, FI
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_FITS_ERROR;
 	}
-	int retval = 0;
-	// There are no dimension and var id in fits file.
-	// Assume the id a sequential number for dimensions, and 0 for the measured variable
+	//int retval = 0;
+	// There are no dimension id and var id in fits file.
+	// Assume the id as a sequential number for dimensions, and 0 for the measured variable
 /*
 	//Get id from dimension name
   	if((retval = nc_inq_varid(ncid, var_name, &(var->varid)))){
@@ -3660,8 +3660,8 @@ int oph_fits_get_fits_var(int id_container, char *varname, long *dims_length, FI
 			return OPH_FITS_ERROR;
 		}
 		var->dims_length[0] = *dims_length;
-	} else {		//TBC
 	}
+//	else {		//TBC }
 	var->varsize = 1 * var->dims_length[0];
 /*
 	if((retval = nc_inq_vartype(ncid, var->varid, &(var->vartype)))){

@@ -85,6 +85,7 @@ struct _OPH_IMPORTFITS_operator_handle
   int run;
   char *fits_file_path;
   char *fits_file_path_orig;
+  int hdu;	/* Set the data HDU; default is the primary HDU (0) */
   char *partition_input;
   char *grid_name;
   int fs_type;
@@ -124,7 +125,7 @@ struct _OPH_IMPORTFITS_operator_handle
 
   long long memory_size;
   char* description;
-  int time_filter;
+  //int time_filter;
 };
 typedef struct _OPH_IMPORTFITS_operator_handle OPH_IMPORTFITS_operator_handle;
 

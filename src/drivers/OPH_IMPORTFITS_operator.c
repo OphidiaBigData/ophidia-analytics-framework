@@ -194,8 +194,8 @@ int update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, i
 int check_subset_string(char *curfilter, int i, FITS_var * measure, int is_index, double offset)
 {
 
-	FITS_var tmp_var;
-	int ii, retval, dims_id[FITS_MAX_VAR_DIMS];
+	//FITS_var tmp_var;
+	int ii;
 	char *endfilter = strchr(curfilter, OPH_DIM_SUBSET_SEPARATOR2);
 	if (!endfilter) {
 		//Only single point
@@ -445,6 +445,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->import_metadata = 0;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->check_compliance = 0;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fptr = NULL;
+	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->hdu = 1;
 	FITS_var *fits_measure = &(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->measure);
 	//fits_measure->fptr = NULL;          //File pointer to fits file
 	fits_measure->dims_name = NULL;
@@ -475,7 +476,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->leap_month = 2;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->memory_size = 0;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->description = NULL;
-	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->time_filter = 1;
+	//((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->time_filter = 1;
 
 	char *value;
 
@@ -509,7 +510,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	char *container_name = (!hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT) ? "NO-CONTAINER" : hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT));
 
 	//3 - Fill struct with the correct data
-
+/*
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_BASE_TIME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_BASE_TIME);
@@ -568,7 +569,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->leap_month = (int) strtol(value, NULL, 10);
-
+*/
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DESCRIPTION);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DESCRIPTION);
@@ -583,9 +584,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_TIME_FILTER);
-	if (value && !strcmp(value, OPH_COMMON_NO_VALUE))
-		((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->time_filter = 0;
+	// No time_filter allowed for fits file; consider time as a common dimension
+	//value = hashtbl_get(task_tbl, OPH_IN_PARAM_TIME_FILTER);
+	//if (value && !strcmp(value, OPH_COMMON_NO_VALUE))
+	//((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->time_filter = 0;
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_IMPORT_METADATA);
 	if (!value) {
@@ -595,7 +597,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	if (strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN) == 0) {
 		((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->import_metadata = 1;
-		// Import metadata not supported yet
+		// For supporting import of metadata
 		//((OPH_IMPORTFITS_operator_handle*)handle->operator_handle)->import_metadata = 0;
 	}
 
@@ -615,6 +617,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MEMORY_ERROR_INPUT_NO_CONTAINER, value, "fits file path");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_FITS_HDU);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_FITS_HDU);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_FITS_HDU);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->hdu = (int) strtol(value, NULL, 10);
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT);
 	if (!value) {
@@ -775,28 +784,39 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	FITS_var *measure = ((FITS_var *) & (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->measure));
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_MEASURE_NAME);
 	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_MEASURE_NAME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_MEASURE_NAME);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		char message[OPH_COMMON_BUFFER_LEN];
+		snprintf(message, OPH_COMMON_BUFFER_LEN, "No measure name specified; using default 'image'");
+                printf("%s\n", message);
+                if (oph_json_is_objkey_printable (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->objkeys, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_IMPORTFITS_SUMMARY)) {
+                        if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_IMPORTFITS_SUMMARY, "Message", message)) {
+                                pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+                                logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+                                return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+                        }
+                }
+		//strncpy(measure->varname, "image", strlen("image"));
+		//pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_MEASURE_NAME);
+		//logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_MEASURE_NAME);
+		//return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	//else
 	strncpy(measure->varname, value, strlen(value));
 
 	int i;
 	char **exp_dim_names = NULL;
 	char **imp_dim_names = NULL;
-	char **exp_dim_clevels = NULL;
-	char **imp_dim_clevels = NULL;
+	//char **exp_dim_clevels = NULL;
+	//char **imp_dim_clevels = NULL;
 	int exp_number_of_dim_names = 0;
 	int imp_number_of_dim_names = 0;
-	int imp_number_of_dim_clevels = 0;
-	int number_of_dim_clevels = 0;
+	//int imp_number_of_dim_clevels = 0;
+	//int number_of_dim_clevels = 0;
 
 	//Open fits file
 	int j;
-	int retval = 0;
+	//int retval = 0;
 	int status = 0;
 	char err_text[48];	//Descriptive text string (30 char max.) corresponding to a CFITSIO error status code
-	//if ((retval = nc_open(((OPH_IMPORTFITS_operator_handle*)handle->operator_handle)->nc_file_path, FITS_NOWRITE, &(((OPH_IMPORTFITS_operator_handle*)handle->operator_handle)->ncid)))) {
 	fits_open_file(&(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fptr), ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path, READONLY, &status);
 	if (status) {
 		fits_get_errstatus(status, err_text);
@@ -804,7 +824,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_FITS_OPEN_ERROR_NO_CONTAINER, container_name, err_text);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-	//int ncid = ((OPH_IMPORTFITS_operator_handle*)handle->operator_handle)->ncid;
 	fitsfile *fptr = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fptr;
 	//Extract measured variable information
 	/* No varid in fits file; for variable let set it to 0  
@@ -819,8 +838,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	//if((retval = nc_inq_vartype(ncid, measure->varid, &(measure->vartype)))){
 
 	// Only IMGs are supported
-	// Fits files are formed by various data HDUs. Suppose that there is a single IMAGE HDU
-	// Loop on the available hdus. fptr points to the current hdu
+	// Fits files are formed by various data HDUs. Get data from the provided (input) HDU (default = primary HDU)
+
 	int hdunum;
 	fits_get_num_hdus(fptr, &hdunum, &status);
 	if (status) {
@@ -829,11 +848,18 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_FITS_IFITS_VAR_ERROR_NO_CONTAINER, container_name, err_text);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+	if(hdunum < ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->hdu){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find the required HDU: %d\n", ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->hdu);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "[CONTAINER: %s] Unable to find the required HDU: %d\n", container_name, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->hdu);
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
 
-	int curhdu = 0;
+	//int curhdu = 0;
 	int hdutype = 0;
 	int naxis = -1;
 
+	// Get the HDU 
+	/*
 	for (curhdu = 1; curhdu <= hdunum; curhdu++) {
 		// Get the type of the hdu. It should be IMAGE
 		fits_get_hdu_type(fptr, &hdutype, &status);
@@ -846,6 +872,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				break;
 		} else
 			fits_movrel_hdu(fptr, 1, NULL, &status);
+	}*/
+
+	// Move to and get the type of the hdu. It should be IMAGE
+	fits_movabs_hdu(fptr, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->hdu, &hdutype, &status);
+	if (hdutype != 0){
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not IMG HDU provided\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "[CONTAINER: %s] Not IMG HDU provided\n", container_name);
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+	fits_get_img_dim(fptr, &naxis, &status);
+	if (naxis == 0) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to identify the number of axis\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "[CONTAINER: %s] Unable to identify the number of axis\n", container_name);
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	// status contains the error code; if status > 0 the subsequent calls of fits functions will be skipped
 	if (status) {
@@ -854,7 +894,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_FITS_IFITS_VAR_ERROR_NO_CONTAINER, container_name, err_text);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-	// Now fptr points to the correct hdu
+	// fptr points to the correct hdu
 
 	measure->ndims = naxis;
 
@@ -933,6 +973,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		exp_number_of_dim_names = imp_number_of_dim_names = 0;
 	}
 
+	// No concept level for naxis dimensions in fits files
+	/*
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXPLICIT_DIMENSION_CONCEPT_LEVEL);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_EXPLICIT_DIMENSION_CONCEPT_LEVEL);
@@ -941,15 +983,17 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	*/
 	char *tmp_concept_levels = NULL;
 	if (!(tmp_concept_levels = (char *) malloc(measure->ndims * sizeof(char)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "Tmp concpet levels");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "Tmp concept levels");
 		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	memset(tmp_concept_levels, 0, measure->ndims * sizeof(char));
+	/*
 	if (strncmp(value, OPH_COMMON_DEFAULT_CONCEPT_LEVEL, strlen(value)) || strncmp(value, OPH_COMMON_DEFAULT_CONCEPT_LEVEL, strlen(OPH_COMMON_DEFAULT_CONCEPT_LEVEL))) {
 		if (oph_tp_parse_multiple_value_param(value, &exp_dim_clevels, &number_of_dim_clevels)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
@@ -987,11 +1031,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	//Default levels
 	else {
+	*/
 		for (i = 0; i < measure->nexp; i++)
 			tmp_concept_levels[i] = OPH_COMMON_BASE_CONCEPT_LEVEL;
-	}
+	//}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_IMPLICIT_DIMENSION_CONCEPT_LEVEL);
+	/*
+ * 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_IMPLICIT_DIMENSION_CONCEPT_LEVEL);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IMPLICIT_DIMENSION_CONCEPT_LEVEL);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IMPLICIT_DIMENSION_CONCEPT_LEVEL);
@@ -1036,10 +1082,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		oph_tp_free_multiple_value_param_list(imp_dim_clevels, imp_number_of_dim_clevels);
 	}
 	//Default levels
-	else {
+	else {*/
 		for (i = measure->nexp; i < measure->ndims; i++)
 			tmp_concept_levels[i] = OPH_COMMON_BASE_CONCEPT_LEVEL;
-	}
+	//}
 
 
 	if (ndims != measure->ndims) {
@@ -1069,7 +1115,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		free(tmp_concept_levels);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
-// No unlimit dimension in fits file
+// No unlimited dimensions in fits file
 /*
   if(!(measure->dims_unlim = (char*)malloc(measure->ndims*sizeof(char)))){
     pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -1107,7 +1153,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	memset(measure->dims_concept_level, 0, measure->ndims * sizeof(char));
 
-	//For fits files, there are no dimension id.
+	//For fits files, there are no dimension ids.
 	if (!(measure->dims_id = (int *) malloc(measure->ndims * sizeof(int)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_id");
@@ -1180,7 +1226,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 
 	int level = 1;
-	int m2u[measure->ndims];
+	//int m2u[measure->ndims];
 	if (exp_dim_names != NULL) {
 		for (i = 0; i < measure->nexp; i++) {
 			flag = 0;
@@ -1188,15 +1234,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			for (j = 0; j < ndims; j++) {
 				if (!strcmp(dimname, measure->dims_name[j])) {
 					flag = 1;
-					m2u[i] = j;
+			//		m2u[i] = j;
 					break;
 				}
 			}
 			if (!flag) {
 				//pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension %s related to variable %s in in nc file\n", dimname, measure->varname);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension name in fits files should be NAXISn (e.g. NASIX1); found %s\n in %s variable\n", dimname, measure->varname);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname,
-					measure->varname);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname, measure->varname);
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 				free(tmp_concept_levels);
@@ -1220,7 +1265,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					}
 				}
 				if (flag) {
-					m2u[k] = i;
+					//m2u[k] = i;
 					measure->dims_oph_level[i] = level++;
 					measure->dims_type[i] = 1;
 					measure->dims_concept_level[i] = tmp_concept_levels[k];
@@ -1230,7 +1275,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		} else {
 			//Use order in nc file
 			for (i = 0; i < measure->nexp; i++) {
-				m2u[i] = i;
+//				m2u[i] = i;
 
 				measure->dims_oph_level[i] = level++;
 				measure->dims_type[i] = 1;
@@ -1247,15 +1292,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			for (j = 0; j < ndims; j++) {
 				if (!strcmp(dimname, measure->dims_name[j])) {
 					flag = 1;
-					m2u[i] = j;
+//					m2u[i] = j;
 					break;
 				}
 			}
 			if (!flag) {
 				//pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension %s related to variable %s in in nc file\n", dimname, measure->varname);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension name in fits files should be NAXISn (e.g. NASIX1); found %s\n in %s variable\n", dimname, measure->varname);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname,
-					measure->varname);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname,	measure->varname);
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 				free(tmp_concept_levels);
@@ -1268,7 +1312,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	} else {
 		//Use order in nc file
 		for (i = measure->nexp; i < measure->ndims; i++) {
-			m2u[i] = i;
+//			m2u[i] = i;
 			measure->dims_concept_level[i] = tmp_concept_levels[i];
 			measure->dims_type[i] = 0;
 			measure->dims_oph_level[i] = level++;
@@ -1281,6 +1325,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 //ADDED TO MANAGE SUBSETTED IMPORT
 
+	// No offset in fits files
+	/*
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OFFSET);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OFFSET);
@@ -1308,28 +1354,31 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			offset[i] = (double) strtod(s_offset[i], NULL);
 		oph_tp_free_multiple_value_param_list(s_offset, s_offset_num);
 	}
+	*/
 
 	char **sub_dims = 0;
 	char **sub_filters = 0;
 	int number_of_sub_dims = 0;
 	int number_of_sub_filters = 0;
 
+	// Only subsetting by index is allowed
+	/*
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_FILTER_TYPE);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
-		if (offset)
-			free(offset);
+//		if (offset)
+//			free(offset);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	int is_index = strncmp(value, OPH_IMPORTFITS_SUBSET_COORD, OPH_TP_TASKLEN);
-
+*/
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_DIMENSIONS);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_DIMENSIONS);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SUBSET_DIMENSIONS);
-		if (offset)
-			free(offset);
+//		if (offset)
+//			free(offset);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
@@ -1340,8 +1389,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_INVALID_INPUT_STRING);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-			if (offset)
-				free(offset);
+//			if (offset)
+//				free(offset);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 	}
@@ -1351,8 +1400,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_FILTER);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SUBSET_FILTER);
 		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-		if (offset)
-			free(offset);
+//		if (offset)
+//			free(offset);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
@@ -1365,8 +1414,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_INVALID_INPUT_STRING);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-			if (offset)
-				free(offset);
+//			if (offset)
+//				free(offset);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 	}
@@ -1376,8 +1425,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_INVALID_INPUT_STRING);
 		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-		if (offset)
-			free(offset);
+//		if (offset)
+//			free(offset);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
@@ -1386,8 +1435,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
 		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-		if (offset)
-			free(offset);
+//		if (offset)
+//			free(offset);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	//Check dimension names
@@ -1401,16 +1450,18 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname, measure->varname);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-			if (offset)
-				free(offset);
+//			if (offset)
+//				free(offset);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 	}
 
 	//Check the sub_filters strings
-	//Fot fits file this section could be not used
-	int tf = -1;		// Id of time filter
+	//Fot fits file no time_filter is allowed. Filtering on time is allowed as common dimensions
+	
+	//int tf = -1;		// Id of time filter
 	for (i = 0; i < number_of_sub_dims; i++) {
+		/*
 		if (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->time_filter && strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR[1])) {
 			if (tf >= 0) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Not more than one time dimension can be considered\n");
@@ -1426,13 +1477,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			for (j = 0; j < ndims; j++)
 				if (!strcmp(dimname, measure->dims_name[j]))
 					break;
-		} else if (strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2) != strrchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2)) {
+		} else */
+		if (strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2) != strrchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Strided range are not supported\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_INVALID_INPUT_STRING);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-			if (offset)
-				free(offset);
+//			if (offset)
+//				free(offset);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 	}
@@ -1446,38 +1498,41 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (oph_odb_read_ophidiadb_config_file(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_OPHIDIADB_CONFIGURATION_FILE, container_name);
-			if (offset)
-				free(offset);
+//			if (offset)
+//				free(offset);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 
 		if (oph_odb_connect_to_ophidiadb(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_OPHIDIADB_CONNECTION_ERROR, container_name);
-			if (offset)
-				free(offset);
+//			if (offset)
+//				free(offset);
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 
+		// Input vocabulary disabled
+		/*
 		value = hashtbl_get(task_tbl, OPH_IN_PARAM_VOCABULARY);
 		if (!value) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_VOCABULARY);
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_VOCABULARY);
-			if (offset)
-				free(offset);
+//			if (offset)
+//				free(offset);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 		if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
 			if ((oph_odb_meta_retrieve_vocabulary_id(oDB, value, &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_vocabulary))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input vocabulary\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_NO_VOCABULARY_NO_CONTAINER, container_name, value);
-				if (offset)
-					free(offset);
+//				if (offset)
+//					free(offset);
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
 		}
+		*/
 	}
-
+/*
 	if (tf >= 0) {
 		oph_odb_dimension dim;
 		oph_odb_dimension *time_dim = &dim, *tot_dims = NULL;
@@ -1654,14 +1709,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		free(sub_filters[tf]);
 		sub_filters[tf] = strdup(temp);
 	}
+*/
 	//Alloc space for subsetting parameters
 	if (!(measure->dims_start_index = (int *) malloc(measure->ndims * sizeof(int)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_start_index");
 		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-		if (offset)
-			free(offset);
+//		if (offset)
+//			free(offset);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
@@ -1670,8 +1726,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_end_index");
 		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-		if (offset)
-			free(offset);
+//		if (offset)
+//			free(offset);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
@@ -1692,11 +1748,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			//Dimension will not be subsetted
 			measure->dims_start_index[i] = 0;
 			measure->dims_end_index[i] = measure->dims_length[i] - 1;
-		} else if ((ii = check_subset_string(curfilter, i, measure, is_index, j < s_offset_num ? offset[j] : 0.0))) {
+		//No offset, no subset by coords in fits files
+		//} else if ((ii = check_subset_string(curfilter, i, measure, is_index, j < s_offset_num ? offset[j] : 0.0))) {
+		} else if ((ii = check_subset_string(curfilter, i, measure, 1, 0))) {
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-			if (offset)
-				free(offset);
+//			if (offset)
+//				free(offset);
 			return ii;
 		} else if (measure->dims_start_index[i] < 0 || measure->dims_end_index[i] < 0 || measure->dims_start_index[i] > measure->dims_end_index[i]
 			   || measure->dims_start_index[i] >= (int) measure->dims_length[i] || measure->dims_end_index[i] >= (int) measure->dims_length[i]) {
@@ -1704,16 +1762,16 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_INVALID_INPUT_STRING);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-			if (offset)
-				free(offset);
+//			if (offset)
+//				free(offset);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 	}
 
 	oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 	oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-	if (offset)
-		free(offset);
+//	if (offset)
+//		free(offset);
 
 	//Check explicit dimension oph levels (all values in interval [1 - nexp] should be supplied)
 	int curr_lev;
@@ -1763,7 +1821,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->run = 0;
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CHECK_COMPLIANCE);
+/*	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CHECK_COMPLIANCE);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CHECK_COMPLIANCE);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CHECK_COMPLIANCE);
@@ -1772,7 +1830,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN) == 0) {
 		((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->check_compliance = 1;
 	}
-
+*/
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_PARTITION_NAME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_PARTITION_NAME);
@@ -1810,7 +1868,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "I/O server type");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
-
+/*
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_IMPORTDIM_GRID_NAME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IMPORTDIM_GRID_NAME);
@@ -1824,11 +1882,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 	}
-
+*/
 	if (handle->proc_rank == 0) {
 		//Only master process has to initialize and open connection to management OphidiaDB
 		ophidiadb *oDB = &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->oDB;
 
+		// No hierarchy in fits files
+		/*
 		value = hashtbl_get(task_tbl, OPH_IN_PARAM_HIERARCHY_NAME);
 		if (!value) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_HIERARCHY_NAME);
@@ -1881,9 +1941,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				}
 			}
 			oph_tp_free_multiple_value_param_list(dim_hierarchy, number_of_dimensions_hierarchy);
-		}
+		}*/
 		//Default hierarchy
-		else {
+		//else {
 			if (!(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_dimension_hierarchy = (int *) malloc(measure->ndims * sizeof(int)))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "id dimension hierarchy");
@@ -1901,7 +1961,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			}
 			for (i = 0; i < measure->ndims; i++)
 				((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_dimension_hierarchy[i] = id_hierarchy;
-		}
+		//}
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -1918,7 +1978,7 @@ int task_init(oph_operator_struct * handle)
 	//For error checking
 	int id_datacube[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
-	int i, retval = 0, flush = 1, id_datacube_out = 0, id_container_out = 0;
+	int i, flush = 1, id_datacube_out = 0, id_container_out = 0;
 
 	FITS_var *measure = &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->measure;
 	//****COMPUTE DEFAULT fragxdb AND tuplexfrag NUMBER (START)*********//
@@ -2045,8 +2105,7 @@ int task_init(oph_operator_struct * handle)
 		} else {
 			//Check if are available DBMS and HOST number into specified partition and of server type
 			if (*host_number > 0 || *dbmsxhost_number > 0) {
-				if ((oph_odb_stge_check_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, (*host_number > 0 ? *host_number : 1), *dbmsxhost_number, &exist_part))
-				    || !exist_part) {
+				if ((oph_odb_stge_check_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, (*host_number > 0 ? *host_number : 1), *dbmsxhost_number, &exist_part)) || !exist_part) {
 					if (run) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts or dbms per host is too big or server type and partition are not available!\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
@@ -3113,18 +3172,33 @@ int task_init(oph_operator_struct * handle)
 				free(dimvar_ids);
 				goto __OPH_EXIT_1;
 			}
-			char card[80];
-			char *attr[2] = { "FLT_ID", "OBS-TYPE" };
+			char keyname[80];
+			char keyvalue[80];
+			char keycomment[80];
+			char valcomm[80];
+			// Get the number of cards (attributes)
+			int keysexist = 0;
+			fits_get_hdrspace (fptr, &keysexist, NULL, &status);
+			if (status) {
+				fits_get_errstatus(status, err_text);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get keywords from fits file: %s\n", err_text);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get get keywords from fits file: %s\n", err_text);
+					free(dimvar_ids);
+					goto __OPH_EXIT_1;
+			}
+			//char *attr[2] = { "FLT_ID", "OBS-TYPE" };
 			int mya;
-			for (mya = 0; mya < 2; mya++) {
-				fits_read_card(fptr, attr[mya], card, &status);
+			// Get the keywords
+			for (mya = 0; mya < keysexist; mya++) {
+				fits_read_keyn(fptr, mya+1, keyname, keyvalue, keycomment, &status);
 				if (status) {
 					fits_get_errstatus(status, err_text);
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get %s attribute value from file: %s\n", attr[mya], err_text);
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get %s attribute value from file\n", attr[mya]);
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get keywords from file: %s\n", err_text);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get keywords from file: %s\n", err_text);
 					free(dimvar_ids);
 					goto __OPH_EXIT_1;
 				}
+				snprintf(valcomm, 80, "%s / %s", keyvalue, keycomment);
 				//NOTE: the type of the key values is fixed to text
 				//Retrieve 'text' type id
 				char key_type[OPH_COMMON_TYPE_SIZE];
@@ -3139,7 +3213,8 @@ int task_init(oph_operator_struct * handle)
 				sid_key_type = id_key_type;
 				int id_metadatainstance;
 				//if(oph_odb_meta_insert_into_metadatainstance_manage_tables(oDB, id_datacube_out, id_key ? (int)strtol(id_key, NULL, 10) : -1, id_key ? NULL : key, NULL, sid_key_type, id_user, svalue, &id_metadatainstance)){
-				if (oph_odb_meta_insert_into_metadatainstance_manage_tables(oDB, id_datacube_out, -1, attr[mya], NULL, sid_key_type, id_user, card, &id_metadatainstance)) {
+				//if (oph_odb_meta_insert_into_metadatainstance_manage_tables(oDB, id_datacube_out, -1, attr[mya], NULL, sid_key_type, id_user, card, &id_metadatainstance)) {
+				if (oph_odb_meta_insert_into_metadatainstance_manage_tables(oDB, id_datacube_out, -1, keyname, NULL, sid_key_type, id_user, valcomm, &id_metadatainstance)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
 					free(dimvar_ids);
@@ -4173,7 +4248,7 @@ int env_unset(oph_operator_struct * handle)
 	if (!handle || !handle->operator_handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	int i, retval;
+	int i;
 
 	//Only master process has to close and release connection to management OphidiaDB
 	if (handle->proc_rank == 0) {
@@ -4216,7 +4291,7 @@ int env_unset(oph_operator_struct * handle)
 	int status = 0;
 	char err_text[48];	//Descriptive text string (30 char max.) corresponding to a CFITSIO error status code
 
-	retval = fits_close_file(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fptr, &status);
+	fits_close_file(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fptr, &status);
 	if (status) {
 		fits_get_errstatus(status, err_text);
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", err_text);

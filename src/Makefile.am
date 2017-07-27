@@ -46,8 +46,10 @@ LIBRARY+= liboph_analytics_operator.la
 LIBRARY+= liboph_ioserver_parser.la
 LIBRARY+= liboph_ioserver.la
 LIBRARY+= liboph_analytics_framework.la
+if HAVE_CFITSIO
 LIBRARY+= liboph_fits.la
-LIBRARY+= liboph_sac.la
+endif
+#LIBRARY+= liboph_sac.la
 
 lib_LTLIBRARIES = $(LIBRARY)
 if DEBUG_1
@@ -172,12 +174,15 @@ liboph_nc_la_LDFLAGS = -static
 liboph_nc_la_LIBADD = -lz -lm $(NETCDF_LIBS) @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube
 endif
 
+if HAVE_CFITSIO
 liboph_fits_la_SOURCES = oph_fits_library.c
-liboph_fits_la_CFLAGS= ${MYSQL_CFLAGS} -I/usr/local/ophidia/extra/fits/include -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
+#liboph_fits_la_CFLAGS= ${MYSQL_CFLAGS} -I/usr/local/ophidia/extra/fits/include -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
+liboph_fits_la_CFLAGS= ${MYSQL_CFLAGS} ${LIBCFITSIO_INCLUDE} -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
 liboph_fits_la_LDFLAGS = -static
-liboph_fits_la_LIBADD = -lz -lm -L/usr/local/ophidia/extra/fits/lib -lcfitsio -lpthread @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube
-
-liboph_sac_la_SOURCES = oph_sac_library.c 
-liboph_sac_la_CFLAGS= ${MYSQL_CFLAGS} -I/usr/local/ophidia/extra/sac/include -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
-liboph_sac_la_LDFLAGS = -static
-liboph_sac_la_LIBADD = -lz -lm @LIBLTDL@ -L/usr/local/ophidia/extra/sac/lib -lreadsac -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube
+#liboph_fits_la_LIBADD = -lz -lm -L/usr/local/ophidia/extra/fits/lib -lcfitsio -lpthread @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube
+liboph_fits_la_LIBADD = -lz -lm ${LIBCFITSIO_LIB} -lpthread @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube
+endif
+#liboph_sac_la_SOURCES = oph_sac_library.c 
+#liboph_sac_la_CFLAGS= ${MYSQL_CFLAGS} -I/usr/local/ophidia/extra/sac/include -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
+#liboph_sac_la_LDFLAGS = -static
+#liboph_sac_la_LIBADD = -lz -lm @LIBLTDL@ -L/usr/local/ophidia/extra/sac/lib -lreadsac -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube
