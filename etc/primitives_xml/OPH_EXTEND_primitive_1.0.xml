@@ -22,7 +22,7 @@ Return an array obtained by concatenating input array more times.
 					&apos;oph_byte&apos;.
 - measure : list of input measure.
 - number : number of replies.
-- mode : use 'a' to concatenate input cubes (default), use 'i' to interlace inout cubes.
+- mode : use 'a' to concatenate input cubes (default), use 'i' to interlace input cubes.
 
 [Return type]
 Binary-array.

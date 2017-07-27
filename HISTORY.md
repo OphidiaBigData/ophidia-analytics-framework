@@ -1,4 +1,40 @@
 
+## v1.1.0 - 2017-07-28
+
+### Fixed:
+
+- Bug in OPH_IMPORTNC to re-use the same default container when no name is specified
+- Bug in selecting DBMS instance with OPH_PRIMITIVE_LIST
+- Some bugs in OPH_MERGECUBES, OPH_INTECUBE and OPH_MERGECUBES2, OPH_METADATA and OPH_SEARCH
+- OPH_SCRIPT behavior in case session folder is not available
+- Some warnings
+- Bug [#15](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/15)
+- Bug [#14](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/14)
+- Bug in strncpy calls
+
+### Added:
+
+- Level 0 option to OPH_EXPLORENC to read file attributes, dimensions and variable lists
+- sessionid and markerid to framework notification messages
+- Entry in table 'task' for OPH_IMPORTNC and OPH_RANDCUBE
+- 'hold_values' and 'number' parameters in OPH_MERGECUBES operator
+- Parameter 'forward' to OPH_IF 
+- XML files for new primitives: oph_concat2, oph_append
+- Multi-user mode and USER_SPACE option in several operators
+- arg_max and arg_min options in reduction operators
+- Add current data directory (cdd) parameter to several operators
+- OPH_FS new operator
+- subet_type argument to OPH_SUBSET and OPH_EXPLORECUBE
+- Some alias for known calendars
+
+### Changed:
+
+- OPH_RESUME operator to allow workflow progress monitoring
+- OPH_IMPORTNC operator to allow import of files without dimension values and to support a more configurable fragmentation
+- OPH_MERGECUBES to allow appending time series with different sizes
+- Disable framework from saving JSON Response
+- OPH_SUBSET2 operator is now deprecated
+
 ## v1.0.0 - 2017-03-23
 
 ### Fixed:
