@@ -42,7 +42,7 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
-int check_subset_string(char *curfilter, int i, FITS_var * measure, int is_index, double offset)
+int check_subset_string(char *curfilter, int i, FITS_var * measure, int is_index)
 {
 
 	int ii;
@@ -68,7 +68,7 @@ int check_subset_string(char *curfilter, int i, FITS_var * measure, int is_index
 			measure->dims_start_index[i] = (int) (strtol(curfilter, (char **) NULL, 10));
 			measure->dims_end_index[i] = measure->dims_start_index[i];
 		}
-		
+
 	} else {
 		//Start and end point
 		char *startfilter = curfilter;
@@ -83,7 +83,7 @@ int check_subset_string(char *curfilter, int i, FITS_var * measure, int is_index
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_INVALID_INPUT_STRING);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
-			//Always index
+		//Always index
 		if (is_index) {
 			//Input filter is index         
 			for (ii = 0; ii < (int) strlen(startfilter); ii++) {
@@ -414,14 +414,16 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!value) {
 		char message[OPH_COMMON_BUFFER_LEN];
 		snprintf(message, OPH_COMMON_BUFFER_LEN, "No measure name specified; using default 'image'");
-                printf("%s\n", message);
-                if (oph_json_is_objkey_printable (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->objkeys, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_IMPORTFITS_SUMMARY)) {
-                        if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_IMPORTFITS_SUMMARY, "Message", message)) {
-                                pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
-                                logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
-                                return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-                        }
-                }
+		printf("%s\n", message);
+		if (oph_json_is_objkey_printable
+		    (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->objkeys, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->objkeys_num,
+		     OPH_JSON_OBJKEY_IMPORTFITS_SUMMARY)) {
+			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_IMPORTFITS_SUMMARY, "Message", message)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+		}
 	}
 	strncpy(measure->varname, value, strlen(value));
 
@@ -457,9 +459,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_FITS_IFITS_VAR_ERROR_NO_CONTAINER, container_name, err_text);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-	if(hdunum < ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->hdu){
+	if (hdunum < ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->hdu) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find the required HDU: %d\n", ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->hdu);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "[CONTAINER: %s] Unable to find the required HDU: %d\n", container_name, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->hdu);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "[CONTAINER: %s] Unable to find the required HDU: %d\n", container_name,
+			((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->hdu);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -468,7 +471,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	// Move to and get the type of the hdu. It should be IMAGE
 	fits_movabs_hdu(fptr, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->hdu, &hdutype, &status);
-	if (hdutype != 0){
+	if (hdutype != 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not IMG HDU provided\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "[CONTAINER: %s] Not IMG HDU provided\n", container_name);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -567,11 +570,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	memset(tmp_concept_levels, 0, measure->ndims * sizeof(char));
-		for (i = 0; i < measure->nexp; i++)
-			tmp_concept_levels[i] = OPH_COMMON_BASE_CONCEPT_LEVEL;
+	for (i = 0; i < measure->nexp; i++)
+		tmp_concept_levels[i] = OPH_COMMON_BASE_CONCEPT_LEVEL;
 
-		for (i = measure->nexp; i < measure->ndims; i++)
-			tmp_concept_levels[i] = OPH_COMMON_BASE_CONCEPT_LEVEL;
+	for (i = measure->nexp; i < measure->ndims; i++)
+		tmp_concept_levels[i] = OPH_COMMON_BASE_CONCEPT_LEVEL;
 
 	if (ndims != measure->ndims) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong number of dimensions provided in task string\n");
@@ -682,7 +685,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			}
 			if (!flag) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension name in fits files should be NAXISn (e.g. NASIX1); found %s\n in %s variable\n", dimname, measure->varname);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname, measure->varname);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname,
+					measure->varname);
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 				free(tmp_concept_levels);
@@ -736,7 +740,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			}
 			if (!flag) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension name in fits files should be NAXISn (e.g. NASIX1); found %s\n in %s variable\n", dimname, measure->varname);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname,	measure->varname);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname,
+					measure->varname);
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 				free(tmp_concept_levels);
@@ -900,7 +905,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			//Dimension will not be subsetted
 			measure->dims_start_index[i] = 0;
 			measure->dims_end_index[i] = measure->dims_length[i] - 1;
-		} else if ((ii = check_subset_string(curfilter, i, measure, 1, 0))) {
+		} else if ((ii = check_subset_string(curfilter, i, measure, 1))) {
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			return ii;
@@ -1006,23 +1011,22 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		//Only master process has to initialize and open connection to management OphidiaDB
 		ophidiadb *oDB = &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->oDB;
 
-			if (!(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_dimension_hierarchy = (int *) malloc(measure->ndims * sizeof(int)))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "id dimension hierarchy");
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			memset(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_dimension_hierarchy, 0, measure->ndims * sizeof(int));
+		if (!(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_dimension_hierarchy = (int *) malloc(measure->ndims * sizeof(int)))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "id dimension hierarchy");
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		memset(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_dimension_hierarchy, 0, measure->ndims * sizeof(int));
 
-			//Retrieve hierarchy ID
-			int id_hierarchy = 0;
-			if (oph_odb_dim_retrieve_hierarchy_id(oDB, OPH_COMMON_DEFAULT_HIERARCHY, &id_hierarchy)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check input hierarchy, or it doesn't exists\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_INPUT_HIERARCHY_ERROR_NO_CONTAINER, container_name,
-					OPH_COMMON_DEFAULT_HIERARCHY);
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-			}
-			for (i = 0; i < measure->ndims; i++)
-				((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_dimension_hierarchy[i] = id_hierarchy;
+		//Retrieve hierarchy ID
+		int id_hierarchy = 0;
+		if (oph_odb_dim_retrieve_hierarchy_id(oDB, OPH_COMMON_DEFAULT_HIERARCHY, &id_hierarchy)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check input hierarchy, or it doesn't exists\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_INPUT_HIERARCHY_ERROR_NO_CONTAINER, container_name, OPH_COMMON_DEFAULT_HIERARCHY);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		for (i = 0; i < measure->ndims; i++)
+			((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_dimension_hierarchy[i] = id_hierarchy;
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -1152,7 +1156,8 @@ int task_init(oph_operator_struct * handle)
 		} else {
 			//Check if are available DBMS and HOST number into specified partition and of server type
 			if (*host_number > 0 || *dbmsxhost_number > 0) {
-				if ((oph_odb_stge_check_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, (*host_number > 0 ? *host_number : 1), *dbmsxhost_number, &exist_part)) || !exist_part) {
+				if ((oph_odb_stge_check_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, (*host_number > 0 ? *host_number : 1), *dbmsxhost_number, &exist_part))
+				    || !exist_part) {
 					if (run) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts or dbms per host is too big or server type and partition are not available!\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
@@ -2172,18 +2177,18 @@ int task_init(oph_operator_struct * handle)
 			char valcomm[80];
 			// Get the number of cards (attributes)
 			int keysexist = 0;
-			fits_get_hdrspace (fptr, &keysexist, NULL, &status);
+			fits_get_hdrspace(fptr, &keysexist, NULL, &status);
 			if (status) {
 				fits_get_errstatus(status, err_text);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get keywords from fits file: %s\n", err_text);
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get get keywords from fits file: %s\n", err_text);
-					free(dimvar_ids);
-					goto __OPH_EXIT_1;
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get get keywords from fits file: %s\n", err_text);
+				free(dimvar_ids);
+				goto __OPH_EXIT_1;
 			}
 			int mya;
 			// Get the keywords
 			for (mya = 0; mya < keysexist; mya++) {
-				fits_read_keyn(fptr, mya+1, keyname, keyvalue, keycomment, &status);
+				fits_read_keyn(fptr, mya + 1, keyname, keyvalue, keycomment, &status);
 				if (status) {
 					fits_get_errstatus(status, err_text);
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get keywords from file: %s\n", err_text);
@@ -2235,6 +2240,8 @@ int task_init(oph_operator_struct * handle)
 
 		oph_odb_db_instance db;
 		oph_odb_dbms_instance dbms;
+		char db_name[OPH_ODB_STGE_DB_NAME_SIZE];
+
 		for (j = 0; j < dbmss_length; j++) {
 
 			db.id_dbms = id_dbmss[j];
@@ -2265,13 +2272,14 @@ int task_init(oph_operator_struct * handle)
 			}
 
 			for (i = 0; i < ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbxdbms_number; i++) {
-				if (oph_dc_generate_db_name(oDB->name, id_datacube_out, db.id_dbms, 0, i + 1, &db.db_name)) {
+				if (oph_dc_generate_db_name(oDB->name, id_datacube_out, db.id_dbms, 0, i + 1, &db_name)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of Db instance  name exceed limit.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_STRING_BUFFER_OVERFLOW, "DB instance name", db.db_name);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_STRING_BUFFER_OVERFLOW, "DB instance name", db_name);
 					free(id_dbmss);
 					oph_dc_disconnect_from_dbms(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->server, &(dbms));
 					goto __OPH_EXIT_1;
 				}
+				strcpy(db.db_name, db_name);
 				if (oph_dc_create_db(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->server, &db)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create new db\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_NEW_DB_ERROR, db.db_name);
@@ -2497,6 +2505,7 @@ int task_execute(oph_operator_struct * handle)
 	}
 
 	oph_odb_fragment new_frag;
+	char fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE];
 
 	int frag_to_insert = 0;
 	int frag_count = 0;
@@ -2564,16 +2573,17 @@ int task_execute(oph_operator_struct * handle)
 				    ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 				new_frag.db_instance = &(dbs.value[j]);
 
-				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &(new_frag.fragment_name))) {
+				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &fragment_name)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag  name exceed limit.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_IMPORTFITS_STRING_BUFFER_OVERFLOW, "fragment name", new_frag.fragment_name);
+						OPH_LOG_OPH_IMPORTFITS_STRING_BUFFER_OVERFLOW, "fragment name", fragment_name);
 					oph_dc_disconnect_from_dbms(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
+				strcpy(new_frag.fragment_name, fragment_name);
 				//Create Empty fragment
 				if (oph_dc_create_empty_fragment(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->server, &new_frag)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating fragment.\n");

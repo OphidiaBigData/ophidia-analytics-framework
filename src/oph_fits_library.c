@@ -1196,7 +1196,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 	} else if (type_flag == OPH_FITS_FLOAT_FLAG) {
 		res = fits_read_subset(fptr, TFLOAT, start, count, inc, NULL, (float *) (binary_cache), NULL, &status);
 	} else if (type_flag == OPH_FITS_DOUBLE_FLAG) {
- 		res = fits_read_subset(fptr, TDOUBLE, start, count, inc, NULL, (double *) (binary_cache), NULL, &status);
+		res = fits_read_subset(fptr, TDOUBLE, start, count, inc, NULL, (double *) (binary_cache), NULL, &status);
 	} else {
 		res = fits_read_subset(fptr, TDOUBLE, start, count, inc, NULL, (double *) (binary_cache), NULL, &status);
 	}
