@@ -5,7 +5,7 @@
 
 - Bug in OPH_IMPORTNC to re-use the same default container when no name is specified
 - Bug in selecting DBMS instance with OPH_PRIMITIVE_LIST
-- Some bugs in OPH_MERGECUBES, OPH_INTECUBE and OPH_MERGECUBES2, OPH_METADATA and OPH_SEARCH
+- Some bugs in OPH_RANDCUBE, OPH_MERGECUBES, OPH_INTECUBE and OPH_MERGECUBES2, OPH_METADATA and OPH_SEARCH
 - OPH_SCRIPT behavior in case session folder is not available
 - Some warnings
 - Bug [#15](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/15)
