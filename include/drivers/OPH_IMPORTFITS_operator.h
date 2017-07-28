@@ -25,7 +25,7 @@
 #include "oph_fits_library.h"
 #include "oph_ioserver_library.h"
 
-#define OPH_IMPORTFITS_SUBSET_INDEX	    "index" 
+#define OPH_IMPORTFITS_SUBSET_INDEX	    "index"
 #define OPH_IMPORTFITS_SUBSET_COORD	    "coord"
 #define OPH_IMPORTFITS_DIMENSION_DEFAULT	"auto"
 
@@ -76,57 +76,55 @@
  * \param memory_size Maximum amount of memory available
  * \param description Free description to be associated with output cube
  */
-struct _OPH_IMPORTFITS_operator_handle
-{
-  ophidiadb oDB;
-  char *container_input;
-  int create_container;
-  char *cwd;
-  int run;
-  char *fits_file_path;
-  char *fits_file_path_orig;
-  int hdu;	/* Set the data HDU; default is the primary HDU (0) */
-  char *partition_input;
-  char *grid_name;
-  int fs_type;
-  char *ioserver_type;
-  int id_output_datacube;
-  int id_input_container;
-  int import_metadata;
-  int check_compliance;
-  int schedule_algo;
-  int fragment_number;
-  int fragment_first_id;
-  int host_number;
-  int dbmsxhost_number;
-  int dbxdbms_number;
-  int fragxdb_number;
-  int tuplexfrag_number;
-  int array_length;
-  int total_frag_number;
-  char *user;
-  fitsfile *fptr;   /* FITS file pointer, defined in fitsio.h */
-  int fitsid;
-  FITS_var measure;
-  int compressed;
-  char **objkeys;
-  int objkeys_num;
-  oph_ioserver_handler *server;
-  char *sessionid;
-  int id_vocabulary;
-  int *id_dimension_hierarchy;
+struct _OPH_IMPORTFITS_operator_handle {
+	ophidiadb oDB;
+	char *container_input;
+	int create_container;
+	char *cwd;
+	int run;
+	char *fits_file_path;
+	char *fits_file_path_orig;
+	int hdu;		/* Set the data HDU; default is the primary HDU (0) */
+	char *partition_input;
+	char *grid_name;
+	int fs_type;
+	char *ioserver_type;
+	int id_output_datacube;
+	int id_input_container;
+	int import_metadata;
+	int check_compliance;
+	int schedule_algo;
+	int fragment_number;
+	int fragment_first_id;
+	int host_number;
+	int dbmsxhost_number;
+	int dbxdbms_number;
+	int fragxdb_number;
+	int tuplexfrag_number;
+	int array_length;
+	int total_frag_number;
+	char *user;
+	fitsfile *fptr;		/* FITS file pointer, defined in fitsio.h */
+	int fitsid;
+	FITS_var measure;
+	int compressed;
+	char **objkeys;
+	int objkeys_num;
+	oph_ioserver_handler *server;
+	char *sessionid;
+	int id_vocabulary;
+	int *id_dimension_hierarchy;
 /* For fits files variables related to time management are not used */
-  char* base_time;
-  char* units;
-  char* calendar;
-  char* month_lengths;
-  int leap_year;
-  int leap_month;
+	char *base_time;
+	char *units;
+	char *calendar;
+	char *month_lengths;
+	int leap_year;
+	int leap_month;
 
-  long long memory_size;
-  char* description;
+	long long memory_size;
+	char *description;
 };
 typedef struct _OPH_IMPORTFITS_operator_handle OPH_IMPORTFITS_operator_handle;
 
-#endif  //__OPH_IMPORTFITS_OPERATOR_H
-
+#endif				//__OPH_IMPORTFITS_OPERATOR_H
