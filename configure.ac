@@ -317,7 +317,7 @@ AM_CONDITIONAL([HAVE_CFITSIO], [test "x$cfitsio" = "xyes"])
 
 if test "x${cfitsio}" = "xyes"; then
 
-        PKG_CHECK_MODULES(CFITSIO, cfitsio >= 3.37)
+        PKG_CHECK_MODULES(CFITSIO, cfitsio >= 3.34)
 
         AC_ARG_WITH(libcfitsio_header_path,
                 [  --with-libcfitsio-header-path=PATH            Location of libcfitsio includes directory],
