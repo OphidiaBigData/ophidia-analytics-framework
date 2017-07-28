@@ -310,8 +310,7 @@ AC_ARG_ENABLE(cfitsio,
             Turn on CFITSIO flags],
         [cfitsio="yes"
             AC_MSG_NOTICE("CFITSIO support enabled")],
-        [cfitsio="no"
-            AC_MSG_WARN("CFITSIO support disabled")]
+        [cfitsio="no"]
         )
 AM_CONDITIONAL([HAVE_CFITSIO], [test "x$cfitsio" = "xyes"])
 
