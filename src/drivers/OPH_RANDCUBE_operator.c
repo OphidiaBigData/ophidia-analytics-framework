@@ -548,11 +548,11 @@ int task_init(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 	//For error checking
-	int id_datacube[6] = { 0, 0, 0, 0, 0, 0 };
+	int id_datacube[6] = { 0, 0, 0, 0, 0, 0 }, flush = 1, id_datacube_out = 0;
 	char *container_name = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->container_input;
+	ophidiadb *oDB = &((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->oDB;
 
 	if (handle->proc_rank == 0) {
-		ophidiadb *oDB = &((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->oDB;
 
 		int i, j;
 		char id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
@@ -762,7 +762,6 @@ int task_init(oph_operator_struct * handle)
 		else
 			*cube.description = 0;
 
-		int id_datacube_out = 0;
 		//Insert new datacube
 		if (oph_odb_cube_insert_into_datacube_partitioned_tables(oDB, &cube, &id_datacube_out)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update datacube table\n");
@@ -1244,8 +1243,11 @@ int task_init(oph_operator_struct * handle)
 		id_datacube[4] = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbxdbms_number;
 		id_datacube[5] = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragxdb_number;
 
+		flush = 0;
 	}
       __OPH_EXIT_1:
+	if (!handle->proc_rank && flush && id_datacube_out)
+		oph_odb_cube_delete_from_datacube_table(oDB, id_datacube_out);
 	if (!((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->run)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 	//Broadcast to all other processes the result         
