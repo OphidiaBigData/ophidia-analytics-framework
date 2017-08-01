@@ -561,6 +561,9 @@ int task_execute(oph_operator_struct * handle)
 		error = pclose(fp);
 	}
 
+	// Print command and output in text log
+	printf("%s\n", system_output);
+
 	// ADD COMMAND TO JSON AS TEXT
 	s = oph_json_is_objkey_printable(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys, ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys_num,
 					 OPH_JSON_OBJKEY_SCRIPT);
