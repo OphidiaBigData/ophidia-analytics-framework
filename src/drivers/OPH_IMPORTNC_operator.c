@@ -2668,7 +2668,7 @@ int task_init(oph_operator_struct * handle)
 					goto __OPH_EXIT_1;
 				}
 			}
-		} else {
+		} else if (measure->ndims) {
 		 /****************************
 	      * BEGIN - IMPORT DIMENSION *
 		  ***************************/
@@ -2677,7 +2677,7 @@ int task_init(oph_operator_struct * handle)
 
 			//Read dimension
 			if (oph_odb_dim_retrieve_dimension_list_from_container(oDB, id_container_out, &tot_dims, &number_of_dimensions_c)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive dimensions .\n");
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive dimensions.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIMENSION_READ_ERROR);
 				if (tot_dims)
 					free(tot_dims);
