@@ -2312,6 +2312,7 @@ int oph_nc_get_c_type(nc_type type_nc, char *out_c_type)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
 			return -1;
 	}
+	out_c_type[OPH_ODB_CUBE_MEASURE_TYPE_SIZE] = 0;
 	return 0;
 
 }
@@ -2820,126 +2821,132 @@ int oph_nc_get_dim_array2(int id_container, int ncid, int dim_id, const char dim
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_NC_ERROR;
 	}
+	*dim_array = NULL;
+
 	//Assume that the coordinate variable related to a dimension depends by one dimension only (Ex. lat(lat) not lat(x,y))  
-	void *binary_dim = NULL;
-	int retval = 0;
 	size_t start[1];
 	size_t count[1];
-
 	start[0] = (size_t) start_index;
 	count[0] = 1;
-
-	if (start_index != end_index)
+	if (start_index < end_index)
 		count[0] = (size_t) (end_index - start_index) + 1;
-
-	if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
-		binary_dim = (void *) malloc(sizeof(char) * dim_size);
-
-		if ((retval = nc_get_vara_uchar(ncid, dim_id, start, count, (unsigned char *) binary_dim))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		*dim_array = (char *) malloc(sizeof(char) * dim_size);
-		if (!(*dim_array)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions binary array");
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		memcpy((char *) *dim_array, (char *) binary_dim, sizeof(char) * dim_size);
-	} else if (!strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
-		binary_dim = (void *) malloc(sizeof(short) * dim_size);
-
-		if ((retval = nc_get_vara_short(ncid, dim_id, start, count, (short *) binary_dim))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		*dim_array = (char *) malloc(sizeof(short) * dim_size);
-		if (!(*dim_array)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions binary array");
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		memcpy((char *) *dim_array, (short *) binary_dim, sizeof(short) * dim_size);
-	} else if (!strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
-		binary_dim = (void *) malloc(sizeof(int) * dim_size);
-
-		if ((retval = nc_get_vara_int(ncid, dim_id, start, count, (int *) binary_dim))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		*dim_array = (char *) malloc(sizeof(int) * dim_size);
-		if (!(*dim_array)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions binary array");
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		memcpy((char *) *dim_array, (int *) binary_dim, sizeof(int) * dim_size);
-	} else if (!strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
-		binary_dim = (void *) malloc(sizeof(float) * dim_size);
-
-		if ((retval = nc_get_vara_float(ncid, dim_id, start, count, (float *) binary_dim))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		*dim_array = (char *) malloc(sizeof(float) * dim_size);
-		if (!(*dim_array)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions binary array");
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		memcpy((char *) *dim_array, (float *) binary_dim, sizeof(float) * dim_size);
-	} else if (!strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
-		binary_dim = (void *) malloc(sizeof(double) * dim_size);
-		if ((retval = nc_get_vara_double(ncid, dim_id, start, count, (double *) binary_dim))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		*dim_array = (char *) malloc(sizeof(double) * dim_size);
-		if (!(*dim_array)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions binary array");
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		memcpy((char *) *dim_array, (double *) binary_dim, sizeof(double) * dim_size);
-	} else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
-		binary_dim = (void *) malloc(sizeof(long long) * dim_size);
-
-		if ((retval = nc_get_vara_longlong(ncid, dim_id, start, count, (long long *) binary_dim))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		*dim_array = (char *) malloc(sizeof(long long) * dim_size);
-		if (!(*dim_array)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions binary array");
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		memcpy((char *) *dim_array, (long long *) binary_dim, sizeof(long long) * dim_size);
-	} else {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
-		free(binary_dim);
+	else if (start_index > end_index) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unsupported order for indexes\n");
 		return OPH_NC_ERROR;
 	}
-	free(binary_dim);
+
+	void *binary_dim = NULL;
+	if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(char));
+	else if (!strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(short));
+	else if (!strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(int));
+	else if (!strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(float));
+	else if (!strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(double));
+	else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(long long));
+	else {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
+		return OPH_NC_ERROR;
+	}
+	if (!binary_dim) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Memory error\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Memory error\n");
+		return OPH_NC_ERROR;
+	}
+
+	if (dim_id >= 0) {
+
+		int retval = 0;
+		if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_vara_uchar(ncid, dim_id, start, count, (unsigned char *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else if (!strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_vara_short(ncid, dim_id, start, count, (short *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else if (!strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_vara_int(ncid, dim_id, start, count, (int *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else if (!strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_vara_float(ncid, dim_id, start, count, (float *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else if (!strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_vara_double(ncid, dim_id, start, count, (double *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_vara_longlong(ncid, dim_id, start, count, (long long *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
+			return OPH_NC_ERROR;
+		}
+
+	} else {
+
+		int value;
+		if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			char *f = (char *) binary_dim;
+			for (value = start_index; value <= end_index; ++value, ++f)
+				*f = (char) value;
+		} else if (!strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			short *f = (short *) binary_dim;
+			for (value = start_index; value <= end_index; ++value, ++f)
+				*f = (short) value;
+		} else if (!strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			int *f = (int *) binary_dim;
+			for (value = start_index; value <= end_index; ++value, ++f)
+				*f = (int) value;
+		} else if (!strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			float *f = (float *) binary_dim;
+			for (value = start_index; value <= end_index; ++value, ++f)
+				*f = (float) value;
+		} else if (!strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			double *f = (double *) binary_dim;
+			for (value = start_index; value <= end_index; ++value, ++f)
+				*f = (double) value;
+		} else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			long long *f = (long long *) binary_dim;
+			for (value = start_index; value <= end_index; ++value, ++f)
+				*f = (long long) value;
+		} else {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
+			return OPH_NC_ERROR;
+		}
+
+	}
+
+	*dim_array = (char *) binary_dim;
+
 	return OPH_NC_SUCCESS;
 }
 
@@ -2949,118 +2956,120 @@ int oph_nc_get_dim_array(int id_container, int ncid, int dim_id, const char dim_
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_NC_ERROR;
 	}
+	*dim_array = NULL;
 
 	void *binary_dim = NULL;
-	int retval = 0;
-	if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
-		binary_dim = (void *) malloc(sizeof(char) * dim_size);
-
-		if ((retval = nc_get_var_uchar(ncid, dim_id, (unsigned char *) binary_dim))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		*dim_array = (char *) malloc(sizeof(char) * dim_size);
-		if (!(*dim_array)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions binary array");
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		memcpy((char *) *dim_array, (char *) binary_dim, sizeof(char) * dim_size);
-	} else if (!strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
-		binary_dim = (void *) malloc(sizeof(short) * dim_size);
-
-		if ((retval = nc_get_var_short(ncid, dim_id, (short *) binary_dim))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		*dim_array = (char *) malloc(sizeof(short) * dim_size);
-		if (!(*dim_array)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions binary array");
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		memcpy((char *) *dim_array, (short *) binary_dim, sizeof(short) * dim_size);
-	} else if (!strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
-		binary_dim = (void *) malloc(sizeof(int) * dim_size);
-
-		if ((retval = nc_get_var_int(ncid, dim_id, (int *) binary_dim))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		*dim_array = (char *) malloc(sizeof(int) * dim_size);
-		if (!(*dim_array)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions binary array");
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		memcpy((char *) *dim_array, (int *) binary_dim, sizeof(int) * dim_size);
-	} else if (!strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
-		binary_dim = (void *) malloc(sizeof(float) * dim_size);
-
-		if ((retval = nc_get_var_float(ncid, dim_id, (float *) binary_dim))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		*dim_array = (char *) malloc(sizeof(float) * dim_size);
-		if (!(*dim_array)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions binary array");
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		memcpy((char *) *dim_array, (float *) binary_dim, sizeof(float) * dim_size);
-	} else if (!strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
-		binary_dim = (void *) malloc(sizeof(double) * dim_size);
-
-		if ((retval = nc_get_var_double(ncid, dim_id, (double *) binary_dim))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		*dim_array = (char *) malloc(sizeof(double) * dim_size);
-		if (!(*dim_array)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions binary array");
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		memcpy((char *) *dim_array, (double *) binary_dim, sizeof(double) * dim_size);
-	} else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
-		binary_dim = (void *) malloc(sizeof(long long) * dim_size);
-
-		if ((retval = nc_get_var_longlong(ncid, dim_id, (long long *) binary_dim))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		*dim_array = (char *) malloc(sizeof(long long) * dim_size);
-		if (!(*dim_array)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions binary array");
-			free(binary_dim);
-			return OPH_NC_ERROR;
-		}
-		memcpy((char *) *dim_array, (long long *) binary_dim, sizeof(long long) * dim_size);
-	} else {
+	if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(char));
+	else if (!strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(short));
+	else if (!strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(int));
+	else if (!strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(float));
+	else if (!strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(double));
+	else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(long long));
+	else {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
-		free(binary_dim);
 		return OPH_NC_ERROR;
 	}
-	free(binary_dim);
+	if (!binary_dim) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Memory error\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Memory error\n");
+		return OPH_NC_ERROR;
+	}
+
+	if (dim_id >= 0) {
+
+		int retval = 0;
+		if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_var_uchar(ncid, dim_id, (unsigned char *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else if (!strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_var_short(ncid, dim_id, (short *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else if (!strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_var_int(ncid, dim_id, (int *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else if (!strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_var_float(ncid, dim_id, (float *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else if (!strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_var_double(ncid, dim_id, (double *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_var_longlong(ncid, dim_id, (long long *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
+			return OPH_NC_ERROR;
+		}
+
+	} else {
+
+		int value;
+		if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			char *f = (char *) binary_dim;
+			for (value = 1; value <= dim_size; ++value, ++f)
+				*f = (char) value;
+		} else if (!strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			short *f = (short *) binary_dim;
+			for (value = 1; value <= dim_size; ++value, ++f)
+				*f = (short) value;
+		} else if (!strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			int *f = (int *) binary_dim;
+			for (value = 1; value <= dim_size; ++value, ++f)
+				*f = (int) value;
+		} else if (!strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			float *f = (float *) binary_dim;
+			for (value = 1; value <= dim_size; ++value, ++f)
+				*f = (float) value;
+		} else if (!strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			double *f = (double *) binary_dim;
+			for (value = 1; value <= dim_size; ++value, ++f)
+				*f = (double) value;
+		} else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			long long *f = (long long *) binary_dim;
+			for (value = 1; value <= dim_size; ++value, ++f)
+				*f = (long long) value;
+		} else {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
+			return OPH_NC_ERROR;
+		}
+
+	}
+
+	*dim_array = (char *) binary_dim;
+
 	return OPH_NC_SUCCESS;
 }
 
@@ -3508,12 +3517,13 @@ int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_NC_ERROR;
 	}
+	var->varid = -1;
 	int retval = 0;
 
 	//Get id from dimension name
 	if ((retval = nc_inq_varid(ncid, var_name, &(var->varid)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+		logging(LOG_WARNING, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
 		return OPH_NC_ERROR;
 	}
 	//Get information from id

@@ -8,6 +8,7 @@ Data Process.
 [Behaviour]
 It performs a subsetting operation along dimensions of a datacube.
 Dimension values are used as input filters.
+This operator is DEPRECATED. Use OPH_SUBSET instead.
 
 [Parameters]
 - cube : name of the input datacube. The name must be in PID format.

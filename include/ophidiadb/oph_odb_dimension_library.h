@@ -55,10 +55,14 @@
 #define OPH_DIM_TIME_CALENDAR_STANDARD "standard"
 #define OPH_DIM_TIME_CALENDAR_GREGORIAN "gregorian"
 #define OPH_DIM_TIME_CALENDAR_PGREGORIAN "proleptic_gregorian"
+#define OPH_DIM_TIME_CALENDAR_PGREGORIAN2 "prolepticgregorian"
 #define OPH_DIM_TIME_CALENDAR_JULIAN "julian"
 #define OPH_DIM_TIME_CALENDAR_360_DAY "360_day"
+#define OPH_DIM_TIME_CALENDAR_360DAY "360day"
 #define OPH_DIM_TIME_CALENDAR_NO_LEAP "no_leap"
+#define OPH_DIM_TIME_CALENDAR_NOLEAP "noleap"
 #define OPH_DIM_TIME_CALENDAR_ALL_LEAP "all_leap"
+#define OPH_DIM_TIME_CALENDAR_ALLLEAP "allleap"
 #define OPH_DIM_TIME_CALENDAR_USER_DEFINED "user_defined"
 
 #define OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR "since"
@@ -85,13 +89,13 @@
 typedef struct {
 	int id_dimension;
 	int id_container;
-	char dimension_name[OPH_ODB_DIM_DIMENSION_SIZE];
-	char dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE];
+	char dimension_name[OPH_ODB_DIM_DIMENSION_SIZE + 1];
+	char dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE + 1];
 	int id_hierarchy;
-	char base_time[OPH_ODB_DIM_TIME_SIZE];
-	char units[OPH_ODB_DIM_TIME_SIZE];
-	char calendar[OPH_ODB_DIM_TIME_SIZE];
-	int month_lengths[OPH_ODB_DIM_MONTH_NUMBER];
+	char base_time[OPH_ODB_DIM_TIME_SIZE + 1];
+	char units[OPH_ODB_DIM_TIME_SIZE + 1];
+	char calendar[OPH_ODB_DIM_TIME_SIZE + 1];
+	int month_lengths[OPH_ODB_DIM_MONTH_NUMBER + 1];
 	int leap_year;
 	int leap_month;
 } oph_odb_dimension;
@@ -124,7 +128,7 @@ typedef struct {
  */
 typedef struct {
 	int id_grid;
-	char grid_name[OPH_ODB_DIM_GRID_SIZE];
+	char grid_name[OPH_ODB_DIM_GRID_SIZE + 1];
 } oph_odb_dimension_grid;
 
 /**
@@ -135,8 +139,8 @@ typedef struct {
  */
 typedef struct {
 	int id_hierarchy;
-	char hierarchy_name[OPH_ODB_DIM_HIERARCHY_SIZE];
-	char filename[OPH_ODB_DIM_HIERARCHY_FILENAME_SIZE];
+	char hierarchy_name[OPH_ODB_DIM_HIERARCHY_SIZE + 1];
+	char filename[OPH_ODB_DIM_HIERARCHY_FILENAME_SIZE + 1];
 } oph_odb_hierarchy;
 
 /**

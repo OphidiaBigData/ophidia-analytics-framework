@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE primitive SYSTEM "ophidiahierarchy.dtd">
 <hierarchy name="oph_base" version="1.0">
-	<attribute long_name="ALL"  short_name="A" aggregate_field="c" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile" aggregate_set="0"  />
+	<attribute long_name="ALL"  short_name="A" aggregate_field="c" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min" aggregate_set="0"  />
 	<attribute long_name="cell" short_name="c" aggregate_field="c" aggregate_op="none" aggregate_set="1"  />
 </hierarchy>
 

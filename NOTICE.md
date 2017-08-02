@@ -76,6 +76,10 @@ http://www.apache.org/licenses/
 Creative Commons CC BY-SA 3.0</br>
 https://creativecommons.org/licenses/by-sa/3.0/#
 
+- FITS I/O C library</br>
+MIT-like License</br>
+https://heasarc.gsfc.nasa.gov/fitsio/c/f_user/node9.html
+
 <b>Note</b>:</br>
 This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit.
 

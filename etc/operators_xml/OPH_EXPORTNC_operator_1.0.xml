@@ -18,6 +18,7 @@ It exports data of a datacube into multiple NetCDF files.
                 directory corresponding to the related container and cube in the nc folder at the framework installation directory.
 - output_name : filename of the NetCDF output files. In case of multiple fragments, filenames will be &quot;output_name0.nc&quot;, &quot;output_name1.nc&quot;, etc.
                 The default value is the measure name of input datacube.
+- cdd : absolute path corresponding to the current directory on data repository.
 - force : flag used to force file creation. An existant file is overwritten with &quot;yes&quot; whereas
           the file is created only if it does not exist with &quot;no&quot; (default).
 - export_metadata: imports also metadata with &quot;yes&quot; (default)
@@ -47,6 +48,7 @@ SUBMISSION STRING: &quot;operator=oph_exportnc;cube=http://www.example.com/1/1;&
 		<argument type="string" mandatory="no" default="no" values="yes|no">misc</argument>
 		<argument type="string" mandatory="no" default="default">output_path</argument>
 		<argument type="string" mandatory="no" default="default">output_name</argument>
+	        <argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">export_metadata</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>

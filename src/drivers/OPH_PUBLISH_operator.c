@@ -1230,7 +1230,7 @@ int task_execute(oph_operator_struct * handle)
 				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
 			if (dim_fk_labels[m]) {
-				char dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE];
+				char dimension_type[1 + OPH_ODB_DIM_DIMENSION_TYPE_SIZE];
 				switch (dim_types[m]) {
 					case OPH_PUBLISH_TIME:
 						strncpy(dimension_type, OPH_COMMON_STRING_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
@@ -1274,6 +1274,7 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_free_ophidiadb(&oDB_slave);
 						return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				}
+				dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
 				if (oph_dim_read_dimension_filtered_data(db_dimension, label_dimension_table_name, dim_fk_labels[m], operation, 0, &(dim_rows[m]), dimension_type, dim_sizes[m])
 				    || !dim_rows[m]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve dimension data\n");
@@ -1674,7 +1675,7 @@ int task_execute(oph_operator_struct * handle)
 													OPH_LOG_OPH_PUBLISH_DIM_READ_ERROR);
 												oph_ioserver_free_result(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frag_rows);
 												oph_dc_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server,
-															     frags.value[k].db_instance->dbms_instance);
+															    frags.value[k].db_instance->dbms_instance);
 												oph_odb_stge_free_fragment_list(&frags);
 												oph_odb_stge_free_db_list(&dbs);
 												oph_odb_stge_free_dbms_list(&dbmss);
@@ -1740,7 +1741,7 @@ int task_execute(oph_operator_struct * handle)
 								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PUBLISH_IOPLUGIN_FETCH_ROW_ERROR);
 								oph_ioserver_free_result(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server, frag_rows);
 								oph_dc_disconnect_from_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server,
-											     frags.value[k].db_instance->dbms_instance);
+											    frags.value[k].db_instance->dbms_instance);
 								oph_odb_stge_free_fragment_list(&frags);
 								oph_odb_stge_free_db_list(&dbs);
 								oph_odb_stge_free_dbms_list(&dbmss);

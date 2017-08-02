@@ -89,6 +89,7 @@
 #define OPH_JSON_OBJKEY_EXPLORENC_WAVELET_COEFF				"explorenc_wavelet_coeff"
 #define OPH_JSON_OBJKEY_EXPLORENC_STATS					"explorenc_stats"
 #define OPH_JSON_OBJKEY_EXPLORENC_FIT					"explorenc_fit"
+#define OPH_JSON_OBJKEY_EXPLORENC_METADATA				"explorenc_metadata"
 
 #define OPH_JSON_OBJKEY_PERMUTE						"permute"
 #define OPH_JSON_OBJKEY_SUBSET						"subset"
@@ -112,6 +113,8 @@
 #define OPH_JSON_OBJKEY_FIND_LIST					"find_list"
 #define OPH_JSON_OBJKEY_FIND_SUMMARY					"find_summary"
 #define OPH_JSON_OBJKEY_IMPORTNC					"importnc"
+#define OPH_JSON_OBJKEY_IMPORTFITS                                      "importfits"
+#define OPH_JSON_OBJKEY_IMPORTFITS_SUMMARY                              "importfits_summary"
 #define OPH_JSON_OBJKEY_EXPORTNC					"exportnc"
 #define OPH_JSON_OBJKEY_EXPORTNC2					"exportnc2"
 #define OPH_JSON_OBJKEY_EXPLORENC					"explorenc"
@@ -133,6 +136,7 @@
 #define OPH_JSON_OBJKEY_INTERCUBE					"intercube"
 #define OPH_JSON_OBJKEY_MERGECUBES					"mergecubes"
 #define OPH_JSON_OBJKEY_SCRIPT						"script"
+#define OPH_JSON_OBJKEY_FS						"fs"
 
 
 #endif

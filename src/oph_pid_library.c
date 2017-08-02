@@ -40,6 +40,8 @@ char *oph_web_server_name = NULL;
 char *oph_web_server_location = NULL;
 long long oph_memory_size = -1;
 char *oph_base_src_path = NULL;
+char *oph_base_user_path = NULL;
+char oph_user_space = -1;
 
 int oph_pid_create_pid(const char *url, int id_container, int id_datacube, char **pid)
 {
@@ -77,6 +79,7 @@ int _oph_pid_load_data()
 
 	char buffer[OPH_PID_BUFFER_SIZE];
 	char *position;
+	int size;
 
 	while (fscanf(file, "%s", buffer) != EOF) {
 		position = strchr(buffer, '=');
@@ -99,6 +102,8 @@ int _oph_pid_load_data()
 				}
 				strncpy(oph_web_server_location, position, strlen(position) + 1);
 				oph_web_server_location[strlen(position)] = '\0';
+				while (((size = strlen(oph_web_server_location) - 1) >= 0) && oph_web_server_location[size] == '/')
+					oph_web_server_location[size] = '\0';
 			} else if (!strncmp(buffer, OPH_PID_MEMORY, strlen(OPH_PID_MEMORY)) && !strncmp(buffer, OPH_PID_MEMORY, strlen(buffer))) {
 				oph_memory_size = (long long) strtoll(position, NULL, 10);
 			} else if (!strncmp(buffer, OPH_PID_BASE_SRC_PATH, strlen(OPH_PID_BASE_SRC_PATH)) && !strncmp(buffer, OPH_PID_BASE_SRC_PATH, strlen(buffer))) {
@@ -109,6 +114,21 @@ int _oph_pid_load_data()
 				}
 				strncpy(oph_base_src_path, position, strlen(position) + 1);
 				oph_base_src_path[strlen(position)] = '\0';
+				while (((size = strlen(oph_base_src_path) - 1) >= 0) && oph_base_src_path[size] == '/')
+					oph_base_src_path[size] = '\0';
+			} else if (!strncmp(buffer, OPH_PID_BASE_USER_PATH, strlen(OPH_PID_BASE_USER_PATH)) && !strncmp(buffer, OPH_PID_BASE_USER_PATH, strlen(buffer))) {
+				if (!(oph_base_user_path = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					fclose(file);
+					return OPH_PID_MEMORY_ERROR;
+				}
+				strncpy(oph_base_user_path, position, strlen(position) + 1);
+				oph_base_user_path[strlen(position)] = '\0';
+				while (((size = strlen(oph_base_user_path) - 1) >= 0) && oph_base_user_path[size] == '/')
+					oph_base_user_path[size] = '\0';
+			} else if (!strncmp(buffer, OPH_PID_USER_SPACE, strlen(OPH_PID_USER_SPACE)) && !strncmp(buffer, OPH_PID_USER_SPACE, strlen(buffer))) {
+				if (!strcasecmp(position, "yes"))
+					oph_user_space = 1;
 			}
 		}
 	}
@@ -116,6 +136,9 @@ int _oph_pid_load_data()
 
 	if (oph_memory_size < 0)
 		oph_memory_size = 0;
+
+	if (oph_user_space < 0)
+		oph_user_space = 0;
 
 	return OPH_PID_SUCCESS;
 }
@@ -158,6 +181,56 @@ int oph_pid_get_base_src_path(char **base_src_path)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		return OPH_PID_MEMORY_ERROR;
 	}
+
+	return OPH_PID_SUCCESS;
+}
+
+int oph_pid_get_base_user_path(char *suffix, char **base_user_path)
+{
+	if (!base_user_path) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_PID_NULL_PARAM;
+	}
+	*base_user_path = NULL;
+
+	if (!oph_base_user_path) {
+		int res;
+		if ((res = _oph_pid_load_data()))
+			return res;
+	}
+	if (!oph_base_user_path)
+		return OPH_PID_SUCCESS;
+
+	if (oph_user_space && suffix) {
+		char tmp[strlen(oph_base_user_path) + strlen(suffix) + 1];
+		sprintf(tmp, "%s/%s", oph_base_user_path, suffix);
+		if (!(*base_user_path = strdup(tmp))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			return OPH_PID_MEMORY_ERROR;
+		}
+	} else if (!(*base_user_path = strdup(oph_base_user_path))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_PID_MEMORY_ERROR;
+	}
+
+	return OPH_PID_SUCCESS;
+}
+
+int oph_pid_get_user_space(char *user_space)
+{
+	if (!user_space) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_PID_NULL_PARAM;
+	}
+	*user_space = -1;
+
+	if (oph_user_space < 0) {
+		int res;
+		if ((res = _oph_pid_load_data()))
+			return res;
+	}
+
+	*user_space = oph_user_space;
 
 	return OPH_PID_SUCCESS;
 }
@@ -301,6 +374,10 @@ int oph_pid_free()
 	if (oph_base_src_path)
 		free(oph_base_src_path);
 	oph_base_src_path = NULL;
+
+	if (oph_base_user_path)
+		free(oph_base_user_path);
+	oph_base_user_path = NULL;
 
 	return OPH_PID_SUCCESS;
 }

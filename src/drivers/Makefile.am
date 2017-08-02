@@ -82,11 +82,15 @@ DRIVER+=liboph_metadataoperator.la
 DRIVER+=liboph_createcontaineroperator.la
 DRIVER+=liboph_searchoperator.la
 DRIVER+=liboph_folderoperator.la
+DRIVER+=liboph_fsoperator.la
 DRIVER+=liboph_hierarchyoperator.la
 DRIVER+=liboph_restorecontaineroperator.la
 DRIVER+=liboph_movecontaineroperator.la
 DRIVER+=liboph_showgridoperator.la
 DRIVER+=liboph_scriptoperator.la
+if HAVE_CFITSIO
+DRIVER+=liboph_importfitsoperator.la
+endif
 
 driver_LTLIBRARIES = $(DRIVER)
 
@@ -159,6 +163,11 @@ liboph_folderoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_folderoperator_la_SOURCES = OPH_FOLDER_operator.c
 liboph_folderoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_folderoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
+
+liboph_fsoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
+liboph_fsoperator_la_SOURCES = OPH_FS_operator.c
+liboph_fsoperator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_fsoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
 
 liboph_hierarchyoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
 liboph_hierarchyoperator_la_SOURCES = OPH_HIERARCHY_operator.c
@@ -326,3 +335,10 @@ liboph_unpublishoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_AN
 liboph_unpublishoperator_la_SOURCES = OPH_UNPUBLISH_operator.c
 liboph_unpublishoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_unpublishoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_directory
+
+if HAVE_CFITSIO
+liboph_importfitsoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} ${LIBCFITSIO_INCLUDE} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
+liboph_importfitsoperator_la_SOURCES = OPH_IMPORTFITS_operator.c
+liboph_importfitsoperator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_importfitsoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} ${LIBCFITSIO_LIB} -lpthread -loph_fits $(BASIC_LIB) -loph_dimension -loph_hierarchy  -loph_datacube -loph_ioserver -loph_binary_io
+endif

@@ -40,7 +40,8 @@ int main(int argc, char *argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
 	if (!myrank) {
-		fprintf(stdout, "%s%s", OPH_VERSION, OPH_DISCLAIMER);
+		fprintf(stdout, OPH_VERSION, PACKAGE_VERSION);
+		fprintf(stdout, "%s", OPH_DISCLAIMER);
 	}
 
 	if (argc != 2) {
@@ -78,8 +79,11 @@ int main(int argc, char *argv[])
 		if (!myrank)
 			gettimeofday(&start_time, NULL);
 
-		char task_string[OPH_COMMON_BUFFER_LEN];
+		char task_string[OPH_COMMON_BUFFER_LEN + 1];
 		strncpy(task_string, argv[1], OPH_COMMON_BUFFER_LEN);
+		task_string[OPH_COMMON_BUFFER_LEN] = 0;
+		if (!myrank)
+			pmesg(LOG_INFO, __FILE__, __LINE__, "Task string:\n%s\n", task_string);
 
 		if ((res = oph_af_execute_framework(task_string, size, myrank))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Framework execution failed! ERROR: %d\n", res);
