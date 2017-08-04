@@ -771,11 +771,10 @@ int oph_tp_parse_multiple_value_param(char *values, char ***value_list, int *val
 	char *ptr_begin = values;
 
 	//Count number of parameters
-	while (ptr_begin)
-		if ((ptr_begin = multival_strchr(ptr_begin, OPH_TP_MULTI_VALUE_SEPARATOR))) {
-			ptr_begin++;
-			param_num++;
-		}
+	while ((ptr_begin = multival_strchr(ptr_begin, OPH_TP_MULTI_VALUE_SEPARATOR))) {
+		ptr_begin++;
+		param_num++;
+	}
 
 	*value_list = (char **) malloc(param_num * sizeof(char *));
 	if (!(*value_list))
