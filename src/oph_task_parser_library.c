@@ -768,9 +768,11 @@ int oph_tp_parse_multiple_value_param(char *values, char ***value_list, int *val
 			return OPH_TP_TASK_PARSER_ERROR;
 	}
 
+	char *ptr_begin = values, *ptr_end;
+
 	//Count number of parameters
-	for (i = 0; values[i]; i++)
-		if (values[i] == OPH_TP_MULTI_VALUE_SEPARATOR)
+	while (ptr_begin)
+		if ((ptr_begin = multival_strchr(ptr_begin, OPH_TP_MULTI_VALUE_SEPARATOR)))
 			param_num++;
 
 	*value_list = (char **) malloc(param_num * sizeof(char *));
@@ -778,8 +780,6 @@ int oph_tp_parse_multiple_value_param(char *values, char ***value_list, int *val
 		return OPH_TP_TASK_PARSER_ERROR;
 	for (i = 0; i < param_num; i++)
 		(*value_list)[i] = (char *) malloc(OPH_TP_TASKLEN * sizeof(char));
-
-	char *ptr_begin, *ptr_end;
 
 	ptr_begin = values;
 	ptr_end = multival_strchr(values, OPH_TP_MULTI_VALUE_SEPARATOR);
