@@ -768,12 +768,14 @@ int oph_tp_parse_multiple_value_param(char *values, char ***value_list, int *val
 			return OPH_TP_TASK_PARSER_ERROR;
 	}
 
-	char *ptr_begin = values, *ptr_end;
+	char *ptr_begin = values;
 
 	//Count number of parameters
 	while (ptr_begin)
-		if ((ptr_begin = multival_strchr(ptr_begin, OPH_TP_MULTI_VALUE_SEPARATOR)))
+		if ((ptr_begin = multival_strchr(ptr_begin, OPH_TP_MULTI_VALUE_SEPARATOR))) {
+			ptr_begin++;
 			param_num++;
+		}
 
 	*value_list = (char **) malloc(param_num * sizeof(char *));
 	if (!(*value_list))
@@ -782,14 +784,14 @@ int oph_tp_parse_multiple_value_param(char *values, char ***value_list, int *val
 		(*value_list)[i] = (char *) malloc(OPH_TP_TASKLEN * sizeof(char));
 
 	ptr_begin = values;
-	ptr_end = multival_strchr(values, OPH_TP_MULTI_VALUE_SEPARATOR);
+	char *ptr_end = multival_strchr(values, OPH_TP_MULTI_VALUE_SEPARATOR);
 	j = 0;
 	while (ptr_begin) {
 		if (ptr_end) {
 			strncpy((*value_list)[j], ptr_begin, strlen(ptr_begin) - strlen(ptr_end));
 			(*value_list)[j][strlen(ptr_begin) - strlen(ptr_end)] = 0;
 			ptr_begin = ptr_end + 1;
-			ptr_end = multival_strchr(ptr_end + 1, OPH_TP_MULTI_VALUE_SEPARATOR);
+			ptr_end = multival_strchr(ptr_begin, OPH_TP_MULTI_VALUE_SEPARATOR);
 		} else {
 			strncpy((*value_list)[j], ptr_begin, strlen(ptr_begin));
 			(*value_list)[j][strlen(ptr_begin)] = 0;
