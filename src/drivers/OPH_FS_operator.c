@@ -235,6 +235,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_FS_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_FS_operator_handle *) handle->operator_handle)->mode = -1;
 	((OPH_FS_operator_handle *) handle->operator_handle)->path = NULL;
+	((OPH_FS_operator_handle *) handle->operator_handle)->path_num = -1;
 	((OPH_FS_operator_handle *) handle->operator_handle)->file = NULL;
 	((OPH_FS_operator_handle *) handle->operator_handle)->recursive = 0;
 	((OPH_FS_operator_handle *) handle->operator_handle)->depth = 0;
@@ -268,10 +269,16 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SYSTEM_COMMAND);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (!strcasecmp(value, OPH_FS_CMD_CD)) {
-		((OPH_FS_operator_handle *) handle->operator_handle)->mode = OPH_FS_MODE_CD;
-	} else if (!strcasecmp(value, OPH_FS_CMD_LS)) {
+	if (!strcasecmp(value, OPH_FS_CMD_LS)) {
 		((OPH_FS_operator_handle *) handle->operator_handle)->mode = OPH_FS_MODE_LS;
+	} else if (!strcasecmp(value, OPH_FS_CMD_CD)) {
+		((OPH_FS_operator_handle *) handle->operator_handle)->mode = OPH_FS_MODE_CD;
+	} else if (!strcasecmp(value, OPH_FS_CMD_MD)) {
+		((OPH_FS_operator_handle *) handle->operator_handle)->mode = OPH_FS_MODE_MD;
+	} else if (!strcasecmp(value, OPH_FS_CMD_RM)) {
+		((OPH_FS_operator_handle *) handle->operator_handle)->mode = OPH_FS_MODE_RM;
+	} else if (!strcasecmp(value, OPH_FS_CMD_MV)) {
+		((OPH_FS_operator_handle *) handle->operator_handle)->mode = OPH_FS_MODE_MV;
 	} else {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid input parameter %s\n", value);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_PARAMETER, value);
@@ -284,9 +291,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DATA_PATH);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (!(((OPH_FS_operator_handle *) handle->operator_handle)->path = (char *) strdup(value))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+	if (oph_tp_parse_multiple_value_param(value, &((OPH_FS_operator_handle *) handle->operator_handle)->path, &((OPH_FS_operator_handle *) handle->operator_handle)->path_num)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING);
+		oph_tp_free_multiple_value_param_list(((OPH_FS_operator_handle *) handle->operator_handle)->path, ((OPH_FS_operator_handle *) handle->operator_handle)->path_num);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
@@ -412,10 +420,12 @@ int task_execute(oph_operator_struct * handle)
 	if (!abs_path)
 		abs_path = strdup("/");
 
-	char *rel_path = NULL;
-	char is_valid = strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->path, OPH_FRAMEWORK_FS_DEFAULT_PATH);
+	char *rel_path = NULL, *dest_path = NULL;
+	char is_valid = strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->path[0], OPH_FRAMEWORK_FS_DEFAULT_PATH);
 	char file_is_valid = strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->file, OPH_FRAMEWORK_FS_DEFAULT_PATH);
-	if (oph_odb_fs_path_parsing(is_valid ? ((OPH_FS_operator_handle *) handle->operator_handle)->path : "", ((OPH_FS_operator_handle *) handle->operator_handle)->cwd, NULL, &rel_path, NULL)) {
+	if (oph_odb_fs_path_parsing
+	    (is_valid ? ((OPH_FS_operator_handle *) handle->operator_handle)->path[0] : (((OPH_FS_operator_handle *) handle->operator_handle)->mode == OPH_FS_MODE_CD ? "/" : ""),
+	     ((OPH_FS_operator_handle *) handle->operator_handle)->cwd, NULL, &rel_path, NULL)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse path\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_PATH_PARSING_ERROR);
 		if (abs_path) {
@@ -430,40 +440,11 @@ int task_execute(oph_operator_struct * handle)
 
 	char path[OPH_COMMON_BUFFER_LEN];
 	snprintf(path, OPH_COMMON_BUFFER_LEN, "%s%s", abs_path, rel_path);
-	printf(OPH_FS_CD_MESSAGE " is: %s from %s and %s\n", path, ((OPH_FS_operator_handle *) handle->operator_handle)->path, ((OPH_FS_operator_handle *) handle->operator_handle)->cwd);
+	printf(OPH_FS_CD_MESSAGE " is: %s from %s and %s\n", path, ((OPH_FS_operator_handle *) handle->operator_handle)->path[0], ((OPH_FS_operator_handle *) handle->operator_handle)->cwd);
 	int result = OPH_ANALYTICS_OPERATOR_SUCCESS;
 	struct stat file_stat;
 
 	switch (((OPH_FS_operator_handle *) handle->operator_handle)->mode) {
-
-		case OPH_FS_MODE_CD:
-
-			if (stat(path, &file_stat) || !S_ISDIR(file_stat.st_mode)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to access '%s'\n", rel_path);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to access '%s'\n", rel_path);
-				result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				break;
-			}
-			// ADD OUTPUT TO JSON AS TEXT
-			if (oph_json_is_objkey_printable
-			    (((OPH_FS_operator_handle *) handle->operator_handle)->objkeys, ((OPH_FS_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_FS)) {
-				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_FS, OPH_FS_CD_MESSAGE, rel_path)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
-					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					break;
-				}
-			}
-			// ADD OUTPUT CWD TO NOTIFICATION STRING
-			char tmp_string[OPH_COMMON_BUFFER_LEN];
-			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_CDD, rel_path);
-			if (handle->output_string) {
-				strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
-				free(handle->output_string);
-			}
-			handle->output_string = strdup(tmp_string);
-
-			break;
 
 		case OPH_FS_MODE_LS:
 
@@ -597,9 +578,9 @@ int task_execute(oph_operator_struct * handle)
 				if (strchr(path, '*') || strchr(path, '~') || strchr(path, '{') || strchr(path, '}'))	// Use glob
 				{
 					if (recursive) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Recursive option cannot be selected for '%s'\n", ((OPH_FS_operator_handle *) handle->operator_handle)->path);
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Recursive option cannot be selected for '%s'\n", ((OPH_FS_operator_handle *) handle->operator_handle)->path[0]);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Recursive option cannot be selected for '%s'\n",
-							((OPH_FS_operator_handle *) handle->operator_handle)->path);
+							((OPH_FS_operator_handle *) handle->operator_handle)->path[0]);
 						result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 						break;
 					}
@@ -607,9 +588,9 @@ int task_execute(oph_operator_struct * handle)
 					glob_t globbuf;
 					if ((s = glob(path, GLOB_MARK | GLOB_NOSORT | GLOB_TILDE_CHECK | GLOB_BRACE, NULL, &globbuf))) {
 						if (s != GLOB_NOMATCH) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse '%s'\n", ((OPH_FS_operator_handle *) handle->operator_handle)->path);
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse '%s'\n", ((OPH_FS_operator_handle *) handle->operator_handle)->path[0]);
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to parse '%s'\n",
-								((OPH_FS_operator_handle *) handle->operator_handle)->path);
+								((OPH_FS_operator_handle *) handle->operator_handle)->path[0]);
 							result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 						}
 						break;
@@ -699,6 +680,129 @@ int task_execute(oph_operator_struct * handle)
 
 			break;
 
+		case OPH_FS_MODE_CD:
+
+			if (stat(path, &file_stat) || !S_ISDIR(file_stat.st_mode)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to access '%s'\n", rel_path);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to access '%s'\n", rel_path);
+				result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				break;
+			}
+			// ADD OUTPUT TO JSON AS TEXT
+			if (oph_json_is_objkey_printable
+			    (((OPH_FS_operator_handle *) handle->operator_handle)->objkeys, ((OPH_FS_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_FS)) {
+				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_FS, OPH_FS_CD_MESSAGE, rel_path)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+			}
+			// ADD OUTPUT CWD TO NOTIFICATION STRING
+			char tmp_string[OPH_COMMON_BUFFER_LEN];
+			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_CDD, rel_path);
+			if (handle->output_string) {
+				strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
+				free(handle->output_string);
+			}
+			handle->output_string = strdup(tmp_string);
+
+			break;
+
+		case OPH_FS_MODE_MD:
+
+			if (!is_valid) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing target directory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Missing target directory\n");
+				result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				break;
+			}
+			if (!stat(path, &file_stat)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to overwrite '%s'\n", rel_path);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to overwrite '%s'\n", rel_path);
+				result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			} else if (mkdir(path, 0755)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create '%s'\n", rel_path);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to create '%s'\n", rel_path);
+				result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+
+			break;
+
+		case OPH_FS_MODE_RM:
+
+			if (!is_valid) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing target directory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Missing target directory\n");
+				result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				break;
+			}
+			if (stat(path, &file_stat) || (!S_ISDIR(file_stat.st_mode) && !S_ISREG(file_stat.st_mode))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to access '%s'\n", rel_path);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to access '%s'\n", rel_path);
+				result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			} else if (remove(path)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to remove '%s'\n", rel_path);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to remove '%s'\n", rel_path);
+				result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+
+			break;
+
+		case OPH_FS_MODE_MV:
+
+			if (!is_valid) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing target directory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Missing target directory\n");
+				result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				break;
+			}
+
+			if (stat(path, &file_stat) || (!S_ISDIR(file_stat.st_mode) && !S_ISREG(file_stat.st_mode))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to access '%s'\n", rel_path);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to access '%s'\n", rel_path);
+				result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				break;
+			}
+
+			if (((OPH_FS_operator_handle *) handle->operator_handle)->path_num < 2) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing destination directory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Missing destination directory\n");
+				result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				break;
+			}
+			if (oph_odb_fs_path_parsing(((OPH_FS_operator_handle *) handle->operator_handle)->path[1], ((OPH_FS_operator_handle *) handle->operator_handle)->cwd, NULL, &dest_path, NULL)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse path\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_PATH_PARSING_ERROR);
+				result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				break;
+			}
+			len = strlen(dest_path);
+			if (len > 1)
+				dest_path[len - 1] = 0;
+			char out_path[OPH_COMMON_BUFFER_LEN];
+			snprintf(out_path, OPH_COMMON_BUFFER_LEN, "%s%s", abs_path, dest_path);
+
+			struct stat out_stat;
+			if (!stat(out_path, &out_stat)) {
+				if (S_ISDIR(out_stat.st_mode))
+					snprintf(out_path + strlen(out_path), OPH_COMMON_BUFFER_LEN - strlen(out_path), "%s", strrchr(path, '/'));
+				else {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to overwrite '%s'\n", dest_path);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to overwrite '%s'\n", dest_path);
+					result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					break;
+				}
+			}
+
+			if (rename(path, out_path)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to move '%s' to '%s'\n", rel_path, dest_path);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to move '%s' to '%s'\n", rel_path, dest_path);
+				result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+
+			break;
+
 		default:
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid input parameter %s\n", OPH_IN_PARAM_SYSTEM_COMMAND);
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_PARAMETER, OPH_IN_PARAM_SYSTEM_COMMAND);
@@ -712,6 +816,10 @@ int task_execute(oph_operator_struct * handle)
 	if (rel_path) {
 		free(rel_path);
 		rel_path = NULL;
+	}
+	if (dest_path) {
+		free(dest_path);
+		dest_path = NULL;
 	}
 
 	return result;
@@ -746,7 +854,7 @@ int env_unset(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	if (((OPH_FS_operator_handle *) handle->operator_handle)->path) {
-		free((char *) ((OPH_FS_operator_handle *) handle->operator_handle)->path);
+		oph_tp_free_multiple_value_param_list(((OPH_FS_operator_handle *) handle->operator_handle)->path, ((OPH_FS_operator_handle *) handle->operator_handle)->path_num);
 		((OPH_FS_operator_handle *) handle->operator_handle)->path = NULL;
 	}
 	if (((OPH_FS_operator_handle *) handle->operator_handle)->file) {
