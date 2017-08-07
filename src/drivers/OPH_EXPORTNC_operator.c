@@ -756,8 +756,6 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
-	oph_odb_free_ophidiadb(&oDB_slave);
-
 	int n;
 	int frag_count = 0;
 
@@ -776,6 +774,7 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_fragment_list(&frags);
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
+		oph_odb_free_ophidiadb(&oDB_slave);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 	if (oph_dim_connect_to_dbms(db_dimension->dbms_instance, 0)) {
@@ -786,6 +785,7 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_fragment_list(&frags);
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
+		oph_odb_free_ophidiadb(&oDB_slave);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 
@@ -797,6 +797,7 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_fragment_list(&frags);
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
+		oph_odb_free_ophidiadb(&oDB_slave);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 
@@ -814,6 +815,7 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_fragment_list(&frags);
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
+		oph_odb_free_ophidiadb(&oDB_slave);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 	if (!exist_flag) {
@@ -824,6 +826,7 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_fragment_list(&frags);
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
+		oph_odb_free_ophidiadb(&oDB_slave);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -836,6 +839,7 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_fragment_list(&frags);
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
+		oph_odb_free_ophidiadb(&oDB_slave);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 	if (!exist_flag) {
@@ -846,6 +850,7 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_fragment_list(&frags);
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
+		oph_odb_free_ophidiadb(&oDB_slave);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -870,6 +875,7 @@ int task_execute(oph_operator_struct * handle)
 			oph_odb_stge_free_fragment_list(&frags);
 			oph_odb_stge_free_db_list(&dbs);
 			oph_odb_stge_free_dbms_list(&dbmss);
+			oph_odb_free_ophidiadb(&oDB_slave);
 			free(dim_rows);
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
@@ -881,6 +887,7 @@ int task_execute(oph_operator_struct * handle)
 			oph_odb_stge_free_fragment_list(&frags);
 			oph_odb_stge_free_db_list(&dbs);
 			oph_odb_stge_free_dbms_list(&dbmss);
+			oph_odb_free_ophidiadb(&oDB_slave);
 			for (l = 0; l < num_of_dims; l++) {
 				if (dim_rows[l]) {
 					free(dim_rows[l]);
@@ -920,6 +927,7 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
+					oph_odb_free_ophidiadb(&oDB_slave);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
 							free(dim_rows[l]);
@@ -938,6 +946,7 @@ int task_execute(oph_operator_struct * handle)
 				oph_odb_stge_free_fragment_list(&frags);
 				oph_odb_stge_free_db_list(&dbs);
 				oph_odb_stge_free_dbms_list(&dbmss);
+				oph_odb_free_ophidiadb(&oDB_slave);
 				for (l = 0; l < num_of_dims; l++) {
 					if (dim_rows[l]) {
 						free(dim_rows[l]);
@@ -980,6 +989,7 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_fragment_list(&frags);
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
+		oph_odb_free_ophidiadb(&oDB_slave);
 		for (l = 0; l < num_of_dims; l++) {
 			if (dim_rows[l]) {
 				free(dim_rows[l]);
@@ -1001,6 +1011,7 @@ int task_execute(oph_operator_struct * handle)
 			oph_odb_stge_free_fragment_list(&frags);
 			oph_odb_stge_free_db_list(&dbs);
 			oph_odb_stge_free_dbms_list(&dbmss);
+			oph_odb_free_ophidiadb(&oDB_slave);
 			for (l = 0; l < num_of_dims; l++) {
 				if (dim_rows[l]) {
 					free(dim_rows[l]);
@@ -1025,6 +1036,7 @@ int task_execute(oph_operator_struct * handle)
 				oph_odb_stge_free_fragment_list(&frags);
 				oph_odb_stge_free_db_list(&dbs);
 				oph_odb_stge_free_dbms_list(&dbmss);
+				oph_odb_free_ophidiadb(&oDB_slave);
 				for (l = 0; l < num_of_dims; l++) {
 					if (dim_rows[l]) {
 						free(dim_rows[l]);
@@ -1060,6 +1072,7 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
+					oph_odb_free_ophidiadb(&oDB_slave);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
 							free(dim_rows[l]);
@@ -1079,6 +1092,7 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
+					oph_odb_free_ophidiadb(&oDB_slave);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
 							free(dim_rows[l]);
@@ -1159,6 +1173,7 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
+						oph_odb_free_ophidiadb(&oDB_slave);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
 								free(dim_rows[l]);
@@ -1179,6 +1194,7 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
+						oph_odb_free_ophidiadb(&oDB_slave);
 						nc_close(ncid);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
@@ -1202,6 +1218,7 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
+					oph_odb_free_ophidiadb(&oDB_slave);
 					nc_close(ncid);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
@@ -1221,6 +1238,7 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
+					oph_odb_free_ophidiadb(&oDB_slave);
 					nc_close(ncid);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
@@ -1235,8 +1253,7 @@ int task_execute(oph_operator_struct * handle)
 				if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->export_metadata)	// Add metadata
 				{
 					if (oph_odb_meta_find_complete_metadata_list
-					    (&((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->oDB, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0,
-					     NULL, NULL, NULL, &read_result)) {
+					    (&oDB_slave, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0, NULL, NULL, NULL, &read_result)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 						oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
@@ -1244,6 +1261,7 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
+						oph_odb_free_ophidiadb(&oDB_slave);
 						nc_close(ncid);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
@@ -1294,6 +1312,7 @@ int task_execute(oph_operator_struct * handle)
 							oph_odb_stge_free_fragment_list(&frags);
 							oph_odb_stge_free_db_list(&dbs);
 							oph_odb_stge_free_dbms_list(&dbmss);
+							oph_odb_free_ophidiadb(&oDB_slave);
 							nc_close(ncid);
 							for (l = 0; l < num_of_dims; l++) {
 								if (dim_rows[l]) {
@@ -1318,6 +1337,7 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
+						oph_odb_free_ophidiadb(&oDB_slave);
 						nc_close(ncid);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
@@ -1361,6 +1381,7 @@ int task_execute(oph_operator_struct * handle)
 							oph_odb_stge_free_fragment_list(&frags);
 							oph_odb_stge_free_db_list(&dbs);
 							oph_odb_stge_free_dbms_list(&dbmss);
+							oph_odb_free_ophidiadb(&oDB_slave);
 							nc_close(ncid);
 							for (l = 0; l < num_of_dims; l++) {
 								if (dim_rows[l]) {
@@ -1380,6 +1401,7 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
+						oph_odb_free_ophidiadb(&oDB_slave);
 						nc_close(ncid);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
@@ -1403,6 +1425,7 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
+					oph_odb_free_ophidiadb(&oDB_slave);
 					nc_close(ncid);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
@@ -1430,6 +1453,7 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
+					oph_odb_free_ophidiadb(&oDB_slave);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
 							free(dim_rows[l]);
@@ -1456,6 +1480,7 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_fragment_list(&frags);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
+					oph_odb_free_ophidiadb(&oDB_slave);
 					nc_close(ncid);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
@@ -1499,6 +1524,7 @@ int task_execute(oph_operator_struct * handle)
 							oph_odb_stge_free_fragment_list(&frags);
 							oph_odb_stge_free_db_list(&dbs);
 							oph_odb_stge_free_dbms_list(&dbmss);
+							oph_odb_free_ophidiadb(&oDB_slave);
 							nc_close(ncid);
 							for (l = 0; l < num_of_dims; l++) {
 								if (dim_rows[l]) {
@@ -1519,6 +1545,7 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
+						oph_odb_free_ophidiadb(&oDB_slave);
 						nc_close(ncid);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
@@ -1538,6 +1565,7 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
+						oph_odb_free_ophidiadb(&oDB_slave);
 						nc_close(ncid);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
@@ -1566,6 +1594,7 @@ int task_execute(oph_operator_struct * handle)
 	oph_odb_stge_free_fragment_list(&frags);
 	oph_odb_stge_free_db_list(&dbs);
 	oph_odb_stge_free_dbms_list(&dbmss);
+	oph_odb_free_ophidiadb(&oDB_slave);
 	for (l = 0; l < num_of_dims; l++) {
 		if (dim_rows[l]) {
 			free(dim_rows[l]);
