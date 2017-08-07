@@ -25,7 +25,7 @@ SUBMISSION STRING: &quot;operator=oph_get_config;key=OPH_XML_URL;&quot;</abstrac
 	<permission>read</permission>
     </info>
     <args>
-		<argument type="string" mandatory="no" default="all" values="all|OPH_XML_URL|OPH_SESSION_ID|OPH_EXEC_MODE|OPH_NCORES|OPH_DATACUBE|OPH_CWD|OPH_BASE_SRC_PATH">key</argument>
+		<argument type="string" mandatory="no" default="all" values="all|OPH_XML_URL|OPH_SESSION_ID|OPH_EXEC_MODE|OPH_NCORES|OPH_DATACUBE|OPH_CWD|OPH_CDD|OPH_BASE_SRC_PATH">key</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|get_config">objkey_filter</argument>
     </args>
 </operator>
