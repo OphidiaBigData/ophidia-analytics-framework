@@ -980,26 +980,25 @@ int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid *
 	// Init res
 	MYSQL_RES *res;
 	MYSQL_ROW row;
-	int num_rows;
 	res = mysql_store_result(oDB->conn);
 
-	if ((num_rows = mysql_num_rows(res))) {
+	if (mysql_num_rows(res)) {
+
 		if (mysql_field_count(oDB->conn) != 1) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Too many fields found by query\n");
 			mysql_free_result(res);
 			return OPH_ODB_TOO_MANY_ROWS;
 		}
-		int id_grid = 0;
 
-		if ((row = mysql_fetch_row(res))) {
-			id_grid = (int) strtol(row[0], NULL, 10);
-		}
+		if ((row = mysql_fetch_row(res)))
+			*last_insertd_id = (int) strtol(row[0], NULL, 10);
+
 		mysql_free_result(res);
-		*last_insertd_id = id_grid;
+
 		return OPH_ODB_SUCCESS;
 	}
-	mysql_free_result(res);
 
+	mysql_free_result(res);
 
 	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_GRID, grid->grid_name);
 	if (n >= MYSQL_BUFLEN) {
@@ -1013,8 +1012,36 @@ int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid *
 	}
 
 	if (!(*last_insertd_id = mysql_insert_id(oDB->conn))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted container id\n");
-		return OPH_ODB_TOO_MANY_ROWS;
+
+		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_DIM_RETRIEVE_GRID_ID2, grid->grid_name);
+		if (n >= MYSQL_BUFLEN) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+			return OPH_ODB_STR_BUFF_OVERFLOW;
+		}
+
+		if (mysql_query(oDB->conn, insertQuery)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			return OPH_ODB_MYSQL_ERROR;
+		}
+
+		res = mysql_store_result(oDB->conn);
+
+		if (!mysql_num_rows(res)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "No rows found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		if (mysql_field_count(oDB->conn) != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Too many fields found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		if ((row = mysql_fetch_row(res)))
+			*last_insertd_id = (int) strtol(row[0], NULL, 10);
+
+		mysql_free_result(res);
 	}
 
 	return OPH_ODB_SUCCESS;
