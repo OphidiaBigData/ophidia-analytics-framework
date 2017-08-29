@@ -1019,11 +1019,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_APPLY_DIM_QUERY);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (oph_tp_parse_multiple_value_param
-	    (value, &((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation, &((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num)) {
+	if (strncmp(value, OPH_COMMON_NULL_VALUE, OPH_TP_TASKLEN)
+	    && oph_tp_parse_multiple_value_param(value, &((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation,
+						 &((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
-		oph_tp_free_multiple_value_param_list(((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size, ((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num);
+		oph_tp_free_multiple_value_param_list(((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size,
+						      ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
@@ -1033,7 +1035,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DIMENSION_SIZE);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (oph_tp_parse_multiple_value_param(value, &((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size, &((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num)) {
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)
+	    && oph_tp_parse_multiple_value_param(value, &((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size, &((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
 		oph_tp_free_multiple_value_param_list(((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size, ((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num);
@@ -1249,24 +1252,27 @@ int task_init(oph_operator_struct * handle)
 				free(old_measure);
 			goto __OPH_EXIT_1;
 		}
-		if (((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num && (((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num != number_of_implicit_dimensions)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to process '%s': wrong number of values.\n", OPH_IN_PARAM_DIMENSION_SIZE);
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, "Unable to process '%s': wrong number of values.\n",
-				OPH_IN_PARAM_DIMENSION_SIZE);
-			free(cubedims);
-			if (old_measure)
-				free(old_measure);
-			goto __OPH_EXIT_1;
-		}
-		if (((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num
-		    && (((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num != number_of_implicit_dimensions)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to process '%s': wrong number of values.\n", OPH_IN_PARAM_APPLY_DIM_QUERY);
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, "Unable to process '%s': wrong number of values.\n",
-				OPH_IN_PARAM_DIMENSION_SIZE);
-			free(cubedims);
-			if (old_measure)
-				free(old_measure);
-			goto __OPH_EXIT_1;
+		if (number_of_implicit_dimensions) {
+			if (((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num
+			    && (((OPH_APPLY_operator_handle *) handle->operator_handle)->dim_size_num != number_of_implicit_dimensions)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to process '%s': wrong number of values.\n", OPH_IN_PARAM_DIMENSION_SIZE);
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, "Unable to process '%s': wrong number of values.\n",
+					OPH_IN_PARAM_DIMENSION_SIZE);
+				free(cubedims);
+				if (old_measure)
+					free(old_measure);
+				goto __OPH_EXIT_1;
+			}
+			if (((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num
+			    && (((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num != number_of_implicit_dimensions)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to process '%s': wrong number of values.\n", OPH_IN_PARAM_APPLY_DIM_QUERY);
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, "Unable to process '%s': wrong number of values.\n",
+					OPH_IN_PARAM_APPLY_DIM_QUERY);
+				free(cubedims);
+				if (old_measure)
+					free(old_measure);
+				goto __OPH_EXIT_1;
+			}
 		}
 
 		if ((use_dim || ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation_num) && (main_impl_dim >= 0)) {

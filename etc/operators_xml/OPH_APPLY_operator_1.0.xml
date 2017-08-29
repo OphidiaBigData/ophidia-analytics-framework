@@ -27,7 +27,7 @@ In case of inequalities, it is necessary to call the primitive &quot;oph_cast&qu
                  if &quot;manual&quot; (default) measure type and the related primitive arguments have to be set in &quot;query&quot;.
 - dim_type : if &quot;auto&quot; dimension type will be set automatically to that of input datacube, the related primitive arguments have to be omitted in &quot;dim_query&quot;;
              if &quot;manual&quot; (default) dimension type and the related primitive arguments have to be set in &quot;dim_query&quot;.
-- dim_size : it can be used to set dimension sizes in output cubes when &quot;dim_query&quot; is used.
+- dim_size : it can be used to set dimension sizes in output cubes when &quot;dim_query&quot; is used; by default the size is taken directly from the query, but it is valid only in case of one implicit dimension.
 - check_type : if &quot;yes&quot; the agreement between input and output data types of nested primitives will be checked,
                if &quot;no&quot; data type will be not checked (valid only for &quot;manual&quot; setting of &quot;measure_type&quot; and &quot;dim_type&quot;).
 - compressed : if &quot;auto&quot; (default) new data wil be compressed according to compression status of input datacube,
