@@ -1306,9 +1306,9 @@ int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb * oDB, i
 			}
 		} else if (concept_level) {
 			if ((*concept_level_ == OPH_HIER_MINUTE_SHORT_NAME[0]) || (*concept_level_ == OPH_HIER_MONTH_SHORT_NAME[0])) {
-				if (!strncmp(concept_level_, OPH_HIER_MINUTE_LONG_NAME, OPH_HIER_MAX_STRING_LENGTH))
+				if (!strncmp(concept_level_, OPH_HIER_MINUTE_LONG_NAME, strlen(concept_level_)))
 					*concept_level = OPH_HIER_MINUTE_SHORT_NAME[0];
-				else if (!strncmp(concept_level_, OPH_HIER_MONTH_LONG_NAME, OPH_HIER_MAX_STRING_LENGTH))
+				else
 					*concept_level = OPH_HIER_MONTH_SHORT_NAME[0];
 			} else
 				*concept_level = *concept_level_;
