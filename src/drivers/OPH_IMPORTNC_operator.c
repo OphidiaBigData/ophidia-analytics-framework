@@ -2558,6 +2558,20 @@ int task_init(oph_operator_struct * handle)
 							}
 							dimvar_ids[i] = tmp_var.varid;
 
+							if (nc_inq_vartype(ncid, tmp_var.varid, &(tmp_var.vartype))) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+								oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+								oph_dim_unload_dim_dbinstance(db_dimension);
+								free(dims);
+								free(dim_inst);
+								free(dimvar_ids);
+								goto __OPH_EXIT_1;
+							}
+							if ((tmp_var.varid >= 0) && oph_nc_compare_nc_c_types(id_container_out, tmp_var.vartype, dims[j].dimension_type)) {
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Dimension type in NC file doesn't correspond to the one stored in OphidiaDB\n");
+								logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
+							}
 							//Modified to allow subsetting
 							tmp_var.dims_start_index = &(measure->dims_start_index[i]);
 							tmp_var.dims_end_index = &(measure->dims_end_index[i]);
@@ -2838,15 +2852,8 @@ int task_init(oph_operator_struct * handle)
 				dim_inst[i].unlimited = measure->dims_unlim[i];
 
 				if ((tmp_var.varid >= 0) && oph_nc_compare_nc_c_types(id_container_out, tmp_var.vartype, tot_dims[j].dimension_type)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension type in NC file doesn't correspond to the one stored in OphidiaDB\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
-					free(tot_dims);
-					free(dims);
-					free(dim_inst);
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					free(dimvar_ids);
-					goto __OPH_EXIT_1;
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Dimension type in NC file doesn't correspond to the one stored in OphidiaDB\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
 				}
 				//Modified to allow subsetting
 				tmp_var.dims_start_index = &(measure->dims_start_index[i]);
