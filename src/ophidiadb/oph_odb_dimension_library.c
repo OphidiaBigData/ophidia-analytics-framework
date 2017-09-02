@@ -953,12 +953,14 @@ int oph_odb_dim_find_container_grid_list(ophidiadb * oDB, int id_container, MYSQ
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid * grid, int *last_insertd_id)
+int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid * grid, int *last_insertd_id, int *grid_exist)
 {
 	if (!oDB || !grid || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+	if (grid_exist)
+		*grid_exist = 0;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -994,6 +996,9 @@ int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid *
 			*last_insertd_id = (int) strtol(row[0], NULL, 10);
 
 		mysql_free_result(res);
+
+		if (grid_exist)
+			*grid_exist = 1;
 
 		return OPH_ODB_SUCCESS;
 	}
@@ -1042,6 +1047,9 @@ int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid *
 			*last_insertd_id = (int) strtol(row[0], NULL, 10);
 
 		mysql_free_result(res);
+
+		if (grid_exist)
+			*grid_exist = 1;
 	}
 
 	return OPH_ODB_SUCCESS;
