@@ -12,9 +12,13 @@ It manages folders of the Ophidia filesystem.
 - command : command to be executed among these:
             -- ls : list the files in a directory (default)
             -- cd : change directory
-- dpath : 0 or 1 paths needed by commands.
-         In case of cd, without a path the new directory will be the root folder.
-         In all other cases, it can be used only 1 path.
+            -- mkdir : create a new directory
+            -- rm : delete an empty directory 
+            -- mv : move/rename a directory
+- dpath : 0, 1 or 2 paths needed by commands.
+          In case of &quot;cd&quot;, without a path the new directory will be the root folder.
+          In case of &quot;mv&quot;, the second path indicates the destination directory.
+          In all other cases, it can be used only 1 path.
 - file : file filter
 - cdd : absolute path corresponding to the current directory on data repository.
 - recursive : specifies if the search is done recursively or not. 
@@ -45,7 +49,7 @@ SUBMISSION STRING: &quot;operator=oph_fs;command=cd;dpath=folder1;cdd=/absolute/
 	<permission>read</permission>
     </info>
     <args>
-        <argument type="string" mandatory="no" default="ls" values="ls|cd">command</argument>
+        <argument type="string" mandatory="no" default="ls" values="ls|cd|mkdir|rm|mv">command</argument>
         <argument type="string" mandatory="no" default="-">dpath</argument>
         <argument type="string" mandatory="no" default="-">file</argument>
         <argument type="string" mandatory="no" default="/">cdd</argument>
@@ -55,6 +59,6 @@ SUBMISSION STRING: &quot;operator=oph_fs;command=cd;dpath=folder1;cdd=/absolute/
         <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
         <argument type="string" mandatory="no" default="null">sessionid</argument>
         <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-	<argument type="string" mandatory="no" default="all" values="all|none|fs">objkey_filter</argument>
+        <argument type="string" mandatory="no" default="all" values="all|none|fs">objkey_filter</argument>
     </args>
 </operator>

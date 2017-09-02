@@ -1583,6 +1583,7 @@ int oph_fits_compare_fits_c_types(int id_container, int var_type, const char dim
 {
 	if (!var_type || !dim_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Null input parameter\n");
 		return OPH_FITS_ERROR;
 	}
 
@@ -1620,6 +1621,7 @@ int oph_fits_compare_fits_c_types(int id_container, int var_type, const char dim
 			break;
 		default:
 			pmesg(LOG_WARNING, __FILE__, __LINE__, "Variable type not supported: double assumed\n");
+			logging(LOG_WARNING, __FILE__, __LINE__, id_container, "Variable type not supported: double assumed\n");
 			break;
 	}
 	return OPH_FITS_SUCCESS;

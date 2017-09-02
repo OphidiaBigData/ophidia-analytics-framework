@@ -160,7 +160,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read user_space\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read user_space\n");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	};
+	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXPORT_METADATA);
 	if (!value) {
