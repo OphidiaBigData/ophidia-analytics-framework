@@ -182,7 +182,7 @@ liboph_fits_la_LIBADD = -lz -lm ${LIBCFITSIO_LIB} -lpthread @LIBLTDL@ -L. -ldebu
 endif
 
 liboph_sac_la_SOURCES = oph_sac_library.c 
-liboph_sac_la_CFLAGS= ${MYSQL_CFLAGS} -I/usr/local/ophidia/extra/sac/include -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
+liboph_sac_la_CFLAGS= ${MYSQL_CFLAGS} -I/usr/local/ophidia/extra/include -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
 liboph_sac_la_LDFLAGS = -static
-liboph_sac_la_LIBADD = -lz -lm @LIBLTDL@ -L/usr/local/ophidia/extra/sac/lib -lreadsac -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube
+liboph_sac_la_LIBADD = -lz -lm @LIBLTDL@ -L/usr/local/ophidia/extra/lib -lreadsac -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube
 
