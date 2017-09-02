@@ -1667,4 +1667,3 @@ int oph_fits_get_fits_var(int id_container, char *varname, long *dims_length, FI
 	var->varsize = 1 * var->dims_length[0];
 	return OPH_FITS_SUCCESS;
 }
-

@@ -2847,4 +2847,3 @@ int env_unset(oph_operator_struct * handle)
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
-
