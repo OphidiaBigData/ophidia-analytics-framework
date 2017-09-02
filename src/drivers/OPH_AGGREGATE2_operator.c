@@ -533,7 +533,7 @@ int task_init(oph_operator_struct * handle)
 		}
 
 		// Grid management
-		int id_grid = 0, new_grid = 0, stored_dim_num = 0;
+		int id_grid = 0, new_grid = 0, stored_dim_num = 0, grid_exist = 0;
 		oph_odb_dimension *stored_dims = NULL;
 		oph_odb_dimension_instance *stored_dim_insts = NULL;
 
@@ -566,13 +566,20 @@ int task_init(oph_operator_struct * handle)
 				new_grid = 1;
 				oph_odb_dimension_grid grid;
 				strncpy(grid.grid_name, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->grid_name, OPH_ODB_DIM_GRID_SIZE);
-				if (oph_odb_dim_insert_into_grid_table(oDB, &grid, &id_grid)) {
+				grid.grid_name[OPH_ODB_DIM_GRID_SIZE] = 0;
+				if (oph_odb_dim_insert_into_grid_table(oDB, &grid, &id_grid, &grid_exist)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while storing grid\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_input_container,
 						OPH_LOG_OPH_AGGREGATE2_GRID_STORE_ERROR);
 					oph_odb_cube_free_datacube(&cube);
 					free(cubedims);
 					goto __OPH_EXIT_1;
+				}
+				if (grid_exist) {
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Grid already exists: dimensions will be not associated to a grid.\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_input_container,
+						"Grid already exists: dimensions will be not associated to a grid.\n");
+					id_grid = 0;
 				}
 			}
 		}
@@ -748,8 +755,10 @@ int task_init(oph_operator_struct * handle)
 								free(stored_dim_insts);
 							goto __OPH_EXIT_1;
 						}
-					} else
+					} else {
 						strncpy(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);	// A reduced dimension is handled by indexes
+						dim[l].dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
+					}
 
 					int flag, size;
 					if (oph_dim_check_data_type(dim[l].dimension_type, &size) || !size) {
@@ -1083,6 +1092,7 @@ int task_init(oph_operator_struct * handle)
 		new_task.id_outputcube = ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_output_datacube;
 		new_task.id_job = ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_job;
 		strncpy(new_task.operator, handle->operator_type, OPH_ODB_CUBE_OPERATOR_SIZE);
+		new_task.operator[OPH_ODB_CUBE_OPERATOR_SIZE] = 0;
 		memset(new_task.query, 0, OPH_ODB_CUBE_OPERATION_QUERY_SIZE);
 		char _ms[OPH_COMMON_MAX_DOUBLE_LENGHT];
 		if (isnan(((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->ms))
@@ -1410,6 +1420,7 @@ int task_execute(oph_operator_struct * handle)
 				//Change fragment fields
 				frags.value[k].id_datacube = id_datacube_out;
 				strncpy(frags.value[k].fragment_name, frag_name_out, OPH_ODB_STGE_FRAG_NAME_SIZE);
+				frags.value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
 				if (frags.value[k].key_end) {
 					frags.value[k].key_start = 1 + (frags.value[k].key_start - 1) / size;
 					frags.value[k].key_end = 1 + (frags.value[k].key_end - 1) / size;

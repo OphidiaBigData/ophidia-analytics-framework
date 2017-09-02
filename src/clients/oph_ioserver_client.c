@@ -40,7 +40,7 @@ int msglevel = LOG_DEBUG;
 
 int main(int argc, char **argv)
 {
-	fprintf(stdout, "%s", OPH_VERSION);
+	fprintf(stdout, OPH_VERSION, PACKAGE_VERSION);
 	fprintf(stdout, "%s", OPH_DISCLAIMER);
 
 	if (!argc || !argv)
@@ -231,6 +231,7 @@ int main(int argc, char **argv)
 				//Change fragment fields
 				frags.value[k].id_datacube = id_output_datacube;
 				strncpy(frags.value[k].fragment_name, frag_name_out, OPH_ODB_STGE_FRAG_NAME_SIZE);
+				frags.value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
 
 				//Insert new fragment
 				if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &(frags.value[k]))) {

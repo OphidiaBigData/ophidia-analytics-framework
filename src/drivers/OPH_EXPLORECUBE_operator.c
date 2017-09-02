@@ -171,11 +171,23 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 	}
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_FILTER_TYPE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->subset_type = !strncmp(value, OPH_EXPLORECUBE_TYPE_COORD, OPH_TP_TASKLEN);
+
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_LIMIT_FILTER);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_LIMIT_FILTER);
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MISSING_INPUT_PARAMETER,
 			OPH_IN_PARAM_LIMIT_FILTER);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strcmp(value, OPH_COMMON_ALL_FILTER) != 0) {
@@ -187,6 +199,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_VISUALIZZATION_LEVEL);
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MISSING_INPUT_PARAMETER,
 			OPH_IN_PARAM_VISUALIZZATION_LEVEL);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->level = (int) strtol(value, NULL, 10);
@@ -196,6 +210,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SHOW_ID);
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MISSING_INPUT_PARAMETER,
 			OPH_IN_PARAM_SHOW_ID);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strcmp(value, OPH_COMMON_YES_VALUE) == 0)
@@ -206,6 +222,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SHOW_INDEX);
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MISSING_INPUT_PARAMETER,
 			OPH_IN_PARAM_SHOW_INDEX);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strcmp(value, OPH_COMMON_YES_VALUE) == 0)
@@ -216,6 +234,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SHOW_TIME);
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MISSING_INPUT_PARAMETER,
 			OPH_IN_PARAM_SHOW_TIME);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strcmp(value, OPH_COMMON_YES_VALUE) == 0)
@@ -234,6 +254,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	char *username = value;
@@ -242,6 +264,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strcmp(value, "default")) {
@@ -249,7 +273,53 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT,
 				"output path");
+			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		if (strstr(handle->output_path, "..")) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		char *pointer = handle->output_path;
+		while (pointer && (*pointer == ' '))
+			pointer++;
+		if (pointer) {
+			char tmp[OPH_COMMON_BUFFER_LEN];
+			if (*pointer != '/') {
+				value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
+				if (!value) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (*value != '/') {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (strlen(value) > 1) {
+					if (strstr(value, "..")) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					}
+					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value + 1, pointer);
+					free(handle->output_path);
+					handle->output_path = strdup(tmp);
+					pointer = handle->output_path;
+				}
+			}
+			if (oph_pid_get_base_src_path(&value)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
+			free(handle->output_path);
+			handle->output_path = strdup(tmp);
+			free(value);
 		}
 	}
 
@@ -257,6 +327,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_NAME);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_NAME);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strcmp(value, "default")) {
@@ -264,7 +336,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT,
 				"output name");
+			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		if (strstr(handle->output_name, "..")) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 		int s;
 		for (s = 0; s < (int) strlen(handle->output_name); s++) {
@@ -279,24 +358,30 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_BASE64);
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MISSING_INPUT_PARAMETER,
 			OPH_IN_PARAM_BASE64);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strcmp(value, OPH_COMMON_YES_VALUE) == 0)
 		((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->base64 = 1;
 
-//Only master process has to initialize and open connection to management OphidiaDB
+	//Only master process has to initialize and open connection to management OphidiaDB
 	ophidiadb *oDB = &((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->oDB;
 	oph_odb_init_ophidiadb(oDB);
 
 	if (oph_odb_read_ophidiadb_config_file(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_OPHIDIADB_CONFIGURATION_FILE);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
 	if (oph_odb_connect_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_OPHIDIADB_CONNECTION_ERROR);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 	//Check if datacube exists (by ID container and datacube)
@@ -510,7 +595,7 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
-	char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[OPH_COMMON_BUFFER_LEN], operation2[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
+	char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[1 + OPH_COMMON_BUFFER_LEN], operation2[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
 	snprintf(index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container);
 	snprintf(label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container);
 	int n, compressed = 0, non_empty_set = 1;
@@ -568,6 +653,46 @@ int task_execute(oph_operator_struct * handle)
 		size_string = &(size_string_vector[d][0]);
 		snprintf(size_string, OPH_COMMON_BUFFER_LEN, "%lld,%lld", block_size, dim_size[d][dim_number[d] - 1]);
 
+		if (!((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->subset_type) {
+
+			// Parsing indexes
+			subset_struct[d] = 0;
+			if (oph_subset_init(&subset_struct[d])) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate subset struct.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_MEMORY_ERROR_STRUCT,
+					"subset");
+				oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
+				oph_odb_cube_free_datacube(&cube);
+				free(cubedims);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			if (oph_subset_parse
+			    (((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d], strlen(((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d]), subset_struct[d],
+			     dim_size[d][dim_number[d] - 1])) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot parse subset string '%s'. Select values in [1,%lld].\n",
+				      ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d], dim_size[d][dim_number[d] - 1]);
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_PARSE_ERROR,
+					((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d], dim_size[d][dim_number[d] - 1]);
+				oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
+				oph_odb_cube_free_datacube(&cube);
+				free(cubedims);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			if (oph_subset_size(subset_struct[d], dim_size[d][dim_number[d] - 1], &new_size[l], 0, 0)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot evaluate subset size.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_SIZE_ERROR);
+				oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
+				oph_odb_cube_free_datacube(&cube);
+				free(cubedims);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+		}
 		// Dimension extraction
 		if (oph_odb_dim_retrieve_dimension_instance(oDB, cubedims[l].id_dimensioninst, &(dim_inst[l]), datacube_id)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading dimension information.\n");
@@ -589,37 +714,28 @@ int task_execute(oph_operator_struct * handle)
 			oph_dim_unload_dim_dbinstance(db);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-		if (compressed) {
-			n = snprintf(operation, OPH_COMMON_BUFFER_LEN, "uncompress(%s)", MYSQL_DIMENSION);
-			if (n >= OPH_COMMON_BUFFER_LEN) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container,
-					OPH_LOG_OPH_EXPLORECUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
-				oph_dim_disconnect_from_dbms(db->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db);
-				oph_odb_cube_free_datacube(&cube);
-				free(cubedims);
-				oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+
+		if (((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->subset_type) {
+
+			if (compressed) {
+				n = snprintf(operation, OPH_COMMON_BUFFER_LEN, "uncompress(%s)", MYSQL_DIMENSION);
+				if (n >= OPH_COMMON_BUFFER_LEN) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_EXPLORECUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					oph_odb_cube_free_datacube(&cube);
+					free(cubedims);
+					oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
+			} else {
+				strncpy(operation, MYSQL_DIMENSION, OPH_COMMON_BUFFER_LEN);
+				operation[OPH_COMMON_BUFFER_LEN] = 0;
 			}
-		} else
-			strncpy(operation, MYSQL_DIMENSION, OPH_COMMON_BUFFER_LEN);
-		dim_row = 0;
-		if (oph_dim_read_dimension_data(db, index_dimension_table_name, dim_inst[l].fk_id_dimension_index, operation, 0, &dim_row) || !dim_row) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading a row from dimension table.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR);
-			if (dim_row)
-				free(dim_row);
-			oph_dim_disconnect_from_dbms(db->dbms_instance);
-			oph_dim_unload_dim_dbinstance(db);
-			oph_odb_cube_free_datacube(&cube);
-			free(cubedims);
-			oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
-		if (dim_inst[l].fk_id_dimension_label) {
-			if (oph_dim_read_dimension_filtered_data(db, label_dimension_table_name, dim_inst[l].fk_id_dimension_label, operation, 0, &dim_row, dim[l].dimension_type, dim_inst[l].size)
-			    || !dim_row) {
+			dim_row = 0;
+			if (oph_dim_read_dimension_data(db, index_dimension_table_name, dim_inst[l].fk_id_dimension_index, operation, 0, &dim_row) || !dim_row) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading a row from dimension table.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR);
 				if (dim_row)
@@ -631,16 +747,13 @@ int task_execute(oph_operator_struct * handle)
 				oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
-		} else
-			strncpy(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);	// A reduced dimension is handled by indexes
-
-		// Pre-parsing for time dimensions
-		if (((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->time_filter && dim[l].calendar && strlen(dim[l].calendar)) {
-			if ((n = oph_dim_parse_time_subset(((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d], &(dim[l]), temp))) {
-				if (n != OPH_DIM_TIME_PARSING_ERROR) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing time values.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_PARSE_ERROR,
-						((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d]);
+			if (dim_inst[l].fk_id_dimension_label) {
+				if (oph_dim_read_dimension_filtered_data
+				    (db, label_dimension_table_name, dim_inst[l].fk_id_dimension_label, operation, 0, &dim_row, dim[l].dimension_type, dim_inst[l].size)
+				    || !dim_row) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading a row from dimension table.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_EXPLORECUBE_DIM_READ_ERROR);
 					if (dim_row)
 						free(dim_row);
 					oph_dim_disconnect_from_dbms(db->dbms_instance);
@@ -650,57 +763,79 @@ int task_execute(oph_operator_struct * handle)
 					oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
-			} else {
-				free(((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d]);
-				((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d] = strndup(temp, OPH_TP_TASKLEN);
+			} else
+				strncpy(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);	// A reduced dimension is handled by indexes
+
+			// Pre-parsing for time dimensions
+			if (((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->time_filter && dim[l].calendar && strlen(dim[l].calendar)) {
+				if ((n = oph_dim_parse_time_subset(((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d], &(dim[l]), temp))) {
+					if (n != OPH_DIM_TIME_PARSING_ERROR) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing time values.\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container,
+							OPH_LOG_OPH_EXPLORECUBE_PARSE_ERROR, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d]);
+						if (dim_row)
+							free(dim_row);
+						oph_dim_disconnect_from_dbms(db->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db);
+						oph_odb_cube_free_datacube(&cube);
+						free(cubedims);
+						oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
+						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					}
+				} else {
+					free(((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d]);
+					((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d] = strndup(temp, OPH_TP_TASKLEN);
+				}
 			}
-		}
-		// Real parsing
-		subset_struct[d] = 0;
-		if (oph_subset_value_to_index
-		    (((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d], dim_row, dim_size[d][dim_number[d] - 1], dim[l].dimension_type, 0, temp, &subset_struct[d])) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot convert the subset '%s' into a subset expressed as indexes.\n",
-			      ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d]);
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_PARSE_ERROR,
-				((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d]);
+			// Real parsing
+			subset_struct[d] = 0;
+			if (oph_subset_value_to_index
+			    (((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d], dim_row, dim_size[d][dim_number[d] - 1], dim[l].dimension_type, 0, temp, &subset_struct[d])) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot convert the subset '%s' into a subset expressed as indexes.\n",
+				      ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d]);
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_PARSE_ERROR,
+					((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d]);
+				if (dim_row)
+					free(dim_row);
+				oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
+				oph_odb_cube_free_datacube(&cube);
+				free(cubedims);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
 			if (dim_row)
 				free(dim_row);
-			oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
-			oph_odb_cube_free_datacube(&cube);
-			free(cubedims);
-			oph_dim_disconnect_from_dbms(db->dbms_instance);
-			oph_dim_unload_dim_dbinstance(db);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
-		if (dim_row)
-			free(dim_row);
 
-		if (non_empty_set && !strlen(temp))
-			non_empty_set = 0;
+			if (non_empty_set && !strlen(temp))
+				non_empty_set = 0;
 
-		if (((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d]) {
-			free((char *) ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d]);
-			((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d] = NULL;
-		}
-		if (!(((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d] = (char *) strndup(temp, OPH_TP_TASKLEN))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_STRUCT, "task");
-			oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
-			oph_odb_cube_free_datacube(&cube);
-			free(cubedims);
-			oph_dim_disconnect_from_dbms(db->dbms_instance);
-			oph_dim_unload_dim_dbinstance(db);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
-		if (strlen(temp) && oph_subset_size(subset_struct[d], dim_size[d][dim_number[d] - 1], &new_size[l], 0, 0)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot evaluate subset size.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_SIZE_ERROR);
-			oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
-			oph_odb_cube_free_datacube(&cube);
-			free(cubedims);
-			oph_dim_disconnect_from_dbms(db->dbms_instance);
-			oph_dim_unload_dim_dbinstance(db);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			if (((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d]) {
+				free((char *) ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d]);
+				((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d] = NULL;
+			}
+			if (!(((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d] = (char *) strndup(temp, OPH_TP_TASKLEN))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_STRUCT,
+					"task");
+				oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
+				oph_odb_cube_free_datacube(&cube);
+				free(cubedims);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			if (strlen(temp) && oph_subset_size(subset_struct[d], dim_size[d][dim_number[d] - 1], &new_size[l], 0, 0)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot evaluate subset size.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPLORECUBE_SIZE_ERROR);
+				oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
+				oph_odb_cube_free_datacube(&cube);
+				free(cubedims);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+
 		}
 
 		if (((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d] && strlen(((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d])) {
@@ -1085,6 +1220,7 @@ int task_execute(oph_operator_struct * handle)
 					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				}
 				strncpy(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
+				dim[l].dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
 				//Since index is always long we can assure that lenght is size*SIZEOF(long)
 				dim_rows[l] = (char *) malloc(dim_inst[l].size * sizeof(long long));
 				if (!dim_rows[l]) {

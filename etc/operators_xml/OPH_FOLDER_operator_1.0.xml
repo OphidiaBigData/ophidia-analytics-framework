@@ -13,7 +13,7 @@ It manages folders of the Ophidia filesystem.
             -- cd : change directory
             -- mkdir : create a new directory
             -- rm : delete an empty directory 
-            -- mv : move/rename a folder
+            -- mv : move/rename a directory
 - path : 0, 1 or 2 absolute/relative paths needed by commands.
          In case of mv, 2 paths are mandatory parameters and must end with a name
          of a folder.
@@ -54,6 +54,6 @@ SUBMISSION STRING: &quot;operator=oph_folder;command=mv;path=fold1|fold2;cwd=/ab
         <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
         <argument type="string" mandatory="no" default="null">sessionid</argument>
         <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-	<argument type="string" mandatory="no" default="all" values="all|none|folder">objkey_filter</argument>
+        <argument type="string" mandatory="no" default="all" values="all|none|folder">objkey_filter</argument>
     </args>
 </operator>

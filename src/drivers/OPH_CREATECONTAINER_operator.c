@@ -557,6 +557,7 @@ int task_execute(oph_operator_struct * handle)
 	//If it doesn't then create new container and get last id
 	oph_odb_container cont;
 	strncpy(cont.container_name, container_name, OPH_ODB_FS_CONTAINER_SIZE);
+	cont.container_name[OPH_ODB_FS_CONTAINER_SIZE] = 0;
 	cont.id_parent = 0;
 	cont.id_folder = folder_id;
 	cont.operation[0] = 0;
@@ -575,12 +576,15 @@ int task_execute(oph_operator_struct * handle)
 	oph_odb_dimension dim;
 	dim.id_container = id_container_out;
 	strncpy(dim.base_time, ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->base_time, OPH_ODB_DIM_TIME_SIZE);
+	dim.base_time[OPH_ODB_DIM_TIME_SIZE] = 0;
 	dim.leap_year = ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->leap_year;
 	dim.leap_month = ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->leap_month;
 	for (i = 0; i < num_of_input_dim; i++) {
 		//Change the dimension names
 		strncpy(dim.dimension_name, ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->dimension_name[i], OPH_ODB_DIM_DIMENSION_SIZE);
+		dim.dimension_name[OPH_ODB_DIM_DIMENSION_SIZE] = 0;
 		strncpy(dim.dimension_type, ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->dimension_type[i], OPH_ODB_DIM_DIMENSION_TYPE_SIZE);
+		dim.dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
 		dim.id_hierarchy = ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->id_dimension_hierarchy[i];
 		if (dim.id_hierarchy >= 0)
 			dim.units[0] = dim.calendar[0] = 0;
@@ -588,9 +592,12 @@ int task_execute(oph_operator_struct * handle)
 			int j = 0;
 			dim.id_hierarchy *= -1;
 			strncpy(dim.units, ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->units, OPH_ODB_DIM_TIME_SIZE);
+			dim.units[OPH_ODB_DIM_TIME_SIZE] = 0;
 			strncpy(dim.calendar, ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->calendar, OPH_ODB_DIM_TIME_SIZE);
-			char *tmp = NULL, *save_pointer = NULL, month_lengths[OPH_ODB_DIM_TIME_SIZE];
+			dim.calendar[OPH_ODB_DIM_TIME_SIZE] = 0;
+			char *tmp = NULL, *save_pointer = NULL, month_lengths[1 + OPH_ODB_DIM_TIME_SIZE];
 			strncpy(month_lengths, ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->month_lengths, OPH_ODB_DIM_TIME_SIZE);
+			month_lengths[OPH_ODB_DIM_TIME_SIZE] = 0;
 			while ((tmp = strtok_r(tmp ? NULL : month_lengths, ",", &save_pointer)) && (j < OPH_ODB_DIM_MONTH_NUMBER))
 				dim.month_lengths[j++] = (int) strtol(tmp, NULL, 10);
 			while (j < OPH_ODB_DIM_MONTH_NUMBER)

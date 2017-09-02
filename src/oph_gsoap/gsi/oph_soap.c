@@ -60,12 +60,13 @@ int oph_soap_read_config_file(oph_soap_data * data)
 	buffer[strlen(buffer) - 1] = '\0';
 	position = strchr(buffer, '=');
 	if (position != NULL) {
-		if (!(host = (char *) malloc((strlen(position + 1) + 1) * sizeof(char)))) {
+		position++;
+		if (!(host = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
 			fclose(file);
 			return -4;
 		}
-		strncpy(host, position + 1, strlen(position + 1) + 1);
-		host[strlen(position + 1)] = '\0';
+		strncpy(host, position, strlen(position) + 1);
+		host[strlen(position)] = '\0';
 	}
 
 	if (!fgets(buffer, OPH_COMMON_BUFFER_LEN, file)) {
@@ -76,13 +77,14 @@ int oph_soap_read_config_file(oph_soap_data * data)
 	buffer[strlen(buffer) - 1] = '\0';
 	position = strchr(buffer, '=');
 	if (position != NULL) {
-		if (!(port = (char *) malloc((strlen(position + 1) + 1) * sizeof(char)))) {
+		position++;
+		if (!(port = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
 			fclose(file);
 			free(host);
 			return -4;
 		}
-		strncpy(port, position + 1, strlen(position + 1) + 1);
-		port[strlen(position + 1)] = '\0';
+		strncpy(port, position, strlen(position) + 1);
+		port[strlen(position)] = '\0';
 	}
 
 	int n;
@@ -105,13 +107,14 @@ int oph_soap_read_config_file(oph_soap_data * data)
 	buffer[strlen(buffer) - 1] = '\0';
 	position = strchr(buffer, '=');
 	if (position != NULL) {
-		if (!(data->username = (char *) malloc((strlen(position + 1) + 1) * sizeof(char)))) {
+		position++;
+		if (!(data->username = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
 			fclose(file);
 			oph_soap_free_data(data);
 			return -4;
 		}
-		strncpy(data->username, position + 1, strlen(position + 1) + 1);
-		data->username[strlen(position + 1)] = '\0';
+		strncpy(data->username, position, strlen(position) + 1);
+		data->username[strlen(position)] = '\0';
 	}
 
 	if (!fgets(buffer, OPH_COMMON_BUFFER_LEN, file)) {
@@ -122,13 +125,14 @@ int oph_soap_read_config_file(oph_soap_data * data)
 	buffer[strlen(buffer) - 1] = '\0';
 	position = strchr(buffer, '=');
 	if (position != NULL) {
-		if (!(data->password = (char *) malloc((strlen(position + 1) + 1) * sizeof(char)))) {
+		position++;
+		if (!(data->password = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
 			fclose(file);
 			oph_soap_free_data(data);
 			return -4;
 		}
-		strncpy(data->password, position + 1, strlen(position + 1) + 1);
-		data->password[strlen(position + 1)] = '\0';
+		strncpy(data->password, position, strlen(position) + 1);
+		data->password[strlen(position)] = '\0';
 	}
 
 	if (!fgets(buffer, OPH_COMMON_BUFFER_LEN, file)) {

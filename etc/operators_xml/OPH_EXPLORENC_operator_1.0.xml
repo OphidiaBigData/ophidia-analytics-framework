@@ -14,6 +14,7 @@ WARNING: It handles only mono-dimensional coordinate variables.
 		     for a static linear block distribution of resources.
 - measure : name of the measure related to the NetCDF file.
 - src_path : path or OPeNDAP URL of the NetCDF file.
+- cdd : absolute path corresponding to the current directory on data repository.
 - exp_dim : names of explicit dimensions.
 				 Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
 				 It implicitly defines explicit dimension number and level (order). 
@@ -60,7 +61,7 @@ WARNING: It handles only mono-dimensional coordinate variables.
 - show_fit : if &quot;yes&quot; linear regression of each time serie is returned.
              It can be adopted only in case only one implicit dimension exists.
              With &quot;no&quot; (default) linear regression is not evaluated (default).
-- level : with &quot;1&quot; (default) only measure values are shown, if it is set to &quot;2&quot; the dimension values are also returned.
+- level : with &quot;0&quot; the attribute list is shown (default), with &quot;1&quot; the values of a measure are shown, with &quot;2&quot; both measure and dimension values are returned.
 - imp_num_points : indicates the number of points which measure values must be distribuited along by interpolation.
                    if &quot;imp_num_points&quot; is higher than the number of actual points then interpolation is evaluated;
                    otherwise &quot;operation&quot; is applied.
@@ -92,7 +93,14 @@ WARNING: It handles only mono-dimensional coordinate variables.
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
-                  explorenc : show operator's output PID as text.
+                  explorenc_data: show data or variable-dimension dependences (only for level 0)
+                  explorenc_summary: show a summary
+                  explorenc_dimvalues: show dimension values or dimension sizes (only for level 0)
+                  explorenc_wavelet_data: show wavelet transform
+                  explorenc_wavelet_coeff: show wavelet coefficients
+                  explorenc_stats: show a number of statistics on data
+                  explorenc_fit: show fitted data
+                  explorenc_metadata: show file attributes (only for level 0).
 
 [Examples] 
 Read the NetCDF file /path/of/ncfile.nc:
@@ -108,26 +116,27 @@ SUBMISSION STRING: &quot;operator=oph_explorenc;measure=pressure;src_path=/path/
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
-		<argument type="string" mandatory="yes">measure</argument>
+		<argument type="string" mandatory="no" default="-">measure</argument>
 		<argument type="string" mandatory="yes">src_path</argument>
-		<argument type="string" mandatory="yes">exp_dim</argument>
-		<argument type="string" mandatory="yes">imp_dim</argument>
+		<argument type="string" mandatory="no" default="/">cdd</argument>
+		<argument type="string" mandatory="no" default="-">exp_dim</argument>
+		<argument type="string" mandatory="no" default="-">imp_dim</argument>
 		<argument type="string" mandatory="no" default="none">subset_dims</argument>
 		<argument type="string" mandatory="no" default="index" values="index|coord">subset_type</argument>
 		<argument type="string" mandatory="no" default="all">subset_filter</argument>
 		<argument type="int" mandatory="no" default="100" minvalue="1" maxvalue="10000">limit_filter</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">show_index</argument>
-        	<argument type="string" mandatory="no" default="no" values="yes|no">show_id</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">show_id</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">show_time</argument>
 		<argument type="string" mandatory="no" default="00000000000000">show_stats</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">show_fit</argument>
-		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="2">level</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0" maxvalue="2" values="0|1|2">level</argument>
 		<argument type="int" mandatory="no" default="0" minvalue="0">imp_num_points</argument>
 		<argument type="real" mandatory="no" default="50" minvalue="0" maxvalue="100">offset</argument>
 		<argument type="string" mandatory="no" default="avg" values="max|min|avg|sum">operation</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no|only">wavelet</argument>
 		<argument type="real" mandatory="no" default="0" minvalue="0" maxvalue="100">wavelet_ratio</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">wavelet_coeff</argument>
-		<argument type="string" mandatory="no" default="all" values="all|none|explorenc">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|explorenc_data|explorenc_summary|explorenc_dimvalues|explorenc_wavelet_data|explorenc_wavelet_coeff|explorenc_stats|explorenc_fit|explorenc_metadata">objkey_filter</argument>
     </args>
 </operator>

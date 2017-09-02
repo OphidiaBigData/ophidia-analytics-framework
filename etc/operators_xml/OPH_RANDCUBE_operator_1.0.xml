@@ -57,11 +57,11 @@ It creates a new datacube with random data and dimensions.
                   randcube : show operator's output PID as text in case "run" is "yes", else the parameter check is shown.
 
 [Examples]
-Generate a random compressed data cube with 1 host, 4 DBMSs/host, 2 dbs/DBMS, 2 fragments/db, 10 tuples/fragment, 
+Generate a random compressed data cube with 1 host, 1 DBMSs/host, 2 dbs/DBMS, 8 fragments/db, 10 tuples/fragment, 
 10 elements/tuple, with &apos;pressure&apos; measure and &apos;lat&apos;, &apos;lon&apos; and &apos;time&apos; 
-dimensions, in the container &apos;/session-code1/container1&apos;:
-OPH_TERM: oph_randcube container=container1;cwd=/session-code1;nhost=1;ndbms=4;ndb=2;nfrag=2;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;grid=new_grid;compressed=yes;host_partition=test;filesystem=local;
-SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;cwd=/session-code1;nhost=1;ndbms=4;ndb=2;nfrag=2;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;grid=new_grid;compressed=yes;host_partition=test;filesystem=local;&quot;</abstract>
+dimensions, in the container &apos;container1&apos;:
+OPH_TERM: oph_randcube container=container1;nhost=1;ndbms=1;ndb=2;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;host_partition=test;filesystem=local;
+SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;nhost=1;ndbms=1;ndb=2;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;host_partition=test;filesystem=local;&quot;</abstract>
         <author>CMCC Foundation</author>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>

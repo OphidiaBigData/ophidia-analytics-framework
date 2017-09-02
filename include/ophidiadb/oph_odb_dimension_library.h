@@ -59,6 +59,8 @@
 #define OPH_DIM_TIME_CALENDAR_JULIAN "julian"
 #define OPH_DIM_TIME_CALENDAR_360_DAY "360_day"
 #define OPH_DIM_TIME_CALENDAR_360DAY "360day"
+#define OPH_DIM_TIME_CALENDAR_365_DAY "365_day"
+#define OPH_DIM_TIME_CALENDAR_365DAY "365day"
 #define OPH_DIM_TIME_CALENDAR_NO_LEAP "no_leap"
 #define OPH_DIM_TIME_CALENDAR_NOLEAP "noleap"
 #define OPH_DIM_TIME_CALENDAR_ALL_LEAP "all_leap"
@@ -89,13 +91,13 @@
 typedef struct {
 	int id_dimension;
 	int id_container;
-	char dimension_name[OPH_ODB_DIM_DIMENSION_SIZE];
-	char dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE];
+	char dimension_name[OPH_ODB_DIM_DIMENSION_SIZE + 1];
+	char dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE + 1];
 	int id_hierarchy;
-	char base_time[OPH_ODB_DIM_TIME_SIZE];
-	char units[OPH_ODB_DIM_TIME_SIZE];
-	char calendar[OPH_ODB_DIM_TIME_SIZE];
-	int month_lengths[OPH_ODB_DIM_MONTH_NUMBER];
+	char base_time[OPH_ODB_DIM_TIME_SIZE + 1];
+	char units[OPH_ODB_DIM_TIME_SIZE + 1];
+	char calendar[OPH_ODB_DIM_TIME_SIZE + 1];
+	int month_lengths[OPH_ODB_DIM_MONTH_NUMBER + 1];
 	int leap_year;
 	int leap_month;
 } oph_odb_dimension;
@@ -128,7 +130,7 @@ typedef struct {
  */
 typedef struct {
 	int id_grid;
-	char grid_name[OPH_ODB_DIM_GRID_SIZE];
+	char grid_name[OPH_ODB_DIM_GRID_SIZE + 1];
 } oph_odb_dimension_grid;
 
 /**
@@ -139,8 +141,8 @@ typedef struct {
  */
 typedef struct {
 	int id_hierarchy;
-	char hierarchy_name[OPH_ODB_DIM_HIERARCHY_SIZE];
-	char filename[OPH_ODB_DIM_HIERARCHY_FILENAME_SIZE];
+	char hierarchy_name[OPH_ODB_DIM_HIERARCHY_SIZE + 1];
+	char filename[OPH_ODB_DIM_HIERARCHY_FILENAME_SIZE + 1];
 } oph_odb_hierarchy;
 
 /**
@@ -269,9 +271,10 @@ int oph_odb_dim_delete_from_grid_table(ophidiadb * oDB, int id_container);
  * \param oDB Pointer to OphidiaDB
  * \param grid Pointer to grid to be added
  * \param last_insertd_id ID of last inserted datacube
+ * \param grid_exist Flag set in case a grid with the same name already exists
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid * grid, int *last_insertd_id);
+int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid * grid, int *last_insertd_id, int *grid_exist);
 
 /**
  * \brief Function that updates OphidiaDB adding the new dimension

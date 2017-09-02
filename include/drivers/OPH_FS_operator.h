@@ -16,50 +16,53 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OPH_FOLDER_OPERATOR_H
-#define __OPH_FOLDER_OPERATOR_H
+#ifndef __OPH_FS_OPERATOR_H
+#define __OPH_FS_OPERATOR_H
 
 //Operator specific headers
-#include "oph_ophidiadb_main.h"
 #include "oph_common.h"
 
-#define OPH_FOLDER_CMD_CD       "cd"
-#define OPH_FOLDER_CMD_MKDIR    "mkdir"
-#define OPH_FOLDER_CMD_MV       "mv"
-#define OPH_FOLDER_CMD_RM       "rm"
+#define OPH_FS_CMD_LS	"ls"
+#define OPH_FS_CMD_CD	"cd"
+#define OPH_FS_CMD_MD	"mkdir"
+#define OPH_FS_CMD_RM	"rm"
+#define OPH_FS_CMD_MV	"mv"
 
-#define OPH_FOLDER_MODE_CD              0
-#define OPH_FOLDER_MODE_MKDIR           1
-#define OPH_FOLDER_MODE_MV              2
-#define OPH_FOLDER_MODE_RM              3
+#define OPH_FS_MODE_LS	0
+#define OPH_FS_MODE_CD	1
+#define OPH_FS_MODE_MD	2
+#define OPH_FS_MODE_RM	3
+#define OPH_FS_MODE_MV	4
 
-#define OPH_FOLDER_CD_MESSAGE "Current Working Directory"
+#define OPH_FS_CD_MESSAGE "Current Data Directory"
 
 /**
- * \brief Structure of parameters needed by the operator OPH_FOLDER. It manages the Ophidia filesystem folders.
- * \param oDB Contains the parameters and the connection to OphidiaDB
+ * \brief Structure of parameters needed by the operator OPH_FS. It manages the Ophidia filesystem FSs.
  * \param mode : number corresponding to one of the provided commands
- * \param path : 1 or 2 absolute or relative paths
+ * \param path : array of absolute or relative paths given as input
  * \param path_num : number of input paths
+ * \param file : file filter
  * \param cwd : current working directory as an absolute path
- * \param user : username of the user managing the filesystem.
+ * \param user : user that has submitted the task
+ * \param recursive : flag used to recursive search
+ * \param depth : maximum folder depth has to be explored in case of recursion
+ * \param realpath : flag used to list real path of files
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
- * \param sessionid SessionID
- * \param userrole User role
  */
-typedef struct _OPH_FOLDER_operator_handle {
-	ophidiadb oDB;
+typedef struct _OPH_FS_operator_handle {
 	int mode;
 	char **path;
 	int path_num;
+	char *file;
 	char *cwd;
 	char *user;
+	int recursive;
+	int depth;
+	int realpath;
 	char **objkeys;
 	int objkeys_num;
-	char *sessionid;
-	int userrole;
-} OPH_FOLDER_operator_handle;
+} OPH_FS_operator_handle;
 
 
-#endif				//__OPH_FOLDER_OPERATOR_H
+#endif				//__OPH_FS_OPERATOR_H

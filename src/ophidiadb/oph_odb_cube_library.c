@@ -312,7 +312,7 @@ int oph_odb_cube_retrieve_source(ophidiadb * oDB, int id_src, oph_odb_source * s
 
 	if ((row = mysql_fetch_row(res)) != NULL) {
 		src->id_source = id_src;
-		memset(&(src->uri), 0, OPH_ODB_CUBE_SOURCE_URI_SIZE);
+		memset(&(src->uri), 0, OPH_ODB_CUBE_SOURCE_URI_SIZE + 1);
 		strncpy(src->uri, row[0], OPH_ODB_CUBE_SOURCE_URI_SIZE);
 	}
 	mysql_free_result(res);
@@ -369,11 +369,11 @@ int _oph_odb_cube_retrieve_datacube(ophidiadb * oDB, int id_datacube, oph_odb_da
 		cube->dbxdbms = (row[4] ? (int) strtol(row[4], NULL, 10) : 0);
 		cube->fragmentxdb = (row[5] ? (int) strtol(row[5], NULL, 10) : 0);
 		cube->tuplexfragment = (row[6] ? (int) strtol(row[6], NULL, 10) : 0);
-		memset(&(cube->measure), 0, OPH_ODB_CUBE_MEASURE_SIZE);
+		memset(&(cube->measure), 0, OPH_ODB_CUBE_MEASURE_SIZE + 1);
 		strncpy(cube->measure, row[7], OPH_ODB_CUBE_MEASURE_SIZE);
-		memset(&(cube->measure_type), 0, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
+		memset(&(cube->measure_type), 0, OPH_ODB_CUBE_MEASURE_TYPE_SIZE + 1);
 		strncpy(cube->measure_type, row[8], OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
-		memset(&(cube->frag_relative_index_set), 0, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
+		memset(&(cube->frag_relative_index_set), 0, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE + 1);
 		strncpy(cube->frag_relative_index_set, row[9], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
 		cube->compressed = (row[10] ? (int) strtol(row[10], NULL, 10) : 0);
 		cube->level = (row[11] ? (int) strtol(row[11], NULL, 10) : 0);

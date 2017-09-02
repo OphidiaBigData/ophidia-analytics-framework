@@ -16,30 +16,39 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OPH_RANDCUBE_OPERATOR_H
-#define __OPH_RANDCUBE_OPERATOR_H
+#ifndef __OPH_IMPORTFITS_OPERATOR_H
+#define __OPH_IMPORTFITS_OPERATOR_H
 
 //Operator specific headers
-#include "oph_ophidiadb_main.h"
 #include "oph_common.h"
+#include "oph_ophidiadb_main.h"
+#include "oph_fits_library.h"
 #include "oph_ioserver_library.h"
 
+#define OPH_IMPORTFITS_SUBSET_INDEX	    "index"
+#define OPH_IMPORTFITS_SUBSET_COORD	    "coord"
+#define OPH_IMPORTFITS_DIMENSION_DEFAULT	"auto"
+
+
+
 /**
- * \brief Structure of parameters needed by the operator OPH_RANDCUBE_IO. It creates a new datacube filling it with random data
+ * \brief Structure of parameters needed by the operator OPH_IMPORTFITS. It creates a new datacube filling it with data taken from fits file
+ *
  * \param oDB Contains the parameters and the connection to OphidiaDB
  * \param container_input Name of the input container used
- * \param cwd Absolute path where the container is 
- * \param user Name of the user that wants to create the datacube
+ * \param create_container Flag indicating if the container has to be created
+ * \param cwd Absolute path where the container is
  * \param run Simulate the run of operator to compute distribution parameters
+ * \param fits_file_path Path of the fits file to import
  * \param partition_input Name of the host partition used to store data
- * \param grid_name Name of the grid used to specify dimensions
- * \param id_output_datacube ID of the output datacube created
- * \param id_input_container ID of the output container used/created
+ * \param grid_name Name of the grid used to specify dimensions - Not used
  * \param fs_type Type of file system used
  * \param ioserver_type Type of I/O server used
- * \param number_of_exp_dimensions Number of input explicit dimension 
- * \param number_of_imp_dimensions Number of input implicit dimension 
- * \param schedule_algo Number of the distribution algorithm to use 
+ * \param id_output_datacube ID of the output datacube created
+ * \param id_input_container ID of the output container used/created
+ * \param import_metadata Flag to indicate if metadata has to be imported with data
+ * \param check_compliance Flag to indicate if compliance with reference vocabulary has to be checked - Not used
+ * \param schedule_algo Number of the distribution algorithm to use
  * \param fragment_number Number of fragments that a process has to manage
  * \param fragment_id_start_position First fragment in the relative index set to work on
  * \param host_number Number of host to work on
@@ -48,33 +57,42 @@
  * \param fragxdb_number Number of fragments for each database (upper bound)
  * \param tuplexfrag_number Number of tuples for each fragment (upper bound)
  * \param array_length Number of elements to store into a row
+ * \param user Name of the user calling the import operation
  * \param measure Measure name
  * \param measure_type Type of data for the given measure
- * \param dimension_name Array of dimension names
- * \param dimension_size Array of sizes of dimensions
- * \param dimension_level Array of short name hierarchy concept levels
- * \param compressed If the data array has to be compressed (1) or not (0)
+ * \param hdu Number of the HDU considered for importing data
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
  * \param server Pointer to I/O server handler
  * \param sessionid SessionID
+ * \param id_vocabulary ID of the vocabulary used for metadata - Not used
+ * \param id_dimension_hierarchy Array of id concept hierarchies of dimensions - Not used
+ * \param base_time Base time in case of time dimension - Not used
+ * \param units Units of dimension time - Not used
+ * \param calendar Calendar associated to a time dimension - Not used
+ * \param month_lengths Month lengths of each year - Not used
+ * \param leap_year Value of the first leap year - Not used
+ * \param leap_month Value of the leap month - Not used
+ * \param memory_size Maximum amount of memory available
  * \param description Free description to be associated with output cube
- * \param id_job ID of the job related to the task
  */
-struct _OPH_RANDCUBE_operator_handle {
+struct _OPH_IMPORTFITS_operator_handle {
 	ophidiadb oDB;
 	char *container_input;
+	int create_container;
 	char *cwd;
-	char *user;
 	int run;
+	char *fits_file_path;
+	char *fits_file_path_orig;
+	int hdu;		/* Set the data HDU; default is the primary HDU (0) */
 	char *partition_input;
 	char *grid_name;
 	int fs_type;
 	char *ioserver_type;
 	int id_output_datacube;
 	int id_input_container;
-	int number_of_exp_dimensions;
-	int number_of_imp_dimensions;
+	int import_metadata;
+	int check_compliance;
 	int schedule_algo;
 	int fragment_number;
 	int fragment_first_id;
@@ -83,20 +101,30 @@ struct _OPH_RANDCUBE_operator_handle {
 	int dbxdbms_number;
 	int fragxdb_number;
 	int tuplexfrag_number;
-	long long array_length;
-	char *measure;
-	char *measure_type;
-	char **dimension_name;
-	long long *dimension_size;
-	char *dimension_level;
+	int array_length;
+	int total_frag_number;
+	char *user;
+	fitsfile *fptr;		/* FITS file pointer, defined in fitsio.h */
+	int fitsid;
+	FITS_var measure;
 	int compressed;
 	char **objkeys;
 	int objkeys_num;
 	oph_ioserver_handler *server;
 	char *sessionid;
-	char *description;
-	int id_job;
-};
-typedef struct _OPH_RANDCUBE_operator_handle OPH_RANDCUBE_operator_handle;
+	int id_vocabulary;
+	int *id_dimension_hierarchy;
+/* For fits files variables related to time management are not used */
+	char *base_time;
+	char *units;
+	char *calendar;
+	char *month_lengths;
+	int leap_year;
+	int leap_month;
 
-#endif				//__OPH_RANDCUBE_OPERATOR_H
+	long long memory_size;
+	char *description;
+};
+typedef struct _OPH_IMPORTFITS_operator_handle OPH_IMPORTFITS_operator_handle;
+
+#endif				//__OPH_IMPORTFITS_OPERATOR_H

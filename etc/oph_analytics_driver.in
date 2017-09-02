@@ -115,6 +115,9 @@ LIB     @MYSQL_LDFLAGS@
 [OPH_FOLDER]
 @DRIVER_PATH@/liboph_folderoperator.so
 LIB     @MYSQL_LDFLAGS@
+[OPH_FS]
+@DRIVER_PATH@/liboph_fsoperator.so
+LIB     @MYSQL_LDFLAGS@
 [OPH_SEARCH]
 @DRIVER_PATH@/liboph_searchoperator.so
 LIB     @MYSQL_LDFLAGS@

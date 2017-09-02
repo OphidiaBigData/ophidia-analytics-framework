@@ -518,7 +518,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 
-		char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[OPH_COMMON_BUFFER_LEN], operation2[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
+		char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], operation[1 + OPH_COMMON_BUFFER_LEN], operation2[1 + OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
 		snprintf(index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container);
 		snprintf(label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container);
 		char o_index_dimension_table_name[OPH_COMMON_BUFFER_LEN], o_label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
@@ -614,8 +614,10 @@ int task_init(oph_operator_struct * handle)
 					oph_subset_vector_free(subset_struct, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->number_of_dim);
 					goto __OPH_EXIT_1;
 				}
-			} else
+			} else {
 				strncpy(operation, MYSQL_DIMENSION, OPH_COMMON_BUFFER_LEN);
+				operation[OPH_COMMON_BUFFER_LEN] = 0;
+			}
 			dim_row = 0;
 
 			if (oph_dim_read_dimension_data(db, index_dimension_table_name, dim_inst[l].fk_id_dimension_index, operation, 0, &dim_row) || !dim_row) {
@@ -644,8 +646,10 @@ int task_init(oph_operator_struct * handle)
 					oph_subset_vector_free(subset_struct, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->number_of_dim);
 					goto __OPH_EXIT_1;
 				}
-			} else
+			} else {
 				strncpy(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);	// A reduced dimension is handled by indexes
+				dim[l].dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
+			}
 
 			// Pre-parsing for time dimensions
 			if (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->time_filter && dim[l].calendar && strlen(dim[l].calendar)) {
@@ -1187,7 +1191,7 @@ int task_init(oph_operator_struct * handle)
 		// Begin - Dimension table management
 
 		// Grid management
-		int id_grid = 0, new_grid = 0, stored_dim_num = 0;
+		int id_grid = 0, new_grid = 0, stored_dim_num = 0, grid_exist = 0;
 		oph_odb_dimension *stored_dims = NULL;
 		oph_odb_dimension_instance *stored_dim_insts = NULL;
 
@@ -1225,7 +1229,8 @@ int task_init(oph_operator_struct * handle)
 				new_grid = 1;
 				oph_odb_dimension_grid grid;
 				strncpy(grid.grid_name, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->grid_name, OPH_ODB_DIM_GRID_SIZE);
-				if (oph_odb_dim_insert_into_grid_table(oDB, &grid, &id_grid)) {
+				grid.grid_name[OPH_ODB_DIM_GRID_SIZE] = 0;
+				if (oph_odb_dim_insert_into_grid_table(oDB, &grid, &id_grid, &grid_exist)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while storing grid\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET2_GRID_STORE_ERROR);
 					oph_odb_cube_free_datacube(&cube);
@@ -1234,6 +1239,12 @@ int task_init(oph_operator_struct * handle)
 					oph_dim_disconnect_from_dbms(db->dbms_instance);
 					oph_dim_unload_dim_dbinstance(db);
 					goto __OPH_EXIT_1;
+				}
+				if (grid_exist) {
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Grid already exists: dimensions will be not associated to a grid.\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container,
+						"Grid already exists: dimensions will be not associated to a grid.\n");
+					id_grid = 0;
 				}
 			}
 		}
@@ -1290,9 +1301,11 @@ int task_init(oph_operator_struct * handle)
 						oph_subset_vector_free(subset_struct, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->number_of_dim);
 						goto __OPH_EXIT_1;
 					}
-				} else
+				} else {
 					strncpy(operation, MYSQL_DIMENSION, OPH_COMMON_BUFFER_LEN);
-				strncpy(operation2, operation, OPH_COMMON_BUFFER_LEN);
+					operation[OPH_COMMON_BUFFER_LEN] = 0;
+				}
+				strcpy(operation2, operation);
 			} else	// Subsetted dimension
 			{
 				if (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->dim_task[d] && strlen(((OPH_SUBSET2_operator_handle *) handle->operator_handle)->dim_task[d])) {
@@ -1477,6 +1490,7 @@ int task_init(oph_operator_struct * handle)
 		new_task.id_job = ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_job;
 		memset(new_task.query, 0, OPH_ODB_CUBE_OPERATION_QUERY_SIZE);
 		strncpy(new_task.operator, handle->operator_type, OPH_ODB_CUBE_OPERATOR_SIZE);
+		new_task.operator[OPH_ODB_CUBE_OPERATOR_SIZE] = 0;
 		if (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->apply_clause) {
 			char buff_tmp[OPH_TP_TASKLEN];
 			snprintf(buff_tmp, OPH_TP_TASKLEN, "%s,%s,%s", ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->apply_clause_type, MYSQL_FRAG_MEASURE,
@@ -1808,6 +1822,7 @@ int task_execute(oph_operator_struct * handle)
 					//Change the other fragment fields
 					frags.value[k].id_datacube = id_datacube_out;
 					strncpy(frags.value[k].fragment_name, frag_name_out, OPH_ODB_STGE_FRAG_NAME_SIZE);
+					frags.value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
 					if (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->frags_size)
 						frags.value[k].frag_relative_index =
 						    ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->keys[index + 2 * ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->frags_size];
