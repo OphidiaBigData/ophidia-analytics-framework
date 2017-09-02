@@ -90,8 +90,8 @@ DRIVER+=liboph_showgridoperator.la
 DRIVER+=liboph_scriptoperator.la
 if HAVE_CFITSIO
 DRIVER+=liboph_importfitsoperator.la
-endif
 DRIVER+=liboph_exportfitsoperator.la
+endif
 DRIVER+=liboph_importsacoperator.la
 
 driver_LTLIBRARIES = $(DRIVER)
@@ -342,13 +342,13 @@ if HAVE_CFITSIO
 liboph_importfitsoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} ${LIBCFITSIO_INCLUDE} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
 liboph_importfitsoperator_la_SOURCES = OPH_IMPORTFITS_operator.c
 liboph_importfitsoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_importfitsoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} ${LIBCFITSIO_LIB} -lpthread -loph_fits $(BASIC_LIB) -loph_dimension -loph_hierarchy  -loph_datacube -loph_ioserver -loph_binary_io
-endif
+liboph_importfitsoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} ${LIBCFITSIO_LIB} -lpthread -loph_fits $(BASIC_LIB) -loph_dimension -loph_hierarchy -loph_datacube -loph_ioserver -loph_binary_io
 
-liboph_exportfitsoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} -I/usr/local/ophidia/extra/fits/include -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"
+liboph_exportfitsoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} ${LIBCFITSIO_INCLUDE} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"
 liboph_exportfitsoperator_la_SOURCES = OPH_EXPORTFITS_operator.c
 liboph_exportfitsoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_exportfitsoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} -L.. -L/usr/local/ophidia/extra/fits/lib -lcfitsio -lpthread -loph_fits $(BASIC_LIB) -loph_directory -loph_dimension -loph_datacube -loph_ioserver
+liboph_exportfitsoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} ${LIBCFITSIO_LIB} -lpthread -loph_fits $(BASIC_LIB) -loph_directory -loph_dimension -loph_datacube -loph_ioserver
+endif
 
 liboph_importsacoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} -I/usr/local/ophidia/extra/sac/include -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
 liboph_importsacoperator_la_SOURCES = OPH_IMPORTSAC_operator.c 
