@@ -350,8 +350,8 @@ liboph_exportfitsoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_exportfitsoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} ${LIBCFITSIO_LIB} -lpthread -loph_fits $(BASIC_LIB) -loph_directory -loph_dimension -loph_datacube -loph_ioserver
 endif
 
-liboph_importsacoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} -I/usr/local/ophidia/extra/sac/include -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
+liboph_importsacoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} -I/usr/local/ophidia/extra/include -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
 liboph_importsacoperator_la_SOURCES = OPH_IMPORTSAC_operator.c 
 liboph_importsacoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_importsacoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} -L.. -L/usr/local/ophidia/extra/sac/lib -lreadsac -loph_sac $(BASIC_LIB) -loph_dimension -loph_hierarchy  -loph_datacube -loph_ioserver -loph_binary_io
+liboph_importsacoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} -L.. -L/usr/local/ophidia/extra/lib -lreadsac -loph_sac $(BASIC_LIB) -loph_dimension -loph_hierarchy  -loph_datacube -loph_ioserver -loph_binary_io
 

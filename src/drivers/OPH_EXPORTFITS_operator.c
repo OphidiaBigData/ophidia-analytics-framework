@@ -732,7 +732,7 @@ int task_execute(oph_operator_struct * handle)
 		int datacube_id = ((OPH_EXPORTFITS_operator_handle *) handle->operator_handle)->id_input_datacube;
 		char *path = ((OPH_EXPORTFITS_operator_handle *) handle->operator_handle)->output_path;
 		char *file = ((OPH_EXPORTFITS_operator_handle *) handle->operator_handle)->output_name;
-		char *measure_name = ((OPH_EXPORTFITS_operator_handle *) handle->operator_handle)->measure;
+		//char *measure_name = ((OPH_EXPORTFITS_operator_handle *) handle->operator_handle)->measure;
 		char *data_type = ((OPH_EXPORTFITS_operator_handle *) handle->operator_handle)->measure_type;
 		int compressed = ((OPH_EXPORTFITS_operator_handle *) handle->operator_handle)->compressed;
 		int num_of_dims = ((OPH_EXPORTFITS_operator_handle *) handle->operator_handle)->num_of_dims;
@@ -1005,8 +1005,8 @@ int task_execute(oph_operator_struct * handle)
 		oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 		oph_dim_unload_dim_dbinstance(db_dimension);
 
-		int start_dim[1] = { 0 };
-		int count_dim[1] = { 1 };
+		//int start_dim[1] = { 0 };
+		//int count_dim[1] = { 1 };
 		int start[num_of_dims];
 		int count[num_of_dims];
 
@@ -1043,8 +1043,9 @@ int task_execute(oph_operator_struct * handle)
 			result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			goto __OPH_EXIT_2;
 		}
+
 		//int retval, ncid, cmode = NC_NETCDF4|NC_MPIIO;
-		int retval, ncid, cmode = 0;
+		int retval;
 		//CREATE FILE
 		//n = snprintf(file_name, sizeof(file_name), OPH_EXPORTFITS_OUTPUT_PATH_SINGLE_FILE, path, file);
 		// Set between parenthesis an input file used as template. Data will be filled with zeros. ! means overwrite
@@ -1179,11 +1180,10 @@ int task_execute(oph_operator_struct * handle)
 			}
 
 		}
-*/
+
 		int varid;
 		//CREATE MEASURE
 		// No need to create measure in fits files
-/*
 		if((retval = nc_def_var (ncid, measure_name, type_nc, num_of_dims, dimids, &varid))){
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to define variable: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTFITS_operator_handle*)handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTFITS_NC_DEFINE_VAR_ERROR, nc_strerror(retval));
