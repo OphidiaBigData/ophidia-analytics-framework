@@ -1058,7 +1058,8 @@ int task_init(oph_operator_struct * handle)
 				}
 				if (grid_exist) {
 					pmesg(LOG_WARNING, __FILE__, __LINE__, "Grid already exists: dimensions will be not associated to a grid.\n");
-					logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container, "Grid already exists: dimensions will be not associated to a grid.\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container,
+						"Grid already exists: dimensions will be not associated to a grid.\n");
 					id_grid = 0;
 				}
 			}
