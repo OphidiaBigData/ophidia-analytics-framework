@@ -173,7 +173,8 @@ int oph_date_to_day(int y, int m, int d, long long *g, oph_odb_dimension * dim)
 	if (!dim->calendar || !strlen(dim->calendar))
 		return OPH_DIM_TIME_PARSING_ERROR;
 
-	if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_GREGORIAN, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_STANDARD, OPH_ODB_DIM_TIME_SIZE)) {
+	if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_GREGORIAN, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_STANDARD, OPH_ODB_DIM_TIME_SIZE)
+	    || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_365_DAY, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_365DAY, OPH_ODB_DIM_TIME_SIZE)) {
 		int offset = 0;
 		if ((y > 1582) || ((y == 1582) && ((m > 10) || ((m == 10) && (d >= 15)))))
 			offset = 1;
@@ -227,7 +228,8 @@ int oph_day_to_date(long long g, int *yy, int *mm, int *dd, int *wd, int *yd, op
 		return OPH_DIM_TIME_PARSING_ERROR;
 
 	long long y, mi, ddd;
-	if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_GREGORIAN, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_STANDARD, OPH_ODB_DIM_TIME_SIZE)) {
+	if (!strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_GREGORIAN, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_STANDARD, OPH_ODB_DIM_TIME_SIZE)
+	    || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_365_DAY, OPH_ODB_DIM_TIME_SIZE) || !strncmp(dim->calendar, OPH_DIM_TIME_CALENDAR_365DAY, OPH_ODB_DIM_TIME_SIZE)) {
 		int offset = g >= 578041 ? 0 : 2;
 		g += offset;
 		y = !offset ? (10000 * g + 14780) / 3652425 : 100 * g / 36525;

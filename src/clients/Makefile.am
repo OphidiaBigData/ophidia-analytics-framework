@@ -30,9 +30,9 @@ bindir=${prefix}/bin
 AM_CFLAGS = $(OPT)
 
 oph_analytics_framework_SOURCES=oph_analytics_framework.c
-oph_analytics_framework_CFLAGS= $(OPT) -I../../include @INCLTDL@ -DOPH_PARALLEL_LOCATION=\"${prefix}\"
+oph_analytics_framework_CFLAGS= $(OPT) -I../../include @INCLTDL@ -DOPH_PARALLEL_LOCATION=\"${prefix}\" -DPACKAGE_VERSION=\"@PACKAGE_VERSION@\"
 oph_analytics_framework_LDADD= -L.. -loph_analytics_framework @LIBLTDL@
 
 oph_ioserver_client_SOURCES= oph_ioserver_client.c 
-oph_ioserver_client_CFLAGS= $(OPT) -I../../include -I../../include/oph_ioserver @INCLTDL@ -DOPH_PARALLEL_LOCATION=\"${prefix}\"  ${MYSQL_CFLAGS} 
+oph_ioserver_client_CFLAGS= $(OPT) -I../../include -I../../include/oph_ioserver @INCLTDL@ -DOPH_PARALLEL_LOCATION=\"${prefix}\" ${MYSQL_CFLAGS} -DPACKAGE_VERSION=\"@PACKAGE_VERSION@\"
 oph_ioserver_client_LDADD= ${MYSQL_LDFLAGS} -L.. -loph_datacube -lophidiadb @LIBLTDL@

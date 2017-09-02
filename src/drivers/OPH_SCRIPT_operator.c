@@ -408,7 +408,18 @@ int task_execute(oph_operator_struct * handle)
 	}
 	//Create dir if not exist
 	struct stat st;
-	if (stat(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path, &st)) {
+	char user_space;
+	if (oph_pid_get_user_space(&user_space)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read user_space\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read user_space\n");
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+	if (user_space) {
+		free(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path);
+		((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path = NULL;
+		free(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url);
+		((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url = NULL;
+	} else if (stat(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path, &st)) {
 		if (oph_dir_r_mkdir(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path)) {
 			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to create dir %s\n", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path);
 			logging(LOG_WARNING, __FILE__, __LINE__, 0, OPH_LOG_GENERIC_DIR_CREATION_ERROR, ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path);
@@ -560,6 +571,9 @@ int task_execute(oph_operator_struct * handle)
 				strncat(system_output, line, s);
 		error = pclose(fp);
 	}
+
+	// Print command and output in text log
+	printf("%s\n", system_output);
 
 	// ADD COMMAND TO JSON AS TEXT
 	s = oph_json_is_objkey_printable(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys, ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys_num,

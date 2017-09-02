@@ -40,7 +40,7 @@ int msglevel = LOG_DEBUG;
 
 int main(int argc, char **argv)
 {
-	fprintf(stdout, "%s", OPH_VERSION);
+	fprintf(stdout, OPH_VERSION, PACKAGE_VERSION);
 	fprintf(stdout, "%s", OPH_DISCLAIMER);
 
 	if (!argc || !argv)

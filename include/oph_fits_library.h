@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -48,26 +48,10 @@
 #define OPH_FITS_ERROR 1
 #define OPH_FITS_SUCCESS 0
 
-//Structure used by OPH_EXPORTFITS operator
-struct _FITS_dim {
-	int dimid;
-	// fits files have no dimensions name. So, they are fixed as NAXIS1, NAXIS2, ..., NAXISn
-	char dimname[256];
-	// always integer
-	short int dimtype;
-	int dimsize;
-	int dimfkid;
-	short int dimophlevel;	//Contains the oph_level of the dimension (explicit and implicit)
-	short int dimexplicit;	// 1 if explicit, 0 if implicit dimension
-	int dimfklabel;
-	char dimunlimited;
-};
-typedef struct _FITS_dim FITS_dim;
-
 //Structure used by OPH_IMPORTFITS operator
 struct _FITS_var {
 	int varid;		// FITS file hasn't varid. Use a sequential number
-//      fitsfile *fptr;   /* FITS file pointer, defined in fitsio.h */
+/* FITS file pointer, defined in fitsio.h */
 	char varname[63 + 1];
 	// Types are :8, 16, 32, 64, -32, -64
 	int vartype;
@@ -82,11 +66,8 @@ struct _FITS_var {
 	int *dims_start_index;	//Contains the start index for each dimension; it follows the dims_id array positionally
 	int *dims_end_index;	//Contains the end index for each dimension; it follows the dims_id array positionally
 	char *dims_concept_level;	//Contains the concept level of the dimensions (depends on hierarchy)
-	//NETCDF_var *expdims;
 	short int nexp;
-	//NETCDF_coordvar *impdims;
 	short int nimp;
-	//char *dims_unlim;             //For fits files could be unuseful
 	short int *dims_order;
 	int *oph_dims_id;
 };
@@ -117,23 +98,10 @@ int _oph_fits_get_dimension_id(unsigned long residual, unsigned long total, unsi
 int oph_fits_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n, long **id);
 
 /**
- * \brief Populate a fragment with nc data
+ * \brief Populate a fragment with fits data (multi-insert version of previous function)
  * \param server Pointer to I/O server structure
  * \param frag Structure with information about fragment to be filled
- * \param ncid Id of nc file
- * \param tuplexfrag_number Number of tuple to insert
- * \param array_length Number of elements to insert in a single row
- * \param compressed If the data to insert is compressed (1) or not (0)
- * \param measure Structure containing measure data and information to be stored
- * \return 0 if successfull
- */
-int oph_fits_populate_fragment_from_fits(oph_ioserver_handler * server, oph_odb_fragment * frag, fitsfile * fptr, int tuplexfrag_number, int array_length, int compressed, FITS_var * measure);
-
-/**
- * \brief Populate a fragment with nc data (multi-insert version of previous function)
- * \param server Pointer to I/O server structure
- * \param frag Structure with information about fragment to be filled
- * \param ncid Id of nc file
+ * \param fptr Pointer to fits file
  * \param tuplexfrag_number Number of tuple to insert
  * \param array_length Number of elements to insert in a single row
  * \param compressed If the data to insert is compressed (1) or not (0)
@@ -143,10 +111,10 @@ int oph_fits_populate_fragment_from_fits(oph_ioserver_handler * server, oph_odb_
 int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler * server, oph_odb_fragment * frag, fitsfile * fptr, int tuplexfrag_number, int array_length, int compressed, FITS_var * measure);
 
 /**
- * \brief Populate a fragment with nc data (auto-drilldown version of previous function)
+ * \brief Populate a fragment with fits data (auto-drilldown version of previous function)
  * \param server Pointer to I/O server structure
  * \param frag Structure with information about fragment to be filled
- * \param ncid Id of nc file
+ * \param fptr Pointer to fits file
  * \param tuplexfrag_number Number of tuple to insert
  * \param array_length Number of elements to insert in a single row
  * \param compressed If the data to insert is compressed (1) or not (0)
@@ -158,24 +126,24 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 					  long long memory_size);
 
 /**
- * \brief Return the C type given the nc_type
- * \param nc_type The nc_type to be converted
+ * \brief Return the C type given the fits_type
+ * \param type_fits The type_fits to be converted
  * \param out_c_type String to be filled with the corresponding C type
  * \return 0 if successfull, -1 otherwise
  */
 int oph_fits_get_c_type(int type_fits, char *out_c_type);
 
 /**
- * \brief Return the nc_type given the C type
+ * \brief Return the type_fits given the C type
  * \param out_c_type String to with the C type to be converted
- * \param nc_type Output to be filled with the corresponding nc type
+ * \param type_fits Output to be filled with the corresponding fits type
  * \return 0 if successfull, -1 otherwise
  */
-int oph_fits_get_fits_type(char *in_c_type, int *type_nc);
+int oph_fits_get_fits_type(char *in_c_type, int *type_fits);
 
 /**
- * \brief Internal recursive function used to compute the subsequent nc dimension id
- * \param id Output with the nc id of the next dimensions
+ * \brief Internal recursive function used to compute the subsequent fits dimension id
+ * \param id Output with the fits id of the next dimensions
  * \param sizemax Array containing the max values of dimension ids
  * \param i Param used to count number of recursive iterations
  * \param n Number of dimensions
@@ -184,37 +152,13 @@ int oph_fits_get_fits_type(char *in_c_type, int *type_nc);
 int _oph_fits_get_next_fits_id(size_t * id, unsigned int *sizemax, int i, int n);
 
 /**
- * \brief Function used to compute the subsequent nc dimension id
- * \param id Output with the nc id of the next dimensions
+ * \brief Function used to compute the subsequent fits dimension id
+ * \param id Output with the fits id of the next dimensions
  * \param sizemax Array containing the max values of dimension ids
  * \param n Number of dimensions
  * \return 0 if successfull, 1 otherwise
  */
 int oph_fits_get_next_fits_id(size_t * id, unsigned int *sizemax, int n);
-
-/**
- * \brief Append nc data to a fragment
- * \param server Pointer to I/O server structure
- * \param old_frag Structure with information about the old fragment
- * \param new_frag Structure with information about the new fragment
- * \param ncid Id of nc file
- * \param compressed If the data to insert is compressed (1) or not (0)
- * \param measure Structure containing measure data and information to be stored
- * \return 0 if successfull
- */
-int oph_fits_append_fragment_from_fits(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int fitsid, int compressed, FITS_var * measure);
-
-/**
- * \brief Retrieve a dimension coordinated variable data from a NetCDF file
- * \param id_container Id of output container (used by logging function)
- * \param ncid Id of nc file
- * \param dim_id Id of the dimension variable to be read
- * \param dim_type String with the type of variable to be read
- * \param dim_size Size of the dimension to be retrieved
- * \param dim_array Structure containing the dimension data read
- * \return 0 if successfull
- */
-int oph_fits_get_dim_array(int id_container, int fitsid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array);
 
 /**
  * \brief Retrieve a dimension coordinated variable data from a FITS file allowing subsetting
@@ -224,22 +168,6 @@ int oph_fits_get_dim_array(int id_container, int fitsid, int dim_id, const char 
  * \return 0 if successfull
  */
 int oph_fits_get_dim_array2(int id_container, int dim_size, char **dim_array);
-
-/**
- * \brief Retrieve the index of a coordinated variable using its value from a NetCDF file
- * \param id_container Id of output container (used by logging function)
- * \param ncid Id of nc file
- * \param dim_id Id of the dimension variable to be read
- * \param dim_type Type of variable to be read (nc_type)
- * \param dim_size Size of the dimension to consider
- * \param value String that contains the numeric value
- * \param want_start 1 if the value I'm searching for is the start index, 0 otherwise
- * \param offset Added to bounds of subset intervals to extend them
- * \param order Return value containing 1 if the order of the dimension values is ascending, 0 otherwise
- * \param coord_index Index of the first value greater than "value"
- * \return 0 if successfull
- */
-int oph_fits_index_by_value(int id_container, int fitsid, int dim_id, int dim_type, int dim_size, char *value, int want_start, double offset, int *order, int *coord_index);
 
 /**
  * \brief Compare fits type with c type
@@ -261,16 +189,5 @@ int oph_fits_compare_fits_c_types(int id_container, int var_type, const char dim
  * \return 0 if successfull
  */
 int oph_fits_get_fits_var(int id_container, char *varname, long *dims_length, FITS_var * var, short flag);
-
-/**
- * \brief Extract a row from nc file
- * \param ncid Id of nc file
- * \param array_length Number of elements to insert in a single row
- * \param measure Structure containing measure data and information to be stored
- * \param idDim Row index
- * \param row Pointer to row to be extracted; it must be freed
- * \return 0 if successfull
- */
-int oph_fits_get_row_from_fits(int fitsid, int array_length, FITS_var * measure, unsigned long idDim, char **row);
 
 #endif				//__OPH_FITS_UTILITY_H

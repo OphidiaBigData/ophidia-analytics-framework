@@ -59,6 +59,8 @@
 #define OPH_DIM_TIME_CALENDAR_JULIAN "julian"
 #define OPH_DIM_TIME_CALENDAR_360_DAY "360_day"
 #define OPH_DIM_TIME_CALENDAR_360DAY "360day"
+#define OPH_DIM_TIME_CALENDAR_365_DAY "365_day"
+#define OPH_DIM_TIME_CALENDAR_365DAY "365day"
 #define OPH_DIM_TIME_CALENDAR_NO_LEAP "no_leap"
 #define OPH_DIM_TIME_CALENDAR_NOLEAP "noleap"
 #define OPH_DIM_TIME_CALENDAR_ALL_LEAP "all_leap"
@@ -269,9 +271,10 @@ int oph_odb_dim_delete_from_grid_table(ophidiadb * oDB, int id_container);
  * \param oDB Pointer to OphidiaDB
  * \param grid Pointer to grid to be added
  * \param last_insertd_id ID of last inserted datacube
+ * \param grid_exist Flag set in case a grid with the same name already exists
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid * grid, int *last_insertd_id);
+int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid * grid, int *last_insertd_id, int *grid_exist);
 
 /**
  * \brief Function that updates OphidiaDB adding the new dimension

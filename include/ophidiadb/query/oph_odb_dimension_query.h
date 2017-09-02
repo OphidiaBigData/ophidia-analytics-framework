@@ -56,7 +56,7 @@
 
 #define MYSQL_QUERY_DIM_RETRIEVE_GRID_LIST				"SELECT distinct gridname FROM grid INNER JOIN dimensioninstance ON grid.idgrid = dimensioninstance.idgrid INNER JOIN dimension ON dimensioninstance.iddimension = dimension.iddimension WHERE idcontainer = %d ORDER BY gridname ASC;"
 
-#define MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_GRID				"INSERT INTO `grid` (`gridname`) VALUES ('%s')"
+#define MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_GRID				"INSERT IGNORE INTO `grid` (`gridname`) VALUES ('%s')"
 
 #define MYSQL_DELETE_OPHIDIADB_GRID					"DELETE FROM grid WHERE idgrid NOT IN (SELECT DISTINCT idgrid FROM dimensioninstance, dimension WHERE dimension.iddimension = dimensioninstance.iddimension AND NOT ISNULL(idgrid) AND idcontainer <> %d);"
 

@@ -1191,7 +1191,7 @@ int task_init(oph_operator_struct * handle)
 		// Begin - Dimension table management
 
 		// Grid management
-		int id_grid = 0, new_grid = 0, stored_dim_num = 0;
+		int id_grid = 0, new_grid = 0, stored_dim_num = 0, grid_exist = 0;
 		oph_odb_dimension *stored_dims = NULL;
 		oph_odb_dimension_instance *stored_dim_insts = NULL;
 
@@ -1230,7 +1230,7 @@ int task_init(oph_operator_struct * handle)
 				oph_odb_dimension_grid grid;
 				strncpy(grid.grid_name, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->grid_name, OPH_ODB_DIM_GRID_SIZE);
 				grid.grid_name[OPH_ODB_DIM_GRID_SIZE] = 0;
-				if (oph_odb_dim_insert_into_grid_table(oDB, &grid, &id_grid)) {
+				if (oph_odb_dim_insert_into_grid_table(oDB, &grid, &id_grid, &grid_exist)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while storing grid\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET2_GRID_STORE_ERROR);
 					oph_odb_cube_free_datacube(&cube);
@@ -1239,6 +1239,12 @@ int task_init(oph_operator_struct * handle)
 					oph_dim_disconnect_from_dbms(db->dbms_instance);
 					oph_dim_unload_dim_dbinstance(db);
 					goto __OPH_EXIT_1;
+				}
+				if (grid_exist) {
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Grid already exists: dimensions will be not associated to a grid.\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container,
+						"Grid already exists: dimensions will be not associated to a grid.\n");
+					id_grid = 0;
 				}
 			}
 		}

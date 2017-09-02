@@ -22,7 +22,7 @@ Return an array obtained by concatenating input array more times. Append mode co
 					&apos;oph_byte&apos;.
 - measure : list of input measure.
 - number : number of replies.
-- mode   : mode of replica ('a' append, 'i' interlace)
+- mode : use 'a' to concatenate input cubes (default), use 'i' to interlace input cubes.
 
 [Return type]
 Binary-array.
@@ -37,10 +37,10 @@ oph_extend(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,4)</abstract>
 	<operation type="simple"/>
     </info>
     <args>
-        <argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
-        <argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-		<argument type="binary-array" mandatory="yes">measure</argument>
-		<argument type="int" mandatory="no" default="1" minvalue="1">number</argument>
-		<argument type="string" mandatory="no" default="a" values="'a'|'i'">mode</argument>
+	<argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+	<argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+	<argument type="binary-array" mandatory="yes">measure</argument>
+	<argument type="int" mandatory="no" default="1" minvalue="1">number</argument>
+	<argument type="string" mandatory="no" default="a" values="a|i">mode</argument>
     </args>
 </primitive>
