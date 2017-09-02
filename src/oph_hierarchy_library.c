@@ -509,7 +509,7 @@ int oph_hier_check_concept_level_long(const char *filename, char *concept_level_
 
 	unsigned int i;
 	for (i = 0; i < hierarchy->attribute_number; ++i)
-		if (!strncasecmp(hierarchy->attributes[i]->long_name, concept_level_long, OPH_HIER_MAX_STRING_LENGTH)) {
+		if (!strncasecmp(hierarchy->attributes[i]->long_name, concept_level_long, strlen(concept_level_long))) {
 			*exists = 1;
 			*short_name = hierarchy->attributes[i]->short_name;
 			break;

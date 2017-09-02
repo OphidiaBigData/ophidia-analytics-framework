@@ -982,14 +982,14 @@ int task_init(oph_operator_struct * handle)
 					goto __OPH_EXIT_1;
 				}
 			}
-			int id_grid;
+			int id_grid = 0, grid_exist = 0;
 			if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->grid_name) {
 				oph_odb_dimension_grid new_grid;
 				strncpy(new_grid.grid_name, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->grid_name, OPH_ODB_DIM_GRID_SIZE);
 				new_grid.grid_name[OPH_ODB_DIM_GRID_SIZE] = 0;
 				int last_inserted_grid_id = 0;
 
-				if (oph_odb_dim_insert_into_grid_table(oDB, &new_grid, &last_inserted_grid_id)) {
+				if (oph_odb_dim_insert_into_grid_table(oDB, &new_grid, &last_inserted_grid_id, &grid_exist)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert grid in OphidiaDB, or grid already exists.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_GRID_INSERT_ERROR);
 					free(tot_dims);
@@ -999,9 +999,12 @@ int task_init(oph_operator_struct * handle)
 					oph_dim_unload_dim_dbinstance(db);
 					goto __OPH_EXIT_1;
 				}
-				id_grid = last_inserted_grid_id;
-			} else
-				id_grid = 0;
+				if (grid_exist) {
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Grid already exists: dimensions will be not associated to a grid.\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, "Grid already exists: dimensions will be not associated to a grid.\n");
+				} else
+					id_grid = last_inserted_grid_id;
+			}
 			//For each input dimension
 			for (i = 0; i < num_of_input_dim; i++) {
 				//Find container dimension

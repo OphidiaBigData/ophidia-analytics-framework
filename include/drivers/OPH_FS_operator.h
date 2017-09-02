@@ -24,16 +24,23 @@
 
 #define OPH_FS_CMD_LS	"ls"
 #define OPH_FS_CMD_CD	"cd"
+#define OPH_FS_CMD_MD	"mkdir"
+#define OPH_FS_CMD_RM	"rm"
+#define OPH_FS_CMD_MV	"mv"
 
 #define OPH_FS_MODE_LS	0
 #define OPH_FS_MODE_CD	1
+#define OPH_FS_MODE_MD	2
+#define OPH_FS_MODE_RM	3
+#define OPH_FS_MODE_MV	4
 
 #define OPH_FS_CD_MESSAGE "Current Data Directory"
 
 /**
  * \brief Structure of parameters needed by the operator OPH_FS. It manages the Ophidia filesystem FSs.
  * \param mode : number corresponding to one of the provided commands
- * \param path : absolute or relative path given as input
+ * \param path : array of absolute or relative paths given as input
+ * \param path_num : number of input paths
  * \param file : file filter
  * \param cwd : current working directory as an absolute path
  * \param user : user that has submitted the task
@@ -45,7 +52,8 @@
  */
 typedef struct _OPH_FS_operator_handle {
 	int mode;
-	char *path;
+	char **path;
+	int path_num;
 	char *file;
 	char *cwd;
 	char *user;
