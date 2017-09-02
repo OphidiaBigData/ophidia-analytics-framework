@@ -49,7 +49,7 @@ LIBRARY+= liboph_analytics_framework.la
 if HAVE_CFITSIO
 LIBRARY+= liboph_fits.la
 endif
-#LIBRARY+= liboph_sac.la
+LIBRARY+= liboph_sac.la
 
 lib_LTLIBRARIES = $(LIBRARY)
 if DEBUG_1
