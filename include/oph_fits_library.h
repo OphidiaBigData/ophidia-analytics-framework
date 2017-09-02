@@ -48,6 +48,20 @@
 #define OPH_FITS_ERROR 1
 #define OPH_FITS_SUCCESS 0
 
+//Structure used by OPH_EXPORTFITS operator
+struct _FITS_dim {
+	int dimid;
+	char dimname[256];
+	short int dimtype;
+	int dimsize;
+	int dimfkid;
+	short int dimophlevel;	//Contains the oph_level of the dimension (explicit and implicit)
+	short int dimexplicit;	// 1 if explicit, 0 if implicit dimension
+	int dimfklabel;
+	char dimunlimited;
+};
+typedef struct _FITS_dim FITS_dim;
+
 //Structure used by OPH_IMPORTFITS operator
 struct _FITS_var {
 	int varid;		// FITS file hasn't varid. Use a sequential number

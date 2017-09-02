@@ -1043,7 +1043,6 @@ int task_execute(oph_operator_struct * handle)
 			result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			goto __OPH_EXIT_2;
 		}
-
 		//int retval, ncid, cmode = NC_NETCDF4|NC_MPIIO;
 		int retval;
 		//CREATE FILE
