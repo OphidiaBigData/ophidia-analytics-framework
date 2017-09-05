@@ -91,12 +91,13 @@ CREATE TABLE `dbmsinstance` (
   `idhost` int(10) unsigned NOT NULL,
   `login` varchar(256) DEFAULT NULL,
   `password` varchar(256) DEFAULT NULL,
-  `port` int(11) DEFAULT NULL,
+  `port` int(11) NOT NULL,
   `ioservertype`  varchar(256) NOT NULL DEFAULT 'mysql_table',
   `fstype`  int(10) NOT NULL DEFAULT 0,
   `status`  varchar(4) NOT NULL DEFAULT "up",
   PRIMARY KEY (`iddbmsinstance`),
   KEY `idhost` (`idhost`),
+  UNIQUE KEY `port_host` (`idhost`, `port`),
   CONSTRAINT `idhost` FOREIGN KEY (`idhost`) REFERENCES `host` (`idhost`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -160,7 +161,8 @@ CREATE TABLE `host` (
   `datacubecount` int(10) unsigned NOT NULL DEFAULT 0,
   `lastupdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`idhost`),
-  KEY `idhost` (`idhost`)
+  KEY `idhost` (`idhost`),
+  UNIQUE KEY `hostname` (`hostname`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
