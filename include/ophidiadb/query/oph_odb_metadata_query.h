@@ -32,7 +32,8 @@
 #define MYSQL_QUERY_META_RETRIEVE_VOCABULARY_ID 		"SELECT idvocabulary from `vocabulary` where name = '%s';"
 #define MYSQL_QUERY_META_RETRIEVE_METADATATYPE_ID 		"SELECT idtype from `metadatatype` where name = '%s';"
 #define MYSQL_QUERY_META_RETRIEVE_VOCABULARY_ID_FROM_CONTAINER 	"SELECT idvocabulary FROM container WHERE idcontainer = %d AND idvocabulary IS NOT NULL;"
-#define MYSQL_QUERY_META_COPY_INSTANCES				"CREATE TABLE metadatainstance_%d AS (SELECT * FROM metadatainstance_%d);"
+#define MYSQL_QUERY_META_CREATE_METADATA_TABLE		"CREATE TABLE metadatainstance_%d (`idmetadatainstance` int(10) unsigned NOT NULL AUTO_INCREMENT, `idkey` int(10) unsigned NOT NULL, `idtype` int(10) unsigned NOT NULL, `value` LONGBLOB NOT NULL, `size` int(10) unsigned NOT NULL DEFAULT 1, PRIMARY KEY (`idmetadatainstance`), FOREIGN KEY (`idkey`) REFERENCES `metadatakey` (`idkey`) ON DELETE CASCADE ON UPDATE CASCADE, FOREIGN KEY (`idtype`) REFERENCES `metadatatype` (`idtype`) ON DELETE CASCADE ON UPDATE CASCADE) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;"
+#define MYSQL_QUERY_META_COPY_INSTANCES				"CREATE TABLE metadatainstance_%d AS SELECT * FROM metadatainstance_%d;"
 #define MYSQL_QUERY_META_COPY_MANAGE				"INSERT INTO `manage` (`iduser`, `idmetadatainstance`) SELECT %d, idmetadatainstance FROM metadatainstance_%d;"
 #define MYSQL_QUERY_META_INSERT_METADATAKEY 			"INSERT INTO `metadatakey` (`label`, `variable`) VALUES ('%s','%s');"
 #define MYSQL_QUERY_META_INSERT_METADATAKEY2 			"INSERT INTO `metadatakey` (`label`) VALUES ('%s');"
@@ -42,10 +43,10 @@
 #define MYSQL_QUERY_META_GET2 					"SELECT idmetadatainstance, value FROM metadatainstance_%d INNER JOIN metadatakey ON metadatainstance_%d.idkey = metadatakey.idkey WHERE template = '%s'"
 #define MYSQL_QUERY_META_TIME_DIMENSION_CHECK			"SELECT COUNT(*), idvocabulary FROM metadatainstance_%d INNER JOIN metadatakey ON metadatainstance_%d.idkey = metadatakey.idkey WHERE template LIKE 'time:%%' AND (variable IS NULL OR variable = '%s') AND required"
 #define MYSQL_QUERY_META_TIME_DIMENSION_CHECK2			"SELECT COUNT(*) FROM metadatakey WHERE template LIKE 'time:%%' AND idvocabulary = %d AND required"
-#define MYSQL_QUERY_META_DELETE_KEYS				"DELETE FROM metadatakey WHERE idvocabulary IS NULL AND idkey IN (SELECT idkey FROM metadatainstance_%d GROUP BY idkey HAVING COUNT(*)=1);"
 #define MYSQL_QUERY_META_CHECK_VOCABULARY			"SELECT idvocabulary FROM metadatakey INNER JOIN metadatainstance_%d ON metadatakey.idkey = metadatainstance_%d.idkey WHERE idvocabulary IS NOT NULL AND metadatainstance_%d.idmetadatainstance=%d;"
 #define MYSQL_QUERY_META_CHECK_VOCABULARIES			"SELECT idvocabulary FROM metadatakey INNER JOIN metadatainstance_%d ON metadatakey.idkey = metadatainstance_%d.idkey WHERE idvocabulary IS NOT NULL %s;"
 #define MYSQL_QUERY_META_RETRIEVE_KEY_OF_INSTANCE		"SELECT idmetadatainstance, label FROM metadatainstance_%d INNER JOIN metadatakey ON metadatainstance_%d.idkey = metadatakey.idkey WHERE variable = '%s';"
 #define MYSQL_QUERY_META_UPDATE_KEY_OF_INSTANCE			"UPDATE metadatainstance_%d SET idkey = %d WHERE idmetadatainstance = %d;"
+#define MYSQL_QUERY_META_DROP_METADATA_TABLE			"DROP TABLE IF EXISTS metadatainstance_%d;"
 
 #endif				/* __OPH_ODB_META_QUERY_H__ */

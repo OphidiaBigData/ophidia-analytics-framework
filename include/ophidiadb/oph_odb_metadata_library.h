@@ -227,4 +227,12 @@ int oph_odb_meta_delete_keys_of_cube(ophidiadb * oDB, int id_datacube);
  */
 int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const char *old_variable, const char *new_variable);
 
+/**
+ * \brief Function to insert a new row in manage table
+ * \param oDB Pointer to OphidiaDB
+ * \param id_datacube Id of the cube associated with the table
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_meta_create_metadatainstance_table(ophidiadb * oDB, int id_datacube);
+
 #endif				/* __OPH_ODB_META_H__ */

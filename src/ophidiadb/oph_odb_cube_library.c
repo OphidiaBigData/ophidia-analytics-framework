@@ -862,7 +862,7 @@ int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb * oDB, oph_od
 	}
 	*last_insertd_id = cube->id_datacube;
 
-	//If datacube has to update partition table
+	// If datacube has to update partition table
 	if (cube->id_db) {
 		int i;
 		for (i = 0; i < cube->db_number; i++) {
@@ -877,6 +877,12 @@ int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb * oDB, oph_od
 			}
 		}
 	}
+	// Create metadatainstance table
+	if (!cube->level && oph_odb_meta_create_metadatainstance_table(oDB, cube->id_datacube)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
 	return OPH_ODB_SUCCESS;
 }
 
@@ -1012,7 +1018,22 @@ int oph_odb_cube_delete_from_datacube_table(ophidiadb * oDB, int id_datacube)
 	}
 
 	char deleteQuery[MYSQL_BUFLEN];
-	int n = snprintf(deleteQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_DELETE_KEYS, id_datacube);
+	int n;
+
+/*
+	n = snprintf(deleteQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_DELETE_KEYS, id_datacube);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, deleteQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+*/
+
+	n = snprintf(deleteQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_DELETE_OPHIDIADB_CUBE, id_datacube);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -1023,7 +1044,7 @@ int oph_odb_cube_delete_from_datacube_table(ophidiadb * oDB, int id_datacube)
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
-	n = snprintf(deleteQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_DELETE_OPHIDIADB_CUBE, id_datacube);
+	n = snprintf(deleteQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_DROP_METADATA_TABLE, id_datacube);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
