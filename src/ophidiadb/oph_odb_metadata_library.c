@@ -31,6 +31,48 @@
 
 extern int msglevel;
 
+#define OPH_META_MAX_RETRY 10
+#define OPH_META_MIN_TIME 1
+
+int oph_odb_meta_execute_query(ophidiadb * oDB, const char *query)
+{
+
+	if (!oDB || !query) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	int n, count = 0, interval = OPH_META_MIN_TIME;
+
+	do {
+
+		n = mysql_query(oDB->conn, query);
+		if (n) {
+			if (!strstr(mysql_error(oDB->conn), "Deadlock found when trying to get lock")) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+				return OPH_ODB_MYSQL_ERROR;
+			}
+			// Deadlock found
+			oph_odb_disconnect_from_ophidiadb(oDB);
+			sleep(rand() % interval);
+			count++;
+			interval <<= 1;
+			if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+				return OPH_ODB_MYSQL_ERROR;
+			}
+		}
+
+	} while (n && (count <= OPH_META_MAX_RETRY));
+
+	if (count > OPH_META_MAX_RETRY) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
 int oph_odb_meta_find_metadatakey_list(ophidiadb * oDB, int vocabulary_id, MYSQL_RES ** information_list)
 {
 	(*information_list) = NULL;
@@ -707,7 +749,7 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 	}
 
 	char insertQuery[MYSQL_BUFLEN];
-	int n;
+	int n, count, interval;
 
 	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_COPY_INSTANCES, id_datacube_input);
 	if (n >= MYSQL_BUFLEN) {
@@ -715,10 +757,8 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	if (mysql_query(oDB->conn, insertQuery)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		return OPH_ODB_MYSQL_ERROR;
-	}
+	if ((n = oph_odb_meta_execute_query(oDB, insertQuery)))
+		return n;
 
 	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_INSERT_INSTANCES, id_datacube_output);
 	if (n >= MYSQL_BUFLEN) {
@@ -726,10 +766,8 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	if (mysql_query(oDB->conn, insertQuery)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		return OPH_ODB_MYSQL_ERROR;
-	}
+	if ((n = oph_odb_meta_execute_query(oDB, insertQuery)))
+		return n;
 
 	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_COPY_MANAGE, id_user, id_datacube_output);
 	if (n >= MYSQL_BUFLEN) {
@@ -738,10 +776,8 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	if (mysql_query(oDB->conn, insertQuery)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		return OPH_ODB_MYSQL_ERROR;
-	}
+	if ((n = oph_odb_meta_execute_query(oDB, insertQuery)))
+		return n;
 
 	return OPH_ODB_SUCCESS;
 }
