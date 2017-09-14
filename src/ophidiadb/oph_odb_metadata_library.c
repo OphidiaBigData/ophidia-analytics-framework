@@ -508,10 +508,8 @@ int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_data
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	if (mysql_query(oDB->conn, insertQuery)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		return OPH_ODB_MYSQL_ERROR;
-	}
+	if ((n = oph_odb_meta_execute_query(oDB, insertQuery, 1)))
+		return n;
 
 	if (!(*last_insertd_id = mysql_insert_id(oDB->conn))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted id\n");
