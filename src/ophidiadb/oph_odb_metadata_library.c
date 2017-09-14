@@ -34,7 +34,7 @@ extern int msglevel;
 #define OPH_META_MAX_RETRY 10
 #define OPH_META_MIN_TIME 1
 
-int oph_odb_meta_execute_query(ophidiadb * oDB, const char *query)
+int oph_odb_meta_execute_query(ophidiadb * oDB, const char *query, char reopen_connection)
 {
 
 	if (!oDB || !query) {
@@ -57,15 +57,19 @@ int oph_odb_meta_execute_query(ophidiadb * oDB, const char *query)
 		}
 		// Deadlock found
 		pmesg(LOG_DEBUG, __FILE__, __LINE__, "%s: retry number %d\n", error_message, ++count);
-		oph_odb_disconnect_from_ophidiadb(oDB);
-		pmesg(LOG_DEBUG, __FILE__, __LINE__, "Disconnect from OphidiaDB.\n");
+		if (reopen_connection) {
+			oph_odb_disconnect_from_ophidiadb(oDB);
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Disconnect from OphidiaDB.\n");
+		}
 		sleep(rand() % interval);
 		interval <<= 1;
-		if (oph_odb_connect_to_ophidiadb(oDB)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
-			return OPH_ODB_MYSQL_ERROR;
+		if (reopen_connection) {
+			if (oph_odb_connect_to_ophidiadb(oDB)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+				return OPH_ODB_MYSQL_ERROR;
+			}
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Reconnect to OphidiaDB.\n");
 		}
-		pmesg(LOG_DEBUG, __FILE__, __LINE__, "Reconnect to OphidiaDB.\n");
 
 	} while (count <= OPH_META_MAX_RETRY);
 
@@ -761,7 +765,7 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	if ((n = oph_odb_meta_execute_query(oDB, insertQuery)))
+	if ((n = oph_odb_meta_execute_query(oDB, insertQuery, 0)))
 		return n;
 
 	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_INSERT_INSTANCES, id_datacube_output);
@@ -770,7 +774,7 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	if ((n = oph_odb_meta_execute_query(oDB, insertQuery)))
+	if ((n = oph_odb_meta_execute_query(oDB, insertQuery, 0)))
 		return n;
 
 	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_COPY_MANAGE, id_user, id_datacube_output);
@@ -780,7 +784,7 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	if ((n = oph_odb_meta_execute_query(oDB, insertQuery)))
+	if ((n = oph_odb_meta_execute_query(oDB, insertQuery, 1)))
 		return n;
 
 	return OPH_ODB_SUCCESS;
