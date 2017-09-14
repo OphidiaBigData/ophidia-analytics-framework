@@ -58,12 +58,14 @@ int oph_odb_meta_execute_query(ophidiadb * oDB, const char *query)
 		// Deadlock found
 		pmesg(LOG_DEBUG, __FILE__, __LINE__, "%s: retry number %d\n", error_message, ++count);
 		oph_odb_disconnect_from_ophidiadb(oDB);
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "Disconnect from OphidiaDB.\n");
 		sleep(rand() % interval);
 		interval <<= 1;
-		if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		if (oph_odb_connect_to_ophidiadb(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
 			return OPH_ODB_MYSQL_ERROR;
 		}
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "Reconnect to OphidiaDB.\n");
 
 	} while (count <= OPH_META_MAX_RETRY);
 
