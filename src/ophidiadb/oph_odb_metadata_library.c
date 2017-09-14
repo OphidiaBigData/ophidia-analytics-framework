@@ -56,25 +56,29 @@ int oph_odb_meta_execute_query(ophidiadb * oDB, const char *query, char reopen_c
 			return OPH_ODB_MYSQL_ERROR;
 		}
 		// Deadlock found
-		pmesg(LOG_DEBUG, __FILE__, __LINE__, "%s: retry number %d\n", error_message, ++count);
+		count++;
+		interval <<= 1;
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "%s: retry number %d\n", error_message, count);
+
 		if (reopen_connection) {
 			oph_odb_disconnect_from_ophidiadb(oDB);
-			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Disconnect from OphidiaDB.\n");
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Disconnected from OphidiaDB.\n");
 		}
-		sleep(rand() % interval);
-		interval <<= 1;
+
+		sleep(rand() % interval);	// 0, 1, 2... (interval - 1) seconds
+
 		if (reopen_connection) {
 			if (oph_odb_connect_to_ophidiadb(oDB)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
 				return OPH_ODB_MYSQL_ERROR;
 			}
-			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Reconnect to OphidiaDB.\n");
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Reconnected to OphidiaDB.\n");
 		}
 
 	} while (count <= OPH_META_MAX_RETRY);
 
 	if (count > OPH_META_MAX_RETRY) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", error_message);
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
@@ -754,7 +758,7 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	if ((n = oph_odb_meta_execute_query(oDB, insertQuery, 0)))
+	if ((n = oph_odb_meta_execute_query(oDB, insertQuery, 1)))
 		return n;
 
 	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_INSERT_INSTANCES, id_datacube_output);
