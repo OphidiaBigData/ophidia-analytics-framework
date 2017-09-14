@@ -176,10 +176,8 @@ int oph_odb_meta_insert_into_metadatainstance_manage_tables(ophidiadb * oDB, con
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	if (mysql_query(oDB->conn, insertQuery)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		return OPH_ODB_MYSQL_ERROR;
-	}
+	if ((n = oph_odb_meta_execute_query(oDB, insertQuery, 1)))
+		return n;
 
 	int metadatainstance_id = 0;
 	if (!(metadatainstance_id = mysql_insert_id(oDB->conn))) {
@@ -939,10 +937,8 @@ int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, con
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 			return OPH_ODB_STR_BUFF_OVERFLOW;
 		}
-		if (mysql_query(oDB->conn, query)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-			return OPH_ODB_MYSQL_ERROR;
-		}
+		if ((n = oph_odb_meta_execute_query(oDB, query, 1)))
+			return n;
 	}
 
 	return OPH_ODB_SUCCESS;
