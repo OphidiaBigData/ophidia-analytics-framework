@@ -53,18 +53,19 @@ Extract the subset consisting of values 1 through 10 of dimension &quot;lat&quot
 OPH_TERM: oph_subset2 cube=http://www.example.com/1/1;subset_dims=lat|lon;subset_filter=1:10|20:30;grid=new_grid;
 SUBMISSION STRING: &quot;operator=oph_subset2;cube=http://www.example.com/1/1;subset_dims=lat|lon;subset_filter=1:10|20:30;grid=new_grid;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Data Analysis</category>
         <creationdate>13/10/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-		<argument type="string" mandatory="yes">cube</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
-		<argument type="string" mandatory="no" default="none">subset_dims</argument>
-		<argument type="string" mandatory="no" default="all">subset_filter</argument>
+		<argument type="string" mandatory="no" default="none" multivalue="yes">subset_dims</argument>
+		<argument type="string" mandatory="no" default="all" multivalue="yes">subset_filter</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">time_filter</argument>
 		<argument type="real" mandatory="no" default="0">offset</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>

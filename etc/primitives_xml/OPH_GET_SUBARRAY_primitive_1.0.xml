@@ -31,16 +31,17 @@ Binary-array.
 Extract 20 measures starting at index 30.
 oph_get_subarray(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,30,20)</abstract>
         <author>CMCC Foundation</author>
+        <category>Selection</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="simple"/>
+        <operation type="simple"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="long-long" mandatory="no" default="1">start</argument>
-	<argument type="long-long" mandatory="no" default="array length">count</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="long-long" mandatory="no" default="1">start</argument>
+		<argument type="long-long" mandatory="no" default="array length">count</argument>
     </args>
 </primitive>

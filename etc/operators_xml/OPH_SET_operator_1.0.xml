@@ -18,13 +18,14 @@ Set the parameter &quot;var&quot; to 10:
 OPH_TERM: oph_set key=var;value=10;
 SUBMISSION STRING: &quot;operator=oph_set;key=var;value=10;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Workflow Management</category>
         <creationdate>31/10/2015</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>
-	<argument type="string" mandatory="yes">key</argument>
-	<argument type="string" mandatory="no" default="-">value</argument>
-	<argument type="int" mandatory="no" default="@OPH_WORKFLOW_ID" minvalue="1">id</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">key</argument>
+		<argument type="string" mandatory="no" default="-" multivalue="yes">value</argument>
+		<argument type="int" mandatory="no" default="@OPH_WORKFLOW_ID" minvalue="1">id</argument>
     </args>
 </operator>

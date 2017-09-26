@@ -73,19 +73,20 @@ Show folders, visible containers and datacubes within a session :
 OPH_TERM: oph_list level=2;cwd=/session-code;
 SUBMISSION STRING: &quot;operator=oph_list;level=2;cwd=/session-code;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Virtual File System Management</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-        <argument type="int" mandatory="no" default="1" minvalue="0" maxvalue="8" values="0|1|2|3|4|5|6|7|8">level</argument>
-        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-        <argument type="string" mandatory="no" default="null">sessionid</argument>
-        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="0" maxvalue="8" values="0|1|2|3|4|5|6|7|8">level</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="-">path</argument>
-        <argument type="string" mandatory="yes">cwd</argument>
+		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="no" default="all">container_filter</argument>
-		<argument type="string" mandatory="no" default="all">cube</argument>
+		<argument type="string" mandatory="no" default="all" multivalue="yes">cube</argument>
 		<argument type="string" mandatory="no" default="all">host_filter</argument>
 		<argument type="int" mandatory="no" default="all">dbms_filter</argument>
 		<argument type="string" mandatory="no" default="all">measure_filter</argument>
