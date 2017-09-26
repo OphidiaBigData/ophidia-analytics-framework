@@ -348,7 +348,9 @@ int task_execute(oph_operator_struct * handle)
 	int id_datacube = ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_datacube;
 
 	int ret = OPH_ANALYTICS_OPERATOR_SUCCESS;
-	if((ret = oph_dproc_delete_data(id_datacube, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids))) {
+	if ((ret =
+	     oph_dproc_delete_data(id_datacube, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container,
+				   ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 	}
@@ -374,7 +376,6 @@ int task_destroy(oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_NULL_OPERATOR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
-
 	//For error checking
 	int result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 

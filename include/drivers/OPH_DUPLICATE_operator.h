@@ -61,6 +61,7 @@ struct _OPH_DUPLICATE_operator_handle {
 	char *sessionid;
 	int id_user;
 	char *description;
+	short int execute_error;
 };
 typedef struct _OPH_DUPLICATE_operator_handle OPH_DUPLICATE_operator_handle;
 

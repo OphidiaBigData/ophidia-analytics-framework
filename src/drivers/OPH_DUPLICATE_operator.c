@@ -33,6 +33,7 @@
 #include "oph_pid_library.h"
 #include "oph_json_library.h"
 #include "oph_datacube_library.h"
+#include "oph_driver_procedure_library.h"
 
 #include "debug.h"
 
@@ -74,6 +75,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->sessionid = NULL;
 	((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_user = 0;
 	((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->description = NULL;
+	((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->execute_error = 0;
+
 
 	//3 - Fill struct with the correct data
 	char *datacube_in;
@@ -538,6 +541,8 @@ int task_init(oph_operator_struct * handle)
 	if (id_string[0][0] == 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DUPLICATE_MASTER_TASK_INIT_FAILED);
+		((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->execute_error = 1;
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
 	if (handle->proc_rank != 0) {
@@ -795,9 +800,8 @@ int task_execute(oph_operator_struct * handle)
 		free(tmp_uri);
 	}
 
-	if (!handle->proc_rank && (result != OPH_ANALYTICS_OPERATOR_SUCCESS))
-		oph_odb_cube_delete_from_datacube_table(&((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->oDB,
-							((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_output_datacube);
+	if (result != OPH_ANALYTICS_OPERATOR_SUCCESS)
+		((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->execute_error = 1;
 
 	return result;
 }
@@ -810,7 +814,6 @@ int task_reduce(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
-
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -822,6 +825,51 @@ int task_destroy(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
+	short int proc_error = ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->execute_error;
+	int id_datacube = ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_output_datacube;
+	short int global_error = 0;
+
+	//Reduce results
+	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
+
+	if (global_error) {
+		//Delete fragments
+		if (id_datacube) {
+			if (((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0)
+				return OPH_ANALYTICS_OPERATOR_SUCCESS;
+
+			int ret = OPH_ANALYTICS_OPERATOR_SUCCESS;
+			if ((ret =
+			     oph_dproc_delete_data(id_datacube, ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_input_container,
+						   ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->fragment_ids))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
+				return ret;
+			}
+		}
+		//For error checking
+		int result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+
+		//Before deleting wait for all process to reach this point
+		MPI_Barrier(MPI_COMM_WORLD);
+
+		//Delete from OphidiaDB
+		if (handle->proc_rank == 0) {
+			result =
+			    oph_dproc_clean_odb(&((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->oDB, id_datacube,
+						((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_input_container);
+		}
+		//Broadcast to all other processes the operation result       
+		MPI_Bcast(&result, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+		//Check if sequential part has been completed
+		if (result != OPH_ANALYTICS_OPERATOR_SUCCESS) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Master destroy procedure has failed\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_MASTER_TASK_DESTROY_FAILED);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+
+	}
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
