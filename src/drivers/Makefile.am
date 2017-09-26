@@ -137,7 +137,7 @@ liboph_cubesizeoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_data
 liboph_deleteoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_deleteoperator_la_SOURCES = OPH_DELETE_operator.c
 liboph_deleteoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_deleteoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver
+liboph_deleteoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver  -loph_driver_proc
 
 liboph_deletecontaineroperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_deletecontaineroperator_la_SOURCES = OPH_DELETECONTAINER_operator.c
