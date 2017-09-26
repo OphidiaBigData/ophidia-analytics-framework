@@ -390,7 +390,7 @@ int task_destroy(oph_operator_struct * handle)
 	MPI_Bcast(&result, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
 	//Check if sequential part has been completed
-	if (!result) {
+	if (result != OPH_ANALYTICS_OPERATOR_SUCCESS) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master destroy procedure has failed\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_MASTER_TASK_DESTROY_FAILED);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
