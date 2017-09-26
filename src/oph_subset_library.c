@@ -83,12 +83,8 @@ int oph_subset_double_parse(const char *cond, unsigned long long len, oph_subset
 	temp0[len] = '\0';
 
 	strcpy(temp2, temp0);
-	result = strtok_r(temp0, OPH_SUBSET_LIB_SUBSET_SEPARATOR, &savepointer);
-
-	while (result) {
+	while (strtok_r(subset->number ? NULL : temp0, OPH_SUBSET_LIB_SUBSET_SEPARATOR, &savepointer))
 		subset->number++;
-		result = strtok_r(NULL, OPH_SUBSET_LIB_SUBSET_SEPARATOR, &savepointer);
-	}
 
 	if (!subset->number)
 		return OPH_SUBSET_LIB_DATA_ERR;
@@ -264,12 +260,8 @@ int oph_subset_parse(const char *cond, unsigned long long len, oph_subset * subs
 	temp0[len] = '\0';
 
 	strcpy(temp2, temp0);
-	result = strtok_r(temp0, OPH_SUBSET_LIB_SUBSET_SEPARATOR, &savepointer);
-
-	while (result) {
+	while (strtok_r(subset->number ? NULL : temp0, OPH_SUBSET_LIB_SUBSET_SEPARATOR, &savepointer))
 		subset->number++;
-		result = strtok_r(NULL, OPH_SUBSET_LIB_SUBSET_SEPARATOR, &savepointer);
-	}
 
 	if (!subset->number)
 		return OPH_SUBSET_LIB_DATA_ERR;
