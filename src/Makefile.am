@@ -39,6 +39,7 @@ LIBRARY+= libophidiadb.la
 LIBRARY+= liboph_hierarchy.la
 LIBRARY+= liboph_dimension.la
 LIBRARY+= liboph_datacube.la
+LIBRARY+= liboph_driver_proc.la
 if HAVE_NETCDF
 LIBRARY+= liboph_nc.la
 endif
@@ -165,6 +166,11 @@ liboph_datacube_la_SOURCES = oph_datacube_library.c
 liboph_datacube_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
 liboph_datacube_la_LDFLAGS = -static
 liboph_datacube_la_LIBADD = -lz -lm @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver 
+
+liboph_driver_proc_la_SOURCES = oph_driver_procedure_library.c
+liboph_driver_proc_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
+liboph_driver_proc_la_LDFLAGS = -static
+liboph_driver_proc_la_LIBADD = -lz -lm @LIBLTDL@ -L. -ldebug -lophidiadb -loph_datacube  
 
 if HAVE_NETCDF
 liboph_nc_la_SOURCES = oph_nc_library.c
