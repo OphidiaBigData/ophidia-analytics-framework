@@ -638,6 +638,8 @@ int task_execute(oph_operator_struct * handle)
 	if (((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
+	((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->execute_error = 1;
+
 	int i, j, k;
 
 	int id_datacube_out = ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_output_datacube;
@@ -800,8 +802,8 @@ int task_execute(oph_operator_struct * handle)
 		free(tmp_uri);
 	}
 
-	if (result != OPH_ANALYTICS_OPERATOR_SUCCESS)
-		((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->execute_error = 1;
+	if (result == OPH_ANALYTICS_OPERATOR_SUCCESS)
+		((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->execute_error = 0;
 
 	return result;
 }
@@ -844,7 +846,6 @@ int task_destroy(oph_operator_struct * handle)
 						   ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->fragment_ids))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
-				return ret;
 			}
 		}
 		//For error checking
