@@ -54,25 +54,26 @@ Concat a NetCDF file excluding metadata into the datacube &quot;http://www.examp
 OPH_TERM:: oph_concatnc src_path=/path/of/ncfile.nc;cube=http://www.example.com/1/1;
 SUBMISSION STRING: &quot;operator=oph_concatnc;src_path=/path/of/ncfile.nc;cube=http://www.example.com/1/1;&quot;</abstract>
         <author>CMCC</author>
+        <category>Data Import/Export</category>
         <creationdate>24/01/2017</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>  
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
-		<argument type="string" mandatory="yes">src_path</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">src_path</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="real" mandatory="no" default="-">dim_offset</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">dim_continue</argument>
-		<argument type="string" mandatory="no" default="none">subset_dims</argument>
+		<argument type="string" mandatory="no" default="none" multivalue="yes">subset_dims</argument>
 		<argument type="string" mandatory="no" default="index" values="index|coord">subset_type</argument>
-		<argument type="string" mandatory="no" default="all">subset_filter</argument>
+		<argument type="string" mandatory="no" default="all" multivalue="yes">subset_filter</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">time_filter</argument>
 		<argument type="real" mandatory="no" default="0">offset</argument>
-		<argument type="string" mandatory="yes">cube</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">check_exp_dim</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|concatnc">objkey_filter</argument>
