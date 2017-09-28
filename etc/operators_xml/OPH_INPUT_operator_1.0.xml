@@ -23,15 +23,16 @@ Set the parameter &quot;var&quot; to 10 for task &quot;example&quot; in workflow
 OPH_TERM: oph_input key=var;value=10;id=1;taskname=example;
 SUBMISSION STRING: &quot;operator=oph_input;key=var;value=10;id=1;taskname=example;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Workflow Management</category>
         <creationdate>02/09/2016</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>
-	<argument type="int" mandatory="no" default="@OPH_WORKFLOW_ID" minvalue="1">id</argument>
-	<argument type="string" mandatory="no" default="Task 0">taskname</argument>
-	<argument type="string" mandatory="no" default="continue" values="continue|abort|wait">action</argument>
-	<argument type="string" mandatory="no" default="-">key</argument>
-	<argument type="string" mandatory="no" default="-">value</argument>
+		<argument type="int" mandatory="no" default="@OPH_WORKFLOW_ID" minvalue="1">id</argument>
+		<argument type="string" mandatory="no" default="Task 0">taskname</argument>
+		<argument type="string" mandatory="no" default="continue" values="continue|abort|wait">action</argument>
+		<argument type="string" mandatory="no" default="-" multivalue="yes">key</argument>
+		<argument type="string" mandatory="no" default="-" multivalue="yes">value</argument>
     </args>
 </operator>

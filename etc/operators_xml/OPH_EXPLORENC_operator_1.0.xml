@@ -107,9 +107,10 @@ Read the NetCDF file /path/of/ncfile.nc:
 OPH_TERM: oph_explorenc measure=pressure;src_path=/path/of/ncfile.nc;exp_dim=lon|lat;imp_dim=time;
 SUBMISSION STRING: &quot;operator=oph_explorenc;measure=pressure;src_path=/path/of/ncfile.nc;exp_dim=lon|lat;imp_dim=time;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Data Import/Export</category>
         <creationdate>02/07/2015</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>  
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
@@ -117,13 +118,13 @@ SUBMISSION STRING: &quot;operator=oph_explorenc;measure=pressure;src_path=/path/
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="-">measure</argument>
-		<argument type="string" mandatory="yes">src_path</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">src_path</argument>
 		<argument type="string" mandatory="no" default="/">cdd</argument>
-		<argument type="string" mandatory="no" default="-">exp_dim</argument>
-		<argument type="string" mandatory="no" default="-">imp_dim</argument>
-		<argument type="string" mandatory="no" default="none">subset_dims</argument>
+		<argument type="string" mandatory="no" default="-" multivalue="yes">exp_dim</argument>
+		<argument type="string" mandatory="no" default="-" multivalue="yes">imp_dim</argument>
+		<argument type="string" mandatory="no" default="none" multivalue="yes">subset_dims</argument>
 		<argument type="string" mandatory="no" default="index" values="index|coord">subset_type</argument>
-		<argument type="string" mandatory="no" default="all">subset_filter</argument>
+		<argument type="string" mandatory="no" default="all" multivalue="yes">subset_filter</argument>
 		<argument type="int" mandatory="no" default="100" minvalue="1" maxvalue="10000">limit_filter</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">show_index</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">show_id</argument>

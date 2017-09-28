@@ -30,14 +30,15 @@ Binary-array.
 Concatenate measures 60-90 to measures 1-30.
 oph_concat2(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,oph_get_subarray(&apos;OPH_DOUBLE&apos;,&apos;&apos;,measure,1,30),oph_get_subarray(&apos;OPH_DOUBLE&apos;,&apos;&apos;,measure,60,31))</abstract>
         <author>CMCC Foundation</author>
+        <category>Core Array</category>
         <creationdate>27/01/2017</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="simple"/>
+        <operation type="simple"/>
     </info>
     <args>
-        <argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
-        <argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-	<multi-argument type="binary-array" mandatory="yes">measure</multi-argument>
+		<argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'" multivalue="yes">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" default="'oph_double'" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<multi-argument type="binary-array" mandatory="yes">measure</multi-argument>
     </args>
 </primitive>
