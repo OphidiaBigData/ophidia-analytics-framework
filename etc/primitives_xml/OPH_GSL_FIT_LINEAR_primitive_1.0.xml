@@ -31,16 +31,17 @@ Binary-array.
 Compute the values of regression line in points &apos;x&apos; given the dimension &apos;dimension&apos;.
 oph_gsl_fit_linear(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,dimension,x)</abstract>
         <author>CMCC Foundation</author>
+        <category>Numerical Analysis</category>
         <creationdate>16/07/2015</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="simple"/>
+        <operation type="simple"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="binary-array" mandatory="yes">dimension</argument>
-	<argument type="binary-array" mandatory="yes">x</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="binary-array" mandatory="yes">dimension</argument>
+		<argument type="binary-array" mandatory="yes">x</argument>
     </args>
 </primitive>

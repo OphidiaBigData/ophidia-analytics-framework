@@ -23,14 +23,15 @@ Binary-array.
 Convert the value &apos;112.45&apos; into a binary value.
 oph_value_to_bin(&apos;&apos;,&apos;OPH_DOUBLE&apos;,112.45)</abstract>
         <author>CMCC Foundation</author>
+        <category>Miscellaneous</category>
         <creationdate>24/03/2014</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="simple"/>
+        <operation type="simple"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-	<argument type="numeric" mandatory="yes">value</argument>
+		<argument type="oph_type" mandatory="yes">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="numeric" mandatory="yes">value</argument>
     </args>
 </primitive>

@@ -75,9 +75,10 @@ Import a FITS file including metadata into the session directory &quot;session-c
 OPH_TERM: oph_importfits cwd=/session-code1;container=container1;measure=pressure;src_path=/path/of/fitsfile.nc;import_metadata=no;
 SUBMISSION STRING: &quot;operator=oph_importfits;cwd=/session-code1;container=container1;measure=pressure;src_path=/path/of/fitsfile.nc;import_metadata=no;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Data Import/Export</category>
         <creationdate>28/07/2017</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>  
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
@@ -96,13 +97,13 @@ SUBMISSION STRING: &quot;operator=oph_importfits;cwd=/session-code1;container=co
 		<argument type="int" mandatory="no" minvalue="0" default="0">nfrag</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
 		<argument type="string" mandatory="no" default="image">measure</argument>
-		<argument type="string" mandatory="yes">src_path</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">src_path</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">hdu</argument>
 		<argument type="string" mandatory="no" default="/">cdd</argument>
-		<argument type="string" mandatory="no" default="auto">exp_dim</argument>
-		<argument type="string" mandatory="no" default="auto">imp_dim</argument>
-		<argument type="string" mandatory="no" default="none">subset_dims</argument>
-		<argument type="string" mandatory="no" default="all">subset_filter</argument>
+		<argument type="string" mandatory="no" default="auto" multivalue="yes">exp_dim</argument>
+		<argument type="string" mandatory="no" default="auto" multivalue="yes">imp_dim</argument>
+		<argument type="string" mandatory="no" default="none" multivalue="yes">subset_dims</argument>
+		<argument type="string" mandatory="no" default="all" multivalue="yes">subset_filter</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">compressed</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|importfits|importfits_summary">objkey_filter</argument>

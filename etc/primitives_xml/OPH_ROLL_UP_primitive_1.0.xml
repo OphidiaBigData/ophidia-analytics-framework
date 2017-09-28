@@ -31,15 +31,16 @@ Transform the &apos;depth&apos; dimension from explicit to implicit (with 100 le
 the output table will contain in each row measures related to a couple (lat, lon) and expressed as a matrix of values along dimensions (depth, time).
 oph_roll_up(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,100)</abstract>
         <author>CMCC Foundation</author>
+        <category>Core Array</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="aggregate"/>
+        <operation type="aggregate"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
-        <argument type="long-long" mandatory="yes">size</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="long-long" mandatory="yes">size</argument>
     </args>
 </primitive>

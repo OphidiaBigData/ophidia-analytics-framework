@@ -23,14 +23,15 @@ Binary-array.
 Convert the string &apos;112.45, 563.9, 0.004&apos;.
 oph_to_bin(&apos;&apos;,&apos;OPH_DOUBLE&apos;,&apos;112.45, 563.9, 0.004&apos;)</abstract>
         <author>CMCC Foundation</author>
+        <category>Miscellaneous</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="simple"/>
+        <operation type="simple"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-	<argument type="string" mandatory="yes">convertible string</argument>
+		<argument type="oph_type" mandatory="yes">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="string" mandatory="yes">convertible string</argument>
     </args>
 </primitive>

@@ -1770,10 +1770,10 @@
 #define OPH_LOG_OPH_METADATA_RETRIEVE_TYPE_ID_ERROR						   "Unable to find id of type %s\n"
 #define OPH_LOG_OPH_METADATA_RETRIEVE_USER_ID_ERROR						   "Unable to find id of user %s\n"
 #define OPH_LOG_OPH_METADATA_RETRIEVE_VALUE_ERROR	 						"Unable to extract metadata values from '%s'\n"
-#define OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR	 						"Unable to insert medatainstance\n"
+#define OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR	 						"Unable to insert metadatainstance\n"
 #define OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR							"Unable to insert into manage table\n"
 #define OPH_LOG_OPH_METADATA_READ_METADATA_ERROR							OPH_LOG_GENERIC_READ_METADATA_ERROR
-#define OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR							"Unable to update medatainstance\n"
+#define OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR							"Unable to update metadatainstance\n"
 #define OPH_LOG_OPH_METADATA_DELETE_INSTANCE_ERROR							"Unable to delete from metadata instance table\n"
 #define OPH_LOG_OPH_METADATA_MODE_ERROR										"Mode not recognized: %d\n"
 #define OPH_LOG_OPH_METADATA_RETRIEVE_METADATAINSTANCE_ID_ERROR				"Metadata instance with id %ld does not exist\n"

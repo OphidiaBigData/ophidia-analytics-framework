@@ -39,19 +39,20 @@ Show the grid &apos;grid1&apos; related to container &apos;container1&apos; :
 OPH_TERM: oph_showgrid container=container1;grid=grid1;cwd=/session-code1;
 SUBMISSION STRING: &quot;operator=oph_showgrid;container=container1;grid=grid1;cwd=/session-code1;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Metadata</category>
         <creationdate>06/12/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-        <argument type="string" mandatory="yes">container</argument>
-        <argument type="string" mandatory="no" default="all">grid</argument>
-        <argument type="string" mandatory="no" default="all">dim</argument>
-        <argument type="string" mandatory="no" default="no" values="yes|no">show_index</argument>
-        <argument type="string" mandatory="yes">cwd</argument>
-        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-        <argument type="string" mandatory="no" default="null">sessionid</argument>
-        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-	<argument type="string" mandatory="no" default="all" values="all|none|showgrid_diminfo|showgrid_dimvalues|showgrid_tip">objkey_filter</argument>
+		<argument type="string" mandatory="yes">container</argument>
+		<argument type="string" mandatory="no" default="all">grid</argument>
+		<argument type="string" mandatory="no" default="all">dim</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">show_index</argument>
+		<argument type="string" mandatory="yes">cwd</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|showgrid_diminfo|showgrid_dimvalues|showgrid_tip">objkey_filter</argument>
     </args>
 </operator>

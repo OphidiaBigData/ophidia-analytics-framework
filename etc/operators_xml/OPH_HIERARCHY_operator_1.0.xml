@@ -34,16 +34,17 @@ Get the description of &quot;oph_time&quot; hierarchy :
 OPH_TERM: oph_hierarchy hierarchy=oph_time;
 SUBMISSION STRING: &quot;operator=oph_hierarchy;hierarchy=oph_time;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Miscellaneous</category>
         <creationdate>02/11/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-        <argument type="string" mandatory="no" default="all">hierarchy</argument>
-        <argument type="string" mandatory="no" default="latest">hierarchy_version</argument>
-        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-        <argument type="string" mandatory="no" default="null">sessionid</argument>
-        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-        <argument type="string" mandatory="no" default="all" values="all|none|hierarchy_list|hierarchy_tip|hierarchy_attrs|hierarchy_function">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="all">hierarchy</argument>
+		<argument type="string" mandatory="no" default="latest">hierarchy_version</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|hierarchy_list|hierarchy_tip|hierarchy_attrs|hierarchy_function">objkey_filter</argument>
     </args>
 </operator>

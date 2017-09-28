@@ -21,14 +21,15 @@ At least one of arguments &quot;values&quot; or &quot;counter&quot; has to be se
 By default &quot;counter&quot; will be set to &quot;1&quot; in case &quot;values&quot; is not provided.
 </abstract>
         <author>CMCC Foundation</author>
+        <category>Workflow Management</category>
         <creationdate>20/08/2015</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-	<argument type="string" mandatory="yes">key</argument>
-	<argument type="string" mandatory="no" default="-">values</argument>
-	<argument type="string" mandatory="no" default="-">counter</argument>
-	<argument type="string" mandatory="no" default="no" values="no|yes">parallel</argument>
+		<argument type="string" mandatory="yes">key</argument>
+		<argument type="string" mandatory="no" default="-" multivalue="yes">values</argument>
+		<argument type="string" mandatory="no" default="-">counter</argument>
+		<argument type="string" mandatory="no" default="no" values="no|yes">parallel</argument>
     </args>
 </operator>

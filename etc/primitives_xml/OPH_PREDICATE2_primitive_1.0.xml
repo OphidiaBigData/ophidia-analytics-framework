@@ -37,19 +37,20 @@ Binary-array.
 Extract measures with temperature values greater than 300 K.
 oph_predicate2(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;x-300&apos;,&apos;>0&apos;,&apos;1&apos;,&apos;0&apos;)</abstract>
         <author>CMCC Foundation</author>
+        <category>Transformation</category>
         <creationdate>12/02/2016</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="simple"/>
+        <operation type="simple"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="string" mandatory="yes">expression 0</argument>
-	<argument type="string" mandatory="yes">comparison</argument>
-	<argument type="string" mandatory="yes">expression 1</argument>
-	<argument type="string" mandatory="yes">expression 2</argument>
-	<argument type="string" mandatory="no" default="all">occurrence</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="string" mandatory="yes">expression 0</argument>
+		<argument type="string" mandatory="yes">comparison</argument>
+		<argument type="string" mandatory="yes">expression 1</argument>
+		<argument type="string" mandatory="yes">expression 2</argument>
+		<argument type="string" mandatory="no" default="all">occurrence</argument>
     </args>
 </primitive>

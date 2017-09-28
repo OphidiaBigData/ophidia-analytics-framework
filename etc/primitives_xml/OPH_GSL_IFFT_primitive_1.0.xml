@@ -18,14 +18,15 @@ Binary-array.
 Compute the original signal through the IFFT of the input coefficients.
 oph_gsl_ifft(&apos;OPH_COMPLEX_DOUBLE&apos;,&apos;OPH_COMPLEX_DOUBLE&apos;,measure)</abstract>
         <author>CMCC Foundation</author>
+        <category>Transformation</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="simple"/>
+        <operation type="simple"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_complex_double'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_complex_double'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_complex_double'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_complex_double'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
     </args>
 </primitive>
