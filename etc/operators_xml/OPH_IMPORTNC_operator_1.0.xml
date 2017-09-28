@@ -104,9 +104,10 @@ Import a NetCDF file excluding metadata into the session directory &quot;session
 OPH_TERM: oph_importnc cwd=/session-code1;container=container1;measure=pressure;src_path=/path/of/ncfile.nc;imp_concept_level=d;import_metadata=no;
 SUBMISSION STRING: &quot;operator=oph_importnc;cwd=/session-code1;container=container1;measure=pressure;src_path=/path/of/ncfile.nc;imp_concept_level=d;import_metadata=no;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Data Import/Export</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>  
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
@@ -126,20 +127,20 @@ SUBMISSION STRING: &quot;operator=oph_importnc;cwd=/session-code1;container=cont
 		<argument type="int" mandatory="no" minvalue="0" default="0">nfrag</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
 		<argument type="string" mandatory="yes">measure</argument>
-		<argument type="string" mandatory="yes">src_path</argument>
-	        <argument type="string" mandatory="no" default="/">cdd</argument>
-		<argument type="string" mandatory="no" default="auto">exp_dim</argument>
-		<argument type="string" mandatory="no" default="auto">imp_dim</argument>
-		<argument type="string" mandatory="no" default="none">subset_dims</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">src_path</argument>
+		<argument type="string" mandatory="no" default="/">cdd</argument>
+		<argument type="string" mandatory="no" default="auto" multivalue="yes">exp_dim</argument>
+		<argument type="string" mandatory="no" default="auto" multivalue="yes">imp_dim</argument>
+		<argument type="string" mandatory="no" default="none" multivalue="yes">subset_dims</argument>
 		<argument type="string" mandatory="no" default="index" values="index|coord">subset_type</argument>
-		<argument type="string" mandatory="no" default="all">subset_filter</argument>
+		<argument type="string" mandatory="no" default="all" multivalue="yes">subset_filter</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">time_filter</argument>
 		<argument type="real" mandatory="no" default="0">offset</argument>
-		<argument type="string" mandatory="no" default="c">exp_concept_level</argument>
-		<argument type="string" mandatory="no" default="c">imp_concept_level</argument>
+		<argument type="string" mandatory="no" default="c" multivalue="yes">exp_concept_level</argument>
+		<argument type="string" mandatory="no" default="c" multivalue="yes">imp_concept_level</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">compressed</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
-		<argument type="string" mandatory="no" default="oph_base">hierarchy</argument>
+		<argument type="string" mandatory="no" default="oph_base" multivalue="yes">hierarchy</argument>
 		<argument type="string" mandatory="no" default="CF">vocabulary</argument>
 		<argument type="string" mandatory="no" default="1900-01-01 00:00:00">base_time</argument>
 		<argument type="string" mandatory="no" default="d" values="s|m|h|3|6|d">units</argument>

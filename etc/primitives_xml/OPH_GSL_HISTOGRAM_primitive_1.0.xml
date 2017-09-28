@@ -35,17 +35,18 @@ Binary-array.
 Estimate the empiric distribution of a set of oph_double with 10 bins. Return ranges and absolute frequencies.
 oph_gsl_histogram(&apos;OPH_DOUBLE&apos;,&apos;&apos;,measure,10)</abstract>
         <author>CMCC Foundation</author>
+        <category>Statistical</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="reduce"/>
+        <operation type="reduce"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="int" mandatory="yes">bin number</argument>
-	<argument type="string" mandatory="no" default="'ALL'" values="'RANGES'|'FREQS|'ALL'">mode</argument>
-	<argument type="string" mandatory="no" default="'ABS'" values="'ABS'|'PDF'|'CDF'">flag</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="int" mandatory="yes">bin number</argument>
+		<argument type="string" mandatory="no" default="'ALL'" values="'RANGES'|'FREQS|'ALL'">mode</argument>
+		<argument type="string" mandatory="no" default="'ABS'" values="'ABS'|'PDF'|'CDF'">flag</argument>
     </args>
 </primitive>

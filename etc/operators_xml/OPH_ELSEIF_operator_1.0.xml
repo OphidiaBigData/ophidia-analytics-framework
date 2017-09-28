@@ -6,7 +6,7 @@
 Flow control.
 
 [Behaviour]
-Start a new sub-block of a selection block &quot;if&quot;.
+Start anew sub-block of a selection block &quot;if&quot;.
 
 [Parameters]
 - condition : boolean expression to be checked:
@@ -14,11 +14,12 @@ Start a new sub-block of a selection block &quot;if&quot;.
               if false, the tasks depending on OPH_ELSEIF are skipped, whereas the task OPH_ELSEIF or OPH_ELSE associated with the following selection sub-block is executed.
 </abstract>
         <author>CMCC Foundation</author>
+        <category>Workflow Management</category>
         <creationdate>20/06/2016</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-	<argument type="string" mandatory="no" default="true">condition</argument>
+		<argument type="string" mandatory="no" default="true">condition</argument>
     </args>
 </operator>

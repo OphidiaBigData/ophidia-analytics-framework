@@ -32,19 +32,20 @@ It executes the same operation over a set of datacubes (massive operation).
 [Examples]
 Not given</abstract>
         <author>CMCC Foundation</author>
+        <category>-</category>
         <creationdate>08/11/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-		<argument type="int" mandatory="no" default="" minvalue="0">level</argument>
+		<argument type="int" mandatory="no" default="" minvalue="0" multivalue="yes">level</argument>
 		<argument type="string" mandatory="no" default="">measure</argument>
 		<argument type="string" mandatory="no" default="">parent_cube</argument>
 		<argument type="string" mandatory="no" default="">container</argument>
 		<argument type="string" mandatory="no" default="">container_pid</argument>
 		<argument type="string" mandatory="no" default="">cube_filter</argument>
-		<argument type="string" mandatory="no" default="">metadata_key</argument>
-		<argument type="string" mandatory="no" default="">metadata_value</argument>
+		<argument type="string" mandatory="no" default="" multivalue="yes">metadata_key</argument>
+		<argument type="string" mandatory="no" default="" multivalue="yes">metadata_value</argument>
 		<argument type="string" mandatory="no" default="">path</argument>
 		<argument type="string" mandatory="no" default="">file</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">recursive</argument>

@@ -38,16 +38,17 @@ Binary-array.
 Compute the slope of a time series.
 oph_gsl_fit_linear_coeff(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,dimension)</abstract>
         <author>CMCC Foundation</author>
+        <category>Numerical Analysis</category>
         <creationdate>31/07/2015</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="reduce"/>
+        <operation type="reduce"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="binary-array" mandatory="no" default="1:array length">dimension</argument>
-	<argument type="string" mandatory="no" default="010000">mask</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="binary-array" mandatory="no" default="1:array length">dimension</argument>
+		<argument type="string" mandatory="no" default="010000">mask</argument>
     </args>
 </primitive>
