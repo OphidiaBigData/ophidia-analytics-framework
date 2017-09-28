@@ -1872,6 +1872,7 @@ int task_execute(oph_operator_struct * handle)
 	char frag_name_out[OPH_ODB_STGE_FRAG_NAME_SIZE];
 	int result = OPH_ANALYTICS_OPERATOR_SUCCESS, frag_count = 0;
 	oph_odb_fragment tmp_frag;
+	char fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE];
 
 	if (oph_dc_setup_dbms(&(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
@@ -1914,13 +1915,14 @@ int task_execute(oph_operator_struct * handle)
 				tmp_frag.key_start = frags.value[k].key_start;
 
 				//Connection string
-				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &tmp_frag.fragment_name)) {
+				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &fragment_name)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag name exceed limit.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_CONCATNC_STRING_BUFFER_OVERFLOW, "fragment name", tmp_frag.fragment_name);
+						OPH_LOG_OPH_CONCATNC_STRING_BUFFER_OVERFLOW, "fragment name", fragment_name);
 					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					break;
 				}
+				strcpy(tmp_frag.fragment_name, fragment_name);
 				//Create Empty fragment
 				if (oph_dc_create_empty_fragment(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->server, &tmp_frag)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating fragment.\n");
