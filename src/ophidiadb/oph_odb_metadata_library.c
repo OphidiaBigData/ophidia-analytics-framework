@@ -1001,7 +1001,7 @@ int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const cha
 		return OPH_ODB_MEMORY_ERROR;
 	}
 
-	int i = 0, j, ret = OPH_ODB_SUCCESS;
+	int i = 0, ret = OPH_ODB_SUCCESS;
 	MYSQL_ROW row;
 	while ((row = mysql_fetch_row(res))) {
 		if (!row[0] || !row[1]) {
@@ -1015,20 +1015,20 @@ int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const cha
 
 	mysql_free_result(res);
 
-	while (ret == OPH_ODB_SUCCESS) {
+	if (ret == OPH_ODB_SUCCESS) {
 
-		n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_KEY_OF_INSTANCE, new_variable, id_metadata_instance[j]);
-		if (n >= MYSQL_BUFLEN) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-			ret = OPH_ODB_STR_BUFF_OVERFLOW;
-			break;
+		int j;
+		for (j = 0; j < nrows; ++j) {
+
+			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_KEY_OF_INSTANCE, new_variable, id_metadata_instance[j]);
+			if (n >= MYSQL_BUFLEN) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+				ret = OPH_ODB_STR_BUFF_OVERFLOW;
+			} else if (mysql_query(oDB->conn, selectQuery)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+				ret = OPH_ODB_MYSQL_ERROR;
+			}
 		}
-		if (mysql_query(oDB->conn, selectQuery)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-			ret = OPH_ODB_MYSQL_ERROR;
-			break;
-		}
-		break;
 	}
 
 	if (id_metadata_instance)
