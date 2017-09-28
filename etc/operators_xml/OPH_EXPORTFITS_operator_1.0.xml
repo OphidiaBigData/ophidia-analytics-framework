@@ -39,12 +39,13 @@ Export data of the datacube identified by the PID &quot;http://www.example.com/1
 OPH_TERM: oph_exportfits cube=http://www.example.com/1/1;
 SUBMISSION STRING: &quot;operator=oph_exportfits;cube=http://www.example.com/1/1;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Data Import/Export</category>
         <creationdate>25/01/2017</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>
-		<argument type="string" mandatory="yes">cube</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">misc</argument>
 		<argument type="string" mandatory="no" default="default">output_path</argument>
 		<argument type="string" mandatory="no" default="default">output_name</argument>
