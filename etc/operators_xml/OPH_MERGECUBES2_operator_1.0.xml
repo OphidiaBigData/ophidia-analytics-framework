@@ -36,15 +36,16 @@ Merge the datacubes identified by the PIDs &quot;http://www.example.com/1/1&quot
 OPH_TERM: oph_mergecubes2 cubes=http://www.example.com/1/1|http://www.example.com/1/2;
 SUBMISSION STRING: &quot;operator=oph_mergecubes2;cubes=http://www.example.com/1/1|http://www.example.com/1/2;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Data Analysis</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-		<argument type="string" mandatory="yes">cubes</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">cubes</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">dim</argument>

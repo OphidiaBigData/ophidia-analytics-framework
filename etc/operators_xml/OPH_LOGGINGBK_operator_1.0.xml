@@ -66,29 +66,30 @@ Get sessionid (with session label), session creation date, job id (with parent j
 OPH_TERM: oph_loggingbk session_level=1;job_level=2;mask=111;session_filter=all;session_creation_filter=1900-01-01 00:00:00,2100-01-01 00:00:00;markerid_filter=all;parent_job_filter=all;job_creation_filter=1900,2100;job_status_filter=all;submission_string_filter=all;job_start_filter=1900-01,;job_end_filter=,2100-01-01;
 SUBMISSION STRING: &quot;operator=oph_loggingbk;session_level=1;job_level=2;mask=111;session_filter=all;session_creation_filter=1900-01-01 00:00:00,2100-01-01 00:00:00;markerid_filter=all;parent_job_filter=all;job_creation_filter=1900,2100;job_status_filter=all;submission_string_filter=all;job_start_filter=1900-01,;job_end_filter=,2100-01-01;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Administration</category>
         <creationdate>06/09/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-        <argument type="int" mandatory="no" default="0" minvalue="0" maxvalue="1" values="0|1">session_level</argument>
-        <argument type="int" mandatory="no" default="0" minvalue="0" maxvalue="2" values="0|1|2">job_level</argument>
-        <argument type="string" mandatory="no" default="000">mask</argument>
-        <argument type="string" mandatory="no" default="all">session_filter</argument>
-        <argument type="string" mandatory="no" default="all">session_label_filter</argument>
-        <argument type="string" mandatory="no" default="1900-01-01 00:00:00,2100-01-01 00:00:00">session_creation_filter</argument>
-        <argument type="string" mandatory="no" default="all">workflowid_filter</argument>
-        <argument type="string" mandatory="no" default="all">markerid_filter</argument>
-        <argument type="string" mandatory="no" default="all">parent_job_filter</argument>
-        <argument type="string" mandatory="no" default="1900-01-01 00:00:00,2100-01-01 00:00:00">job_creation_filter</argument>
-        <argument type="string" mandatory="no" default="all">job_status_filter</argument>
-        <argument type="string" mandatory="no" default="all">submission_string_filter</argument>
-        <argument type="string" mandatory="no" default="1900-01-01 00:00:00,2100-01-01 00:00:00">job_start_filter</argument>
-        <argument type="string" mandatory="no" default="1900-01-01 00:00:00,2100-01-01 00:00:00">job_end_filter</argument>
-        <argument type="int" mandatory="no" default="100" minvalue="1" maxvalue="10000">nlines</argument>
-        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-        <argument type="string" mandatory="no" default="null">sessionid</argument>
-        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-        <argument type="string" mandatory="no" default="all" values="all|none|loggingbk">objkey_filter</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0" maxvalue="1" values="0|1">session_level</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0" maxvalue="2" values="0|1|2">job_level</argument>
+		<argument type="string" mandatory="no" default="000">mask</argument>
+		<argument type="string" mandatory="no" default="all">session_filter</argument>
+		<argument type="string" mandatory="no" default="all">session_label_filter</argument>
+		<argument type="string" mandatory="no" default="1900-01-01 00:00:00,2100-01-01 00:00:00">session_creation_filter</argument>
+		<argument type="string" mandatory="no" default="all">workflowid_filter</argument>
+		<argument type="string" mandatory="no" default="all">markerid_filter</argument>
+		<argument type="string" mandatory="no" default="all">parent_job_filter</argument>
+		<argument type="string" mandatory="no" default="1900-01-01 00:00:00,2100-01-01 00:00:00">job_creation_filter</argument>
+		<argument type="string" mandatory="no" default="all">job_status_filter</argument>
+		<argument type="string" mandatory="no" default="all">submission_string_filter</argument>
+		<argument type="string" mandatory="no" default="1900-01-01 00:00:00,2100-01-01 00:00:00">job_start_filter</argument>
+		<argument type="string" mandatory="no" default="1900-01-01 00:00:00,2100-01-01 00:00:00">job_end_filter</argument>
+		<argument type="int" mandatory="no" default="100" minvalue="1" maxvalue="10000">nlines</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|loggingbk">objkey_filter</argument>
     </args>
 </operator>

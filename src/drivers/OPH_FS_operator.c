@@ -667,8 +667,12 @@ int task_execute(oph_operator_struct * handle)
 						for (ii = 0; ii < jj; ++ii, start = NULL) {
 							filename = strtok_r(start, OPH_SEPARATOR_PARAM, &save_pointer);
 							lstat(filename, &file_stat);
-							for (ni = 0; ni < nn; ++ni)
-								filename = strchr(filename, '/') + 1;
+							if (((OPH_FS_operator_handle *) handle->operator_handle)->realpath) {
+								if (nn)
+									for (iii = 0; filename && *filename && (*filename == abs_path[iii]); iii++, filename++);
+							} else
+								for (ni = 0; ni < nn; ++ni)
+									filename = strchr(filename, '/') + 1;
 							snprintf(filenames[ii], OPH_COMMON_BUFFER_LEN, "%s%s", filename, S_ISDIR(file_stat.st_mode) ? "/" : "");
 						}
 						result = write_json(filenames, jj, handle->operator_json, num_fields);

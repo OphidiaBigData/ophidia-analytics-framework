@@ -704,6 +704,74 @@ int renderXML(const char *xmlfilename, short int function_type_code, oph_json * 
 		xmlXPathFreeObject(xpathObj);
 		//AUTHOR end
 
+		//CATEGORY start
+		printf("| ");
+
+		xpathObj = xmlXPathEvalExpression((const xmlChar *) "//category", xpathCtx);
+		if (xpathObj == NULL) {
+			fprintf(stderr, "Error: unable to evaluate xpath expression\n");
+			xmlXPathFreeContext(xpathCtx);
+			xmlFreeDoc(doc);
+			xmlFreeParserCtxt(ctxt);
+			free(header_line);
+			return OPH_RENDER_OUTPUT_RENDER_ERROR;
+		}
+		node = xpathObj->nodesetval->nodeTab[0];
+		content = xmlNodeGetContent(node);
+
+		//print category
+		printf("%-13s | ", "Category");
+		j = 0;
+		for (i = 0; i < strlen((char *) content); i++) {
+			if (content[i] == '\t') {
+				if (j == OPH_RENDER_OUTPUT_MAN_TABLE_WIDTH - 18) {
+					printf(" |\n| %-13s | ", "");
+					j = 0;
+				}
+				printf(" ");
+				j++;
+			} else if (content[i] == '\n') {
+				if (i != 0) {
+					if (j == OPH_RENDER_OUTPUT_MAN_TABLE_WIDTH - 18) {
+						printf(" |\n| %-13s | ", "");
+					} else {
+						printf("%-*s |\n| %-13s | ", OPH_RENDER_OUTPUT_MAN_TABLE_WIDTH - 18 - j, "", "");
+					}
+					j = 0;
+				}
+				printf(" ");
+				j++;
+			} else {
+				if (j == OPH_RENDER_OUTPUT_MAN_TABLE_WIDTH - 18) {
+					printf(" |\n| %-13s | ", "");
+					j = 0;
+				}
+				printf("%c", content[i]);
+				j++;
+			}
+		}
+		if (j == OPH_RENDER_OUTPUT_MAN_TABLE_WIDTH - 18) {
+			printf(" |\n");
+		} else {
+			printf("%-*s |\n", OPH_RENDER_OUTPUT_MAN_TABLE_WIDTH - 18 - j, "");
+		}
+
+		if (oph_json_is_objkey_printable(objkeys, objkeys_num, OPH_JSON_OBJKEY_MAN_INFO)) {
+			char *my_row[2] = { "Category", (char *) content };
+			if (oph_json_add_grid_row(oper_json, OPH_JSON_OBJKEY_MAN_INFO, my_row)) {
+				fprintf(stderr, "ADD GRID ROW error\n");
+				xmlXPathFreeContext(xpathCtx);
+				xmlFreeDoc(doc);
+				xmlFreeParserCtxt(ctxt);
+				free(header_line);
+				return OPH_RENDER_OUTPUT_RENDER_ERROR;
+			}
+		}
+
+		xmlFree(content);
+		xmlXPathFreeObject(xpathObj);
+		//CATEGORY end
+
 		//CREATION DATE start
 		xpathObj = xmlXPathEvalExpression((const xmlChar *) "//creationdate", xpathCtx);
 		if (xpathObj == NULL) {
@@ -1091,16 +1159,17 @@ int renderXML(const char *xmlfilename, short int function_type_code, oph_json * 
 		row_line[k + i] = '|';
 
 		//print args columns
-		printf("| %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s |\n",
+		printf("| %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s |\n",
 		       OPH_RENDER_OUTPUT_MAN_ARG_NAME_WIDTH, "NAME",
 		       OPH_RENDER_OUTPUT_MAN_ARG_TYPE_WIDTH, "TYPE",
 		       OPH_RENDER_OUTPUT_MAN_ARG_MANDATORY_WIDTH, "MANDATORY",
 		       OPH_RENDER_OUTPUT_MAN_ARG_DEFAULT_WIDTH, "DEFAULT",
-		       OPH_RENDER_OUTPUT_MAN_ARG_MINVAL_WIDTH, "MIN", OPH_RENDER_OUTPUT_MAN_ARG_MAXVAL_WIDTH, "MAX", OPH_RENDER_OUTPUT_MAN_ARG_VALUES_WIDTH, "VALUES");
+		       OPH_RENDER_OUTPUT_MAN_ARG_MINVAL_WIDTH, "MIN", OPH_RENDER_OUTPUT_MAN_ARG_MAXVAL_WIDTH, "MAX", OPH_RENDER_OUTPUT_MAN_ARG_VALUES_WIDTH, "VALUES",
+		       OPH_RENDER_OUTPUT_MAN_MULTI_ARG_VALUES_WIDTH, "MULTIVALUE");
 		if (oph_json_is_objkey_printable(objkeys, objkeys_num, OPH_JSON_OBJKEY_MAN_ARGS)) {
-			int num_fields = 7;
-			char *keys[7] = { "NAME", "TYPE", "MANDATORY", "DEFAULT", "MIN", "MAX", "VALUES" };
-			char *fieldtypes[7] = { "string", "string", "string", "string", "string", "string", "string" };
+			int num_fields = 8;
+			char *keys[8] = { "NAME", "TYPE", "MANDATORY", "DEFAULT", "MIN", "MAX", "VALUES", "MULTIVALUE" };
+			char *fieldtypes[8] = { "string", "string", "string", "string", "string", "string", "string", "string" };
 			if (oph_json_add_grid(oper_json, OPH_JSON_OBJKEY_MAN_ARGS, "Function Arguments", NULL, keys, num_fields, fieldtypes, num_fields)) {
 				fprintf(stderr, "ADD GRID error\n");
 				xmlXPathFreeContext(xpathCtx);
@@ -1113,6 +1182,16 @@ int renderXML(const char *xmlfilename, short int function_type_code, oph_json * 
 		//print line
 		printf("%s\n", inner_header_line);
 
+		char my_row0[OPH_COMMON_BUFFER_LEN];
+		char my_row1[OPH_COMMON_BUFFER_LEN];
+		char my_row2[OPH_COMMON_BUFFER_LEN];
+		char my_row3[OPH_COMMON_BUFFER_LEN];
+		char my_row4[OPH_COMMON_BUFFER_LEN];
+		char my_row5[OPH_COMMON_BUFFER_LEN];
+		char my_row6[OPH_COMMON_BUFFER_LEN];
+		char my_row7[OPH_COMMON_BUFFER_LEN];
+		char *my_row[8] = { my_row0, my_row1, my_row2, my_row3, my_row4, my_row5, my_row6, my_row7 };
+
 		for (n = 0; n < xpathObj->nodesetval->nodeNr; n++) {
 
 			node = xpathObj->nodesetval->nodeTab[n];
@@ -1121,17 +1200,7 @@ int renderXML(const char *xmlfilename, short int function_type_code, oph_json * 
 				//print line
 				printf("%s\n", row_line);
 			}
-
 			printf("| ");
-
-			char my_row1[OPH_COMMON_BUFFER_LEN];
-			char my_row2[OPH_COMMON_BUFFER_LEN];
-			char my_row3[OPH_COMMON_BUFFER_LEN];
-			char my_row4[OPH_COMMON_BUFFER_LEN];
-			char my_row5[OPH_COMMON_BUFFER_LEN];
-			char my_row6[OPH_COMMON_BUFFER_LEN];
-			char my_row7[OPH_COMMON_BUFFER_LEN];
-			char *my_row[7] = { my_row1, my_row2, my_row3, my_row4, my_row5, my_row6, my_row7 };
 
 			//NAME
 			content = xmlNodeGetContent(node);
@@ -1268,6 +1337,18 @@ int renderXML(const char *xmlfilename, short int function_type_code, oph_json * 
 
 				xmlFree(content);
 			}
+			//MULTIVALUE
+			content = xmlGetProp(node, (const xmlChar *) "multivalue");
+			if (!content) {
+				printf("%-*s | ", OPH_RENDER_OUTPUT_MAN_ARG_MAXVAL_WIDTH, "no");
+				if (oph_json_is_objkey_printable(objkeys, objkeys_num, OPH_JSON_OBJKEY_MAN_ARGS))
+					snprintf(my_row[7], OPH_COMMON_BUFFER_LEN, "%s", "no");
+			} else {
+				printf("%-*s | ", OPH_RENDER_OUTPUT_MAN_ARG_MAXVAL_WIDTH, (char *) content);
+				if (oph_json_is_objkey_printable(objkeys, objkeys_num, OPH_JSON_OBJKEY_MAN_ARGS))
+					snprintf(my_row[7], OPH_COMMON_BUFFER_LEN, "%s", content);
+				xmlFree(content);
+			}
 
 			if (oph_json_is_objkey_printable(objkeys, objkeys_num, OPH_JSON_OBJKEY_MAN_ARGS)) {
 				if (oph_json_add_grid_row(oper_json, OPH_JSON_OBJKEY_MAN_ARGS, my_row)) {
@@ -1323,7 +1404,7 @@ int renderXML(const char *xmlfilename, short int function_type_code, oph_json * 
 			//print line
 			printf("%s\n", inner_header_line);
 			//print args columns
-			printf("| %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s |\n",
+			printf("| %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s | %-*s |\n",
 			       OPH_RENDER_OUTPUT_MAN_MULTI_ARG_NAME_WIDTH, "NAME",
 			       OPH_RENDER_OUTPUT_MAN_MULTI_ARG_TYPE_WIDTH, "TYPE",
 			       OPH_RENDER_OUTPUT_MAN_MULTI_ARG_MANDATORY_WIDTH, "MANDATORY",
@@ -1331,11 +1412,12 @@ int renderXML(const char *xmlfilename, short int function_type_code, oph_json * 
 			       OPH_RENDER_OUTPUT_MAN_MULTI_ARG_MINVAL_WIDTH, "MIN VAL",
 			       OPH_RENDER_OUTPUT_MAN_MULTI_ARG_MAXVAL_WIDTH, "MAX VAL",
 			       OPH_RENDER_OUTPUT_MAN_MULTI_ARG_MINVAL_WIDTH, "MIN TIMES",
-			       OPH_RENDER_OUTPUT_MAN_MULTI_ARG_MAXVAL_WIDTH, "MAX TIMES", OPH_RENDER_OUTPUT_MAN_MULTI_ARG_VALUES_WIDTH, "VALUES");
+			       OPH_RENDER_OUTPUT_MAN_MULTI_ARG_MAXVAL_WIDTH, "MAX TIMES", OPH_RENDER_OUTPUT_MAN_MULTI_ARG_VALUES_WIDTH, "VALUES", OPH_RENDER_OUTPUT_MAN_MULTI_ARG_VALUES_WIDTH,
+			       "MULTIVALUE");
 			if (oph_json_is_objkey_printable(objkeys, objkeys_num, OPH_JSON_OBJKEY_MAN_MULTIARGS)) {
-				int num_fields = 9;
-				char *keys[9] = { "NAME", "TYPE", "MANDATORY", "DEFAULT", "MIN VAL", "MAX VAL", "MIN TIMES", "MAX TIMES", "VALUES" };
-				char *fieldtypes[9] = { "string", "string", "string", "string", "string", "string", "string", "string", "string" };
+				int num_fields = 10;
+				char *keys[10] = { "NAME", "TYPE", "MANDATORY", "DEFAULT", "MIN VAL", "MAX VAL", "MIN TIMES", "MAX TIMES", "VALUES", "MULTIVALUE" };
+				char *fieldtypes[10] = { "string", "string", "string", "string", "string", "string", "string", "string", "string", "string" };
 				if (oph_json_add_grid(oper_json, OPH_JSON_OBJKEY_MAN_MULTIARGS, "Function Multi-Arguments", NULL, keys, num_fields, fieldtypes, num_fields)) {
 					fprintf(stderr, "ADD GRID error\n");
 					xmlXPathFreeContext(xpathCtx);
@@ -1348,6 +1430,18 @@ int renderXML(const char *xmlfilename, short int function_type_code, oph_json * 
 			//print line
 			printf("%s\n", inner_header_line);
 
+			char my_row0[OPH_COMMON_BUFFER_LEN];
+			char my_row1[OPH_COMMON_BUFFER_LEN];
+			char my_row2[OPH_COMMON_BUFFER_LEN];
+			char my_row3[OPH_COMMON_BUFFER_LEN];
+			char my_row4[OPH_COMMON_BUFFER_LEN];
+			char my_row5[OPH_COMMON_BUFFER_LEN];
+			char my_row6[OPH_COMMON_BUFFER_LEN];
+			char my_row7[OPH_COMMON_BUFFER_LEN];
+			char my_row8[OPH_COMMON_BUFFER_LEN];
+			char my_row9[OPH_COMMON_BUFFER_LEN];
+			char *my_row[10] = { my_row0, my_row1, my_row2, my_row3, my_row4, my_row5, my_row6, my_row7, my_row8, my_row9 };
+
 			for (n = 0; n < xpathObj->nodesetval->nodeNr; n++) {
 
 				node = xpathObj->nodesetval->nodeTab[n];
@@ -1356,19 +1450,7 @@ int renderXML(const char *xmlfilename, short int function_type_code, oph_json * 
 					//print line
 					printf("%s\n", row_line);
 				}
-
 				printf("| ");
-
-				char my_row1[OPH_COMMON_BUFFER_LEN];
-				char my_row2[OPH_COMMON_BUFFER_LEN];
-				char my_row3[OPH_COMMON_BUFFER_LEN];
-				char my_row4[OPH_COMMON_BUFFER_LEN];
-				char my_row5[OPH_COMMON_BUFFER_LEN];
-				char my_row6[OPH_COMMON_BUFFER_LEN];
-				char my_row7[OPH_COMMON_BUFFER_LEN];
-				char my_row8[OPH_COMMON_BUFFER_LEN];
-				char my_row9[OPH_COMMON_BUFFER_LEN];
-				char *my_row[9] = { my_row1, my_row2, my_row3, my_row4, my_row5, my_row6, my_row7, my_row8, my_row9 };
 
 				//NAME
 				content = xmlNodeGetContent(node);
@@ -1536,6 +1618,18 @@ int renderXML(const char *xmlfilename, short int function_type_code, oph_json * 
 					if (oph_json_is_objkey_printable(objkeys, objkeys_num, OPH_JSON_OBJKEY_MAN_MULTIARGS))
 						snprintf(my_row[8], OPH_COMMON_BUFFER_LEN, "%s", content);
 
+					xmlFree(content);
+				}
+				//MULTIVALUE
+				content = xmlGetProp(node, (const xmlChar *) "multivalue");
+				if (!content) {
+					printf("%-*s | ", OPH_RENDER_OUTPUT_MAN_MULTI_ARG_MAXTIME_WIDTH, "no");
+					if (oph_json_is_objkey_printable(objkeys, objkeys_num, OPH_JSON_OBJKEY_MAN_MULTIARGS))
+						snprintf(my_row[9], OPH_COMMON_BUFFER_LEN, "%s", "no");
+				} else {
+					printf("%-*s | ", OPH_RENDER_OUTPUT_MAN_MULTI_ARG_MAXTIME_WIDTH, (char *) content);
+					if (oph_json_is_objkey_printable(objkeys, objkeys_num, OPH_JSON_OBJKEY_MAN_MULTIARGS))
+						snprintf(my_row[9], OPH_COMMON_BUFFER_LEN, "%s", content);
 					xmlFree(content);
 				}
 

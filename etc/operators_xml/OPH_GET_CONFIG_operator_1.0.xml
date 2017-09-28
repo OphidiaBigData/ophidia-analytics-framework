@@ -20,9 +20,10 @@ Get the URL where XML documents associated with Ophidia operators are located:
 OPH_TERM: oph_get_config key=OPH_XML_URL;
 SUBMISSION STRING: &quot;operator=oph_get_config;key=OPH_XML_URL;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Administration</category>
         <creationdate>09/03/2014</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
 		<argument type="string" mandatory="no" default="all" values="all|OPH_XML_URL|OPH_SESSION_ID|OPH_EXEC_MODE|OPH_NCORES|OPH_DATACUBE|OPH_CWD|OPH_CDD|OPH_BASE_SRC_PATH">key</argument>
