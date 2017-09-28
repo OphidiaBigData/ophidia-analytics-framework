@@ -44,19 +44,20 @@ Show information about all tasks :
 OPH_TERM: oph_tasks cube_filter=all;operator_filter=all;
 SUBMISSION STRING: &quot;operator=oph_tasks;cube_filter=all;operator_filter=all;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Metadata</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-        <argument type="string" mandatory="no" default="all">cube_filter</argument>
-        <argument type="string" mandatory="no" default="all">operator_filter</argument>
-        <argument type="string" mandatory="no" default="-">path</argument>
-        <argument type="string" mandatory="yes">cwd</argument>
+		<argument type="string" mandatory="no" default="all">cube_filter</argument>
+		<argument type="string" mandatory="no" default="all">operator_filter</argument>
+		<argument type="string" mandatory="no" default="-">path</argument>
+		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="no" default="all">container</argument>
-        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-        <argument type="string" mandatory="no" default="null">sessionid</argument>
-        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-	<argument type="string" mandatory="no" default="all" values="all|none|tasks">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|tasks">objkey_filter</argument>
     </args>
 </operator>

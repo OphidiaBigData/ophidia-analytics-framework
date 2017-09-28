@@ -15,10 +15,10 @@ Only session owner and administrators can submit the command.
             enable    : enable a session (only the owner is authorized to submit the command)
             env       : list environmental session variables
             grant     : share the session with a list of users, assigning one or more of the following roles:
-			&quot;read&quot;    : the user can submit commands to read data and metadata from datasets;
-			&quot;write&quot;   : the user can submit commands to create new datasets;
-			&quot;execute&quot; : the user can execute scripts;
-			&quot;admin&quot;   : the user can grant/revoke access privileges.
+                        &quot;read&quot;    : the user can submit commands to read data and metadata from datasets;
+                        &quot;write&quot;   : the user can submit commands to create new datasets;
+                        &quot;execute&quot; : the user can execute scripts;
+                        &quot;admin&quot;   : the user can grant/revoke access privileges.
             list      : list the session which the user can access to
             listusers : list session users with their roles
             new       : create a new session
@@ -26,7 +26,7 @@ Only session owner and administrators can submit the command.
             revoke    : revoke the grants to a list of user
             setenv    : set environmental session variables
 - session : link to intended session, by default it is the working session.
-- key     : name of the parameter to be get/set.
+- key     : name of the parameter to be got/set.
 - value   : value of the key set with the argument &quot;key&quot;.
 
 [System parameters]
@@ -47,16 +47,17 @@ Share the session with user &quot;oph-test&quot;, assigning it the role &quot;wr
 OPH_TERM: oph_manage_session grant user oph-test:write
 SUBMISSION STRING: &quot;operator=oph_manage_session;action=listusers;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Administration</category>
         <creationdate>15/08/2014</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-	<argument type="string" mandatory="yes" values="disable|enable|env|grant|list|listusers|new|remove|revoke|setenv">action</argument>
-	<argument type="string" mandatory="no" default="this">session</argument>
-	<argument type="string" mandatory="no" default="user" values="active|autoremove|label|user">key</argument>
-	<argument type="string" mandatory="no" default="null">value</argument>
-	<argument type="string" mandatory="no" default="null">sessionid</argument>
-	<argument type="string" mandatory="no" default="all" values="all|none|manage_session_list|manage_session_summary">objkey_filter</argument>
+		<argument type="string" mandatory="yes" values="disable|enable|env|grant|list|listusers|new|remove|revoke|setenv">action</argument>
+		<argument type="string" mandatory="no" default="this">session</argument>
+		<argument type="string" mandatory="no" default="user" values="active|autoremove|label|user">key</argument>
+		<argument type="string" mandatory="no" default="null">value</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|manage_session_list|manage_session_summary">objkey_filter</argument>
     </args>
 </operator>

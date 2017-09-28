@@ -725,7 +725,6 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_COPY_MANAGE, id_user, id_datacube_output);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		mysql_autocommit(oDB->conn, 1);
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 

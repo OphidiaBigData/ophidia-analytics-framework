@@ -10,9 +10,10 @@ Close a loop &quot;for&quot;.
       
 </abstract>
         <author>CMCC Foundation</author>
+        <category>Workflow Management</category>
         <creationdate>20/08/2015</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
     </args>
