@@ -29,19 +29,20 @@ Binary-array.
 Fill monthly data with NAN when time dimension unit is &apos;day&apos;.
 oph_expand(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,dimension,NULL,30.4375)</abstract>
         <author>CMCC Foundation</author>
+        <category>Core Array</category>
         <creationdate>25/03/2016</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="simple"/>
+        <operation type="simple"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="binary-array" mandatory="no" default="NULL">indexes</argument>
-	<argument type="double" mandatory="no" default="NULL">start</argument>
-	<argument type="double" mandatory="no" default="1">stride</argument>
-	<argument type="double" mandatory="no" default="NULL">stop</argument>
-	<argument type="string" mandatory="no" default="NAN">filling</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="binary-array" mandatory="no" default="NULL">indexes</argument>
+		<argument type="double" mandatory="no" default="NULL">start</argument>
+		<argument type="double" mandatory="no" default="1">stride</argument>
+		<argument type="double" mandatory="no" default="NULL">stop</argument>
+		<argument type="string" mandatory="no" default="NAN">filling</argument>
     </args>
 </primitive>

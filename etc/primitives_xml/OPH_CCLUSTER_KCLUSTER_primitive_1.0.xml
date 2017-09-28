@@ -39,18 +39,19 @@ Binary-array.
 Group data into 2 clusters, with 10 EM iterations, and return the centroid value for each input point.
 oph_ccluster_kcluster(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,2,&apos;KMEANS&apos;,10,&apos;ALL&apos;)</abstract>
         <author>CMCC Foundation</author>
+        <category>Mining</category>
         <creationdate>17/06/2014</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="reduce"/>
+        <operation type="reduce"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">input measure type</argument>
-        <argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="int" mandatory="yes">k</argument>
-	<argument type="string" mandatory="no" default="'kmeans'" values="'kmeans'|'kmedians'">method</argument>
-	<argument type="string" mandatory="no" default="'all'" values="'centroids'|'labels'|'all'">level</argument>
-	<argument type="int" mandatory="no" default="1">npass</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="int" mandatory="yes">k</argument>
+		<argument type="string" mandatory="no" default="'kmeans'" values="'kmeans'|'kmedians'">method</argument>
+		<argument type="string" mandatory="no" default="'all'" values="'centroids'|'labels'|'all'">level</argument>
+		<argument type="int" mandatory="no" default="1">npass</argument>
     </args>
 </primitive>

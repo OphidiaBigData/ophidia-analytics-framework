@@ -63,9 +63,10 @@ dimensions, in the container &apos;container1&apos;:
 OPH_TERM: oph_randcube container=container1;nhost=1;ndbms=1;ndb=2;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;host_partition=test;filesystem=local;
 SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;nhost=1;ndbms=1;ndb=2;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;host_partition=test;filesystem=local;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Data Import/Export</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
@@ -86,9 +87,9 @@ SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;nhost=1;ndbm
 		<argument type="string" mandatory="yes">measure</argument>
 		<argument type="string" mandatory="yes" values="double|float|int|long|short|byte">measure_type</argument>
 		<argument type="int" mandatory="yes" minvalue="1">exp_ndim</argument>
-		<argument type="string" mandatory="yes">dim</argument>
-		<argument type="string" mandatory="no" default="c">concept_level</argument>
-		<argument type="string" mandatory="yes">dim_size</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">dim</argument>
+		<argument type="string" mandatory="no" default="c" multivalue="yes">concept_level</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">dim_size</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">compressed</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>

@@ -31,15 +31,16 @@ Binary-array.
 Compute correlation of the two measures.
 oph_gsl_correlation(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,a.measure,b.measure)</abstract>
         <author>CMCC Foundation</author>
+        <category>Statistical</category>
         <creationdate>10/04/2015</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="reduce"/>
+        <operation type="reduce"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="binary-array" mandatory="yes">measure2</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'" multivalue="yes">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="binary-array" mandatory="yes">measure2</argument>
     </args>
 </primitive>

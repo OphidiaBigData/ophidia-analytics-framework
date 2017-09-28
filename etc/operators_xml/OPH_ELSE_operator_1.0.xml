@@ -6,13 +6,14 @@
 Flow control.
 
 [Behaviour]
-Start the last sub-block of a selection block &quot;if&quot;.
+Start the last sub-block of a selection block &quot;for&quot;.
       
 </abstract>
         <author>CMCC Foundation</author>
+        <category>Workflow Management</category>
         <creationdate>20/06/2016</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
     </args>

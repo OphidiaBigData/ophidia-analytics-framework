@@ -51,15 +51,16 @@ Binary-array.
 Compute partial results for mean, maximum and minimum of a set of time series.
 oph_aggregate_stats_partial(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;1000011&apos;)</abstract>
         <author>CMCC Foundation</author>
+        <category>Statistical</category>
         <creationdate>16/06/2014</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="aggregate"/>
+        <operation type="aggregate"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input data type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output data type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="string" mandatory="no" default="1111111">mask</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input data type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output data type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="string" mandatory="no" default="1111111">mask</argument>
     </args>
 </primitive>
