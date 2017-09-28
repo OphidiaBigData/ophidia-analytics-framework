@@ -27,16 +27,17 @@ Binary-array.
 
 [Examples]
 Concat three measures
-oph_append(&apos;OPH_DOUBLE&apos;|&apos;OPH_FLOAT&apos;|&apos;OPH_INT&apos;,&apos;OPH_DOUBLE,OPH_FLOAT,OPH_INT&apos;,a.measure,b.measure,c.measure)</abstract>
+oph_append(&apos;OPH_DOUBLE|OPH_FLOAT|OPH_INT&apos;,&apos;OPH_DOUBLE,OPH_FLOAT,OPH_INT&apos;,a.measure,b.measure,c.measure)</abstract>
         <author>CMCC Foundation</author>
+        <category>Core Array</category>
         <creationdate>10/05/2017</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="simple"/>
+        <operation type="simple"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-	<multi-argument type="binary-array" mandatory="yes" mintimes="1">measure</multi-argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'" multivalue="yes">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<multi-argument type="binary-array" mandatory="yes" mintimes="1">measure</multi-argument>
     </args>
 </primitive>

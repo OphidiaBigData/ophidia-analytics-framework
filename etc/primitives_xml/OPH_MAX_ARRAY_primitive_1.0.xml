@@ -30,16 +30,17 @@ Binary-array.
 [Examples]
 oph_max_array(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure_a,measure_b)</abstract>
         <author>CMCC Foundation</author>
+        <category>Arithmetic</category>
         <creationdate>29/09/2014</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="simple"/>
+        <operation type="simple"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure a</argument>
-	<argument type="binary-array" mandatory="yes">measure b</argument>
-	<argument type="double" mandatory="no" default="NAN">missingvalue</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'" multivalue="yes">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure a</argument>
+		<argument type="binary-array" mandatory="yes">measure b</argument>
+		<argument type="double" mandatory="no" default="NAN">missingvalue</argument>
     </args>
 </primitive>

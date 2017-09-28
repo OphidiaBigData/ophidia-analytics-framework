@@ -31,16 +31,17 @@ Binary-array.
 Compute the interpolation from dimension &apos;x1&apos; to &apos;x2&apos;.
 oph_gsl_spline(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,x1,x2)</abstract>
         <author>CMCC Foundation</author>
+        <category>Numerical Analysis</category>
         <creationdate>16/07/2015</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="simple"/>
+        <operation type="simple"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="binary-array" mandatory="yes">old_dim</argument>
-	<argument type="binary-array" mandatory="yes">new_dim</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="binary-array" mandatory="yes">old_dim</argument>
+		<argument type="binary-array" mandatory="yes">new_dim</argument>
     </args>
 </primitive>

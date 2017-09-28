@@ -31,17 +31,18 @@ Compute the number of elements in the datacube &quot;http://www.example.com/1/1&
 OPH_TERM: oph_cubeelements cube=http://www.example.com/1/1;
 SUBMISSION STRING: &quot;operator=oph_cubeelements;cube=http://www.example.com/1/1;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Metadata</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-        <argument type="string" mandatory="yes">cube</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
 		<argument type="int" mandatory="no" default="0" minvalue="0" maxvalue="0" values="0">schedule</argument>
-        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-        <argument type="string" mandatory="no" default="dim_product" values="dim_product|count">algorithm</argument>
-        <argument type="string" mandatory="no" default="null">sessionid</argument>
-        <argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
-	<argument type="string" mandatory="no" default="all" values="all|none|cubeelements">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="dim_product" values="dim_product|count">algorithm</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|cubeelements">objkey_filter</argument>
     </args>
 </operator>

@@ -38,17 +38,18 @@ Binary-array.
 Extract elements 1 and 2 with block size 360 and size 100.
 oph_get_subarray3(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;1,2&apos;,360,100)</abstract>
         <author>CMCC Foundation</author>
+        <category>Selection</category>
         <creationdate>01/10/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="simple"/>
+        <operation type="simple"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
-	<multi-argument type="string" mandatory="no" default="1:end" mintimes="0">subset</multi-argument>
-	<multi-argument type="long-long" mandatory="no" default="1" mintimes="0">block size</multi-argument>
-	<multi-argument type="long-long" mandatory="no" default="0" mintimes="0">size</multi-argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<multi-argument type="string" mandatory="no" default="1:end" mintimes="0">subset</multi-argument>
+		<multi-argument type="long-long" mandatory="no" default="1" mintimes="0">block size</multi-argument>
+		<multi-argument type="long-long" mandatory="no" default="0" mintimes="0">size</multi-argument>
     </args>
 </primitive>

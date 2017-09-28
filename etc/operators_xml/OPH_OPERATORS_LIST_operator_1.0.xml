@@ -31,16 +31,17 @@ Get at most 10 operators with names containing the word &quot;list&quot; :
 OPH_TERM: oph_operators_list operator_filter=list;limit_filter=10;
 SUBMISSION STRING: &quot;operator=oph_operators_list;operator_filter=list;limit_filter=10;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Miscellaneous</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-        <argument type="string" mandatory="no" default="">operator_filter</argument>
-        <argument type="int" mandatory="no" default="0" minvalue="0">limit_filter</argument>
-        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-        <argument type="string" mandatory="no" default="null">sessionid</argument>
-        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-	<argument type="string" mandatory="no" default="all" values="all|none|operators_list_list|operators_list_tip">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="">operator_filter</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0">limit_filter</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|operators_list_list|operators_list_tip">objkey_filter</argument>
     </args>
 </operator>
