@@ -550,6 +550,7 @@ int task_init(oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DUPLICATE_MEMORY_ERROR_INPUT,
 				"fragment ids");
+			((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->execute_error = 1;
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 		((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_output_datacube = (int) strtol(id_string[1], NULL, 10);
@@ -567,6 +568,8 @@ int task_distribute(oph_operator_struct * handle)
 
 	int id_number;
 	char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
+
+	((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->execute_error = 1;
 
 	//Get total number of fragment IDs
 	if (oph_ids_count_number_of_ids(((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->fragment_ids, &id_number)) {
@@ -604,8 +607,10 @@ int task_distribute(oph_operator_struct * handle)
 			((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->fragment_id_start_position = -1;
 	}
 
-	if (((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0)
+	if (((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0) {
+		((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->execute_error = 0;
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+	}
 
 	//Partition fragment relative index string
 	char *new_ptr = new_id_string;
@@ -624,6 +629,7 @@ int task_distribute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
+	((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->execute_error = 0;
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -840,36 +846,21 @@ int task_destroy(oph_operator_struct * handle)
 			if (((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0)
 				return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-			int ret = OPH_ANALYTICS_OPERATOR_SUCCESS;
-			if ((ret =
-			     oph_dproc_delete_data(id_datacube, ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_input_container,
+			if ((oph_dproc_delete_data(id_datacube, ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_input_container,
 						   ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->fragment_ids))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}
 		}
-		//For error checking
-		int result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 
 		//Before deleting wait for all process to reach this point
 		MPI_Barrier(MPI_COMM_WORLD);
 
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
-			result =
-			    oph_dproc_clean_odb(&((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->oDB, id_datacube,
+		    oph_dproc_clean_odb(&((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->oDB, id_datacube,
 						((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_input_container);
 		}
-		//Broadcast to all other processes the operation result       
-		MPI_Bcast(&result, 1, MPI_INT, 0, MPI_COMM_WORLD);
-
-		//Check if sequential part has been completed
-		if (result != OPH_ANALYTICS_OPERATOR_SUCCESS) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Master destroy procedure has failed\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_MASTER_TASK_DESTROY_FAILED);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
-
 	}
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

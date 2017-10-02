@@ -377,7 +377,7 @@ int task_destroy(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 	//For error checking
-	int result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	int result = OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	//Before deleting wait for all process to reach this point
 	MPI_Barrier(MPI_COMM_WORLD);
