@@ -91,64 +91,66 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-	}
-	//For each DBMS
-	for (i = 0; (i < dbmss.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
-		if (oph_dc_connect_to_dbms(server, &(dbmss.value[i]), 0)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DBMS_CONNECTION_ERROR, (dbmss.value[i]).id_dbms);
-			result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-		}
-		//For each DB
-		for (j = 0; (j < dbs.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS); j++) {
-			//Check DB - DBMS Association
-			if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
-				continue;
-
-			//For each dbinstance count the number of stored datacubes
-			if (oph_odb_stge_get_number_of_datacube_for_db(&oDB_slave, dbs.value[j].id_db, &datacubexdb_number)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve database instance information.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_DELETE_DB_DATACUBE_COUNT_ERROR, (dbs.value[j]).db_name);
+	} else {
+		//For each DBMS
+		for (i = 0; i < dbmss.size; i++) {
+			if (oph_dc_connect_to_dbms(server, &(dbmss.value[i]), 0)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DBMS_CONNECTION_ERROR, (dbmss.value[i]).id_dbms);
 				result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-				break;
-			}
-			//If the db stores just one datacube then directly drop the dbinstance
-			if (datacubexdb_number == 1) {
-				//Databse drop
-				if (oph_dc_delete_db(server, &(dbs.value[j]))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while dropping database.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_DELETE_DROP_DB_ERROR, (dbs.value[j]).db_name);
-					result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-					break;
-				}
 				continue;
 			}
-			//In this case the dbinstance may be already been deleted before
-			else if (datacubexdb_number == 0)
-				continue;
-
-			if (oph_dc_use_db_of_dbms(server, &(dbmss.value[i]), &(dbs.value[j]))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DB_SELECTION_ERROR, (dbs.value[j]).db_name);
-				result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-				break;
-			}
-			//For each fragment
-			for (k = 0; k < frags.size; k++) {
-				//Check Fragment - DB Association
-				if (frags.value[k].db_instance != &(dbs.value[j]))
+			//For each DB
+			for (j = 0; j < dbs.size; j++) {
+				//Check DB - DBMS Association
+				if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
 					continue;
 
-				//Delete fragment
-				if (oph_dc_delete_fragment(server, &(frags.value[k]))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while dropping table.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_DELETE_DROP_FRAGMENT_ERROR, (frags.value[j]).fragment_name);
+				//For each dbinstance count the number of stored datacubes
+				if (oph_odb_stge_get_number_of_datacube_for_db(&oDB_slave, dbs.value[j].id_db, &datacubexdb_number)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve database instance information.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_DELETE_DB_DATACUBE_COUNT_ERROR, (dbs.value[j]).db_name);
 					result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-					break;
+					continue;
+				}
+				//If the db stores just one datacube then directly drop the dbinstance
+				if (datacubexdb_number == 1) {
+					//Databse drop
+					if (oph_dc_delete_db(server, &(dbs.value[j]))) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while dropping database.\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_DELETE_DROP_DB_ERROR, (dbs.value[j]).db_name);
+						result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+						continue;
+					}
+					continue;
+				}
+				//In this case the dbinstance may be already been deleted before
+				else if (datacubexdb_number == 0)
+					continue;
+
+				if (oph_dc_use_db_of_dbms(server, &(dbmss.value[i]), &(dbs.value[j]))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DB_SELECTION_ERROR, (dbs.value[j]).db_name);
+					result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+					continue;
+				}
+				//For each fragment
+				for (k = 0; k < frags.size; k++) {
+					//Check Fragment - DB Association
+					if (frags.value[k].db_instance != &(dbs.value[j]))
+						continue;
+
+					//Delete fragment
+					if (oph_dc_delete_fragment(server, &(frags.value[k]))) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while dropping table.\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_DELETE_DROP_FRAGMENT_ERROR, (frags.value[j]).fragment_name);
+						result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+						continue;
+					}
 				}
 			}
+			oph_dc_disconnect_from_dbms(server, &(dbmss.value[i]));
 		}
-		oph_dc_disconnect_from_dbms(server, &(dbmss.value[i]));
 	}
 	if (oph_dc_cleanup_dbms(server)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
@@ -216,7 +218,7 @@ int oph_dproc_clean_odb(ophidiadb * oDB, int id_datacube, int id_container)
 				if (id_datacubes)
 					free(id_datacubes);
 				free(id_dbs);
-				return result;
+				continue;
 			}
 		}
 		if (id_datacubes)
