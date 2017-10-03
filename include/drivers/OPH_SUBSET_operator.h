@@ -71,6 +71,7 @@
  * \param offset List of offsets used to enlarge subset intervals
  * \param offset_num Number of offsets
  * \param subset_type Flag indicating whether filters are expressed as indexes or values
+ * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
 struct _OPH_SUBSET_operator_handle {
 	ophidiadb oDB;
@@ -105,6 +106,7 @@ struct _OPH_SUBSET_operator_handle {
 	double *offset;
 	int offset_num;
 	int subset_type;
+	short int execute_error;
 };
 typedef struct _OPH_SUBSET_operator_handle OPH_SUBSET_operator_handle;
 

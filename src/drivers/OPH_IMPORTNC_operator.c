@@ -4159,14 +4159,13 @@ int task_destroy(oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}
 		}
-
 		//Before deleting wait for all process to reach this point
 		MPI_Barrier(MPI_COMM_WORLD);
 
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
 			oph_dproc_clean_odb(&((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB, id_datacube,
-						((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container);
+					    ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container);
 		}
 	}
 

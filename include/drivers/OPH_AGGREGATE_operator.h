@@ -51,6 +51,7 @@
  * \param id_user ID of submitter
  * \param description Free description to be associated with output cube
  * \param ms Conventional value for missing values
+ * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
 struct _OPH_AGGREGATE_operator_handle {
 	ophidiadb oDB;
@@ -75,6 +76,7 @@ struct _OPH_AGGREGATE_operator_handle {
 	int id_user;
 	char *description;
 	double ms;
+	short int execute_error;
 };
 typedef struct _OPH_AGGREGATE_operator_handle OPH_AGGREGATE_operator_handle;
 

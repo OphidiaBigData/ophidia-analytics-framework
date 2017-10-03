@@ -47,6 +47,7 @@
  * \param sessionid SessionID
  * \param id_user ID of submitter
  * \param description Free description to be associated with output cube
+ * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
 struct _OPH_SPLIT_operator_handle {
 	ophidiadb oDB;
@@ -68,6 +69,7 @@ struct _OPH_SPLIT_operator_handle {
 	char *sessionid;
 	int id_user;
 	char *description;
+	short int execute_error;
 };
 typedef struct _OPH_SPLIT_operator_handle OPH_SPLIT_operator_handle;
 

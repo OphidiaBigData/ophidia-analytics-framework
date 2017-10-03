@@ -611,7 +611,6 @@ int task_distribute(oph_operator_struct * handle)
 		((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->execute_error = 0;
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 	}
-
 	//Partition fragment relative index string
 	char *new_ptr = new_id_string;
 	if (oph_ids_get_substring_from_string
@@ -852,14 +851,13 @@ int task_destroy(oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}
 		}
-
 		//Before deleting wait for all process to reach this point
 		MPI_Barrier(MPI_COMM_WORLD);
 
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
-		    oph_dproc_clean_odb(&((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->oDB, id_datacube,
-						((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_input_container);
+			oph_dproc_clean_odb(&((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->oDB, id_datacube,
+					    ((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_input_container);
 		}
 	}
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
