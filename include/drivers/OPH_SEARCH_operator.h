@@ -58,6 +58,6 @@ typedef struct _OPH_SEARCH_operator_handle {
 
 /* OPERATOR MYSQL QUERIES */
 #define MYSQL_QUERY_OPH_SEARCH_READ_SUBFOLDERS "SELECT idfolder,foldername FROM folder WHERE idparent=%d"
-#define MYSQL_QUERY_OPH_SEARCH_READ_INSTANCES "SELECT container.idcontainer AS Container,datacube.iddatacube AS Datacube,metadatakey.label AS 'Key',metadatainstance.value AS Value FROM metadatainstance,metadatakey,datacube,container WHERE container.idcontainer=datacube.idcontainer AND datacube.iddatacube=metadatainstance.iddatacube AND metadatainstance.idkey=metadatakey.idkey AND container.idfolder=%d AND container.hidden=0 %s ORDER BY Container,Datacube,'Key',Value"
+#define MYSQL_QUERY_OPH_SEARCH_READ_INSTANCES "SELECT container.idcontainer AS Container,datacube.iddatacube AS Datacube,metadatainstance.label AS 'Key',metadatainstance.value AS Value FROM metadatainstance,datacube,container WHERE container.idcontainer=datacube.idcontainer AND datacube.iddatacube=metadatainstance.iddatacube AND container.idfolder=%d AND container.hidden=0 %s ORDER BY Container,Datacube,'Key',Value"
 
 #endif				//__OPH_SEARCH_OPERATOR_H
