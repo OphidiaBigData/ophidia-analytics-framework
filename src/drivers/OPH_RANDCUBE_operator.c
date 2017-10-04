@@ -1573,56 +1573,52 @@ int task_destroy(oph_operator_struct * handle)
 	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
 
 	if (global_error) {
-		//Delete fragments
-		if (id_datacube) {
-			//For error checking
-			char id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
-			memset(id_string, 0, sizeof(id_string));
+		//For error checking
+		char id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
+		memset(id_string, 0, sizeof(id_string));
 
-			if (handle->proc_rank == 0) {
-				ophidiadb *oDB = &((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->oDB;
-				oph_odb_datacube cube;
-				oph_odb_cube_init_datacube(&cube);
+		if (handle->proc_rank == 0) {
+			ophidiadb *oDB = &((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->oDB;
+			oph_odb_datacube cube;
+			oph_odb_cube_init_datacube(&cube);
 
-				//retrieve input datacube
-				if (oph_odb_cube_retrieve_datacube(oDB, id_datacube, &cube)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_RANDCUBE_DATACUBE_READ_ERROR);
-				} else {
-					//Copy fragment id relative index set 
-					strncpy(id_string, cube.frag_relative_index_set, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
+			//retrieve input datacube
+			if (oph_odb_cube_retrieve_datacube(oDB, id_datacube, &cube)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container,
+					OPH_LOG_OPH_RANDCUBE_DATACUBE_READ_ERROR);
+			} else {
+				//Copy fragment id relative index set 
+				strncpy(id_string, cube.frag_relative_index_set, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
+			}
+			oph_odb_cube_free_datacube(&cube);
+		}
+		//Broadcast to all other processes the fragment relative index        
+		MPI_Bcast(id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+		//Check if sequential part has been completed
+		if (id_string[0] == 0) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_MASTER_TASK_INIT_FAILED);
+		}
+		else {
+			if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id >= 0 || handle->proc_rank == 0) {
+				//Partition fragment relative index string
+				char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
+				char *new_ptr = new_id_string;
+				if (oph_ids_get_substring_from_string
+					(id_string, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id,
+					 ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_number, &new_ptr)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to split IDs fragment string\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_ID_STRING_SPLIT_ERROR);
 				}
-				oph_odb_cube_free_datacube(&cube);
-			}
-			//Broadcast to all other processes the fragment relative index        
-			MPI_Bcast(id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
-
-			//Check if sequential part has been completed
-			if (id_string[0] == 0) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_MASTER_TASK_INIT_FAILED);
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-			}
-
-			if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id < 0 && handle->proc_rank != 0)
-				return OPH_ANALYTICS_OPERATOR_SUCCESS;
-
-			//Partition fragment relative index string
-			char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
-			char *new_ptr = new_id_string;
-			if (oph_ids_get_substring_from_string
-			    (id_string, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id,
-			     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_number, &new_ptr)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to split IDs fragment string\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_ID_STRING_SPLIT_ERROR);
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-			}
-
-			int ret = OPH_ANALYTICS_OPERATOR_SUCCESS;
-			if ((ret = oph_dproc_delete_data(id_datacube, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, new_id_string))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
+				else {
+					//Delete fragments
+					if (oph_dproc_delete_data(id_datacube, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, new_id_string)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
+					}
+				}
 			}
 		}
 		//Before deleting wait for all process to reach this point

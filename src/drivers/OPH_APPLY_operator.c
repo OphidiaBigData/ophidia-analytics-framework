@@ -2156,10 +2156,7 @@ int task_destroy(oph_operator_struct * handle)
 
 	if (global_error) {
 		//Delete fragments
-		if (id_datacube) {
-			if (((OPH_APPLY_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0)
-				return OPH_ANALYTICS_OPERATOR_SUCCESS;
-
+		if (((OPH_APPLY_operator_handle *) handle->operator_handle)->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
 			if ((oph_dproc_delete_data(id_datacube, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container,
 						   ((OPH_APPLY_operator_handle *) handle->operator_handle)->fragment_ids))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
