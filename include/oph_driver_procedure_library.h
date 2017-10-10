@@ -29,9 +29,11 @@
  * \param id_datacube Id of the datacube
  * \param id_container Id of the container where the datacube belongs
  * \param fragment_ids Contains the string of fragment relative index
+ * \param start_position DB list starting position (in case of import-type operations)
+ * \param row_number DB list number of rows (in case of import-type operations)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids);
+int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids, int start_position, int row_number);
 
 /**
  * \brief Procedure to remove all datacube information from OphidiaDB

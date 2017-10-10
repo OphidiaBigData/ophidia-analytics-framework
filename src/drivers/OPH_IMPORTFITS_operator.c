@@ -2315,8 +2315,6 @@ int task_init(oph_operator_struct * handle)
 		id_datacube[5] = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number;
 		id_datacube[6] = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 		id_datacube[7] = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->total_frag_number;
-
-		flush = 0;
 	}
       __OPH_EXIT_1:
 	if (!((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->run)
@@ -2688,7 +2686,18 @@ int task_destroy(oph_operator_struct * handle)
 						OPH_LOG_OPH_IMPORTFITS_ID_STRING_SPLIT_ERROR);
 				} else {
 					//Delete fragments
-					if (oph_dproc_delete_data(id_datacube, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, new_id_string)) {
+					int start_position =
+					    (int) floor((double) ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragment_first_id /
+							((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number);
+					int row_number =
+					    (int)
+					    ceil((double)
+						 (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragment_first_id +
+						  ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragment_number) /
+						 ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number) - start_position;
+
+					if (oph_dproc_delete_data
+					    (id_datacube, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_DELETE_DB_READ_ERROR);
