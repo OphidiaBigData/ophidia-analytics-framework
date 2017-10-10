@@ -1030,6 +1030,13 @@ int task_init(oph_operator_struct * handle)
 			free(cubedims);
 			goto __OPH_EXIT_1;
 		}
+
+		if (id_grid && oph_odb_dim_enable_grid(oDB, id_grid)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to enable grid\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container, "Unable to enable grid\n");
+			free(cubedims);
+			goto __OPH_EXIT_1;
+		}
 		// End - Dimension table management
 
 		//Write new cube - dimension relation rows

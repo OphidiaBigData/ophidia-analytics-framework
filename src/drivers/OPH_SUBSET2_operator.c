@@ -1466,6 +1466,12 @@ int task_init(oph_operator_struct * handle)
 		if (stored_dim_insts)
 			free(stored_dim_insts);
 
+		if (id_grid && oph_odb_dim_enable_grid(oDB, id_grid)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to enable grid\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container, "Unable to enable grid\n");
+			free(cubedims);
+			goto __OPH_EXIT_1;
+		}
 		// End - Dimension table management
 
 		oph_subset_vector_free(subset_struct, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->number_of_dim);
