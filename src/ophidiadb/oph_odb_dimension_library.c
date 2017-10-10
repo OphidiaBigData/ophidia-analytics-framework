@@ -1078,6 +1078,8 @@ int oph_odb_dim_enable_grid(ophidiadb * oDB, int id_grid)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
+
+	return OPH_ODB_SUCCESS;
 }
 
 int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension * dim, int *last_insertd_id, int id_datacube)
