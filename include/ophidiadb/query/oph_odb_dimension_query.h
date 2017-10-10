@@ -66,6 +66,6 @@
 
 #define MYSQL_RETRIEVE_HIERARCHY_ID					"SELECT idhierarchy from `hierarchy` where hierarchyname = '%s';"
 
-#define MYSQL_QUERY_DIM_ENABLE_GRID					"UPDATE grid SET enabled = 1 WHERE id_grid = %d;"
+#define MYSQL_QUERY_DIM_ENABLE_GRID					"UPDATE grid SET enabled = 1 WHERE idgrid = %d;"
 
 #endif				/* __OPH_ODB_DIM_QUERY_H__ */
