@@ -95,6 +95,7 @@ struct _OPH_SUBSET_operator_handle {
 	char *apply_clause;
 	char *apply_clause_type;
 	char *grid_name;
+	char check_grid;
 	char **objkeys;
 	int objkeys_num;
 	oph_ioserver_handler *server;

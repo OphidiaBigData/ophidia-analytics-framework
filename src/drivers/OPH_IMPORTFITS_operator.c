@@ -136,6 +136,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->create_container = 0;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->grid_name = NULL;
+	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->check_grid = 0;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path = NULL;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path_orig = NULL;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_output_datacube = 0;
@@ -1751,9 +1752,11 @@ int task_init(oph_operator_struct * handle)
 							}
 							free(tmp_var.dims_id);
 
-							if (!oph_dim_compare_dimension
-							    (db_dimension, label_dimension_table_name, dims[j].dimension_type, dim_inst[j].size, dim_array, dim_inst[j].fk_id_dimension_label, &match)
-							    && !match) {
+							if (!((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->check_grid || (!oph_dim_compare_dimension
+																	  (db_dimension, label_dimension_table_name,
+																	   dims[j].dimension_type, dim_inst[j].size, dim_array,
+																	   dim_inst[j].fk_id_dimension_label, &match)
+																	  && !match)) {
 								free(dim_array);
 								found_flag = 1;
 								break;

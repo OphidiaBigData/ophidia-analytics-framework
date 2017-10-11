@@ -76,6 +76,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->number_of_dim = 0;
 	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->frags_size = 0;
 	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->grid_name = NULL;
+	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->check_grid = 0;
 	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->objkeys_num = -1;
 	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->server = NULL;
@@ -377,6 +378,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CHECK_GRID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CHECK_GRID);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_SUBSET2_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CHECK_GRID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN))
+		((OPH_SUBSET2_operator_handle *) handle->operator_handle)->check_grid = 1;
 
 	value = hashtbl_get(task_tbl, OPH_ARG_IDJOB);
 	if (!value)
@@ -1392,7 +1402,7 @@ int task_init(oph_operator_struct * handle)
 					    && (stored_dim_insts[d].size == dim_inst[l].size) && (stored_dim_insts[d].concept_level == dim_inst[l].concept_level))
 						break;
 				//If original dimension is found and has size 0 then do not compare
-				if (!(d < stored_dim_num && !dim_inst[l].size)) {
+				if (!((d < stored_dim_num) && !dim_inst[l].size) && ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->check_grid) {
 					if ((d >= stored_dim_num)
 					    || oph_dim_compare_dimension(db, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, dim_inst[l].size, dim_row, stored_dim_insts[d].fk_id_dimension_index,
 									 &match) || match) {
