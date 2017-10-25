@@ -36,6 +36,7 @@ Binary-array.
 Extract measures with temperature values greater than 300 K.
 oph_predicate3(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;x>300&apos;,&apos;1&apos;,&apos;0&apos;)</abstract>
         <author>CMCC Foundation</author>
+        <category>Transformation</category>
         <creationdate>12/02/2016</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
