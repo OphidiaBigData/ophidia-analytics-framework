@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,14 +45,13 @@
  * \param input_cube_number Number of input datacube used for the task
  * \param id_inputcube Vector of input datacube IDs used for the operation
  */
-typedef struct
-{
+typedef struct {
 	int id_outputcube;
 	int id_job;
-	char operator[OPH_ODB_CUBE_OPERATOR_SIZE];
-	char query[OPH_ODB_CUBE_OPERATION_QUERY_SIZE];
+	char operator[OPH_ODB_CUBE_OPERATOR_SIZE + 1];
+	char query[OPH_ODB_CUBE_OPERATION_QUERY_SIZE + 1];
 	int input_cube_number;
-	int* id_inputcube;
+	int *id_inputcube;
 } oph_odb_task;
 
 /**
@@ -72,24 +71,23 @@ typedef struct
  * \param level It rappresents the level of transformation.
  * \param id_source id of the source file. It may be NULL (0).
  */
-typedef struct
-{
+typedef struct {
 	int id_datacube;
 	int hostxdatacube;
 	int dbmsxhost;
 	int dbxdbms;
 	int fragmentxdb;
 	int tuplexfragment;
-	char measure[OPH_ODB_CUBE_MEASURE_SIZE];
-	char measure_type[OPH_ODB_CUBE_MEASURE_TYPE_SIZE];
-	char frag_relative_index_set[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
+	char measure[OPH_ODB_CUBE_MEASURE_SIZE + 1];
+	char measure_type[OPH_ODB_CUBE_MEASURE_TYPE_SIZE + 1];
+	char frag_relative_index_set[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE + 1];
 	int id_container;
 	int *id_db;
 	int db_number;
 	int compressed;
 	int level;
 	int id_source;
-	char description[OPH_ODB_CUBE_DESCRIPTION_SIZE];
+	char description[OPH_ODB_CUBE_DESCRIPTION_SIZE + 1];
 } oph_odb_datacube;
 
 
@@ -99,10 +97,9 @@ typedef struct
  * \param id_source id of the source
  * \param uri URI of the source used
  */
-typedef struct
-{
+typedef struct {
 	int id_source;
-	char uri[OPH_ODB_CUBE_SOURCE_URI_SIZE];
+	char uri[OPH_ODB_CUBE_SOURCE_URI_SIZE + 1];
 } oph_odb_source;
 
 
@@ -114,8 +111,7 @@ typedef struct
  * \param size Length of the dimension (field of dimension_instance table used for read only purpose - inherited from previous version)
  * \param level Level of the dimension
  */
-typedef struct
-{
+typedef struct {
 	int id_datacube;
 	int id_dimensioninst;
 	int explicit_dim;
@@ -129,14 +125,14 @@ typedef struct
  * \param m Pointer to datacube to initialize
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_init_datacube(oph_odb_datacube *m);
+int oph_odb_cube_init_datacube(oph_odb_datacube * m);
 
 /**
  * \brief Function to free datcube instance resources
  * \param m Pointer to datacube to clean
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_free_datacube(oph_odb_datacube *m);
+int oph_odb_cube_free_datacube(oph_odb_datacube * m);
 
 /**
  * \brief Function to count number of dbms instance in which a datacube is stored
@@ -145,7 +141,7 @@ int oph_odb_cube_free_datacube(oph_odb_datacube *m);
  * \param num_elements Number of DBMS instances
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_get_datacube_dbmsinstance_number(ophidiadb *oDB, int id_datacube, int *num_elements);
+int oph_odb_cube_get_datacube_dbmsinstance_number(ophidiadb * oDB, int id_datacube, int *num_elements);
 
 /**
  * \brief Function to retrieve datacube size from ophidiadb
@@ -154,7 +150,7 @@ int oph_odb_cube_get_datacube_dbmsinstance_number(ophidiadb *oDB, int id_datacub
  * \param size Size of the datacube
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_get_datacube_size(ophidiadb *oDB, int id_datacube, long long int *size);
+int oph_odb_cube_get_datacube_size(ophidiadb * oDB, int id_datacube, long long int *size);
 
 /**
  * \brief Function to retrieve datacube number of elements from ophidiadb
@@ -163,7 +159,7 @@ int oph_odb_cube_get_datacube_size(ophidiadb *oDB, int id_datacube, long long in
  * \param num_elements Number of elements of the datacube
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_get_datacube_num_elements(ophidiadb *oDB, int id_datacube, long long int *num_elements);
+int oph_odb_cube_get_datacube_num_elements(ophidiadb * oDB, int id_datacube, long long int *num_elements);
 
 /**
  * \brief Function to insert datacube number of elements in ophidiadb
@@ -172,7 +168,7 @@ int oph_odb_cube_get_datacube_num_elements(ophidiadb *oDB, int id_datacube, long
  * \param num_elements Number of elements of the datacube
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_set_datacube_num_elements(ophidiadb *oDB, int id_datacube, long long int num_elements);
+int oph_odb_cube_set_datacube_num_elements(ophidiadb * oDB, int id_datacube, long long int num_elements);
 
 /**
  * \brief Function to insert datacube size in ophidiadb
@@ -181,7 +177,7 @@ int oph_odb_cube_set_datacube_num_elements(ophidiadb *oDB, int id_datacube, long
  * \param size Size of the datacube
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_set_datacube_size(ophidiadb *oDB, int id_datacube, long long int size);
+int oph_odb_cube_set_datacube_size(ophidiadb * oDB, int id_datacube, long long int size);
 
 /**
  * \brief Function to retrieve datacube informations from OphidiaDB given the datacube name and container name
@@ -190,7 +186,7 @@ int oph_odb_cube_set_datacube_size(ophidiadb *oDB, int id_datacube, long long in
  * \param cube Pointer datacube to be filled
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_retrieve_datacube(ophidiadb *oDB, int id_datacube, oph_odb_datacube *cube);
+int oph_odb_cube_retrieve_datacube(ophidiadb * oDB, int id_datacube, oph_odb_datacube * cube);
 
 /**
  * \brief Function to retrieve datacube informations from OphidiaDB given the datacube name and container name
@@ -199,7 +195,7 @@ int oph_odb_cube_retrieve_datacube(ophidiadb *oDB, int id_datacube, oph_odb_data
  * \param cube Pointer datacube to be filled
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_retrieve_datacube_with_ordered_partitions(ophidiadb *oDB, int id_datacube, oph_odb_datacube *cube);
+int oph_odb_cube_retrieve_datacube_with_ordered_partitions(ophidiadb * oDB, int id_datacube, oph_odb_datacube * cube);
 
 /**
  * \brief Function to retrieve source informations from OphidiaDB given the src id
@@ -208,7 +204,7 @@ int oph_odb_cube_retrieve_datacube_with_ordered_partitions(ophidiadb *oDB, int i
  * \param src Pointer to src struct to be filled
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_retrieve_source(ophidiadb *oDB, int id_src, oph_odb_source *src);
+int oph_odb_cube_retrieve_source(ophidiadb * oDB, int id_src, oph_odb_source * src);
 
 /**
  * \brief Function to retrieve datacube additional informations from OphidiaDB. This are the creation date and the description (usually unused in other functions)
@@ -218,7 +214,7 @@ int oph_odb_cube_retrieve_source(ophidiadb *oDB, int id_src, oph_odb_source *src
  * \param *description Pointer to string to be filled with description (it has to be freed)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_find_datacube_additional_info(ophidiadb *oDB, int id_datacube, char **creationdate, char **description);
+int oph_odb_cube_find_datacube_additional_info(ophidiadb * oDB, int id_datacube, char **creationdate, char **description);
 
 /**
  * \brief Function to retrieve list of all datacubes generated from input one or all datacubes generating input one
@@ -228,7 +224,7 @@ int oph_odb_cube_find_datacube_additional_info(ophidiadb *oDB, int id_datacube, 
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_find_datacube_hierarchy(ophidiadb *oDB, int direction, int id_datacube, MYSQL_RES **information_list);
+int oph_odb_cube_find_datacube_hierarchy(ophidiadb * oDB, int direction, int id_datacube, MYSQL_RES ** information_list);
 
 /**
  * \brief Function to retrieve list of all task filtered by one or more parameters
@@ -240,7 +236,7 @@ int oph_odb_cube_find_datacube_hierarchy(ophidiadb *oDB, int direction, int id_d
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_find_task_list(ophidiadb *oDB, int folder_id, int datacube_id, char *operator, char *container_name, MYSQL_RES **information_list);
+int oph_odb_cube_find_task_list(ophidiadb * oDB, int folder_id, int datacube_id, char *operator, char *container_name, MYSQL_RES ** information_list);
 
 /**
  * \brief Function to delete datacube informations from OphidiaDB
@@ -248,7 +244,7 @@ int oph_odb_cube_find_task_list(ophidiadb *oDB, int folder_id, int datacube_id, 
  * \param id_datacube ID of the datacube to be deleted
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_delete_from_datacube_table(ophidiadb *oDB, int id_datacube);
+int oph_odb_cube_delete_from_datacube_table(ophidiadb * oDB, int id_datacube);
 
 /**
  * \brief Function that updates OphidiaDB adding source specified. If the uri is already inserted it will just return the id.
@@ -257,7 +253,7 @@ int oph_odb_cube_delete_from_datacube_table(ophidiadb *oDB, int id_datacube);
  * \param last_insertd_id ID of last inserted source
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_insert_into_source_table(ophidiadb *oDB, oph_odb_source *src, int *last_insertd_id);
+int oph_odb_cube_insert_into_source_table(ophidiadb * oDB, oph_odb_source * src, int *last_insertd_id);
 
 /**
  * \brief Function that updates OphidiaDB adding the new task and new hasinput relations
@@ -266,7 +262,7 @@ int oph_odb_cube_insert_into_source_table(ophidiadb *oDB, oph_odb_source *src, i
  * \param last_insertd_id ID of last inserted task
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_insert_into_task_table(ophidiadb *oDB, oph_odb_task *new_task, int *last_insertd_id);
+int oph_odb_cube_insert_into_task_table(ophidiadb * oDB, oph_odb_task * new_task, int *last_insertd_id);
 
 /**
  * \brief Function to check if a container.datacube exists
@@ -277,7 +273,7 @@ int oph_odb_cube_insert_into_task_table(ophidiadb *oDB, oph_odb_task *new_task, 
  * \param exists Variable that contains 0 if the container.datacube doesn't exists and 1 otherwise
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_check_if_datacube_not_present_by_pid(ophidiadb *oDB, const char *uri, const int id_container, const int id_datacube,  int *exists);
+int oph_odb_cube_check_if_datacube_not_present_by_pid(ophidiadb * oDB, const char *uri, const int id_container, const int id_datacube, int *exists);
 
 /**
  * \brief Function to check if host/dbms where datacube/fragment is stored are available
@@ -287,7 +283,7 @@ int oph_odb_cube_check_if_datacube_not_present_by_pid(ophidiadb *oDB, const char
  * \param status Variable that contains 0 if the datacube/fragment isn't available and 1 otherwise
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_check_datacube_availability(ophidiadb *oDB, int id_input, int type, int *status);
+int oph_odb_cube_check_datacube_availability(ophidiadb * oDB, int id_input, int type, int *status);
 
 /**
  * \brief Function to retrieve id of a datacubes related to a db
@@ -297,7 +293,7 @@ int oph_odb_cube_check_datacube_availability(ophidiadb *oDB, int id_input, int t
  * \param size Pointer with the length of id_datacubes
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_retrieve_datacube_id_list_from_dbinstance(ophidiadb *oDB, int id_db, int **id_datacubes, int *size);
+int oph_odb_cube_retrieve_datacube_id_list_from_dbinstance(ophidiadb * oDB, int id_db, int **id_datacubes, int *size);
 
 /**
  * \brief Function to retrieve the name of the measure of a datacube
@@ -306,7 +302,7 @@ int oph_odb_cube_retrieve_datacube_id_list_from_dbinstance(ophidiadb *oDB, int i
  * \param measure Name of the measure
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_retrieve_datacube_measure(ophidiadb *oDB, int id_datacube, char *measure);
+int oph_odb_cube_retrieve_datacube_measure(ophidiadb * oDB, int id_datacube, char *measure);
 
 /**
  * \brief Function that updates OphidiaDB adding the new cubehasdim relations
@@ -315,7 +311,7 @@ int oph_odb_cube_retrieve_datacube_measure(ophidiadb *oDB, int id_datacube, char
  * \param last_insertd_id ID of last inserted relation
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_insert_into_cubehasdim_table(ophidiadb *oDB, oph_odb_cubehasdim *cubedim, int *last_insertd_id);
+int oph_odb_cube_insert_into_cubehasdim_table(ophidiadb * oDB, oph_odb_cubehasdim * cubedim, int *last_insertd_id);
 
 /**
  * \brief Function that updates OphidiaDB adding the new datacube and new partition relations
@@ -324,7 +320,7 @@ int oph_odb_cube_insert_into_cubehasdim_table(ophidiadb *oDB, oph_odb_cubehasdim
  * \param last_insertd_id ID of last inserted datacube
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb *oDB, oph_odb_datacube *cube, int *last_insertd_id);
+int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb * oDB, oph_odb_datacube * cube, int *last_insertd_id);
 
 /**
  * \brief Function to find datacubes and/or containers from OphidiaDB given optionally a datacube name and/or the container name
@@ -336,7 +332,7 @@ int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb *oDB, oph_odb
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_find_containers_datacubes(ophidiadb *oDB, int folder_id, int search_on, char *container_name, int id_datacube, MYSQL_RES **information_list);
+int oph_odb_cube_find_containers_datacubes(ophidiadb * oDB, int folder_id, int search_on, char *container_name, int id_datacube, MYSQL_RES ** information_list);
 
 /**
  * \brief Function to retrieve cubehasdim rows from OphidiaDB given the datacube id
@@ -346,8 +342,8 @@ int oph_odb_cube_find_containers_datacubes(ophidiadb *oDB, int folder_id, int se
  * \param dim_num Pointer to integer used to store the dimension number;
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_retrieve_cubehasdim_list(ophidiadb *oDB, int id_datacube, oph_odb_cubehasdim **cubedims, int *dim_num);
+int oph_odb_cube_retrieve_cubehasdim_list(ophidiadb * oDB, int id_datacube, oph_odb_cubehasdim ** cubedims, int *dim_num);
 
-int oph_odb_cube_update_tuplexfragment(ophidiadb *oDB, int id_datacube, int tuplexfragment);
+int oph_odb_cube_update_tuplexfragment(ophidiadb * oDB, int id_datacube, int tuplexfragment);
 
-#endif /* __OPH_ODB_CUBE_H__ */
+#endif				/* __OPH_ODB_CUBE_H__ */

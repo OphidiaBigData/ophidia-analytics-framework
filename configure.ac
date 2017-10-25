@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2016 CMCC Foundation
+#    Copyright (C) 2012-2017 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 #
 
 AC_PREREQ([2.60])
-AC_INIT([ophidia-analytics-framework], [0.10.7], [ophidia-info@lists.cmcc.it])
+AC_INIT([ophidia-analytics-framework], [1.1.0], [ophidia-info@cmcc.it])
 
 AC_CONFIG_AUX_DIR([config])
 
@@ -303,6 +303,44 @@ AC_ARG_ENABLE(parallel_netcdf,
         )
 AM_CONDITIONAL([HAVE_PARALLEL_NETCDF], [test "x$parallel_netcdf" = "xyes"])
 
+#Check if cfitsio is installed
+cfitsio="no"
+AC_ARG_ENABLE(cfitsio,
+        [  --enable-cfitsio
+            Turn on CFITSIO flags],
+        [cfitsio="yes"
+            AC_MSG_NOTICE("CFITSIO support enabled")],
+        [cfitsio="no"]
+        )
+AM_CONDITIONAL([HAVE_CFITSIO], [test "x$cfitsio" = "xyes"])
+
+if test "x${cfitsio}" = "xyes"; then
+
+        PKG_CHECK_MODULES(CFITSIO, cfitsio >= 3.34)
+
+        AC_ARG_WITH(libcfitsio_header_path,
+                [  --with-libcfitsio-header-path=PATH            Location of libcfitsio includes directory],
+                [
+                        libcfitsio_header_path="$withval"
+                ],
+                [
+                        libcfitsio_header_path="$CFITSIO_CFLAGS"
+                ])
+        AC_ARG_WITH(libcfitsio_lib_path,
+                [  --with-libcfitsio-lib-path=PATH               Location of libcfitsio],
+                [
+                        libcfitsio_lib_path="$withval"
+                ],
+                [
+                        libcfitsio_lib_path="$CFITSIO_LIBS"
+                ])
+
+        LIBCFITSIO_INCLUDE="$libcfitsio_header_path"
+        AC_SUBST(LIBCFITSIO_INCLUDE)
+        LIBCFITSIO_LIB="$libcfitsio_lib_path"
+        AC_SUBST(LIBCFITSIO_LIB)
+fi
+
 #Enable stand-alone mode
 standalone_mode="no"
 AC_ARG_ENABLE(standalone_mode,
@@ -338,6 +376,32 @@ JANSON_LIBS="$jansson_lib_path"
 AC_SUBST(JANSON_LIBS)
 JANSSON_LIBDIR=`pkg-config --variable=libdir jansson`
 AC_SUBST(JANSSON_LIBDIR)
+
+ophidiaio_server_support=no
+OPHIDIAIO_SERVER_PATH=
+AC_ARG_WITH(ophidiaio_server_path,
+           [  --with-ophidiaio-server-path=PATH   Set Ophidia IO server lib dir (Not available by default)],
+           [
+                ophidiaio_server_path="$withval"
+                ophidiaio_server_support=yes
+           ],
+           [
+                AC_MSG_NOTICE("Ophidia IO server support disabled.")
+           ]
+           )
+if test "x${ophidiaio_server_support}" = "xyes"; then
+        if test "x${ophidiaio_server_path}" != "x"; then
+                OPHIDIAIO_SERVER_CFLAGS="-I${ophidiaio_server_path}/include"
+                OPHIDIAIO_SERVER_LIBS="-L${ophidiaio_server_path}/lib"
+                AC_SUBST(OPHIDIAIO_SERVER_CFLAGS)
+                AC_SUBST(OPHIDIAIO_SERVER_LIBS)
+                AC_MSG_NOTICE("Ophidia IO server support enabled.")
+        else
+                AC_MSG_ERROR("Ophidia IO server install dir not found!")
+                ophidiaio_server_support=no
+        fi
+fi
+AM_CONDITIONAL([OPHIDIAIO_SERVER_SUPPORT], [test "x$ophidiaio_server_support" = "xyes"])
 
 AC_ARG_WITH(interface_type,
 	   [  --with-interface-type=TYPE 		Interface type: SSL],

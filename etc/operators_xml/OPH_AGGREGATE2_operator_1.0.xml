@@ -17,6 +17,7 @@ It executes an aggregation function on a datacube.
 - midnight : if 00 then the edge point of two consecutive aggregate time sets will be aggregated into the right set;
              if 24 (default) then the edge point will be aggragated into the left set.
 - operation : reduction operation. Possible values are &quot;count&quot;, &quot;max&quot;, &quot;min&quot;, &quot;avg&quot; and &quot;sum&quot;.
+- missingvalue : value to be considered as missing value; by default it is NAN (for float and double).
 - grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
              or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
 - container : name of the container to be used to store the output cube; by default it is the input container.
@@ -37,20 +38,22 @@ Compute the maximum with respect to time dimension on the datacube identified by
 OPH_TERM: oph_aggregate2 operation=max;dim=time;concept_level=A;cube=http://www.example.com/1/1;grid=new_grid;
 SUBMISSION STRING: &quot;operator=oph_aggregate2;operation=max;dim=time;concept_level=A;cube=http://www.example.com/1/1;grid=new_grid;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Data Analysis</category>
         <creationdate>09/10/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-		<argument type="string" mandatory="yes">cube</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="yes">dim</argument>
 		<argument type="char" mandatory="no" default="A">concept_level</argument>
 		<argument type="char" mandatory="no" default="24" values="00|24">midnight</argument>
 		<argument type="string" mandatory="yes" values="count|max|min|avg|sum">operation</argument>
+		<argument type="real" mandatory="no" default="NAN">missingvalue</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>

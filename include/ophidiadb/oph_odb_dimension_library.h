@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@
 #define OPH_ODB_DIM_MINUTE_NUMBER 60
 #define OPH_ODB_DIM_HOUR_NUMBER 24
 #define OPH_ODB_DIM_DAY_NUMBER 30
+#define OPH_ODB_DIM_WEEK_NUMBER 7
 #define OPH_ODB_DIM_MONTH_NUMBER 12
 
 #define OPH_ODB_TIME_FREQUENCY "time:frequency"
@@ -54,10 +55,16 @@
 #define OPH_DIM_TIME_CALENDAR_STANDARD "standard"
 #define OPH_DIM_TIME_CALENDAR_GREGORIAN "gregorian"
 #define OPH_DIM_TIME_CALENDAR_PGREGORIAN "proleptic_gregorian"
+#define OPH_DIM_TIME_CALENDAR_PGREGORIAN2 "prolepticgregorian"
 #define OPH_DIM_TIME_CALENDAR_JULIAN "julian"
 #define OPH_DIM_TIME_CALENDAR_360_DAY "360_day"
+#define OPH_DIM_TIME_CALENDAR_360DAY "360day"
+#define OPH_DIM_TIME_CALENDAR_365_DAY "365_day"
+#define OPH_DIM_TIME_CALENDAR_365DAY "365day"
 #define OPH_DIM_TIME_CALENDAR_NO_LEAP "no_leap"
+#define OPH_DIM_TIME_CALENDAR_NOLEAP "noleap"
 #define OPH_DIM_TIME_CALENDAR_ALL_LEAP "all_leap"
+#define OPH_DIM_TIME_CALENDAR_ALLLEAP "allleap"
 #define OPH_DIM_TIME_CALENDAR_USER_DEFINED "user_defined"
 
 #define OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR "since"
@@ -81,17 +88,16 @@
  * \param leap_year The first leap year
  * \param leap_month The leap month
 */
-typedef struct
-{
+typedef struct {
 	int id_dimension;
 	int id_container;
-	char dimension_name[OPH_ODB_DIM_DIMENSION_SIZE];
-	char dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE];
+	char dimension_name[OPH_ODB_DIM_DIMENSION_SIZE + 1];
+	char dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE + 1];
 	int id_hierarchy;
-	char base_time[OPH_ODB_DIM_TIME_SIZE];
-	char units[OPH_ODB_DIM_TIME_SIZE];
-	char calendar[OPH_ODB_DIM_TIME_SIZE];
-	int month_lengths[OPH_ODB_DIM_MONTH_NUMBER];
+	char base_time[OPH_ODB_DIM_TIME_SIZE + 1];
+	char units[OPH_ODB_DIM_TIME_SIZE + 1];
+	char calendar[OPH_ODB_DIM_TIME_SIZE + 1];
+	int month_lengths[OPH_ODB_DIM_MONTH_NUMBER + 1];
 	int leap_year;
 	int leap_month;
 } oph_odb_dimension;
@@ -106,8 +112,7 @@ typedef struct
  * \param concept_level Concept level of dimension instance
  * \param unlimited Flag indicating if the dimension was unlimited in the original file
 */
-typedef struct
-{
+typedef struct {
 	int id_dimensioninst;
 	int id_dimension;
 	int id_grid;
@@ -123,10 +128,9 @@ typedef struct
  * \param id_grid id of the grid
  * \param grid_name Name of the grid
  */
-typedef struct
-{
+typedef struct {
 	int id_grid;
-	char grid_name[OPH_ODB_DIM_GRID_SIZE];
+	char grid_name[OPH_ODB_DIM_GRID_SIZE + 1];
 } oph_odb_dimension_grid;
 
 /**
@@ -135,11 +139,10 @@ typedef struct
  * \param hierarchy_name Name of the hierarchy
  * \param filename Filename of XML document that describes the hierarchy
  */
-typedef struct
-{
+typedef struct {
 	int id_hierarchy;
-	char hierarchy_name[OPH_ODB_DIM_HIERARCHY_SIZE];
-	char filename[OPH_ODB_DIM_HIERARCHY_FILENAME_SIZE];
+	char hierarchy_name[OPH_ODB_DIM_HIERARCHY_SIZE + 1];
+	char filename[OPH_ODB_DIM_HIERARCHY_FILENAME_SIZE + 1];
 } oph_odb_hierarchy;
 
 /**
@@ -153,7 +156,8 @@ typedef struct
  * \param datacube_id Id of the datacube, used to access time 
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_retrieve_full_dimension_info(ophidiadb *oDB, int id_dimensioninst, oph_odb_dimension *dim, oph_odb_dimension_instance *dim_inst, oph_odb_dimension_grid *dim_grid, oph_odb_hierarchy *hier, int id_datacube);
+int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensioninst, oph_odb_dimension * dim, oph_odb_dimension_instance * dim_inst, oph_odb_dimension_grid * dim_grid,
+					     oph_odb_hierarchy * hier, int id_datacube);
 
 /**
  * \brief Function to retrieve dimensions from OphidiaDB given the id_dimension
@@ -163,7 +167,7 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb *oDB, int id_dimensionins
  * \param datacube_id Id of the datacube, used to access time 
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_retrieve_dimension(ophidiadb *oDB, int id_dimension, oph_odb_dimension *dim, int id_datacube);
+int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_dimension * dim, int id_datacube);
 
 /**
  * \brief Function to retrieve dimension instances from OphidiaDB given the id_dimensioninst
@@ -173,7 +177,7 @@ int oph_odb_dim_retrieve_dimension(ophidiadb *oDB, int id_dimension, oph_odb_dim
  * \param datacube_id Id of the datacube, used to access time 
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_retrieve_dimension_instance(ophidiadb *oDB, int id_dimensioninst, oph_odb_dimension_instance *dim_inst, int id_datacube);
+int oph_odb_dim_retrieve_dimension_instance(ophidiadb * oDB, int id_dimensioninst, oph_odb_dimension_instance * dim_inst, int id_datacube);
 
 /**
  * \brief Function to retrieve grid id from OphidiaDB given its name and the container id
@@ -183,7 +187,7 @@ int oph_odb_dim_retrieve_dimension_instance(ophidiadb *oDB, int id_dimensioninst
  * \param id_grid Pointer to id_grid to be filled
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_retrieve_grid_id(ophidiadb *oDB, char* gridname, int id_container, int* id_grid);
+int oph_odb_dim_retrieve_grid_id(ophidiadb * oDB, char *gridname, int id_container, int *id_grid);
 
 /**
  * \brief Function to retrieve hierarchy from OphidiaDB given the id_hierarchy
@@ -192,7 +196,7 @@ int oph_odb_dim_retrieve_grid_id(ophidiadb *oDB, char* gridname, int id_containe
  * \param hier Pointer to hierarchy structure to be filled
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_retrieve_hierarchy(ophidiadb *oDB, int id_hierarchy, oph_odb_hierarchy *hier);
+int oph_odb_dim_retrieve_hierarchy(ophidiadb * oDB, int id_hierarchy, oph_odb_hierarchy * hier);
 
 /**
  * \brief Function to retrieve dimension instance id from OphidiaDB given the datacube id and dimension name
@@ -202,7 +206,7 @@ int oph_odb_dim_retrieve_hierarchy(ophidiadb *oDB, int id_hierarchy, oph_odb_hie
  * \param id_dimension_instance Pointer to id_dimension_instance to be filled
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_retrieve_dimension_instance_id(ophidiadb *oDB, int id_datacube, char* dimensionname, int* id_dimension_instance);
+int oph_odb_dim_retrieve_dimension_instance_id(ophidiadb * oDB, int id_datacube, char *dimensionname, int *id_dimension_instance);
 
 /**
  * \brief Function to retrieve dimension rows OphidiaDB given the container id
@@ -212,7 +216,7 @@ int oph_odb_dim_retrieve_dimension_instance_id(ophidiadb *oDB, int id_datacube, 
  * \param dim_num Pointer to integer used to store the dimension number;
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_retrieve_dimension_list_from_container(ophidiadb *oDB, int id_container, oph_odb_dimension **dims, int *dim_num);
+int oph_odb_dim_retrieve_dimension_list_from_container(ophidiadb * oDB, int id_container, oph_odb_dimension ** dims, int *dim_num);
 
 /**
  * \brief Function to retrieve dimension rows and related instances given the grid name and container id
@@ -224,7 +228,7 @@ int oph_odb_dim_retrieve_dimension_list_from_container(ophidiadb *oDB, int id_co
  * \param dim_num Pointer to integer used to store the dimension number;
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_retrieve_dimension_list_from_grid_in_container(ophidiadb *oDB, char *grid_name, int id_container, oph_odb_dimension **dims, oph_odb_dimension_instance **dim_insts, int *dim_num);
+int oph_odb_dim_retrieve_dimension_list_from_grid_in_container(ophidiadb * oDB, char *grid_name, int id_container, oph_odb_dimension ** dims, oph_odb_dimension_instance ** dim_insts, int *dim_num);
 
 /**
  * \brief Function to retrieve all features of dimensions given the datacube id
@@ -235,7 +239,7 @@ int oph_odb_dim_retrieve_dimension_list_from_grid_in_container(ophidiadb *oDB, c
  * \param datacube_id Id of the datacube, used to access time 
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_find_dimensions_features(ophidiadb *oDB, int id_datacube, MYSQL_RES **frag_rows, int *dim_num);
+int oph_odb_dim_find_dimensions_features(ophidiadb * oDB, int id_datacube, MYSQL_RES ** frag_rows, int *dim_num);
 
 /**
  * \brief Function to retrieve list of all hierarchies
@@ -243,7 +247,7 @@ int oph_odb_dim_find_dimensions_features(ophidiadb *oDB, int id_datacube, MYSQL_
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_find_hierarchy_list(ophidiadb *oDB, MYSQL_RES **information_list);
+int oph_odb_dim_find_hierarchy_list(ophidiadb * oDB, MYSQL_RES ** information_list);
 
 /**
  * \brief Function to retrieve list of all grids related to a container
@@ -252,7 +256,7 @@ int oph_odb_dim_find_hierarchy_list(ophidiadb *oDB, MYSQL_RES **information_list
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_find_container_grid_list(ophidiadb *oDB, int id_container, MYSQL_RES **information_list);
+int oph_odb_dim_find_container_grid_list(ophidiadb * oDB, int id_container, MYSQL_RES ** information_list);
 
 /**
  * \brief Function to delete grid informations from OphidiaDB
@@ -260,16 +264,17 @@ int oph_odb_dim_find_container_grid_list(ophidiadb *oDB, int id_container, MYSQL
  * \param id_container ID of the container to whom the grids are related
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_delete_from_grid_table(ophidiadb *oDB, int id_container);
+int oph_odb_dim_delete_from_grid_table(ophidiadb * oDB, int id_container);
 
 /**
  * \brief Function that updates OphidiaDB adding the new grid
  * \param oDB Pointer to OphidiaDB
  * \param grid Pointer to grid to be added
  * \param last_insertd_id ID of last inserted datacube
+ * \param grid_exist Flag set in case a grid with the same name already exists
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_insert_into_grid_table(ophidiadb *oDB, oph_odb_dimension_grid *grid, int *last_insertd_id);
+int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid * grid, int *last_insertd_id, int *grid_exist);
 
 /**
  * \brief Function that updates OphidiaDB adding the new dimension
@@ -279,7 +284,7 @@ int oph_odb_dim_insert_into_grid_table(ophidiadb *oDB, oph_odb_dimension_grid *g
  * \param datacube_id Id of the datacube, used to access time 
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_insert_into_dimension_table(ophidiadb *oDB, oph_odb_dimension *dim, int *last_insertd_id, int id_datacube);
+int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension * dim, int *last_insertd_id, int id_datacube);
 
 /**
  * \brief Function that updates OphidiaDB adding the new dimension instance
@@ -291,7 +296,7 @@ int oph_odb_dim_insert_into_dimension_table(ophidiadb *oDB, oph_odb_dimension *d
  * \param frequency New value of frequency in case of time dimension
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb *oDB, oph_odb_dimension_instance *dim_inst, int *last_insertd_id, int id_datacube, const char* dimension_name, const char* frequency);
+int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb * oDB, oph_odb_dimension_instance * dim_inst, int *last_insertd_id, int id_datacube, const char *dimension_name, const char *frequency);
 
 /**
  * \brief Function to retrieve id of a hieararchy from its name (that is unique)
@@ -300,7 +305,7 @@ int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb *oDB, oph_odb_dime
  * \param id_hierarchy ID of the hierarchy retrieved
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_retrieve_hierarchy_id(ophidiadb *oDB, char *hierarchy_name, int *id_hierarchy);
+int oph_odb_dim_retrieve_hierarchy_id(ophidiadb * oDB, char *hierarchy_name, int *id_hierarchy);
 
 /**
  * \brief Function to retrieve hierarchy and current concept level of a given dimension of a datacube
@@ -312,7 +317,7 @@ int oph_odb_dim_retrieve_hierarchy_id(ophidiadb *oDB, char *hierarchy_name, int 
  * \param dimension_instance_id Return the dimension instance id associated with the dimension
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb *oDB, int datacube_id, const char* dimension_name, oph_odb_hierarchy *hier, char* concept_level, int* dimension_instance_id);
+int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb * oDB, int datacube_id, const char *dimension_name, oph_odb_hierarchy * hier, char *concept_level, int *dimension_instance_id);
 
 /**
  * \brief Function to assign time hierarchy to a given dimension of a datacube
@@ -321,7 +326,7 @@ int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb *oDB, in
  * \param dimension_name Name of the dimension
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_set_time_dimension(ophidiadb *oDB, int id_datacube, char* dimension_name);
+int oph_odb_dim_set_time_dimension(ophidiadb * oDB, int id_datacube, char *dimension_name);
 
 /**
  * \brief Function to update dimension data with time-specific attributes
@@ -331,6 +336,6 @@ int oph_odb_dim_set_time_dimension(ophidiadb *oDB, int id_datacube, char* dimens
  * \brief nattr Number of attributes
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_update_time_dimension(oph_odb_dimension *dim, char **templates, char** values, int nattr);
+int oph_odb_dim_update_time_dimension(oph_odb_dimension * dim, char **templates, char **values, int nattr);
 
-#endif /* __OPH_ODB_DIM_H__ */
+#endif				/* __OPH_ODB_DIM_H__ */

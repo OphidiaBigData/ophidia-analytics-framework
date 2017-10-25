@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,6 +46,7 @@
 
 //*****************Query arguments***************//
 
+#define OPH_IOSERVER_SQ_ARG_FINAL_STATEMENT "final_statement"
 #define OPH_IOSERVER_SQ_ARG_FRAG "frag_name"
 #define OPH_IOSERVER_SQ_ARG_COLUMN_NAME "column_name"
 #define OPH_IOSERVER_SQ_ARG_COLUMN_TYPE "column_type"
@@ -66,6 +67,11 @@
 #define OPH_IOSERVER_SQ_ARG_FUNC "func_name"
 #define OPH_IOSERVER_SQ_ARG_ARG "arg"
 
+//*****************Query values***************//
+
+#define OPH_IOSERVER_SQ_VAL_YES "yes"
+#define OPH_IOSERVER_SQ_VAL_NO 	"no"
+
 //*****************Keywords***************//
 
 #define OPH_IOSERVER_SQ_KW_TABLE_SIZE "@tot_table_size"
@@ -74,4 +80,4 @@
 #define OPH_IOSERVER_SQ_KW_FUNCTION_FIELDS "@function_fields"
 #define OPH_IOSERVER_SQ_KW_FUNCTION_TABLE "@function_table"
 
-#endif //__OPH_IOSERVER_SUBMISSION_QUERY_H
+#endif				//__OPH_IOSERVER_SUBMISSION_QUERY_H

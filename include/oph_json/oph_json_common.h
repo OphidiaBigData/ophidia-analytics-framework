@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -140,14 +140,14 @@ typedef struct _oph_json_links {
  * \param json Address of a pointer to an OPH_JSON object
  * \return 0 if successfull, N otherwise
  */
-int oph_json_alloc(oph_json **json);
+int oph_json_alloc(oph_json ** json);
 
 /**
  * \brief Function to free an OPH_JSON object
  * \param json Pointer to an OPH_JSON object
  * \return 0 if successfull, N otherwise
  */
-int oph_json_free(oph_json *json);
+int oph_json_free(oph_json * json);
 
 /**
  * \brief Function to add a consumer to an OPH_JSON object
@@ -155,7 +155,7 @@ int oph_json_free(oph_json *json);
  * \param consumer Name of the consumer user
  * \return 0 if successfull, N otherwise
  */
-int oph_json_add_consumer(oph_json *json, const char *consumer);
+int oph_json_add_consumer(oph_json * json, const char *consumer);
 
 /**
  * \brief Function to create a JSON string from an OPH_JSON object.
@@ -163,7 +163,7 @@ int oph_json_add_consumer(oph_json *json, const char *consumer);
  * \param jstring Output JSON string
  * \return 0 if successfull, N otherwise
  */
-int oph_json_to_json_string(oph_json *json, char **jstring);
+int oph_json_to_json_string(oph_json * json, char **jstring);
 
 /**
  * \brief Function to write a JSON file from an OPH_JSON object.
@@ -171,7 +171,7 @@ int oph_json_to_json_string(oph_json *json, char **jstring);
  * \param filename Output absolute JSON file name
  * \return 0 if successfull, N otherwise
  */
-int oph_json_to_json_file(oph_json *json, char *filename);
+int oph_json_to_json_file(oph_json * json, char *filename);
 
 /**
  * \brief Function to write a JSON file from an OPH_JSON object.
@@ -180,7 +180,7 @@ int oph_json_to_json_file(oph_json *json, char *filename);
  * \param jstring Output JSON string
  * \return 0 if successfull, N otherwise
  */
-int _oph_json_to_json_file(oph_json *json, char *filename, char** jstring);
+int _oph_json_to_json_file(oph_json * json, char *filename, char **jstring);
 
 /**
  * \brief Function to set the data source properties
@@ -192,7 +192,7 @@ int _oph_json_to_json_file(oph_json *json, char *filename, char** jstring);
  * \param producer Producer user or NULL
  * \return 0 if successfull, N otherwise
  */
-int oph_json_set_source(oph_json *json, const char *srckey, const char *srcname, const char *srcurl, const char *description, const char *producer);
+int oph_json_set_source(oph_json * json, const char *srckey, const char *srcname, const char *srcurl, const char *description, const char *producer);
 
 /**
  * \brief Function to add a property to the data source
@@ -201,7 +201,7 @@ int oph_json_set_source(oph_json *json, const char *srckey, const char *srcname,
  * \param value Value of the source property
  * \return 0 if successfull, N otherwise
  */
-int oph_json_add_source_detail(oph_json *json, const char *key, const char *value);
+int oph_json_add_source_detail(oph_json * json, const char *key, const char *value);
 
 /**
  * \brief Function to check if objkey has to be written to file
@@ -210,7 +210,7 @@ int oph_json_add_source_detail(oph_json *json, const char *key, const char *valu
  * \param objkey Objkey to check for
  * \return 1 if printable, 0 otherwise
  */
-int oph_json_is_objkey_printable(char **objkeys,int objkeys_num,const char *objkey);
+int oph_json_is_objkey_printable(char **objkeys, int objkeys_num, const char *objkey);
 
 /***********OPH_JSON INTERNAL FUNCTIONS***********/
 
@@ -219,14 +219,14 @@ int oph_json_is_measuretype_correct(const char *measuretype);
 // Check if type does exist
 int oph_json_is_type_correct(const char *type);
 // Add an objkey to the responseKeyset if new
-int oph_json_add_responseKey(oph_json *json, const char *responseKey);
+int oph_json_add_responseKey(oph_json * json, const char *responseKey);
 // Free consumers
-int oph_json_free_consumers(oph_json *json);
+int oph_json_free_consumers(oph_json * json);
 // Free responseKeyset
-int oph_json_free_responseKeyset(oph_json *json);
+int oph_json_free_responseKeyset(oph_json * json);
 // Free source
-int oph_json_free_source(oph_json *json);
+int oph_json_free_source(oph_json * json);
 // Free response
-int oph_json_free_response(oph_json *json);
+int oph_json_free_response(oph_json * json);
 
 #endif

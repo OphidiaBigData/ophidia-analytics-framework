@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_append" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Concat multiple input measures into a single output measure. It requires at least two measures, otherwise it returns an error. For each measure an input type should be specified. Given two input arrays A(a1, a2, ..., an) and B(b1, b2, ..., bn), the resulting array will be C(a1, a2, ..., an, b1, b2, ..., bn).
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are enumerations of:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure. This argument can be specified multiple times.
+
+[Return type]
+Binary-array.
+
+[Examples]
+Concat three measures
+oph_append(&apos;OPH_DOUBLE|OPH_FLOAT|OPH_INT&apos;,&apos;OPH_DOUBLE,OPH_FLOAT,OPH_INT&apos;,a.measure,b.measure,c.measure)</abstract>
+        <author>CMCC Foundation</author>
+        <category>Core Array</category>
+        <creationdate>10/05/2017</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+        <operation type="simple"/>
+    </info>
+    <args>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'" multivalue="yes">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<multi-argument type="binary-array" mandatory="yes" mintimes="1">measure</multi-argument>
+    </args>
+</primitive>

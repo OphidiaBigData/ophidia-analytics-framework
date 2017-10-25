@@ -33,12 +33,15 @@ Reduces a measure array performing the specified operation on blocks of count el
                   -- &quot;oph_acmoment&quot; : compute the absolute central moment;
                   -- &quot;oph_rmoment&quot; : compute the raw moment;
                   -- &quot;oph_armoment&quot; : compute the absolute raw moment;
-                  -- &quot;oph_quantile&quot; : compute the quantile.
+                  -- &quot;oph_quantile&quot; : compute the quantile;
+                  -- &apos;oph_arg_max&apos; : compute the index of the maximum;
+                  -- &apos;oph_arg_min&apos; : compute the index of the minimum.
 - count : number of elements to be reduced. Default value (0) corresponds to the entire array.
 - block size : product of the dimensions that vary more quickly than the dimension to be reduced.
 - size : size of the dimension to be reduced. Default value (0) corresponds to the entire array.
 - order : order used in evaluation the moments or value of the quantile in range [0, 1].
-                  
+- missingvalue : value to be considered as missing value; by default it is NAN (for &apos;oph_double&apos; and &apos;oph_float&apos;).
+
 [Return type]
 Binary-array.
         
@@ -47,19 +50,21 @@ Reduces a measure array computing the mean on groups of 10 elements with the int
 to-be-reduced one of size 10.
 oph_reduce2(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;OPH_AVG&apos;,1,10,15,10)</abstract>
         <author>CMCC Foundation</author>
+        <category>Statistical</category>
         <creationdate>04/10/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="reduce"/>
+        <operation type="reduce"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="oph_operator" mandatory="no" default="'oph_max'" values="'oph_count'|'oph_max'|'oph_min'|'oph_avg'|'oph_sum'|'oph_std'|'oph_var'|'oph_cmoment'|'oph_acmoment'|'oph_rmoment'|'oph_armoment'">operator name</argument>
-	<argument type="double" mandatory="no" default="0" minvalue="0" maxvalue="array length">count</argument>
-	<argument type="long-long" mandatory="no" default="1" minvalue="1" maxvalue="array length">block size</argument>
-	<argument type="long-long" mandatory="no" default="0" minvalue="0" maxvalue="array length">size</argument>
-	<argument type="double" mandatory="no" default="2" minvalue="0">order</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="oph_operator" mandatory="no" default="'oph_max'" values="'oph_count'|'oph_max'|'oph_min'|'oph_avg'|'oph_sum'|'oph_std'|'oph_var'|'oph_cmoment'|'oph_acmoment'|'oph_rmoment'|'oph_armoment'|'oph_arg_max'|'oph_arg_min'">operator name</argument>
+		<argument type="double" mandatory="no" default="0" minvalue="0" maxvalue="array length">count</argument>
+		<argument type="long-long" mandatory="no" default="1" minvalue="1" maxvalue="array length">block size</argument>
+		<argument type="long-long" mandatory="no" default="0" minvalue="0" maxvalue="array length">size</argument>
+		<argument type="double" mandatory="no" default="2" minvalue="0">order</argument>
+		<argument type="double" mandatory="no" default="NAN">missingvalue</argument>
     </args>
 </primitive>

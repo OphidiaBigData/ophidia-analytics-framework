@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -58,7 +58,13 @@
 
 #define OPH_ODB_JOB_STATUS_CLOSED_STR "OPH_STATUS_CLOSED"
 
-typedef enum { OPH_ODB_JOB_STATUS_UNKNOWN, OPH_ODB_JOB_STATUS_PENDING, OPH_ODB_JOB_STATUS_WAIT, OPH_ODB_JOB_STATUS_RUNNING, OPH_ODB_JOB_STATUS_START, OPH_ODB_JOB_STATUS_SET_ENV, OPH_ODB_JOB_STATUS_INIT, OPH_ODB_JOB_STATUS_DISTRIBUTE, OPH_ODB_JOB_STATUS_EXECUTE, OPH_ODB_JOB_STATUS_REDUCE, OPH_ODB_JOB_STATUS_DESTROY, OPH_ODB_JOB_STATUS_UNSET_ENV, OPH_ODB_JOB_STATUS_COMPLETED, OPH_ODB_JOB_STATUS_ERROR, OPH_ODB_JOB_STATUS_PENDING_ERROR, OPH_ODB_JOB_STATUS_RUNNING_ERROR, OPH_ODB_JOB_STATUS_START_ERROR, OPH_ODB_JOB_STATUS_SET_ENV_ERROR, OPH_ODB_JOB_STATUS_INIT_ERROR, OPH_ODB_JOB_STATUS_DISTRIBUTE_ERROR, OPH_ODB_JOB_STATUS_EXECUTE_ERROR, OPH_ODB_JOB_STATUS_REDUCE_ERROR, OPH_ODB_JOB_STATUS_DESTROY_ERROR, OPH_ODB_JOB_STATUS_UNSET_ENV_ERROR, OPH_ODB_JOB_STATUS_SKIPPED, OPH_ODB_JOB_STATUS_ABORTED, OPH_ODB_JOB_STATUS_UNSELECTED, OPH_ODB_JOB_STATUS_EXPIRED, OPH_ODB_JOB_STATUS_CLOSED } oph_odb_job_status;
+typedef enum { OPH_ODB_JOB_STATUS_UNKNOWN, OPH_ODB_JOB_STATUS_PENDING, OPH_ODB_JOB_STATUS_WAIT, OPH_ODB_JOB_STATUS_RUNNING, OPH_ODB_JOB_STATUS_START, OPH_ODB_JOB_STATUS_SET_ENV,
+	OPH_ODB_JOB_STATUS_INIT, OPH_ODB_JOB_STATUS_DISTRIBUTE, OPH_ODB_JOB_STATUS_EXECUTE, OPH_ODB_JOB_STATUS_REDUCE, OPH_ODB_JOB_STATUS_DESTROY, OPH_ODB_JOB_STATUS_UNSET_ENV,
+	OPH_ODB_JOB_STATUS_COMPLETED, OPH_ODB_JOB_STATUS_ERROR, OPH_ODB_JOB_STATUS_PENDING_ERROR, OPH_ODB_JOB_STATUS_RUNNING_ERROR, OPH_ODB_JOB_STATUS_START_ERROR,
+	OPH_ODB_JOB_STATUS_SET_ENV_ERROR, OPH_ODB_JOB_STATUS_INIT_ERROR, OPH_ODB_JOB_STATUS_DISTRIBUTE_ERROR, OPH_ODB_JOB_STATUS_EXECUTE_ERROR, OPH_ODB_JOB_STATUS_REDUCE_ERROR,
+	OPH_ODB_JOB_STATUS_DESTROY_ERROR, OPH_ODB_JOB_STATUS_UNSET_ENV_ERROR, OPH_ODB_JOB_STATUS_SKIPPED, OPH_ODB_JOB_STATUS_ABORTED, OPH_ODB_JOB_STATUS_UNSELECTED, OPH_ODB_JOB_STATUS_EXPIRED,
+	OPH_ODB_JOB_STATUS_CLOSED
+} oph_odb_job_status;
 
 /**
  * \brief Function to set the job status
@@ -67,7 +73,7 @@ typedef enum { OPH_ODB_JOB_STATUS_UNKNOWN, OPH_ODB_JOB_STATUS_PENDING, OPH_ODB_J
  * \param status Status to be set
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_job_set_job_status(ophidiadb *oDB, int id_job, oph_odb_job_status status);
+int oph_odb_job_set_job_status(ophidiadb * oDB, int id_job, oph_odb_job_status status);
 
 /**
  * \brief Function to retrieve the ID of a session
@@ -76,7 +82,7 @@ int oph_odb_job_set_job_status(ophidiadb *oDB, int id_job, oph_odb_job_status st
  * \param id_session ID of the session
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_job_retrieve_session_id(ophidiadb *oDB, char* sessionid, int *id_session);
+int oph_odb_job_retrieve_session_id(ophidiadb * oDB, char *sessionid, int *id_session);
 
 /**
  * \brief Function to retrieve the ID of a job
@@ -86,7 +92,7 @@ int oph_odb_job_retrieve_session_id(ophidiadb *oDB, char* sessionid, int *id_ses
  * \param id_job ID of the job
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_job_retrieve_job_id(ophidiadb *oDB, char* sessionid, char* markerid, int* id_job);
+int oph_odb_job_retrieve_job_id(ophidiadb * oDB, char *sessionid, char *markerid, int *id_job);
 
 /**
  * \brief Function to update the session table
@@ -97,7 +103,7 @@ int oph_odb_job_retrieve_job_id(ophidiadb *oDB, char* sessionid, char* markerid,
  * \param id_session ID of the new session
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_job_update_session_table(ophidiadb* oDB, char* sessionid, char* username, int id_folder, int* id_session);
+int oph_odb_job_update_session_table(ophidiadb * oDB, char *sessionid, char *username, int id_folder, int *id_session);
 
 /**
  * \brief Function to update the job table
@@ -111,6 +117,6 @@ int oph_odb_job_update_session_table(ophidiadb* oDB, char* sessionid, char* user
  * \param parentid ID of the parent job
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_job_update_job_table(ophidiadb* oDB, char* markerid, char* task_string, char* status, char* username, int id_session, int* id_job, char *parentid);
+int oph_odb_job_update_job_table(ophidiadb * oDB, char *markerid, char *task_string, char *status, char *username, int id_session, int *id_job, char *parentid);
 
-#endif /* __OPH_ODB_JOB_LIBRARY__ */
+#endif				/* __OPH_ODB_JOB_LIBRARY__ */

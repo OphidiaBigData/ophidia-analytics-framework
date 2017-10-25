@@ -15,17 +15,18 @@ Return 0 if the two input measures are equal.
 Long-long.
         
 [Examples]
-oph_compare(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure_a,measure_b)</abstract>
+oph_compare(&apos;&apos;,&apos;&apos;,measure_a,measure_b)</abstract>
         <author>CMCC Foundation</author>
+        <category>Arithmetic</category>
         <creationdate>24/09/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="long-long" />
-	<operation type="simple"/>
+        <operation type="simple"/>
     </info>
     <args>
-	<multi-argument type="oph_type" mandatory="yes">input measure type</multi-argument>
-        <argument type="oph_type" mandatory="yes">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure a</argument>
-	<argument type="binary-array" mandatory="yes">measure b</argument>
+		<argument type="oph_type" mandatory="yes">input measure type</argument>
+		<argument type="oph_type" mandatory="yes">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure a</argument>
+		<argument type="binary-array" mandatory="yes">measure b</argument>
     </args>
 </primitive>

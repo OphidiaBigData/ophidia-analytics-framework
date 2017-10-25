@@ -24,13 +24,14 @@ Cancel the workflow 1:
 OPH_TERM: oph_cancel id=1;
 SUBMISSION STRING: &quot;operator=oph_cancel;id=1;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Administration</category>
         <creationdate>06/09/2015</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-	<argument type="int" mandatory="yes" minvalue="1">id</argument>
-	<argument type="string" mandatory="no" default="kill" values="kill|abort|stop">type</argument>
-	<argument type="string" mandatory="no" default="all" values="all|none|cancel">objkey_filter</argument>
+		<argument type="int" mandatory="yes" minvalue="1">id</argument>
+		<argument type="string" mandatory="no" default="kill" values="kill|abort|stop">type</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|cancel">objkey_filter</argument>
     </args>
 </operator>

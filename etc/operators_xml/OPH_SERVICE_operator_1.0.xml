@@ -23,13 +23,14 @@ Enable the service:
 OPH_TERM: oph_service status=up;
 SUBMISSION STRING: &quot;operator=oph_service;status=up;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Administration</category>
         <creationdate>22/07/2014</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-	<argument type="string" mandatory="no" default="" values="up|down">status</argument>
-	<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="2">level</argument>
-	<argument type="string" mandatory="no" default="all" values="all|none|service_status|service_tasks">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="" values="up|down">status</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="2">level</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|service_status|service_tasks">objkey_filter</argument>
     </args>
 </operator>

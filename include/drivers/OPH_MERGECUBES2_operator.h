@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -77,30 +77,31 @@
  * \param id_user ID of submitter
  * \param description Free description to be associated with output cube
  * \param dim_name Name of new dimension to be created
+ * \param number Number of replies of the first cube to be considered
  */
-struct _OPH_MERGECUBES2_operator_handle
-{
-  ophidiadb oDB;
-  int *id_input_datacube;
-  int *id_input_container;
-  int id_output_datacube;
-  int id_output_container;
-  int id_job;
-  int schedule_algo;
-  char* fragment_ids;
-  int fragment_number;
-  int fragment_id_start_position;
-  int input_datacube_num;
-  char** measure_type;
-  int compressed;
-  char **objkeys;
-  int objkeys_num;
-  oph_ioserver_handler *server;
-  char *sessionid;
-  int id_user;
-  char* description;
-  char* dim_name;
+struct _OPH_MERGECUBES2_operator_handle {
+	ophidiadb oDB;
+	int *id_input_datacube;
+	int *id_input_container;
+	int id_output_datacube;
+	int id_output_container;
+	int id_job;
+	int schedule_algo;
+	char *fragment_ids;
+	int fragment_number;
+	int fragment_id_start_position;
+	int input_datacube_num;
+	char **measure_type;
+	int compressed;
+	char **objkeys;
+	int objkeys_num;
+	oph_ioserver_handler *server;
+	char *sessionid;
+	int id_user;
+	char *description;
+	char *dim_name;
+	int number;
 };
 typedef struct _OPH_MERGECUBES2_operator_handle OPH_MERGECUBES2_operator_handle;
 
-#endif  //__OPH_MERGECUBES2_OPERATOR_H
+#endif				//__OPH_MERGECUBES2_OPERATOR_H

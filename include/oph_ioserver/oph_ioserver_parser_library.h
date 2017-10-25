@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@ int oph_ioserver_validate_query_string(const char *server_name, const char *quer
  * \param hashtbl       Hash table to be loaded
  * \return              0 if successfull, non-0 otherwise
  */
-int oph_ioserver_load_query_string_params(const char *server_name, const char *query_string, HASHTBL *hashtbl);
+int oph_ioserver_load_query_string_params(const char *server_name, const char *query_string, HASHTBL * hashtbl);
 
 /**
  * \brief               Function parse and split multiple-value arguments. WARNING: it modified the input "values" string 
@@ -56,6 +56,6 @@ int oph_ioserver_load_query_string_params(const char *server_name, const char *q
  * \param value_num     Number of values splitted
  * \return              0 if successfull, non-0 otherwise
  */
-int oph_ioserver_parse_multivalue_arg (const char *server_name, char *values, char ***value_list, int *value_num);
+int oph_ioserver_parse_multivalue_arg(const char *server_name, char *values, char ***value_list, int *value_num);
 
-#endif //__OPH_IOSERVER_PARSER_H
+#endif				//__OPH_IOSERVER_PARSER_H

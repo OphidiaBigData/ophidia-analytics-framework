@@ -4,10 +4,11 @@
 <!ATTLIST operator name CDATA #REQUIRED>
 <!ATTLIST operator version CDATA #REQUIRED>
 
-<!ELEMENT info (abstract,author,creationdate?,license?,permission?)>
+<!ELEMENT info (abstract,author,category,creationdate?,license?,permission?)>
 
 <!ELEMENT abstract (#PCDATA)>
 <!ELEMENT author (#PCDATA)>
+<!ELEMENT category (#PCDATA)>
 <!ELEMENT creationdate (#PCDATA)>
 <!ELEMENT license (#PCDATA)>
 <!ATTLIST license url CDATA #REQUIRED>
@@ -22,3 +23,4 @@
 <!ATTLIST argument default CDATA #IMPLIED>
 <!ATTLIST argument values CDATA #IMPLIED>
 <!ATTLIST argument mandatory (yes|no) "yes">
+<!ATTLIST argument multivalue (yes|no) "no">

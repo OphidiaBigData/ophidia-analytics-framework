@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_IMPORTFITS" version="1.0">
+    <info>
+        <abstract>[Type]
+Data Process.
+
+[Behaviour]
+It imports a FITS file into a datacube (both data and axis).
+Support is provided only for images fits files.
+
+[Parameters]
+- container : name of the input container; by default it will be automatically set to file name.
+- cwd : absolute path corresponding to the current working directory,
+        used to select the folder where the container is located
+- host_partition : name of I/O host partition used to store data. 
+                   If default value &quot;auto&quot; is specified, the first host partition available will be used. 
+- filesystem : type of filesystem used to store data.
+               Possible values are &quot;local&quot;, &quot;global&quot; or &quot;auto&quot; (default).
+               In the last case the first filesystem available will be used. 
+- ioserver : type of I/O server used to store data.
+			Possible values are: &quot;ophidiaio_memory&quot; or &quot;mysql_table&quot; (default)
+- import_metadata: imports also metadata with &quot;yes&quot; (default)
+			       or only data with &quot;no&quot;.
+- schedule : scheduling algorithm. The only possible value is 0,
+		     for a static linear block distribution of resources.
+- nhost : number of output hosts. With default value (&apos;0&apos;) all host available in the host partition are used.
+- ndbms : number of the output DBMS per host. With default value (&apos;0&apos;) all DBMS instance available per host are used.
+- ndb : number of output database per host. Default value is &apos;1&apos;.
+- nfrag : number of fragments per database. With default value (&apos;0&apos;) the number of fragments will be the ratio of
+          the product of sizes of the n-1 most outer explicit dimensions to the product of the other arguments.
+- measure : name of the measure related to the FITS file. If not provided &quot;image&quot; will be used (default).
+- run : If set to &apos;no&apos; the operator simulates the import and computes the fragmentation parameters 
+		that would be used, else if set to &apos;yes&apos; the actual import operation is executed.
+- src_path : path of the FITS file.
+- cdd : absolute path corresponding to the current directory on data repository.
+- hdu : import data from the selected HDU. If not specified, Primary HDU &quot;1&quot; (default) will be considered.
+- exp_dim : names of explicit dimensions (axis).
+            Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
+            It implicitly defines explicit dimension number and level (order). 
+            Allowed values are NAXIS1, NAXIS2, ..., NAXISn.
+            If default value &quot;auto&quot; is specified, then the first n-1 dimension of the measure in the fits file will be used as explicit dimensions.
+- imp_dim : names of implicit dimensions (axis).
+            Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided 
+            It implicitly defines implicit dimension number and level (order).  
+            If default value &quot;auto&quot; is specified, then the last dimension of the measure in the fits file will be used as implicit dimension.
+            Allowed values are NAXIS1, NAXIS2, ..., NAXISn.
+- subset_dims : dimension (axis) names used for the subsetting.
+				Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
+				Must be the same number of &quot;subset_filter&quot; 
+                Allowed values are NAXIS1, NAXIS2, ..., NAXISn.
+- subset_filter : enumeration of comma-separated elementary filters (1 series of filters for each dimension). Possible forms are:
+					-- start_value : single value specifying the start index of the subset
+					-- start_value:stop_value : select elements from start_index to stop_index
+                  Values should be numbers.
+				  Multiple-value field: list of filters separated by &quot;|&quot; can be provided  
+				  Must be the same number of &quot;subset_dims&quot;. Example:
+                    subset_dims=NAXIS1|NAXIS2;subset_filter=101:200|1001:1100;
+- compressed: save compressed data with &quot;yes&quot; or original data with &quot;no&quot; (default).
+- description : additional description to be associated with the output cube.
+        
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output):
+                  importfits: show operator's output PID as text;
+                  importfits_summary : show additional information about imported data.
+
+[Examples] 
+Import a FITS file including metadata into the session directory &quot;session-code1&quot; :
+OPH_TERM: oph_importfits cwd=/session-code1;container=container1;measure=pressure;src_path=/path/of/fitsfile.nc;import_metadata=no;
+SUBMISSION STRING: &quot;operator=oph_importfits;cwd=/session-code1;container=container1;measure=pressure;src_path=/path/of/fitsfile.nc;import_metadata=no;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <category>Data Import/Export</category>
+        <creationdate>28/07/2017</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <permission>write</permission>
+    </info>
+    <args>  
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="-">container</argument>
+		<argument type="string" mandatory="yes">cwd</argument>
+		<argument type="string" mandatory="no" default="auto">host_partition</argument>
+		<argument type="string" mandatory="no" default="auto" values="auto|local|global">filesystem</argument>
+		<argument type="string" mandatory="no" default="mysql_table" values="mysql_table">ioserver</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">import_metadata</argument>
+		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
+		<argument type="int" mandatory="no" minvalue="0" default="0">nhost</argument>
+		<argument type="int" mandatory="no" minvalue="1" default="1">ndbms</argument>
+		<argument type="int" mandatory="no" minvalue="1" default="1">ndb</argument>
+		<argument type="int" mandatory="no" minvalue="0" default="0">nfrag</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
+		<argument type="string" mandatory="no" default="image">measure</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">src_path</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">hdu</argument>
+		<argument type="string" mandatory="no" default="/">cdd</argument>
+		<argument type="string" mandatory="no" default="auto" multivalue="yes">exp_dim</argument>
+		<argument type="string" mandatory="no" default="auto" multivalue="yes">imp_dim</argument>
+		<argument type="string" mandatory="no" default="none" multivalue="yes">subset_dims</argument>
+		<argument type="string" mandatory="no" default="all" multivalue="yes">subset_filter</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">compressed</argument>
+		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|importfits|importfits_summary">objkey_filter</argument>
+    </args>
+</operator>

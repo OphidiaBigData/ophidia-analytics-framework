@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_padding" version="1.0">
+	<info>
+		<abstract>[Behaviour]
+Returns an array in which the input is filled by a padding value so that array size becomes a given value.
+        
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- size : minimum number of elements of output array. If input array is larger then the primitive returns input array.
+- filling : number used as padding value.
+
+[Return type]
+Binary-array.
+        
+[Examples]
+oph_padding(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,100,-1)</abstract>
+		<author>CMCC Foundation</author>
+        <category>Core Array</category>
+		<creationdate>08/08/2017</creationdate>
+		<license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+		<return type="binary-array" />
+		<operation type="simple"/>
+	</info>
+	<args>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="long-long" mandatory="no" default="0">size</argument>
+		<argument type="double" mandatory="no" default="0">filling</argument>
+	</args>
+</primitive>

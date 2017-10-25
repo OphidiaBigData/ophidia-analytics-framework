@@ -72,24 +72,25 @@ Insert new metadata in &apos;container1&apos; located into the &apos;session1&ap
 OPH_TERM: oph_metadata mode=insert;cube=http://www.example.com/1/1;metadata_key=key1;metadata_type=text;metadata_value=test_text;
 SUBMISSION STRING: &quot;operator=oph_metadata;mode=insert;cube=http://www.example.com/1/1;metadata_key=key1;metadata_type=text;metadata_value=test_text;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Metadata</category>
         <creationdate>11/09/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-        <argument type="string" mandatory="no" default="read" values="insert|read|update|delete">mode</argument>
-	<argument type="string" mandatory="yes">cube</argument>
-        <argument type="string" mandatory="no" default="all">metadata_key</argument>
-        <argument type="string" mandatory="no" default="global">variable</argument>
-        <argument type="int" mandatory="no" default="0" minvalue="0">metadata_id</argument>
-        <argument type="string" mandatory="no" default="text" values="text|image|video|audio|url|double|float|long|int|short">metadata_type</argument>
-        <argument type="string" mandatory="no" default="-">metadata_value</argument>
-        <argument type="string" mandatory="no" default="all">metadata_type_filter</argument>
-        <argument type="string" mandatory="no" default="all">metadata_value_filter</argument>
-        <argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
-        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-        <argument type="string" mandatory="no" default="null">sessionid</argument>
-        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-        <argument type="string" mandatory="no" default="all" values="all|none|metadata_list|metadata_summary">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="read" values="insert|read|update|delete">mode</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
+		<argument type="string" mandatory="no" default="all">metadata_key</argument>
+		<argument type="string" mandatory="no" default="global">variable</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0">metadata_id</argument>
+		<argument type="string" mandatory="no" default="text" values="text|image|video|audio|url|double|float|long|int|short">metadata_type</argument>
+		<argument type="string" mandatory="no" default="-">metadata_value</argument>
+		<argument type="string" mandatory="no" default="all">metadata_type_filter</argument>
+		<argument type="string" mandatory="no" default="all">metadata_value_filter</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|metadata_list|metadata_summary">objkey_filter</argument>
     </args>
 </operator>

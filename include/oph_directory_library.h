@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,19 +31,19 @@
  * \var OPH_DIR_ALL Variable used for all extensions
  */
 typedef enum {
-    OPH_DIR_NC,
-    OPH_DIR_NCL,
-    OPH_DIR_ALL
+	OPH_DIR_NC,
+	OPH_DIR_NCL,
+	OPH_DIR_ALL
 } oph_dir_extension;
 
-#define OPH_DIR_NCL_EXTENSION OPH_COMMON_NCL_EXTENSION
-#define OPH_DIR_NC_EXTENSION OPH_COMMON_NC_EXTENSION
-#define OPH_DIR_CURRENT_DIR OPH_COMMON_CURRENT_DIR
-#define OPH_DIR_PARENT_DIR OPH_COMMON_PARENT_DIR
-#define OPH_DIR_BUFFER_LEN OPH_COMMON_BUFFER_LEN
+#define OPH_DIR_NCL_EXTENSION	OPH_COMMON_NCL_EXTENSION
+#define OPH_DIR_NC_EXTENSION	OPH_COMMON_NC_EXTENSION
+#define OPH_DIR_CURRENT_DIR	OPH_COMMON_CURRENT_DIR
+#define OPH_DIR_PARENT_DIR	OPH_COMMON_PARENT_DIR
+#define OPH_DIR_BUFFER_LEN	OPH_COMMON_BUFFER_LEN
 
-#define OPH_DIR_ERROR   1
-#define OPH_DIR_SUCCESS 0
+#define OPH_DIR_ERROR   	1
+#define OPH_DIR_SUCCESS 	0
 
 
 /** 
@@ -60,7 +60,7 @@ int oph_dir_r_mkdir(const char *dir);
  * \param ext_type Type of file extension to be counted
  * \return 0 if successfull, N otherwise
  */
-int oph_dir_get_num_of_files_in_dir(char *dirpath,int *num, oph_dir_extension ext_type);
+int oph_dir_get_num_of_files_in_dir(char *dirpath, int *num, oph_dir_extension ext_type);
 
 /** 
  * \brief Function to get the list of file name inside a folder
@@ -88,5 +88,5 @@ int oph_dir_get_defnc_in_dir(char *dirpath, char *file_name);
  * \return 0 if successfull, N otherwise
  */
 int oph_dir_unlink_path(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf);
- 
-#endif //__OPH_DIRECTORY_H
+
+#endif				//__OPH_DIRECTORY_H

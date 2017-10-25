@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -64,8 +64,7 @@ void logging(int level, const char *source, long int line_number, int container_
 
 void logging_server(int level, const char *source, long int line_number, const char *server_type, const char *format, ...);
 
-void set_log_prefix(char* p);
-void set_log_backtrace(char** p);
+void set_log_prefix(char *p);
+void set_log_backtrace(char **p);
 
-#endif /* DEBUG_H */
-
+#endif				/* DEBUG_H */

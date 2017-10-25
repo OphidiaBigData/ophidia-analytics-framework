@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -28,4 +28,4 @@
  */
 int oph_af_execute_framework(char *task_string, int task_number, int task_rank);
 
-#endif //__OPH_ANALYTICS_FRAMEWORK_H
+#endif				//__OPH_ANALYTICS_FRAMEWORK_H

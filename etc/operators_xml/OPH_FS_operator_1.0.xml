@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_FS" version="1.0">
+    <info>
+        <abstract>[Type]
+Metadata Process.
+ 
+[Behaviour]
+It manages folders of the Ophidia filesystem.
+ 
+[Parameters]
+- command : command to be executed among these:
+            -- ls : list the files in a directory (default)
+            -- cd : change directory
+            -- mkdir : create a new directory
+            -- rm : delete an empty directory 
+            -- mv : move/rename a directory
+- dpath : 0, 1 or 2 paths needed by commands.
+          In case of &quot;cd&quot;, without a path the new directory will be the root folder.
+          In case of &quot;mv&quot;, the second path indicates the destination directory.
+          In all other cases, it can be used only 1 path.
+- file : file filter
+- cdd : absolute path corresponding to the current directory on data repository.
+- recursive : specifies if the search is done recursively or not. 
+			  The argument is considered only for the first three levels and may have the following values:
+              -- no : research only in current path (default);
+              -- yes : research recursively starting from current path.
+- depth : set to the maximum folder depth has to be explored in case of recursion; level &quot;1&quot; corresponds to &quot;no recursion&quot;; by default no limit is applied.
+- realpath : set to &quot;yes&quot; to list real paths to files; disabled by default.
+
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  fs : show the new working directory and the related file list.
+        
+[Examples]       
+- Change directory to &quot;/absolute/path/folder1&quot; :
+OPH_TERM: oph_fs command=cd;dpath=folder1;cdd=/absolute/path;
+SUBMISSION STRING: &quot;operator=oph_fs;command=cd;dpath=folder1;cdd=/absolute/path;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <category>Miscellaneous</category>
+        <creationdate>12/04/2017</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <permission>read</permission>
+    </info>
+    <args>
+		<argument type="string" mandatory="no" default="ls" values="ls|cd|mkdir|rm|mv">command</argument>
+		<argument type="string" mandatory="no" default="-" multivalue="yes">dpath</argument>
+		<argument type="string" mandatory="no" default="-">file</argument>
+		<argument type="string" mandatory="no" default="/">cdd</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">recursive</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0">depth</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">realpath</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|fs">objkey_filter</argument>
+    </args>
+</operator>

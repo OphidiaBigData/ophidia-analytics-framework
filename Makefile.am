@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2016 CMCC Foundation
+#    Copyright (C) 2012-2017 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = . libltdl src 
 
-sysconf_DATA = etc/oph_analytics_driver etc/oph_io_server etc/oph_configuration etc/oph_dim_configuration etc/ophidiadb.sql etc/oph_soap_configuration etc/oph_script_configuration
+sysconf_DATA = etc/oph_analytics_driver etc/oph_io_server etc/oph_configuration etc/ophidiadb.sql etc/oph_soap_configuration etc/oph_script_configuration
  
 logdir = $(prefix)/log/
 dist_log_DATA =
@@ -49,8 +49,6 @@ OPERATOR_XML+=etc/operators_xml/OPH_EXPLORECUBE_operator_1.0.xml
 if HAVE_NETCDF
 OPERATOR_XML+=etc/operators_xml/OPH_EXPORTNC_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC_operator_1.0.xml
-OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC2_operator_1.0.xml
-OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC3_operator_1.0.xml
 if GSL_SUPPORT
 OPERATOR_XML+=etc/operators_xml/OPH_EXPLORENC_operator_1.0.xml
 endif
@@ -59,13 +57,13 @@ OPERATOR_XML+=etc/operators_xml/OPH_EXPORTNC2_operator_1.0.xml
 endif
 endif
 OPERATOR_XML+=etc/operators_xml/OPH_FOLDER_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_FS_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_FOR_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_GET_CONFIG_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_HIERARCHY_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IF_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INPUT_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INSTANCES_operator_1.0.xml
-OPERATOR_XML+=etc/operators_xml/OPH_INTERCOMPARISON_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INTERCUBE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_LIST_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_LOGGINGBK_operator_1.0.xml

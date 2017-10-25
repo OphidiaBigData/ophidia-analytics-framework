@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,6 +40,9 @@
 #define OPH_EXPLORECUBE_DECIMAL "decimal"
 #define OPH_EXPLORECUBE_BASE64 "base64"
 
+#define OPH_EXPLORECUBE_TYPE_INDEX "index"
+#define OPH_EXPLORECUBE_TYPE_COORD "coord"
+
 /**
  * \brief Structure of parameters needed by the operator OPH_EXPLORECUBE. It generate a cube by selecting a subset of measure values based on a subset string related to a dimension.
  * \param oDB Contains the parameters and the connection to OphidiaDB
@@ -55,30 +58,31 @@
  * \param level Verbose level, used to enable the print of dimension values
  * \param time_filter Flag used in case time filters are expressed as dates
  * \param base64 Flag used in representation of output data
+ * \param subset_type Flag indicating whether filters are expressed as indexes or values
  */
-struct _OPH_EXPLORECUBE_operator_handle
-{
-  ophidiadb oDB;
-  int id_input_datacube;
-  int id_input_container;
-  char* task[OPH_SUBSET_LIB_MAX_DIM];
-  char* dim_task[OPH_SUBSET_LIB_MAX_DIM];
-  int id_dimension[OPH_SUBSET_LIB_MAX_DIM];
-  int number_of_dim;
-  char* where_clause;
-  char* apply_clause;
-  int limit;
-  short int show_id;
-  short int show_index;
-  short int show_time;
-  char **objkeys;
-  int objkeys_num;
-  oph_ioserver_handler *server;
-  char *sessionid;
-  int level;
-  int time_filter;
-  int base64;
+struct _OPH_EXPLORECUBE_operator_handle {
+	ophidiadb oDB;
+	int id_input_datacube;
+	int id_input_container;
+	char *task[OPH_SUBSET_LIB_MAX_DIM];
+	char *dim_task[OPH_SUBSET_LIB_MAX_DIM];
+	int id_dimension[OPH_SUBSET_LIB_MAX_DIM];
+	int number_of_dim;
+	char *where_clause;
+	char *apply_clause;
+	int limit;
+	short int show_id;
+	short int show_index;
+	short int show_time;
+	char **objkeys;
+	int objkeys_num;
+	oph_ioserver_handler *server;
+	char *sessionid;
+	int level;
+	int time_filter;
+	int base64;
+	int subset_type;
 };
 typedef struct _OPH_EXPLORECUBE_operator_handle OPH_EXPLORECUBE_operator_handle;
 
-#endif  //__OPH_EXPLORECUBE_OPERATOR_H
+#endif				//__OPH_EXPLORECUBE_OPERATOR_H

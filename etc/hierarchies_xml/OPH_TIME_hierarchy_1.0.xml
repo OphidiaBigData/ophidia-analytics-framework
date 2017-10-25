@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE primitive SYSTEM "ophidiahierarchy.dtd">
 <hierarchy name="oph_time" version="1.0">
-	<attribute long_name="ALL"     		short_name="A" aggregate_field="y" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile" aggregate_set="0"  />
-	<attribute long_name="year"    		short_name="y" aggregate_field="q" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile" aggregate_set="4" />
-	<attribute long_name="quarter" 		short_name="q" aggregate_field="M" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile" aggregate_set="3" />
-	<attribute long_name="month"   		short_name="M" aggregate_field="d" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile" aggregate_set="30" />
-	<attribute long_name="day"     		short_name="d" aggregate_field="6" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile" aggregate_set="4" />
-	<attribute long_name="6_hour"		short_name="6" aggregate_field="3" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile" aggregate_set="2" />
-	<attribute long_name="3_hour"    	short_name="3" aggregate_field="h" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile" aggregate_set="3" />
-	<attribute long_name="hour"    		short_name="h" aggregate_field="m" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile" aggregate_set="60" />
-	<attribute long_name="minute"  		short_name="m" aggregate_field="s" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile" aggregate_set="60" />
-	<attribute long_name="second"  		short_name="s" aggregate_field="s" aggregate_op="none" aggregate_set="1"  />
+	<attribute long_name="ALL"     	short_name="A" aggregate_field="yw" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min" aggregate_set="0" />
+	<attribute long_name="year"    	short_name="y" aggregate_field="q" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min" aggregate_set="4" />
+	<attribute long_name="quarter" 	short_name="q" aggregate_field="M" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min" aggregate_set="3" />
+	<attribute long_name="month"   	short_name="M" aggregate_field="d" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min" aggregate_set="30" />
+	<attribute long_name="week"   	short_name="w" aggregate_field="d" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min" aggregate_set="7" />
+	<attribute long_name="day"     	short_name="d" aggregate_field="6" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min" aggregate_set="4" />
+	<attribute long_name="6_hour"	short_name="6" aggregate_field="3" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min" aggregate_set="2" />
+	<attribute long_name="3_hour"   short_name="3" aggregate_field="h" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min" aggregate_set="3" />
+	<attribute long_name="hour"    	short_name="h" aggregate_field="m" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min" aggregate_set="60" />
+	<attribute long_name="minute"  	short_name="m" aggregate_field="s" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min" aggregate_set="60" />
+	<attribute long_name="second"  	short_name="s" aggregate_field="s" aggregate_op="none" aggregate_set="1" />
 </hierarchy>
 

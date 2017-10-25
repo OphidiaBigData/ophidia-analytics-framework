@@ -1,4 +1,103 @@
 
+## v1.1.0 - 2017-07-28
+
+### Fixed:
+
+- Bug in OPH_IMPORTNC to re-use the same default container when no name is specified
+- Bug in selecting DBMS instance with OPH_PRIMITIVE_LIST
+- Some bugs in OPH_RANDCUBE, OPH_MERGECUBES, OPH_INTERCUBE, OPH_MERGECUBES2, OPH_METADATA and OPH_SEARCH
+- OPH_SCRIPT behavior in case session folder is not available
+- Some warnings
+- Bug [#15](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/15)
+- Bug [#14](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/14)
+- Bug in strncpy calls
+
+### Added:
+
+- OPH_IMPORTFITS new operator (INDIGO-DataCloud Project)
+- Level 0 option to OPH_EXPLORENC to read file attributes, dimensions and variable lists
+- sessionid and markerid to framework notification messages
+- Entry in table 'task' for OPH_IMPORTNC and OPH_RANDCUBE
+- 'hold_values' and 'number' parameters in OPH_MERGECUBES operator
+- Parameter 'forward' to OPH_IF 
+- XML files for new primitives: oph_concat2, oph_append
+- Multi-user mode and USER_SPACE option in several operators
+- arg_max and arg_min options in reduction operators
+- Add current data directory (cdd) parameter to several operators
+- OPH_FS new operator
+- subet_type argument to OPH_SUBSET and OPH_EXPLORECUBE
+- Some alias for known calendars
+
+### Changed:
+
+- OPH_RESUME operator to allow workflow progress monitoring
+- OPH_IMPORTNC operator to allow import of files without dimension values and to support a more configurable fragmentation
+- OPH_MERGECUBES to allow appending time series with different sizes
+- Disable framework from saving JSON Response
+- OPH_SUBSET2 operator is now deprecated
+
+## v1.0.0 - 2017-03-23
+
+### Fixed:
+
+- Typos in OPH_EXPLORENC, OPH_MERGECUBES and OPH_MERGECUBES2 XML files
+- Subset library to handle large filters
+- Bug in evaluating monthly reductions
+
+### Added:
+
+- 'week' concept level to oph_time hierarchy
+
+### Changed:
+
+- Library name from oph_datacube2_library to oph_datacube_library
+- Default value of 'operation' argument in OPH_INTERCUBE to 'sub' 
+- Default value of 'compressed' argument in OPH_RANDCUBE to 'no' 
+- Operator name from OPH_IMPORTNC3 to OPH_IMPORTNC
+- Code indentation style
+
+### Removed:
+
+- Operator OPH_INTERCOMPARISON
+
+## v0.11.0 - 2017-01-31
+
+### Fixed:
+
+- Bug regarding metadatakey table update on cube deletion
+- Memory leak in OPH_APPLY
+- Bug [#9](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/9)
+- Example in OPH_INSTANCE xml file
+- Bug [#7](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/7)
+- Bug [#5](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/5)
+
+### Added:
+
+- Max and min operations to OPH_INTERCUBE operator
+- Argument 'status_filter' to OPH_RESUME operator XML file
+- Support for missing values to several operators
+- Support for base64-encoded dimensions [#10](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/10)
+- Support for missing values to several primitives XML descriptions
+- Support for Ophidia native IO server
+
+### Changed:
+
+- OPH_CUBESIZE query to compute data fragment size
+- OPH_EXPORTNC2 to handle multiple row selection and export
+- XML descriptions of the primitives with two input measures
+- OPH_INTERCUBE operator to allow comparison of cubes stored on different IO nodes
+- OPH_SERVICE xml file for listing running tasks
+- Configuration parameters names in oph_configuration
+- Query used in exportnc operators to optimize retrieval from IO server
+- Multi-insert query to optimize operations on IO server side
+- OPH_APPLY query used to count fragment rows
+
+### Removed:
+
+- oph_dim_configuration file (unified with oph_configuration)
+- OPH_IMPORTNC
+- OPH_IMPORTNC2
+
 ## v0.10.7 - 2016-11-15
 
 ### Fixed

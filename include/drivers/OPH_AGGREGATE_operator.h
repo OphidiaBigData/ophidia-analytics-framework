@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,10 +24,10 @@
 #include "oph_common.h"
 #include "oph_ioserver_library.h"
 
-#define OPH_AGGREGATE_PLUGIN "oph_aggregate_operator('oph_%s', 'oph_%s', %s,'oph_%s')"
-#define OPH_AGGREGATE_PLUGIN_COMPR "oph_compress('', '', oph_aggregate_operator('oph_%s', 'oph_%s', oph_uncompress('', '', %s),'oph_%s'))"
-#define OPH_AGGREGATE_QUERY_COMPR OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "fact_out") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "mysql.oph_id(%s,%d)|oph_compress('', '', oph_aggregate_operator('oph_%s', 'oph_%s', oph_uncompress('', '', %s),'oph_%s'))") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "fact_in") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_GROUP, "mysql.oph_id(%s,%d)")
-#define OPH_AGGREGATE_QUERY OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "fact_out") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "mysql.oph_id(%s,%d)|oph_aggregate_operator('oph_%s','oph_%s','%s,'oph_%s')") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "fact_in") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_GROUP, "mysql.oph_id(%s,%d)")
+#define OPH_AGGREGATE_PLUGIN "oph_aggregate_operator('oph_%s', 'oph_%s', %s,'oph_%s',%s)"
+#define OPH_AGGREGATE_PLUGIN_COMPR "oph_compress('', '', oph_aggregate_operator('oph_%s', 'oph_%s', oph_uncompress('', '', %s),'oph_%s',%s))"
+#define OPH_AGGREGATE_QUERY_COMPR OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "fact_out") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "mysql.oph_id(%s,%d)|oph_compress('', '', oph_aggregate_operator('oph_%s', 'oph_%s', oph_uncompress('', '', %s),'oph_%s',%s))") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "fact_in") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_GROUP, "mysql.oph_id(%s,%d)")
+#define OPH_AGGREGATE_QUERY OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "fact_out") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "mysql.oph_id(%s,%d)|oph_aggregate_operator('oph_%s','oph_%s','%s,'oph_%s',%s)") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD_ALIAS, "%s|%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "fact_in") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_GROUP, "mysql.oph_id(%s,%d)")
 
 /**
  * \brief Structure of parameters needed by the operator OPH_AGGREGATE. It generate a cube by aggregating more values along one or more explicit dimensions.
@@ -50,31 +50,32 @@
  * \param sessionid SessionID
  * \param id_user ID of submitter
  * \param description Free description to be associated with output cube
+ * \param ms Conventional value for missing values
  */
-struct _OPH_AGGREGATE_operator_handle
-{
-  ophidiadb oDB;
-  int id_input_datacube;
-  int id_input_container;
-  int id_output_datacube;
-  int id_output_container;
-  int id_job;
-  int schedule_algo;
-  char* fragment_ids;
-  int fragment_number;
-  int fragment_id_start_position;
-  char* operation;
-  int size;
-  char* measure_type;
-  int compressed;
-  char* grid_name;
-  char **objkeys;
-  int objkeys_num;
-  oph_ioserver_handler *server;
-  char *sessionid;
-  int id_user;
-  char* description;
+struct _OPH_AGGREGATE_operator_handle {
+	ophidiadb oDB;
+	int id_input_datacube;
+	int id_input_container;
+	int id_output_datacube;
+	int id_output_container;
+	int id_job;
+	int schedule_algo;
+	char *fragment_ids;
+	int fragment_number;
+	int fragment_id_start_position;
+	char *operation;
+	int size;
+	char *measure_type;
+	int compressed;
+	char *grid_name;
+	char **objkeys;
+	int objkeys_num;
+	oph_ioserver_handler *server;
+	char *sessionid;
+	int id_user;
+	char *description;
+	double ms;
 };
 typedef struct _OPH_AGGREGATE_operator_handle OPH_AGGREGATE_operator_handle;
 
-#endif  //__OPH_AGGREGATE_OPERATOR_H
+#endif				//__OPH_AGGREGATE_OPERATOR_H

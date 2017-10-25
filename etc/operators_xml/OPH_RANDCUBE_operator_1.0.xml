@@ -18,7 +18,7 @@ It creates a new datacube with random data and dimensions.
                Possible values are &quot;local&quot;, &quot;global&quot; or &quot;auto&quot; (default).
                In the last case the first filesystem available will be used. 
 - ioserver : type of I/O server used to store data.
-             Possible values are: &quot;mysql_table&quot; (default)
+             Possible values are: &quot;ophidiaio_memory&quot; or &quot;mysql_table&quot; (default)
 - schedule : scheduling algorithm. The only possible value is 0,
 		   for a static linear block distribution of resources.
 - nhost : number of output hosts. With default value (&apos;0&apos;) all host available in the host partition are used.
@@ -40,8 +40,8 @@ It creates a new datacube with random data and dimensions.
 				Multiple-value field: list of concept levels separated by &quot;|&quot; can be provided. 
 - dim_size: size of random dimension.
 				Multiple-value field: list of dimension sizes separated by &quot;|&quot; can be provided. 
-- compressed : if set to &quot;yes&quot; (default), new data will be compressed.
-			 With &quot;no&quot;, data will be inserted without compression.
+- compressed : if set to &quot;yes&quot;, new data will be compressed.
+			 With &quot;no&quot; (default), data will be inserted without compression.
 - grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
              or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
 - description : additional description to be associated with the output cube.
@@ -57,15 +57,16 @@ It creates a new datacube with random data and dimensions.
                   randcube : show operator's output PID as text in case "run" is "yes", else the parameter check is shown.
 
 [Examples]
-Generate a random compressed data cube with 1 host, 4 DBMSs/host, 2 dbs/DBMS, 2 fragments/db, 10 tuples/fragment, 
+Generate a random compressed data cube with 1 host, 1 DBMSs/host, 2 dbs/DBMS, 8 fragments/db, 10 tuples/fragment, 
 10 elements/tuple, with &apos;pressure&apos; measure and &apos;lat&apos;, &apos;lon&apos; and &apos;time&apos; 
-dimensions, in the container &apos;/session-code1/container1&apos;:
-OPH_TERM: oph_randcube container=container1;cwd=/session-code1;nhost=1;ndbms=4;ndb=2;nfrag=2;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;grid=new_grid;compressed=yes;host_partition=test;filesystem=local;
-SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;cwd=/session-code1;nhost=1;ndbms=4;ndb=2;nfrag=2;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;grid=new_grid;compressed=yes;host_partition=test;filesystem=local;&quot;</abstract>
+dimensions, in the container &apos;container1&apos;:
+OPH_TERM: oph_randcube container=container1;nhost=1;ndbms=1;ndb=2;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;host_partition=test;filesystem=local;
+SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;nhost=1;ndbms=1;ndb=2;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;host_partition=test;filesystem=local;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Data Import/Export</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
@@ -75,7 +76,7 @@ SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;cwd=/session
 		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="no" default="auto">host_partition</argument>
 		<argument type="string" mandatory="no" default="auto" values="auto|local|global">filesystem</argument>
-		<argument type="string" mandatory="no" default="mysql_table" values="mysql_table">ioserver</argument>
+		<argument type="string" mandatory="no" default="mysql_table" values="mysql_table|ophidiaio_memory">ioserver</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="0">nhost</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="1">ndbms</argument>
@@ -86,10 +87,10 @@ SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;cwd=/session
 		<argument type="string" mandatory="yes">measure</argument>
 		<argument type="string" mandatory="yes" values="double|float|int|long|short|byte">measure_type</argument>
 		<argument type="int" mandatory="yes" minvalue="1">exp_ndim</argument>
-		<argument type="string" mandatory="yes">dim</argument>
-		<argument type="string" mandatory="no" default="c">concept_level</argument>
-		<argument type="string" mandatory="yes">dim_size</argument>
-		<argument type="string" mandatory="no" default="yes" values="yes|no">compressed</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">dim</argument>
+		<argument type="string" mandatory="no" default="c" multivalue="yes">concept_level</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">dim_size</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">compressed</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|randcube">objkey_filter</argument>

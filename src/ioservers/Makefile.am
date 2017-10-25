@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2016 CMCC Foundation
+#    Copyright (C) 2012-2017 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -21,7 +21,10 @@ ioserver_CFLAGS = -I. -I../../include -I../../include/oph_ioserver $(OPT)
 ioserverdir=${IOSERVER_PATH}
 IOSERVER=
 
-IOSERVER+=libmysql_ioserver.la 
+IOSERVER+=libmysql_ioserver.la
+if OPHIDIAIO_SERVER_SUPPORT
+IOSERVER+=libophidia_ioserver.la
+endif
 
 ioserver_LTLIBRARIES = $(IOSERVER)
 
@@ -34,7 +37,15 @@ else
 libmysql_ioserver_la_CFLAGS =  ${MYSQL_CFLAGS}  ${ioserver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\"  $(OPT)
 endif
 endif
+
 libmysql_ioserver_la_SOURCES = MYSQL_ioserver.c
 libmysql_ioserver_la_LDFLAGS = -module -avoid-version -no-undefined 
 libmysql_ioserver_la_LIBADD = -lz ${MYSQL_LDFLAGS} -L.. -ldebug -lhashtbl -loph_ioserver_parser
+
+if OPHIDIAIO_SERVER_SUPPORT
+libophidia_ioserver_la_SOURCES = OPHIDIA_ioserver.c
+libophidia_ioserver_la_CFLAGS = ${ioserver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\"  $(OPT)  ${OPHIDIAIO_SERVER_CFLAGS}
+libophidia_ioserver_la_LDFLAGS = -module -avoid-version -no-undefined
+libophidia_ioserver_la_LIBADD = -lz ${MYSQL_LDFLAGS} -L.. -ldebug -lhashtbl ${OPHIDIAIO_SERVER_LIBS} -loph_io_client_interface -loph_ioserver_parser
+endif
 

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -93,7 +93,8 @@ typedef struct _oph_json_obj_multigrid {
  * \param measuretype Measure type (required)
  * \return 0 if successfull, N otherwise
  */
-int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title, const char *description, char **rowkeys, int rowkeys_num, char **rowfieldtypes, int rowfieldtypes_num, char **colkeys, int colkeys_num, char **colfieldtypes, int colfieldtypes_num, char ***colvalues, int colvalues_num, const char *measurename, const char *measuretype);
+int oph_json_add_multigrid(oph_json * json, const char *objkey, const char *title, const char *description, char **rowkeys, int rowkeys_num, char **rowfieldtypes, int rowfieldtypes_num,
+			   char **colkeys, int colkeys_num, char **colfieldtypes, int colfieldtypes_num, char ***colvalues, int colvalues_num, const char *measurename, const char *measuretype);
 
 /**
  * \brief Function to add a row to a multigrid object in OPH_JSON
@@ -103,11 +104,11 @@ int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title
  * \param measurevalues The row of measures to be inserted
  * \return 0 if successfull, N otherwise
  */
-int oph_json_add_multigrid_row(oph_json *json, const char *objkey, char **rowvalues, char **measurevalues);
+int oph_json_add_multigrid_row(oph_json * json, const char *objkey, char **rowvalues, char **measurevalues);
 
 /***********OPH_JSON_OBJ_MULTIGRID INTERNAL FUNCTIONS***********/
 
 // Free a multigrid object contents
-int oph_json_free_multigrid(oph_json_obj_multigrid *obj);
+int oph_json_free_multigrid(oph_json_obj_multigrid * obj);
 
 #endif

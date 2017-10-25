@@ -13,7 +13,7 @@ It manages folders of the Ophidia filesystem.
             -- cd : change directory
             -- mkdir : create a new directory
             -- rm : delete an empty directory 
-            -- mv : move/rename a folder
+            -- mv : move/rename a directory
 - path : 0, 1 or 2 absolute/relative paths needed by commands.
          In case of mv, 2 paths are mandatory parameters and must end with a name
          of a folder.
@@ -43,17 +43,18 @@ SUBMISSION STRING: &quot;operator=oph_folder;command=cd;path=folder1;cwd=/absolu
 OPH_TERM: oph_folder command=mv;path=fold1|fold2;cwd=/abs/path;
 SUBMISSION STRING: &quot;operator=oph_folder;command=mv;path=fold1|fold2;cwd=/abs/path&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Virtual File System Management</category>
         <creationdate>01/10/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-        <argument type="string" mandatory="yes" values="cd|mkdir|rm|mv">command</argument>
-        <argument type="string" mandatory="no" default="-">path</argument>
-        <argument type="string" mandatory="yes">cwd</argument>
-        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-        <argument type="string" mandatory="no" default="null">sessionid</argument>
-        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-	<argument type="string" mandatory="no" default="all" values="all|none|folder">objkey_filter</argument>
+		<argument type="string" mandatory="yes" values="cd|mkdir|rm|mv">command</argument>
+		<argument type="string" mandatory="no" default="-" multivalue="yes">path</argument>
+		<argument type="string" mandatory="yes">cwd</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|folder">objkey_filter</argument>
     </args>
 </operator>

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,5 +29,4 @@
 #define OPH_SERVER_WRONG_PARAMETER_ERROR 7
 #define OPH_SERVER_NO_RESPONSE 8
 
-#endif /* OPH_SERVER_ERROR_H */
-
+#endif				/* OPH_SERVER_ERROR_H */

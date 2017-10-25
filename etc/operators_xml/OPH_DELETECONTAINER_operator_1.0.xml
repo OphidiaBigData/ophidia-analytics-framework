@@ -34,19 +34,20 @@ Logically remove the empty visible container &quot;container1&quot; :
 OPH_TERM: oph_deletecontainer container=container1;cwd=/session-code;
 SUBMISSION STRING: &quot;operator=oph_deletecontainer;container=container1;cwd=/session-code;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Virtual File System Management</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>
-	<argument type="string" mandatory="yes">container</argument>
-	<argument type="string" mandatory="no" default="logical" values="logical|physical">delete_type</argument>
-	<argument type="string" mandatory="no" default="yes" values="yes|no">hidden</argument>
-	<argument type="string" mandatory="yes">cwd</argument>
-	<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-	<argument type="string" mandatory="no" default="null">sessionid</argument>
-	<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-	<argument type="string" mandatory="no" default="all" values="all|none|deletecontainer">objkey_filter</argument>
+		<argument type="string" mandatory="yes">container</argument>
+		<argument type="string" mandatory="no" default="logical" values="logical|physical">delete_type</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">hidden</argument>
+		<argument type="string" mandatory="yes">cwd</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|deletecontainer">objkey_filter</argument>
     </args>
 </operator>
 

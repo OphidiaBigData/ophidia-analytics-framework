@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -61,7 +61,7 @@ typedef struct _oph_json_obj_tree {
  * \param nodekeys_num Number of node properties or 0
  * \return 0 if successfull, N otherwise
  */
-int oph_json_add_tree(oph_json *json, const char *objkey, const char *title, const char *description, char **nodekeys, int nodekeys_num);
+int oph_json_add_tree(oph_json * json, const char *objkey, const char *title, const char *description, char **nodekeys, int nodekeys_num);
 
 /**
  * \brief Function to add a node to a tree object in OPH_JSON. Node indexes are autoincremental and starting from 0.
@@ -70,7 +70,7 @@ int oph_json_add_tree(oph_json *json, const char *objkey, const char *title, con
  * \param nodevalues The values of node properties or NULL
  * \return 0 if successfull, N otherwise
  */
-int oph_json_add_tree_node(oph_json *json, const char *objkey, char **nodevalues);
+int oph_json_add_tree_node(oph_json * json, const char *objkey, char **nodevalues);
 
 /**
  * \brief Function to set a node of a tree object in OPH_JSON as a root node
@@ -79,7 +79,7 @@ int oph_json_add_tree_node(oph_json *json, const char *objkey, char **nodevalues
  * \param rootnode The index of the root node
  * \return 0 if successfull, N otherwise
  */
-int oph_json_set_tree_root(oph_json *json, const char *objkey, int rootnode);
+int oph_json_set_tree_root(oph_json * json, const char *objkey, int rootnode);
 
 /**
  * \brief Function to add a link between two nodes of a tree object in OPH_JSON
@@ -90,11 +90,11 @@ int oph_json_set_tree_root(oph_json *json, const char *objkey, int rootnode);
  * \param description A description for the link or NULL
  * \return 0 if successfull, N otherwise
  */
-int oph_json_add_tree_link(oph_json *json, const char *objkey, int sourcenode, int targetnode, const char *description);
+int oph_json_add_tree_link(oph_json * json, const char *objkey, int sourcenode, int targetnode, const char *description);
 
 /***********OPH_JSON_OBJ_TREE INTERNAL FUNCTIONS***********/
 
 // Free a tree object contents
-int oph_json_free_tree(oph_json_obj_tree *obj);
+int oph_json_free_tree(oph_json_obj_tree * obj);
 
 #endif

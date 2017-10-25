@@ -52,16 +52,17 @@ In case of inequalities, it is necessary to call the primitive &quot;oph_cast&qu
 OPH_TERM:: oph_apply cube=http://www.example.com/1/1;query=oph_reduce(measure,&apos;OPH_AVG&apos;,25);
 SUBMISSION STRING: &quot;operator=oph_apply;cube=http://www.example.com/1/1;query=oph_reduce(measure,&apos;OPH_AVG&apos;,25);&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Data Analysis</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-		<argument type="string" mandatory="yes">cube</argument>
-		<argument type="string" mandatory="yes">query</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
+		<argument type="string" mandatory="no" default="measure">query</argument>
 		<argument type="string" mandatory="no" default="null">dim_query</argument>
 		<argument type="string" mandatory="no" default="null">measure</argument>
 		<argument type="string" mandatory="no" default="manual" values="auto|manual">measure_type</argument>

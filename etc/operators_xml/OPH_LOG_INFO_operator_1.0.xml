@@ -37,18 +37,19 @@ Read the last 10 lines of the log file related to the container with id 3 :
 OPH_TERM: oph_log_info log_type=container;container_id=3;nlines=10;
 SUBMISSION STRING: &quot;operator=oph_log_info;log_type=container;container_id=3;nlines=10;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Administration</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-        <argument type="string" mandatory="no" default="server" values="server|container|ioserver">log_type</argument>
-        <argument type="int" mandatory="no" minvalue="0" default="0">container_id</argument>
-	<argument type="string" mandatory="no" default="mysql" values="mysql">ioserver</argument>
-        <argument type="int" mandatory="no" default="10" minvalue="1" maxvalue="10000">nlines</argument>
-        <argument type="string" mandatory="no" default="sync" values="async|sync">exec_mode</argument>
-        <argument type="string" mandatory="no" default="null">sessionid</argument>
-        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-	<argument type="string" mandatory="no" default="all" values="all|none|log_info">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="server" values="server|container|ioserver">log_type</argument>
+		<argument type="int" mandatory="no" minvalue="0" default="0">container_id</argument>
+		<argument type="string" mandatory="no" default="mysql" values="mysql">ioserver</argument>
+		<argument type="int" mandatory="no" default="10" minvalue="1" maxvalue="10000">nlines</argument>
+		<argument type="string" mandatory="no" default="sync" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|log_info">objkey_filter</argument>
     </args>
 </operator>

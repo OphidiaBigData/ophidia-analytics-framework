@@ -6,25 +6,41 @@
 Data Process.
 
 [Behaviour]
-It performs a subsetting operation along dimensions of a datacube. Dimension indexes are used as input filters.
+It performs a subsetting operation along dimensions of a datacube.
+Dimension values are used as input filters.
 
 [Parameters]
 - cube : name of the input datacube. The name must be in PID format.
 - schedule : scheduling algorithm. The only possible value is 0,
-		     for a static linear block distribution of resources.		   
+             for a static linear block distribution of resources.	   
 - subset_dims : dimension names of the datacube used for the subsetting.
-			    Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
-			    Must be the same number of &quot;subset_filter&quot; 
-- subset_filter : enumeration of comma-separated elementary filters (1 series of filters for each dimension):
-					-- start_index : select a single value, specified by its index
-					-- start_index:stop_index : select elements from start_index to stop_index
-					-- start_index:stride:stop_index : select elements from start_index to stop_index with a step of stride
-				  Indexes are integers from 1 to the dimension size. It can be also used &quot;end&quot; to specify
-				  the index of the last element.
-				  Example:
-					subset_dims=lat|lon;subset_filter=1:10|20:end;
-			      Multiple-value field: list of filters separated by &quot;|&quot; can be provided  
-			      Must be the same number of &quot;subset_dims&quot; 
+                Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
+                Must be the same number of &quot;subset_filter&quot; 
+- subset_filter : enumeration of comma-separated elementary filters (1 series of filters for each dimension).
+                  Multiple-value field: list of filters separated by &quot;|&quot; can be provided.
+                  Must be the same number of &quot;subset_dims&quot; .
+                  In case &quot;subset_type&quot; is &quot;index&quot; a filter can be expressed as
+                  -- index : select a single value, specified by its index;
+                  -- start_index:stop_index : select elements from start_index to stop_index;
+                  -- start_index:stride:stop_index : select elements from start_index to stop_index with a step of stride.
+                  Indexes are integers from 1 to the dimension size. It can be also used &quot;end&quot; to specify the index of the last element.
+                  Example: subset_dims=lat|lon;subset_filter=1:10|20:end;
+                  In case &quot;subset_type&quot; is &quot;coord&quot; a filter can be expressed as
+                  -- value : select a specific value;
+                  -- start_value:stop_value : select elements from start_value to stop_value; return an error if this set is empty.
+                  Values should be numbers. Example: subset_dims=lat|lon;subset_filter=35:45|15:20;
+                  For time dimensions the option &quot;time_filter&quot; can be enabled, so that the following date formats can be also used:
+                  -- yyyy
+                  -- yyyy-mm
+                  -- yyyy-mm-dd
+                  -- yyyy-mm-dd hh
+                  -- yyyy-mm-dd hh:mm
+                  -- yyyy-mm-dd hh:mm:ss
+                  Interval bounds must be separated with &quot;_&quot;.
+- subset_type : if set to &quot;index&quot; (default), the subset_filter is considered on dimension index. 
+                With &quot;coord&quot;, filter is considered on dimension values.
+- time_filter : enable filters using dates for time dimensions; enabled by default.
+- offset : it is added to the bounds of subset intervals defined with &quot;subset_filter&quot; in case of &quot;coord&quot; filter type is used.
 - grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
              or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
 - container : name of the container to be used to store the output cube; by default it is the input container.
@@ -45,18 +61,22 @@ Extract the subset consisting of values 1 through 10 of dimension &quot;lat&quot
 OPH_TERM: oph_subset cube=http://www.example.com/1/1;subset_dims=lat|lon;subset_filter=1:10|20:30;grid=new_grid;
 SUBMISSION STRING: &quot;operator=oph_subset;cube=http://www.example.com/1/1;subset_dims=lat|lon;subset_filter=1:10|20:30;grid=new_grid;&quot;</abstract>
         <author>CMCC Foundation</author>
-        <creationdate>01/10/2013</creationdate>
+        <category>Data Analysis</category>
+        <creationdate>13/10/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-		<argument type="string" mandatory="yes">cube</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
-		<argument type="string" mandatory="no" default="none">subset_dims</argument>
-		<argument type="string" mandatory="no" default="all">subset_filter</argument>
+		<argument type="string" mandatory="no" default="none" multivalue="yes">subset_dims</argument>
+		<argument type="string" mandatory="no" default="all" multivalue="yes">subset_filter</argument>
+		<argument type="string" mandatory="no" default="index" values="index|coord">subset_type</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">time_filter</argument>
+		<argument type="real" mandatory="no" default="0">offset</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>

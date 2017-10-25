@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -55,36 +55,37 @@
  * \param server Pointer to I/O server handler
  * \param sessionid SessionID
  * \param force Flag used to force file creation
- * \param force Flag used to save file in export/misc folder
+ * \param misc Flag used to save file in export/misc folder
+ * \param memory_size Maximum amount of memory available
  */
-struct _OPH_EXPORTNC2_operator_handle
-{
-  ophidiadb oDB;
-  char *datacube_input;
-  int id_input_datacube;
-  int id_input_container;
-  char *output_path;
-  char *output_link;
-  int output_path_user_defined;
-  char *output_name;
-  int export_metadata;
-  int schedule_algo;
-  char* fragment_ids;
-  int total_fragment_number;
-  int fragment_id_start_position;
-  char *measure;
-  char *measure_type;
-  int cached_flag;
-  int compressed;
-  int num_of_dims;
-  NETCDF_dim *dims;
-  char **objkeys;
-  int objkeys_num;
-  oph_ioserver_handler *server;
-  char *sessionid;
-  int force;
-  int misc;
+struct _OPH_EXPORTNC2_operator_handle {
+	ophidiadb oDB;
+	char *datacube_input;
+	int id_input_datacube;
+	int id_input_container;
+	char *output_path;
+	char *output_link;
+	int output_path_user_defined;
+	char *output_name;
+	int export_metadata;
+	int schedule_algo;
+	char *fragment_ids;
+	int total_fragment_number;
+	int fragment_id_start_position;
+	char *measure;
+	char *measure_type;
+	int cached_flag;
+	int compressed;
+	int num_of_dims;
+	NETCDF_dim *dims;
+	char **objkeys;
+	int objkeys_num;
+	oph_ioserver_handler *server;
+	char *sessionid;
+	int force;
+	int misc;
+	long long memory_size;
 };
 typedef struct _OPH_EXPORTNC2_operator_handle OPH_EXPORTNC2_operator_handle;
 
-#endif  //__OPH_EXPORTNC2_OPERATOR_H
+#endif				//__OPH_EXPORTNC2_OPERATOR_H

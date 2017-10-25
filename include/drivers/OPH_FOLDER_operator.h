@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2016 CMCC Foundation
+    Copyright (C) 2012-2017 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 #define OPH_FOLDER_MODE_MV              2
 #define OPH_FOLDER_MODE_RM              3
 
-#define OPH_FOLDER_CD_MESSAGE "Current working directory is: "
+#define OPH_FOLDER_CD_MESSAGE "Current Working Directory"
 
 /**
  * \brief Structure of parameters needed by the operator OPH_FOLDER. It manages the Ophidia filesystem folders.
@@ -48,19 +48,18 @@
  * \param sessionid SessionID
  * \param userrole User role
  */
-typedef struct _OPH_FOLDER_operator_handle
-{
-  ophidiadb oDB;
-  int mode;
-  char **path;
-  int path_num;
-  char *cwd;
-  char *user;
-  char **objkeys;
-  int objkeys_num;
-  char *sessionid;
-  int userrole;
+typedef struct _OPH_FOLDER_operator_handle {
+	ophidiadb oDB;
+	int mode;
+	char **path;
+	int path_num;
+	char *cwd;
+	char *user;
+	char **objkeys;
+	int objkeys_num;
+	char *sessionid;
+	int userrole;
 } OPH_FOLDER_operator_handle;
 
 
-#endif  //__OPH_FOLDER_OPERATOR_H
+#endif				//__OPH_FOLDER_OPERATOR_H
