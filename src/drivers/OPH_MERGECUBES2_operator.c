@@ -1313,15 +1313,6 @@ int task_execute(oph_operator_struct * handle)
 					       frags[0].value[k].fragment_name, MYSQL_FRAG_ID, frags[1].value[k].fragment_name, MYSQL_FRAG_ID);
 #endif
 
-				if (strlen(query) >= OPH_COMMON_BUFFER_LEN) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
-						OPH_LOG_OPH_MERGECUBES_STRING_BUFFER_OVERFLOW, "MySQL operation name", query);
-					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					free(query);
-					query = NULL;
-					break;
-				}
 				//MERGECUBES2 fragment
 				if (oph_dc_create_fragment_from_query(((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->server, &(frags[0].value[k]), NULL, query, 0, 0, 0)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
