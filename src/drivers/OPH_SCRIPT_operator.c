@@ -46,6 +46,7 @@
 #define MAX_OUT_LEN 500*1024
 #define OPH_SCRIPT_MARKER '$'
 #define OPH_SCRIPT_MARKER2 '\\'
+#define OPH_SCRIPT_MARKER3 ' '
 
 int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
@@ -536,12 +537,15 @@ int task_execute(oph_operator_struct * handle)
 		if (arg) {
 			new_arg = (char *) calloc(4 * strlen(arg), sizeof(char));
 			for (j = k = 0; j < strlen(arg); ++j, ++k) {
+				if (arg[j] == OPH_SCRIPT_MARKER3)
+					new_arg[k++] = OPH_SCRIPT_MARKER;
 				new_arg[k] = arg[j];
 				if (arg[j] == OPH_SCRIPT_MARKER) {
 					new_arg[++k] = OPH_SCRIPT_MARKER2;
 					new_arg[++k] = OPH_SCRIPT_MARKER;
 					new_arg[++k] = OPH_SCRIPT_MARKER;
-				}
+				} else if (arg[j] == OPH_SCRIPT_MARKER3)
+					new_arg[++k] = OPH_SCRIPT_MARKER;
 			}
 			new_arg[k] = 0;
 			n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "'%s' ", new_arg);
