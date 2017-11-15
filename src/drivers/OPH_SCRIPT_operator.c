@@ -44,7 +44,7 @@
 #include "oph_directory_library.h"
 
 #define MAX_OUT_LEN 500*1024
-#define OPH_SCRIPT_MARKER '$'
+#define OPH_SCRIPT_MARKER '\''
 #define OPH_SCRIPT_MARKER2 '\\'
 #define OPH_SCRIPT_MARKER3 ' '
 
