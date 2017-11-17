@@ -12,7 +12,7 @@ It performs a reduction operation based on hierarchy on a datacube.
 - cube : name of the input datacube. The name must be in PID format.
 - schedule : scheduling algorithm. The only possible value is 0,
 		   for a static linear block distribution of resources.
-- dim : name of dimension on which the operation will be applied. By default the operator considers the implicit dimension with the higher level.
+- dim : name of dimension on which the operation will be applied. By default the operator considers the implicit dimension with the highest level.
 - concept_level : concept level inside the hierarchy used for the operation.
 - midnight : if 00 then the edge point of two consecutive aggregate time sets will be aggregated into the right set;
              if 24 (default) then the edge point will be aggragated into the left set.
