@@ -27,6 +27,8 @@
 
 #define MYSQL_QUERY_DIM_RETRIEVE_DIMENSION				"SELECT iddimension, idcontainer, dimensionname, dimensiontype, dimension.idhierarchy, basetime, units, calendar, monthlengths, leapyear, leapmonth, hierarchyname from `dimension` inner join `hierarchy` on dimension.idhierarchy = hierarchy.idhierarchy where iddimension = %d;"
 
+#define MYSQL_QUERY_DIM_RETRIEVE_DIMENSION_FROM_INSTANCE_ID	"SELECT dimensionname FROM `dimensioninstance` INNER JOIN `dimension` ON dimensioninstance.iddimension = dimension.iddimension WHERE iddimensioninstance = %d;"
+
 #define MYSQL_QUERY_DIM_RETRIEVE_DIMENSION_INSTANCE			"SELECT iddimensioninstance, dimensioninstance.iddimension, idgrid, size, fkiddimensionindex, conceptlevel, fkiddimensionlabel, dimensionname, filename, unlimited FROM `dimensioninstance` INNER JOIN `dimension` ON dimensioninstance.iddimension = dimension.iddimension LEFT JOIN `hierarchy` ON hierarchy.idhierarchy = dimension.idhierarchy WHERE iddimensioninstance = %d;"
 
 #define MYSQL_QUERY_DIM_RETRIEVE_GRID_DIMENSION_INSTANCES		"SELECT dimensioninstance.iddimensioninstance, dimensioninstance.iddimension, dimensioninstance.idgrid, size, fkiddimensionindex, conceptlevel, fkiddimensionlabel from `dimensioninstance` INNER JOIN grid ON grid.idgrid = dimensioninstance.idgrid INNER JOIN dimension ON dimension.iddimension = dimensioninstance.iddimension where gridname = '%s' AND idcontainer = %d;"
