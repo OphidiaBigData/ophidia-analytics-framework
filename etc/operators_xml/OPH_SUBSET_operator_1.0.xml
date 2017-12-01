@@ -76,7 +76,7 @@ SUBMISSION STRING: &quot;operator=oph_subset;cube=http://www.example.com/1/1;sub
 		<argument type="string" mandatory="no" default="all" multivalue="yes">subset_filter</argument>
 		<argument type="string" mandatory="no" default="index" values="index|coord">subset_type</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">time_filter</argument>
-		<argument type="real" mandatory="no" default="0">offset</argument>
+		<argument type="real" mandatory="no" default="0" multivalue="yes">offset</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
