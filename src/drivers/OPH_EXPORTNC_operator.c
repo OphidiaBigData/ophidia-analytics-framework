@@ -491,10 +491,8 @@ int task_init(oph_operator_struct * handle)
 				free(stream_broad);
 				goto __OPH_EXIT_1;
 			} else if ((errno != ENOENT) || oph_dir_r_mkdir(path)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_DIR_CREATION_ERROR, path);
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_DIR_CREATION_ERROR, path);
-				free(stream_broad);
-				goto __OPH_EXIT_1;
+				pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_DIR_CREATION_ERROR, path);
+				logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_DIR_CREATION_ERROR, path);
 			}
 		}
 		//If dir already exists then exit
