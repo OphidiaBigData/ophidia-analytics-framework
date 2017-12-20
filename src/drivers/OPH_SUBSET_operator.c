@@ -380,7 +380,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (number_of_sub_types > number_of_sub_dims) {
+	if (number_of_sub_dims && (number_of_sub_types > number_of_sub_dims)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SUBSET_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
 		oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
@@ -393,8 +393,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
-	for (i = 0; i < number_of_sub_types; ++i)
-		((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types[i] = !strncmp(sub_types[i], OPH_SUBSET_TYPE_COORD, OPH_TP_TASKLEN);
+	if (number_of_sub_dims)
+		for (i = 0; i < number_of_sub_types; ++i)
+			((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types[i] = !strncmp(sub_types[i], OPH_SUBSET_TYPE_COORD, OPH_TP_TASKLEN);
 	oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SCHEDULE_ALGORITHM);
