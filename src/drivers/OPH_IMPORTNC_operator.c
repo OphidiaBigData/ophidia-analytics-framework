@@ -1649,7 +1649,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		for (i = 0; i < number_of_sub_types; ++i)
 			is_index[i] = strncmp(sub_types[i], OPH_IMPORTNC_SUBSET_COORD, OPH_TP_TASKLEN);
 		for (; i < number_of_sub_dims; ++i)
-			is_index[i] = 1;
+			is_index[i] = number_of_sub_types == 1 ? is_index[0] : 1;
 	}
 	is_index[number_of_sub_dims] = 0;
 	oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);

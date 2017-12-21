@@ -393,9 +393,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
-	if (number_of_sub_dims)
+	if (number_of_sub_dims) {
 		for (i = 0; i < number_of_sub_types; ++i)
 			((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types[i] = !strncmp(sub_types[i], OPH_SUBSET_TYPE_COORD, OPH_TP_TASKLEN);
+		if (number_of_sub_types == 1)
+			for (; i < number_of_sub_dims; ++i)
+				((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types[i] = ((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types[0];
+	}
 	oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SCHEDULE_ALGORITHM);

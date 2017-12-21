@@ -56,6 +56,7 @@ WARNING: It imports only mono-dimensional coordinate variables.
                   Must be the same number of &quot;subset_dims&quot;
 - subset_type : if set to &quot;index&quot; (default), the subset_filter is considered on dimension index. 
                 With &quot;coord&quot;, filter is considered on dimension values.
+                In case of single value, that value is used for all the dimensions.
 - time_filter : enable filters using dates for time dimensions; enabled by default.
 - offset : it is added to the bounds of subset intervals defined with &quot;subset_filter&quot; in case of &quot;coord&quot; filter type is used.
 - exp_concept_level: concept level short name (must be a single char) of explicit dimensions. Default value is &quot;c&quot;
