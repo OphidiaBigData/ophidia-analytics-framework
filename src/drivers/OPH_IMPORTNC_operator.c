@@ -1221,18 +1221,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	char **sub_dims = 0;
 	char **sub_filters = 0;
+	char **sub_types = NULL;
 	int number_of_sub_dims = 0;
 	int number_of_sub_filters = 0;
-
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_FILTER_TYPE);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
-		if (offset)
-			free(offset);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	int is_index = strncmp(value, OPH_IMPORTNC_SUBSET_COORD, OPH_TP_TASKLEN);
+	int number_of_sub_types = 0;
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_DIMENSIONS);
 	if (!value) {
@@ -1622,6 +1614,46 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_FILTER_TYPE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
+		if (offset)
+			free(offset);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (oph_tp_parse_multiple_value_param(value, &sub_types, &number_of_sub_types)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
+		if (offset)
+			free(offset);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+		oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (number_of_sub_dims && (number_of_sub_types > number_of_sub_dims)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
+		if (offset)
+			free(offset);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+		oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	char is_index[1 + number_of_sub_dims];
+	if (number_of_sub_dims) {
+		for (i = 0; i < number_of_sub_types; ++i)
+			is_index[i] = strncmp(sub_types[i], OPH_IMPORTNC_SUBSET_COORD, OPH_TP_TASKLEN);
+		for (; i < number_of_sub_dims; ++i)
+			is_index[i] = number_of_sub_types == 1 ? is_index[0] : 1;
+	}
+	is_index[number_of_sub_dims] = 0;
+	oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
+
 	char *curfilter = NULL;
 	int ii;
 
@@ -1639,7 +1671,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			//Dimension will not be subsetted
 			measure->dims_start_index[i] = 0;
 			measure->dims_end_index[i] = measure->dims_length[i] - 1;
-		} else if ((ii = check_subset_string(curfilter, i, measure, is_index, ncid, j < s_offset_num ? offset[j] : 0.0))) {
+		} else if ((ii = check_subset_string(curfilter, i, measure, is_index[j], ncid, j < s_offset_num ? offset[j] : 0.0))) {
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)

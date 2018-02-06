@@ -70,7 +70,7 @@
  * \param description Free description to be associated with output cube
  * \param offset List of offsets used to enlarge subset intervals
  * \param offset_num Number of offsets
- * \param subset_type Flag indicating whether filters are expressed as indexes or values
+ * \param subset_types Array of flags indicating whether filters are expressed as indexes or values
  */
 struct _OPH_SUBSET_operator_handle {
 	ophidiadb oDB;
@@ -104,7 +104,7 @@ struct _OPH_SUBSET_operator_handle {
 	char *description;
 	double *offset;
 	int offset_num;
-	int subset_type;
+	char *subset_types;
 };
 typedef struct _OPH_SUBSET_operator_handle OPH_SUBSET_operator_handle;
 
