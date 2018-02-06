@@ -13,7 +13,6 @@ data cubes can be merged. A new implicit dimension will be created.
 [Parameters]
 - cubes : name of the datacubes to merge. The names must be in PID format.
          Multiple-value field: list of cubes separated by &quot;|&quot; can be provided.
-         At least two datacubes must be specified.  
 - schedule : scheduling algorithm. The only possible value is 0,
          for a static linear block distribution of resources.
 - container : name of the container to be used to store the output cube; by default it is the input container.

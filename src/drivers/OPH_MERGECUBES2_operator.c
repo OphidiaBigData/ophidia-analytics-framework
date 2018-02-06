@@ -43,7 +43,7 @@
 
 int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db, char **input_frag, char **input_type, int compressed, char **query)
 {
-	if (datacube_num < 2 || output_cube == NULL || input_db == NULL || input_frag == NULL || input_type == NULL || query == NULL) {
+	if (datacube_num < 1 || output_cube == NULL || input_db == NULL || input_frag == NULL || input_type == NULL || query == NULL) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return 1;
 	}
@@ -111,7 +111,8 @@ int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db,
 			tmp_len += snprintf(tmp_buffer[3] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_WHERE_SEPARATOR);
 		tmp_len += snprintf(tmp_buffer[3] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_WHERE_PART, 0, MYSQL_FRAG_ID, cc, MYSQL_FRAG_ID);
 	}
-	buf_len += snprintf(NULL, 0, OPH_MERGECUBES2_QUERY_WHERE, tmp_buffer[3]);
+	if (tmp_len)
+		buf_len += snprintf(NULL, 0, OPH_MERGECUBES2_QUERY_WHERE, tmp_buffer[3]);
 
 	//Build structures for output quey
 	char *out_buffer = (char *) malloc(++buf_len * sizeof(char));
@@ -125,7 +126,8 @@ int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db,
 	out_len += snprintf(out_buffer + out_len, buf_len - out_len, OPH_MERGECUBES2_QUERY_ALIAS, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE);
 	out_len += snprintf(out_buffer + out_len, buf_len - out_len, OPH_MERGECUBES2_QUERY_FROM, tmp_buffer[1]);
 	out_len += snprintf(out_buffer + out_len, buf_len - out_len, OPH_MERGECUBES2_QUERY_FROM_ALIAS, tmp_buffer[2]);
-	out_len += snprintf(out_buffer + out_len, buf_len - out_len, OPH_MERGECUBES2_QUERY_WHERE, tmp_buffer[3]);
+	if (tmp_len)
+		out_len += snprintf(out_buffer + out_len, buf_len - out_len, OPH_MERGECUBES2_QUERY_WHERE, tmp_buffer[3]);
 
 	if (out_len >= buf_len) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size %d is not enough for query '%s'\n", buf_len - 1, out_buffer);
@@ -442,7 +444,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_MERGECUBES_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_NUMBER);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num + ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->number < 2) {
+	if (((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num + ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->number < 1) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_MERGECUBES_DATACUBE_NUMBER_ERROR);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MERGECUBES_DATACUBE_NUMBER_ERROR);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
@@ -1313,15 +1315,6 @@ int task_execute(oph_operator_struct * handle)
 					       frags[0].value[k].fragment_name, MYSQL_FRAG_ID, frags[1].value[k].fragment_name, MYSQL_FRAG_ID);
 #endif
 
-				if (strlen(query) >= OPH_COMMON_BUFFER_LEN) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
-						OPH_LOG_OPH_MERGECUBES_STRING_BUFFER_OVERFLOW, "MySQL operation name", query);
-					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					free(query);
-					query = NULL;
-					break;
-				}
 				//MERGECUBES2 fragment
 				if (oph_dc_create_fragment_from_query(((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->server, &(frags[0].value[k]), NULL, query, 0, 0, 0)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");

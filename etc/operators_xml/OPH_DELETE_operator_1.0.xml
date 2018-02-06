@@ -28,7 +28,7 @@ Remove datacube identified by the PID &quot;http://www.example.com/1/1&quot; :
 OPH_TERM: oph_delete cube=http://www.example.com/1/1;
 SUBMISSION STRING: &quot;operator=oph_delete;cube=http://www.example.com/1/1;&quot;</abstract>
         <author>CMCC Foundation</author>
-        <category>Virtual File System Management</category>
+        <category>Virtual File System</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <permission>write</permission>

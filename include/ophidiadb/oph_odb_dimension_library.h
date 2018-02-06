@@ -170,6 +170,15 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensionin
 int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_dimension * dim, int id_datacube);
 
 /**
+ * \brief Function to retrieve dimensions from OphidiaDB given the id_dimension
+ * \param oDB Pointer to the OphidiaDB
+ * \param id_dimensioninst ID of the dimension instance to be found
+ * \param dimension_name Pointer to string to be filled
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_dim_retrieve_dimension_name_from_instance_id(ophidiadb * oDB, int id_dimensioninst, char **dimension_name);
+
+/**
  * \brief Function to retrieve dimension instances from OphidiaDB given the id_dimensioninst
  * \param oDB Pointer to the OphidiaDB
  * \param id_dimensioninst ID of the dimension instance to be found
