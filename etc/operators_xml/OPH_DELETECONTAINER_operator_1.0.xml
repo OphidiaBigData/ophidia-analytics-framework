@@ -34,7 +34,7 @@ Logically remove the empty visible container &quot;container1&quot; :
 OPH_TERM: oph_deletecontainer container=container1;cwd=/session-code;
 SUBMISSION STRING: &quot;operator=oph_deletecontainer;container=container1;cwd=/session-code;&quot;</abstract>
         <author>CMCC Foundation</author>
-        <category>Virtual File System Management</category>
+        <category>Virtual File System</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <permission>write</permission>
