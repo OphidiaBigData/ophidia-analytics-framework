@@ -88,6 +88,7 @@ struct _OPH_IMPORTNC_operator_handle {
 	char *nc_file_path_orig;
 	char *partition_input;
 	char *grid_name;
+	char check_grid;
 	int fs_type;
 	char *ioserver_type;
 	int id_output_datacube;

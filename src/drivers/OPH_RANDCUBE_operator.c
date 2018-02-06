@@ -1087,6 +1087,15 @@ int task_init(oph_operator_struct * handle)
 			oph_dim_disconnect_from_dbms(db->dbms_instance);
 			oph_dim_unload_dim_dbinstance(db);
 			free(tot_dims);
+
+			if (id_grid && oph_odb_dim_enable_grid(oDB, id_grid)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to enable grid\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to enable grid\n");
+				free(dims);
+				free(dim_inst);
+				goto __OPH_EXIT_1;
+			}
+
 	 /****************************
       *  END - IMPORT DIMENSION  *
 	  ***************************/

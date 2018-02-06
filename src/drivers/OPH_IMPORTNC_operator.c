@@ -431,6 +431,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container = 0;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->grid_name = NULL;
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->check_grid = 0;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path = NULL;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path_orig = NULL;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_output_datacube = 0;
@@ -1804,6 +1805,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 	}
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CHECK_GRID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CHECK_GRID);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CHECK_GRID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN))
+		((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->check_grid = 1;
+
 	if (handle->proc_rank == 0) {
 		//Only master process has to initialize and open connection to management OphidiaDB
 		ophidiadb *oDB = &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB;
@@ -2671,9 +2681,11 @@ int task_init(oph_operator_struct * handle)
 							}
 							free(tmp_var.dims_id);
 
-							if (!oph_dim_compare_dimension
-							    (db_dimension, label_dimension_table_name, dims[j].dimension_type, dim_inst[j].size, dim_array, dim_inst[j].fk_id_dimension_label, &match)
-							    && !match) {
+							if (!((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->check_grid || (!oph_dim_compare_dimension
+																	(db_dimension, label_dimension_table_name,
+																	 dims[j].dimension_type, dim_inst[j].size, dim_array,
+																	 dim_inst[j].fk_id_dimension_label, &match)
+																	&& !match)) {
 								free(dim_array);
 								found_flag = 1;
 								break;
@@ -2953,6 +2965,17 @@ int task_init(oph_operator_struct * handle)
 				dim_inst[i].id_dimensioninst = dimension_array_id;
 			}
 			free(tot_dims);
+
+			if (id_grid && oph_odb_dim_enable_grid(oDB, id_grid)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to enable grid\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to enable grid\n");
+				free(dims);
+				free(dim_inst);
+				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db_dimension);
+				free(dimvar_ids);
+				goto __OPH_EXIT_1;
+			}
 		 /****************************
 	      *  END - IMPORT DIMENSION  *
 		  ***************************/

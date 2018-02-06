@@ -97,6 +97,7 @@
 #define OPH_IN_PARAM_IOSERVER_TYPE				"ioserver"
 #define OPH_IN_PARAM_FS_TYPE					"filesystem"
 #define OPH_IN_PARAM_IMPORTDIM_GRID_NAME			"grid"
+#define OPH_IN_PARAM_CHECK_GRID					"check_grid"
 #define OPH_IN_PARAM_VOCABULARY					"vocabulary"
 #define OPH_IN_PARAM_IMPORT_METADATA				"import_metadata"
 #define OPH_IN_PARAM_EXPORT_METADATA				"export_metadata"

@@ -68,6 +68,7 @@ WARNING: It imports only mono-dimensional coordinate variables.
               or original data with &quot;no&quot; (default).
 - grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
         or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
+- check_grid : optional flag to be enabled in case the values of grid have to be checked (valid only if the grid already exists).
 - description : additional description to be associated with the output cube.
 
 The following parameters are considered only in case the container has to be created.
@@ -141,6 +142,7 @@ SUBMISSION STRING: &quot;operator=oph_importnc;cwd=/session-code1;container=cont
 		<argument type="string" mandatory="no" default="c" multivalue="yes">imp_concept_level</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">compressed</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">check_grid</argument>
 		<argument type="string" mandatory="no" default="oph_base" multivalue="yes">hierarchy</argument>
 		<argument type="string" mandatory="no" default="CF">vocabulary</argument>
 		<argument type="string" mandatory="no" default="1900-01-01 00:00:00">base_time</argument>

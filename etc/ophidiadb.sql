@@ -599,6 +599,7 @@ DROP TABLE IF EXISTS `grid`;
 CREATE TABLE `grid` (
   `idgrid` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `gridname` varchar(256) NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`idgrid`),
   UNIQUE KEY (`gridname`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;

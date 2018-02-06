@@ -44,6 +44,7 @@ Dimension values are used as input filters.
 - offset : it is added to the bounds of subset intervals defined with &quot;subset_filter&quot; in case of &quot;coord&quot; filter type is used.
 - grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
              or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
+- check_grid : optional flag to be enabled in case the values of grid have to be checked (valid only if the grid already exists).
 - container : name of the container to be used to store the output cube; by default it is the input container.
 - description : additional description to be associated with the output cube.
 
@@ -79,6 +80,7 @@ SUBMISSION STRING: &quot;operator=oph_subset;cube=http://www.example.com/1/1;sub
 		<argument type="string" mandatory="no" default="yes" values="yes|no">time_filter</argument>
 		<argument type="real" mandatory="no" default="0" multivalue="yes">offset</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">check_grid</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|subset">objkey_filter</argument>
