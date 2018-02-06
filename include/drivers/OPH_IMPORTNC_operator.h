@@ -77,6 +77,7 @@
  * \param description Free description to be associated with output cube
  * \param time_filter Flag used in case time filters are expressed as dates
  * \param id_job ID of the job related to the task
+ * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
 struct _OPH_IMPORTNC_operator_handle {
 	ophidiadb oDB;
@@ -125,6 +126,7 @@ struct _OPH_IMPORTNC_operator_handle {
 	char *description;
 	int time_filter;
 	int id_job;
+	short int execute_error;
 };
 typedef struct _OPH_IMPORTNC_operator_handle OPH_IMPORTNC_operator_handle;
 
