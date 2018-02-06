@@ -46,24 +46,24 @@ Reduces a measure array performing the specified operation on blocks of elements
 Binary-array.
         
 [Examples]
-Reduces a measure array computing the mean on groups of elements as specified in count_list with the internal dimension of size 15 and the external
-to-be-reduced one of size 10.
-oph_reduce3(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;OPH_AVG&apos;,1,count_list,15,10)</abstract>
+Reduces a measure array computing the mean on groups of elements as specified in count_list with the internal dimension of size 15 and the external to-be-reduced one of size 10.
+oph_reduce3(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;OPH_AVG&apos;,count_list,15,10)</abstract>
         <author>CMCC Foundation</author>
+        <category>Statistical</category>
         <creationdate>19/10/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="reduce"/>
+        <operation type="reduce"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="oph_operator" mandatory="no" default="'oph_max'" values="'oph_count'|'oph_max'|'oph_min'|'oph_avg'|'oph_sum'|'oph_std'|'oph_var'|'oph_cmoment'|'oph_acmoment'|'oph_rmoment'|'oph_armoment'|'oph_arg_max'|'oph_arg_min'">operator name</argument>
-	<argument type="binary-array" mandatory="no" default="array length">binary count list</argument>
-	<argument type="long-long" mandatory="no" default="1" minvalue="1" maxvalue="array length">block size</argument>
-	<argument type="long-long" mandatory="no" default="0" minvalue="0" maxvalue="array length">size</argument>
-	<argument type="double" mandatory="no" default="2" minvalue="0">order</argument>
-	<argument type="double" mandatory="no" default="NAN">missingvalue</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="oph_operator" mandatory="no" default="'oph_max'" values="'oph_count'|'oph_max'|'oph_min'|'oph_avg'|'oph_sum'|'oph_std'|'oph_var'|'oph_cmoment'|'oph_acmoment'|'oph_rmoment'|'oph_armoment'|'oph_arg_max'|'oph_arg_min'">operator name</argument>
+		<argument type="binary-array" mandatory="no" default="array length">binary count list</argument>
+		<argument type="long-long" mandatory="no" default="1" minvalue="1" maxvalue="array length">block size</argument>
+		<argument type="long-long" mandatory="no" default="0" minvalue="0" maxvalue="array length">size</argument>
+		<argument type="double" mandatory="no" default="2" minvalue="0">order</argument>
+		<argument type="double" mandatory="no" default="NAN">missingvalue</argument>
     </args>
 </primitive>

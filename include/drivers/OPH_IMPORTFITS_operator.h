@@ -88,6 +88,7 @@ struct _OPH_IMPORTFITS_operator_handle {
 	int hdu;		/* Set the data HDU; default is the primary HDU (0) */
 	char *partition_input;
 	char *grid_name;
+	char check_grid;
 	int fs_type;
 	char *ioserver_type;
 	int id_output_datacube;

@@ -31,26 +31,29 @@ The script can eventually process some environmental variables passed by the ope
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
-                  script : show the full command that was launched.
-        
+                  script : show the output of the command or the list of registered scripts;
+                  script_url : show the URL where the command could save some data;
+                  script_returncode : show the return code of the command.
+
 [Examples]
 Execute the script &quot;./test.sh var1 var2&quot; without redirecting stdout and stderr:
 OPH_TERM: oph_script script=./test.sh;args=var1|var2;
 SUBMISSION STRING: &quot;operator=oph_script;script=./test.sh;args=var1|var2;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Data Analysis</category>
         <creationdate>10/08/2014</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>execute</permission>
+        <permission>execute</permission>
     </info>
     <args>
-        <argument type="string" mandatory="no" default=":">script</argument>
-        <argument type="string" mandatory="no" default=" ">args</argument>
-        <argument type="string" mandatory="no" default="stdout">stdout</argument>
-        <argument type="string" mandatory="no" default="stderr">stderr</argument>
-        <argument type="string" mandatory="no" default="no" values="yes|no">list</argument>
-        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-        <argument type="string" mandatory="no" default="null">sessionid</argument>
-        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-	<argument type="string" mandatory="no" default="all" values="all|none|script">objkey_filter</argument>
+		<argument type="string" mandatory="no" default=":">script</argument>
+		<argument type="string" mandatory="no" default=" " multivalue="yes">args</argument>
+		<argument type="string" mandatory="no" default="stdout">stdout</argument>
+		<argument type="string" mandatory="no" default="stderr">stderr</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">list</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|script|script_url|script_returncode">objkey_filter</argument>
     </args>
 </operator>

@@ -44,21 +44,22 @@ It manages folders of the Ophidia filesystem.
 OPH_TERM: oph_fs command=cd;dpath=folder1;cdd=/absolute/path;
 SUBMISSION STRING: &quot;operator=oph_fs;command=cd;dpath=folder1;cdd=/absolute/path;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Miscellaneous</category>
         <creationdate>12/04/2017</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-        <argument type="string" mandatory="no" default="ls" values="ls|cd|mkdir|rm|mv">command</argument>
-        <argument type="string" mandatory="no" default="-">dpath</argument>
-        <argument type="string" mandatory="no" default="-">file</argument>
-        <argument type="string" mandatory="no" default="/">cdd</argument>
+		<argument type="string" mandatory="no" default="ls" values="ls|cd|mkdir|rm|mv">command</argument>
+		<argument type="string" mandatory="no" default="-" multivalue="yes">dpath</argument>
+		<argument type="string" mandatory="no" default="-">file</argument>
+		<argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">recursive</argument>
 		<argument type="int" mandatory="no" default="0" minvalue="0">depth</argument>
-        <argument type="string" mandatory="no" default="no" values="yes|no">realpath</argument>
-        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-        <argument type="string" mandatory="no" default="null">sessionid</argument>
-        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-        <argument type="string" mandatory="no" default="all" values="all|none|fs">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">realpath</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|fs">objkey_filter</argument>
     </args>
 </operator>

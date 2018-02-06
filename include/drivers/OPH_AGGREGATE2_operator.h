@@ -72,6 +72,7 @@ struct _OPH_AGGREGATE2_operator_handle {
 	char *measure_type;
 	int compressed;
 	char *grid_name;
+	char check_grid;
 	char *dimension_name;
 	char *dimension_level;
 	long long block_size;

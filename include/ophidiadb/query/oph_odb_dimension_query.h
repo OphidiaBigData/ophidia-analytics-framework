@@ -27,6 +27,8 @@
 
 #define MYSQL_QUERY_DIM_RETRIEVE_DIMENSION				"SELECT iddimension, idcontainer, dimensionname, dimensiontype, dimension.idhierarchy, basetime, units, calendar, monthlengths, leapyear, leapmonth, hierarchyname from `dimension` inner join `hierarchy` on dimension.idhierarchy = hierarchy.idhierarchy where iddimension = %d;"
 
+#define MYSQL_QUERY_DIM_RETRIEVE_DIMENSION_FROM_INSTANCE_ID	"SELECT dimensionname FROM `dimensioninstance` INNER JOIN `dimension` ON dimensioninstance.iddimension = dimension.iddimension WHERE iddimensioninstance = %d;"
+
 #define MYSQL_QUERY_DIM_RETRIEVE_DIMENSION_INSTANCE			"SELECT iddimensioninstance, dimensioninstance.iddimension, idgrid, size, fkiddimensionindex, conceptlevel, fkiddimensionlabel, dimensionname, filename, unlimited FROM `dimensioninstance` INNER JOIN `dimension` ON dimensioninstance.iddimension = dimension.iddimension LEFT JOIN `hierarchy` ON hierarchy.idhierarchy = dimension.idhierarchy WHERE iddimensioninstance = %d;"
 
 #define MYSQL_QUERY_DIM_RETRIEVE_GRID_DIMENSION_INSTANCES		"SELECT dimensioninstance.iddimensioninstance, dimensioninstance.iddimension, dimensioninstance.idgrid, size, fkiddimensionindex, conceptlevel, fkiddimensionlabel from `dimensioninstance` INNER JOIN grid ON grid.idgrid = dimensioninstance.idgrid INNER JOIN dimension ON dimension.iddimension = dimensioninstance.iddimension where gridname = '%s' AND idcontainer = %d;"
@@ -48,7 +50,7 @@
 
 #define MYSQL_QUERY_DIM_RETRIEVE_GRID_ID2				"SELECT idgrid FROM grid WHERE gridname='%s';"
 
-#define MYSQL_QUERY_DIM_RETRIEVE_GRID_ID				"SELECT DISTINCT grid.idgrid FROM grid INNER JOIN dimensioninstance ON dimensioninstance.idgrid = grid.idgrid INNER JOIN dimension ON dimension.iddimension = dimensioninstance.iddimension WHERE gridname='%s' AND idcontainer = %d;"
+#define MYSQL_QUERY_DIM_RETRIEVE_GRID_ID				"SELECT DISTINCT grid.idgrid FROM grid INNER JOIN dimensioninstance ON dimensioninstance.idgrid = grid.idgrid INNER JOIN dimension ON dimension.iddimension = dimensioninstance.iddimension WHERE gridname='%s' AND idcontainer = %d AND enabled;"
 
 #define MYSQL_QUERY_DIM_RETRIEVE_DIMENSIONS_FROM_GRID_IN_CONTAINER	"SELECT dimension.iddimension, dimensionname, dimensiontype, idhierarchy, iddimensioninstance, dimensioninstance.idgrid, size, fkiddimensionindex, conceptlevel, fkiddimensionlabel, basetime, units, calendar, monthlengths, leapyear, leapmonth FROM (dimensioninstance INNER JOIN grid ON grid.idgrid = dimensioninstance.idgrid) INNER JOIN dimension ON dimensioninstance.iddimension = dimension.iddimension WHERE gridname = '%s' AND idcontainer = %d;"
 
@@ -65,5 +67,7 @@
 #define MYSQL_QUERY_DIM_RETRIEVE_HIERARCHY_LIST				"SELECT hierarchyname FROM hierarchy ORDER BY hierarchyname ASC;"
 
 #define MYSQL_RETRIEVE_HIERARCHY_ID					"SELECT idhierarchy from `hierarchy` where hierarchyname = '%s';"
+
+#define MYSQL_QUERY_DIM_ENABLE_GRID					"UPDATE grid SET enabled = 1 WHERE idgrid = %d;"
 
 #endif				/* __OPH_ODB_DIM_QUERY_H__ */

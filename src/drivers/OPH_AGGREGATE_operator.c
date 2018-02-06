@@ -77,6 +77,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->measure_type = NULL;
 	((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->compressed = 0;
 	((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->grid_name = NULL;
+	((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->check_grid = 0;
 	((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->objkeys_num = -1;
 	((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->sessionid = NULL;
@@ -289,6 +290,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CHECK_GRID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CHECK_GRID);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_AGGREGATE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CHECK_GRID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN))
+		((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->check_grid = 1;
 
 	value = hashtbl_get(task_tbl, OPH_ARG_IDJOB);
 	if (!value)
@@ -750,7 +760,7 @@ int task_init(oph_operator_struct * handle)
 					    && (stored_dim_insts[d].size == dim_inst[l].size) && (stored_dim_insts[d].concept_level == dim_inst[l].concept_level))
 						break;
 				//If original dimension is found and has size 0 then do not compare
-				if (!(d < stored_dim_num && !dim_inst[l].size)) {
+				if (!((d < stored_dim_num) && !dim_inst[l].size) && ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->check_grid) {
 					if ((d >= stored_dim_num)
 					    || oph_dim_compare_dimension(db, dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, dim_inst[l].size, dim_row, stored_dim_insts[d].fk_id_dimension_index,
 									 &match) || match) {
@@ -784,6 +794,13 @@ int task_init(oph_operator_struct * handle)
 		if (!new_grid && ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->grid_name && (residual_dim_number != stored_dim_num)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "This grid cannot be used in this context or error in checking dimension data or metadata\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_AGGREGATE_DIM_CHECK_ERROR);
+			free(cubedims);
+			goto __OPH_EXIT_1;
+		}
+
+		if (id_grid && oph_odb_dim_enable_grid(oDB, id_grid)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to enable grid\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container, "Unable to enable grid\n");
 			free(cubedims);
 			goto __OPH_EXIT_1;
 		}

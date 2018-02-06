@@ -44,16 +44,17 @@ Binary-array.
 Add 2+2i to each element of the input array.
 oph_sum_scalar2(&apos;OPH_COMPLEX_DOUBLE&apos;,&apos;OPH_COMPLEX_DOUBLE&apos;,measure,2,2)</abstract>
         <author>CMCC Foundation</author>
+        <category>Arithmetic</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array"/>
-	<operation type="simple"/>
+        <operation type="simple"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="double" mandatory="no" default="0">scalar value (real)</argument>
-        <argument type="double" mandatory="no" default="0">scalar value (imaginary)</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'|'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="double" mandatory="no" default="0">scalar value (real)</argument>
+		<argument type="double" mandatory="no" default="0">scalar value (imaginary)</argument>
     </args>
 </primitive>

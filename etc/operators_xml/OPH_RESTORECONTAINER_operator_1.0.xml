@@ -32,9 +32,10 @@ Restore &apos;container1&apos; in &apos;/session-code1&apos; :
 OPH_TERM: oph_restorecontainer container=container1;cwd=/session-code1;
 SUBMISSION STRING: &quot;operator=oph_restorecontainer;container=container1;cwd=/session-code1;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Virtual File System</category>
         <creationdate>08/11/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>

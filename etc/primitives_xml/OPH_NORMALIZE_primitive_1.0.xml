@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
-<primitive name="oph_predicate" version="1.0">
+<primitive name="oph_normalize" version="1.0">
     <info>
         <abstract>[Behaviour]
-Evaluates a predicate. If &apos;expression0&apos; satisfies &apos;comparison&apos; then &apos;expression1&apos; is executed, else &apos;expression2&apos; is executed.
+Normalizes a measure array performing the specified operation on &apos;count&apos; elements.
 
 [Parameters]
 - input measure type : Ophidia typing. Supported types are:
@@ -21,20 +21,21 @@ Evaluates a predicate. If &apos;expression0&apos; satisfies &apos;comparison&apo
 					&apos;oph_short&apos;;
 					&apos;oph_byte&apos;.
 - measure : input measure.
-- expression 0 : first expression.
-- comparison : condition to be verified.
-- expression 1 : expression executed if expression 0 satisfies comparison.
-- expression 2 : expression executed if expression 0 does not satisfy comparison.
-                 
+- operator name : type of operator:
+                  -- &apos;oph_max&apos; : compute the maximum and divide each element by it (default);
+                  -- &apos;oph_avg&apos; : compute the mean and substract each element by it (anomaly).
+- count : number of elements to be normalized. Default value (0) corresponds to the entire array.
+- missingvalue : value to be considered as missing value; by default it is NAN (for &apos;oph_double&apos; and &apos;oph_float&apos;).
+
 [Return type]
 Binary-array.
 
 [Examples]
-Extract measures with temperature values greater than 300 K.
-oph_predicate(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;x-300&apos;,&apos;>0&apos;,&apos;1&apos;,&apos;0&apos;)</abstract>
+Compute the anomaly with respect to the mean value on 30 measures.
+oph_normalize(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;OPH_AVG&apos;,30)</abstract>
         <author>CMCC Foundation</author>
-        <category>Transformation</category>
-        <creationdate>27/07/2013</creationdate>
+        <category>Statistical</category>
+        <creationdate>28/10/2017</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
         <operation type="simple"/>
@@ -43,9 +44,8 @@ oph_predicate(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;x-300&
 		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
 		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
 		<argument type="binary-array" mandatory="yes">measure</argument>
-		<argument type="string" mandatory="yes">expression 0</argument>
-		<argument type="string" mandatory="yes">comparison</argument>
-		<argument type="string" mandatory="yes">expression 1</argument>
-		<argument type="string" mandatory="yes">expression 2</argument>
+		<argument type="oph_operator" mandatory="no" default="'oph_max'" values="'oph_max'|'oph_avg'">operator name</argument>
+		<argument type="long-long" mandatory="no" default="0" minvalue="0" maxvalue="array length">count</argument>
+		<argument type="double" mandatory="no" default="NAN">missingvalue</argument>
     </args>
 </primitive>

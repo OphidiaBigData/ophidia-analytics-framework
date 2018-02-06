@@ -38,18 +38,19 @@ Wait for 200 seconds:
 OPH_TERM: oph_wait timeout=200;
 SUBMISSION STRING: &quot;operator=oph_wait;timeout=200;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Workflow Management</category>
         <creationdate>01/09/2016</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-	<argument type="string" mandatory="no" default="clock" values="clock|input|file">type</argument>
-	<argument type="int" mandatory="no" default="-1">timeout</argument>
-	<argument type="string" mandatory="no" default="duration" values="duration|deadline">timeout_type</argument>
-	<argument type="string" mandatory="no" default="-">key</argument>
-	<argument type="string" mandatory="no" default="-">value</argument>
-	<argument type="string" mandatory="no" default="-">filename</argument>
-	<argument type="string" mandatory="no" default="-">message</argument>
-	<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
+		<argument type="string" mandatory="no" default="clock" values="clock|input|file">type</argument>
+		<argument type="int" mandatory="no" default="-1">timeout</argument>
+		<argument type="string" mandatory="no" default="duration" values="duration|deadline">timeout_type</argument>
+		<argument type="string" mandatory="no" default="-" multivalue="yes">key</argument>
+		<argument type="string" mandatory="no" default="-" multivalue="yes">value</argument>
+		<argument type="string" mandatory="no" default="-">filename</argument>
+		<argument type="string" mandatory="no" default="-">message</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
     </args>
 </operator>

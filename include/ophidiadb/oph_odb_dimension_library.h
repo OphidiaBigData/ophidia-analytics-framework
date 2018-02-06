@@ -170,6 +170,15 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensionin
 int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_dimension * dim, int id_datacube);
 
 /**
+ * \brief Function to retrieve dimensions from OphidiaDB given the id_dimension
+ * \param oDB Pointer to the OphidiaDB
+ * \param id_dimensioninst ID of the dimension instance to be found
+ * \param dimension_name Pointer to string to be filled
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_dim_retrieve_dimension_name_from_instance_id(ophidiadb * oDB, int id_dimensioninst, char **dimension_name);
+
+/**
  * \brief Function to retrieve dimension instances from OphidiaDB given the id_dimensioninst
  * \param oDB Pointer to the OphidiaDB
  * \param id_dimensioninst ID of the dimension instance to be found
@@ -269,12 +278,20 @@ int oph_odb_dim_delete_from_grid_table(ophidiadb * oDB, int id_container);
 /**
  * \brief Function that updates OphidiaDB adding the new grid
  * \param oDB Pointer to OphidiaDB
- * \param grid Pointer to grid to be added
+ * \param grid Pointer to grid to be added (disabled by default)
  * \param last_insertd_id ID of last inserted datacube
  * \param grid_exist Flag set in case a grid with the same name already exists
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid * grid, int *last_insertd_id, int *grid_exist);
+
+/**
+ * \brief Function that updates OphidiaDB adding the new grid
+ * \param oDB Pointer to OphidiaDB
+ * \param id_grid Identifier of the grid to be enabled
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_dim_enable_grid(ophidiadb * oDB, int id_grid);
 
 /**
  * \brief Function that updates OphidiaDB adding the new dimension

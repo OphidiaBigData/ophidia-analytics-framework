@@ -39,16 +39,17 @@ Binary-array.
 Compute the coefficients of the Discrete Wavelet Transform of the input array with the Daubechies mother wavelet with 2 vanishing moments.
 oph_gsl_dwt(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;DAUBECHIES&apos;,4)</abstract>
         <author>CMCC Foundation</author>
+        <category>Transformation</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="simple"/>
+        <operation type="simple"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_double'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
-	<argument type="string" mandatory="no" default="'DAUBECHIES'" values="'DAUBECHIES'|'DAUBECHIES_C'|'HAAR'|'HAAR_C'|'BSPLINE'|'BSPLINE_C'">wavelet family</argument>
-	<argument type="long-long" mandatory="no" default="4">wavelet member</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="string" mandatory="no" default="'DAUBECHIES'" values="'DAUBECHIES'|'DAUBECHIES_C'|'HAAR'|'HAAR_C'|'BSPLINE'|'BSPLINE_C'">wavelet family</argument>
+		<argument type="long-long" mandatory="no" default="4">wavelet member</argument>
     </args>
 </primitive>

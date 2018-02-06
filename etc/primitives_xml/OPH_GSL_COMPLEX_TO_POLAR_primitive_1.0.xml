@@ -25,14 +25,15 @@ Binary-array.
 Get the polar form of an array of complex numbers.
 oph_gsl_complex_to_polar(&apos;OPH_COMPlEX_DOUBLE&apos;,&apos;OPH_COMPLEX_DOUBLE&apos;,measure)</abstract>
         <author>CMCC Foundation</author>
+        <category>Arithmetic</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-	<operation type="simple"/>
+        <operation type="simple"/>
     </info>
     <args>
-	<argument type="oph_type" mandatory="yes" values="'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">input measure type</argument>
-	<argument type="oph_type" mandatory="yes" values="'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">output measure type</argument>
-	<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_complex_double'|'oph_complex_float'|'oph_complex_int'|'oph_complex_long'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
     </args>
 </primitive>

@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
-<primitive name="oph_predicate" version="1.0">
+<primitive name="oph_replace" version="1.0">
     <info>
         <abstract>[Behaviour]
-Evaluates a predicate. If &apos;expression0&apos; satisfies &apos;comparison&apos; then &apos;expression1&apos; is executed, else &apos;expression2&apos; is executed.
-
+Returns an array in which the occurrences of a number in input array are replaced with another number.
+        
 [Parameters]
 - input measure type : Ophidia typing. Supported types are:
 					&apos;oph_double&apos;;
@@ -21,31 +21,27 @@ Evaluates a predicate. If &apos;expression0&apos; satisfies &apos;comparison&apo
 					&apos;oph_short&apos;;
 					&apos;oph_byte&apos;.
 - measure : input measure.
-- expression 0 : first expression.
-- comparison : condition to be verified.
-- expression 1 : expression executed if expression 0 satisfies comparison.
-- expression 2 : expression executed if expression 0 does not satisfy comparison.
-                 
+- old_value : number to be replaced.
+- new_value : new value for the element to be replaced.
+
 [Return type]
 Binary-array.
-
+        
 [Examples]
-Extract measures with temperature values greater than 300 K.
-oph_predicate(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;x-300&apos;,&apos;>0&apos;,&apos;1&apos;,&apos;0&apos;)</abstract>
+Replace all the occurences of number 1 with 2 in a measure.
+oph_replace(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,1,2)</abstract>
         <author>CMCC Foundation</author>
         <category>Transformation</category>
-        <creationdate>27/07/2013</creationdate>
+        <creationdate>23/01/2018</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
-        <operation type="simple"/>
+        <operation type="reduce"/>
     </info>
     <args>
 		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
 		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
 		<argument type="binary-array" mandatory="yes">measure</argument>
-		<argument type="string" mandatory="yes">expression 0</argument>
-		<argument type="string" mandatory="yes">comparison</argument>
-		<argument type="string" mandatory="yes">expression 1</argument>
-		<argument type="string" mandatory="yes">expression 2</argument>
+		<argument type="double" mandatory="no" default="0">old_value</argument>
+		<argument type="double" mandatory="no" default="suppress">new_value</argument>
     </args>
 </primitive>

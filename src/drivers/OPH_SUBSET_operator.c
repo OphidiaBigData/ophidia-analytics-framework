@@ -77,6 +77,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->number_of_dim = 0;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->frags_size = 0;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->grid_name = NULL;
+	((OPH_SUBSET_operator_handle *) handle->operator_handle)->check_grid = 0;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->objkeys_num = -1;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->server = NULL;
@@ -86,7 +87,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->offset = NULL;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->offset_num = 0;
-	((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_type = 0;
+	((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types = NULL;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->execute_error = 0;
 
 	int i, j;
@@ -366,6 +367,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 	oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 
+	char **sub_types = NULL;
+	int number_of_sub_types = 0;
+
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_FILTER_TYPE);
@@ -373,7 +377,33 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			OPH_IN_PARAM_SUBSET_FILTER_TYPE);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_type = !strncmp(value, OPH_SUBSET_TYPE_COORD, OPH_TP_TASKLEN);
+	if (oph_tp_parse_multiple_value_param(value, &sub_types, &number_of_sub_types)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SUBSET_INVALID_INPUT_STRING);
+		oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (number_of_sub_dims && (number_of_sub_types > number_of_sub_dims)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SUBSET_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
+		oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types = (char *) calloc(1 + number_of_sub_dims, sizeof(char));
+	if (!((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "subset_types");
+		oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+	if (number_of_sub_dims) {
+		for (i = 0; i < number_of_sub_types; ++i)
+			((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types[i] = !strncmp(sub_types[i], OPH_SUBSET_TYPE_COORD, OPH_TP_TASKLEN);
+		if (number_of_sub_types == 1)
+			for (; i < number_of_sub_dims; ++i)
+				((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types[i] = ((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types[0];
+	}
+	oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SCHEDULE_ALGORITHM);
 	if (!value) {
@@ -396,6 +426,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CHECK_GRID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CHECK_GRID);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_SUBSET_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CHECK_GRID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN))
+		((OPH_SUBSET_operator_handle *) handle->operator_handle)->check_grid = 1;
 
 	value = hashtbl_get(task_tbl, OPH_ARG_IDJOB);
 	if (!value)
@@ -596,7 +635,7 @@ int task_init(oph_operator_struct * handle)
 			size_string = &(size_string_vector[d][0]);
 			snprintf(size_string, OPH_COMMON_BUFFER_LEN, "%lld,%lld", block_size, dim_size[d][dim_number[d] - 1]);
 
-			if (!((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_type) {
+			if (!((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types[d]) {
 
 				// Parsing indexes
 				subset_struct[d] = 0;
@@ -658,7 +697,7 @@ int task_init(oph_operator_struct * handle)
 				goto __OPH_EXIT_1;
 			}
 
-			if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_type) {
+			if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types[d]) {
 
 				if (compressed) {
 					n = snprintf(operation, OPH_COMMON_BUFFER_LEN, "uncompress(%s)", MYSQL_DIMENSION);
@@ -1454,7 +1493,7 @@ int task_init(oph_operator_struct * handle)
 					    && (stored_dim_insts[d].size == dim_inst[l].size) && (stored_dim_insts[d].concept_level == dim_inst[l].concept_level))
 						break;
 				//If original dimension is found and has size 0 then do not compare
-				if (!(d < stored_dim_num && !dim_inst[l].size)) {
+				if (!((d < stored_dim_num) && !dim_inst[l].size) && ((OPH_SUBSET_operator_handle *) handle->operator_handle)->check_grid) {
 					if ((d >= stored_dim_num)
 					    || oph_dim_compare_dimension(db, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, dim_inst[l].size, dim_row, stored_dim_insts[d].fk_id_dimension_index,
 									 &match) || match) {
@@ -1527,6 +1566,12 @@ int task_init(oph_operator_struct * handle)
 		if (stored_dim_insts)
 			free(stored_dim_insts);
 
+		if (id_grid && oph_odb_dim_enable_grid(oDB, id_grid)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to enable grid\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, "Unable to enable grid\n");
+			free(cubedims);
+			goto __OPH_EXIT_1;
+		}
 		// End - Dimension table management
 
 		oph_subset_vector_free(subset_struct, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->number_of_dim);
@@ -2078,6 +2123,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->offset) {
 		free((double *) ((OPH_SUBSET_operator_handle *) handle->operator_handle)->offset);
 		((OPH_SUBSET_operator_handle *) handle->operator_handle)->offset = NULL;
+	}
+	if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types) {
+		free((char *) ((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types);
+		((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types = NULL;
 	}
 	free((OPH_SUBSET_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;

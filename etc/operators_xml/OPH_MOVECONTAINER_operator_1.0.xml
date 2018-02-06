@@ -32,16 +32,17 @@ Move and rename the visible container &quot;container1&quot; from &quot;/session
 OPH_TERM: oph_movecontainer container=folder1/container1|folder1/folder2/container2;cwd=/session-code1;
 SUBMISSION STRING: &quot;operator=oph_movecontainer;container=folder1/container1|folder1/folder2/container2;cwd=/session-code1;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Virtual File System</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>write</permission>
+        <permission>write</permission>
     </info>
     <args>
-        <argument type="string" mandatory="yes">container</argument>
-        <argument type="string" mandatory="yes">cwd</argument>
-        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-        <argument type="string" mandatory="no" default="null">sessionid</argument>
-        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-	<argument type="string" mandatory="no" default="all" values="all|none|movecontainer">objkey_filter</argument>
+		<argument type="string" mandatory="yes">container</argument>
+		<argument type="string" mandatory="yes">cwd</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|movecontainer">objkey_filter</argument>
     </args>
 </operator>

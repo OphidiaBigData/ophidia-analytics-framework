@@ -445,7 +445,7 @@ int get_filters_string(char **container_filter, int container_filter_num, char *
 		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "AND (");
 		m += snprintf(query + m, MYSQL_BUFLEN - m, m ? "AND (" : "(");
 		for (i = 0; i < container_filter_num; i++) {
-			n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "%scontainer.containername LIKE '%s'", i ? " OR " : "", container_filter[i]);
+			n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "%scontainername LIKE '%s'", i ? " OR " : "", container_filter[i]);
 			m += snprintf(query + m, MYSQL_BUFLEN - m, "%scontainer=%s", i ? " OR " : "", container_filter[i]);
 		}
 		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, ") ");
@@ -458,10 +458,10 @@ int get_filters_string(char **container_filter, int container_filter_num, char *
 		for (i = k = t = 0; i < metadata_key_filter_num; i++, t = 0) {
 			strcpy(tmp, metadata_key_filter[i]);
 			for (_tmp = tmp, sp = NULL; (pch = strtok_r(_tmp, OPH_SEARCH_AND_SEPARATOR, &sp)); _tmp = NULL, k++, t++) {
-				n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "%s(metadatakey.label LIKE '%s'", k ? (t ? " AND " : " OR ") : "", pch);
+				n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "%s(label LIKE '%s'", k ? (t ? " AND " : " OR ") : "", pch);
 				m += snprintf(query + m, MYSQL_BUFLEN - m, "%s(key=%s", k ? (t ? " AND " : " OR ") : "", pch);
 				if (strcasecmp(metadata_value_filter[0], OPH_COMMON_ALL_FILTER) && (j < metadata_value_filter_num)) {
-					n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, " AND CONVERT(metadatainstance.value USING latin1) LIKE '%%%s%%')", metadata_value_filter[j]);
+					n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, " AND CONVERT(value USING latin1) LIKE '%%%s%%')", metadata_value_filter[j]);
 					m += snprintf(query + m, MYSQL_BUFLEN - m, " AND value=%s)", metadata_value_filter[j]);
 					j++;
 				} else {
@@ -478,7 +478,7 @@ int get_filters_string(char **container_filter, int container_filter_num, char *
 		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "AND (");
 		m += snprintf(query + m, MYSQL_BUFLEN - m, m ? "AND (" : "(");
 		for (i = j, k = 0; i < metadata_value_filter_num; i++, k++) {
-			n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "%sCONVERT(metadatainstance.value USING latin1) LIKE '%%%s%%'", k ? " OR " : "", metadata_value_filter[i]);
+			n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "%sCONVERT(value USING latin1) LIKE '%%%s%%'", k ? " OR " : "", metadata_value_filter[i]);
 			m += snprintf(query + m, MYSQL_BUFLEN - m, "%svalue=%s", k ? " OR " : "", metadata_value_filter[i]);
 		}
 		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, ") ");

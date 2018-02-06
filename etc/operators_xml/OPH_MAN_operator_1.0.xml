@@ -35,17 +35,18 @@ Get the description of the operator &quot;oph_list&quot; :
 OPH_TERM: oph_man function=oph_list;function_version=latest;
 SUBMISSION STRING: &quot;operator=oph_man;function=oph_list;function_version=latest;&quot;</abstract>
         <author>CMCC Foundation</author>
+        <category>Miscellaneous</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-	<permission>read</permission>
+        <permission>read</permission>
     </info>
     <args>
-        <argument type="string" mandatory="yes">function</argument>
-        <argument type="string" mandatory="no" default="latest">function_version</argument>
-        <argument type="string" mandatory="no" default="operator" values="operator|primitive">function_type</argument>
-        <argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-        <argument type="string" mandatory="no" default="null">sessionid</argument>
-        <argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-        <argument type="string" mandatory="no" default="all" values="all|none|man_info|man_args|man_function|man_multiargs">objkey_filter</argument>
+		<argument type="string" mandatory="yes">function</argument>
+		<argument type="string" mandatory="no" default="latest">function_version</argument>
+		<argument type="string" mandatory="no" default="operator" values="operator|primitive">function_type</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|man_info|man_args|man_function|man_multiargs">objkey_filter</argument>
     </args>
 </operator>

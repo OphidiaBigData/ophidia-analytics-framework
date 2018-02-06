@@ -356,6 +356,61 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 	return OPH_ODB_SUCCESS;
 }
 
+int oph_odb_dim_retrieve_dimension_name_from_instance_id(ophidiadb * oDB, int id_dimensioninst, char **dimension_name)
+{
+	if (!oDB || !id_dimensioninst || !dimension_name) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	*dimension_name = NULL;
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char query[MYSQL_BUFLEN];
+	int n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_DIM_RETRIEVE_DIMENSION_FROM_INSTANCE_ID, id_dimensioninst);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+
+	if (mysql_num_rows(res) != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if (mysql_field_count(oDB->conn) != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if ((row = mysql_fetch_row(res)) != NULL)
+		*dimension_name = strndup(row[0], OPH_ODB_DIM_DIMENSION_SIZE);
+
+	if (!*dimension_name) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Memory error\n");
+		mysql_free_result(res);
+		return OPH_ODB_MEMORY_ERROR;
+	}
+
+	mysql_free_result(res);
+
+	return OPH_ODB_SUCCESS;
+}
+
 //Note it retrieves grid associated to the specified container
 int oph_odb_dim_retrieve_grid_id(ophidiadb * oDB, char *gridname, int id_container, int *id_grid)
 {
@@ -1050,6 +1105,33 @@ int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid *
 
 		if (grid_exist)
 			*grid_exist = 1;
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_dim_enable_grid(ophidiadb * oDB, int id_grid)
+{
+	if (!oDB || !id_grid) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char insertQuery[MYSQL_BUFLEN];
+	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_DIM_ENABLE_GRID, id_grid);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, insertQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	return OPH_ODB_SUCCESS;

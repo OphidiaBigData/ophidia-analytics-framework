@@ -69,6 +69,7 @@ struct _OPH_AGGREGATE_operator_handle {
 	char *measure_type;
 	int compressed;
 	char *grid_name;
+	char check_grid;
 	char **objkeys;
 	int objkeys_num;
 	oph_ioserver_handler *server;
