@@ -73,7 +73,7 @@ Show folders, visible containers and datacubes within a session :
 OPH_TERM: oph_list level=2;cwd=/session-code;
 SUBMISSION STRING: &quot;operator=oph_list;level=2;cwd=/session-code;&quot;</abstract>
         <author>CMCC Foundation</author>
-        <category>Virtual File System Management</category>
+        <category>Virtual File System</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <permission>read</permission>

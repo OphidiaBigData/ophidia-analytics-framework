@@ -599,6 +599,7 @@ DROP TABLE IF EXISTS `grid`;
 CREATE TABLE `grid` (
   `idgrid` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `gridname` varchar(256) NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`idgrid`),
   UNIQUE KEY (`gridname`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
@@ -800,13 +801,15 @@ DROP TABLE IF EXISTS `metadatainstance`;
 CREATE TABLE `metadatainstance` (
   `idmetadatainstance` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `iddatacube` int(10) unsigned NOT NULL,
-  `idkey` int(10) unsigned NOT NULL,
+  `idkey` int(10) unsigned DEFAULT NULL,
   `idtype` int(10) unsigned NOT NULL,
+  `label` varchar(256) NOT NULL,
+  `variable` varchar(256) DEFAULT NULL,
   `value` LONGBLOB NOT NULL,
   `size` int(10) unsigned NOT NULL DEFAULT 1,
   PRIMARY KEY (`idmetadatainstance`),
   FOREIGN KEY (`iddatacube`) REFERENCES `datacube` (`iddatacube`) ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY (`idkey`) REFERENCES `metadatakey` (`idkey`) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (`idkey`) REFERENCES `metadatakey` (`idkey`) ON DELETE SET NULL ON UPDATE CASCADE,
   FOREIGN KEY (`idtype`) REFERENCES `metadatatype` (`idtype`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;

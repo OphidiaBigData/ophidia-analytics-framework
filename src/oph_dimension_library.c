@@ -800,6 +800,8 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 
 		tm_value.tm_year += 1900;
 		tm_value.tm_mon++;
+		if (!n && !tm_value.tm_mday)
+			tm_value.tm_mday++;
 		if (oph_date_to_day(tm_value.tm_year, tm_value.tm_mon, tm_value.tm_mday, &value_time, dim)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
 			return OPH_DIM_DATA_ERROR;

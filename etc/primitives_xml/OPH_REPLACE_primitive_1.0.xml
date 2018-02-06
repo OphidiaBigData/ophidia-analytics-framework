@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_replace" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Returns an array in which the occurrences of a number in input array are replaced with another number.
+        
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- old_value : number to be replaced.
+- new_value : new value for the element to be replaced.
+
+[Return type]
+Binary-array.
+        
+[Examples]
+Replace all the occurences of number 1 with 2 in a measure.
+oph_replace(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,1,2)</abstract>
+        <author>CMCC Foundation</author>
+        <category>Transformation</category>
+        <creationdate>23/01/2018</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+        <operation type="reduce"/>
+    </info>
+    <args>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="double" mandatory="no" default="0">old_value</argument>
+		<argument type="double" mandatory="no" default="suppress">new_value</argument>
+    </args>
+</primitive>

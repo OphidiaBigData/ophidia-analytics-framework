@@ -90,7 +90,7 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 
 				for (i = 0; i < handle->metadata_keys_num; ++i) {
 					//retrieve key id
-					if (oph_odb_meta_retrieve_metadatakey_id(oDB, handle->metadata_keys[i], handle->variable, handle->id_container_input, 1, &idkey)) {
+					if (oph_odb_meta_retrieve_metadatakey_id(oDB, handle->metadata_keys[i], handle->variable, handle->id_container_input, &idkey)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_RETRIEVE_KEY_ID_ERROR, handle->metadata_keys[i]);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_KEY_ID_ERROR, handle->metadata_keys[i]);
 						if (handle->metadata_keys_num > 1)
@@ -99,7 +99,8 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 					}
 					//insert into medatainstance table
 					if (oph_odb_meta_insert_into_metadatainstance_table
-					    (oDB, handle->id_datacube_input, idkey, idtype, handle->metadata_keys_num > 1 ? metadata_values[i] : handle->metadata_value, &idmetadatainstance)) {
+					    (oDB, handle->id_datacube_input, idkey, idtype, handle->metadata_keys[i], handle->variable,
+					     handle->metadata_keys_num > 1 ? metadata_values[i] : handle->metadata_value, &idmetadatainstance)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
 						if (handle->metadata_keys_num > 1)

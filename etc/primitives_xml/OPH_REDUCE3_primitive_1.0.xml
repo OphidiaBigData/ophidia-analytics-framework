@@ -46,9 +46,8 @@ Reduces a measure array performing the specified operation on blocks of elements
 Binary-array.
         
 [Examples]
-Reduces a measure array computing the mean on groups of elements as specified in count_list with the internal dimension of size 15 and the external
-to-be-reduced one of size 10.
-oph_reduce3(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;OPH_AVG&apos;,1,count_list,15,10)</abstract>
+Reduces a measure array computing the mean on groups of elements as specified in count_list with the internal dimension of size 15 and the external to-be-reduced one of size 10.
+oph_reduce3(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;OPH_AVG&apos;,count_list,15,10)</abstract>
         <author>CMCC Foundation</author>
         <category>Statistical</category>
         <creationdate>19/10/2013</creationdate>

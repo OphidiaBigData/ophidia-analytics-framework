@@ -43,7 +43,7 @@ SUBMISSION STRING: &quot;operator=oph_folder;command=cd;path=folder1;cwd=/absolu
 OPH_TERM: oph_folder command=mv;path=fold1|fold2;cwd=/abs/path;
 SUBMISSION STRING: &quot;operator=oph_folder;command=mv;path=fold1|fold2;cwd=/abs/path&quot;</abstract>
         <author>CMCC Foundation</author>
-        <category>Virtual File System Management</category>
+        <category>Virtual File System</category>
         <creationdate>01/10/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <permission>read</permission>
