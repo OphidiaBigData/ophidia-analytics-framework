@@ -2107,17 +2107,7 @@ int task_init(oph_operator_struct * handle)
 							frag_param_error = 1;
 						}
 					} else {
-						if (final_frag_number % user_arg_prod != 0) {
-							if (run) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-								goto __OPH_EXIT_1;
-							} else {
-								frag_param_error = 1;
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-							}
-						} else
-							*fragxdb_number = final_frag_number / user_arg_prod;
+						*fragxdb_number = (int) ceilf((float) final_frag_number / user_arg_prod);
 					}
 				} else {
 					//User has set all parameters - in this case allow further fragmentation
