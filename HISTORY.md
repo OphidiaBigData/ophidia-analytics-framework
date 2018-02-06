@@ -1,4 +1,41 @@
 
+## v1.2.0 - 2018-02-06
+
+### Fixed:
+
+- Improve metadata management to prevent deadlocks [#22](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/22)
+- Drop old reference to autocommit
+- Bug in handling parameter 'realpath' of OPH_FS
+- Dimension type check in OPH_IMPORTNC
+- Change auto-setting of concept level to monthly
+- Bug [#17](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/17)
+- XML description of OPH_IMPORTFITS
+
+### Added:
+
+- Add support for rollback in case of errors [#27](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/27)
+- Add optional flag for grid check [#26](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/26)
+- New primitive oph_normalize [#25](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/25)
+- New primitive oph_replace [#23](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/23)
+- Fields 'category' and 'multivalue' to XML descriptions
+- Calendar '365_day'
+- New primitive oph_padding
+- New options to handle directories to OPH_FS
+- Option OPH_CDD to OPH_GET_CONFIG
+- Print input command and output in text log of OPH_SCRIPT
+
+### Changed:
+
+- OphidiaDB to count number of data cubes managed by the hosts [#29](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/29)
+- Allow to import data without dimension values [#28](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/28)
+- Extend subset_types to allow index/coord per dimension [#24](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/24)
+- Change VFS category name
+- Relax error on folder creation in OPH_EXPORTNC
+- Allow to merge one cube with OPH_MERGECUBES
+- Adapt OPH_SCRIPT to include stdout and stderr in JSON Response
+- Remove check for maximum query size from OPH_MERGECUBE
+- Queries of OPH_SEARCH
+
 ## v1.1.0 - 2017-07-28
 
 ### Fixed:
