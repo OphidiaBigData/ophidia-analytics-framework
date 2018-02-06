@@ -45,7 +45,7 @@ Binary-array.
 
 [Examples]
 Compute the mean on 30 measures.
-oph_reduce(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;OPH_AVG&apos;,1,30)</abstract>
+oph_reduce(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;OPH_AVG&apos;,30)</abstract>
         <author>CMCC Foundation</author>
         <category>Statistical</category>
         <creationdate>27/07/2013</creationdate>
