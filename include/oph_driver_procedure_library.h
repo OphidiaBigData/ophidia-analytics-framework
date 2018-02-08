@@ -42,6 +42,6 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
  * \param id_container Id of the container where the datacube belongs
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dproc_clean_odb(ophidiadb *oDB, int id_datacube, int id_container);
+int oph_dproc_clean_odb(ophidiadb * oDB, int id_datacube, int id_container);
 
 #endif				/* __OPH_DRIVER_PROC_H__ */

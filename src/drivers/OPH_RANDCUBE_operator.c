@@ -1624,8 +1624,7 @@ int task_destroy(oph_operator_struct * handle)
 					int start_position =
 					    (int) floor((double) ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id /
 							((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragxdb_number);
-					int row_number =
-					    (int)
+					int row_number = (int)
 					    ceil((double)
 						 (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id +
 						  ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_number) /
