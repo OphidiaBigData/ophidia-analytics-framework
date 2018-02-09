@@ -21,7 +21,7 @@ AC_INIT([ophidia-analytics-framework], [1.1.0], [ophidia-info@cmcc.it])
 
 AC_CONFIG_AUX_DIR([config])
 
-AM_INIT_AUTOMAKE([foreign])
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_SRCDIR([src])
