@@ -160,7 +160,7 @@ libophidiadb_la_LIBADD = -lz -lm ${MYSQL_LDFLAGS} @LIBLTDL@ -L. -ldebug -loph_pi
 liboph_dimension_la_SOURCES = oph_dimension_library.c
 liboph_dimension_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include @INCLTDL@ ${lib_CFLAGS}
 liboph_dimension_la_LDFLAGS = -static $(LIB_OPERATOR)
-liboph_dimension_la_LIBADD = -lz -lm ${MYSQL_LDFLAGS} @LIBLTDL@ -L. -ldebug -loph_binary_io 
+liboph_dimension_la_LIBADD = -lz -lm ${MYSQL_LDFLAGS} @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_hierarchy 
 
 liboph_datacube_la_SOURCES = oph_datacube_library.c
 liboph_datacube_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}

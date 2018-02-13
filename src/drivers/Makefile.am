@@ -107,7 +107,7 @@ liboph_aggregate2operator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_da
 liboph_applyoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(XML_CFLAGS)
 liboph_applyoperator_la_SOURCES = OPH_APPLY_operator.c
 liboph_applyoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_applyoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension $(XML_LIBS) -loph_driver_proc
+liboph_applyoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy $(XML_LIBS) -loph_driver_proc
 
 liboph_createcontaineroperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"
 liboph_createcontaineroperator_la_SOURCES = OPH_CREATECONTAINER_operator.c
@@ -136,8 +136,8 @@ liboph_cubesizeoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_data
 
 liboph_deleteoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_deleteoperator_la_SOURCES = OPH_DELETE_operator.c
-liboph_deleteoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_deleteoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver  -loph_driver_proc
+liboph_deleteoperator_la_LDFLAGS = -module -avoid-version -no-undefined 
+liboph_deleteoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} -loph_driver_proc $(BASIC_LIB) -loph_datacube -loph_ioserver 
 
 liboph_deletecontaineroperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_deletecontaineroperator_la_SOURCES = OPH_DELETECONTAINER_operator.c
@@ -147,17 +147,17 @@ liboph_deletecontaineroperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -lo
 liboph_drilldownoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_drilldownoperator_la_SOURCES = OPH_DRILLDOWN_operator.c
 liboph_drilldownoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_drilldownoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_driver_proc
+liboph_drilldownoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_driver_proc
 
 liboph_duplicateoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_duplicateoperator_la_SOURCES = OPH_DUPLICATE_operator.c
 liboph_duplicateoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_duplicateoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_driver_proc
+liboph_duplicateoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_driver_proc
 
 liboph_explorecubeoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} 
 liboph_explorecubeoperator_la_SOURCES = OPH_EXPLORECUBE_operator.c
 liboph_explorecubeoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_explorecubeoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_subset -loph_utility
+liboph_explorecubeoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_subset -loph_utility
 
 liboph_folderoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_folderoperator_la_SOURCES = OPH_FOLDER_operator.c
@@ -182,7 +182,7 @@ liboph_instancesoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
 liboph_intercubeoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_intercubeoperator_la_SOURCES = OPH_INTERCUBE_operator.c
 liboph_intercubeoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_intercubeoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_driver_proc
+liboph_intercubeoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_driver_proc
 
 if HAVE_NETCDF
 liboph_exportncoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} $(NETCDF_CFLAGS) -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"
@@ -230,17 +230,17 @@ liboph_manoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_render_ou
 liboph_mergeoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_mergeoperator_la_SOURCES = OPH_MERGE_operator.c
 liboph_mergeoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_mergeoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_driver_proc
+liboph_mergeoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_driver_proc
 
 liboph_mergecubesoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_mergecubesoperator_la_SOURCES = OPH_MERGECUBES_operator.c
 liboph_mergecubesoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_mergecubesoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_driver_proc
+liboph_mergecubesoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_driver_proc
 
 liboph_mergecubes2operator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_mergecubes2operator_la_SOURCES = OPH_MERGECUBES2_operator.c
 liboph_mergecubes2operator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_mergecubes2operator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_driver_proc
+liboph_mergecubes2operator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_driver_proc
 
 liboph_metadataoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"
 liboph_metadataoperator_la_SOURCES = OPH_METADATA_operator.c
@@ -260,7 +260,7 @@ liboph_operators_listoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
 liboph_permuteoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_permuteoperator_la_SOURCES = OPH_PERMUTE_operator.c
 liboph_permuteoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_permuteoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_driver_proc
+liboph_permuteoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_driver_proc
 
 liboph_primitives_listoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_primitives_listoperator_la_SOURCES = OPH_PRIMITIVES_LIST_operator.c
@@ -270,7 +270,7 @@ liboph_primitives_listoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -lo
 liboph_publishoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"
 liboph_publishoperator_la_SOURCES = OPH_PUBLISH_operator.c
 liboph_publishoperator_la_LDFLAGS = -module -avoid-version -no-undefined 
-liboph_publishoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_directory -loph_datacube -loph_ioserver -loph_dimension
+liboph_publishoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_directory -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy
 
 liboph_randcubeoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
 liboph_randcubeoperator_la_SOURCES = OPH_RANDCUBE_operator.c
@@ -295,7 +295,7 @@ liboph_restorecontaineroperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -l
 liboph_rollupoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_rollupoperator_la_SOURCES = OPH_ROLLUP_operator.c
 liboph_rollupoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_rollupoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_driver_proc
+liboph_rollupoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_driver_proc
 
 liboph_scriptoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"
 liboph_scriptoperator_la_SOURCES = OPH_SCRIPT_operator.c
@@ -315,17 +315,17 @@ liboph_showgridoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_dime
 liboph_splitoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_splitoperator_la_SOURCES = OPH_SPLIT_operator.c
 liboph_splitoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_splitoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_driver_proc
+liboph_splitoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension  -loph_hierarchy -loph_driver_proc
 
 liboph_subsetoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_subsetoperator_la_SOURCES = OPH_SUBSET_operator.c
 liboph_subsetoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_subsetoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_subset -loph_datacube -loph_ioserver -loph_dimension -loph_driver_proc
+liboph_subsetoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_subset -loph_datacube -loph_ioserver -loph_dimension  -loph_hierarchy -loph_driver_proc
 
 liboph_subset2operator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} 
 liboph_subset2operator_la_SOURCES = OPH_SUBSET2_operator.c
 liboph_subset2operator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_subset2operator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_subset -loph_datacube -loph_ioserver -loph_dimension -loph_driver_proc
+liboph_subset2operator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_subset -loph_datacube -loph_ioserver -loph_dimension  -loph_hierarchy -loph_driver_proc
 
 liboph_tasksoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_tasksoperator_la_SOURCES = OPH_TASKS_operator.c
