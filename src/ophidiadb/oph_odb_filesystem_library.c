@@ -1105,17 +1105,34 @@ int oph_odb_fs_insert_into_container_table(ophidiadb * oDB, oph_odb_container * 
 
 	char insertQuery[MYSQL_BUFLEN];
 	int n;
-	if (cont->id_vocabulary) {
-		if (cont->id_parent)
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_3, cont->id_folder, cont->id_parent, cont->container_name, cont->operation,
-				     cont->id_vocabulary);
-		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_4, cont->id_folder, cont->container_name, cont->operation, cont->id_vocabulary);
+	if (!strlen(cont->description)) {
+		if (cont->id_vocabulary) {
+			if (cont->id_parent)
+				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_3, cont->id_folder, cont->id_parent, cont->container_name, cont->operation,
+					     cont->id_vocabulary);
+			else
+				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_4, cont->id_folder, cont->container_name, cont->operation, cont->id_vocabulary);
+		} else {
+			if (cont->id_parent)
+				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER, cont->id_folder, cont->id_parent, cont->container_name, cont->operation);
+			else
+				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_2, cont->id_folder, cont->container_name, cont->operation);
+		}
 	} else {
-		if (cont->id_parent)
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER, cont->id_folder, cont->id_parent, cont->container_name, cont->operation);
-		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_2, cont->id_folder, cont->container_name, cont->operation);
+		if (cont->id_vocabulary) {
+			if (cont->id_parent)
+				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_D_3, cont->id_folder, cont->id_parent, cont->container_name, cont->operation,
+					     cont->id_vocabulary, cont->description);
+			else
+				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_D_4, cont->id_folder, cont->container_name, cont->operation, cont->id_vocabulary,
+					     cont->description);
+		} else {
+			if (cont->id_parent)
+				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_D, cont->id_folder, cont->id_parent, cont->container_name, cont->operation,
+					     cont->description);
+			else
+				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_D_2, cont->id_folder, cont->container_name, cont->operation, cont->description);
+		}
 	}
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");

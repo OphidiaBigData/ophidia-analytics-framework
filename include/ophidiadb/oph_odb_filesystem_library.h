@@ -36,6 +36,8 @@
 
 #define OPH_ODB_FS_CHARS_NUM 14
 
+#define OPH_ODB_FS_DESCRIPTION_SIZE 2048
+
 /**
  * \brief Structure that contains a container
  * \param id_folder id of the folder
@@ -49,6 +51,7 @@ typedef struct {
 	char container_name[OPH_ODB_FS_CONTAINER_SIZE + 1];
 	char operation[OPH_ODB_FS_CONTAINER_OPERATOR_SIZE + 1];
 	int id_vocabulary;
+	char description[OPH_ODB_FS_DESCRIPTION_SIZE + 1];
 } oph_odb_container;
 
 /**
