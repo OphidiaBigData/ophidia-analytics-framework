@@ -68,6 +68,8 @@
 #define MYSQL_QUERY_FS_RETRIEVE_CONTAINER_ID 		"SELECT idcontainer from `container` where containername = '%s' AND idfolder = %d AND hidden = %d;"
 #define MYSQL_QUERY_FS_RETRIEVE_CONTAINER_ID2 		"SELECT idcontainer from `container` where containername = '%s' AND idfolder = %d AND hidden = 0;"
 
+#define MYSQL_QUERY_FS_RETRIEVE_CONTAINER	 		"SELECT idcontainer, container.description, name FROM `container` LEFT JOIN `vocabulary` ON container.idvocabulary = vocabulary.idvocabulary WHERE containername = '%s' AND idfolder = %d AND hidden = 0;"
+
 #define MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_NAME	"UPDATE `container` SET containername = CONCAT(containername, CONCAT('_', idcontainer)) WHERE idcontainer = '%d'"
 
 #endif				/* __OPH_ODB_FS_QUERY_H__ */

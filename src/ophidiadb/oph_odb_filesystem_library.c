@@ -1201,6 +1201,64 @@ int oph_odb_fs_retrieve_container_id_from_container_name(ophidiadb * oDB, int fo
 	return OPH_ODB_SUCCESS;
 }
 
+int oph_odb_fs_retrieve_container_from_container_name(ophidiadb * oDB, int folder_id, char *container_name, int *id_container, char **description, char **vocabulary)
+{
+	if (!oDB || !container_name || !folder_id || !id_container) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	*id_container = 0;
+	if (description)
+		*description = 0;
+	if (vocabulary)
+		*vocabulary = 0;
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char selectQuery[MYSQL_BUFLEN];
+	int n;
+	n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_RETRIEVE_CONTAINER, container_name, folder_id);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, selectQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+	int num_rows = mysql_num_rows(res);
+	if (num_rows != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if (mysql_field_count(oDB->conn) != 3) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	row = mysql_fetch_row(res);
+	*id_container = (int) strtol(row[0], NULL, 10);
+	if (description && row[1])
+		*description = strdup(row[1]);
+	if (vocabulary && row[2])
+		*vocabulary = strdup(row[2]);
+
+	mysql_free_result(res);
+
+	return OPH_ODB_SUCCESS;
+}
+
 int oph_odb_fs_check_if_container_not_present(ophidiadb * oDB, char *container_name, int folder_id, int *result)
 {
 	*result = 0;

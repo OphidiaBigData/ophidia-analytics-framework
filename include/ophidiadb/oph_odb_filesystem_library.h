@@ -305,4 +305,16 @@ int oph_odb_fs_has_ascendant_equal_to_folder(ophidiadb * oDB, int folderid, int 
  */
 int oph_odb_fs_add_suffix_to_container_name(ophidiadb * oDB, int containerid);
 
+/**
+ * \brief Function used to retrieve container info from container name
+ * \param Pointer to OphidiaDB
+ * \param container_name name of the container
+ * \param folder_id id of folder where the container should be
+ * \param id_container ID of the container
+ * \param description Pointer to an output string containing the description
+ * \param vocabulary Pointer to an output string containing the vocabulary
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_fs_retrieve_container_from_container_name(ophidiadb * oDB, int folder_id, char *container_name, int *id_container, char **description, char **vocabulary);
+
 #endif				/* __OPH_ODB_FS_H__ */
