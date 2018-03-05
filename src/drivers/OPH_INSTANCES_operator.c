@@ -67,6 +67,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_INSTANCES_operator_handle *) handle->operator_handle)->dbms_status = NULL;
 	((OPH_INSTANCES_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_INSTANCES_operator_handle *) handle->operator_handle)->objkeys_num = -1;
+	((OPH_INSTANCES_operator_handle *) handle->operator_handle)->action = 0;	// read mode
+	((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids = NULL;
+	((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids_num = -1;
+	((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user = 0;
 
 	ophidiadb *oDB = &((OPH_INSTANCES_operator_handle *) handle->operator_handle)->oDB;
 
@@ -76,11 +80,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	oph_odb_init_ophidiadb(oDB);
 
-
 	if (oph_odb_read_ophidiadb_config_file(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_OPHIDIADB_CONFIGURATION_FILE_NO_CONTAINER);
-
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	//3 - Fill struct with the correct data
@@ -104,7 +106,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_VISUALIZZATION_LEVEL);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_VISUALIZZATION_LEVEL);
-
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	((OPH_INSTANCES_operator_handle *) handle->operator_handle)->level = (int) strtol(value, NULL, 10);
@@ -114,34 +115,54 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		((OPH_INSTANCES_operator_handle *) handle->operator_handle)->level = 1;
 	}
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_ACTION);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_PARTITION_NAME);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_PARTITION_NAME);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strcmp(value, "add"))
+		((OPH_INSTANCES_operator_handle *) handle->operator_handle)->action = 1;
+	else if (!strcmp(value, "remove"))
+		((OPH_INSTANCES_operator_handle *) handle->operator_handle)->action = 2;
+	else if (strcmp(value, "read")) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "INSTANCES action unrecognized\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "INSTANCES action unrecognized\n");
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_HOSTNAME_FILTER);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_HOSTNAME_FILTER);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_HOSTNAME_FILTER);
-
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strcmp(value, OPH_COMMON_ALL_FILTER) != 0) {
-		if (!(((OPH_INSTANCES_operator_handle *) handle->operator_handle)->hostname = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		if (oph_tp_parse_multiple_value_param
+		    (value, &((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids, &((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids_num)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "hostname");
-
-			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
+		if (!((OPH_INSTANCES_operator_handle *) handle->operator_handle)->action && (((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids_num != 1)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Only one hostname has to be set in read mode\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "hostname");
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		if (((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids_num)
+			((OPH_INSTANCES_operator_handle *) handle->operator_handle)->hostname = ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids[0];
 	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_PARTITION_NAME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_PARTITION_NAME);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_PARTITION_NAME);
-
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strcmp(value, OPH_COMMON_ALL_FILTER) != 0) {
 		if (!(((OPH_INSTANCES_operator_handle *) handle->operator_handle)->partition_name = (char *) strndup(value, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "partition_name");
-
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 	}
@@ -150,7 +171,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_FS_TYPE_FILTER);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_FS_TYPE_FILTER);
-
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strcmp(value, OPH_COMMON_IO_FS_LOCAL) == 0) {
@@ -203,10 +223,23 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 	}
 
+	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
 	if (oph_odb_connect_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_OPHIDIADB_CONNECTION_ERROR_NO_CONTAINER);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+
+	if (oph_odb_user_retrieve_user_id(oDB, value, &(((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to extract userid.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_USER_ID_ERROR);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -246,6 +279,7 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	ophidiadb *oDB = &((OPH_INSTANCES_operator_handle *) handle->operator_handle)->oDB;
+	int action = ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->action;
 	int level = ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->level;
 	char *hostname = ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->hostname;
 	char *partition_name = ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->partition_name;
@@ -261,888 +295,1022 @@ int task_execute(oph_operator_struct * handle)
 	    oph_json_is_objkey_printable(((OPH_INSTANCES_operator_handle *) handle->operator_handle)->objkeys, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->objkeys_num,
 					 OPH_JSON_OBJKEY_INSTANCES);
 
-	switch (level) {
-		case 3:
-			if (partition_name) {
-				printf("+----------------------+----------------------+-------------+\n");
-				printf("| %-20s | %-20s | %-11s |\n", "HOST PARTITION", "HOST NAME", "HOST STATUS");
-				printf("+----------------------+----------------------+-------------+\n");
+	switch (action) {
 
-				// SET TABLE COLUMN FOR JSON
-				if (objkey_printable) {
-					char **jsonkeys = NULL;
-					char **fieldtypes = NULL;
-					int num_fields = 3, iii, jjj = 0;
-					jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
-					if (!jsonkeys) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "keys");
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					jsonkeys[jjj] = strdup("HOST PARTITION");
-					if (!jsonkeys[jjj]) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-						for (iii = 0; iii < jjj; iii++)
-							if (jsonkeys[iii])
-								free(jsonkeys[iii]);
-						if (jsonkeys)
-							free(jsonkeys);
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					jjj++;
-					jsonkeys[jjj] = strdup("HOST NAME");
-					if (!jsonkeys[jjj]) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-						for (iii = 0; iii < jjj; iii++)
-							if (jsonkeys[iii])
-								free(jsonkeys[iii]);
-						if (jsonkeys)
-							free(jsonkeys);
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					jjj++;
-					jsonkeys[jjj] = strdup("HOST STATUS");
-					if (!jsonkeys[jjj]) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-						for (iii = 0; iii < jjj; iii++)
-							if (jsonkeys[iii])
-								free(jsonkeys[iii]);
-						if (jsonkeys)
-							free(jsonkeys);
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					jjj = 0;
-					fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
-					if (!fieldtypes) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtypes");
-						for (iii = 0; iii < num_fields; iii++)
-							if (jsonkeys[iii])
-								free(jsonkeys[iii]);
-						if (jsonkeys)
-							free(jsonkeys);
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					fieldtypes[jjj] = strdup(OPH_JSON_STRING);
-					if (!fieldtypes[jjj]) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-						for (iii = 0; iii < num_fields; iii++)
-							if (jsonkeys[iii])
-								free(jsonkeys[iii]);
-						if (jsonkeys)
-							free(jsonkeys);
-						for (iii = 0; iii < jjj; iii++)
-							if (fieldtypes[iii])
-								free(fieldtypes[iii]);
-						if (fieldtypes)
-							free(fieldtypes);
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					jjj++;
-					fieldtypes[jjj] = strdup(OPH_JSON_STRING);
-					if (!fieldtypes[jjj]) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-						for (iii = 0; iii < num_fields; iii++)
-							if (jsonkeys[iii])
-								free(jsonkeys[iii]);
-						if (jsonkeys)
-							free(jsonkeys);
-						for (iii = 0; iii < jjj; iii++)
-							if (fieldtypes[iii])
-								free(fieldtypes[iii]);
-						if (fieldtypes)
-							free(fieldtypes);
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					jjj++;
-					fieldtypes[jjj] = strdup(OPH_JSON_STRING);
-					if (!fieldtypes[jjj]) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-						for (iii = 0; iii < num_fields; iii++)
-							if (jsonkeys[iii])
-								free(jsonkeys[iii]);
-						if (jsonkeys)
-							free(jsonkeys);
-						for (iii = 0; iii < jjj; iii++)
-							if (fieldtypes[iii])
-								free(fieldtypes[iii]);
-						if (fieldtypes)
-							free(fieldtypes);
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, "Host Partition : Host List", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
-						logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
-						for (iii = 0; iii < num_fields; iii++)
-							if (jsonkeys[iii])
-								free(jsonkeys[iii]);
-						if (jsonkeys)
-							free(jsonkeys);
-						for (iii = 0; iii < num_fields; iii++)
-							if (fieldtypes[iii])
-								free(fieldtypes[iii]);
-						if (fieldtypes)
-							free(fieldtypes);
-						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					}
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					for (iii = 0; iii < num_fields; iii++)
-						if (fieldtypes[iii])
-							free(fieldtypes[iii]);
-					if (fieldtypes)
-						free(fieldtypes);
-				}
+		case 0:{
 
-			} else {
-				printf("+----------------------+\n");
-				printf("| %-20s |\n", "HOST PARTITION");
-				printf("+----------------------+\n");
+				switch (level) {
+					case 3:
+						if (partition_name) {
+							printf("+----------------------+----------------------+-------------+\n");
+							printf("| %-20s | %-20s | %-11s |\n", "HOST PARTITION", "HOST NAME", "HOST STATUS");
+							printf("+----------------------+----------------------+-------------+\n");
 
-				// SET TABLE COLUMN FOR JSON
-				if (objkey_printable) {
-					char **jsonkeys = NULL;
-					char **fieldtypes = NULL;
-					int num_fields = 1, iii, jjj = 0;
-					jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
-					if (!jsonkeys) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "keys");
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					jsonkeys[jjj] = strdup("HOST PARTITION");
-					if (!jsonkeys[jjj]) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-						for (iii = 0; iii < jjj; iii++)
-							if (jsonkeys[iii])
-								free(jsonkeys[iii]);
-						if (jsonkeys)
-							free(jsonkeys);
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					jjj = 0;
-					fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
-					if (!fieldtypes) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtypes");
-						for (iii = 0; iii < num_fields; iii++)
-							if (jsonkeys[iii])
-								free(jsonkeys[iii]);
-						if (jsonkeys)
-							free(jsonkeys);
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					fieldtypes[jjj] = strdup(OPH_JSON_STRING);
-					if (!fieldtypes[jjj]) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-						for (iii = 0; iii < num_fields; iii++)
-							if (jsonkeys[iii])
-								free(jsonkeys[iii]);
-						if (jsonkeys)
-							free(jsonkeys);
-						for (iii = 0; iii < jjj; iii++)
-							if (fieldtypes[iii])
-								free(fieldtypes[iii]);
-						if (fieldtypes)
-							free(fieldtypes);
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, "Host Partition List", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
-						logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
-						for (iii = 0; iii < num_fields; iii++)
-							if (jsonkeys[iii])
-								free(jsonkeys[iii]);
-						if (jsonkeys)
-							free(jsonkeys);
-						for (iii = 0; iii < num_fields; iii++)
-							if (fieldtypes[iii])
-								free(fieldtypes[iii]);
-						if (fieldtypes)
-							free(fieldtypes);
-						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					}
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					for (iii = 0; iii < num_fields; iii++)
-						if (fieldtypes[iii])
-							free(fieldtypes[iii]);
-					if (fieldtypes)
-						free(fieldtypes);
-				}
+							// SET TABLE COLUMN FOR JSON
+							if (objkey_printable) {
+								char **jsonkeys = NULL;
+								char **fieldtypes = NULL;
+								int num_fields = 3, iii, jjj = 0;
+								jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
+								if (!jsonkeys) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "keys");
+									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+								}
+								jsonkeys[jjj] = strdup("HOST PARTITION");
+								if (!jsonkeys[jjj]) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
+									for (iii = 0; iii < jjj; iii++)
+										if (jsonkeys[iii])
+											free(jsonkeys[iii]);
+									if (jsonkeys)
+										free(jsonkeys);
+									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+								}
+								jjj++;
+								jsonkeys[jjj] = strdup("HOST NAME");
+								if (!jsonkeys[jjj]) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
+									for (iii = 0; iii < jjj; iii++)
+										if (jsonkeys[iii])
+											free(jsonkeys[iii]);
+									if (jsonkeys)
+										free(jsonkeys);
+									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+								}
+								jjj++;
+								jsonkeys[jjj] = strdup("HOST STATUS");
+								if (!jsonkeys[jjj]) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
+									for (iii = 0; iii < jjj; iii++)
+										if (jsonkeys[iii])
+											free(jsonkeys[iii]);
+									if (jsonkeys)
+										free(jsonkeys);
+									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+								}
+								jjj = 0;
+								fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
+								if (!fieldtypes) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtypes");
+									for (iii = 0; iii < num_fields; iii++)
+										if (jsonkeys[iii])
+											free(jsonkeys[iii]);
+									if (jsonkeys)
+										free(jsonkeys);
+									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+								}
+								fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+								if (!fieldtypes[jjj]) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+									for (iii = 0; iii < num_fields; iii++)
+										if (jsonkeys[iii])
+											free(jsonkeys[iii]);
+									if (jsonkeys)
+										free(jsonkeys);
+									for (iii = 0; iii < jjj; iii++)
+										if (fieldtypes[iii])
+											free(fieldtypes[iii]);
+									if (fieldtypes)
+										free(fieldtypes);
+									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+								}
+								jjj++;
+								fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+								if (!fieldtypes[jjj]) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+									for (iii = 0; iii < num_fields; iii++)
+										if (jsonkeys[iii])
+											free(jsonkeys[iii]);
+									if (jsonkeys)
+										free(jsonkeys);
+									for (iii = 0; iii < jjj; iii++)
+										if (fieldtypes[iii])
+											free(fieldtypes[iii]);
+									if (fieldtypes)
+										free(fieldtypes);
+									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+								}
+								jjj++;
+								fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+								if (!fieldtypes[jjj]) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+									for (iii = 0; iii < num_fields; iii++)
+										if (jsonkeys[iii])
+											free(jsonkeys[iii]);
+									if (jsonkeys)
+										free(jsonkeys);
+									for (iii = 0; iii < jjj; iii++)
+										if (fieldtypes[iii])
+											free(fieldtypes[iii]);
+									if (fieldtypes)
+										free(fieldtypes);
+									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+								}
+								if (oph_json_add_grid
+								    (handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, "Host Partition : Host List", NULL, jsonkeys, num_fields, fieldtypes,
+								     num_fields)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
+									logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
+									for (iii = 0; iii < num_fields; iii++)
+										if (jsonkeys[iii])
+											free(jsonkeys[iii]);
+									if (jsonkeys)
+										free(jsonkeys);
+									for (iii = 0; iii < num_fields; iii++)
+										if (fieldtypes[iii])
+											free(fieldtypes[iii]);
+									if (fieldtypes)
+										free(fieldtypes);
+									return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+								}
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								for (iii = 0; iii < num_fields; iii++)
+									if (fieldtypes[iii])
+										free(fieldtypes[iii]);
+								if (fieldtypes)
+									free(fieldtypes);
+							}
 
-			}
-			break;
-		case 2:
-			printf("+----------------------+-------------+----------------+----------+-----------------+----------------------+-----------------+\n");
-			printf("| %-20s | %-11s | %-14s | %-8s | %-15s | %-20s | %-15s |\n", "HOSTNAME", "HOST STATUS", "DBMS INSTANCE", "PORT", "FILESYSTEM TYPE", "I/O SERVER TYPE",
-			       "INSTANCE STATUS");
-			printf("+----------------------+-------------+----------------+----------+-----------------+----------------------+-----------------+\n");
+						} else {
+							printf("+----------------------+\n");
+							printf("| %-20s |\n", "HOST PARTITION");
+							printf("+----------------------+\n");
 
-			// SET TABLE COLUMN FOR JSON
-			if (objkey_printable) {
-				char **jsonkeys = NULL;
-				char **fieldtypes = NULL;
-				int num_fields = 7, iii, jjj = 0;
-				jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
-				if (!jsonkeys) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "keys");
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jsonkeys[jjj] = strdup("HOST NAME");
-				if (!jsonkeys[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-					for (iii = 0; iii < jjj; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				jsonkeys[jjj] = strdup("HOST STATUS");
-				if (!jsonkeys[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-					for (iii = 0; iii < jjj; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				jsonkeys[jjj] = strdup("DBMS INSTANCE");
-				if (!jsonkeys[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-					for (iii = 0; iii < jjj; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				jsonkeys[jjj] = strdup("PORT");
-				if (!jsonkeys[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-					for (iii = 0; iii < jjj; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				jsonkeys[jjj] = strdup("FILESYSTEM TYPE");
-				if (!jsonkeys[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-					for (iii = 0; iii < jjj; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				jsonkeys[jjj] = strdup("I/O SERVER TYPE");
-				if (!jsonkeys[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-					for (iii = 0; iii < jjj; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				jsonkeys[jjj] = strdup("INSTANCE STATUS");
-				if (!jsonkeys[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-					for (iii = 0; iii < jjj; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj = 0;
-				fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
-				if (!fieldtypes) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtypes");
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				fieldtypes[jjj] = strdup(OPH_JSON_STRING);
-				if (!fieldtypes[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					for (iii = 0; iii < jjj; iii++)
-						if (fieldtypes[iii])
-							free(fieldtypes[iii]);
-					if (fieldtypes)
-						free(fieldtypes);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				fieldtypes[jjj] = strdup(OPH_JSON_STRING);
-				if (!fieldtypes[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					for (iii = 0; iii < jjj; iii++)
-						if (fieldtypes[iii])
-							free(fieldtypes[iii]);
-					if (fieldtypes)
-						free(fieldtypes);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				fieldtypes[jjj] = strdup(OPH_JSON_INT);
-				if (!fieldtypes[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					for (iii = 0; iii < jjj; iii++)
-						if (fieldtypes[iii])
-							free(fieldtypes[iii]);
-					if (fieldtypes)
-						free(fieldtypes);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				fieldtypes[jjj] = strdup(OPH_JSON_INT);
-				if (!fieldtypes[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					for (iii = 0; iii < jjj; iii++)
-						if (fieldtypes[iii])
-							free(fieldtypes[iii]);
-					if (fieldtypes)
-						free(fieldtypes);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				fieldtypes[jjj] = strdup(OPH_JSON_STRING);
-				if (!fieldtypes[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					for (iii = 0; iii < jjj; iii++)
-						if (fieldtypes[iii])
-							free(fieldtypes[iii]);
-					if (fieldtypes)
-						free(fieldtypes);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				fieldtypes[jjj] = strdup(OPH_JSON_STRING);
-				if (!fieldtypes[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					for (iii = 0; iii < jjj; iii++)
-						if (fieldtypes[iii])
-							free(fieldtypes[iii]);
-					if (fieldtypes)
-						free(fieldtypes);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				fieldtypes[jjj] = strdup(OPH_JSON_STRING);
-				if (!fieldtypes[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					for (iii = 0; iii < jjj; iii++)
-						if (fieldtypes[iii])
-							free(fieldtypes[iii]);
-					if (fieldtypes)
-						free(fieldtypes);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, "DBMS Instance List", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
-					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					for (iii = 0; iii < num_fields; iii++)
-						if (fieldtypes[iii])
-							free(fieldtypes[iii]);
-					if (fieldtypes)
-						free(fieldtypes);
-					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-				}
-				for (iii = 0; iii < num_fields; iii++)
-					if (jsonkeys[iii])
-						free(jsonkeys[iii]);
-				if (jsonkeys)
-					free(jsonkeys);
-				for (iii = 0; iii < num_fields; iii++)
-					if (fieldtypes[iii])
-						free(fieldtypes[iii]);
-				if (fieldtypes)
-					free(fieldtypes);
-			}
-			break;
-		case 1:
-			printf("+----------------------+----------+--------+-------------+\n");
-			printf("| %-20s | %-8s | %-6s | %-11s |\n", "HOST NAME", "MEMORY", "CORES", "HOST STATUS");
-			printf("+----------------------+----------+--------+-------------+\n");
+							// SET TABLE COLUMN FOR JSON
+							if (objkey_printable) {
+								char **jsonkeys = NULL;
+								char **fieldtypes = NULL;
+								int num_fields = 2, iii, jjj = 0;
+								jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
+								if (!jsonkeys) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "keys");
+									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+								}
+								jsonkeys[jjj] = strdup("HOST PARTITION");
+								if (!jsonkeys[jjj]) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
+									for (iii = 0; iii < jjj; iii++)
+										if (jsonkeys[iii])
+											free(jsonkeys[iii]);
+									if (jsonkeys)
+										free(jsonkeys);
+									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+								}
+								jjj++;
+								jsonkeys[jjj] = strdup("USER-DEFINED");
+								if (!jsonkeys[jjj]) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
+									for (iii = 0; iii < jjj; iii++)
+										if (jsonkeys[iii])
+											free(jsonkeys[iii]);
+									if (jsonkeys)
+										free(jsonkeys);
+									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+								}
+								jjj = 0;
+								fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
+								if (!fieldtypes) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtypes");
+									for (iii = 0; iii < num_fields; iii++)
+										if (jsonkeys[iii])
+											free(jsonkeys[iii]);
+									if (jsonkeys)
+										free(jsonkeys);
+									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+								}
+								fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+								if (!fieldtypes[jjj]) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+									for (iii = 0; iii < num_fields; iii++)
+										if (jsonkeys[iii])
+											free(jsonkeys[iii]);
+									if (jsonkeys)
+										free(jsonkeys);
+									for (iii = 0; iii < jjj; iii++)
+										if (fieldtypes[iii])
+											free(fieldtypes[iii]);
+									if (fieldtypes)
+										free(fieldtypes);
+									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+								}
+								jjj++;
+								fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+								if (!fieldtypes[jjj]) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+									for (iii = 0; iii < num_fields; iii++)
+										if (jsonkeys[iii])
+											free(jsonkeys[iii]);
+									if (jsonkeys)
+										free(jsonkeys);
+									for (iii = 0; iii < jjj; iii++)
+										if (fieldtypes[iii])
+											free(fieldtypes[iii]);
+									if (fieldtypes)
+										free(fieldtypes);
+									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+								}
+								if (oph_json_add_grid
+								    (handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, "Host Partition List", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
+									logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
+									for (iii = 0; iii < num_fields; iii++)
+										if (jsonkeys[iii])
+											free(jsonkeys[iii]);
+									if (jsonkeys)
+										free(jsonkeys);
+									for (iii = 0; iii < num_fields; iii++)
+										if (fieldtypes[iii])
+											free(fieldtypes[iii]);
+									if (fieldtypes)
+										free(fieldtypes);
+									return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+								}
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								for (iii = 0; iii < num_fields; iii++)
+									if (fieldtypes[iii])
+										free(fieldtypes[iii]);
+								if (fieldtypes)
+									free(fieldtypes);
+							}
 
-			// SET TABLE COLUMN FOR JSON
-			if (objkey_printable) {
-				char **jsonkeys = NULL;
-				char **fieldtypes = NULL;
-				int num_fields = 4, iii, jjj = 0;
-				jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
-				if (!jsonkeys) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "keys");
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jsonkeys[jjj] = strdup("HOST NAME");
-				if (!jsonkeys[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-					for (iii = 0; iii < jjj; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				jsonkeys[jjj] = strdup("MEMORY");
-				if (!jsonkeys[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-					for (iii = 0; iii < jjj; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				jsonkeys[jjj] = strdup("CORES");
-				if (!jsonkeys[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-					for (iii = 0; iii < jjj; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				jsonkeys[jjj] = strdup("HOST STATUS");
-				if (!jsonkeys[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-					for (iii = 0; iii < jjj; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj = 0;
-				fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
-				if (!fieldtypes) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtypes");
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				fieldtypes[jjj] = strdup(OPH_JSON_STRING);
-				if (!fieldtypes[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					for (iii = 0; iii < jjj; iii++)
-						if (fieldtypes[iii])
-							free(fieldtypes[iii]);
-					if (fieldtypes)
-						free(fieldtypes);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				fieldtypes[jjj] = strdup(OPH_JSON_INT);
-				if (!fieldtypes[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					for (iii = 0; iii < jjj; iii++)
-						if (fieldtypes[iii])
-							free(fieldtypes[iii]);
-					if (fieldtypes)
-						free(fieldtypes);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				fieldtypes[jjj] = strdup(OPH_JSON_INT);
-				if (!fieldtypes[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					for (iii = 0; iii < jjj; iii++)
-						if (fieldtypes[iii])
-							free(fieldtypes[iii]);
-					if (fieldtypes)
-						free(fieldtypes);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				jjj++;
-				fieldtypes[jjj] = strdup(OPH_JSON_STRING);
-				if (!fieldtypes[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					for (iii = 0; iii < jjj; iii++)
-						if (fieldtypes[iii])
-							free(fieldtypes[iii]);
-					if (fieldtypes)
-						free(fieldtypes);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, "Host List", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
-					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					for (iii = 0; iii < num_fields; iii++)
-						if (fieldtypes[iii])
-							free(fieldtypes[iii]);
-					if (fieldtypes)
-						free(fieldtypes);
-					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-				}
-				for (iii = 0; iii < num_fields; iii++)
-					if (jsonkeys[iii])
-						free(jsonkeys[iii]);
-				if (jsonkeys)
-					free(jsonkeys);
-				for (iii = 0; iii < num_fields; iii++)
-					if (fieldtypes[iii])
-						free(fieldtypes[iii]);
-				if (fieldtypes)
-					free(fieldtypes);
-			}
-
-			break;
-		default:
-			pmesg(LOG_WARNING, __FILE__, __LINE__, "INSTANCES level unrecognized\n");
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-
-	//retrieve information INSTANCES
-	if (oph_odb_stge_find_instances_information(oDB, level, hostname, partition_name, fs_type, ioserver_type, host_status, dbms_status, &info_instances)) {
-		pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive information INSTANCES\n");
-		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_INSTANCES_NOT_FOUND);
-		mysql_free_result(info_instances);
-		return OPH_ANALYTICS_OPERATOR_SUCCESS;
-	}
-	//Empty set
-	if (!(num_rows = mysql_num_rows(info_instances))) {
-		pmesg(LOG_WARNING, __FILE__, __LINE__, "No rows find by query\n");
-		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_NO_ROWS_FOUND);
-		mysql_free_result(info_instances);
-		return OPH_ANALYTICS_OPERATOR_SUCCESS;
-	}
-
-	MYSQL_ROW row;
-
-	//For each ROW
-	while ((row = mysql_fetch_row(info_instances))) {
-		switch (level) {
-			case 3:
-				if (partition_name) {
-					printf("| %-20s | %-20s | %-11s |\n", (row[0] ? row[0] : "-"), (row[1] ? row[1] : "-"), (row[2] ? row[2] : "-"));
-
-					// ADD ROW TO JSON GRID
-					if (objkey_printable) {
-						char **jsonvalues = NULL;
-						int num_fields = 3, iii, jjj;
-						jsonvalues = (char **) calloc(num_fields, sizeof(char *));
-						if (!jsonvalues) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "values");
-							return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 						}
-						for (jjj = 0; jjj < num_fields; jjj++) {
-							jsonvalues[jjj] = strdup(row[jjj] ? row[jjj] : "");
-							if (!jsonvalues[jjj]) {
+						break;
+					case 2:
+						printf("+----------------------+-------------+----------------+----------+-----------------+----------------------+-----------------+\n");
+						printf("| %-20s | %-11s | %-14s | %-8s | %-15s | %-20s | %-15s |\n", "HOSTNAME", "HOST STATUS", "DBMS INSTANCE", "PORT", "FILESYSTEM TYPE",
+						       "I/O SERVER TYPE", "INSTANCE STATUS");
+						printf("+----------------------+-------------+----------------+----------+-----------------+----------------------+-----------------+\n");
+
+						// SET TABLE COLUMN FOR JSON
+						if (objkey_printable) {
+							char **jsonkeys = NULL;
+							char **fieldtypes = NULL;
+							int num_fields = 7, iii, jjj = 0;
+							jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
+							if (!jsonkeys) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "value");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "keys");
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jsonkeys[jjj] = strdup("DBMS INSTANCE");
+							if (!jsonkeys[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
 								for (iii = 0; iii < jjj; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							jsonkeys[jjj] = strdup("HOST NAME");
+							if (!jsonkeys[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
+								for (iii = 0; iii < jjj; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							jsonkeys[jjj] = strdup("HOST STATUS");
+							if (!jsonkeys[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
+								for (iii = 0; iii < jjj; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							jsonkeys[jjj] = strdup("PORT");
+							if (!jsonkeys[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
+								for (iii = 0; iii < jjj; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							jsonkeys[jjj] = strdup("FILESYSTEM TYPE");
+							if (!jsonkeys[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
+								for (iii = 0; iii < jjj; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							jsonkeys[jjj] = strdup("I/O SERVER TYPE");
+							if (!jsonkeys[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
+								for (iii = 0; iii < jjj; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							jsonkeys[jjj] = strdup("INSTANCE STATUS");
+							if (!jsonkeys[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
+								for (iii = 0; iii < jjj; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj = 0;
+							fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
+							if (!fieldtypes) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtypes");
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							fieldtypes[jjj] = strdup(OPH_JSON_INT);
+							if (!fieldtypes[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								for (iii = 0; iii < jjj; iii++)
+									if (fieldtypes[iii])
+										free(fieldtypes[iii]);
+								if (fieldtypes)
+									free(fieldtypes);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+							if (!fieldtypes[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								for (iii = 0; iii < jjj; iii++)
+									if (fieldtypes[iii])
+										free(fieldtypes[iii]);
+								if (fieldtypes)
+									free(fieldtypes);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+							if (!fieldtypes[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								for (iii = 0; iii < jjj; iii++)
+									if (fieldtypes[iii])
+										free(fieldtypes[iii]);
+								if (fieldtypes)
+									free(fieldtypes);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							fieldtypes[jjj] = strdup(OPH_JSON_INT);
+							if (!fieldtypes[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								for (iii = 0; iii < jjj; iii++)
+									if (fieldtypes[iii])
+										free(fieldtypes[iii]);
+								if (fieldtypes)
+									free(fieldtypes);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+							if (!fieldtypes[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								for (iii = 0; iii < jjj; iii++)
+									if (fieldtypes[iii])
+										free(fieldtypes[iii]);
+								if (fieldtypes)
+									free(fieldtypes);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+							if (!fieldtypes[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								for (iii = 0; iii < jjj; iii++)
+									if (fieldtypes[iii])
+										free(fieldtypes[iii]);
+								if (fieldtypes)
+									free(fieldtypes);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+							if (!fieldtypes[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								for (iii = 0; iii < jjj; iii++)
+									if (fieldtypes[iii])
+										free(fieldtypes[iii]);
+								if (fieldtypes)
+									free(fieldtypes);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							if (oph_json_add_grid
+							    (handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, "DBMS Instance List", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
+								logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								for (iii = 0; iii < num_fields; iii++)
+									if (fieldtypes[iii])
+										free(fieldtypes[iii]);
+								if (fieldtypes)
+									free(fieldtypes);
+								return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							}
+							for (iii = 0; iii < num_fields; iii++)
+								if (jsonkeys[iii])
+									free(jsonkeys[iii]);
+							if (jsonkeys)
+								free(jsonkeys);
+							for (iii = 0; iii < num_fields; iii++)
+								if (fieldtypes[iii])
+									free(fieldtypes[iii]);
+							if (fieldtypes)
+								free(fieldtypes);
+						}
+						break;
+					case 1:
+						printf("+----------------------+----------+--------+-------------+\n");
+						printf("| %-20s | %-8s | %-6s | %-11s |\n", "HOST NAME", "MEMORY", "CORES", "HOST STATUS");
+						printf("+----------------------+----------+--------+-------------+\n");
+
+						// SET TABLE COLUMN FOR JSON
+						if (objkey_printable) {
+							char **jsonkeys = NULL;
+							char **fieldtypes = NULL;
+							int num_fields = 5, iii, jjj = 0;
+							jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
+							if (!jsonkeys) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "keys");
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jsonkeys[jjj] = strdup("HOST INSTANCE");
+							if (!jsonkeys[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
+								for (iii = 0; iii < jjj; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							jsonkeys[jjj] = strdup("HOST NAME");
+							if (!jsonkeys[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
+								for (iii = 0; iii < jjj; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							jsonkeys[jjj] = strdup("MEMORY");
+							if (!jsonkeys[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
+								for (iii = 0; iii < jjj; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							jsonkeys[jjj] = strdup("CORES");
+							if (!jsonkeys[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
+								for (iii = 0; iii < jjj; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							jsonkeys[jjj] = strdup("HOST STATUS");
+							if (!jsonkeys[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
+								for (iii = 0; iii < jjj; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj = 0;
+							fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
+							if (!fieldtypes) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtypes");
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							fieldtypes[jjj] = strdup(OPH_JSON_INT);
+							if (!fieldtypes[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								for (iii = 0; iii < jjj; iii++)
+									if (fieldtypes[iii])
+										free(fieldtypes[iii]);
+								if (fieldtypes)
+									free(fieldtypes);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+							if (!fieldtypes[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								for (iii = 0; iii < jjj; iii++)
+									if (fieldtypes[iii])
+										free(fieldtypes[iii]);
+								if (fieldtypes)
+									free(fieldtypes);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							fieldtypes[jjj] = strdup(OPH_JSON_INT);
+							if (!fieldtypes[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								for (iii = 0; iii < jjj; iii++)
+									if (fieldtypes[iii])
+										free(fieldtypes[iii]);
+								if (fieldtypes)
+									free(fieldtypes);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							fieldtypes[jjj] = strdup(OPH_JSON_INT);
+							if (!fieldtypes[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								for (iii = 0; iii < jjj; iii++)
+									if (fieldtypes[iii])
+										free(fieldtypes[iii]);
+								if (fieldtypes)
+									free(fieldtypes);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							jjj++;
+							fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+							if (!fieldtypes[jjj]) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								for (iii = 0; iii < jjj; iii++)
+									if (fieldtypes[iii])
+										free(fieldtypes[iii]);
+								if (fieldtypes)
+									free(fieldtypes);
+								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+							}
+							if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, "Host List", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
+								logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
+								for (iii = 0; iii < num_fields; iii++)
+									if (jsonkeys[iii])
+										free(jsonkeys[iii]);
+								if (jsonkeys)
+									free(jsonkeys);
+								for (iii = 0; iii < num_fields; iii++)
+									if (fieldtypes[iii])
+										free(fieldtypes[iii]);
+								if (fieldtypes)
+									free(fieldtypes);
+								return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							}
+							for (iii = 0; iii < num_fields; iii++)
+								if (jsonkeys[iii])
+									free(jsonkeys[iii]);
+							if (jsonkeys)
+								free(jsonkeys);
+							for (iii = 0; iii < num_fields; iii++)
+								if (fieldtypes[iii])
+									free(fieldtypes[iii]);
+							if (fieldtypes)
+								free(fieldtypes);
+						}
+
+						break;
+					default:
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "INSTANCES level unrecognized\n");
+						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+
+				//retrieve information INSTANCES
+				if (oph_odb_stge_find_instances_information
+				    (oDB, level, hostname, partition_name, fs_type, ioserver_type, host_status, dbms_status, &info_instances,
+				     ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user)) {
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive information INSTANCES\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_INSTANCES_NOT_FOUND);
+					mysql_free_result(info_instances);
+					return OPH_ANALYTICS_OPERATOR_SUCCESS;
+				}
+				//Empty set
+				if (!(num_rows = mysql_num_rows(info_instances))) {
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "No rows find by query\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_NO_ROWS_FOUND);
+					mysql_free_result(info_instances);
+					return OPH_ANALYTICS_OPERATOR_SUCCESS;
+				}
+
+				MYSQL_ROW row;
+
+				//For each ROW
+				while ((row = mysql_fetch_row(info_instances))) {
+					switch (level) {
+						case 3:
+							if (partition_name) {
+								printf("| %-20s | %-20s | %-11s |\n", (row[0] ? row[0] : "-"), (row[1] ? row[1] : "-"), (row[2] ? row[2] : "-"));
+
+								// ADD ROW TO JSON GRID
+								if (objkey_printable) {
+									char **jsonvalues = NULL;
+									int num_fields = 3, iii, jjj;
+									jsonvalues = (char **) calloc(num_fields, sizeof(char *));
+									if (!jsonvalues) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "values");
+										return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+									}
+									for (jjj = 0; jjj < num_fields; jjj++) {
+										jsonvalues[jjj] = strdup(row[jjj] ? row[jjj] : "");
+										if (!jsonvalues[jjj]) {
+											pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+											logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT,
+												"value");
+											for (iii = 0; iii < jjj; iii++)
+												if (jsonvalues[iii])
+													free(jsonvalues[iii]);
+											if (jsonvalues)
+												free(jsonvalues);
+											return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+										}
+									}
+									if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, jsonvalues)) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
+										logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+										for (iii = 0; iii < num_fields; iii++)
+											if (jsonvalues[iii])
+												free(jsonvalues[iii]);
+										if (jsonvalues)
+											free(jsonvalues);
+										return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									}
+									for (iii = 0; iii < num_fields; iii++)
+										if (jsonvalues[iii])
+											free(jsonvalues[iii]);
+									if (jsonvalues)
+										free(jsonvalues);
+								}
+
+							} else {
+								printf("| %-20s |\n", (row[0] ? row[0] : "-"));
+
+								// ADD ROW TO JSON GRID
+								if (objkey_printable) {
+									char **jsonvalues = NULL;
+									int num_fields = 2, iii, jjj = 0;
+									jsonvalues = (char **) calloc(num_fields, sizeof(char *));
+									if (!jsonvalues) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "values");
+										return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+									}
+									jsonvalues[jjj] = strdup(row[jjj] ? row[jjj] : "");
+									if (!jsonvalues[jjj]) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "value");
+										for (iii = 0; iii < jjj; iii++)
+											if (jsonvalues[iii])
+												free(jsonvalues[iii]);
+										if (jsonvalues)
+											free(jsonvalues);
+										return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+									}
+									jjj++;
+									jsonvalues[jjj] = strdup(row[jjj] ? "yes" : "no");
+									if (!jsonvalues[jjj]) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "value");
+										for (iii = 0; iii < jjj; iii++)
+											if (jsonvalues[iii])
+												free(jsonvalues[iii]);
+										if (jsonvalues)
+											free(jsonvalues);
+										return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+									}
+									if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, jsonvalues)) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
+										logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+										for (iii = 0; iii < num_fields; iii++)
+											if (jsonvalues[iii])
+												free(jsonvalues[iii]);
+										if (jsonvalues)
+											free(jsonvalues);
+										return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									}
+									for (iii = 0; iii < num_fields; iii++)
+										if (jsonvalues[iii])
+											free(jsonvalues[iii]);
+									if (jsonvalues)
+										free(jsonvalues);
+								}
+
+							}
+							break;
+						case 2:
+							printf("| %-20s | %-11s | %-14s | %-8s | %-15s | %-20s | %-15s |\n", (row[1] ? row[1] : "-"), (row[2] ? row[2] : "-"), (row[0] ? row[0] : "-"),
+							       (row[3] ? row[3] : "-"), (row[4] ? (row[4][0] == '0' ? OPH_COMMON_IO_FS_LOCAL : OPH_COMMON_IO_FS_GLOBAL) : "-"), (row[5] ? row[5] : "-"),
+							       (row[6] ? row[6] : "-"));
+
+							// ADD ROW TO JSON GRID
+							if (objkey_printable) {
+								char **jsonvalues = NULL;
+								int num_fields = 7, iii, jjj;
+								jsonvalues = (char **) calloc(num_fields, sizeof(char *));
+								if (!jsonvalues) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "values");
+									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+								}
+								for (jjj = 0; jjj < num_fields; jjj++) {
+									if (jjj == 4)
+										jsonvalues[jjj] = strdup((row[jjj] ? (row[jjj][0] == '0' ? OPH_COMMON_IO_FS_LOCAL : OPH_COMMON_IO_FS_GLOBAL) : ""));
+									else
+										jsonvalues[jjj] = strdup(row[jjj] ? row[jjj] : "");
+									if (!jsonvalues[jjj]) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "value");
+										for (iii = 0; iii < jjj; iii++)
+											if (jsonvalues[iii])
+												free(jsonvalues[iii]);
+										if (jsonvalues)
+											free(jsonvalues);
+										return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+									}
+								}
+								if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, jsonvalues)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
+									logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+									for (iii = 0; iii < num_fields; iii++)
+										if (jsonvalues[iii])
+											free(jsonvalues[iii]);
+									if (jsonvalues)
+										free(jsonvalues);
+									return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+								}
+								for (iii = 0; iii < num_fields; iii++)
 									if (jsonvalues[iii])
 										free(jsonvalues[iii]);
 								if (jsonvalues)
 									free(jsonvalues);
-								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 							}
-						}
-						if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, jsonvalues)) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
-							logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
-							for (iii = 0; iii < num_fields; iii++)
-								if (jsonvalues[iii])
-									free(jsonvalues[iii]);
-							if (jsonvalues)
-								free(jsonvalues);
-							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-						}
-						for (iii = 0; iii < num_fields; iii++)
-							if (jsonvalues[iii])
-								free(jsonvalues[iii]);
-						if (jsonvalues)
-							free(jsonvalues);
-					}
+							break;
+						case 1:
+							printf("| %-20s | %-8s | %-6s | %-11s |\n", (row[1] ? row[1] : "-"), (row[2] ? row[2] : "-"), (row[3] ? row[3] : "-"), (row[4] ? row[4] : "-"));
 
-				} else {
-					printf("| %-20s |\n", (row[0] ? row[0] : "-"));
-
-					// ADD ROW TO JSON GRID
-					if (objkey_printable) {
-						char **jsonvalues = NULL;
-						int num_fields = 1, iii, jjj;
-						jsonvalues = (char **) calloc(num_fields, sizeof(char *));
-						if (!jsonvalues) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "values");
-							return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-						}
-						for (jjj = 0; jjj < num_fields; jjj++) {
-							jsonvalues[jjj] = strdup(row[jjj] ? row[jjj] : "");
-							if (!jsonvalues[jjj]) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "value");
-								for (iii = 0; iii < jjj; iii++)
+							// ADD ROW TO JSON GRID
+							if (objkey_printable) {
+								char **jsonvalues = NULL;
+								int num_fields = 5, iii, jjj;
+								jsonvalues = (char **) calloc(num_fields, sizeof(char *));
+								if (!jsonvalues) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "values");
+									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+								}
+								for (jjj = 0; jjj < num_fields; jjj++) {
+									jsonvalues[jjj] = strdup(row[jjj] ? row[jjj] : "");
+									if (!jsonvalues[jjj]) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "value");
+										for (iii = 0; iii < jjj; iii++)
+											if (jsonvalues[iii])
+												free(jsonvalues[iii]);
+										if (jsonvalues)
+											free(jsonvalues);
+										return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+									}
+								}
+								if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, jsonvalues)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
+									logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+									for (iii = 0; iii < num_fields; iii++)
+										if (jsonvalues[iii])
+											free(jsonvalues[iii]);
+									if (jsonvalues)
+										free(jsonvalues);
+									return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+								}
+								for (iii = 0; iii < num_fields; iii++)
 									if (jsonvalues[iii])
 										free(jsonvalues[iii]);
 								if (jsonvalues)
 									free(jsonvalues);
-								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 							}
-						}
-						if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, jsonvalues)) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
-							logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
-							for (iii = 0; iii < num_fields; iii++)
-								if (jsonvalues[iii])
-									free(jsonvalues[iii]);
-							if (jsonvalues)
-								free(jsonvalues);
-							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-						}
-						for (iii = 0; iii < num_fields; iii++)
-							if (jsonvalues[iii])
-								free(jsonvalues[iii]);
-						if (jsonvalues)
-							free(jsonvalues);
-					}
 
+							break;
+						default:
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "INSTANCES level unrecognized\n");
+							mysql_free_result(info_instances);
+							return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					}
 				}
-				break;
-			case 2:
-				printf("| %-20s | %-11s | %-14s | %-8s | %-15s | %-20s | %-15s |\n", (row[0] ? row[0] : "-"), (row[1] ? row[1] : "-"), (row[2] ? row[2] : "-"), (row[3] ? row[3] : "-"),
-				       (row[4] ? (row[4][0] == '0' ? OPH_COMMON_IO_FS_LOCAL : OPH_COMMON_IO_FS_GLOBAL) : "-"), (row[5] ? row[5] : "-"), (row[6] ? row[6] : "-"));
-
-				// ADD ROW TO JSON GRID
-				if (objkey_printable) {
-					char **jsonvalues = NULL;
-					int num_fields = 7, iii, jjj;
-					jsonvalues = (char **) calloc(num_fields, sizeof(char *));
-					if (!jsonvalues) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "values");
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					for (jjj = 0; jjj < num_fields; jjj++) {
-						if (jjj == 4)
-							jsonvalues[jjj] = strdup((row[jjj] ? (row[jjj][0] == '0' ? OPH_COMMON_IO_FS_LOCAL : OPH_COMMON_IO_FS_GLOBAL) : ""));
-						else
-							jsonvalues[jjj] = strdup(row[jjj] ? row[jjj] : "");
-						if (!jsonvalues[jjj]) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "value");
-							for (iii = 0; iii < jjj; iii++)
-								if (jsonvalues[iii])
-									free(jsonvalues[iii]);
-							if (jsonvalues)
-								free(jsonvalues);
-							return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-						}
-					}
-					if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, jsonvalues)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
-						logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
-						for (iii = 0; iii < num_fields; iii++)
-							if (jsonvalues[iii])
-								free(jsonvalues[iii]);
-						if (jsonvalues)
-							free(jsonvalues);
-						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					}
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonvalues[iii])
-							free(jsonvalues[iii]);
-					if (jsonvalues)
-						free(jsonvalues);
-				}
-				break;
-			case 1:
-				printf("| %-20s | %-8s | %-6s | %-11s |\n", (row[0] ? row[0] : "-"), (row[1] ? row[1] : "-"), (row[2] ? row[2] : "-"), (row[3] ? row[3] : "-"));
-
-				// ADD ROW TO JSON GRID
-				if (objkey_printable) {
-					char **jsonvalues = NULL;
-					int num_fields = 4, iii, jjj;
-					jsonvalues = (char **) calloc(num_fields, sizeof(char *));
-					if (!jsonvalues) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "values");
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					for (jjj = 0; jjj < num_fields; jjj++) {
-						jsonvalues[jjj] = strdup(row[jjj] ? row[jjj] : "");
-						if (!jsonvalues[jjj]) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "value");
-							for (iii = 0; iii < jjj; iii++)
-								if (jsonvalues[iii])
-									free(jsonvalues[iii]);
-							if (jsonvalues)
-								free(jsonvalues);
-							return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-						}
-					}
-					if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, jsonvalues)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
-						logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
-						for (iii = 0; iii < num_fields; iii++)
-							if (jsonvalues[iii])
-								free(jsonvalues[iii]);
-						if (jsonvalues)
-							free(jsonvalues);
-						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					}
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonvalues[iii])
-							free(jsonvalues[iii]);
-					if (jsonvalues)
-						free(jsonvalues);
-				}
-
-				break;
-			default:
-				pmesg(LOG_WARNING, __FILE__, __LINE__, "INSTANCES level unrecognized\n");
 				mysql_free_result(info_instances);
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-		}
-	}
-	mysql_free_result(info_instances);
 
-	switch (level) {
-		case 3:
-			if (partition_name)
-				printf("+----------------------+----------------------+-------------+\n");
-			else
-				printf("+----------------------+\n");
-			break;
-		case 2:
-			printf("+----------------------+-------------+----------------+----------+-----------------+----------------------+-----------------+\n");
-			break;
-		case 1:
-			printf("+----------------------+----------+--------+-------------+\n");
-			break;
-		default:
-			pmesg(LOG_WARNING, __FILE__, __LINE__, "INSTANCES level unrecognized\n");
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				switch (level) {
+					case 3:
+						if (partition_name)
+							printf("+----------------------+----------------------+-------------+\n");
+						else
+							printf("+----------------------+\n");
+						break;
+					case 2:
+						printf("+----------------------+-------------+----------------+----------+-----------------+----------------------+-----------------+\n");
+						break;
+					case 1:
+						printf("+----------------------+----------+--------+-------------+\n");
+						break;
+					default:
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "INSTANCES level unrecognized\n");
+						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+
+				break;
+			}
+
+		case 1:{
+				if (!partition_name) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_PARTITION_NAME);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_PARTITION_NAME);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				int id_hostpartition = 0;
+				if (oph_odb_stge_add_hostpartition(oDB, partition_name, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user, &id_hostpartition) || !id_hostpartition) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Host partition cannot be created\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Host partition cannot be created\n");
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
+				if (!hostname) {
+					if (oph_odb_stge_add_all_hosts_to_partition(oDB, id_hostpartition)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Host partition cannot be created\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Host partition cannot be created\n");
+						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					}
+				} else {
+					int id_host;
+					for (num_rows = 0; num_rows < ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids_num; ++num_rows) {
+						id_host = (int) strtol(((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids[num_rows], NULL, 10);
+						if (!id_host || oph_odb_stge_add_host_to_partition(oDB, id_hostpartition, id_host)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Host partition creation cannot be completed\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Host partition creation cannot be completed\n");
+							oph_odb_stge_delete_hostpartition_by_id(oDB, id_hostpartition);
+							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+						}
+					}
+				}
+				break;
+			}
+
+		case 2:{
+				if (!partition_name) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_PARTITION_NAME);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_PARTITION_NAME);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (oph_odb_stge_delete_hostpartition(oDB, partition_name, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Host partition cannot be removed\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Host partition cannot be removed\n");
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
+				break;
+			}
+
+		default:;
+
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -1178,10 +1346,6 @@ int env_unset(oph_operator_struct * handle)
 
 	oph_odb_disconnect_from_ophidiadb(&((OPH_INSTANCES_operator_handle *) handle->operator_handle)->oDB);
 	oph_odb_free_ophidiadb(&((OPH_INSTANCES_operator_handle *) handle->operator_handle)->oDB);
-	if (((OPH_INSTANCES_operator_handle *) handle->operator_handle)->hostname) {
-		free((char *) ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->hostname);
-		((OPH_INSTANCES_operator_handle *) handle->operator_handle)->hostname = NULL;
-	}
 	if (((OPH_INSTANCES_operator_handle *) handle->operator_handle)->partition_name) {
 		free((char *) ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->partition_name);
 		((OPH_INSTANCES_operator_handle *) handle->operator_handle)->partition_name = NULL;
@@ -1201,6 +1365,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_INSTANCES_operator_handle *) handle->operator_handle)->ioserver_type) {
 		free((char *) ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->ioserver_type);
 		((OPH_INSTANCES_operator_handle *) handle->operator_handle)->ioserver_type = NULL;
+	}
+	if (((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids) {
+		oph_tp_free_multiple_value_param_list(((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids_num);
+		((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids = NULL;
 	}
 	free((OPH_INSTANCES_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;

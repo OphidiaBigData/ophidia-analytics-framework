@@ -37,6 +37,10 @@
  * \param host_status Status of the host to filter on
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
+ * \param action Comamnd type: read or write.
+ * \param host_ids List of host identifiers to be grouped in a user-defined host partition.
+ * \param host_ids_num Number of host identifiers to be grouped in a user-defined host partition.
+ * \param id_user ID of submitter
  */
 struct _OPH_INSTANCES_operator_handle {
 	ophidiadb oDB;
@@ -49,6 +53,10 @@ struct _OPH_INSTANCES_operator_handle {
 	char *host_status;
 	char **objkeys;
 	int objkeys_num;
+	char action;
+	char **host_ids;
+	int host_ids_num;
+	int id_user;
 };
 typedef struct _OPH_INSTANCES_operator_handle OPH_INSTANCES_operator_handle;
 

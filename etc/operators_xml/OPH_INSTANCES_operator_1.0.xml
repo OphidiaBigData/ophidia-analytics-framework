@@ -9,10 +9,17 @@ Metadata Access.
 It shows information about host partitions, hosts and dbms instances.
 
 [Parameters]
+- action : command type; use
+           &quot;read&quot; to access information,
+           &quot;add&quot; to create user-defined host partitions,
+           &quot;remove&quot; to remove user-defined host partitions.
 - level : show hosts with "1", DBMS instances with "2" or host partitions with "3".
-- host_filter : optional filter on host name. Used only with level 2.
-- host_partition : optional filter on host partition name. Used only with level 3.
-				       If no partition is specified, then the list of all partitions is shown.
+- host_filter : in &quot;read&quot; mode it is an optional filter on host name and can be used only with level 2.
+                In &quot;add&quot; mode it is the list of host identifiers to be grouped in the user-defined partition. 
+- host_partition : in &quot;read&quot; mode it is an optional filter on host partition name and can be used only with level 3.
+                   If no partition is specified, then the list of all partitions is shown.
+                   In &quot;add&quot; mode it is the name of the new partition.
+                   In &quot;remove&quot; mode it is the name of the partition to be removed.
 - filesystem_filter : optional filter on the type of filesystem used. Used only with level 2:
 				       &quot;local&quot; for local disks only,
 				       &quot;global&quot; for GPFS disks only,
@@ -49,9 +56,10 @@ SUBMISSION STRING: &quot;operator=oph_instances;level=2;host_filter=all;&quot;</
         <category>Administration</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
-        <permission>read</permission>
+        <permission>write</permission>
     </info>
     <args>
+		<argument type="string" mandatory="no" default="read" values="read|add|remove">action</argument>
 		<argument type="int" mandatory="no" minvalue="1" maxvalue="3" values="1|2|3" default="1">level</argument>
 		<argument type="string" mandatory="no" default="all">host_filter</argument>
 		<argument type="string" mandatory="no" default="all">host_partition</argument>
