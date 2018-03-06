@@ -1275,6 +1275,7 @@ int task_execute(oph_operator_struct * handle)
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 				char jsonbuf[OPH_COMMON_BUFFER_LEN];
+				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correclty created", partition_name);
 				if (id_hostpartition) {
 					if (!hostname) {
 						if (oph_odb_stge_add_all_hosts_to_partition(oDB, id_hostpartition)) {
@@ -1289,9 +1290,7 @@ int task_execute(oph_operator_struct * handle)
 							if (!id_host || oph_odb_stge_add_host_to_partition(oDB, id_hostpartition, id_host))
 								break;
 						}
-						if (num_rows >= ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids_num)
-							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correclty created", partition_name);
-						else {
+						if (num_rows < ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids_num) {
 							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "Unable to add host '%s' to partition '%s'",
 								 ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids[num_rows], partition_name);
 							oph_odb_stge_delete_hostpartition_by_id(oDB, id_hostpartition);
