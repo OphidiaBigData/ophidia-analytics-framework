@@ -1999,10 +1999,7 @@ int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_use
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
-	if (!(*id_hostpartition = mysql_insert_id(oDB->conn))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create user-defind partition, maybe it already exists.\n");
-		return OPH_ODB_TOO_MANY_ROWS;
-	}
+	*id_hostpartition = mysql_insert_id(oDB->conn);
 
 	return OPH_ODB_SUCCESS;
 }
@@ -2061,12 +2058,14 @@ int oph_odb_stge_add_host_to_partition(ophidiadb * oDB, int id_hostpartition, in
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_delete_hostpartition(ophidiadb * oDB, const char *name, int id_user)
+int oph_odb_stge_delete_hostpartition(ophidiadb * oDB, const char *name, int id_user, int *num_rows)
 {
 	if (!oDB || !name || !id_user) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+	if (num_rows)
+		*num_rows = 0;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -2084,6 +2083,9 @@ int oph_odb_stge_delete_hostpartition(ophidiadb * oDB, const char *name, int id_
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
+
+	if (num_rows)
+		*num_rows = (int) mysql_affected_rows(oDB->conn);
 
 	return OPH_ODB_SUCCESS;
 }

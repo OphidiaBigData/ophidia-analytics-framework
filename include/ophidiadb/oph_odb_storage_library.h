@@ -466,7 +466,7 @@ int oph_odb_stge_insert_into_dbinstance_partitioned_tables(ophidiadb * oDB, oph_
 int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_user, int *id_hostpartition);
 int oph_odb_stge_add_all_hosts_to_partition(ophidiadb * oDB, int id_hostpartition);
 int oph_odb_stge_add_host_to_partition(ophidiadb * oDB, int id_hostpartition, int id_host);
-int oph_odb_stge_delete_hostpartition(ophidiadb * oDB, const char *name, int id_user);
+int oph_odb_stge_delete_hostpartition(ophidiadb * oDB, const char *name, int id_user, int *num_rows);
 int oph_odb_stge_delete_hostpartition_by_id(ophidiadb * oDB, int id_hostpartition);
 
 #endif				/* __OPH_ODB_STGE_H__ */

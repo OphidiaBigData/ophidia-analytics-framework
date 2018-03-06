@@ -1269,28 +1269,41 @@ int task_execute(oph_operator_struct * handle)
 					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 				}
 				int id_hostpartition = 0;
-				if (oph_odb_stge_add_hostpartition(oDB, partition_name, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user, &id_hostpartition) || !id_hostpartition) {
+				if (oph_odb_stge_add_hostpartition(oDB, partition_name, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user, &id_hostpartition)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Host partition cannot be created\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Host partition cannot be created\n");
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
-				if (!hostname) {
-					if (oph_odb_stge_add_all_hosts_to_partition(oDB, id_hostpartition)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Host partition cannot be created\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Host partition cannot be created\n");
-						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					}
-				} else {
-					int id_host;
-					for (num_rows = 0; num_rows < ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids_num; ++num_rows) {
-						id_host = (int) strtol(((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids[num_rows], NULL, 10);
-						if (!id_host || oph_odb_stge_add_host_to_partition(oDB, id_hostpartition, id_host)) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Host partition creation cannot be completed\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Host partition creation cannot be completed\n");
-							oph_odb_stge_delete_hostpartition_by_id(oDB, id_hostpartition);
+				char jsonbuf[OPH_COMMON_BUFFER_LEN];
+				if (id_hostpartition) {
+					if (!hostname) {
+						if (oph_odb_stge_add_all_hosts_to_partition(oDB, id_hostpartition)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Host partition cannot be created\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Host partition cannot be created\n");
 							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						}
+					} else {
+						int id_host;
+						for (num_rows = 0; num_rows < ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids_num; ++num_rows) {
+							id_host = (int) strtol(((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids[num_rows], NULL, 10);
+							if (!id_host || oph_odb_stge_add_host_to_partition(oDB, id_hostpartition, id_host))
+								break;
+						}
+						if (num_rows >= ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids_num)
+							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correclty created", partition_name);
+						else {
+							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "Unable to add host '%s' to partition '%s'",
+								 ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids[num_rows], partition_name);
+							oph_odb_stge_delete_hostpartition_by_id(oDB, id_hostpartition);
+							id_hostpartition = 0;
+						}
 					}
+				} else
+					snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "Unable to create host partition '%s', maybe it already exists", partition_name);
+				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, id_hostpartition ? "Success" : "Error", jsonbuf)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 				break;
 			}
@@ -1301,9 +1314,16 @@ int task_execute(oph_operator_struct * handle)
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_PARTITION_NAME);
 					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 				}
-				if (oph_odb_stge_delete_hostpartition(oDB, partition_name, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user)) {
+				if (oph_odb_stge_delete_hostpartition(oDB, partition_name, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user, &num_rows)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Host partition cannot be removed\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Host partition cannot be removed\n");
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
+				char jsonbuf[OPH_COMMON_BUFFER_LEN];
+				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%d partition%s removed", num_rows, num_rows == 1 ? "" : "s");
+				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, num_rows == 1 ? "Success" : "Warning", jsonbuf)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 				break;
