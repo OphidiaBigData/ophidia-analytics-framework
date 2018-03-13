@@ -70,6 +70,7 @@
 #define MYSQL_QUERY_STGE_CREATE_PARTITION			"INSERT IGNORE INTO hostpartition (partitionname, iduser, reserved) VALUES ('%s', %d, %d);"
 #define MYSQL_QUERY_STGE_ADD_HOST_TO_PARTITION		"INSERT INTO hashost (idhostpartition, idhost) VALUES (%d, %d);"
 #define MYSQL_QUERY_STGE_ADD_ALL_HOSTS_TO_PARTITION	"INSERT INTO hashost (idhostpartition, idhost) SELECT %d, idhost FROM host;"
+#define MYSQL_QUERY_STGE_ADD_SOME_HOSTS_TO_PARTITION	"INSERT INTO hashost (idhostpartition, idhost) SELECT %d, idhost FROM host ORDER BY datacubecount ASC LIMIT %d;"
 #define MYSQL_QUERY_STGE_DELETE_PARTITION			"DELETE FROM hostpartition WHERE partitionname = '%s' AND iduser = %d;"
 #define MYSQL_QUERY_STGE_DELETE_PARTITION2			"DELETE FROM hostpartition WHERE idhostpartition = %d;"
 

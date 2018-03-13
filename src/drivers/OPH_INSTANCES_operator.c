@@ -71,6 +71,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids = NULL;
 	((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids_num = -1;
 	((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user = 0;
+	((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_number = 0;
 
 	ophidiadb *oDB = &((OPH_INSTANCES_operator_handle *) handle->operator_handle)->oDB;
 
@@ -223,6 +224,19 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "dbms_status");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_HOST_NUMBER);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_HOST_NUMBER);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_HOST_NUMBER);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_number = (int) strtol(value, NULL, 10);
+	if (((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_number < 0) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Bad number of hosts\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Bad number of hosts\n");
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
@@ -1398,14 +1412,26 @@ int task_execute(oph_operator_struct * handle)
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Host partition '%s' cannot be %s\n", partition_name, action != 1 ? "reserved" : "created");
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
-				char jsonbuf[OPH_COMMON_BUFFER_LEN];
+				char jsonbuf[OPH_COMMON_BUFFER_LEN], warning = 0;
 				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correclty %s", partition_name, action != 1 ? "reserved" : "created");
 				if (id_hostpartition) {
-					if (!hostname) {
+					if (!hostname && !((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_number) {
 						if (oph_odb_stge_add_all_hosts_to_partition(oDB, id_hostpartition, action != 1)) {
 							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "Host partition '%s' cannot be %s", partition_name, action != 1 ? "reserved" : "created");
 							oph_odb_stge_delete_hostpartition_by_id(oDB, id_hostpartition);
 							id_hostpartition = 0;
+						}
+					} else if (((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_number) {
+						if (oph_odb_stge_add_some_hosts_to_partition
+						    (oDB, id_hostpartition, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_number, action != 1, &num_rows)) {
+							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "Host partition '%s' cannot be %s", partition_name, action != 1 ? "reserved" : "created");
+							oph_odb_stge_delete_hostpartition_by_id(oDB, id_hostpartition);
+							id_hostpartition = 0;
+						}
+						if (num_rows < ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_number) {
+							warning = 1;
+							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "Host partition '%s' will consist only of %d host%s", partition_name, num_rows,
+								 num_rows == 1 ? "" : "s");
 						}
 					} else {
 						int id_host;
@@ -1423,7 +1449,7 @@ int task_execute(oph_operator_struct * handle)
 					}
 				} else
 					snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "Unable to create host partition '%s', maybe it already exists", partition_name);
-				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, id_hostpartition ? "Success" : "Error", jsonbuf)) {
+				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, id_hostpartition ? (warning ? "Warning" : "Success") : "Error", jsonbuf)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
