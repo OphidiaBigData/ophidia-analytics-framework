@@ -186,6 +186,7 @@ CREATE TABLE `hostpartition` (
   `idhostpartition` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `partitionname` varchar(64) NOT NULL,
   `hidden` tinyint(1) NOT NULL DEFAULT 0,
+  `reserved` tinyint(1) NOT NULL DEFAULT 0,
   `iduser` int(10) unsigned NULL DEFAULT NULL,
   CONSTRAINT `iduser_s` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`) ON DELETE CASCADE ON UPDATE CASCADE,
   PRIMARY KEY (`idhostpartition`),

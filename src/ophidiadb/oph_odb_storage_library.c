@@ -1974,7 +1974,7 @@ int oph_odb_stge_insert_into_dbinstance_partitioned_tables(ophidiadb * oDB, oph_
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_user, int *id_hostpartition)
+int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_user, char reserved, int *id_hostpartition)
 {
 	if (!oDB || !name || !id_user || !id_hostpartition) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1988,7 +1988,7 @@ int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_use
 	}
 
 	char insertQuery[MYSQL_BUFLEN];
-	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_CREATE_PARTITION, name, id_user);
+	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_CREATE_PARTITION, name, id_user, reserved);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -1999,12 +1999,12 @@ int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_use
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
-	*id_hostpartition = mysql_insert_id(oDB->conn);
+	*id_hostpartition = (int) mysql_insert_id(oDB->conn);
 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_add_all_hosts_to_partition(ophidiadb * oDB, int id_hostpartition)
+int oph_odb_stge_add_all_hosts_to_partition(ophidiadb * oDB, int id_hostpartition, char reserved)
 {
 	if (!oDB || !id_hostpartition) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2028,10 +2028,41 @@ int oph_odb_stge_add_all_hosts_to_partition(ophidiadb * oDB, int id_hostpartitio
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
+	if (reserved) {
+
+		if (mysql_query(oDB->conn, MYSQL_QUERY_STGE_CHECK_ALL_HOSTS)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			return OPH_ODB_MYSQL_ERROR;
+		}
+
+		MYSQL_RES *res;
+		MYSQL_ROW row;
+		res = mysql_store_result(oDB->conn);
+		if (mysql_num_rows(res) != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+		if (mysql_field_count(oDB->conn) != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		row = mysql_fetch_row(res);
+		if (strtol(row[0], NULL, 10) > 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Host is already reserved\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		mysql_free_result(res);
+	}
+
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_add_host_to_partition(ophidiadb * oDB, int id_hostpartition, int id_host)
+int oph_odb_stge_add_host_to_partition(ophidiadb * oDB, int id_hostpartition, int id_host, char reserved)
 {
 	if (!oDB || !id_hostpartition || !id_host) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2053,6 +2084,43 @@ int oph_odb_stge_add_host_to_partition(ophidiadb * oDB, int id_hostpartition, in
 	if (mysql_query(oDB->conn, insertQuery)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	if (reserved) {
+
+		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_CHECK_HOST, id_host);
+		if (n >= MYSQL_BUFLEN) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+			return OPH_ODB_STR_BUFF_OVERFLOW;
+		}
+
+		if (mysql_query(oDB->conn, insertQuery)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			return OPH_ODB_MYSQL_ERROR;
+		}
+
+		MYSQL_RES *res;
+		MYSQL_ROW row;
+		res = mysql_store_result(oDB->conn);
+		if (mysql_num_rows(res) != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+		if (mysql_field_count(oDB->conn) != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		row = mysql_fetch_row(res);
+		if (strtol(row[0], NULL, 10) > 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Host is already reserved\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		mysql_free_result(res);
 	}
 
 	return OPH_ODB_SUCCESS;
