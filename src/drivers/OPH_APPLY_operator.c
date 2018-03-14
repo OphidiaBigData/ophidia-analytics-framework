@@ -1927,7 +1927,7 @@ int task_reduce(oph_operator_struct * handle)
 					}
 				} else {
 					// Adaptation due to array size modification
-					if (((OPH_APPLY_operator_handle *) handle->operator_handle)->impl_size_update || is_reduce) {
+					if (((OPH_APPLY_operator_handle *) handle->operator_handle)->impl_size_update) {
 						if (first) {
 							if ((size == 1) && is_reduce) {
 								cubedims[l].size = cubedims[l].level = 0;
