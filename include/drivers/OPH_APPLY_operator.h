@@ -60,6 +60,7 @@
  * \param array_values Pointer to value of main implicit dimension of input cube
  * \param description Free description to be associated with output cube
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
+ * \param on_reduce Flag set to 1 in case the values of implicit dimension has to updated due to a reduction primitive
  */
 struct _OPH_APPLY_operator_handle {
 	ophidiadb oDB;
@@ -96,6 +97,7 @@ struct _OPH_APPLY_operator_handle {
 	long long array_length;
 	char *description;
 	short int execute_error;
+	char on_reduce;
 };
 typedef struct _OPH_APPLY_operator_handle OPH_APPLY_operator_handle;
 
