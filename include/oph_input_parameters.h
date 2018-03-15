@@ -171,7 +171,8 @@
 #define OPH_IN_PARAM_NUMBER					"number"
 #define OPH_IN_PARAM_FILE					"file"
 #define OPH_IN_PARAM_DEPTH					"depth"
-#define OPH_IN_PARAM_REALPATH				"realpath"
+#define OPH_IN_PARAM_REALPATH					"realpath"
+#define OPH_IN_PARAM_ON_REDUCE					"on_reduce"
 #define OPH_IN_PARAM_ACTION					"action"
 
 #define OPH_IN_PARAM_SCRIPT					"script"
