@@ -450,7 +450,7 @@ CREATE TABLE `job` (
   `nchildrentotal` int(10) unsigned DEFAULT NULL,
   `nchildrencompleted` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`idjob`),
-  CONSTRAINT `idparent_j` FOREIGN KEY (`idparent`) REFERENCES `job` (`idjob`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `idparent_j` FOREIGN KEY (`idparent`) REFERENCES `job` (`idjob`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `iduser_j` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `idsession_j` FOREIGN KEY (`idsession`) REFERENCES `session` (`idsession`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
@@ -478,7 +478,7 @@ CREATE TABLE `jobaccounting` (
   `markerid` int(10) unsigned NOT NULL,
   `workflowid` int(10) unsigned DEFAULT NULL,
   `idsession` int(10) unsigned DEFAULT NULL,
-  `iduser` int(10) unsigned NOT NULL,
+  `iduser` int(10) unsigned DEFAULT NULL,
   `creationdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `status` varchar(64) NOT NULL,
   `submissionstring` varchar(2048) DEFAULT NULL,
@@ -486,7 +486,10 @@ CREATE TABLE `jobaccounting` (
   `timeend` timestamp NULL DEFAULT NULL,
   `nchildrentotal` int(10) unsigned DEFAULT NULL,
   `nchildrencompleted` int(10) unsigned DEFAULT NULL,
-  PRIMARY KEY (`idjob`)
+  PRIMARY KEY (`idjob`),
+  CONSTRAINT `idparent_ja` FOREIGN KEY (`idparent`) REFERENCES `jobaccounting` (`idjob`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `iduser_ja` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `idsession_ja` FOREIGN KEY (`idsession`) REFERENCES `session` (`idsession`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
