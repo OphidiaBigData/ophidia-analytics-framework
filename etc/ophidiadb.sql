@@ -466,6 +466,40 @@ LOCK TABLES `job` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `jobaccounting`
+--
+
+DROP TABLE IF EXISTS `jobaccounting`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `jobaccounting` (
+  `idjob` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `idparent` int(10) unsigned DEFAULT NULL,
+  `markerid` int(10) unsigned NOT NULL,
+  `workflowid` int(10) unsigned DEFAULT NULL,
+  `idsession` int(10) unsigned DEFAULT NULL,
+  `iduser` int(10) unsigned NOT NULL,
+  `creationdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `status` varchar(64) NOT NULL,
+  `submissionstring` varchar(2048) DEFAULT NULL,
+  `timestart` timestamp NULL DEFAULT NULL,
+  `timeend` timestamp NULL DEFAULT NULL,
+  `nchildrentotal` int(10) unsigned DEFAULT NULL,
+  `nchildrencompleted` int(10) unsigned DEFAULT NULL,
+  PRIMARY KEY (`idjob`)
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `jobaccounting`
+--
+
+LOCK TABLES `jobaccounting` WRITE;
+/*!40000 ALTER TABLE `jobaccounting` DISABLE KEYS */;
+/*!40000 ALTER TABLE `jobaccounting` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `task`
 --
 
