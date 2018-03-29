@@ -70,4 +70,8 @@
 
 #define MYSQL_QUERY_DIM_ENABLE_GRID					"UPDATE grid SET enabled = 1 WHERE idgrid = %d;"
 
+#define MYSQL_DELETE_OPHIDIADB_DIMENSION_INSTANCE	"DELETE FROM dimensioninstance WHERE iddimensioninstance = %d;"
+
+#define MYSQL_RETRIEVE_DIMENSIONS_OF_DATACUBE		"SELECT dimensionname FROM dimension INNER JOIN dimensioninstance ON dimension.iddimension = dimensioninstance.iddimension INNER JOIN cubehasdim ON dimensioninstance.iddimensioninstance = cubehasdim.iddimensioninstance WHERE iddatacube = %d;"
+
 #endif				/* __OPH_ODB_DIM_QUERY_H__ */

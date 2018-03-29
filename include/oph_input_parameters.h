@@ -47,6 +47,8 @@
 #define OPH_IN_PARAM_DIMENSION_TYPE				"dim_type"
 #define OPH_IN_PARAM_DIMENSION_SIZE				"dim_size"
 #define OPH_IN_PARAM_DIMENSION_LEVEL				"concept_level"
+#define OPH_IN_PARAM_EI_DIMENSION_LEVEL				"dim_level"
+#define OPH_IN_PARAM_EI_DIMENSION_TYPE				"dim_array"
 #define OPH_IN_PARAM_REDUCTION_OPERATION			"operation"
 #define OPH_IN_PARAM_REDUCTION_SIZE				"group_size"
 #define OPH_IN_PARAM_CUBEIO_HIERARCHY_DIRECTION			"branch"
@@ -173,6 +175,7 @@
 #define OPH_IN_PARAM_DEPTH					"depth"
 #define OPH_IN_PARAM_REALPATH				"realpath"
 #define OPH_IN_PARAM_ON_REDUCE				"on_reduce"
+#define OPH_IN_PARAM_ACTION					"action"
 
 #define OPH_IN_PARAM_SCRIPT					"script"
 #define OPH_IN_PARAM_ARGS					"args"

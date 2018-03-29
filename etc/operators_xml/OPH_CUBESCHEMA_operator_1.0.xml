@@ -13,6 +13,7 @@ It shows metadata information about a datacube and the dimensions related to it.
 - action : command type; use
            &quot;read&quot; to access information (default)
            &quot;add&quot; to add a new dimension. Dimension size will be 1.
+           &quot;clear&quot; to clear collapsed dimnsions.
 - level : In case of action &quot;read&quot;, level of information shown.
 		  -- 0 : shows only metadata (default)			
 		  -- 1 : shows only dimension values
@@ -26,8 +27,6 @@ It shows metadata information about a datacube and the dimensions related to it.
 			With &quot;yes&quot;, the values are converted as a string with date and time.
 - base64 : if &quot;no&quot; (default), dimension values are returned as strings (with possible trucantion errors).
 			With &quot;yes&quot;, raw dimension values are returned as base64-coded strings.
-- dim_type: data type of the new dimension. Valid only if a new dimension has to be added. Default value is &quot;double&quot;.
-- hierachy : concept hierarchy name of the new dimension. Default value is &quot;oph_base&quot;.
 - concept_level : concept level short name (must be a single char) of the new dimension. Default value is &quot;c&quot;.
 - dim_level : level of the new dimension to be added in dimension table.
 - dim_array : use &quot;yes&quot; to add an implicit dimension (default), use &quot;no&quot; to add an explicit dimension.
@@ -58,17 +57,15 @@ SUBMISSION STRING: &quot;operator=oph_cubeschema;cube=http://www.example.com/1/1
     </info>
     <args>
 		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
-		<argument type="string" mandatory="no" default="read" values="read|add">action</argument>
+		<argument type="string" mandatory="no" default="read" values="read|add|clear">action</argument>
 		<argument type="int" mandatory="no" default="0" minvalue="0" maxvalue="2" values="0|1|2">level</argument>
 		<argument type="string" mandatory="no" default="all" multivalue="yes">dim</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">show_index</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">show_time</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">base64</argument>
-		<argument type="string" mandatory="no" default="double" values="double|float|int|long|short|byte">dim_type</argument>
-		<argument type="string" mandatory="no" default="oph_base">hierarchy</argument>
 		<argument type="string" mandatory="no" default="c">concept_level</argument>
-		<argument type="string" mandatory="no" default="no" values="yes|no">dim_array</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">dim_level</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">dim_array</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
