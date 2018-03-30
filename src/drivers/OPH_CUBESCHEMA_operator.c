@@ -491,16 +491,8 @@ int task_execute(oph_operator_struct * handle)
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to set concept level to '%c'", ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->concept_level);
 			break;
 		}
-		//Create entry in dims and dim_insts
-		oph_odb_dimension dims;
+
 		oph_odb_dimension_instance dim_inst;
-
-		dims.id_dimension = tot_dims[j].id_dimension;
-		dims.id_container = tot_dims[j].id_container;
-		dims.id_hierarchy = tot_dims[j].id_hierarchy;
-		snprintf(dims.dimension_name, OPH_ODB_DIM_DIMENSION_SIZE, "%s", tot_dims[j].dimension_name);
-		snprintf(dims.dimension_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE, "%s", tot_dims[j].dimension_type);
-
 		dim_inst.id_dimension = tot_dims[j].id_dimension;
 		dim_inst.fk_id_dimension_index = 0;
 		dim_inst.concept_level = ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->concept_level;
