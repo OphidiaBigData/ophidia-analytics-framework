@@ -345,27 +345,6 @@ int task_execute(oph_operator_struct * handle)
 	int id_datacube = ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->id_input_datacube;
 	int level = ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->level;
 
-	if (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->action == 1) {
-		char **dimension_names = NULL;
-		int l = 0, ll, dimension_names_num = 0;
-		if (oph_odb_dim_retrieve_dimensions(oDB, id_datacube, &dimension_names, &dimension_names_num)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve dimensions.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Unable to retrieve dimensions.\n");
-		} else {
-			for (; l < dimension_names_num; ++l)
-				if (!dimension_names[l] && !strcmp(dimension_name[0], dimension_names[l]))
-					break;
-		}
-		if (dimension_names) {
-			for (ll = 0; ll < dimension_names_num; ++ll)
-				if (dimension_names[ll])
-					free(dimension_names[ll]);
-			free(dimension_names);
-		}
-		if (l < dimension_names_num)
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-
 	oph_odb_cubehasdim *cubedims = NULL;
 	int l, j, number_of_dimensions = 0;
 
@@ -376,9 +355,31 @@ int task_execute(oph_operator_struct * handle)
 		number_of_dimensions = 0;
 	}
 
-	char error_message[OPH_COMMON_BUFFER_LEN], success = 0;
+	char error_message[OPH_COMMON_BUFFER_LEN], success = 0, *concept_level_long = NULL;
 	*error_message = 0;
+
 	while (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->action == 1) {
+
+		char **dimension_names = NULL;
+		int l = 0, ll, dimension_names_num = 0;
+		if (oph_odb_dim_retrieve_dimensions(oDB, id_datacube, &dimension_names, &dimension_names_num)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve dimensions.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Unable to retrieve dimensions.\n");
+		} else {
+			for (; l < dimension_names_num; ++l)
+				if (dimension_names[l] && !strcmp(dimension_name[0], dimension_names[l]))
+					break;
+		}
+		if (dimension_names) {
+			for (ll = 0; ll < dimension_names_num; ++ll)
+				if (dimension_names[ll])
+					free(dimension_names[ll]);
+			free(dimension_names);
+		}
+		if (l < dimension_names_num) {
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Dimension '%s' is already set\n", dimension_name[0]);
+			break;
+		}
 
 		char is_last, first_implicit = -1;
 		int number_of_dimensions_ext = 1 + number_of_dimensions, found = -1, k = 0, kk, last_level = 0;
@@ -449,12 +450,9 @@ int task_execute(oph_operator_struct * handle)
 			break;
 		}
 		//Find container dimension
-		for (j = 0; j < number_of_dimensions_c; j++) {
-			if (!strncmp(tot_dims[j].dimension_name, dimension_name[0], OPH_ODB_DIM_DIMENSION_SIZE)) {
-				snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Dimension '%s' is already set", dimension_name[0]);
+		for (j = 0; j < number_of_dimensions_c; j++)
+			if (!strncmp(tot_dims[j].dimension_name, dimension_name[0], OPH_ODB_DIM_DIMENSION_SIZE))
 				break;
-			}
-		}
 		if (j == number_of_dimensions_c) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension %s not found in the container\n", dimension_name[0]);
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Dimension %s not found in the container\n", dimension_name[0]);
@@ -477,7 +475,7 @@ int task_execute(oph_operator_struct * handle)
 		int exist_flag = 0;
 		char filename[2 * OPH_TP_BUFLEN];
 		snprintf(filename, 2 * OPH_TP_BUFLEN, OPH_FRAMEWORK_HIERARCHY_XML_FILE_PATH_DESC, OPH_ANALYTICS_LOCATION, hier.filename);
-		if (oph_hier_check_concept_level_short(filename, ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->concept_level, &exist_flag)) {
+		if (oph_hier_get_concept_level_long(filename, ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->concept_level, &concept_level_long)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving hierarchy\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Error retrieving hierarchy\n");
 			free(tot_dims);
@@ -485,7 +483,7 @@ int task_execute(oph_operator_struct * handle)
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to retrieve concept hierachy");
 			break;
 		}
-		if (!exist_flag) {
+		if (!concept_level_long) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c'\n", ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->concept_level);
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Unable to set concept level to '%c'\n", ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->concept_level);
 			free(tot_dims);
@@ -621,7 +619,7 @@ int task_execute(oph_operator_struct * handle)
 		oph_dim_unload_dim_dbinstance(db);
 		free(tot_dims);
 
-		if (oph_odb_dim_insert_into_dimensioninstance_table(oDB, &dim_inst, &dimension_array_id, id_datacube, NULL, NULL)) {
+		if (oph_odb_dim_insert_into_dimensioninstance_table(oDB, &dim_inst, &dimension_array_id, id_datacube, dimension_name[0], concept_level_long)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension instance row\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Unable to insert new dimension instance row\n");
 			free(cubedims_ext);
@@ -657,6 +655,8 @@ int task_execute(oph_operator_struct * handle)
 		success = 1;
 		break;
 	}
+	if (concept_level_long)
+		free(concept_level_long);
 
 	while (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->action == 2) {
 
