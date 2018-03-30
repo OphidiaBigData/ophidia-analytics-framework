@@ -42,7 +42,7 @@ int oph_odb_meta_execute_query(ophidiadb * oDB, const char *query, char reopen_c
 		return OPH_ODB_NULL_PARAM;
 	}
 
-	int n, count = 0, interval = OPH_META_MIN_TIME;
+	int count = 0, interval = OPH_META_MIN_TIME;
 	char *error_message = NULL;
 
 	do {
@@ -50,7 +50,7 @@ int oph_odb_meta_execute_query(ophidiadb * oDB, const char *query, char reopen_c
 		if (!mysql_query(oDB->conn, query))
 			break;
 
-		error_message = mysql_error(oDB->conn);
+		error_message = (char *) mysql_error(oDB->conn);
 		if (!strstr(error_message, "Deadlock found when trying to get lock")) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", error_message);
 			return OPH_ODB_MYSQL_ERROR;
@@ -750,9 +750,7 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 	}
 
 	char insertQuery[MYSQL_BUFLEN];
-	int n, count, interval;
-
-	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_COPY_INSTANCES, id_datacube_input);
+	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_COPY_INSTANCES, id_datacube_input);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
