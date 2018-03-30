@@ -381,7 +381,7 @@ int task_execute(oph_operator_struct * handle)
 	while (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->action == 1) {
 
 		char is_last, first_implicit = -1;
-		int number_of_dimensions_ext = 1 + number_of_dimensions, found = -1, k, kk, last_level = 0;
+		int number_of_dimensions_ext = 1 + number_of_dimensions, found = -1, k = 0, kk, last_level = 0;
 		oph_odb_cubehasdim *cubedims_ext = (oph_odb_cubehasdim *) malloc(number_of_dimensions_ext * sizeof(oph_odb_cubehasdim));
 		if (!cubedims_ext) {
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Memory error");
@@ -429,12 +429,19 @@ int task_execute(oph_operator_struct * handle)
 				j++;
 			}
 		}
+		if (found < 0) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store dimension '%s'\n", dimension_name[0]);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Unable to store dimension '%s'\n", dimension_name[0]);
+			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to store dimension '%s'\n", dimension_name[0]);
+			break;
+		}
 
 		int number_of_dimensions_c = 0;
 		oph_odb_dimension *tot_dims = NULL;
 		if (oph_odb_dim_retrieve_dimension_list_from_container(oDB, id_container, &tot_dims, &number_of_dimensions_c)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve dimensions.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Unable to retrieve dimensions.\n");
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve dimensions\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Unable to retrieve dimensions\n");
 			if (tot_dims)
 				free(tot_dims);
 			free(cubedims_ext);
