@@ -376,13 +376,17 @@ int task_execute(oph_operator_struct * handle)
 		number_of_dimensions = 0;
 	}
 
+	char error_message[OPH_COMMON_BUFFER_LEN], success = 0;
+	*error_message = 0;
 	while (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->action == 1) {
 
 		char is_last, first_implicit = -1;
 		int number_of_dimensions_ext = 1 + number_of_dimensions, found = -1, k, kk, last_level = 0;
 		oph_odb_cubehasdim *cubedims_ext = (oph_odb_cubehasdim *) malloc(number_of_dimensions_ext * sizeof(oph_odb_cubehasdim));
-		if (!cubedims_ext)
+		if (!cubedims_ext) {
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Memory error");
 			break;
+		}
 		for (l = j = 0; l <= number_of_dimensions; ++l) {
 			is_last = l == number_of_dimensions;
 			if (!is_last) {
@@ -434,18 +438,22 @@ int task_execute(oph_operator_struct * handle)
 			if (tot_dims)
 				free(tot_dims);
 			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to retrieve dimensions");
 			break;
 		}
 		//Find container dimension
 		for (j = 0; j < number_of_dimensions_c; j++) {
-			if (!strncmp(tot_dims[j].dimension_name, dimension_name[0], OPH_ODB_DIM_DIMENSION_SIZE))
+			if (!strncmp(tot_dims[j].dimension_name, dimension_name[0], OPH_ODB_DIM_DIMENSION_SIZE)) {
+				snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Dimension '%s' is already set", dimension_name[0]);
 				break;
+			}
 		}
 		if (j == number_of_dimensions_c) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension %s not found in the container\n", dimension_name[0]);
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Dimension %s not found in the container\n", dimension_name[0]);
 			free(tot_dims);
 			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "There is no dimension '%s' in the container", dimension_name[0]);
 			break;
 		}
 		//Find dimension level into hierarchy file
@@ -455,6 +463,7 @@ int task_execute(oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Error retrieving hierarchy\n");
 			free(tot_dims);
 			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to retrieve concept hierachy");
 			break;
 		}
 
@@ -466,6 +475,7 @@ int task_execute(oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Error retrieving hierarchy\n");
 			free(tot_dims);
 			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to retrieve concept hierachy");
 			break;
 		}
 		if (!exist_flag) {
@@ -473,6 +483,7 @@ int task_execute(oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Unable to set concept level to '%c'\n", ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->concept_level);
 			free(tot_dims);
 			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to set concept level to '%c'", ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->concept_level);
 			break;
 		}
 		//Create entry in dims and dim_insts
@@ -503,6 +514,7 @@ int task_execute(oph_operator_struct * handle)
 			oph_dim_unload_dim_dbinstance(db);
 			free(tot_dims);
 			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to load dimension");
 			break;
 
 		}
@@ -513,6 +525,7 @@ int task_execute(oph_operator_struct * handle)
 			oph_dim_unload_dim_dbinstance(db);
 			free(tot_dims);
 			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to load dimensions");
 			break;
 		}
 
@@ -527,6 +540,7 @@ int task_execute(oph_operator_struct * handle)
 			oph_dim_unload_dim_dbinstance(db);
 			free(tot_dims);
 			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to load dimensions");
 			break;
 		}
 		if (!exist_flag) {
@@ -536,6 +550,7 @@ int task_execute(oph_operator_struct * handle)
 			oph_dim_unload_dim_dbinstance(db);
 			free(tot_dims);
 			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to load dimensions");
 			break;
 		}
 		if (oph_dim_check_if_dimension_table_exists(db, label_dimension_table_name, &exist_flag)) {
@@ -545,6 +560,7 @@ int task_execute(oph_operator_struct * handle)
 			oph_dim_unload_dim_dbinstance(db);
 			free(tot_dims);
 			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to load dimensions");
 			break;
 		}
 		if (!exist_flag) {
@@ -554,6 +570,7 @@ int task_execute(oph_operator_struct * handle)
 			oph_dim_unload_dim_dbinstance(db);
 			free(tot_dims);
 			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to load dimensions");
 			break;
 		}
 		if (oph_dim_use_db_of_dbms(db->dbms_instance, db)) {
@@ -563,6 +580,7 @@ int task_execute(oph_operator_struct * handle)
 			oph_dim_unload_dim_dbinstance(db);
 			free(tot_dims);
 			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to load dimensions");
 			break;
 		}
 
@@ -574,6 +592,7 @@ int task_execute(oph_operator_struct * handle)
 			oph_dim_unload_dim_dbinstance(db);
 			free(tot_dims);
 			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to store dimension '%s'", dimension_name[0]);
 			break;
 		}
 		dim_inst.fk_id_dimension_label = dimension_array_id;	// Real data
@@ -586,6 +605,7 @@ int task_execute(oph_operator_struct * handle)
 			oph_dim_unload_dim_dbinstance(db);
 			free(tot_dims);
 			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to store dimension '%s'", dimension_name[0]);
 			break;
 		}
 		dim_inst.fk_id_dimension_index = dimension_array_id;	// Indexes
@@ -598,6 +618,7 @@ int task_execute(oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension instance row\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Unable to insert new dimension instance row\n");
 			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to store dimension '%s'", dimension_name[0]);
 			break;
 		}
 		cubedims_ext[found].id_dimensioninst = dimension_array_id;
@@ -606,6 +627,7 @@ int task_execute(oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new datacube - dimension relations.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Unable to insert new datacube - dimension relations.\n");
 			free(cubedims_ext);
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to store dimension '%s'", dimension_name[0]);
 			break;
 		}
 
@@ -614,6 +636,7 @@ int task_execute(oph_operator_struct * handle)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update dimension level.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Unable to update dimension level.\n");
 				free(cubedims_ext);
+				snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to update dimensions");
 				break;
 			}
 		}
@@ -624,20 +647,24 @@ int task_execute(oph_operator_struct * handle)
 		cubedims = cubedims_ext;
 		number_of_dimensions = number_of_dimensions_ext;
 
+		success = 1;
 		break;
 	}
 
 	while (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->action == 2) {
 
 		oph_odb_cubehasdim *cubedims_ext = (oph_odb_cubehasdim *) malloc(number_of_dimensions * sizeof(oph_odb_cubehasdim));
-		if (!cubedims_ext)
+		if (!cubedims_ext) {
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Memory error");
 			break;
+		}
 		for (l = j = 0; l < number_of_dimensions; ++l)
 			if (!cubedims[l].level || !cubedims[l].size) {
 				if (oph_odb_dim_delete_dimensioninstance(oDB, cubedims[l].id_dimensioninst)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to clear dimension instance row\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Unable to clear dimension instance row\n");
 					free(cubedims_ext);
+					snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to clear dimensions");
 					break;
 				}
 			} else {
@@ -651,7 +678,22 @@ int task_execute(oph_operator_struct * handle)
 		cubedims = cubedims_ext;
 		number_of_dimensions = j;
 
+		success = 1;
 		break;
+	}
+
+	if (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->action && !success) {
+		// ADD OUTPUT PID TO JSON AS TEXT
+		if (oph_json_is_objkey_printable
+		    (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->objkeys_num,
+		     OPH_JSON_OBJKEY_CUBESCHEMA_DIMINFO)) {
+			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_CUBESCHEMA_DIMINFO, "Error", strlen(error_message) > 0 ? error_message : NULL)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, "ADD TEXT error\n");
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+		}
+		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 	}
 
 	if (level != 1) {
