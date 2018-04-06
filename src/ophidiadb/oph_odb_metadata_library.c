@@ -497,12 +497,13 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 	char query[MYSQL_BUFLEN];
 	int n = 0;
 
-	if (id_metadatainstance != NULL) {
-		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_READ_INSTANCES, id_datacube, id_metadatainstance, "%", "%", "");
-	} else {
+	if (id_metadatainstance)
+		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_READ_INSTANCES, id_datacube, id_metadatainstance, "%", "%", "%", "");
+	else {
 		if (!metadata_keys) {
 			//read all keys
-			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_READ_INSTANCES, id_datacube, "%", (metadata_type ? metadata_type : "%"), (metadata_value ? metadata_value : "%"), "");
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_READ_INSTANCES, id_datacube, "%", metadata_variable ? metadata_variable : "%", metadata_type ? metadata_type : "%",
+				     metadata_value ? metadata_value : "%", "");
 		} else {
 			//read a group of keys
 			char key_filter[MYSQL_BUFLEN];
