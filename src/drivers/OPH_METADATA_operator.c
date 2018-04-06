@@ -494,12 +494,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_MEMORY_ERROR_INPUT, OPH_IN_PARAM_METADATA_VARIABLE_FILTER);
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
-	} else {
-		if (!(((OPH_METADATA_operator_handle *) handle->operator_handle)->variable_filter = (char *) strdup("%"))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_MEMORY_ERROR_INPUT, OPH_IN_PARAM_METADATA_VARIABLE_FILTER);
-			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-		}
 	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_METADATA_VALUE_FILTER);
