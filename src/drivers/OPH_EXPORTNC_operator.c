@@ -1251,7 +1251,7 @@ int task_execute(oph_operator_struct * handle)
 				if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->export_metadata)	// Add metadata
 				{
 					if (oph_odb_meta_find_complete_metadata_list
-					    (&oDB_slave, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0, NULL, NULL, NULL, &read_result)) {
+					    (&oDB_slave, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0, NULL, NULL, NULL, NULL, &read_result)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 						oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);

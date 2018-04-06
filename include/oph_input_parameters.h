@@ -124,6 +124,7 @@
 #define OPH_IN_PARAM_METADATA_ID				"metadata_id"
 #define OPH_IN_PARAM_METADATA_TYPE				"metadata_type"
 #define OPH_IN_PARAM_METADATA_VARIABLE				"variable"
+#define OPH_IN_PARAM_METADATA_VARIABLE_FILTER	"variable_filter"
 #define OPH_IN_PARAM_METADATA_VALUE				"metadata_value"
 #define OPH_IN_PARAM_METADATA_TYPE_FILTER			"metadata_type_filter"
 #define OPH_IN_PARAM_METADATA_VALUE_FILTER			"metadata_value_filter"

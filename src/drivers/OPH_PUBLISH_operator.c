@@ -1329,7 +1329,7 @@ int task_execute(oph_operator_struct * handle)
 		if (((OPH_PUBLISH_operator_handle *) handle->operator_handle)->publish_metadata) {
 			MYSQL_RES *read_result = NULL;
 			MYSQL_ROW row;
-			if (oph_odb_meta_find_complete_metadata_list(&oDB_slave, datacube_id, NULL, 0, NULL, NULL, NULL, &read_result)) {
+			if (oph_odb_meta_find_complete_metadata_list(&oDB_slave, datacube_id, NULL, 0, NULL, NULL, NULL, NULL, &read_result)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to load metadata.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_READ_METADATA_ERROR);
 				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -1858,7 +1858,7 @@ int task_execute(oph_operator_struct * handle)
 		if (((OPH_PUBLISH_operator_handle *) handle->operator_handle)->publish_metadata) {
 			MYSQL_RES *read_result = NULL;
 			MYSQL_ROW row;
-			if (oph_odb_meta_find_complete_metadata_list(&oDB_slave, datacube_id, NULL, 0, NULL, NULL, NULL, &read_result)) {
+			if (oph_odb_meta_find_complete_metadata_list(&oDB_slave, datacube_id, NULL, 0, NULL, NULL, NULL, NULL, &read_result)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to load metadata.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_READ_METADATA_ERROR);
 				oph_odb_free_ophidiadb(&oDB_slave);
