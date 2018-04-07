@@ -41,23 +41,21 @@ It provides CRUD operations (Create, Read, Update and Delete) on OphidiaDB metad
                    Valid only in insert or update modes.
                    In insert mode more values can be listed by using &quot;|&quot; as separator.
                    Default value is &quot;null&quot;.
-- variable_filter : optional filter on variable name.
+- variable_filter : optional filter on variable name, valid in read/delete mode only.
                     This filter will be considered only when metadata_id is not specified or equal to its default value (0).
-                    This filter is used with the SQL search pattern &quot;filter&quot;, so use one
-                    of the values of metadata_type or &quot;all&quot; to select all types (default).
-- metadata_type_filter : optional filter on the type of returned metadata valid in read mode only.
-                         This filter will be considered only when metadata_id is not specified or
-                         equal to its default value (0).
-                         This filter is used with the SQL search pattern &quot;filter&quot;, so use one
-                         of the values of metadata_type or &quot;all&quot; to select all types (default).
-- metadata_value_filter : optional filter on the value of returned metadata valid in read mode only.
-                          This filter will be considered only when metadata_id is not specified or
-                          equal to its default value (0).
-                          This filter is used with the SQL search pattern %filter% in order to select
-                          values containing &quot;filter&quot;. Use &quot;all&quot; (default) to mute this filter.
+                    This filter is used with the SQL search pattern %filter% in order to select variables containing &quot;filter&quot;.
+                    Use &quot;all&quot; (default) to mute this filter.
+- metadata_type_filter : optional filter on the type of returned metadata, valid in read/delete mode only.
+                         This filter will be considered only when metadata_id is not specified or equal to its default value (0).
+                         This filter is used with the SQL search pattern %filter% in order to select types containing &quot;filter&quot;.
+                         Use &quot;all&quot; (default) to mute this filter.
+- metadata_value_filter : optional filter on the value of returned metadata, valid in read/delete mode only.
+                          This filter will be considered only when metadata_id is not specified or equal to its default value (0).
+                          This filter is used with the SQL search pattern %filter% in order to select values containing &quot;filter&quot;.
+                          Use &quot;all&quot; (default) to mute this filter.
 - force : force update or deletion of functional metadata associated to a vocabulary (e.g. time metadata).
-        By default update or deletion of functiona metadata is not allowed (&quot;no&quot;)
-        Set to &quot;yes&quot; to allow modification of functional metadata.
+          By default update or deletion of functiona metadata is not allowed (&quot;no&quot;)
+          Set to &quot;yes&quot; to allow modification of functional metadata.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
