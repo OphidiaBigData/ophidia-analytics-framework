@@ -12,8 +12,8 @@ It shows metadata information about a datacube and the dimensions related to it.
 - cube : name of the input datacube. The name must be in PID format.
 - action : command type; use
            &quot;read&quot; to access information (default)
-           &quot;add&quot; to add a new dimension. Dimension size will be 1.
-           &quot;clear&quot; to clear collapsed dimnsions.
+           &quot;add&quot; to add a new dimension. Dimension size will be 1
+           &quot;clear&quot; to clear collapsed dimensions.
 - level : In case of action &quot;read&quot;, level of information shown.
 		  -- 0 : shows only metadata (default)			
 		  -- 1 : shows only dimension values
