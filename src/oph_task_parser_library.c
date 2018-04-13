@@ -496,8 +496,10 @@ int oph_tp_validate_task_string_param(const char *task_string, xmlNodePtr xml_no
 					xmlFree(attribute_maxvalue);
 					if (min_value == max_value) {
 						sprintf(tmp_value, "%d", min_value);
-						pmesg(LOG_WARNING, __FILE__, __LINE__, "Param '%s' is changed to the only possible value %d\n", param, min_value);
-						logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Param '%s' is changed to the only possible value %d\n", param, min_value);
+						if (min_value < numeric_value) {
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Param '%s' is changed to the only possible value %d\n", param, min_value);
+							logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Param '%s' is changed to the only possible value %d\n", param, min_value);
+						}
 					} else {
 						if (numeric_value < min_value) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Param '%s' is smaller than minvalue %d\n", param, min_value);
@@ -540,8 +542,10 @@ int oph_tp_validate_task_string_param(const char *task_string, xmlNodePtr xml_no
 					xmlFree(attribute_maxvalue);
 					if (min_value == max_value) {
 						sprintf(tmp_value, "%f", min_value);
-						pmesg(LOG_WARNING, __FILE__, __LINE__, "Param '%s' is changed to the only possible value %f\n", param, min_value);
-						logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Param '%s' is changed to the only possible value %f\n", param, min_value);
+						if (min_value < numeric_value) {
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Param '%s' is changed to the only possible value %f\n", param, min_value);
+							logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Param '%s' is changed to the only possible value %f\n", param, min_value);
+						}
 					} else {
 						if (numeric_value < min_value) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Param '%s' is smaller than minvalue %f\n", param, min_value);
