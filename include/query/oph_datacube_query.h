@@ -158,7 +158,7 @@
 #define MYSQL_DC_APPLY_PLUGIN_GB2 "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT oph_id3(%s,?,%lld) AS %s, %s AS %s FROM %s GROUP BY oph_id3(%s,?,%lld)"
 #define MYSQL_DC_APPLY_PLUGIN_WGB2 "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT oph_id3(%s,?,%lld) AS %s, %s AS %s FROM %s WHERE %s GROUP BY oph_id3(%s,?,%lld)"
 
-#define MYSQL_DC_SIZE_ELEMENTS_FRAG "SELECT oph_convert_l('','OPH_LONG',oph_aggregate_operator('OPH_LONG','OPH_LONG',oph_value_to_bin('','OPH_LONG',index_length+data_length),'OPH_SUM')) AS size FROM information_schema.TABLES WHERE table_name IN (%s);"
+#define MYSQL_DC_SIZE_ELEMENTS_FRAG "SELECT oph_convert_l('OPH_LONG','',oph_aggregate_operator('OPH_LONG','OPH_LONG',oph_value_to_bin('','OPH_LONG',index_length+data_length),'OPH_SUM')) AS size FROM information_schema.TABLES WHERE table_name IN (%s);"
 
 #define MYSQL_DC_DELETE_FRAG "DROP TABLE IF EXISTS %s"
 
