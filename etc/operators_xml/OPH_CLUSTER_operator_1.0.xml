@@ -32,7 +32,7 @@ SUBMISSION STRING: &quot;operator=oph_io_server;nhosts=3;host_partition=cluster;
     <args>
 		<argument type="string" mandatory="yes">host_partition</argument>
 		<argument type="string" mandatory="no" default="start" values="start|stop">type</argument>
-		<argument type="int" mandatory="no" minvalue="0" default="0">nhosts</argument>
+		<argument type="int" mandatory="no" minvalue="1" default="1">nhosts</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|io_server">objkey_filter</argument>
     </args>
 </operator>
