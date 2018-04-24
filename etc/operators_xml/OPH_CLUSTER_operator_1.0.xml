@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
-<operator name="OPH_IO_SERVER" version="1.0">
+<operator name="OPH_CLUSTER" version="1.0">
     <info>
         <abstract>[Type]
 Management.
 
 [Behaviour]
-Start and stop I/O servers.
+Start and stop a cluster of I/O servers.
 
 [Parameters]
 - action : use one of the following types:
@@ -21,7 +21,7 @@ Start and stop I/O servers.
         
 [Examples]       
 Start 3 I/O servers:
-OPH_TERM: oph_io_server nhosts=3;host_partition=cluster;
+OPH_TERM: oph_cluster nhosts=3;host_partition=cluster;
 SUBMISSION STRING: &quot;operator=oph_io_server;nhosts=3;host_partition=cluster;&quot;</abstract>
         <author>CMCC Foundation</author>
         <category>Administration</category>
