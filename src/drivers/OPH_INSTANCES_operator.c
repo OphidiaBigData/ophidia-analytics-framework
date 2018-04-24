@@ -1413,8 +1413,8 @@ int task_execute(oph_operator_struct * handle)
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 				char jsonbuf[OPH_COMMON_BUFFER_LEN], warning = 0;
-				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correclty %s", partition_name, action != 1 ? "reserved" : "created");
 				if (id_hostpartition) {
+					snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correctly %s", partition_name, action != 1 ? "reserved" : "created");
 					if (!hostname && !((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_number) {
 						if (oph_odb_stge_add_all_hosts_to_partition(oDB, id_hostpartition, action != 1)) {
 							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "Host partition '%s' cannot be %s", partition_name, action != 1 ? "reserved" : "created");
