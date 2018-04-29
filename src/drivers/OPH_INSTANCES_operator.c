@@ -118,17 +118,25 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_ACTION);
 	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_PARTITION_NAME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_PARTITION_NAME);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_ACTION);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_ACTION);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!strcmp(value, "add"))
 		((OPH_INSTANCES_operator_handle *) handle->operator_handle)->action = 1;
 	else if (!strcmp(value, "remove"))
 		((OPH_INSTANCES_operator_handle *) handle->operator_handle)->action = 2;
-	else if (!strcmp(value, "reserve"))
-		((OPH_INSTANCES_operator_handle *) handle->operator_handle)->action = 3;
-	else if (strcmp(value, "read")) {
+	else if (!strcmp(value, "reserve")) {
+		//((OPH_INSTANCES_operator_handle *) handle->operator_handle)->action = 3;
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "INSTANCES action unrecognized\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "INSTANCES action unrecognized\n");
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	} else if (!strcmp(value, "release")) {
+		//((OPH_INSTANCES_operator_handle *) handle->operator_handle)->action = 4;
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "INSTANCES action unrecognized\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "INSTANCES action unrecognized\n");
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	} else if (strcmp(value, "read")) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "INSTANCES action unrecognized\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "INSTANCES action unrecognized\n");
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
@@ -1162,8 +1170,8 @@ int task_execute(oph_operator_struct * handle)
 										jsonvalues[jjj] = strdup(row[jjj] ? row[jjj] : "");
 										if (!jsonvalues[jjj]) {
 											pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-											logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT,
-												"value");
+											logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID,
+												OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "value");
 											for (iii = 0; iii < jjj; iii++)
 												if (jsonvalues[iii])
 													free(jsonvalues[iii]);
@@ -1268,8 +1276,9 @@ int task_execute(oph_operator_struct * handle)
 							}
 							break;
 						case 2:
-							printf("| %-20s | %-11s | %-14s | %-8s | %-15s | %-20s | %-15s |\n", (row[1] ? row[1] : "-"), (row[2] ? row[2] : "-"), (row[0] ? row[0] : "-"),
-							       (row[3] ? row[3] : "-"), (row[4] ? (row[4][0] == '0' ? OPH_COMMON_IO_FS_LOCAL : OPH_COMMON_IO_FS_GLOBAL) : "-"), (row[5] ? row[5] : "-"),
+							printf("| %-20s | %-11s | %-14s | %-8s | %-15s | %-20s | %-15s |\n", (row[1] ? row[1] : "-"), (row[2] ? row[2] : "-"),
+							       (row[0] ? row[0] : "-"), (row[3] ? row[3] : "-"),
+							       (row[4] ? (row[4][0] == '0' ? OPH_COMMON_IO_FS_LOCAL : OPH_COMMON_IO_FS_GLOBAL) : "-"), (row[5] ? row[5] : "-"),
 							       (row[6] ? row[6] : "-"));
 
 							// ADD ROW TO JSON GRID
@@ -1406,8 +1415,11 @@ int task_execute(oph_operator_struct * handle)
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_PARTITION_NAME);
 					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 				}
-				int id_hostpartition = 0;
-				if (oph_odb_stge_add_hostpartition(oDB, partition_name, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user, action != 1, &id_hostpartition)) {
+				int id_hostpartition = 0, nhosts = ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_number, estimated_nhosts = nhosts;
+				if (!estimated_nhosts && hostname)
+					estimated_nhosts = ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids_num;
+				if (oph_odb_stge_add_hostpartition
+				    (oDB, partition_name, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user, action != 1, estimated_nhosts, &id_hostpartition)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Host partition '%s' cannot be %s\n", partition_name, action != 1 ? "reserved" : "created");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Host partition '%s' cannot be %s\n", partition_name, action != 1 ? "reserved" : "created");
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -1415,20 +1427,19 @@ int task_execute(oph_operator_struct * handle)
 				char jsonbuf[OPH_COMMON_BUFFER_LEN], warning = 0;
 				if (id_hostpartition) {
 					snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correctly %s", partition_name, action != 1 ? "reserved" : "created");
-					if (!hostname && !((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_number) {
+					if (!hostname && !nhosts) {
 						if (oph_odb_stge_add_all_hosts_to_partition(oDB, id_hostpartition, action != 1)) {
 							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "Host partition '%s' cannot be %s", partition_name, action != 1 ? "reserved" : "created");
 							oph_odb_stge_delete_hostpartition_by_id(oDB, id_hostpartition);
 							id_hostpartition = 0;
 						}
-					} else if (((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_number) {
-						if (oph_odb_stge_add_some_hosts_to_partition
-						    (oDB, id_hostpartition, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_number, action != 1, &num_rows)) {
+					} else if (nhosts) {
+						if (oph_odb_stge_add_some_hosts_to_partition(oDB, id_hostpartition, nhosts, action != 1, &num_rows)) {
 							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "Host partition '%s' cannot be %s", partition_name, action != 1 ? "reserved" : "created");
 							oph_odb_stge_delete_hostpartition_by_id(oDB, id_hostpartition);
 							id_hostpartition = 0;
 						}
-						if (num_rows < ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_number) {
+						if (num_rows < nhosts) {
 							warning = 1;
 							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "Host partition '%s' will consist only of %d host%s", partition_name, num_rows,
 								 num_rows == 1 ? "" : "s");
@@ -1457,19 +1468,20 @@ int task_execute(oph_operator_struct * handle)
 				break;
 			}
 
-		case 2:{
+		case 2:
+		case 4:{
 				if (!partition_name) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_PARTITION_NAME);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_PARTITION_NAME);
 					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 				}
-				if (oph_odb_stge_delete_hostpartition(oDB, partition_name, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user, &num_rows)) {
+				if (oph_odb_stge_delete_hostpartition(oDB, partition_name, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user, action != 2, &num_rows)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Host partition cannot be removed\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Host partition cannot be removed\n");
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 				char jsonbuf[OPH_COMMON_BUFFER_LEN];
-				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%d partition%s removed", num_rows, num_rows == 1 ? "" : "s");
+				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' removed (%d host%s)", partition_name, num_rows, num_rows == 1 ? "" : "s");
 				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES, num_rows == 1 ? "Success" : "Warning", jsonbuf)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");

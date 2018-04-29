@@ -1974,13 +1974,15 @@ int oph_odb_stge_insert_into_dbinstance_partitioned_tables(ophidiadb * oDB, oph_
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_user, char reserved, int *id_hostpartition)
+int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_user, char reserved, int hosts, int *id_hostpartition)
 {
 	if (!oDB || !name || !id_user || !id_hostpartition) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
 	*id_hostpartition = 0;
+	if (hosts < 0)
+		hosts = 0;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -1988,7 +1990,7 @@ int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_use
 	}
 
 	char insertQuery[MYSQL_BUFLEN];
-	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_CREATE_PARTITION, name, id_user, reserved);
+	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_CREATE_PARTITION, name, id_user, reserved, hosts);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -2189,7 +2191,7 @@ int oph_odb_stge_add_host_to_partition(ophidiadb * oDB, int id_hostpartition, in
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_delete_hostpartition(ophidiadb * oDB, const char *name, int id_user, int *num_rows)
+int oph_odb_stge_delete_hostpartition(ophidiadb * oDB, const char *name, int id_user, char reserved, int *num_rows)
 {
 	if (!oDB || !name || !id_user) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2204,7 +2206,7 @@ int oph_odb_stge_delete_hostpartition(ophidiadb * oDB, const char *name, int id_
 	}
 
 	char insertQuery[MYSQL_BUFLEN];
-	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_DELETE_PARTITION, name, id_user);
+	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_DELETE_PARTITION, name, id_user, reserved ? "" : "AND NOT reserved");
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
