@@ -49,6 +49,41 @@ struct timeval *res, *x, *y;
 
 extern int msglevel;
 
+int _oph_nc_cache_to_buffer2(short int tot_dim_number, unsigned int *counters, unsigned int *limits, unsigned int *products, char *binary_cache, char *binary_insert, size_t sizeof_var)
+{
+	short int i = 0;
+	long long addr = 0;
+	long long index = 0;
+	long long total_iter = 1;
+
+	for(i = 0; i < tot_dim_number; i++){
+		if (i != 0)
+			counters[i] = 0;
+		total_iter *= (limits[i] - counters[i]); 
+	}
+
+	for(index=0; index < total_iter; index++){
+		addr = 0;
+		for (i = 0; i < tot_dim_number; i++) {
+			addr += counters[i] * products[i];
+		}
+		memcpy(binary_insert + index * sizeof_var, binary_cache + addr * sizeof_var, sizeof_var);
+
+		//Increase counters starting from most rapidly varying dimension
+		for (i = tot_dim_number-1; i >= 0; i--) {
+			counters[i]++;
+			if(counters[i] < limits[i]) {
+				break;	
+			} else {
+				counters[i] = 0;
+			}
+		}
+	}
+
+	return 0;
+}
+
+
 int _oph_nc_cache_to_buffer(short int tot_dim_number, short int curr_dim, unsigned int *counters, unsigned int *limits, unsigned int *products, long long *index, char *binary_cache,
 			    char *binary_insert, size_t sizeof_var)
 {
