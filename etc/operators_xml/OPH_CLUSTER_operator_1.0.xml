@@ -16,6 +16,8 @@ Start and stop a cluster of I/O servers.
 - host_partition : name of user-defined partition to be used to group hosts.
 
 [System parameters]
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   cancel : show result data as text.
         
@@ -30,6 +32,7 @@ SUBMISSION STRING: &quot;operator=oph_io_server;nhosts=3;host_partition=cluster;
         <permission>read</permission>
     </info>
     <args>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="yes">host_partition</argument>
 		<argument type="string" mandatory="no" default="start" values="start|stop">action</argument>
 		<argument type="int" mandatory="no" minvalue="1" default="1">nhosts</argument>
