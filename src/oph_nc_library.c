@@ -162,14 +162,14 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 	char insert_query[QUERY_BUFLEN];
 	int n;
 	if (compressed == 1) {
-		#ifdef OPH_DEBUG_MYSQL
+#ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
-		#endif
+#endif
 		n = snprintf(insert_query, QUERY_BUFLEN, OPH_DC_SQ_INSERT_COMPRESSED_FRAG, frag->fragment_name);
 	} else {
-		#ifdef OPH_DEBUG_MYSQL
+#ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_INSERT_FRAG "\n", frag->fragment_name);
-		#endif
+#endif
 		n = snprintf(insert_query, QUERY_BUFLEN, OPH_DC_SQ_INSERT_FRAG, frag->fragment_name);
 	}
 
@@ -800,17 +800,17 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 
 	n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
 	if (compressed == 1) {
-		#ifdef OPH_DEBUG_MYSQL
+#ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
-		#endif
+#endif
 		for (j = 0; j < regular_rows; j++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 		}
 	} else {
-		#ifdef OPH_DEBUG_MYSQL
+#ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
-		#endif
+#endif
 		for (j = 0; j < regular_rows; j++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
@@ -1241,17 +1241,17 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 		query = NULL;
 		n = snprintf(query_string, query_size, OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL, frag->fragment_name) - 1;
 		if (compressed == 1) {
-			#ifdef OPH_DEBUG_MYSQL
+#ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
-			#endif
+#endif
 			for (j = 0; j < remainder_rows; j++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 			}
 		} else {
-			#ifdef OPH_DEBUG_MYSQL
+#ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
-			#endif
+#endif
 			for (j = 0; j < remainder_rows; j++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
@@ -1552,17 +1552,17 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 
 	n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
 	if (compressed == 1) {
-		#ifdef OPH_DEBUG_MYSQL
+#ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
-		#endif
+#endif
 		for (j = 0; j < regular_rows; j++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 		}
 	} else {
-		#ifdef OPH_DEBUG_MYSQL
+#ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
-		#endif
+#endif
 		for (j = 0; j < regular_rows; j++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
@@ -1783,7 +1783,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 	//Fill binary cache
 	res = -1;
 
-	#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	struct timeval start_read_time, end_read_time, total_read_time;
 	struct timeval start_transpose_time, end_transpose_time, intermediate_transpose_time, total_transpose_time;
 	struct timeval start_write_time, end_write_time, intermediate_write_time, total_write_time;
@@ -1793,7 +1793,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 	total_write_time.tv_sec = 0;
 
 	gettimeofday(&start_read_time, NULL);
-	#endif
+#endif
 
 	if (type_flag == OPH_NC_INT_FLAG) {
 		res = nc_get_vara_int(ncid, measure->varid, start, count, (int *) (binary_cache));
@@ -1810,11 +1810,11 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 	} else {
 		res = nc_get_vara_double(ncid, measure->varid, start, count, (double *) (binary_cache));
 	}
-	#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	gettimeofday(&end_read_time, NULL);
 	timeval_subtract(&total_read_time, &end_read_time, &start_read_time);
 	printf("Fragment %s:  Total read :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_read_time.tv_sec, (int) total_read_time.tv_usec);
-	#endif
+#endif
 
 	if (res != 0) {
 		OPH_NC_ERR(res);
@@ -1908,19 +1908,19 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		limits[0] = (l + 1) * regular_rows;
 		counters[0] = l * regular_rows;
 
-		#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_transpose_time, NULL);
-		#endif
+#endif
 		oph_nc_cache_to_buffer(measure->nimp + 1, counters, limits, products, binary_cache, binary_insert, sizeof_type);
-		#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_transpose_time, NULL);
 		timeval_subtract(&intermediate_transpose_time, &end_transpose_time, &start_transpose_time);
 		timeval_add(&total_transpose_time, &total_transpose_time, &intermediate_transpose_time);
-		#endif
+#endif
 
-		#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_write_time, NULL);
-		#endif
+#endif
 		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
@@ -1937,11 +1937,11 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 			free(limits);
 			return OPH_NC_ERROR;
 		}
-		#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_write_time, NULL);
 		timeval_subtract(&intermediate_write_time, &end_write_time, &start_write_time);
 		timeval_add(&total_write_time, &total_write_time, &intermediate_write_time);
-		#endif
+#endif
 
 		//Increase idDim
 		for (ii = 0; ii < regular_rows; ii++) {
@@ -1978,17 +1978,17 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		query = NULL;
 		n = snprintf(query_string, query_size, OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL, frag->fragment_name) - 1;
 		if (compressed == 1) {
-			#ifdef OPH_DEBUG_MYSQL
+#ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
-			#endif
+#endif
 			for (j = 0; j < remainder_rows; j++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 			}
 		} else {
-			#ifdef OPH_DEBUG_MYSQL
+#ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
-			#endif
+#endif
 			for (j = 0; j < remainder_rows; j++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
@@ -2023,19 +2023,19 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		memset(counters, 0, measure->nimp + 1);
 		limits[0] = regular_times * regular_rows + remainder_rows;
 		counters[0] = regular_times * regular_rows;
-		#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_transpose_time, NULL);
-		#endif
+#endif
 		oph_nc_cache_to_buffer(measure->nimp + 1, counters, limits, products, binary_cache, binary_insert, sizeof_type);
-		#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_transpose_time, NULL);
 		timeval_subtract(&intermediate_transpose_time, &end_transpose_time, &start_transpose_time);
 		timeval_add(&total_transpose_time, &total_transpose_time, &intermediate_transpose_time);
-		#endif
+#endif
 
-		#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_write_time, NULL);
-		#endif
+#endif
 		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
@@ -2052,18 +2052,18 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 			free(limits);
 			return OPH_NC_ERROR;
 		}
-		#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_write_time, NULL);
 		timeval_subtract(&intermediate_write_time, &end_write_time, &start_write_time);
 		timeval_add(&total_write_time, &total_write_time, &intermediate_write_time);
-		#endif
+#endif
 
 		oph_ioserver_free_query(server, query);
 	}
-	#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	printf("Fragment %s:  Total transpose :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_transpose_time.tv_sec, (int) total_transpose_time.tv_usec);
 	printf("Fragment %s:  Total write :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_write_time.tv_sec, (int) total_write_time.tv_usec);
-	#endif
+#endif
 
 
 	free(query_string);
@@ -2254,17 +2254,17 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 
 	n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
 	if (compressed == 1) {
-		#ifdef OPH_DEBUG_MYSQL
+#ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
-		#endif
+#endif
 		for (j = 0; j < regular_rows; j++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 		}
 	} else {
-		#ifdef OPH_DEBUG_MYSQL
+#ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
-		#endif
+#endif
 		for (j = 0; j < regular_rows; j++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
@@ -2508,8 +2508,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		free(index);
 		return OPH_NC_ERROR;
 	}
-
-	#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	struct timeval start_read_time, end_read_time, total_read_time;
 	struct timeval start_transpose_time, end_transpose_time, intermediate_transpose_time, total_transpose_time;
 	struct timeval start_write_time, end_write_time, intermediate_write_time, total_write_time;
@@ -2519,7 +2518,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 	total_write_time.tv_sec = 0;
 
 	gettimeofday(&start_read_time, NULL);
-	#endif
+#endif
 
 	//Fill binary cache
 	res = -1;
@@ -2557,11 +2556,11 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		}
 	}
 
-	#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	gettimeofday(&end_read_time, NULL);
 	timeval_subtract(&total_read_time, &end_read_time, &start_read_time);
 	printf("Fragment %s:  Total read :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_read_time.tv_sec, (int) total_read_time.tv_usec);
-	#endif
+#endif
 
 	if (res != 0) {
 		OPH_NC_ERR(res);
@@ -2643,16 +2642,16 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		}
 		free(file_indexes);
 
-		#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_transpose_time, NULL);
-		#endif
+#endif
 		oph_nc_cache_to_buffer2(measure->ndims, counters, limits, products, binary_cache, binary_insert, sizeof_type);
-		#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_transpose_time, NULL);
 		timeval_subtract(&intermediate_transpose_time, &end_transpose_time, &start_transpose_time);
 		timeval_add(&total_transpose_time, &total_transpose_time, &intermediate_transpose_time);
 		printf("Fragment %s:  Total transpose :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_transpose_time.tv_sec, (int) total_transpose_time.tv_usec);
-		#endif
+#endif
 		free(counters);
 		free(products);
 		free(limits);
@@ -2663,9 +2662,9 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 
 	for (l = 0; l < regular_times; l++) {
 
-		#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_write_time, NULL);
-		#endif
+#endif
 		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
@@ -2680,15 +2679,15 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			oph_ioserver_free_query(server, query);
 			return OPH_NC_ERROR;
 		}
-		#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_write_time, NULL);
 		timeval_subtract(&intermediate_write_time, &end_write_time, &start_write_time);
 		timeval_add(&total_write_time, &total_write_time, &intermediate_write_time);
-		#endif
+#endif
 
 		oph_ioserver_free_query(server, query);
 		//Increase idDim
-		if(l < (regular_times - 1)){
+		if (l < (regular_times - 1)) {
 			for (ii = 0; ii < regular_rows; ii++) {
 				idDim[ii] += regular_rows;
 				args[2 * ii + 1]->arg = (char *) (binary_insert + sizeof_var * (ii + (l + 1) * regular_rows));
@@ -2744,17 +2743,17 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		query = NULL;
 		n = snprintf(query_string, query_size, OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL, frag->fragment_name) - 1;
 		if (compressed == 1) {
-			#ifdef OPH_DEBUG_MYSQL
+#ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
-			#endif
+#endif
 			for (j = 0; j < remainder_rows; j++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 			}
 		} else {
-			#ifdef OPH_DEBUG_MYSQL
+#ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
-			#endif
+#endif
 			for (j = 0; j < remainder_rows; j++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
@@ -2783,9 +2782,9 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			free(args);
 			return OPH_NC_ERROR;
 		}
-		#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_write_time, NULL);
-		#endif
+#endif
 		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
@@ -2800,17 +2799,17 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			oph_ioserver_free_query(server, query);
 			return OPH_NC_ERROR;
 		}
-		#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_write_time, NULL);
 		timeval_subtract(&intermediate_write_time, &end_write_time, &start_write_time);
 		timeval_add(&total_write_time, &total_write_time, &intermediate_write_time);
-		#endif
+#endif
 
 		oph_ioserver_free_query(server, query);
 	}
-	#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	printf("Fragment %s:  Total write :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_write_time.tv_sec, (int) total_write_time.tv_usec);
-	#endif
+#endif
 
 	free(query_string);
 	free(idDim);
@@ -2824,6 +2823,172 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 
 	return OPH_NC_SUCCESS;
 }
+
+
+int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fragment * frag, char *nc_file_path, int tuplexfrag_number, int compressed, NETCDF_var * measure)
+{
+	if (!frag || !nc_file_path || !tuplexfrag_number || !measure || !server) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_NC_ERROR;
+	}
+
+	if (oph_dc_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
+		return OPH_NC_ERROR;
+	}
+	//Flag set to 1 if dimension are in the order specified in the file
+	int i;
+	size_t *index = (size_t *) malloc((measure->ndims) * sizeof(size_t));
+	for (i = 0; i < measure->ndims; i++) {
+		//Compute index of actual order in Ophidia
+		if (!measure->dims_type[i])
+			index[i] = (measure->ndims - measure->nimp) + measure->dims_oph_level[i] - 1;
+		else
+			index[i] = measure->dims_oph_level[i] - 1;
+	}
+
+	//Check if only most external dimension is splitted
+	long long curr_rows = 1;
+	long long relative_rows = 0;
+	short int whole_explicit = 1;
+	int j;
+	for (i = measure->ndims - 1; i > 0; i--) {
+		//Find dimension related to index
+		for (j = 0; j < measure->ndims; j++) {
+			if (i == index[j]) {
+				break;
+			}
+		}
+
+		//External explicit
+		if (measure->dims_type[j]) {
+			relative_rows = (int) (tuplexfrag_number / curr_rows);
+			curr_rows *= (measure->dims_end_index[j] - measure->dims_start_index[j] + 1);
+			if (relative_rows < (measure->dims_end_index[j] - measure->dims_start_index[j] + 1)) {
+				whole_explicit = 0;
+				break;
+			}
+		}
+	}
+	//If external explicit is not integer
+	if ((tuplexfrag_number % curr_rows) != 0)
+		whole_explicit = 0;
+
+	if (!whole_explicit) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create fragment: internal explicit dimensions are fragmented\n");
+		free(index);
+		return OPH_NC_ERROR;
+	}
+	//Alloc query String
+	int n1 = 0, n2 = 0, n3 = 0, n4 = 0;
+	for (j = 0; j < measure->ndims; j++) {
+		n1 += snprintf(NULL, 0, "%hd|", measure->dims_type[j]);
+		n2 += snprintf(NULL, 0, "%d|", (int) index[j]);
+		n3 += snprintf(NULL, 0, "%d|", measure->dims_start_index[j]);
+		n4 += snprintf(NULL, 0, "%d|", measure->dims_end_index[j]);
+	}
+
+	long long query_size = 0;
+	char *insert_query = OPH_DC_SQ_INSERT_FROM_FILE;
+	if (compressed == 1) {
+		query_size =
+		    snprintf(NULL, 0, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_YES, tuplexfrag_number, frag->key_start, "", "", "",
+			     "") + (n1 + n2 + n3 + n4 - 4) + 1;
+	} else {
+		query_size =
+		    snprintf(NULL, 0, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, frag->key_start, "", "", "",
+			     "") + (n1 + n2 + n3 + n4 - 4) + 1;
+	}
+
+	char *query_string = (char *) malloc(query_size * sizeof(char));
+	if (!(query_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(index);
+		return OPH_NC_ERROR;
+	}
+
+	char *dims_type_string = (char *) malloc(n1 * sizeof(char));
+	if (!(dims_type_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(index);
+		return OPH_NC_ERROR;
+	}
+	char *dims_index_string = (char *) malloc(n2 * sizeof(char));
+	if (!(dims_index_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(dims_type_string);
+		free(index);
+		return OPH_NC_ERROR;
+	}
+	char *dims_start_string = (char *) malloc(n3 * sizeof(char));
+	if (!(dims_start_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(dims_type_string);
+		free(dims_index_string);
+		free(index);
+		return OPH_NC_ERROR;
+	}
+	char *dims_end_string = (char *) malloc(n4 * sizeof(char));
+	if (!(dims_end_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(dims_type_string);
+		free(dims_index_string);
+		free(dims_start_string);
+		free(index);
+		return OPH_NC_ERROR;
+	}
+	//Set values into strings
+	int m1 = 0, m2 = 0, m3 = 0, m4 = 0;
+	for (j = 0; j < measure->ndims; j++) {
+		m1 += snprintf(dims_type_string + m1, n1 - m1, "%hd|", measure->dims_type[j]);
+		m2 += snprintf(dims_index_string + m2, n2 - m2, "%d|", (int) index[j]);
+		m3 += snprintf(dims_start_string + m3, n3 - m3, "%d|", measure->dims_start_index[j]);
+		m4 += snprintf(dims_end_string + m4, n4 - m4, "%d|", measure->dims_end_index[j]);
+	}
+	dims_type_string[m1 - 1] = 0;
+	dims_index_string[m2 - 1] = 0;
+	dims_start_string[m3 - 1] = 0;
+	dims_end_string[m4 - 1] = 0;
+	free(index);
+
+	int n = 0;
+	if (compressed == 1) {
+		n = snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_YES, tuplexfrag_number, frag->key_start, dims_type_string,
+			     dims_index_string, dims_start_string, dims_end_string);
+	} else {
+		n = snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, frag->key_start, dims_type_string,
+			     dims_index_string, dims_start_string, dims_end_string);
+	}
+
+	free(dims_type_string);
+	free(dims_index_string);
+	free(dims_start_string);
+	free(dims_end_string);
+
+	oph_ioserver_query *query = NULL;
+	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, NULL, &query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
+		free(query_string);
+		return OPH_DC_SERVER_ERROR;
+	}
+
+	if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
+		free(query_string);
+		oph_ioserver_free_query(server, query);
+		return OPH_DC_SERVER_ERROR;
+	}
+
+	oph_ioserver_free_query(server, query);
+	free(query_string);
+
+	return OPH_NC_SUCCESS;
+}
+
 
 int oph_nc_get_row_from_nc(int ncid, int array_length, NETCDF_var * measure, unsigned long idDim, char **row)
 {
@@ -3188,14 +3353,14 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 	char insert_query[QUERY_BUFLEN];
 	int n;
 	if (compressed == 1) {
-		#ifdef OPH_DEBUG_MYSQL
+#ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_INSERT_COMPRESSED_FRAG "\n", new_frag->fragment_name);
-		#endif
+#endif
 		n = snprintf(insert_query, QUERY_BUFLEN, OPH_DC_SQ_INSERT_COMPRESSED_FRAG, new_frag->fragment_name);
 	} else {
-		#ifdef OPH_DEBUG_MYSQL
+#ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_INSERT_FRAG "\n", new_frag->fragment_name);
-		#endif
+#endif
 		n = snprintf(insert_query, QUERY_BUFLEN, OPH_DC_SQ_INSERT_FRAG, new_frag->fragment_name);
 	}
 

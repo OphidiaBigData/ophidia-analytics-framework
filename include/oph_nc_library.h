@@ -166,6 +166,18 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 				      long long memory_size);
 
 /**
+ * \brief Run read fragment from file on IO server
+ * \param server Pointer to I/O server structure
+ * \param frag Structure with information about fragment to be filled
+ * \param nc_file_path Path to NetCDF file
+ * \param tuplexfrag_number Number of tuple to insert
+ * \param compressed If the data to insert is compressed (1) or not (0)
+ * \param measure Structure containing measure data and information to be stored
+ * \return 0 if successfull
+ */
+int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fragment * frag, char *nc_file_path, int tuplexfrag_number, int compressed, NETCDF_var * measure);
+
+/**
  * \brief Return the C type given the nc_type
  * \param nc_type The nc_type to be converted
  * \param out_c_type String to be filled with the corresponding C type

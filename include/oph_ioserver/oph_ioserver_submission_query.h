@@ -41,6 +41,7 @@
 #define OPH_IOSERVER_SQ_OP_DROP_DB "drop_database"
 #define OPH_IOSERVER_SQ_OP_INSERT "insert"
 #define OPH_IOSERVER_SQ_OP_MULTI_INSERT "multi_insert"
+#define OPH_IOSERVER_SQ_OP_FILE_IMPORT 	"file_import"
 #define OPH_IOSERVER_SQ_OP_SELECT "select"
 #define OPH_IOSERVER_SQ_OP_FUNCTION "function"
 
@@ -66,6 +67,16 @@
 #define OPH_IOSERVER_SQ_ARG_VALUE "value"
 #define OPH_IOSERVER_SQ_ARG_FUNC "func_name"
 #define OPH_IOSERVER_SQ_ARG_ARG "arg"
+#define OPH_IOSERVER_SQ_ARG_SEQUENTIAL  "sequential_id"
+#define OPH_IOSERVER_SQ_ARG_PATH  	  "src_path"
+#define OPH_IOSERVER_SQ_ARG_MEASURE  	  "measure"
+#define OPH_IOSERVER_SQ_ARG_COMPRESSED  "compressed"
+#define OPH_IOSERVER_SQ_ARG_NROW  	  "nrows"
+#define OPH_IOSERVER_SQ_ARG_ROW_START   "row_start"
+#define OPH_IOSERVER_SQ_ARG_DIM_TYPE    "dim_type"
+#define OPH_IOSERVER_SQ_ARG_DIM_INDEX   "dim_index"
+#define OPH_IOSERVER_SQ_ARG_DIM_START   "dim_start"
+#define OPH_IOSERVER_SQ_ARG_DIM_END     "dim_end"
 
 //*****************Query values***************//
 
