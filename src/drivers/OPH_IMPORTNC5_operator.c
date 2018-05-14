@@ -1945,43 +1945,41 @@ int task_init(oph_operator_struct * handle)
 	//For error checking
 	int id_datacube[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-	int i, retval = 0, flush = 1, id_datacube_out = 0, id_container_out = 0;
+	int i, j, retval = 0, flush = 1, id_datacube_out = 0, id_container_out = 0;
 
 	NETCDF_var *measure = &((OPH_IMPORTNC5_operator_handle *) handle->operator_handle)->measure;
 
-	//Compute tuple per fragment as the number of values of most inernal explicit dimension (excluding first one)
 	//Find the first explicit dimension checking oph_value
 	short int min_lev = 1;
-	short int first_dimid = 0;
-	for (i = 0; i < measure->ndims; i++) {
-		//Consider only explicit dimensions
-		if (measure->dims_type[i]) {
-			if (measure->dims_oph_level[i] <= min_lev) {
-				first_dimid = measure->dims_id[i];
-				min_lev = measure->dims_oph_level[i];
-				((OPH_IMPORTNC5_operator_handle *) handle->operator_handle)->total_frag_number = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
-			}
+	//Find most external dimension with size bigger than 1
+	for (i = 0; i < measure->nexp; i++) {
+		for (j = 0; j < measure->ndims; j++) {
+			//Consider only explicit dimensions
+			if (measure->dims_type[j] && measure->dims_oph_level[j] == (i+1)) {
+				break;
+			}	
+		}
+
+		if((measure->dims_end_index[j] - measure->dims_start_index[j]) > 0) {
+			min_lev = measure->dims_oph_level[j];
+			break;	
 		}
 	}
 
-	//Compute total fragment as the number of values of the explicit dimensions excluding the last one
 	((OPH_IMPORTNC5_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
-	for (i = 0; i < measure->ndims; i++) {
-		//Consider only explicit dimensions
-		if (measure->dims_type[i] && measure->dims_id[i] != first_dimid) {
-			if (measure->dims_end_index[i] == measure->dims_start_index[i])
-				continue;
-			((OPH_IMPORTNC5_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
-		}
-	}
-
-	// Compute array length
 	((OPH_IMPORTNC5_operator_handle *) handle->operator_handle)->array_length = 1;
 	for (i = 0; i < measure->ndims; i++) {
-		//Consider only implicit dimensions
-		if (!measure->dims_type[i]) {
-			if (measure->dims_end_index[i] == measure->dims_start_index[i])
-				continue;
+		if (measure->dims_type[i]) {
+			//Consider only explicit dimensions
+			if(measure->dims_oph_level[i] == min_lev){
+				//Compute total fragment as the number of values of the most external explicit dimensions excluding those with size 1
+				((OPH_IMPORTNC5_operator_handle *) handle->operator_handle)->total_frag_number = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
+			} else if (measure->dims_oph_level[i] > min_lev) {
+				//Compute tuple per fragment as the number of values of most inernal explicit dimension (excluding the first one bigger than 1)
+				((OPH_IMPORTNC5_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
+			}
+		} else {
+			//Consider only implicit dimensions
 			((OPH_IMPORTNC5_operator_handle *) handle->operator_handle)->array_length *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 		}
 	}

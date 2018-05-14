@@ -2847,12 +2847,31 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fra
 			index[i] = measure->dims_oph_level[i] - 1;
 	}
 
-	//Check if only most external dimension is splitted
+	//Find most external dimension with size bigger than 1
+	int j;
+	int most_extern_id = 0;
+	for (i = 0; i < measure->nexp; i++) {
+		//Find dimension related to index
+		for (j = 0; j < measure->ndims; j++) {
+			if (i == index[j]) {
+				break;
+			}
+		}
+
+		//External explicit
+		if (measure->dims_type[j]) {
+			if ((measure->dims_end_index[j] - measure->dims_start_index[j]) > 0) {
+				most_extern_id = i;
+				break;
+			}			
+		}
+	}
+
+	//Check if only most external dimension (bigger than 1) is splitted
 	long long curr_rows = 1;
 	long long relative_rows = 0;
 	short int whole_explicit = 1;
-	int j;
-	for (i = measure->ndims - 1; i > 0; i--) {
+	for (i = measure->ndims - 1; i > most_extern_id; i--) {
 		//Find dimension related to index
 		for (j = 0; j < measure->ndims; j++) {
 			if (i == index[j]) {
