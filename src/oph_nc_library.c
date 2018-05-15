@@ -2908,7 +2908,7 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fra
 	}
 
 	long long query_size = 0;
-	char *insert_query = OPH_DC_SQ_INSERT_FROM_FILE;
+	char *insert_query = OPH_DC_SQ_CREATE_FRAG_FROM_FILE;
 	if (compressed == 1) {
 		query_size =
 		    snprintf(NULL, 0, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_YES, tuplexfrag_number, frag->key_start, "", "", "",

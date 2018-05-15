@@ -4052,17 +4052,7 @@ int task_execute(oph_operator_struct * handle)
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 				strcpy(new_frag.fragment_name, fragment_name);
-				//Create Empty fragment
-				if (oph_dc_create_empty_fragment(oper_handle->server, &new_frag)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating fragment.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_FRAGMENT_CREATION_ERROR, new_frag.fragment_name);
-					oph_dc_disconnect_from_dbms(oper_handle->server, &(dbmss.value[i]));
-					oph_odb_stge_free_db_list(&dbs);
-					oph_odb_stge_free_dbms_list(&dbmss);
-					oph_odb_free_ophidiadb(&oDB_slave);
-					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-				}
-				//Populate fragment
+				//Create  and populate fragment
 				if (oph_nc_populate_fragment_from_nc5
 				    (oper_handle->server, &new_frag, oper_handle->nc_file_path, actual_tuplexfrag_number, oper_handle->compressed, (NETCDF_var *) & (oper_handle->measure))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
