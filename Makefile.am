@@ -53,6 +53,7 @@ OPERATOR_XML+=etc/operators_xml/OPH_EXPORTNC_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC4_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC5_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC6_operator_1.0.xml
 if GSL_SUPPORT
 OPERATOR_XML+=etc/operators_xml/OPH_EXPLORENC_operator_1.0.xml
 endif

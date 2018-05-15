@@ -504,6 +504,13 @@ if  test "$plugin_host_path" = "no"; then
 fi
 AC_SUBST(PLUGIN_DEFAULT_HOSTNAME)
 
+AC_ARG_ENABLE([openmp], [AS_HELP_STRING([--enable-openmp], [enable OpenMP multi-threading [[default=no]]])])
+if test "x$enable_openmp" = xyes; then
+  AX_OPENMP
+fi
+AM_CONDITIONAL([HAVE_OPENMP], [test -n "$OPENMP_CFLAGS"])
+AC_SUBST(OPENMP_CFLAGS)
+
 OPT="-Wno-error -Wno-format-security"
 case "${host}" in
         *-*-solaris*)   PLATFORM=SUN_OS

@@ -85,6 +85,9 @@ LIB     @MYSQL_LDFLAGS@
 [OPH_IMPORTNC5]
 @DRIVER_PATH@/liboph_importnc5operator.so
 LIB     @MYSQL_LDFLAGS@
+[OPH_IMPORTNC6]
+@DRIVER_PATH@/liboph_importnc6operator.so
+LIB     @MYSQL_LDFLAGS@
 [OPH_EXPORTNC]
 @DRIVER_PATH@/liboph_exportncoperator.so
 LIB     @MYSQL_LDFLAGS@
