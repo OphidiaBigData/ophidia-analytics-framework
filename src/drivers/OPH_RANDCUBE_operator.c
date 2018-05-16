@@ -561,14 +561,20 @@ int task_init(oph_operator_struct * handle)
 
 		long long kk;
 		long long *index_array = NULL;
-
-
-
 		int container_exists = 0;
 		int id_container_out = 0;
 		int last_insertd_id = 0;
 		int num_of_input_dim =
 		    ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->number_of_exp_dimensions + ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->number_of_imp_dimensions;
+
+		//Retrieve user id
+		char *user = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->user;
+		int id_user = 0;
+		if (oph_odb_user_retrieve_user_id(oDB, user, &id_user)) {
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive user id\n");
+			logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_USER_ID_ERROR);
+			goto __OPH_EXIT_1;
+		}
 
 	  /********************************
 	   *INPUT PARAMETERS CHECK - BEGIN*
@@ -598,7 +604,7 @@ int task_init(oph_operator_struct * handle)
 			//Check if are available DBMS and HOST number into specified partition and of server type
 			if (oph_odb_stge_count_number_of_host_dbms
 			    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fs_type, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
-			     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, &nhost, &ndbms) || !nhost || !ndbms) {
+			     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, id_user, &nhost, &ndbms) || !nhost || !ndbms) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or dbms or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
 					((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input);
@@ -612,7 +618,7 @@ int task_init(oph_operator_struct * handle)
 		//Check if are available DBMS and HOST number into specified partition and of server type
 		if ((oph_odb_stge_check_number_of_host_dbms
 		     (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fs_type, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
-		      ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number,
+		      ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, id_user, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number,
 		      ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbmsxhost_number, &exist_part)) || !exist_part) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts - dbms per host is too big or server type and partition are not available!\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
@@ -690,8 +696,6 @@ int task_init(oph_operator_struct * handle)
 
 
 		char *cwd = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->cwd;
-		char *user = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->user;
-
 		int permission = 0;
 		int folder_id = 0;
 		//Check if input path exists
@@ -1158,7 +1162,7 @@ int task_init(oph_operator_struct * handle)
 		//Retreive ID dbms list 
 		if (oph_odb_stge_retrieve_dbmsinstance_id_list
 		    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fs_type, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
-		     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number,
+		     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, id_user, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number,
 		     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbmsxhost_number, &id_dbmss, &dbmss_length)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DBMS_LIST_ERROR);

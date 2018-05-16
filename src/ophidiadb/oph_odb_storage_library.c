@@ -863,7 +863,7 @@ int oph_odb_stge_fetch_fragment_connection_string_for_deletion(ophidiadb * oDB, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int *host_number, int *dbmsxhost_number)
+int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int id_user, int *host_number, int *dbmsxhost_number)
 {
 	if (!oDB || !host_number || !dbmsxhost_number || !host_partition || fs_type < 0 || fs_type > 2 || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -876,7 +876,7 @@ int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *i
 	}
 
 	char selectQuery[MYSQL_BUFLEN];
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_COUNT_HOST_DBMS, host_partition, fs_type, ioserver_type);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_COUNT_HOST_DBMS, host_partition, fs_type, ioserver_type, id_user);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -980,7 +980,7 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, int *fs_type, ch
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int host_number, int dbmsxhost_number, int *exist)
+int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int *exist)
 {
 	if (!oDB || !host_number || !dbmsxhost_number || !host_partition || !exist || fs_type < 0 || fs_type > 2 || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -995,7 +995,7 @@ int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *i
 	}
 
 	char selectQuery[MYSQL_BUFLEN];
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_HOST_DBMS_NUMBER, host_partition, fs_type, ioserver_type);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_HOST_DBMS_NUMBER, host_partition, fs_type, ioserver_type, id_user);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -1787,7 +1787,7 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int host_number, int dbmsxhost_number, int **id_dbmss, int *size)
+int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int **id_dbmss, int *size)
 {
 	if (!oDB || !host_number || !dbmsxhost_number || !id_dbmss || !size || fs_type < 0 || fs_type > 2 || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1801,7 +1801,8 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 
 	char selectQuery[MYSQL_BUFLEN];
 	//Select all up host that have at least dbmsxhost_number
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST, host_partition, fs_type, ioserver_type, host_partition, fs_type, ioserver_type, dbmsxhost_number);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST, host_partition, fs_type, ioserver_type, id_user, host_partition, fs_type, ioserver_type, id_user,
+			 dbmsxhost_number);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
