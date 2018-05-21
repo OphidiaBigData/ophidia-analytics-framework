@@ -2148,7 +2148,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 	//Flag set to 1 if dimension are in the order specified in the file
 	int i;
 	short int dimension_ordered = 1;
-	size_t *index = (size_t *) malloc((measure->ndims) * sizeof(size_t));
+	int *index = (int *) malloc((measure->ndims) * sizeof(int));
 	for (i = 0; i < measure->ndims; i++) {
 		//Compute index of actual order in Ophidia
 		if (!measure->dims_type[i])
@@ -2838,7 +2838,7 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fra
 	}
 	//Flag set to 1 if dimension are in the order specified in the file
 	int i;
-	size_t *index = (size_t *) malloc((measure->ndims) * sizeof(size_t));
+	int *index = (int *) malloc((measure->ndims) * sizeof(int));
 	for (i = 0; i < measure->ndims; i++) {
 		//Compute index of actual order in Ophidia
 		if (!measure->dims_type[i])
@@ -2981,6 +2981,10 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fra
 	} else {
 		n = snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, frag->key_start, dims_type_string,
 			     dims_index_string, dims_start_string, dims_end_string);
+	}
+	if (n >= query_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_NC_ERROR;
 	}
 
 	free(dims_type_string);

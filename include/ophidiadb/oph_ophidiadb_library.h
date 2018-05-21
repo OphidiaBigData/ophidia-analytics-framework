@@ -77,10 +77,22 @@ int oph_odb_read_ophidiadb_config_file(ophidiadb * oDB);
 int oph_odb_init_ophidiadb(ophidiadb * oDB);
 
 /**
+ * \brief Function to initilize OphidiaDB structure in multi-thread environment.
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_init_ophidiadb_thread(ophidiadb * oDB);
+
+/**
  * \brief Function to delete OphidiaDB and to free memory allocated.
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_free_ophidiadb(ophidiadb * oDB);
+
+/**
+ * \brief Function to delete OphidiaDB and to free memory allocated in multi-thread environment.
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_free_ophidiadb_thread(ophidiadb * oDB);
 
 /**
  * \brief Function to connect to the OphidiaDB. WARNING: Call this function before any other function or the system will crash
