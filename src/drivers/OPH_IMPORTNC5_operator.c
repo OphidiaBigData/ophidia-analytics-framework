@@ -1955,14 +1955,14 @@ int task_init(oph_operator_struct * handle)
 	for (i = 0; i < measure->nexp; i++) {
 		for (j = 0; j < measure->ndims; j++) {
 			//Consider only explicit dimensions
-			if (measure->dims_type[j] && measure->dims_oph_level[j] == (i+1)) {
+			if (measure->dims_type[j] && measure->dims_oph_level[j] == (i + 1)) {
 				break;
-			}	
+			}
 		}
 
-		if((measure->dims_end_index[j] - measure->dims_start_index[j]) > 0) {
+		if ((measure->dims_end_index[j] - measure->dims_start_index[j]) > 0) {
 			min_lev = measure->dims_oph_level[j];
-			break;	
+			break;
 		}
 	}
 
@@ -1971,7 +1971,7 @@ int task_init(oph_operator_struct * handle)
 	for (i = 0; i < measure->ndims; i++) {
 		if (measure->dims_type[i]) {
 			//Consider only explicit dimensions
-			if(measure->dims_oph_level[i] == min_lev){
+			if (measure->dims_oph_level[i] == min_lev) {
 				//Compute total fragment as the number of values of the most external explicit dimensions excluding those with size 1
 				((OPH_IMPORTNC5_operator_handle *) handle->operator_handle)->total_frag_number = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
 			} else if (measure->dims_oph_level[i] > min_lev) {

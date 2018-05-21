@@ -30,7 +30,11 @@ bindir=${prefix}/bin
 AM_CFLAGS = $(OPT)
 
 oph_analytics_framework_SOURCES=oph_analytics_framework.c
+if HAVE_OPENMP
+oph_analytics_framework_CFLAGS= $(OPT) -I../../include @INCLTDL@ -DOPH_PARALLEL_LOCATION=\"${prefix}\" -DPACKAGE_VERSION=\"@PACKAGE_VERSION@\" $(OPENMP_CFLAGS)
+else
 oph_analytics_framework_CFLAGS= $(OPT) -I../../include @INCLTDL@ -DOPH_PARALLEL_LOCATION=\"${prefix}\" -DPACKAGE_VERSION=\"@PACKAGE_VERSION@\"
+endif
 oph_analytics_framework_LDADD= -L.. -loph_analytics_framework @LIBLTDL@
 
 oph_ioserver_client_SOURCES= oph_ioserver_client.c 

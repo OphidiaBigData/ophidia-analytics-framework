@@ -2863,7 +2863,7 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fra
 			if ((measure->dims_end_index[j] - measure->dims_start_index[j]) > 0) {
 				most_extern_id = i;
 				break;
-			}			
+			}
 		}
 	}
 
