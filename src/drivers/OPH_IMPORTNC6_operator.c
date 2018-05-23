@@ -2252,6 +2252,13 @@ int task_init(oph_operator_struct * handle)
 			*dbxdbms_number = 1;
 			*fragxdb_number = ((OPH_IMPORTNC6_operator_handle *) handle->operator_handle)->total_frag_number / ii;
 		}
+		//Check that product of ncores and nthread is at most equal to total number of fragments        
+		if (((OPH_IMPORTNC6_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > ((OPH_IMPORTNC6_operator_handle *) handle->operator_handle)->total_frag_number) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of cores per number of threads is bigger than requested fragments\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "[CONTAINER NAME %s] Number of cores per number of threads is bigger than requested fragments\n",
+				container_name);
+			goto __OPH_EXIT_1;
+		}
 
 		if (!((OPH_IMPORTNC6_operator_handle *) handle->operator_handle)->run) {
 			char message[OPH_COMMON_BUFFER_LEN] = { 0 };
@@ -4155,8 +4162,9 @@ int task_execute(oph_operator_struct * handle)
 			mysql_thread_end();
 		}
 
-		pthread_exit((void *) res);
-
+		int *ret_val = (int *) malloc(sizeof(int));
+		*ret_val = res;
+		pthread_exit((void *) ret_val);
 	}
 
 	pthread_t threads[num_threads];
@@ -4181,8 +4189,11 @@ int task_execute(oph_operator_struct * handle)
 	}
 
 	pthread_attr_destroy(&attr);
+	void *ret_val = NULL;
 	for (l = 0; l < num_threads; l++) {
-		rc = pthread_join(threads[l], (void *) &res[l]);
+		rc = pthread_join(threads[l], &ret_val);
+		res[l] = *((int *) ret_val);
+		free(ret_val);
 		if (rc) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while joining thread %d: %d.\n", l, rc);
 			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Error while joining thread %d: %d.\n", l, rc);

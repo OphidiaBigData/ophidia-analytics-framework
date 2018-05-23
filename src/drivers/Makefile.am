@@ -220,7 +220,7 @@ liboph_importnc6operator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} $(NETCDF_
 endif
 liboph_importnc6operator_la_SOURCES = OPH_IMPORTNC6_operator.c
 liboph_importnc6operator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_importnc6operator_la_LIBADD = -lz ${MYSQL_LDFLAGS} -L.. $(NETCDF_LIBS) -loph_nc $(BASIC_LIB) -loph_dimension -loph_hierarchy  -loph_datacube -loph_ioserver -loph_binary_io -loph_driver_proc
+liboph_importnc6operator_la_LIBADD = -lz ${MYSQL_LDFLAGS} -L.. $(NETCDF_LIBS) -loph_nc $(BASIC_LIB) -lpthread -loph_dimension -loph_hierarchy  -loph_datacube -loph_ioserver -loph_binary_io -loph_driver_proc
 
 
 if GSL_SUPPORT
