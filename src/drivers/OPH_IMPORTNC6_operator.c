@@ -3963,7 +3963,7 @@ int task_execute(oph_operator_struct * handle)
 	int l;
 	int id_datacube_out = oper_handle->id_output_datacube;
 
-	int num_threads = ((OPH_IMPORTNC6_operator_handle *) handle->operator_handle)->nthread;
+	int num_threads = oper_handle->nthread;
 	int res[num_threads];
 
 	//In multi-thread code mysql_library_init must be called before starting the threads
