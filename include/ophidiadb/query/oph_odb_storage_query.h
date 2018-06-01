@@ -77,4 +77,6 @@
 #define MYSQL_QUERY_STGE_CHECK_ALL_HOSTS			"SELECT MAX(nhosts) AS mhosts FROM (SELECT COUNT(*) AS nhosts FROM hashost INNER JOIN hostpartition ON hashost.idhostpartition = hostpartition.idhostpartition WHERE hidden = 0 GROUP BY idhost) AS chosts;"
 #define MYSQL_QUERY_STGE_CHECK_HOST					"SELECT COUNT(*) FROM hashost INNER JOIN hostpartition ON hashost.idhostpartition = hostpartition.idhostpartition WHERE hidden = 0 AND idhost = %d;"
 
+#define MYSQL_QUERY_STGE_INCREASE_CUBE_COUNT_OF_HOSTS	"UPDATE host SET datacubecount = datacubecount + 1 WHERE idhost IN (%s);"
+
 #endif				/* __OPH_ODB_STGE_QUERY_H__ */
