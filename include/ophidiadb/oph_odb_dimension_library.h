@@ -355,4 +355,8 @@ int oph_odb_dim_set_time_dimension(ophidiadb * oDB, int id_datacube, char *dimen
  */
 int oph_odb_dim_update_time_dimension(oph_odb_dimension * dim, char **templates, char **values, int nattr);
 
+int oph_odb_dim_delete_dimensioninstance(ophidiadb * oDB, int id_dimensioninst);
+
+int oph_odb_dim_retrieve_dimensions(ophidiadb * oDB, int id_datacube, char ***dimension_names, int *dimension_names_num);
+
 #endif				/* __OPH_ODB_DIM_H__ */

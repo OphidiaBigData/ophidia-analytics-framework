@@ -59,6 +59,7 @@ DRIVER+=liboph_mergeoperator.la
 DRIVER+=liboph_mergecubesoperator.la
 DRIVER+=liboph_mergecubes2operator.la
 DRIVER+=liboph_cubeschemaoperator.la
+DRIVER+=liboph_containerschemaoperator.la
 DRIVER+=liboph_instancesoperator.la
 DRIVER+=liboph_cubeiooperator.la
 DRIVER+=liboph_tasksoperator.la
@@ -108,6 +109,11 @@ liboph_applyoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYT
 liboph_applyoperator_la_SOURCES = OPH_APPLY_operator.c
 liboph_applyoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_applyoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy $(XML_LIBS) -loph_driver_proc
+
+liboph_containerschemaoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
+liboph_containerschemaoperator_la_SOURCES = OPH_CONTAINERSCHEMA_operator.c
+liboph_containerschemaoperator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_containerschemaoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
 
 liboph_createcontaineroperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"
 liboph_createcontaineroperator_la_SOURCES = OPH_CREATECONTAINER_operator.c

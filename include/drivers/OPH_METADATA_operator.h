@@ -50,8 +50,9 @@
  * \param metadata_id_str : string representation of metadata id
  * \param metadata_type : type of the to-be-inserted metadata.
  * \param metadata_value : string value to be assigned to specified metadata.
- * \param metadata_type_filter : optional filter on the type of returned metadata valid in read mode only.
- * \param metadata_value_filter : optional filter on the value of returned metadata valid in read mode only.
+ * \param metadata_variable_filter : optional filter on variable name of returned metadata valid in read/delete mode only.
+ * \param metadata_type_filter : optional filter on the type of returned metadata valid in read/delete mode only.
+ * \param metadata_value_filter : optional filter on the value of returned metadata valid in read/delete mode only.
  * \param user : username of the user managing metadata.
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
@@ -71,6 +72,7 @@ typedef struct _OPH_METADATA_operator_handle {
 	char *metadata_id_str;
 	char *metadata_type;
 	char *metadata_value;
+	char *variable_filter;
 	char *metadata_type_filter;
 	char *metadata_value_filter;
 	char *user;

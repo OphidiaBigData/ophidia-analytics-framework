@@ -37,6 +37,7 @@ It creates an empty container.
 			  to associate metadata to the container.
 - compressed : if &quot;yes&quot;, new data will be compressed.
 			   With &quot;no&quot; (default), data will be inserted without compression.
+- description : additional description to be associated with the output container.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -50,8 +51,8 @@ It creates an empty container.
                   createcontainer : show operator's output PID as text.
 
 [Examples]       
-Create a new container &apos;container1&apos; with dimensions lat, lon and time into folder &apos;/session-code1&apos;:
-OPH_TERM:: oph_createcontainer container=container1;cwd=/session-code1;dim=lat|lon|time;dim_type=double|double|double;hierarchy=oph_base|oph_base|oph_time;
+Create a new container &apos;container1&apos; with dimensions lat, lon and time into folder &apos;/folder&apos;:
+OPH_TERM:: oph_createcontainer container=container1;cwd=/folder;dim=lat|lon|time;dim_type=double|double|double;hierarchy=oph_base|oph_base|oph_time;
 SUBMISSION STRING: &quot;operator=oph_createcontainer;container=container1;cwd=/session-code1;dim=lat|lon|time;dim_type=double|double|double;hierarchy=oph_base|oph_base|oph_time;&quot;</abstract>
         <author>CMCC Foundation</author>
         <category>Virtual File System</category>
@@ -76,6 +77,7 @@ SUBMISSION STRING: &quot;operator=oph_createcontainer;container=container1;cwd=/
 		<argument type="int" mandatory="no" default="2" minvalue="1" maxvalue="12">leap_month</argument>
 		<argument type="string" mandatory="no" default="CF">vocabulary</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">compressed</argument>
+		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|createcontainer">objkey_filter</argument>
     </args>
 </operator>

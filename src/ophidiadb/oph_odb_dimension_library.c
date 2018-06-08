@@ -1259,6 +1259,33 @@ int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb * oDB, oph_odb_dim
 	return OPH_ODB_SUCCESS;
 }
 
+int oph_odb_dim_delete_dimensioninstance(ophidiadb * oDB, int id_dimensioninst)
+{
+	if (!oDB || !id_dimensioninst) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char deleteQuery[MYSQL_BUFLEN];
+	int n = snprintf(deleteQuery, MYSQL_BUFLEN, MYSQL_DELETE_OPHIDIADB_DIMENSION_INSTANCE, id_dimensioninst);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, deleteQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
 //NOTE: It deletes grids used exclusively by this container
 int oph_odb_dim_delete_from_grid_table(ophidiadb * oDB, int id_container)
 {
@@ -1664,5 +1691,55 @@ int oph_odb_dim_update_time_dimension(oph_odb_dimension * dim, char **templates,
 		}
 	}
 
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_dim_retrieve_dimensions(ophidiadb * oDB, int id_datacube, char ***dimension_names, int *dimension_names_num)
+{
+	if (!oDB || !id_datacube || !dimension_names || !dimension_names_num) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	*dimension_names = NULL;
+	*dimension_names_num = 0;
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char selectQuery[MYSQL_BUFLEN];
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_RETRIEVE_DIMENSIONS_OF_DATACUBE, id_datacube);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, selectQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+	if (!mysql_num_rows(res)) {
+		mysql_free_result(res);
+		return OPH_ODB_SUCCESS;
+	}
+	if (mysql_field_count(oDB->conn) != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	*dimension_names_num = mysql_num_rows(res);
+	*dimension_names = (char **) calloc(*dimension_names_num, sizeof(char *));
+
+	int i = 0;
+	while ((row = mysql_fetch_row(res)) && (i < *dimension_names_num))
+		(*dimension_names)[i++] = row[0] ? strdup(row[0]) : NULL;
+
+	mysql_free_result(res);
 	return OPH_ODB_SUCCESS;
 }

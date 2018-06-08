@@ -23,7 +23,7 @@
 
 #define MYSQL_QUERY_CUBE_RETRIEVE_CUBE_ADDITIONAL_INFO		"SELECT creationdate, description from `datacube` where iddatacube = %d"
 
-#define MYSQL_QUERY_CUBE_RETRIEVE_CUBEHASDIM			"SELECT cubehasdim.iddimensioninstance, iddatacube, explicit, level, size FROM cubehasdim INNER JOIN dimensioninstance ON cubehasdim.iddimensioninstance = dimensioninstance.iddimensioninstance WHERE iddatacube = %d ORDER by explicit DESC, level ASC;"
+#define MYSQL_QUERY_CUBE_RETRIEVE_CUBEHASDIM			"SELECT idcubehasdim, cubehasdim.iddimensioninstance, iddatacube, explicit, level, size FROM cubehasdim INNER JOIN dimensioninstance ON cubehasdim.iddimensioninstance = dimensioninstance.iddimensioninstance WHERE iddatacube = %d ORDER by explicit DESC, level ASC;"
 
 #define MYSQL_QUERY_CUBE_RETRIEVE_PART				"SELECT iddbinstance FROM `partitioned` WHERE iddatacube = %d"
 
@@ -84,6 +84,7 @@
 #define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_PART			"INSERT INTO `partitioned` (`iddbinstance`, `iddatacube`) VALUES (%d, %d)"
 
 #define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBEHASDIM		"INSERT INTO `cubehasdim` (`iddimensioninstance`, `iddatacube`, `explicit`, `level`) VALUES (%d, %d, %d, %d)"
+#define MYSQL_QUERY_CUBE_UPDATE_LEVEL_OF_CUBEHASDIM			"UPDATE cubehasdim SET level = %d WHERE idcubehasdim = %d"
 
 #define MYSQL_QUERY_CUBE_DELETE_OPHIDIADB_CUBE			"DELETE FROM `datacube` where `iddatacube` = %d"
 
