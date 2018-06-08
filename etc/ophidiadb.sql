@@ -186,8 +186,12 @@ CREATE TABLE `hostpartition` (
   `idhostpartition` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `partitionname` varchar(64) NOT NULL,
   `hidden` tinyint(1) NOT NULL DEFAULT 0,
+  `reserved` tinyint(1) NOT NULL DEFAULT 0,
+  `hosts` int(10) unsigned NULL DEFAULT 0,
   `iduser` int(10) unsigned NULL DEFAULT NULL,
-  CONSTRAINT `iduser_s` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`) ON DELETE CASCADE ON UPDATE CASCADE,
+  `idjob` int(10) unsigned DEFAULT NULL,
+  CONSTRAINT `iduser_h` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `idjob_h` FOREIGN KEY (`idjob`) REFERENCES `job` (`idjob`) ON DELETE SET NULL ON UPDATE CASCADE,
   PRIMARY KEY (`idhostpartition`),
   UNIQUE KEY `user_partition` (`partitionname`, `iduser`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
