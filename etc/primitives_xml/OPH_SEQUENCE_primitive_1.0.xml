@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_sequence" version="1.0">
+	<info>
+		<abstract>[Behaviour]
+Returns an array with a list of information regarding the sequences of non-zero consecutive values in input array.
+        
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- info : metric to be evaluated for each sequence:
+         &apos;length&apos; returns an array with sequence lengths (default)
+         &apos;first&apos; returns the index of the first element of each sequence
+         &apos;last&apos; returns the index of the last element of each sequence
+- padding : set to &apos;yes&apos; in case output array needs to be padded with zeros. By default no padding is used.
+
+[Return type]
+Binary-array.
+        
+[Examples]
+oph_sequence(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure)</abstract>
+		<author>CMCC Foundation</author>
+        <category>Core Array</category>
+		<creationdate>13/03/2018</creationdate>
+		<license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+		<return type="binary-array" />
+		<operation type="reduce"/>
+	</info>
+	<args>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="string" mandatory="no" default="length" values="length|first|last">info</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">padding</argument>
+	</args>
+</primitive>
