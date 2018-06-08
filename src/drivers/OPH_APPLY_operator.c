@@ -791,6 +791,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->array_length = 0;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->execute_error = 0;
+	((OPH_APPLY_operator_handle *) handle->operator_handle)->on_reduce = 0;
 
 	//3 - Fill struct with the correct data
 	char *datacube_in;
@@ -1041,6 +1042,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_ON_REDUCE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_ON_REDUCE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_APPLY_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_ON_REDUCE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strncasecmp(value, "update", OPH_TP_TASKLEN))
+		((OPH_APPLY_operator_handle *) handle->operator_handle)->on_reduce = 1;
+	else if (strncasecmp(value, "skip", OPH_TP_TASKLEN)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Bad value '%s'\n", value);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Bad value '%s'\n", value);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -1927,7 +1942,8 @@ int task_reduce(oph_operator_struct * handle)
 					}
 				} else {
 					// Adaptation due to array size modification
-					if (((OPH_APPLY_operator_handle *) handle->operator_handle)->impl_size_update || is_reduce) {
+					if (((OPH_APPLY_operator_handle *) handle->operator_handle)->impl_size_update
+					    || (is_reduce && ((OPH_APPLY_operator_handle *) handle->operator_handle)->on_reduce)) {
 						if (first) {
 							if ((size == 1) && is_reduce) {
 								cubedims[l].size = cubedims[l].level = 0;
