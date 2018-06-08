@@ -10,20 +10,26 @@ It shows metadata information about a datacube and the dimensions related to it.
 
 [Parameters]
 - cube : name of the input datacube. The name must be in PID format.
-
-- level : level of information shown.
+- action : command type; use
+           &quot;read&quot; to access information (default)
+           &quot;add&quot; to add a new dimension. Dimension size will be 1
+           &quot;clear&quot; to clear collapsed dimensions.
+- level : In case of action &quot;read&quot;, level of information shown.
 		  -- 0 : shows only metadata (default)			
 		  -- 1 : shows only dimension values
-		  -- 2 : shows metadata and dimension values 
-- dim : names of dimensions to show. Only valid with level bigger than 0. 
-                Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
-			    If not specified all dimension are shown.
+		  -- 2 : shows metadata and dimension values.
+- dim : names of dimensions to show. Valid with level bigger than 0 only. 
+        In case of action &quot;read&quot;, all dimension are shown by default and multiple values can be set (separated by &quot;|&quot;).
+        In case of action &quot;add&quot;, only one dimension has to be set.
 - show_index : if &quot;no&quot; (default), it won't show dimension ids.
 			   With &quot;yes&quot;, it will also show the dimension id next to the value.
 - show_time : if &quot;no&quot; (default), the values of time dimension are shown as numbers.
 			With &quot;yes&quot;, the values are converted as a string with date and time.
 - base64 : if &quot;no&quot; (default), dimension values are returned as strings (with possible trucantion errors).
 			With &quot;yes&quot;, raw dimension values are returned as base64-coded strings.
+- concept_level : concept level short name (must be a single char) of the new dimension. Default value is &quot;c&quot;.
+- dim_level : level of the new dimension to be added in dimension table.
+- dim_array : use &quot;yes&quot; to add an implicit dimension (default), use &quot;no&quot; to add an explicit dimension.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -34,10 +40,10 @@ It shows metadata information about a datacube and the dimensions related to it.
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
-		          cubeschema_cubeinfo : show cube information as grid.
-              cubeschema_morecubeinfo : show more cube information as grid.
+                  cubeschema_cubeinfo : show cube information as grid.
+                  cubeschema_morecubeinfo : show more cube information as grid.
                   cubeschema_diminfo : show the list of cube dimensions as grid.
-		          cubeschema_dimvalues : show the values of cube dimensions as grid.
+                  cubeschema_dimvalues : show the values of cube dimensions as grid.
 
 [Examples]
 Show metadata information about the datacube identified by the PID &quot;http://www.example.com/1/1&quot; :
@@ -51,11 +57,15 @@ SUBMISSION STRING: &quot;operator=oph_cubeschema;cube=http://www.example.com/1/1
     </info>
     <args>
 		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
-		<argument type="int" mandatory="no" default="0"  minvalue="0" maxvalue="2" values="0|1|2">level</argument>
+		<argument type="string" mandatory="no" default="read" values="read|add|clear">action</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0" maxvalue="2" values="0|1|2">level</argument>
 		<argument type="string" mandatory="no" default="all" multivalue="yes">dim</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">show_index</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">show_time</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">base64</argument>
+		<argument type="string" mandatory="no" default="c">concept_level</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">dim_level</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">dim_array</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>

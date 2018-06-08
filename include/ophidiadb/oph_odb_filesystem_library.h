@@ -36,6 +36,8 @@
 
 #define OPH_ODB_FS_CHARS_NUM 14
 
+#define OPH_ODB_FS_DESCRIPTION_SIZE 2048
+
 /**
  * \brief Structure that contains a container
  * \param id_folder id of the folder
@@ -49,6 +51,7 @@ typedef struct {
 	char container_name[OPH_ODB_FS_CONTAINER_SIZE + 1];
 	char operation[OPH_ODB_FS_CONTAINER_OPERATOR_SIZE + 1];
 	int id_vocabulary;
+	char description[OPH_ODB_FS_DESCRIPTION_SIZE + 1];
 } oph_odb_container;
 
 /**
@@ -301,5 +304,17 @@ int oph_odb_fs_has_ascendant_equal_to_folder(ophidiadb * oDB, int folderid, int 
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_fs_add_suffix_to_container_name(ophidiadb * oDB, int containerid);
+
+/**
+ * \brief Function used to retrieve container info from container name
+ * \param Pointer to OphidiaDB
+ * \param container_name name of the container
+ * \param folder_id id of folder where the container should be
+ * \param id_container ID of the container
+ * \param description Pointer to an output string containing the description
+ * \param vocabulary Pointer to an output string containing the vocabulary
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_fs_retrieve_container_from_container_name(ophidiadb * oDB, int folder_id, char *container_name, int *id_container, char **description, char **vocabulary);
 
 #endif				/* __OPH_ODB_FS_H__ */

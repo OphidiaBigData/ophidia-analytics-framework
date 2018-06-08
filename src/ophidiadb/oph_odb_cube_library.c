@@ -518,7 +518,7 @@ int oph_odb_cube_retrieve_cubehasdim_list(ophidiadb * oDB, int id_datacube, oph_
 	MYSQL_ROW row;
 	res = mysql_store_result(oDB->conn);
 
-	if (mysql_field_count(oDB->conn) != 5) {
+	if (mysql_field_count(oDB->conn) != 6) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
@@ -540,11 +540,12 @@ int oph_odb_cube_retrieve_cubehasdim_list(ophidiadb * oDB, int id_datacube, oph_
 	int i = 0;
 	*dim_num = number_of_dims;
 	while ((row = mysql_fetch_row(res)) != NULL) {
-		(*cubedims)[i].id_dimensioninst = (row[0] ? (int) strtol(row[0], NULL, 10) : 0);
-		(*cubedims)[i].id_datacube = (row[1] ? (int) strtol(row[1], NULL, 10) : 0);
-		(*cubedims)[i].explicit_dim = (row[2] ? (int) strtol(row[2], NULL, 10) : 0);
-		(*cubedims)[i].level = (row[3] ? (int) strtol(row[3], NULL, 10) : 0);
-		(*cubedims)[i].size = (row[4] ? (int) strtol(row[4], NULL, 10) : 0);
+		(*cubedims)[i].id_cubehasdim = (row[0] ? (int) strtol(row[0], NULL, 10) : 0);
+		(*cubedims)[i].id_dimensioninst = (row[1] ? (int) strtol(row[1], NULL, 10) : 0);
+		(*cubedims)[i].id_datacube = (row[2] ? (int) strtol(row[2], NULL, 10) : 0);
+		(*cubedims)[i].explicit_dim = (row[3] ? (int) strtol(row[3], NULL, 10) : 0);
+		(*cubedims)[i].level = (row[4] ? (int) strtol(row[4], NULL, 10) : 0);
+		(*cubedims)[i].size = (row[5] ? (int) strtol(row[5], NULL, 10) : 0);
 		i++;
 	}
 	mysql_free_result(res);
@@ -968,6 +969,7 @@ int oph_odb_cube_insert_into_cubehasdim_table(ophidiadb * oDB, oph_odb_cubehasdi
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+	*last_insertd_id = 0;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -989,6 +991,35 @@ int oph_odb_cube_insert_into_cubehasdim_table(ophidiadb * oDB, oph_odb_cubehasdi
 	if (!(*last_insertd_id = mysql_insert_id(oDB->conn))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted cubehasdim id\n");
 		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	cubedim->id_cubehasdim = *last_insertd_id;
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_cube_update_level_in_cubehasdim_table(ophidiadb * oDB, int level, int id_cubehasdim)
+{
+	if (!oDB || !id_cubehasdim) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char updateQuery[MYSQL_BUFLEN];
+	int n = snprintf(updateQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_LEVEL_OF_CUBEHASDIM, level, id_cubehasdim);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, updateQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	return OPH_ODB_SUCCESS;

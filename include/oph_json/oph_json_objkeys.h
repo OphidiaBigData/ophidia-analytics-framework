@@ -139,6 +139,8 @@
 #define OPH_JSON_OBJKEY_SCRIPT_URL					"script_url"
 #define OPH_JSON_OBJKEY_SCRIPT_RETURNCODE			"script_returncode"
 #define OPH_JSON_OBJKEY_FS							"fs"
+#define OPH_JSON_OBJKEY_CONTAINERSCHEMA_INFO 		"containerschema_info"
+#define OPH_JSON_OBJKEY_CONTAINERSCHEMA_DIMINFO 	"containerschema_diminfo"
 
 
 #endif
