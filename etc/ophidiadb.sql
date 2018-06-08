@@ -186,7 +186,10 @@ CREATE TABLE `hostpartition` (
   `idhostpartition` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `partitionname` varchar(64) NOT NULL,
   `hidden` tinyint(1) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`idhostpartition`)
+  `iduser` int(10) unsigned NULL DEFAULT NULL,
+  CONSTRAINT `iduser_s` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`) ON DELETE CASCADE ON UPDATE CASCADE,
+  PRIMARY KEY (`idhostpartition`),
+  UNIQUE KEY `user_partition` (`partitionname`, `iduser`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -209,7 +212,7 @@ DROP TABLE IF EXISTS `hashost`;
 CREATE TABLE `hashost` (
   `idhostpartition` int(10) unsigned NOT NULL,
   `idhost` int(10) unsigned NOT NULL,
-  `datacubecount` int(10) unsigned NULL DEFAULT NULL,
+  `datacubecount` int(10) unsigned NULL DEFAULT 0,
   PRIMARY KEY (`idhostpartition`, `idhost`),
   CONSTRAINT `idhost_hh` FOREIGN KEY (`idhost`) REFERENCES `host` (`idhost`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `idhostpartition_hh` FOREIGN KEY (`idhostpartition`) REFERENCES `hostpartition` (`idhostpartition`) ON DELETE CASCADE ON UPDATE CASCADE

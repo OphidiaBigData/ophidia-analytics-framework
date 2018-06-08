@@ -342,10 +342,11 @@ int oph_odb_stge_find_datacube_fragmentation_list(ophidiadb * oDB, int level, in
  * \param host_status Status of the host to filter on (may be null)
  * \param dbms_status Status of the dbms instance to filter on (may be null)
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
+ * \param id_user Reference to user-defined host partitions
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *hostname, char *partition_name, int fs_type, char *ioserver_type, char *host_status, char *dbms_status,
-					    MYSQL_RES ** information_list);
+					    MYSQL_RES ** information_list, int id_user);
 
 /**
  * \brief Function to retrieve list of fragments name related to datacube and id_dbms
@@ -461,5 +462,11 @@ int oph_odb_stge_get_number_of_datacube_for_db(ophidiadb * oDB, int id_db, int *
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_stge_insert_into_dbinstance_partitioned_tables(ophidiadb * oDB, oph_odb_db_instance * db, int id_datacube);
+
+int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_user, int *id_hostpartition);
+int oph_odb_stge_add_all_hosts_to_partition(ophidiadb * oDB, int id_hostpartition);
+int oph_odb_stge_add_host_to_partition(ophidiadb * oDB, int id_hostpartition, int id_host);
+int oph_odb_stge_delete_hostpartition(ophidiadb * oDB, const char *name, int id_user, int *num_rows);
+int oph_odb_stge_delete_hostpartition_by_id(ophidiadb * oDB, int id_hostpartition);
 
 #endif				/* __OPH_ODB_STGE_H__ */
