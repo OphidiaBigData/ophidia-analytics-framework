@@ -528,7 +528,7 @@ int oph_odb_cube_retrieve_cubehasdim_list(ophidiadb * oDB, int id_datacube, oph_
 	if (!(number_of_dims)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "No rows found by query\n");
 		mysql_free_result(res);
-		return OPH_ODB_TOO_MANY_ROWS;
+		return OPH_ODB_SUCCESS;
 	}
 
 	if (!(*cubedims = (oph_odb_cubehasdim *) malloc(number_of_dims * sizeof(oph_odb_cubehasdim)))) {
