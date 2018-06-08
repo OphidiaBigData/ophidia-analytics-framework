@@ -616,25 +616,6 @@ int task_execute(oph_operator_struct * handle)
 			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
 		}
 	}
-
-	char return_code[OPH_COMMON_BUFFER_LEN];
-	if (error == -1)
-		snprintf(return_code, OPH_COMMON_BUFFER_LEN, "System command failed");
-	else if (WEXITSTATUS(error) == 127)
-		snprintf(return_code, OPH_COMMON_BUFFER_LEN, "System command cannot be executed (127)");
-	else if (WEXITSTATUS(error) != 0)
-		snprintf(return_code, OPH_COMMON_BUFFER_LEN, "Script failed with code %d", WEXITSTATUS(error));
-	else
-		snprintf(return_code, OPH_COMMON_BUFFER_LEN, "Script executed correctly (0)");
-
-	if (oph_json_is_objkey_printable
-	    (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys, ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_SCRIPT_RETURNCODE)) {
-		snprintf(system_output, MAX_OUT_LEN, "%s", return_code);
-		if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_SCRIPT_RETURNCODE, "Return code", system_output)) {
-			pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
-		}
-	}
 	// ADD OUTPUT PID TO NOTIFICATION STRING
 	if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url) {
 		char tmp_string[OPH_COMMON_BUFFER_LEN];
@@ -646,6 +627,22 @@ int task_execute(oph_operator_struct * handle)
 		handle->output_string = strdup(tmp_string);
 	}
 
+	char return_code[MAX_OUT_LEN];
+	if (error == -1)
+		snprintf(return_code, MAX_OUT_LEN, "System command failed");
+	else if (WEXITSTATUS(error) == 127)
+		snprintf(return_code, MAX_OUT_LEN, "System command cannot be executed (127)");
+	else if (WEXITSTATUS(error) != 0)
+		snprintf(return_code, MAX_OUT_LEN, "Script failed with code %d", WEXITSTATUS(error));
+	else
+		snprintf(return_code, MAX_OUT_LEN, "Script executed correctly (0)");
+	if (oph_json_is_objkey_printable
+	    (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys, ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_SCRIPT_RETURNCODE)) {
+		if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_SCRIPT_RETURNCODE, "Return code", return_code)) {
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
+			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+		}
+	}
 	if (error)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "%s\n", return_code);
 	if (error == -1)
