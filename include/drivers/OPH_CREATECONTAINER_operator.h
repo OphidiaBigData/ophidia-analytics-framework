@@ -45,6 +45,7 @@
  * \param month_lengths Month lengths of each year
  * \param leap_year Value of the first leap year
  * \param leap_month Value of the leap month
+ * \param description Free description to be associated with output container
  */
 struct _OPH_CREATECONTAINER_operator_handle {
 	ophidiadb oDB;
@@ -67,6 +68,7 @@ struct _OPH_CREATECONTAINER_operator_handle {
 	char *month_lengths;
 	int leap_year;
 	int leap_month;
+	char *description;
 };
 typedef struct _OPH_CREATECONTAINER_operator_handle OPH_CREATECONTAINER_operator_handle;
 
