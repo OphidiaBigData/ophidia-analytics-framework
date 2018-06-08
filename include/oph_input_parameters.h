@@ -97,6 +97,7 @@
 #define OPH_IN_PARAM_IOSERVER_TYPE				"ioserver"
 #define OPH_IN_PARAM_FS_TYPE					"filesystem"
 #define OPH_IN_PARAM_IMPORTDIM_GRID_NAME			"grid"
+#define OPH_IN_PARAM_CHECK_GRID					"check_grid"
 #define OPH_IN_PARAM_VOCABULARY					"vocabulary"
 #define OPH_IN_PARAM_IMPORT_METADATA				"import_metadata"
 #define OPH_IN_PARAM_EXPORT_METADATA				"export_metadata"
@@ -171,6 +172,7 @@
 #define OPH_IN_PARAM_FILE					"file"
 #define OPH_IN_PARAM_DEPTH					"depth"
 #define OPH_IN_PARAM_REALPATH				"realpath"
+#define OPH_IN_PARAM_ON_REDUCE				"on_reduce"
 
 #define OPH_IN_PARAM_SCRIPT					"script"
 #define OPH_IN_PARAM_ARGS					"args"

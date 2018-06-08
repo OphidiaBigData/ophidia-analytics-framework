@@ -70,7 +70,8 @@
  * \param description Free description to be associated with output cube
  * \param offset List of offsets used to enlarge subset intervals
  * \param offset_num Number of offsets
- * \param subset_type Flag indicating whether filters are expressed as indexes or values
+ * \param subset_types Array of flags indicating whether filters are expressed as indexes or values
+ * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
 struct _OPH_SUBSET_operator_handle {
 	ophidiadb oDB;
@@ -95,6 +96,7 @@ struct _OPH_SUBSET_operator_handle {
 	char *apply_clause;
 	char *apply_clause_type;
 	char *grid_name;
+	char check_grid;
 	char **objkeys;
 	int objkeys_num;
 	oph_ioserver_handler *server;
@@ -104,7 +106,8 @@ struct _OPH_SUBSET_operator_handle {
 	char *description;
 	double *offset;
 	int offset_num;
-	int subset_type;
+	char *subset_types;
+	short int execute_error;
 };
 typedef struct _OPH_SUBSET_operator_handle OPH_SUBSET_operator_handle;
 

@@ -36,6 +36,7 @@
 #include "oph_hierarchy_library.h"
 #include "oph_pid_library.h"
 #include "oph_json_library.h"
+#include "oph_driver_procedure_library.h"
 
 #include "debug.h"
 
@@ -431,6 +432,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container = 0;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->grid_name = NULL;
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->check_grid = 0;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path = NULL;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path_orig = NULL;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_output_datacube = 0;
@@ -469,6 +471,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->time_filter = 1;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->execute_error = 0;
 
 	char *value;
 
@@ -805,251 +808,274 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	//Check ndims value
 	int ndims;
-	if ((retval = nc_inq_varndims(ncid, measure->varid, &(ndims)))) {
+	if ((retval = nc_inq_varndims(ncid, measure->varid, &ndims))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_IMPLICIT_DIMENSION_NAME);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IMPLICIT_DIMENSION_NAME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IMPLICIT_DIMENSION_NAME);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
+	char *tmp_concept_levels = NULL;
 
-	if (strncmp(value, OPH_IMPORTNC_DIMENSION_DEFAULT, strlen(value)) || strncmp(value, OPH_IMPORTNC_DIMENSION_DEFAULT, strlen(OPH_IMPORTNC_DIMENSION_DEFAULT))) {
-		//If implicit is differen't from auto use standard approach
-		if (oph_tp_parse_multiple_value_param(value, &imp_dim_names, &imp_number_of_dim_names)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-		}
-		measure->nimp = imp_number_of_dim_names;
+	if (ndims) {
 
-		if (measure->nimp > ndims) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong number of dimensions provided in task string\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_WRONG_DIM_NUMBER_NO_CONTAINER, container_name, ndims);
-			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
-
-		value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
+		value = hashtbl_get(task_tbl, OPH_IN_PARAM_IMPLICIT_DIMENSION_NAME);
 		if (!value) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
-			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IMPLICIT_DIMENSION_NAME);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IMPLICIT_DIMENSION_NAME);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 
 		if (strncmp(value, OPH_IMPORTNC_DIMENSION_DEFAULT, strlen(value)) || strncmp(value, OPH_IMPORTNC_DIMENSION_DEFAULT, strlen(OPH_IMPORTNC_DIMENSION_DEFAULT))) {
-			//Explicit is not auto, use standard approach
-			if (oph_tp_parse_multiple_value_param(value, &exp_dim_names, &exp_number_of_dim_names)) {
+			//If implicit is differen't from auto use standard approach
+			if (oph_tp_parse_multiple_value_param(value, &imp_dim_names, &imp_number_of_dim_names)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
+				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+			measure->nimp = imp_number_of_dim_names;
+
+			if (measure->nimp > ndims) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong number of dimensions provided in task string\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_WRONG_DIM_NUMBER_NO_CONTAINER, container_name, ndims);
+				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+
+			value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
+			if (!value) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
+				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+
+			if (strncmp(value, OPH_IMPORTNC_DIMENSION_DEFAULT, strlen(value)) || strncmp(value, OPH_IMPORTNC_DIMENSION_DEFAULT, strlen(OPH_IMPORTNC_DIMENSION_DEFAULT))) {
+				//Explicit is not auto, use standard approach
+				if (oph_tp_parse_multiple_value_param(value, &exp_dim_names, &exp_number_of_dim_names)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
+					oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+					oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				measure->nexp = exp_number_of_dim_names;
+			} else {
+				//Use optimized approach with drilldown
+				measure->nexp = ndims - measure->nimp;
+				exp_dim_names = NULL;
+				exp_number_of_dim_names = 0;
+			}
+			measure->ndims = measure->nexp + measure->nimp;
+		} else {
+			//Implicit dimension is auto, import as NetCDF file order
+			measure->nimp = 1;
+			measure->nexp = ndims - 1;
+			measure->ndims = ndims;
+			exp_dim_names = imp_dim_names = NULL;
+			exp_number_of_dim_names = imp_number_of_dim_names = 0;
+		}
+
+		value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXPLICIT_DIMENSION_CONCEPT_LEVEL);
+		if (!value) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_EXPLICIT_DIMENSION_CONCEPT_LEVEL);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_EXPLICIT_DIMENSION_CONCEPT_LEVEL);
+			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		if (!(tmp_concept_levels = (char *) malloc(measure->ndims * sizeof(char)))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "Tmp concpet levels");
+			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		memset(tmp_concept_levels, 0, measure->ndims * sizeof(char));
+		if (strncmp(value, OPH_COMMON_DEFAULT_CONCEPT_LEVEL, strlen(value)) || strncmp(value, OPH_COMMON_DEFAULT_CONCEPT_LEVEL, strlen(OPH_COMMON_DEFAULT_CONCEPT_LEVEL))) {
+			if (oph_tp_parse_multiple_value_param(value, &exp_dim_clevels, &number_of_dim_clevels)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+				oph_tp_free_multiple_value_param_list(exp_dim_clevels, number_of_dim_clevels);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+				if (tmp_concept_levels)
+					free(tmp_concept_levels);
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
-			measure->nexp = exp_number_of_dim_names;
-		} else {
-			//Use optimized approach with drilldown
-			measure->nexp = ndims - measure->nimp;
-			exp_dim_names = NULL;
-			exp_number_of_dim_names = 0;
-		}
-		measure->ndims = measure->nexp + measure->nimp;
-	} else {
-		//Implicit dimension is auto, import as NetCDF file order
-		measure->nimp = 1;
-		measure->nexp = ndims - 1;
-		measure->ndims = ndims;
-		exp_dim_names = imp_dim_names = NULL;
-		exp_number_of_dim_names = imp_number_of_dim_names = 0;
-	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXPLICIT_DIMENSION_CONCEPT_LEVEL);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_EXPLICIT_DIMENSION_CONCEPT_LEVEL);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_EXPLICIT_DIMENSION_CONCEPT_LEVEL);
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	char *tmp_concept_levels = NULL;
-	if (!(tmp_concept_levels = (char *) malloc(measure->ndims * sizeof(char)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "Tmp concpet levels");
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
-	memset(tmp_concept_levels, 0, measure->ndims * sizeof(char));
-	if (strncmp(value, OPH_COMMON_DEFAULT_CONCEPT_LEVEL, strlen(value)) || strncmp(value, OPH_COMMON_DEFAULT_CONCEPT_LEVEL, strlen(OPH_COMMON_DEFAULT_CONCEPT_LEVEL))) {
-		if (oph_tp_parse_multiple_value_param(value, &exp_dim_clevels, &number_of_dim_clevels)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-			oph_tp_free_multiple_value_param_list(exp_dim_clevels, number_of_dim_clevels);
-			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-			free(tmp_concept_levels);
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-		}
-
-		if (number_of_dim_clevels != measure->nexp) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
-			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-			oph_tp_free_multiple_value_param_list(exp_dim_clevels, number_of_dim_clevels);
-			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-			free(tmp_concept_levels);
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-		}
-
-		for (i = 0; i < measure->nexp; i++) {
-			if ((exp_dim_clevels[i][0] == OPH_HIER_MINUTE_SHORT_NAME[0]) || (exp_dim_clevels[i][0] == OPH_HIER_MONTH_SHORT_NAME[0])) {
-				if (!strncmp(exp_dim_clevels[i], OPH_HIER_MINUTE_LONG_NAME, strlen(exp_dim_clevels[i])))
-					tmp_concept_levels[i] = OPH_HIER_MINUTE_SHORT_NAME[0];
-				else
-					tmp_concept_levels[i] = OPH_HIER_MONTH_SHORT_NAME[0];
-			} else
-				tmp_concept_levels[i] = exp_dim_clevels[i][0];
-			if (tmp_concept_levels[i] == OPH_COMMON_ALL_CONCEPT_LEVEL) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c'\n", OPH_COMMON_ALL_CONCEPT_LEVEL);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_BAD2_PARAMETER, "dimension level", OPH_COMMON_ALL_CONCEPT_LEVEL);
+			if (number_of_dim_clevels != measure->nexp) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 				oph_tp_free_multiple_value_param_list(exp_dim_clevels, number_of_dim_clevels);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-				free(tmp_concept_levels);
+				if (tmp_concept_levels)
+					free(tmp_concept_levels);
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
-		}
-		oph_tp_free_multiple_value_param_list(exp_dim_clevels, number_of_dim_clevels);
-	}
-	//Default levels
-	else {
-		for (i = 0; i < measure->nexp; i++)
-			tmp_concept_levels[i] = OPH_COMMON_BASE_CONCEPT_LEVEL;
-	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_IMPLICIT_DIMENSION_CONCEPT_LEVEL);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IMPLICIT_DIMENSION_CONCEPT_LEVEL);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IMPLICIT_DIMENSION_CONCEPT_LEVEL);
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-		free(tmp_concept_levels);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (strncmp(value, OPH_COMMON_DEFAULT_CONCEPT_LEVEL, strlen(value)) || strncmp(value, OPH_COMMON_DEFAULT_CONCEPT_LEVEL, strlen(OPH_COMMON_DEFAULT_CONCEPT_LEVEL))) {
-		if (oph_tp_parse_multiple_value_param(value, &imp_dim_clevels, &imp_number_of_dim_clevels)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
+			for (i = 0; i < measure->nexp; i++) {
+				if ((exp_dim_clevels[i][0] == OPH_HIER_MINUTE_SHORT_NAME[0]) || (exp_dim_clevels[i][0] == OPH_HIER_MONTH_SHORT_NAME[0])) {
+					if (!strncmp(exp_dim_clevels[i], OPH_HIER_MINUTE_LONG_NAME, strlen(exp_dim_clevels[i])))
+						tmp_concept_levels[i] = OPH_HIER_MINUTE_SHORT_NAME[0];
+					else
+						tmp_concept_levels[i] = OPH_HIER_MONTH_SHORT_NAME[0];
+				} else
+					tmp_concept_levels[i] = exp_dim_clevels[i][0];
+				if (tmp_concept_levels[i] == OPH_COMMON_ALL_CONCEPT_LEVEL) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c'\n", OPH_COMMON_ALL_CONCEPT_LEVEL);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_BAD2_PARAMETER, "dimension level", OPH_COMMON_ALL_CONCEPT_LEVEL);
+					oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+					oph_tp_free_multiple_value_param_list(exp_dim_clevels, number_of_dim_clevels);
+					oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+					if (tmp_concept_levels)
+						free(tmp_concept_levels);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+			}
+			oph_tp_free_multiple_value_param_list(exp_dim_clevels, number_of_dim_clevels);
+		}
+		//Default levels
+		else {
+			for (i = 0; i < measure->nexp; i++)
+				tmp_concept_levels[i] = OPH_COMMON_BASE_CONCEPT_LEVEL;
+		}
+
+		value = hashtbl_get(task_tbl, OPH_IN_PARAM_IMPLICIT_DIMENSION_CONCEPT_LEVEL);
+		if (!value) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IMPLICIT_DIMENSION_CONCEPT_LEVEL);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IMPLICIT_DIMENSION_CONCEPT_LEVEL);
 			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-			oph_tp_free_multiple_value_param_list(imp_dim_clevels, imp_number_of_dim_clevels);
 			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-			free(tmp_concept_levels);
+			if (tmp_concept_levels)
+				free(tmp_concept_levels);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
-
-		if (imp_number_of_dim_clevels != measure->nimp) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
-			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-			oph_tp_free_multiple_value_param_list(imp_dim_clevels, imp_number_of_dim_clevels);
-			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-			free(tmp_concept_levels);
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-		}
-
-		for (i = measure->nexp; i < measure->ndims; i++) {
-			if ((imp_dim_clevels[i - measure->nexp][0] == OPH_HIER_MINUTE_SHORT_NAME[0]) || (imp_dim_clevels[i - measure->nexp][0] == OPH_HIER_MONTH_SHORT_NAME[0])) {
-				if (!strncmp(imp_dim_clevels[i - measure->nexp], OPH_HIER_MINUTE_LONG_NAME, strlen(imp_dim_clevels[i - measure->nexp])))
-					tmp_concept_levels[i] = OPH_HIER_MINUTE_SHORT_NAME[0];
-				else
-					tmp_concept_levels[i] = OPH_HIER_MONTH_SHORT_NAME[0];
-			} else
-				tmp_concept_levels[i] = imp_dim_clevels[i - measure->nexp][0];
-			if (tmp_concept_levels[i] == OPH_COMMON_ALL_CONCEPT_LEVEL) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c'\n", OPH_COMMON_ALL_CONCEPT_LEVEL);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_BAD2_PARAMETER, "dimension level", OPH_COMMON_ALL_CONCEPT_LEVEL);
+		if (strncmp(value, OPH_COMMON_DEFAULT_CONCEPT_LEVEL, strlen(value)) || strncmp(value, OPH_COMMON_DEFAULT_CONCEPT_LEVEL, strlen(OPH_COMMON_DEFAULT_CONCEPT_LEVEL))) {
+			if (oph_tp_parse_multiple_value_param(value, &imp_dim_clevels, &imp_number_of_dim_clevels)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 				oph_tp_free_multiple_value_param_list(imp_dim_clevels, imp_number_of_dim_clevels);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-				free(tmp_concept_levels);
+				if (tmp_concept_levels)
+					free(tmp_concept_levels);
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
+
+			if (imp_number_of_dim_clevels != measure->nimp) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
+				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+				oph_tp_free_multiple_value_param_list(imp_dim_clevels, imp_number_of_dim_clevels);
+				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+				if (tmp_concept_levels)
+					free(tmp_concept_levels);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+
+			for (i = measure->nexp; i < measure->ndims; i++) {
+				if ((imp_dim_clevels[i - measure->nexp][0] == OPH_HIER_MINUTE_SHORT_NAME[0]) || (imp_dim_clevels[i - measure->nexp][0] == OPH_HIER_MONTH_SHORT_NAME[0])) {
+					if (!strncmp(imp_dim_clevels[i - measure->nexp], OPH_HIER_MINUTE_LONG_NAME, strlen(imp_dim_clevels[i - measure->nexp])))
+						tmp_concept_levels[i] = OPH_HIER_MINUTE_SHORT_NAME[0];
+					else
+						tmp_concept_levels[i] = OPH_HIER_MONTH_SHORT_NAME[0];
+				} else
+					tmp_concept_levels[i] = imp_dim_clevels[i - measure->nexp][0];
+				if (tmp_concept_levels[i] == OPH_COMMON_ALL_CONCEPT_LEVEL) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c'\n", OPH_COMMON_ALL_CONCEPT_LEVEL);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_BAD2_PARAMETER, "dimension level", OPH_COMMON_ALL_CONCEPT_LEVEL);
+					oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+					oph_tp_free_multiple_value_param_list(imp_dim_clevels, imp_number_of_dim_clevels);
+					oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+					if (tmp_concept_levels)
+						free(tmp_concept_levels);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+			}
+			oph_tp_free_multiple_value_param_list(imp_dim_clevels, imp_number_of_dim_clevels);
 		}
-		oph_tp_free_multiple_value_param_list(imp_dim_clevels, imp_number_of_dim_clevels);
-	}
-	//Default levels
-	else {
-		for (i = measure->nexp; i < measure->ndims; i++)
-			tmp_concept_levels[i] = OPH_COMMON_BASE_CONCEPT_LEVEL;
-	}
+		//Default levels
+		else {
+			for (i = measure->nexp; i < measure->ndims; i++)
+				tmp_concept_levels[i] = OPH_COMMON_BASE_CONCEPT_LEVEL;
+		}
 
 
-	if (ndims != measure->ndims) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong number of dimensions provided in task string\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_WRONG_DIM_NUMBER_NO_CONTAINER, container_name, ndims);
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-		free(tmp_concept_levels);
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
+		if (ndims != measure->ndims) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong number of dimensions provided in task string\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_WRONG_DIM_NUMBER_NO_CONTAINER, container_name, ndims);
+			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+			if (tmp_concept_levels)
+				free(tmp_concept_levels);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
 
-	if (!(measure->dims_name = (char **) malloc(measure->ndims * sizeof(char *)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_name");
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-		free(tmp_concept_levels);
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
-	memset(measure->dims_name, 0, measure->ndims * sizeof(char *));
+		if (!(measure->dims_name = (char **) malloc(measure->ndims * sizeof(char *)))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_name");
+			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+			if (tmp_concept_levels)
+				free(tmp_concept_levels);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		memset(measure->dims_name, 0, measure->ndims * sizeof(char *));
 
-	if (!(measure->dims_length = (size_t *) malloc(measure->ndims * sizeof(size_t)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_length");
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-		free(tmp_concept_levels);
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		if (!(measure->dims_length = (size_t *) malloc(measure->ndims * sizeof(size_t)))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_length");
+			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+			if (tmp_concept_levels)
+				free(tmp_concept_levels);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		if (!(measure->dims_unlim = (char *) malloc(measure->ndims * sizeof(char)))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_unlim");
+			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+			if (tmp_concept_levels)
+				free(tmp_concept_levels);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		if (!(measure->dims_type = (short int *) malloc(measure->ndims * sizeof(short int)))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_type");
+			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+			if (tmp_concept_levels)
+				free(tmp_concept_levels);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		if (!(measure->dims_oph_level = (short int *) calloc(measure->ndims, sizeof(short int)))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_oph_level");
+			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+			if (tmp_concept_levels)
+				free(tmp_concept_levels);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		if (!(measure->dims_concept_level = (char *) calloc(measure->ndims, sizeof(char)))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_concept_level");
+			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+			if (tmp_concept_levels)
+				free(tmp_concept_levels);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		memset(measure->dims_concept_level, 0, measure->ndims * sizeof(char));
+
+	} else {
+
+		measure->ndims = ndims;
+
 	}
-	if (!(measure->dims_unlim = (char *) malloc(measure->ndims * sizeof(char)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_unlim");
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-		free(tmp_concept_levels);
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
-	if (!(measure->dims_type = (short int *) malloc(measure->ndims * sizeof(short int)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_type");
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-		free(tmp_concept_levels);
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
-	if (!(measure->dims_oph_level = (short int *) calloc(measure->ndims, sizeof(short int)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_oph_level");
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-		free(tmp_concept_levels);
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
-	if (!(measure->dims_concept_level = (char *) calloc(measure->ndims, sizeof(char)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_concept_level");
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-		free(tmp_concept_levels);
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
-	memset(measure->dims_concept_level, 0, measure->ndims * sizeof(char));
 
 	//Extract dimension ids following order in the nc file
 	if (!(measure->dims_id = (int *) malloc(measure->ndims * sizeof(int)))) {
@@ -1057,7 +1083,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_id");
 		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-		free(tmp_concept_levels);
+		if (tmp_concept_levels)
+			free(tmp_concept_levels);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	if ((retval = nc_inq_vardimid(ncid, measure->varid, measure->dims_id))) {
@@ -1065,7 +1092,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
 		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-		free(tmp_concept_levels);
+		if (tmp_concept_levels)
+			free(tmp_concept_levels);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	int unlimdimid;
@@ -1074,7 +1102,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
 		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-		free(tmp_concept_levels);
+		if (tmp_concept_levels)
+			free(tmp_concept_levels);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	//Extract dimensions information and check names provided by task string
@@ -1088,13 +1117,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
 			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-			free(tmp_concept_levels);
+			if (tmp_concept_levels)
+				free(tmp_concept_levels);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 	}
 
 	int level = 1;
-	int m2u[measure->ndims];
+	int m2u[measure->ndims ? measure->ndims : 1];
+	m2u[0] = 0;
 	if (exp_dim_names != NULL) {
 		for (i = 0; i < measure->nexp; i++) {
 			flag = 0;
@@ -1111,7 +1142,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname, measure->varname);
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-				free(tmp_concept_levels);
+				if (tmp_concept_levels)
+					free(tmp_concept_levels);
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
 			measure->dims_oph_level[j] = level++;
@@ -1168,7 +1200,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname, measure->varname);
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-				free(tmp_concept_levels);
+				if (tmp_concept_levels)
+					free(tmp_concept_levels);
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
 			measure->dims_concept_level[j] = tmp_concept_levels[i];
@@ -1187,7 +1220,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 	oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-	free(tmp_concept_levels);
+	if (tmp_concept_levels)
+		free(tmp_concept_levels);
 
 //ADDED TO MANAGE SUBSETTED IMPORT
 
@@ -1221,18 +1255,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	char **sub_dims = 0;
 	char **sub_filters = 0;
+	char **sub_types = NULL;
 	int number_of_sub_dims = 0;
 	int number_of_sub_filters = 0;
-
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_FILTER_TYPE);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
-		if (offset)
-			free(offset);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	int is_index = strncmp(value, OPH_IMPORTNC_SUBSET_COORD, OPH_TP_TASKLEN);
+	int number_of_sub_types = 0;
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_DIMENSIONS);
 	if (!value) {
@@ -1622,6 +1648,46 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_FILTER_TYPE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
+		if (offset)
+			free(offset);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (oph_tp_parse_multiple_value_param(value, &sub_types, &number_of_sub_types)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
+		if (offset)
+			free(offset);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+		oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (number_of_sub_dims && (number_of_sub_types > number_of_sub_dims)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
+		if (offset)
+			free(offset);
+		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+		oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	char is_index[1 + number_of_sub_dims];
+	if (number_of_sub_dims) {
+		for (i = 0; i < number_of_sub_types; ++i)
+			is_index[i] = strncmp(sub_types[i], OPH_IMPORTNC_SUBSET_COORD, OPH_TP_TASKLEN);
+		for (; i < number_of_sub_dims; ++i)
+			is_index[i] = number_of_sub_types == 1 ? is_index[0] : 1;
+	}
+	is_index[number_of_sub_dims] = 0;
+	oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
+
 	char *curfilter = NULL;
 	int ii;
 
@@ -1639,7 +1705,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			//Dimension will not be subsetted
 			measure->dims_start_index[i] = 0;
 			measure->dims_end_index[i] = measure->dims_length[i] - 1;
-		} else if ((ii = check_subset_string(curfilter, i, measure, is_index, ncid, j < s_offset_num ? offset[j] : 0.0))) {
+		} else if ((ii = check_subset_string(curfilter, i, measure, is_index[j], ncid, j < s_offset_num ? offset[j] : 0.0))) {
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)
@@ -1771,6 +1837,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CHECK_GRID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CHECK_GRID);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CHECK_GRID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN))
+		((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->check_grid = 1;
 
 	if (handle->proc_rank == 0) {
 		//Only master process has to initialize and open connection to management OphidiaDB
@@ -2629,9 +2704,11 @@ int task_init(oph_operator_struct * handle)
 							}
 							free(tmp_var.dims_id);
 
-							if (!oph_dim_compare_dimension
-							    (db_dimension, label_dimension_table_name, dims[j].dimension_type, dim_inst[j].size, dim_array, dim_inst[j].fk_id_dimension_label, &match)
-							    && !match) {
+							if (!((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->check_grid || (!oph_dim_compare_dimension
+																	(db_dimension, label_dimension_table_name,
+																	 dims[j].dimension_type, dim_inst[j].size, dim_array,
+																	 dim_inst[j].fk_id_dimension_label, &match)
+																	&& !match)) {
 								free(dim_array);
 								found_flag = 1;
 								break;
@@ -2653,7 +2730,7 @@ int task_init(oph_operator_struct * handle)
 					goto __OPH_EXIT_1;
 				}
 			}
-		} else {
+		} else if (measure->ndims) {
 		 /****************************
 	      * BEGIN - IMPORT DIMENSION *
 		  ***************************/
@@ -2662,7 +2739,7 @@ int task_init(oph_operator_struct * handle)
 
 			//Read dimension
 			if (oph_odb_dim_retrieve_dimension_list_from_container(oDB, id_container_out, &tot_dims, &number_of_dimensions_c)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive dimensions .\n");
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive dimensions.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIMENSION_READ_ERROR);
 				if (tot_dims)
 					free(tot_dims);
@@ -2911,6 +2988,17 @@ int task_init(oph_operator_struct * handle)
 				dim_inst[i].id_dimensioninst = dimension_array_id;
 			}
 			free(tot_dims);
+
+			if (id_grid && oph_odb_dim_enable_grid(oDB, id_grid)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to enable grid\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to enable grid\n");
+				free(dims);
+				free(dim_inst);
+				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db_dimension);
+				free(dimvar_ids);
+				goto __OPH_EXIT_1;
+			}
 		 /****************************
 	      *  END - IMPORT DIMENSION  *
 		  ***************************/
@@ -3775,6 +3863,7 @@ int task_init(oph_operator_struct * handle)
 	if (!id_datacube[0] || !id_datacube[1]) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube[1], OPH_LOG_OPH_IMPORTNC_MASTER_TASK_INIT_FAILED_NO_CONTAINER, container_name);
+		((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->execute_error = 1;
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_output_datacube = id_datacube[0];
@@ -3848,6 +3937,8 @@ int task_execute(oph_operator_struct * handle)
 
 	if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id < 0 && handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->execute_error = 1;
 
 	int i, j, k;
 	int id_datacube_out = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_output_datacube;
@@ -4058,6 +4149,8 @@ int task_execute(oph_operator_struct * handle)
 		free(tmp_uri);
 	}
 
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->execute_error = 0;
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -4080,6 +4173,80 @@ int task_destroy(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
+	short int proc_error = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->execute_error;
+	int id_datacube = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_output_datacube;
+	short int global_error = 0;
+
+	//Reduce results
+	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
+
+	if (global_error) {
+		//For error checking
+		char id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
+		memset(id_string, 0, sizeof(id_string));
+
+		if (handle->proc_rank == 0) {
+			ophidiadb *oDB = &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB;
+			oph_odb_datacube cube;
+			oph_odb_cube_init_datacube(&cube);
+
+			//retrieve input datacube
+			if (oph_odb_cube_retrieve_datacube(oDB, id_datacube, &cube)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_DATACUBE_READ_ERROR);
+			} else {
+				//Copy fragment id relative index set 
+				strncpy(id_string, cube.frag_relative_index_set, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
+			}
+			oph_odb_cube_free_datacube(&cube);
+		}
+		//Broadcast to all other processes the fragment relative index        
+		MPI_Bcast(id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+		//Check if sequential part has been completed
+		if (id_string[0] == 0) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_MASTER_TASK_INIT_FAILED);
+		} else {
+			if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id >= 0 || handle->proc_rank == 0) {
+				//Partition fragment relative index string
+				char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
+				char *new_ptr = new_id_string;
+				if (oph_ids_get_substring_from_string
+				    (id_string, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id,
+				     ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_number, &new_ptr)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to split IDs fragment string\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_IMPORTNC_ID_STRING_SPLIT_ERROR);
+				} else {
+					//Delete fragments
+					int start_position =
+					    (int) floor((double) ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id /
+							((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number);
+					int row_number = (int)
+					    ceil((double)
+						 (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id +
+						  ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_number) /
+						 ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number) - start_position;
+
+					if (oph_dproc_delete_data
+					    (id_datacube, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
+							OPH_LOG_OPH_DELETE_DB_READ_ERROR);
+					}
+				}
+			}
+		}
+		//Before deleting wait for all process to reach this point
+		MPI_Barrier(MPI_COMM_WORLD);
+
+		//Delete from OphidiaDB
+		if (handle->proc_rank == 0) {
+			oph_dproc_clean_odb(&((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB, id_datacube,
+					    ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container);
+		}
+	}
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 

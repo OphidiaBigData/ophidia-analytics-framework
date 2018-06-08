@@ -54,6 +54,7 @@
  * \param order Order to be used in case of evaluation of the moments
  * \param description Free description to be associated with output cube
  * \param ms Conventional value for missing values
+ * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
 struct _OPH_REDUCE2_operator_handle {
 	ophidiadb oDB;
@@ -71,6 +72,7 @@ struct _OPH_REDUCE2_operator_handle {
 	char *measure_type;
 	int compressed;
 	char *grid_name;
+	char check_grid;
 	char *dimension_name;
 	char *dimension_level;
 	long long block_size;
@@ -85,6 +87,7 @@ struct _OPH_REDUCE2_operator_handle {
 	double order;
 	char *description;
 	double ms;
+	short int execute_error;
 };
 typedef struct _OPH_REDUCE2_operator_handle OPH_REDUCE2_operator_handle;
 

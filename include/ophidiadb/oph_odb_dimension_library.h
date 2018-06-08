@@ -278,12 +278,20 @@ int oph_odb_dim_delete_from_grid_table(ophidiadb * oDB, int id_container);
 /**
  * \brief Function that updates OphidiaDB adding the new grid
  * \param oDB Pointer to OphidiaDB
- * \param grid Pointer to grid to be added
+ * \param grid Pointer to grid to be added (disabled by default)
  * \param last_insertd_id ID of last inserted datacube
  * \param grid_exist Flag set in case a grid with the same name already exists
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid * grid, int *last_insertd_id, int *grid_exist);
+
+/**
+ * \brief Function that updates OphidiaDB adding the new grid
+ * \param oDB Pointer to OphidiaDB
+ * \param id_grid Identifier of the grid to be enabled
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_dim_enable_grid(ophidiadb * oDB, int id_grid);
 
 /**
  * \brief Function that updates OphidiaDB adding the new dimension

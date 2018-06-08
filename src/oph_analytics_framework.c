@@ -373,7 +373,9 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+#ifndef OPH_STANDALONE_MODE
 	hashtbl_insert(task_tbl, OPH_ARG_IDJOB, notify_jobid);
+#endif
 
 	char tmp_value[OPH_TP_TASKLEN];
 #ifndef OPH_STANDALONE_MODE
@@ -958,6 +960,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	//Perform task initializazion procedures (optional)
 	if ((res = oph_init_task(handle))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task initilization failed [Code: %d]!\n", res);
+		oph_destroy_task(handle);
 		oph_unset_env(handle);
 		oph_tp_end_xml_parser();
 		if (handle->dlh)
@@ -1018,6 +1021,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	//Perform workload distribution activities (optional)
 	if ((res = oph_distribute_task(handle))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task distribution failed [Code: %d]!\n", res);
+		oph_destroy_task(handle);
 		oph_unset_env(handle);
 		oph_tp_end_xml_parser();
 		if (handle->dlh)
@@ -1078,6 +1082,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	//Perform distributive part of task
 	if ((res = oph_execute_task(handle))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task execution failed [Code: %d]!\n", res);
+		oph_destroy_task(handle);
 		oph_unset_env(handle);
 		oph_tp_end_xml_parser();
 		if (handle->dlh)
@@ -1138,6 +1143,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	//Perform reduction of results
 	if ((res = oph_reduce_task(handle))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task reduction failed [Code: %d]!\n", res);
+		oph_destroy_task(handle);
 		oph_unset_env(handle);
 		oph_tp_end_xml_parser();
 		if (handle->dlh)
