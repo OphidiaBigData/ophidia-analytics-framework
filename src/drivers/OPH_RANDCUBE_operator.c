@@ -919,7 +919,6 @@ int task_init(oph_operator_struct * handle)
 
 			}
 
-			int exists = 0;
 			char filename[2 * OPH_TP_BUFLEN];
 			oph_odb_hierarchy hier;
 			dims = (oph_odb_dimension *) malloc(num_of_input_dim * sizeof(oph_odb_dimension));
@@ -961,8 +960,7 @@ int task_init(oph_operator_struct * handle)
 
 				exist_flag = 0;
 				snprintf(filename, 2 * OPH_TP_BUFLEN, OPH_FRAMEWORK_HIERARCHY_XML_FILE_PATH_DESC, OPH_ANALYTICS_LOCATION, hier.filename);
-
-				if (oph_hier_check_concept_level_short(filename, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_level[i], &exists)) {
+				if (oph_hier_check_concept_level_short(filename, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_level[i], &exist_flag)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving hierarchy\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_HIERARCHY_ERROR);
 					free(tot_dims);
@@ -972,7 +970,7 @@ int task_init(oph_operator_struct * handle)
 					oph_dim_unload_dim_dbinstance(db);
 					goto __OPH_EXIT_1;
 				}
-				if (!exists) {
+				if (!exist_flag) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c'\n", ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_level[i]);
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_BAD2_PARAMETER,
 						"dimension level", ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_level[i]);
