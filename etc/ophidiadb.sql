@@ -457,7 +457,7 @@ CREATE TABLE `job` (
   `nchildrentotal` int(10) unsigned DEFAULT NULL,
   `nchildrencompleted` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`idjob`),
-  CONSTRAINT `idparent_j` FOREIGN KEY (`idparent`) REFERENCES `job` (`idjob`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `idparent_j` FOREIGN KEY (`idparent`) REFERENCES `job` (`idjob`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `iduser_j` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `idsession_j` FOREIGN KEY (`idsession`) REFERENCES `session` (`idsession`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
@@ -470,6 +470,43 @@ CREATE TABLE `job` (
 LOCK TABLES `job` WRITE;
 /*!40000 ALTER TABLE `job` DISABLE KEYS */;
 /*!40000 ALTER TABLE `job` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `jobaccounting`
+--
+
+DROP TABLE IF EXISTS `jobaccounting`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `jobaccounting` (
+  `idjob` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `idparent` int(10) unsigned DEFAULT NULL,
+  `markerid` int(10) unsigned NOT NULL,
+  `workflowid` int(10) unsigned DEFAULT NULL,
+  `idsession` int(10) unsigned DEFAULT NULL,
+  `iduser` int(10) unsigned DEFAULT NULL,
+  `creationdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `status` varchar(64) NOT NULL,
+  `submissionstring` varchar(2048) DEFAULT NULL,
+  `timestart` timestamp NULL DEFAULT NULL,
+  `timeend` timestamp NULL DEFAULT NULL,
+  `nchildrentotal` int(10) unsigned DEFAULT NULL,
+  `nchildrencompleted` int(10) unsigned DEFAULT NULL,
+  PRIMARY KEY (`idjob`),
+  CONSTRAINT `idparent_ja` FOREIGN KEY (`idparent`) REFERENCES `jobaccounting` (`idjob`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `iduser_ja` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `idsession_ja` FOREIGN KEY (`idsession`) REFERENCES `session` (`idsession`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `jobaccounting`
+--
+
+LOCK TABLES `jobaccounting` WRITE;
+/*!40000 ALTER TABLE `jobaccounting` DISABLE KEYS */;
+/*!40000 ALTER TABLE `jobaccounting` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
