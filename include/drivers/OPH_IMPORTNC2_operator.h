@@ -80,7 +80,7 @@
  * \param description Free description to be associated with output cube
  * \param time_filter Flag used in case time filters are expressed as dates
  * \param id_job ID of the job related to the task
- * \param nthread Number of OpenMP threads related to each MPI task
+ * \param nthread Number of pthreads related to each MPI task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
 struct _OPH_IMPORTNC2_operator_handle {

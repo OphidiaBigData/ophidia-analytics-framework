@@ -422,7 +422,7 @@ int task_init(oph_operator_struct * handle)
 		if (oph_ids_count_number_of_ids(((OPH_REDUCE2_operator_handle *) handle->operator_handle)->fragment_ids, &tot_frag_num)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get total number of IDs\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_REDUCE2_RETREIVE_IDS_ERROR);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			goto __OPH_EXIT_1;
 		}
 
 		//Check that product of ncores and nthread is at most equal to total number of fragments        
