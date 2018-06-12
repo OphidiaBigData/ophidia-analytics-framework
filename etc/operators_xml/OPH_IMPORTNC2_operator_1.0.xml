@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
-<operator name="OPH_IMPORTNC5" version="1.0">
+<operator name="OPH_IMPORTNC2" version="1.0">
     <info>
         <abstract>[Type]
 Data Process.
@@ -95,6 +95,7 @@ The following parameters are considered only in case the container has to be cre
 - exec_mode : operator execution mode. Possible values are async (default) for
               asynchronous mode, sync for synchronous mode with json-compliant output.
 - ncores : number of parallel processes to be used (min. 1).
+- nthreads : number of parallel threads per process to be used (min. 1).
 - sessionid : session identifier used server-side to manage sessions and jobs.
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
@@ -103,8 +104,8 @@ The following parameters are considered only in case the container has to be cre
 
 [Examples] 
 Import a NetCDF file excluding metadata into the session directory &quot;session-code1&quot; :
-OPH_TERM: oph_importnc5 cwd=/session-code1;container=container1;measure=pressure;src_path=/path/of/ncfile.nc;imp_concept_level=d;import_metadata=no;
-SUBMISSION STRING: &quot;operator=oph_importnc5;cwd=/session-code1;container=container1;measure=pressure;src_path=/path/of/ncfile.nc;imp_concept_level=d;import_metadata=no;&quot;</abstract>
+OPH_TERM: oph_importnc2 cwd=/session-code1;container=container1;measure=pressure;src_path=/path/of/ncfile.nc;imp_concept_level=d;import_metadata=no;
+SUBMISSION STRING: &quot;operator=oph_importnc2;cwd=/session-code1;container=container1;measure=pressure;src_path=/path/of/ncfile.nc;imp_concept_level=d;import_metadata=no;&quot;</abstract>
         <author>CMCC Foundation</author>
         <category>Data Import/Export</category>
         <creationdate>26/04/2018</creationdate>
@@ -114,6 +115,7 @@ SUBMISSION STRING: &quot;operator=oph_importnc5;cwd=/session-code1;container=con
     <args>  
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">nthreads</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="yes">cwd</argument>

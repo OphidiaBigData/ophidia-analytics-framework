@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OPH_IMPORTNC4_OPERATOR_H
-#define __OPH_IMPORTNC4_OPERATOR_H
+#ifndef __OPH_IMPORTNC2_OPERATOR_H
+#define __OPH_IMPORTNC2_OPERATOR_H
 
 //Operator specific headers
 #include "oph_common.h"
@@ -25,14 +25,14 @@
 #include "oph_nc_library.h"
 #include "oph_ioserver_library.h"
 
-#define OPH_IMPORTNC4_SUBSET_INDEX	    "index"
-#define OPH_IMPORTNC4_SUBSET_COORD	    "coord"
-#define OPH_IMPORTNC4_DIMENSION_DEFAULT	"auto"
+#define OPH_IMPORTNC2_SUBSET_INDEX	    "index"
+#define OPH_IMPORTNC2_SUBSET_COORD	    "coord"
+#define OPH_IMPORTNC2_DIMENSION_DEFAULT	"auto"
 
 //Only import of measured variables is supported
 
 /**
- * \brief Structure of parameters needed by the operator OPH_IMPORTNC4. It creates a new datacube filling it with data taken from nc file
+ * \brief Structure of parameters needed by the operator OPH_IMPORTNC2. It creates a new datacube filling it with data taken from nc file
  *
  * \param oDB Contains the parameters and the connection to OphidiaDB
  * \param container_input Name of the input container used
@@ -80,9 +80,10 @@
  * \param description Free description to be associated with output cube
  * \param time_filter Flag used in case time filters are expressed as dates
  * \param id_job ID of the job related to the task
+ * \param nthread Number of OpenMP threads related to each MPI task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
-struct _OPH_IMPORTNC4_operator_handle {
+struct _OPH_IMPORTNC2_operator_handle {
 	ophidiadb oDB;
 	char *container_input;
 	int create_container;
@@ -131,8 +132,9 @@ struct _OPH_IMPORTNC4_operator_handle {
 	char *description;
 	int time_filter;
 	int id_job;
+	unsigned int nthread;
 	short int execute_error;
 };
-typedef struct _OPH_IMPORTNC4_operator_handle OPH_IMPORTNC4_operator_handle;
+typedef struct _OPH_IMPORTNC2_operator_handle OPH_IMPORTNC2_operator_handle;
 
-#endif				//__OPH_IMPORTNC4_OPERATOR_H
+#endif				//__OPH_IMPORTNC2_OPERATOR_H

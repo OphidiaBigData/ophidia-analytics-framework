@@ -514,13 +514,6 @@ if  test "$plugin_host_path" = "no"; then
 fi
 AC_SUBST(PLUGIN_DEFAULT_HOSTNAME)
 
-AC_ARG_ENABLE([openmp], [AS_HELP_STRING([--enable-openmp], [enable OpenMP multi-threading [[default=no]]])])
-if test "x$enable_openmp" = xyes; then
-  AX_OPENMP
-fi
-AM_CONDITIONAL([HAVE_OPENMP], [test -n "$OPENMP_CFLAGS"])
-AC_SUBST(OPENMP_CFLAGS)
-
 OPT="-Wno-error -Wno-format-security"
 case "${host}" in
         *-*-solaris*)   PLATFORM=SUN_OS
@@ -536,7 +529,7 @@ case "${host}" in
                                     if (test "x$debug" = "x1") || (test "x$debug" = "x2"); then
 										OPT+=" -g3 -Wall -Wextra -O0"
 									else
-										OPT+=" -O2"
+										OPT+=" -O3"
 									fi
 			            if test "x$optimization" = "xyes" ; then
 			                 CFLAGS="-O3 -finline-functions -funswitch-loops -fgcse-after-reload -ftree-loop-linear -ftree-loop-im -ftree-loop-ivcanon -fivopts -ftree-vectorize -ftracer -fgcse-sm -fgcse-las -fgcse-after-reload -funroll-loops -freorder-blocks-and-partition -fweb"
