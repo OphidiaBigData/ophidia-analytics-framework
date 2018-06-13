@@ -1,4 +1,32 @@
 
+## NEXT RELEASE
+
+### Fixed:
+
+- Link to output of OPH_SCRIPT in session space
+- OphidiaDB cube library to allow exploration of cubes without dimensions
+- Code building when standalone configuration option is enabled [#30](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/30)
+- OPH_APPLY operator to avoid updating dimension metadata in case the array size is not changed
+
+### Added:
+
+- New operator OPH_IMPORTNC2 [#42](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/42)
+- Functionalities to manage reserved host partitions [#40](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/40)
+- XML file of OPH_CLUSTER  [#40](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/40)
+- XML for new primitive oph_sequence [#35](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/35)
+- New operator OPH_CONTAINERSCHEMA [#34](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/34)
+
+### Changed:
+
+- OPH_REDUCE2 operator and some common libraries to support multi-threaded execution [#42](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/42)
+- Job tracking for accounting purposes [#41](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/41)
+- OPH_INSTANCES operator to manage user-defined host partitions [#39](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/39)
+- OPH_IMPORTNC operator to allow different number of fragments per DB [#38](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/38)
+- OPH_METADATA operator to filter also on variable name [#37](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/37)
+- XML of oph_gsl_quantile primitive [#36](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/36)
+- OPH_CUBESCHEMA operator to also add dimensions [#33](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/33)
+- OPH_APPLY operator to update dimension values according to the new parameter 'on_reduce'
+
 ## v1.2.0 - 2018-02-16
 
 ### Fixed:
