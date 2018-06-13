@@ -49,6 +49,41 @@ struct timeval *res, *x, *y;
 
 extern int msglevel;
 
+int oph_nc_cache_to_buffer2(short int tot_dim_number, unsigned int *counters, unsigned int *limits, unsigned int *products, char *binary_cache, char *binary_insert, size_t sizeof_var)
+{
+	short int i = 0;
+	long long addr = 0;
+	long long index = 0;
+	long long total_iter = 1;
+
+	for (i = 0; i < tot_dim_number; i++) {
+		if (i != 0)
+			counters[i] = 0;
+		total_iter *= (limits[i] - counters[i]);
+	}
+
+	for (index = 0; index < total_iter; index++) {
+		addr = 0;
+		for (i = 0; i < tot_dim_number; i++) {
+			addr += counters[i] * products[i];
+		}
+		memcpy(binary_insert + index * sizeof_var, binary_cache + addr * sizeof_var, sizeof_var);
+
+		//Increase counters starting from most rapidly varying dimension
+		for (i = tot_dim_number - 1; i >= 0; i--) {
+			counters[i]++;
+			if (counters[i] < limits[i]) {
+				break;
+			} else {
+				counters[i] = 0;
+			}
+		}
+	}
+
+	return 0;
+}
+
+
 int _oph_nc_cache_to_buffer(short int tot_dim_number, short int curr_dim, unsigned int *counters, unsigned int *limits, unsigned int *products, long long *index, char *binary_cache,
 			    char *binary_insert, size_t sizeof_var)
 {
@@ -2045,6 +2080,938 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 
 	return OPH_NC_SUCCESS;
 }
+
+int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragment * frag, int ncid, int tuplexfrag_number, int array_length, int compressed, NETCDF_var * measure,
+				      long long memory_size)
+{
+	if (!frag || !ncid || !tuplexfrag_number || !array_length || !measure || !server) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_NC_ERROR;
+	}
+
+	if (oph_dc_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
+		return OPH_NC_ERROR;
+	}
+
+	char type_flag = '\0';
+	switch (measure->vartype) {
+		case NC_BYTE:
+		case NC_CHAR:
+			type_flag = OPH_NC_BYTE_FLAG;
+			break;
+		case NC_SHORT:
+			type_flag = OPH_NC_SHORT_FLAG;
+			break;
+		case NC_INT:
+			type_flag = OPH_NC_INT_FLAG;
+			break;
+		case NC_INT64:
+			type_flag = OPH_NC_LONG_FLAG;
+			break;
+		case NC_FLOAT:
+			type_flag = OPH_NC_FLOAT_FLAG;
+			break;
+		case NC_DOUBLE:
+			type_flag = OPH_NC_DOUBLE_FLAG;
+			break;
+		default:
+			type_flag = OPH_NC_DOUBLE_FLAG;
+	}
+
+	long long sizeof_var = 0;
+
+	if (type_flag == OPH_NC_BYTE_FLAG)
+		sizeof_var = (array_length) * sizeof(char);
+	else if (type_flag == OPH_NC_SHORT_FLAG)
+		sizeof_var = (array_length) * sizeof(short);
+	else if (type_flag == OPH_NC_INT_FLAG)
+		sizeof_var = (array_length) * sizeof(int);
+	else if (type_flag == OPH_NC_LONG_FLAG)
+		sizeof_var = (array_length) * sizeof(long long);
+	else if (type_flag == OPH_NC_FLOAT_FLAG)
+		sizeof_var = (array_length) * sizeof(float);
+	else if (type_flag == OPH_NC_DOUBLE_FLAG)
+		sizeof_var = (array_length) * sizeof(double);
+	else
+		sizeof_var = (array_length) * sizeof(double);
+
+	long long memory_size_mb = memory_size * 1024 * 1024;
+	//Flag set to 1 if whole fragment fits in memory
+	//Conservative choice. At most we insert the whole fragment, hence we need 2 equal buffers: 1 to read and 1 to write 
+	short int whole_fragment = ((tuplexfrag_number * sizeof_var) > (long long) (memory_size_mb / 2) ? 0 : 1);
+
+	if (!whole_fragment) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read fragment in memory. Memory required is: %lld\n", memory_size_mb);
+		return OPH_NC_ERROR;
+	}
+	//Flag set to 1 if dimension are in the order specified in the file
+	int i;
+	short int dimension_ordered = 1;
+	int *index = (int *) malloc((measure->ndims) * sizeof(int));
+	for (i = 0; i < measure->ndims; i++) {
+		//Compute index of actual order in Ophidia
+		if (!measure->dims_type[i])
+			index[i] = (measure->ndims - measure->nimp) + measure->dims_oph_level[i] - 1;
+		else
+			index[i] = measure->dims_oph_level[i] - 1;
+	}
+
+	short int curr_lev = 0;
+	for (i = 0; i < measure->ndims; i++) {
+		if (index[i] != curr_lev) {
+			dimension_ordered = 0;
+			break;
+		}
+		curr_lev++;
+	}
+
+	//If flag is set fragment reordering is required
+	short int transpose = 1;
+	if (dimension_ordered) {
+		transpose = 0;
+	}
+	//Check if only most external dimension is splitted
+	long long curr_rows = 1;
+	long long relative_rows = 0;
+	short int whole_explicit = 1;
+	int j;
+	for (i = measure->ndims - 1; i > 0; i--) {
+		//Find dimension related to index
+		for (j = 0; j < measure->ndims; j++) {
+			if (i == index[j]) {
+				break;
+			}
+		}
+
+		//External explicit
+		if (measure->dims_type[j]) {
+			relative_rows = (int) (tuplexfrag_number / curr_rows);
+			curr_rows *= (measure->dims_end_index[j] - measure->dims_start_index[j] + 1);
+			if (relative_rows < (measure->dims_end_index[j] - measure->dims_start_index[j] + 1)) {
+				whole_explicit = 0;
+				break;
+			}
+		}
+	}
+	//If external explicit is not integer
+	if ((tuplexfrag_number % curr_rows) != 0)
+		whole_explicit = 0;
+
+	if (!whole_explicit) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create fragment: internal explicit dimensions are fragmented\n");
+		free(index);
+		return OPH_NC_ERROR;
+	}
+	//Compute number of tuples per insert (regular case)
+	long long regular_rows = 0;
+	long long regular_times = 0;
+	long long remainder_rows = 0;
+
+	long long block_size = 512 * 1024;	//Maximum size that could be transfered
+	long long block_rows = 1000;	//Maximum number of lines that could be transfered
+
+	if (sizeof_var >= block_size) {
+		//Use the same algorithm
+		regular_rows = 1;
+		regular_times = tuplexfrag_number;
+		remainder_rows = 0;
+	} else if (tuplexfrag_number * sizeof_var <= block_size) {
+		//Do single insert
+		if (tuplexfrag_number <= block_rows) {
+			regular_rows = tuplexfrag_number;
+			regular_times = 1;
+			remainder_rows = 0;
+		} else {
+			regular_rows = block_rows;
+			regular_times = (int) tuplexfrag_number / regular_rows;
+			remainder_rows = (int) tuplexfrag_number % regular_rows;
+		}
+	} else {
+		//Compute num rows x insert and remainder
+		regular_rows = ((int) block_size / sizeof_var >= block_rows ? block_rows : (int) block_size / sizeof_var);
+		regular_times = (int) tuplexfrag_number / regular_rows;
+		remainder_rows = (int) tuplexfrag_number % regular_rows;
+	}
+
+	//Alloc query String
+	long long query_size = 0;
+	char *insert_query = (remainder_rows > 0 ? OPH_DC_SQ_MULTI_INSERT_FRAG : OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL);
+	if (compressed == 1) {
+		query_size = snprintf(NULL, 0, insert_query, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW) * regular_rows + 1;
+	} else {
+		query_size = snprintf(NULL, 0, insert_query, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_ROW) * regular_rows + 1;
+	}
+
+	char *query_string = (char *) malloc(query_size * sizeof(char));
+	if (!(query_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(index);
+		return OPH_NC_ERROR;
+	}
+
+	int n;
+
+	n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
+	if (compressed == 1) {
+#ifdef OPH_DEBUG_MYSQL
+		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
+#endif
+		for (j = 0; j < regular_rows; j++) {
+			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
+			n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
+		}
+	} else {
+#ifdef OPH_DEBUG_MYSQL
+		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
+#endif
+		for (j = 0; j < regular_rows; j++) {
+			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
+			n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
+		}
+	}
+	query_string[n - 1] = ';';
+	query_string[n] = 0;
+
+	int l;
+
+	//Create binary array
+	char *binary_cache = 0;
+	int res;
+
+	if (transpose) {
+		//Create a binary array to store the whole fragment
+		if (type_flag == OPH_NC_BYTE_FLAG)
+			res = oph_iob_bin_array_create_b(&binary_cache, array_length * tuplexfrag_number);
+		else if (type_flag == OPH_NC_SHORT_FLAG)
+			res = oph_iob_bin_array_create_s(&binary_cache, array_length * tuplexfrag_number);
+		else if (type_flag == OPH_NC_INT_FLAG)
+			res = oph_iob_bin_array_create_i(&binary_cache, array_length * tuplexfrag_number);
+		else if (type_flag == OPH_NC_LONG_FLAG)
+			res = oph_iob_bin_array_create_l(&binary_cache, array_length * tuplexfrag_number);
+		else if (type_flag == OPH_NC_FLOAT_FLAG)
+			res = oph_iob_bin_array_create_f(&binary_cache, array_length * tuplexfrag_number);
+		else if (type_flag == OPH_NC_DOUBLE_FLAG)
+			res = oph_iob_bin_array_create_d(&binary_cache, array_length * tuplexfrag_number);
+		else
+			res = oph_iob_bin_array_create_d(&binary_cache, array_length * tuplexfrag_number);
+		if (res) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array creation: %d\n", res);
+			free(binary_cache);
+			free(query_string);
+			free(index);
+			return OPH_NC_ERROR;
+		}
+	}
+	//Create array for rows to be insert
+	char *binary_insert = 0;
+	res = 0;
+	if (type_flag == OPH_NC_BYTE_FLAG)
+		res = oph_iob_bin_array_create_b(&binary_insert, array_length * tuplexfrag_number);
+	else if (type_flag == OPH_NC_SHORT_FLAG)
+		res = oph_iob_bin_array_create_s(&binary_insert, array_length * tuplexfrag_number);
+	else if (type_flag == OPH_NC_INT_FLAG)
+		res = oph_iob_bin_array_create_i(&binary_insert, array_length * tuplexfrag_number);
+	else if (type_flag == OPH_NC_LONG_FLAG)
+		res = oph_iob_bin_array_create_l(&binary_insert, array_length * tuplexfrag_number);
+	else if (type_flag == OPH_NC_FLOAT_FLAG)
+		res = oph_iob_bin_array_create_f(&binary_insert, array_length * tuplexfrag_number);
+	else if (type_flag == OPH_NC_DOUBLE_FLAG)
+		res = oph_iob_bin_array_create_d(&binary_insert, array_length * tuplexfrag_number);
+	else
+		res = oph_iob_bin_array_create_d(&binary_insert, array_length * tuplexfrag_number);
+	if (res) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array creation: %d\n", res);
+		if (binary_cache)
+			free(binary_cache);
+		free(binary_insert);
+		free(query_string);
+		free(index);
+		return OPH_NC_ERROR;
+	}
+
+	int c_arg = 1 + regular_rows * 2, ii;
+	oph_ioserver_query *query = NULL;
+	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(c_arg, sizeof(oph_ioserver_query_arg *));
+	if (!(args)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		if (binary_cache)
+			free(binary_cache);
+		free(binary_insert);
+		free(index);
+		return OPH_NC_ERROR;
+	}
+
+	for (ii = 0; ii < c_arg - 1; ii++) {
+		args[ii] = (oph_ioserver_query_arg *) calloc(1, sizeof(oph_ioserver_query_arg));
+		if (!args[ii]) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate input arguments\n");
+			free(query_string);
+			if (binary_cache)
+				free(binary_cache);
+			free(binary_insert);
+			for (ii = 0; ii < c_arg - 1; ii++)
+				if (args[ii])
+					free(args[ii]);
+			free(args);
+			free(index);
+			return OPH_NC_ERROR;
+		}
+	}
+	args[c_arg - 1] = NULL;
+
+	unsigned long long *idDim = (unsigned long long *) calloc(regular_rows, sizeof(unsigned long long));
+	if (!(idDim)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		if (binary_cache)
+			free(binary_cache);
+		free(binary_insert);
+		for (ii = 0; ii < c_arg - 1; ii++)
+			if (args[ii])
+				free(args[ii]);
+		free(args);
+		free(index);
+		return OPH_NC_ERROR;
+	}
+
+	for (ii = 0; ii < regular_rows; ii++) {
+		args[2 * ii]->arg_length = sizeof(unsigned long long);
+		args[2 * ii]->arg_type = OPH_IOSERVER_TYPE_LONGLONG;
+		args[2 * ii]->arg_is_null = 0;
+		args[2 * ii]->arg = (unsigned long long *) (&(idDim[ii]));
+
+		args[2 * ii + 1]->arg_length = sizeof_var;
+		args[2 * ii + 1]->arg_type = OPH_IOSERVER_TYPE_BLOB;
+		args[2 * ii + 1]->arg_is_null = 0;
+		args[2 * ii + 1]->arg = (char *) (binary_insert + sizeof_var * ii);
+		idDim[ii] = frag->key_start + ii;
+	}
+
+	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
+		free(idDim);
+		free(query_string);
+		if (binary_cache)
+			free(binary_cache);
+		free(binary_insert);
+		for (ii = 0; ii < c_arg - 1; ii++)
+			if (args[ii])
+				free(args[ii]);
+		free(args);
+		free(index);
+		return OPH_NC_ERROR;
+	}
+	//start and count array must be sorted based on the actual order of dimensions in the nc file
+	//sizemax must be sorted based on the actual oph_level value
+	unsigned int *sizemax = (unsigned int *) malloc((measure->nexp) * sizeof(unsigned int));
+	size_t *start = (size_t *) malloc((measure->ndims) * sizeof(size_t));
+	size_t *count = (size_t *) malloc((measure->ndims) * sizeof(size_t));
+	//Sort start in base of oph_level of explicit dimension
+	size_t **start_pointer = (size_t **) malloc((measure->nexp) * sizeof(size_t *));
+
+	//idDim controls the start array for the fragment
+	short int flag = 0;
+	for (curr_lev = 1; curr_lev <= measure->nexp; curr_lev++) {
+		flag = 0;
+		//Find dimension with oph_level = curr_lev
+		for (i = 0; i < measure->ndims; i++) {
+			if (measure->dims_type[i] && measure->dims_oph_level[i] == curr_lev) {
+				//Modified to allow subsetting
+				sizemax[curr_lev - 1] = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
+				start_pointer[curr_lev - 1] = &(start[i]);
+				flag = 1;
+				break;
+			}
+		}
+		if (!flag) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid explicit dimensions in task string \n");
+			if (binary_cache)
+				free(binary_cache);
+			free(binary_insert);
+			free(query_string);
+			free(idDim);
+			for (ii = 0; ii < c_arg - 1; ii++)
+				if (args[ii])
+					free(args[ii]);
+			free(args);
+			oph_ioserver_free_query(server, query);
+			free(start);
+			free(count);
+			free(start_pointer);
+			free(sizemax);
+			free(index);
+			return OPH_NC_ERROR;
+		}
+	}
+
+	oph_nc_compute_dimension_id(idDim[0], sizemax, measure->nexp, start_pointer);
+
+	for (i = 0; i < measure->nexp; i++) {
+		*(start_pointer[i]) -= 1;
+		for (ii = 0; ii < measure->ndims; ii++) {
+			if (start_pointer[i] == &(start[ii])) {
+				*(start_pointer[i]) += measure->dims_start_index[ii];
+			}
+		}
+	}
+
+	relative_rows = 0;
+	curr_rows = 1;
+	for (i = measure->ndims - 1; i >= 0; i--) {
+		//Find dimension related to index
+		for (j = 0; j < measure->ndims; j++) {
+			if (i == index[j]) {
+				break;
+			}
+		}
+
+		//Explicit
+		if (measure->dims_type[j]) {
+			if (index[j] != 0)
+				count[j] = measure->dims_end_index[j] - measure->dims_start_index[j] + 1;
+			else {
+				count[j] = (int) (tuplexfrag_number / curr_rows);
+			}
+			curr_rows *= count[j];
+		} else {
+			//Implicit
+			//Modified to allow subsetting
+			count[j] = measure->dims_end_index[j] - measure->dims_start_index[j] + 1;
+			start[j] = measure->dims_start_index[j];
+		}
+	}
+
+	//Check
+	int total = 1;
+	for (i = 0; i < measure->ndims; i++)
+		total *= count[i];
+
+	if (total != array_length * tuplexfrag_number) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "ARRAY_LENGTH = %d, TOTAL = %d\n", array_length, total);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array creation: %d\n", res);
+		if (binary_cache)
+			free(binary_cache);
+		free(binary_insert);
+		free(query_string);
+		free(idDim);
+		for (ii = 0; ii < c_arg - 1; ii++)
+			if (args[ii])
+				free(args[ii]);
+		free(args);
+		oph_ioserver_free_query(server, query);
+		free(start);
+		free(count);
+		free(start_pointer);
+		free(sizemax);
+		free(index);
+		return OPH_NC_ERROR;
+	}
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+	struct timeval start_read_time, end_read_time, total_read_time;
+	struct timeval start_transpose_time, end_transpose_time, intermediate_transpose_time, total_transpose_time;
+	struct timeval start_write_time, end_write_time, intermediate_write_time, total_write_time;
+	total_transpose_time.tv_usec = 0;
+	total_transpose_time.tv_sec = 0;
+	total_write_time.tv_usec = 0;
+	total_write_time.tv_sec = 0;
+
+	gettimeofday(&start_read_time, NULL);
+#endif
+
+	//Fill binary cache
+	res = -1;
+	if (transpose) {
+		if (type_flag == OPH_NC_INT_FLAG) {
+			res = nc_get_vara_int(ncid, measure->varid, start, count, (int *) (binary_cache));
+		} else if (type_flag == OPH_NC_BYTE_FLAG) {
+			res = nc_get_vara_uchar(ncid, measure->varid, start, count, (unsigned char *) (binary_cache));
+		} else if (type_flag == OPH_NC_SHORT_FLAG) {
+			res = nc_get_vara_short(ncid, measure->varid, start, count, (short *) (binary_cache));
+		} else if (type_flag == OPH_NC_LONG_FLAG) {
+			res = nc_get_vara_longlong(ncid, measure->varid, start, count, (long long *) (binary_cache));
+		} else if (type_flag == OPH_NC_FLOAT_FLAG) {
+			res = nc_get_vara_float(ncid, measure->varid, start, count, (float *) (binary_cache));
+		} else if (type_flag == OPH_NC_DOUBLE_FLAG) {
+			res = nc_get_vara_double(ncid, measure->varid, start, count, (double *) (binary_cache));
+		} else {
+			res = nc_get_vara_double(ncid, measure->varid, start, count, (double *) (binary_cache));
+		}
+	} else {
+		if (type_flag == OPH_NC_INT_FLAG) {
+			res = nc_get_vara_int(ncid, measure->varid, start, count, (int *) (binary_insert));
+		} else if (type_flag == OPH_NC_BYTE_FLAG) {
+			res = nc_get_vara_uchar(ncid, measure->varid, start, count, (unsigned char *) (binary_insert));
+		} else if (type_flag == OPH_NC_SHORT_FLAG) {
+			res = nc_get_vara_short(ncid, measure->varid, start, count, (short *) (binary_insert));
+		} else if (type_flag == OPH_NC_LONG_FLAG) {
+			res = nc_get_vara_longlong(ncid, measure->varid, start, count, (long long *) (binary_insert));
+		} else if (type_flag == OPH_NC_FLOAT_FLAG) {
+			res = nc_get_vara_float(ncid, measure->varid, start, count, (float *) (binary_insert));
+		} else if (type_flag == OPH_NC_DOUBLE_FLAG) {
+			res = nc_get_vara_double(ncid, measure->varid, start, count, (double *) (binary_insert));
+		} else {
+			res = nc_get_vara_double(ncid, measure->varid, start, count, (double *) (binary_insert));
+		}
+	}
+
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+	gettimeofday(&end_read_time, NULL);
+	timeval_subtract(&total_read_time, &end_read_time, &start_read_time);
+	printf("Fragment %s:  Total read :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_read_time.tv_sec, (int) total_read_time.tv_usec);
+#endif
+
+	if (res != 0) {
+		OPH_NC_ERR(res);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
+		free(query_string);
+		free(idDim);
+		if (binary_cache)
+			free(binary_cache);
+		free(binary_insert);
+		for (ii = 0; ii < c_arg - 1; ii++)
+			if (args[ii])
+				free(args[ii]);
+		free(args);
+		oph_ioserver_free_query(server, query);
+		free(start);
+		free(count);
+		free(start_pointer);
+		free(sizemax);
+		free(index);
+		return OPH_NC_ERROR;
+	}
+
+	free(start);
+	free(start_pointer);
+	free(sizemax);
+
+	if (transpose) {
+		//Prepare structures for buffer insert update
+		size_t sizeof_type = (int) sizeof_var / array_length;
+
+		unsigned int *counters = (unsigned int *) malloc((measure->ndims) * sizeof(unsigned int));
+		unsigned int *products = (unsigned int *) malloc((measure->ndims) * sizeof(unsigned));
+		unsigned int *limits = (unsigned int *) malloc((measure->ndims) * sizeof(unsigned));
+		int *file_indexes = (int *) malloc((measure->ndims) * sizeof(int));
+
+		int k = 0;
+
+		//Setup arrays for recursive selection
+		for (i = 0; i < measure->ndims; i++) {
+			counters[index[i]] = 0;
+			products[index[i]] = 1;
+			limits[index[i]] = count[i];
+			file_indexes[index[i]] = k++;
+		}
+
+		//Compute products
+		for (k = 0; k < (measure->ndims); k++) {
+			//Last dimension in file has product 1
+			for (i = (file_indexes[k] + 1); i < (measure->ndims); i++) {
+				flag = 0;
+				//For each index following multiply
+				for (j = 0; j < (measure->ndims); j++) {
+					if (file_indexes[j] == i) {
+						products[k] *= limits[j];
+						flag = 1;
+						break;
+					}
+				}
+				if (!flag) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid dimensions in task string \n");
+					free(binary_cache);
+					free(binary_insert);
+					free(query_string);
+					free(idDim);
+					for (ii = 0; ii < c_arg - 1; ii++)
+						if (args[ii])
+							free(args[ii]);
+					free(args);
+					oph_ioserver_free_query(server, query);
+					free(count);
+					free(counters);
+					free(index);
+					free(file_indexes);
+					free(products);
+					free(limits);
+					return OPH_NC_ERROR;
+				}
+			}
+		}
+		free(file_indexes);
+
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+		gettimeofday(&start_transpose_time, NULL);
+#endif
+		oph_nc_cache_to_buffer2(measure->ndims, counters, limits, products, binary_cache, binary_insert, sizeof_type);
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+		gettimeofday(&end_transpose_time, NULL);
+		timeval_subtract(&intermediate_transpose_time, &end_transpose_time, &start_transpose_time);
+		timeval_add(&total_transpose_time, &total_transpose_time, &intermediate_transpose_time);
+		printf("Fragment %s:  Total transpose :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_transpose_time.tv_sec, (int) total_transpose_time.tv_usec);
+#endif
+		free(counters);
+		free(products);
+		free(limits);
+	}
+
+	free(count);
+	free(index);
+
+	for (l = 0; l < regular_times; l++) {
+
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+		gettimeofday(&start_write_time, NULL);
+#endif
+		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
+			free(query_string);
+			free(idDim);
+			if (binary_cache)
+				free(binary_cache);
+			free(binary_insert);
+			for (ii = 0; ii < c_arg - 1; ii++)
+				if (args[ii])
+					free(args[ii]);
+			free(args);
+			oph_ioserver_free_query(server, query);
+			return OPH_NC_ERROR;
+		}
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+		gettimeofday(&end_write_time, NULL);
+		timeval_subtract(&intermediate_write_time, &end_write_time, &start_write_time);
+		timeval_add(&total_write_time, &total_write_time, &intermediate_write_time);
+#endif
+
+		oph_ioserver_free_query(server, query);
+		//Increase idDim
+		if (l < (regular_times - 1)) {
+			for (ii = 0; ii < regular_rows; ii++) {
+				idDim[ii] += regular_rows;
+				args[2 * ii + 1]->arg = (char *) (binary_insert + sizeof_var * (ii + (l + 1) * regular_rows));
+			}
+		} else {
+			for (ii = 0; ii < remainder_rows; ii++) {
+				idDim[ii] += regular_rows;
+				args[2 * ii + 1]->arg = (char *) (binary_insert + sizeof_var * (ii + (l + 1) * regular_rows));
+			}
+		}
+
+		if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
+			free(query_string);
+			free(idDim);
+			if (binary_cache)
+				free(binary_cache);
+			free(binary_insert);
+			for (ii = 0; ii < c_arg - 1; ii++)
+				if (args[ii])
+					free(args[ii]);
+			free(args);
+			return OPH_NC_ERROR;
+		}
+
+
+	}
+	oph_ioserver_free_query(server, query);
+	free(query_string);
+	query_string = NULL;
+
+	if (remainder_rows > 0) {
+		if (compressed == 1) {
+			query_size = snprintf(NULL, 0, OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW) * regular_rows + 1;
+		} else {
+			query_size = snprintf(NULL, 0, OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_ROW) * regular_rows + 1;
+		}
+
+		query_string = (char *) malloc(query_size * sizeof(char));
+		if (!(query_string)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			free(idDim);
+			if (binary_cache)
+				free(binary_cache);
+			free(binary_insert);
+			for (ii = 0; ii < c_arg - 1; ii++)
+				if (args[ii])
+					free(args[ii]);
+			free(args);
+			return OPH_NC_ERROR;
+		}
+
+		query = NULL;
+		n = snprintf(query_string, query_size, OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL, frag->fragment_name) - 1;
+		if (compressed == 1) {
+#ifdef OPH_DEBUG_MYSQL
+			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
+#endif
+			for (j = 0; j < remainder_rows; j++) {
+				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
+				n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
+			}
+		} else {
+#ifdef OPH_DEBUG_MYSQL
+			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
+#endif
+			for (j = 0; j < remainder_rows; j++) {
+				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
+				n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
+			}
+		}
+		query_string[n - 1] = ';';
+		query_string[n] = 0;
+
+		for (ii = remainder_rows * 2; ii < c_arg; ii++) {
+			if (args[ii]) {
+				free(args[ii]);
+				args[ii] = NULL;
+			}
+		}
+
+		if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
+			free(query_string);
+			free(idDim);
+			if (binary_cache)
+				free(binary_cache);
+			free(binary_insert);
+			for (ii = 0; ii < c_arg - 1; ii++)
+				if (args[ii])
+					free(args[ii]);
+			free(args);
+			return OPH_NC_ERROR;
+		}
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+		gettimeofday(&start_write_time, NULL);
+#endif
+		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
+			free(query_string);
+			free(idDim);
+			if (binary_cache)
+				free(binary_cache);
+			free(binary_insert);
+			for (ii = 0; ii < c_arg - 1; ii++)
+				if (args[ii])
+					free(args[ii]);
+			free(args);
+			oph_ioserver_free_query(server, query);
+			return OPH_NC_ERROR;
+		}
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+		gettimeofday(&end_write_time, NULL);
+		timeval_subtract(&intermediate_write_time, &end_write_time, &start_write_time);
+		timeval_add(&total_write_time, &total_write_time, &intermediate_write_time);
+#endif
+
+		oph_ioserver_free_query(server, query);
+	}
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+	printf("Fragment %s:  Total write :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_write_time.tv_sec, (int) total_write_time.tv_usec);
+#endif
+
+	free(query_string);
+	free(idDim);
+	if (binary_cache)
+		free(binary_cache);
+	free(binary_insert);
+	for (ii = 0; ii < c_arg - 1; ii++)
+		if (args[ii])
+			free(args[ii]);
+	free(args);
+
+	return OPH_NC_SUCCESS;
+}
+
+
+int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fragment * frag, char *nc_file_path, int tuplexfrag_number, int compressed, NETCDF_var * measure)
+{
+	if (!frag || !nc_file_path || !tuplexfrag_number || !measure || !server) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_NC_ERROR;
+	}
+
+	if (oph_dc_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
+		return OPH_NC_ERROR;
+	}
+	//Flag set to 1 if dimension are in the order specified in the file
+	int i;
+	int *index = (int *) malloc((measure->ndims) * sizeof(int));
+	for (i = 0; i < measure->ndims; i++) {
+		//Compute index of actual order in Ophidia
+		if (!measure->dims_type[i])
+			index[i] = (measure->ndims - measure->nimp) + measure->dims_oph_level[i] - 1;
+		else
+			index[i] = measure->dims_oph_level[i] - 1;
+	}
+
+	//Find most external dimension with size bigger than 1
+	int j;
+	int most_extern_id = 0;
+	for (i = 0; i < measure->nexp; i++) {
+		//Find dimension related to index
+		for (j = 0; j < measure->ndims; j++) {
+			if (i == index[j]) {
+				break;
+			}
+		}
+
+		//External explicit
+		if (measure->dims_type[j]) {
+			if ((measure->dims_end_index[j] - measure->dims_start_index[j]) > 0) {
+				most_extern_id = i;
+				break;
+			}
+		}
+	}
+
+	//Check if only most external dimension (bigger than 1) is splitted
+	long long curr_rows = 1;
+	long long relative_rows = 0;
+	short int whole_explicit = 1;
+	for (i = measure->ndims - 1; i > most_extern_id; i--) {
+		//Find dimension related to index
+		for (j = 0; j < measure->ndims; j++) {
+			if (i == index[j]) {
+				break;
+			}
+		}
+
+		//External explicit
+		if (measure->dims_type[j]) {
+			relative_rows = (int) (tuplexfrag_number / curr_rows);
+			curr_rows *= (measure->dims_end_index[j] - measure->dims_start_index[j] + 1);
+			if (relative_rows < (measure->dims_end_index[j] - measure->dims_start_index[j] + 1)) {
+				whole_explicit = 0;
+				break;
+			}
+		}
+	}
+	//If external explicit is not integer
+	if ((tuplexfrag_number % curr_rows) != 0)
+		whole_explicit = 0;
+
+	if (!whole_explicit) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create fragment: internal explicit dimensions are fragmented\n");
+		free(index);
+		return OPH_NC_ERROR;
+	}
+	//Alloc query String
+	int n1 = 0, n2 = 0, n3 = 0, n4 = 0;
+	for (j = 0; j < measure->ndims; j++) {
+		n1 += snprintf(NULL, 0, "%hd|", measure->dims_type[j]);
+		n2 += snprintf(NULL, 0, "%d|", (int) index[j]);
+		n3 += snprintf(NULL, 0, "%d|", measure->dims_start_index[j]);
+		n4 += snprintf(NULL, 0, "%d|", measure->dims_end_index[j]);
+	}
+
+	long long query_size = 0;
+	char *insert_query = OPH_DC_SQ_CREATE_FRAG_FROM_FILE;
+	if (compressed == 1) {
+		query_size =
+		    snprintf(NULL, 0, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_YES, tuplexfrag_number, frag->key_start, "", "", "",
+			     "") + (n1 + n2 + n3 + n4 - 4) + 1;
+	} else {
+		query_size =
+		    snprintf(NULL, 0, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, frag->key_start, "", "", "",
+			     "") + (n1 + n2 + n3 + n4 - 4) + 1;
+	}
+
+	char *query_string = (char *) malloc(query_size * sizeof(char));
+	if (!(query_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(index);
+		return OPH_NC_ERROR;
+	}
+
+	char *dims_type_string = (char *) malloc(n1 * sizeof(char));
+	if (!(dims_type_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(index);
+		return OPH_NC_ERROR;
+	}
+	char *dims_index_string = (char *) malloc(n2 * sizeof(char));
+	if (!(dims_index_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(dims_type_string);
+		free(index);
+		return OPH_NC_ERROR;
+	}
+	char *dims_start_string = (char *) malloc(n3 * sizeof(char));
+	if (!(dims_start_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(dims_type_string);
+		free(dims_index_string);
+		free(index);
+		return OPH_NC_ERROR;
+	}
+	char *dims_end_string = (char *) malloc(n4 * sizeof(char));
+	if (!(dims_end_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(dims_type_string);
+		free(dims_index_string);
+		free(dims_start_string);
+		free(index);
+		return OPH_NC_ERROR;
+	}
+	//Set values into strings
+	int m1 = 0, m2 = 0, m3 = 0, m4 = 0;
+	for (j = 0; j < measure->ndims; j++) {
+		m1 += snprintf(dims_type_string + m1, n1 - m1, "%hd|", measure->dims_type[j]);
+		m2 += snprintf(dims_index_string + m2, n2 - m2, "%d|", (int) index[j]);
+		m3 += snprintf(dims_start_string + m3, n3 - m3, "%d|", measure->dims_start_index[j]);
+		m4 += snprintf(dims_end_string + m4, n4 - m4, "%d|", measure->dims_end_index[j]);
+	}
+	dims_type_string[m1 - 1] = 0;
+	dims_index_string[m2 - 1] = 0;
+	dims_start_string[m3 - 1] = 0;
+	dims_end_string[m4 - 1] = 0;
+	free(index);
+
+	int n = 0;
+	if (compressed == 1) {
+		n = snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_YES, tuplexfrag_number, frag->key_start, dims_type_string,
+			     dims_index_string, dims_start_string, dims_end_string);
+	} else {
+		n = snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, frag->key_start, dims_type_string,
+			     dims_index_string, dims_start_string, dims_end_string);
+	}
+	if (n >= query_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_NC_ERROR;
+	}
+
+	free(dims_type_string);
+	free(dims_index_string);
+	free(dims_start_string);
+	free(dims_end_string);
+
+	oph_ioserver_query *query = NULL;
+	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, NULL, &query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
+		free(query_string);
+		return OPH_DC_SERVER_ERROR;
+	}
+
+	if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
+		free(query_string);
+		oph_ioserver_free_query(server, query);
+		return OPH_DC_SERVER_ERROR;
+	}
+
+	oph_ioserver_free_query(server, query);
+	free(query_string);
+
+	return OPH_NC_SUCCESS;
+}
+
 
 int oph_nc_get_row_from_nc(int ncid, int array_length, NETCDF_var * measure, unsigned long idDim, char **row)
 {

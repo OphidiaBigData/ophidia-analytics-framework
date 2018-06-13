@@ -79,6 +79,16 @@ else
 	AC_MSG_ERROR([MySQL libraries not found! Aborting configure!])
 fi
 
+AC_CHECK_LIB(pthread, pthread_create)
+if test "$ac_cv_lib_pthread_pthread_create" = yes ; then
+   CFLAGS="$CFLAGS -D_REENTRANT"
+else
+   AC_CHECK_LIB(pthreads, pthread_create)
+   if test "$ac_cv_lib_pthreads_pthread_create" = yes ; then
+      CFLAGS="$CFLAGS -D_REENTRANT"
+   fi
+fi
+
 optimization="no"
 AC_ARG_ENABLE(optimization,
         [  --enable-optimization          turn on optimization flags],
@@ -519,7 +529,7 @@ case "${host}" in
                                     if (test "x$debug" = "x1") || (test "x$debug" = "x2"); then
 										OPT+=" -g3 -Wall -Wextra -O0"
 									else
-										OPT+=" -O2"
+										OPT+=" -O3"
 									fi
 			            if test "x$optimization" = "xyes" ; then
 			                 CFLAGS="-O3 -finline-functions -funswitch-loops -fgcse-after-reload -ftree-loop-linear -ftree-loop-im -ftree-loop-ivcanon -fivopts -ftree-vectorize -ftracer -fgcse-sm -fgcse-las -fgcse-after-reload -funroll-loops -freorder-blocks-and-partition -fweb"

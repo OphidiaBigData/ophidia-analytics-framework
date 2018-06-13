@@ -85,7 +85,7 @@ liboph_analytics_operator_la_LIBADD = @LIBLTDL@ -L. -ldebug -lhashtbl
 liboph_ioserver_la_SOURCES = oph_ioserver/oph_ioserver_library.c
 liboph_ioserver_la_CFLAGS= -prefer-pic -I../include/oph_ioserver -I../include @INCLTDL@ ${lib_CFLAGS}
 liboph_ioserver_la_LDFLAGS = -shared 
-liboph_ioserver_la_LIBADD = @LIBLTDL@ -L. -ldebug
+liboph_ioserver_la_LIBADD = @LIBLTDL@ -L. -ldebug -lpthread
 
 liboph_ioserver_parser_la_SOURCES = oph_ioserver/oph_ioserver_parser_library.c
 liboph_ioserver_parser_la_CFLAGS= -prefer-pic -I../include/oph_ioserver -I../include @INCLTDL@ ${lib_CFLAGS}

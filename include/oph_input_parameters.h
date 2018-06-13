@@ -183,6 +183,7 @@
 #define OPH_IN_PARAM_STDOUT					"stdout"
 #define OPH_IN_PARAM_STDERR					"stderr"
 
+#define OPH_ARG_NTHREAD						"nthreads"
 #define OPH_ARG_USERNAME					"username"
 #define OPH_ARG_SESSIONID					"sessionid"
 #define OPH_ARG_WORKFLOWID					"workflowid"
