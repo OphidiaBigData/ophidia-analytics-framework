@@ -2075,7 +2075,8 @@ int task_init(oph_operator_struct * handle)
 		} else {
 			//Check if are available DBMS and HOST number into specified partition and of server type
 			if (*host_number > 0 || *dbmsxhost_number > 0) {
-				if ((oph_odb_stge_check_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, id_user, (*host_number > 0 ? *host_number : 1), *dbmsxhost_number, &exist_part))
+				if ((oph_odb_stge_check_number_of_host_dbms
+				     (oDB, storage_type, ioserver_type, host_partition, id_user, (*host_number > 0 ? *host_number : 1), *dbmsxhost_number, &exist_part))
 				    || !exist_part) {
 					if (run) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts or dbms per host is too big or server type and partition are not available!\n");
