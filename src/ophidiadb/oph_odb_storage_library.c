@@ -2054,7 +2054,7 @@ int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_use
 	}
 	*id_hostpartition = 0;
 
-  if (hosts < 0)
+	if (hosts < 0)
 		hosts = 0;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
