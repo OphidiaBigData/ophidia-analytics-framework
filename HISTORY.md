@@ -1,8 +1,9 @@
 
-## NEXT RELEASE
+## v1.3.0 - 2018-06-18
 
 ### Fixed:
 
+- Bug in handling idjob for massive operations
 - Link to output of OPH_SCRIPT in session space
 - OphidiaDB cube library to allow exploration of cubes without dimensions
 - Code building when standalone configuration option is enabled [#30](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/30)
@@ -18,6 +19,7 @@
 
 ### Changed:
 
+- Definition of OphidiaDB 'hostpartition', 'hashost' and 'job' tables
 - OPH_REDUCE2 operator and some common libraries to support multi-threaded execution [#42](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/42)
 - Job tracking for accounting purposes [#41](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/41)
 - OPH_INSTANCES operator to manage user-defined host partitions [#39](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/39)
