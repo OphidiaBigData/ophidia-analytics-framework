@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -67,6 +67,7 @@
  * \param description Free description to be associated with output cube
  * \param offset List of offsets used to enlarge subset intervals
  * \param offset_num Number of offsets
+ * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
 struct _OPH_SUBSET2_operator_handle {
 	ophidiadb oDB;
@@ -91,6 +92,7 @@ struct _OPH_SUBSET2_operator_handle {
 	char *apply_clause;
 	char *apply_clause_type;
 	char *grid_name;
+	char check_grid;
 	char **objkeys;
 	int objkeys_num;
 	oph_ioserver_handler *server;
@@ -100,6 +102,7 @@ struct _OPH_SUBSET2_operator_handle {
 	char *description;
 	double *offset;
 	int offset_num;
+	short int execute_error;
 };
 typedef struct _OPH_SUBSET2_operator_handle OPH_SUBSET2_operator_handle;
 

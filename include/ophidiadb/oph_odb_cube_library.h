@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -105,6 +105,7 @@ typedef struct {
 
 /**
  * \brief Structure that contains a cubehasdim table row
+ * \param id_cubhasdim Id used in Ophidia DB (output value)
  * \param id_datacube id of the containing datacube
  * \param id_dimensioninst id of the dimension instance
  * \param explicit_dim Type of dimension
@@ -112,6 +113,7 @@ typedef struct {
  * \param level Level of the dimension
  */
 typedef struct {
+	int id_cubehasdim;
 	int id_datacube;
 	int id_dimensioninst;
 	int explicit_dim;
@@ -345,5 +347,7 @@ int oph_odb_cube_find_containers_datacubes(ophidiadb * oDB, int folder_id, int s
 int oph_odb_cube_retrieve_cubehasdim_list(ophidiadb * oDB, int id_datacube, oph_odb_cubehasdim ** cubedims, int *dim_num);
 
 int oph_odb_cube_update_tuplexfragment(ophidiadb * oDB, int id_datacube, int tuplexfragment);
+
+int oph_odb_cube_update_level_in_cubehasdim_table(ophidiadb * oDB, int level, int id_cubehasdim);
 
 #endif				/* __OPH_ODB_CUBE_H__ */

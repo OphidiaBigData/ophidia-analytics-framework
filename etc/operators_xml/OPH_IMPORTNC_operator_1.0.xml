@@ -56,6 +56,7 @@ WARNING: It imports only mono-dimensional coordinate variables.
                   Must be the same number of &quot;subset_dims&quot;
 - subset_type : if set to &quot;index&quot; (default), the subset_filter is considered on dimension index. 
                 With &quot;coord&quot;, filter is considered on dimension values.
+                In case of single value, that value is used for all the dimensions.
 - time_filter : enable filters using dates for time dimensions; enabled by default.
 - offset : it is added to the bounds of subset intervals defined with &quot;subset_filter&quot; in case of &quot;coord&quot; filter type is used.
 - exp_concept_level: concept level short name (must be a single char) of explicit dimensions. Default value is &quot;c&quot;
@@ -67,6 +68,7 @@ WARNING: It imports only mono-dimensional coordinate variables.
               or original data with &quot;no&quot; (default).
 - grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
         or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
+- check_grid : optional flag to be enabled in case the values of grid have to be checked (valid only if the grid already exists).
 - description : additional description to be associated with the output cube.
 
 The following parameters are considered only in case the container has to be created.
@@ -132,14 +134,15 @@ SUBMISSION STRING: &quot;operator=oph_importnc;cwd=/session-code1;container=cont
 		<argument type="string" mandatory="no" default="auto" multivalue="yes">exp_dim</argument>
 		<argument type="string" mandatory="no" default="auto" multivalue="yes">imp_dim</argument>
 		<argument type="string" mandatory="no" default="none" multivalue="yes">subset_dims</argument>
-		<argument type="string" mandatory="no" default="index" values="index|coord">subset_type</argument>
+		<argument type="string" mandatory="no" default="index" values="index|coord" multivalue="yes">subset_type</argument>
 		<argument type="string" mandatory="no" default="all" multivalue="yes">subset_filter</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">time_filter</argument>
-		<argument type="real" mandatory="no" default="0">offset</argument>
+		<argument type="real" mandatory="no" default="0" multivalue="yes">offset</argument>
 		<argument type="string" mandatory="no" default="c" multivalue="yes">exp_concept_level</argument>
 		<argument type="string" mandatory="no" default="c" multivalue="yes">imp_concept_level</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">compressed</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">check_grid</argument>
 		<argument type="string" mandatory="no" default="oph_base" multivalue="yes">hierarchy</argument>
 		<argument type="string" mandatory="no" default="CF">vocabulary</argument>
 		<argument type="string" mandatory="no" default="1900-01-01 00:00:00">base_time</argument>

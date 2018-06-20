@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,6 +42,9 @@
 #define OPH_IOSERVER_FREE_RESULT_FUNC     "_%s_free_result"
 
 #define OPH_IOSERVER_SEPARATOR '_'
+
+#define OPH_IOSERVER_MYSQL_TYPE		"mysql_table"
+#define OPH_IOSERVER_OPHIDIAIO_TYPE	"ophidiaio_memory"
 
 //*************Error codes***************//
 

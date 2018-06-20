@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -58,10 +58,17 @@
 #define MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_2 	"INSERT INTO `container` (`idfolder`, `containername`, `operator`) VALUES (%d, '%s', '%s')"
 #define MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_3 	"INSERT INTO `container` (`idfolder`, `idparent`, `containername`, `operator`, `idvocabulary`) VALUES (%d, %d, '%s', '%s', %d)"
 #define MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_4 	"INSERT INTO `container` (`idfolder`, `containername`, `operator`, `idvocabulary`) VALUES (%d, '%s', '%s', %d)"
+#define MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_D 	"INSERT INTO `container` (`idfolder`, `idparent`, `containername`, `operator`, `description`) VALUES (%d, %d, '%s', '%s', '%s')"
+#define MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_D_2 	"INSERT INTO `container` (`idfolder`, `containername`, `operator`, `description`) VALUES (%d, '%s', '%s', '%s')"
+#define MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_D_3 	"INSERT INTO `container` (`idfolder`, `idparent`, `containername`, `operator`, `idvocabulary`, `description`) VALUES (%d, %d, '%s', '%s', %d, '%s')"
+#define MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_D_4 	"INSERT INTO `container` (`idfolder`, `containername`, `operator`, `idvocabulary`, `description`) VALUES (%d, '%s', '%s', %d, '%s')"
+
 #define MYSQL_QUERY_FS_DELETE_OPHIDIADB_CONTAINER 	"DELETE FROM `container` WHERE `idcontainer` = %d"
 #define MYSQL_QUERY_FS_RETRIEVE_EMPTY_CONTAINER 	"SELECT count(*) FROM container INNER JOIN datacube ON container.idcontainer = datacube.idcontainer WHERE container.idcontainer = %d"
 #define MYSQL_QUERY_FS_RETRIEVE_CONTAINER_ID 		"SELECT idcontainer from `container` where containername = '%s' AND idfolder = %d AND hidden = %d;"
 #define MYSQL_QUERY_FS_RETRIEVE_CONTAINER_ID2 		"SELECT idcontainer from `container` where containername = '%s' AND idfolder = %d AND hidden = 0;"
+
+#define MYSQL_QUERY_FS_RETRIEVE_CONTAINER	 		"SELECT idcontainer, container.description, name FROM `container` LEFT JOIN `vocabulary` ON container.idvocabulary = vocabulary.idvocabulary WHERE containername = '%s' AND idfolder = %d AND hidden = 0;"
 
 #define MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_NAME	"UPDATE `container` SET containername = CONCAT(containername, CONCAT('_', idcontainer)) WHERE idcontainer = '%d'"
 

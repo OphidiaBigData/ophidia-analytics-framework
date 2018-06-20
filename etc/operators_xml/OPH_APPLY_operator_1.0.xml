@@ -29,6 +29,8 @@ In case of inequalities, it is necessary to call the primitive &quot;oph_cast&qu
              if &quot;manual&quot; (default) dimension type and the related primitive arguments have to be set in &quot;dim_query&quot;.
 - check_type : if &quot;yes&quot; the agreement between input and output data types of nested primitives will be checked,
                if &quot;no&quot; data type will be not checked (valid only for &quot;manual&quot; setting of &quot;measure_type&quot; and &quot;dim_type&quot;).
+- on_reduce : if &quot;update&quot; the values of implicit dimension are automatically set to a list of long integers starting from 1 even if dimension size does not decrease;
+              if &quot;skip&quot; (default) the values are updated to a list of long integers only in case dimension size decrease due to a reduction primitive.
 - compressed : if &quot;auto&quot; (default) new data wil be compressed according to compression status of input datacube,
                if &quot;yes&quot; new data will be compressed,
                if &quot;no&quot; data will be inserted without compression.
@@ -68,6 +70,7 @@ SUBMISSION STRING: &quot;operator=oph_apply;cube=http://www.example.com/1/1;quer
 		<argument type="string" mandatory="no" default="manual" values="auto|manual">measure_type</argument>
 		<argument type="string" mandatory="no" default="manual" values="auto|manual">dim_type</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">check_type</argument>
+		<argument type="string" mandatory="no" default="skip" values="update|skip">on_reduce</argument>
 		<argument type="string" mandatory="no" default="auto" values="yes|no|auto">compressed</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>

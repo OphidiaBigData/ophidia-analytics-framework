@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2017 CMCC Foundation
+#    Copyright (C) 2012-2018 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@ LIBRARY+= libophidiadb.la
 LIBRARY+= liboph_hierarchy.la
 LIBRARY+= liboph_dimension.la
 LIBRARY+= liboph_datacube.la
+LIBRARY+= liboph_driver_proc.la
 if HAVE_NETCDF
 LIBRARY+= liboph_nc.la
 endif
@@ -85,7 +86,7 @@ liboph_analytics_operator_la_LIBADD = @LIBLTDL@ -L. -ldebug -lhashtbl
 liboph_ioserver_la_SOURCES = oph_ioserver/oph_ioserver_library.c
 liboph_ioserver_la_CFLAGS= -prefer-pic -I../include/oph_ioserver -I../include @INCLTDL@ ${lib_CFLAGS}
 liboph_ioserver_la_LDFLAGS = -shared 
-liboph_ioserver_la_LIBADD = @LIBLTDL@ -L. -ldebug
+liboph_ioserver_la_LIBADD = @LIBLTDL@ -L. -ldebug -lpthread
 
 liboph_ioserver_parser_la_SOURCES = oph_ioserver/oph_ioserver_parser_library.c
 liboph_ioserver_parser_la_CFLAGS= -prefer-pic -I../include/oph_ioserver -I../include @INCLTDL@ ${lib_CFLAGS}
@@ -160,12 +161,17 @@ libophidiadb_la_LIBADD = -lz -lm ${MYSQL_LDFLAGS} @LIBLTDL@ -L. -ldebug -loph_pi
 liboph_dimension_la_SOURCES = oph_dimension_library.c
 liboph_dimension_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include @INCLTDL@ ${lib_CFLAGS}
 liboph_dimension_la_LDFLAGS = -static $(LIB_OPERATOR)
-liboph_dimension_la_LIBADD = -lz -lm ${MYSQL_LDFLAGS} @LIBLTDL@ -L. -ldebug -loph_binary_io 
+liboph_dimension_la_LIBADD = -lz -lm ${MYSQL_LDFLAGS} @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_hierarchy 
 
 liboph_datacube_la_SOURCES = oph_datacube_library.c
 liboph_datacube_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
 liboph_datacube_la_LDFLAGS = -static
 liboph_datacube_la_LIBADD = -lz -lm @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver 
+
+liboph_driver_proc_la_SOURCES = oph_driver_procedure_library.c
+liboph_driver_proc_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
+liboph_driver_proc_la_LDFLAGS = -static
+liboph_driver_proc_la_LIBADD = -lz -lm @LIBLTDL@ -L. -ldebug -lophidiadb -loph_datacube  
 
 if HAVE_NETCDF
 liboph_nc_la_SOURCES = oph_nc_library.c

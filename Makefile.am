@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2017 CMCC Foundation
+#    Copyright (C) 2012-2018 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+AUTOMAKE_OPTIONS = subdir-objects
 
 ACLOCAL_AMFLAGS = -I m4
 
@@ -32,6 +34,8 @@ OPERATOR_XML+=etc/operators_xml/OPH_AGGREGATE2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_AGGREGATE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_APPLY_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CANCEL_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_CLUSTER_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_CONTAINERSCHEMA_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CREATECONTAINER_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CUBEELEMENTS_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CUBEIO_operator_1.0.xml
@@ -49,6 +53,7 @@ OPERATOR_XML+=etc/operators_xml/OPH_EXPLORECUBE_operator_1.0.xml
 if HAVE_NETCDF
 OPERATOR_XML+=etc/operators_xml/OPH_EXPORTNC_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC2_operator_1.0.xml
 if GSL_SUPPORT
 OPERATOR_XML+=etc/operators_xml/OPH_EXPLORENC_operator_1.0.xml
 endif

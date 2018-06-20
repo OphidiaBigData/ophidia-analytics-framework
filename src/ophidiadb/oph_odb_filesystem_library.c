@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -1105,17 +1105,34 @@ int oph_odb_fs_insert_into_container_table(ophidiadb * oDB, oph_odb_container * 
 
 	char insertQuery[MYSQL_BUFLEN];
 	int n;
-	if (cont->id_vocabulary) {
-		if (cont->id_parent)
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_3, cont->id_folder, cont->id_parent, cont->container_name, cont->operation,
-				     cont->id_vocabulary);
-		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_4, cont->id_folder, cont->container_name, cont->operation, cont->id_vocabulary);
+	if (!strlen(cont->description)) {
+		if (cont->id_vocabulary) {
+			if (cont->id_parent)
+				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_3, cont->id_folder, cont->id_parent, cont->container_name, cont->operation,
+					     cont->id_vocabulary);
+			else
+				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_4, cont->id_folder, cont->container_name, cont->operation, cont->id_vocabulary);
+		} else {
+			if (cont->id_parent)
+				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER, cont->id_folder, cont->id_parent, cont->container_name, cont->operation);
+			else
+				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_2, cont->id_folder, cont->container_name, cont->operation);
+		}
 	} else {
-		if (cont->id_parent)
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER, cont->id_folder, cont->id_parent, cont->container_name, cont->operation);
-		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_2, cont->id_folder, cont->container_name, cont->operation);
+		if (cont->id_vocabulary) {
+			if (cont->id_parent)
+				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_D_3, cont->id_folder, cont->id_parent, cont->container_name, cont->operation,
+					     cont->id_vocabulary, cont->description);
+			else
+				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_D_4, cont->id_folder, cont->container_name, cont->operation, cont->id_vocabulary,
+					     cont->description);
+		} else {
+			if (cont->id_parent)
+				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_D, cont->id_folder, cont->id_parent, cont->container_name, cont->operation,
+					     cont->description);
+			else
+				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_UPDATE_OPHIDIADB_CONTAINER_D_2, cont->id_folder, cont->container_name, cont->operation, cont->description);
+		}
 	}
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
@@ -1178,6 +1195,64 @@ int oph_odb_fs_retrieve_container_id_from_container_name(ophidiadb * oDB, int fo
 
 	row = mysql_fetch_row(res);
 	*id_container = (int) strtol(row[0], NULL, 10);
+
+	mysql_free_result(res);
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_fs_retrieve_container_from_container_name(ophidiadb * oDB, int folder_id, char *container_name, int *id_container, char **description, char **vocabulary)
+{
+	if (!oDB || !container_name || !folder_id || !id_container) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	*id_container = 0;
+	if (description)
+		*description = 0;
+	if (vocabulary)
+		*vocabulary = 0;
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char selectQuery[MYSQL_BUFLEN];
+	int n;
+	n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_RETRIEVE_CONTAINER, container_name, folder_id);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, selectQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+	int num_rows = mysql_num_rows(res);
+	if (num_rows != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if (mysql_field_count(oDB->conn) != 3) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	row = mysql_fetch_row(res);
+	*id_container = (int) strtol(row[0], NULL, 10);
+	if (description && row[1])
+		*description = strdup(row[1]);
+	if (vocabulary && row[2])
+		*vocabulary = strdup(row[2]);
 
 	mysql_free_result(res);
 

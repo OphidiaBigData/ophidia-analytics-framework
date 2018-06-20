@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@
 #define OPH_DC_SQ_MULTI_INSERT_ROW "?|?|"
 #define OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW "?|oph_compress('','',?)|"
 
+#define OPH_DC_SQ_CREATE_FRAG_FROM_FILE OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_FILE_IMPORT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_COLUMN_NAME, "id_dim|measure") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_COLUMN_TYPE, "long|blob") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_PATH, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_MEASURE, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_COMPRESSED, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_NROW, "%d") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_ROW_START, "%d") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_DIM_TYPE, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_DIM_INDEX, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_DIM_START, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_DIM_END, "%s")
 
 #define OPH_DC_SQ_GET_ID_FRAG OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "id_dim") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FROM, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_LIMIT, "%d|%d")
 
@@ -158,7 +159,7 @@
 #define MYSQL_DC_APPLY_PLUGIN_GB2 "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT oph_id3(%s,?,%lld) AS %s, %s AS %s FROM %s GROUP BY oph_id3(%s,?,%lld)"
 #define MYSQL_DC_APPLY_PLUGIN_WGB2 "CREATE TABLE %s (%s integer, %s longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT oph_id3(%s,?,%lld) AS %s, %s AS %s FROM %s WHERE %s GROUP BY oph_id3(%s,?,%lld)"
 
-#define MYSQL_DC_SIZE_ELEMENTS_FRAG "SELECT oph_convert_l('','OPH_LONG',oph_aggregate_operator('OPH_LONG','OPH_LONG',oph_value_to_bin('','OPH_LONG',index_length+data_length),'OPH_SUM')) AS size FROM information_schema.TABLES WHERE table_name IN (%s);"
+#define MYSQL_DC_SIZE_ELEMENTS_FRAG "SELECT oph_convert_l('OPH_LONG','',oph_aggregate_operator('OPH_LONG','OPH_LONG',oph_value_to_bin('','OPH_LONG',index_length+data_length),'OPH_SUM')) AS size FROM information_schema.TABLES WHERE table_name IN (%s);"
 
 #define MYSQL_DC_DELETE_FRAG "DROP TABLE IF EXISTS %s"
 

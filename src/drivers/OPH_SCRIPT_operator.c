@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -44,6 +44,9 @@
 #include "oph_directory_library.h"
 
 #define MAX_OUT_LEN 500*1024
+#define OPH_SCRIPT_MARKER '\''
+#define OPH_SCRIPT_MARKER2 '\\'
+#define OPH_SCRIPT_MARKER3 ' '
 
 int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
@@ -513,6 +516,7 @@ int task_execute(oph_operator_struct * handle)
 	}
 
 	int error = 0, n = 0, i;
+	size_t j, k;
 	char command[OPH_COMMON_BUFFER_LEN];
 	memset(command, 0, OPH_COMMON_BUFFER_LEN);
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_DATA_PATH='%s' ", base_src_path ? base_src_path : "");
@@ -527,8 +531,25 @@ int task_execute(oph_operator_struct * handle)
 		      ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->marker_id ? ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->marker_id : 0);
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "%s ", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->script);
 
+	char *new_arg = NULL, *arg;
 	for (i = 0; i < ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->args_num; i++) {
-		n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "%s ", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->args[i]);
+		arg = ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->args[i];
+		if (arg) {
+			new_arg = (char *) calloc(4 * strlen(arg), sizeof(char));
+			for (j = k = 0; j < strlen(arg); ++j, ++k) {
+				if (arg[j] == OPH_SCRIPT_MARKER3)
+					new_arg[k++] = OPH_SCRIPT_MARKER;
+				new_arg[k] = arg[j];
+				if (arg[j] == OPH_SCRIPT_MARKER) {
+					new_arg[++k] = OPH_SCRIPT_MARKER2;
+					new_arg[++k] = OPH_SCRIPT_MARKER;
+					new_arg[++k] = OPH_SCRIPT_MARKER;
+				} else if (arg[j] == OPH_SCRIPT_MARKER3)
+					new_arg[++k] = OPH_SCRIPT_MARKER;
+			}
+			new_arg[k] = 0;
+			n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "'%s' ", new_arg);
+		}
 	}
 
 	if (strcmp(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->out_redir, "stdout")) {
@@ -559,9 +580,8 @@ int task_execute(oph_operator_struct * handle)
 	char system_output[MAX_OUT_LEN];
 	memset(system_output, 0, MAX_OUT_LEN);
 	char line[OPH_COMMON_BUFFER_LEN];
-	snprintf(system_output, MAX_OUT_LEN, "Command: %s\n\n", command);
 
-	int s = 0, so = 1;
+	int s = 0;
 	FILE *fp = popen(command, "r");
 	if (!fp)
 		error = -1;
@@ -573,35 +593,29 @@ int task_execute(oph_operator_struct * handle)
 	}
 
 	// Print command and output in text log
-	printf("%s\n", system_output);
+	printf("Command:\n%s\n\nScript output:\n%s\n", command, system_output);
 
 	// ADD COMMAND TO JSON AS TEXT
 	s = oph_json_is_objkey_printable(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys, ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys_num,
 					 OPH_JSON_OBJKEY_SCRIPT);
-#if defined(OPH_DEBUG_LEVEL_1) || defined(OPH_DEBUG_LEVEL_2)
-	if (s && oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_SCRIPT, "System output", system_output)) {
+	if (s && oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_SCRIPT, "Script output", system_output)) {
 		pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
 		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
 	}
-	so = 0;
-#endif
-	if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path) {
+
+	if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_path
+	    && oph_json_is_objkey_printable(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys, ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys_num,
+					    OPH_JSON_OBJKEY_SCRIPT_URL)) {
 		if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->workflow_id)
 			snprintf(system_output, MAX_OUT_LEN, "%s/%s", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url,
 				 ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->workflow_id);
 		else
 			snprintf(system_output, MAX_OUT_LEN, "%s", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url);
-		if (s && oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_SCRIPT, "Output URL", system_output)) {
-			pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
-		}
-	} else {
-		if (so && s && oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_SCRIPT, "SUCCESS", NULL)) {
+		if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_SCRIPT_URL, "Output URL", system_output)) {
 			pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
 			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
 		}
 	}
-
 	// ADD OUTPUT PID TO NOTIFICATION STRING
 	if (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url) {
 		char tmp_string[OPH_COMMON_BUFFER_LEN];
@@ -613,20 +627,32 @@ int task_execute(oph_operator_struct * handle)
 		handle->output_string = strdup(tmp_string);
 	}
 
-	if (error == -1) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "System command failed\n");
+	char return_code[MAX_OUT_LEN];
+	if (error == -1)
+		snprintf(return_code, MAX_OUT_LEN, "System command failed");
+	else if (WEXITSTATUS(error) == 127)
+		snprintf(return_code, MAX_OUT_LEN, "System command cannot be executed (127)");
+	else if (WEXITSTATUS(error) != 0)
+		snprintf(return_code, MAX_OUT_LEN, "Script failed with code %d", WEXITSTATUS(error));
+	else
+		snprintf(return_code, MAX_OUT_LEN, "Script executed correctly (0)");
+	if (oph_json_is_objkey_printable
+	    (((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys, ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_SCRIPT_RETURNCODE)) {
+		if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_SCRIPT_RETURNCODE, "Return code", return_code)) {
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
+			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+		}
+	}
+	if (error)
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "%s\n", return_code);
+	if (error == -1)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_COMMAND_FAILED);
-		return OPH_ANALYTICS_OPERATOR_COMMAND_ERROR;
-	} else if (WEXITSTATUS(error) == 127) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "System command cannot be executed\n");
+	else if (WEXITSTATUS(error) == 127)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_COMMAND_NOT_EXECUTED);
-		return OPH_ANALYTICS_OPERATOR_COMMAND_ERROR;
-	} else if (WEXITSTATUS(error) != 0) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Command failed with code %d\n", WEXITSTATUS(error));
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Command failed with code %d\n", WEXITSTATUS(error));
-		return OPH_ANALYTICS_OPERATOR_COMMAND_ERROR;
-	} else
-		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+	else if (WEXITSTATUS(error) != 0)
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, return_code);
+
+	return error ? OPH_ANALYTICS_OPERATOR_COMMAND_ERROR : OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
 int task_reduce(oph_operator_struct * handle)

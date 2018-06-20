@@ -1986,6 +1986,16 @@ int task_init(oph_operator_struct * handle)
 		char *ioserver_type = ((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->ioserver_type;
 		int run = ((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->run;
 
+		//Retrieve user id
+		char *username = ((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->user;
+		int id_user = 0;
+		if (oph_odb_user_retrieve_user_id(oDB, username, &id_user)) {
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive user id\n");
+			logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTSAC_USER_ID_ERROR);
+			free(dimvar_ids);
+			goto __OPH_EXIT_1;
+		}
+
 	  /********************************
 	   *INPUT PARAMETERS CHECK - BEGIN*
 	   ********************************/
@@ -2024,7 +2034,8 @@ int task_init(oph_operator_struct * handle)
 		} else {
 			//Check if are available DBMS and HOST number into specified partition and of server type
 			if (*host_number > 0 || *dbmsxhost_number > 0) {
-				if ((oph_odb_stge_check_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, (*host_number > 0 ? *host_number : 1), *dbmsxhost_number, &exist_part))
+				if ((oph_odb_stge_check_number_of_host_dbms
+				     (oDB, storage_type, ioserver_type, host_partition, id_user, (*host_number > 0 ? *host_number : 1), *dbmsxhost_number, &exist_part))
 				    || !exist_part) {
 					if (run) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts or dbms per host is too big or server type and partition are not available!\n");
@@ -2043,7 +2054,7 @@ int task_init(oph_operator_struct * handle)
 
 		if (*host_number <= 0) {
 			//Check how many DBMS and HOST are available into specified partition and of server type
-			if (oph_odb_stge_count_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, &nhost, &ndbms) || !nhost || !ndbms) {
+			if (oph_odb_stge_count_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, id_user, &nhost, &ndbms) || !nhost || !ndbms) {
 				if (run) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve number of host and dbms or server type and partition are not available!\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
@@ -2201,7 +2212,7 @@ int task_init(oph_operator_struct * handle)
 
 		if (frag_param_error) {
 			//Check how many DBMS and HOST are available into specified partition and of server type
-			if (oph_odb_stge_count_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, &nhost, &ndbms) || !nhost || !ndbms) {
+			if (oph_odb_stge_count_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, id_user, &nhost, &ndbms) || !nhost || !ndbms) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or dbms or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
 				goto __OPH_EXIT_1;
@@ -2257,7 +2268,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		//Check if are available DBMS and HOST number into specified partition and of server type
-		if ((oph_odb_stge_check_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, *host_number, *dbmsxhost_number, &exist_part)) || !exist_part) {
+		if ((oph_odb_stge_check_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, id_user, *host_number, *dbmsxhost_number, &exist_part)) || !exist_part) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts - dbms per host is too big or server type and partition are not available!\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTSAC_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
 				((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->host_number, ((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->dbmsxhost_number,
@@ -3091,15 +3102,6 @@ int task_init(oph_operator_struct * handle)
 #if 0
 		if (((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->import_metadata) {
 			//Check vocabulary and metadata key presence
-			//Retrieve user id
-			char *username = ((OPH_IMPORTSAC_operator_handle *) handle->operator_handle)->user;
-			int id_user = 0;
-			if (oph_odb_user_retrieve_user_id(oDB, username, &id_user)) {
-				pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive user id\n");
-				logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTSAC_USER_ID_ERROR);
-				free(dimvar_ids);
-				goto __OPH_EXIT_1;
-			}
 			//NOTE: the type of the key values is fixed to text
 			//Retrieve 'text' type id
 			char key_type[OPH_COMMON_TYPE_SIZE];
