@@ -109,6 +109,7 @@
 #define OPH_JSON_OBJKEY_SPLIT						"split"
 #define OPH_JSON_OBJKEY_MERGE						"merge"
 #define OPH_JSON_OBJKEY_INSTANCES					"instances"
+#define OPH_JSON_OBJKEY_INSTANCES_SUMMARY			"instances_summary"
 #define OPH_JSON_OBJKEY_TASKS						"tasks"
 #define OPH_JSON_OBJKEY_FIND_LIST					"find_list"
 #define OPH_JSON_OBJKEY_FIND_SUMMARY					"find_summary"

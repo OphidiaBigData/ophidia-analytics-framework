@@ -318,6 +318,9 @@ int task_execute(oph_operator_struct * handle)
 	int objkey_printable =
 	    oph_json_is_objkey_printable(((OPH_INSTANCES_operator_handle *) handle->operator_handle)->objkeys, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->objkeys_num,
 					 OPH_JSON_OBJKEY_INSTANCES);
+	int objkey_printable_summary =
+	    oph_json_is_objkey_printable(((OPH_INSTANCES_operator_handle *) handle->operator_handle)->objkeys, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->objkeys_num,
+					 OPH_JSON_OBJKEY_INSTANCES_SUMMARY);
 
 	switch (action) {
 
@@ -1141,9 +1144,17 @@ int task_execute(oph_operator_struct * handle)
 				}
 				//Empty set
 				if (!(num_rows = mysql_num_rows(info_instances))) {
-					pmesg(LOG_WARNING, __FILE__, __LINE__, "No rows find by query\n");
-					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_NO_ROWS_FOUND);
 					mysql_free_result(info_instances);
+					if (objkey_printable_summary) {
+						char message[OPH_COMMON_BUFFER_LEN];
+						snprintf(message, OPH_COMMON_BUFFER_LEN, "No item found");
+						printf("%s\n", message);
+						if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES_SUMMARY, "Summary", message)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+						}
+					}
 					return OPH_ANALYTICS_OPERATOR_SUCCESS;
 				}
 
@@ -1403,6 +1414,34 @@ int task_execute(oph_operator_struct * handle)
 					default:
 						pmesg(LOG_WARNING, __FILE__, __LINE__, "INSTANCES level unrecognized\n");
 						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+
+				if (objkey_printable_summary) {
+					char message[OPH_COMMON_BUFFER_LEN];
+					int n = snprintf(message, OPH_COMMON_BUFFER_LEN, "Found %d ", num_rows);
+					switch (level) {
+						case 3:
+							if (partition_name)
+								snprintf(message + n, OPH_COMMON_BUFFER_LEN, "host instance%s", num_rows > 0 ? "s" : "");
+							else
+								snprintf(message + n, OPH_COMMON_BUFFER_LEN, "host partition%s", num_rows > 0 ? "s" : "");
+							break;
+						case 2:
+							snprintf(message + n, OPH_COMMON_BUFFER_LEN, "DBMS instance%s", num_rows > 0 ? "s" : "");
+							break;
+						case 1:
+							snprintf(message + n, OPH_COMMON_BUFFER_LEN, "host instance%s", num_rows > 0 ? "s" : "");
+							break;
+						default:
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "INSTANCES level unrecognized\n");
+							return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					}
+					printf("\n%s\n", message);
+					if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_INSTANCES_SUMMARY, "Summary", message)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					}
 				}
 
 				break;
