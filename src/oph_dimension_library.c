@@ -829,8 +829,8 @@ int oph_dim_parse_season_subset(const char *subset_string, oph_odb_dimension * d
 
 	int i, n = 0, nn;
 	char type, first = 0;
-	char season[4], temp2[MYSQL_BUFLEN], temp3[MYSQL_BUFLEN];
-	for (i = 0; i < 4; ++i)
+	char season[5], temp2[MYSQL_BUFLEN], temp3[MYSQL_BUFLEN];
+	for (i = 0; i < 5; ++i)
 		season[i] = 0;
 	while ((pch = strtok_r(pch ? NULL : temp, OPH_DIM_SUBSET_SEPARATOR1, &save_pointer))) {
 		if (!strcmp(pch, OPH_DIM_TIME_WINTER))
