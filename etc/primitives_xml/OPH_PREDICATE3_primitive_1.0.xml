@@ -3,7 +3,7 @@
 <primitive name="oph_predicate3" version="1.0">
     <info>
         <abstract>[Behaviour]
-Evaluates a predicate3. If &apos;condition&apos; is met then &apos;expression1&apos; is executed, else &apos;expression2&apos; is executed.
+Evaluates a predicate3. For each item of input array, if &apos;condition&apos; is met then &apos;expression1&apos; is executed, else &apos;expression2&apos; is executed.
 
 [Parameters]
 - input measure type : Ophidia typing. Supported types are:
@@ -21,7 +21,7 @@ Evaluates a predicate3. If &apos;condition&apos; is met then &apos;expression1&a
 					&apos;oph_short&apos;;
 					&apos;oph_byte&apos;.
 - measure : input measure.
-- condition : condition to be verified.
+- condition : condition to be verified. Any boolean expression is acceptable.
 - expression 1 : expression executed if condition is met.
 - expression 2 : expression executed if condition is not met.
 - occurrence : if is set to a number &apos;n&apos; then expression 1 is evaluated only for the &apos;n&apos;-th of the condition; otherwise the expression 2 is evaluated.
