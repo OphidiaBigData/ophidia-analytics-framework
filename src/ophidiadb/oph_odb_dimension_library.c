@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -352,6 +352,61 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 			free(value);
 		}
 	}
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_dim_retrieve_dimension_name_from_instance_id(ophidiadb * oDB, int id_dimensioninst, char **dimension_name)
+{
+	if (!oDB || !id_dimensioninst || !dimension_name) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	*dimension_name = NULL;
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char query[MYSQL_BUFLEN];
+	int n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_DIM_RETRIEVE_DIMENSION_FROM_INSTANCE_ID, id_dimensioninst);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+
+	if (mysql_num_rows(res) != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if (mysql_field_count(oDB->conn) != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if ((row = mysql_fetch_row(res)) != NULL)
+		*dimension_name = strndup(row[0], OPH_ODB_DIM_DIMENSION_SIZE);
+
+	if (!*dimension_name) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Memory error\n");
+		mysql_free_result(res);
+		return OPH_ODB_MEMORY_ERROR;
+	}
+
+	mysql_free_result(res);
 
 	return OPH_ODB_SUCCESS;
 }
@@ -1055,6 +1110,33 @@ int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid *
 	return OPH_ODB_SUCCESS;
 }
 
+int oph_odb_dim_enable_grid(ophidiadb * oDB, int id_grid)
+{
+	if (!oDB || !id_grid) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char insertQuery[MYSQL_BUFLEN];
+	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_DIM_ENABLE_GRID, id_grid);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, insertQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
 int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension * dim, int *last_insertd_id, int id_datacube)
 {
 	if (!oDB || !dim || !last_insertd_id) {
@@ -1172,6 +1254,33 @@ int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb * oDB, oph_odb_dim
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 			return OPH_ODB_MYSQL_ERROR;
 		}
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_dim_delete_dimensioninstance(ophidiadb * oDB, int id_dimensioninst)
+{
+	if (!oDB || !id_dimensioninst) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char deleteQuery[MYSQL_BUFLEN];
+	int n = snprintf(deleteQuery, MYSQL_BUFLEN, MYSQL_DELETE_OPHIDIADB_DIMENSION_INSTANCE, id_dimensioninst);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, deleteQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	return OPH_ODB_SUCCESS;
@@ -1582,5 +1691,55 @@ int oph_odb_dim_update_time_dimension(oph_odb_dimension * dim, char **templates,
 		}
 	}
 
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_dim_retrieve_dimensions(ophidiadb * oDB, int id_datacube, char ***dimension_names, int *dimension_names_num)
+{
+	if (!oDB || !id_datacube || !dimension_names || !dimension_names_num) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	*dimension_names = NULL;
+	*dimension_names_num = 0;
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char selectQuery[MYSQL_BUFLEN];
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_RETRIEVE_DIMENSIONS_OF_DATACUBE, id_datacube);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, selectQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+	if (!mysql_num_rows(res)) {
+		mysql_free_result(res);
+		return OPH_ODB_SUCCESS;
+	}
+	if (mysql_field_count(oDB->conn) != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	*dimension_names_num = mysql_num_rows(res);
+	*dimension_names = (char **) calloc(*dimension_names_num, sizeof(char *));
+
+	int i = 0;
+	while ((row = mysql_fetch_row(res)) && (i < *dimension_names_num))
+		(*dimension_names)[i++] = row[0] ? strdup(row[0]) : NULL;
+
+	mysql_free_result(res);
 	return OPH_ODB_SUCCESS;
 }

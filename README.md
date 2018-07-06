@@ -58,4 +58,4 @@ If you want to use the program system-wide, remember to add its installation dir
 $ oph_analytics_framework "operator=value;param=value;..."
 ```
 
-Further information can be found at [http://ophidia.cmcc.it/documentation](http://ophidia.cmcc.it/documentation).
+Further information can be found at [http://ophidia.cmcc.it/documentation/admin/](http://ophidia.cmcc.it/documentation/admin/).

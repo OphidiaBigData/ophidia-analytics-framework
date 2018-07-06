@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,6 +36,7 @@
 #include "oph_pid_library.h"
 #include "oph_json_library.h"
 #include "oph_datacube_library.h"
+#include "oph_driver_procedure_library.h"
 
 #include "debug.h"
 
@@ -87,6 +88,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server = NULL;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->sessionid = NULL;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->description = NULL;
+	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->execute_error = 0;
 
 	//3 - Fill struct with the correct data
 	char *container_name, *value;
@@ -548,7 +550,7 @@ int task_init(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 	//For error checking
-	int id_datacube[6] = { 0, 0, 0, 0, 0, 0 }, flush = 1, id_datacube_out = 0;
+	int id_datacube[6] = { 0, 0, 0, 0, 0, 0 }, id_datacube_out = 0;
 	char *container_name = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->container_input;
 	ophidiadb *oDB = &((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->oDB;
 
@@ -559,14 +561,20 @@ int task_init(oph_operator_struct * handle)
 
 		long long kk;
 		long long *index_array = NULL;
-
-
-
 		int container_exists = 0;
 		int id_container_out = 0;
 		int last_insertd_id = 0;
 		int num_of_input_dim =
 		    ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->number_of_exp_dimensions + ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->number_of_imp_dimensions;
+
+		//Retrieve user id
+		char *user = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->user;
+		int id_user = 0;
+		if (oph_odb_user_retrieve_user_id(oDB, user, &id_user)) {
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive user id\n");
+			logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_USER_ID_ERROR);
+			goto __OPH_EXIT_1;
+		}
 
 	  /********************************
 	   *INPUT PARAMETERS CHECK - BEGIN*
@@ -596,7 +604,7 @@ int task_init(oph_operator_struct * handle)
 			//Check if are available DBMS and HOST number into specified partition and of server type
 			if (oph_odb_stge_count_number_of_host_dbms
 			    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fs_type, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
-			     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, &nhost, &ndbms) || !nhost || !ndbms) {
+			     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, id_user, &nhost, &ndbms) || !nhost || !ndbms) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or dbms or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
 					((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input);
@@ -610,7 +618,7 @@ int task_init(oph_operator_struct * handle)
 		//Check if are available DBMS and HOST number into specified partition and of server type
 		if ((oph_odb_stge_check_number_of_host_dbms
 		     (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fs_type, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
-		      ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number,
+		      ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, id_user, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number,
 		      ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbmsxhost_number, &exist_part)) || !exist_part) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts - dbms per host is too big or server type and partition are not available!\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
@@ -688,8 +696,6 @@ int task_init(oph_operator_struct * handle)
 
 
 		char *cwd = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->cwd;
-		char *user = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->user;
-
 		int permission = 0;
 		int folder_id = 0;
 		//Check if input path exists
@@ -917,7 +923,6 @@ int task_init(oph_operator_struct * handle)
 
 			}
 
-			int exists = 0;
 			char filename[2 * OPH_TP_BUFLEN];
 			oph_odb_hierarchy hier;
 			dims = (oph_odb_dimension *) malloc(num_of_input_dim * sizeof(oph_odb_dimension));
@@ -959,8 +964,7 @@ int task_init(oph_operator_struct * handle)
 
 				exist_flag = 0;
 				snprintf(filename, 2 * OPH_TP_BUFLEN, OPH_FRAMEWORK_HIERARCHY_XML_FILE_PATH_DESC, OPH_ANALYTICS_LOCATION, hier.filename);
-
-				if (oph_hier_check_concept_level_short(filename, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_level[i], &exists)) {
+				if (oph_hier_check_concept_level_short(filename, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_level[i], &exist_flag)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving hierarchy\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_HIERARCHY_ERROR);
 					free(tot_dims);
@@ -970,7 +974,7 @@ int task_init(oph_operator_struct * handle)
 					oph_dim_unload_dim_dbinstance(db);
 					goto __OPH_EXIT_1;
 				}
-				if (!exists) {
+				if (!exist_flag) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c'\n", ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_level[i]);
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_BAD2_PARAMETER,
 						"dimension level", ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_level[i]);
@@ -1087,6 +1091,15 @@ int task_init(oph_operator_struct * handle)
 			oph_dim_disconnect_from_dbms(db->dbms_instance);
 			oph_dim_unload_dim_dbinstance(db);
 			free(tot_dims);
+
+			if (id_grid && oph_odb_dim_enable_grid(oDB, id_grid)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to enable grid\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to enable grid\n");
+				free(dims);
+				free(dim_inst);
+				goto __OPH_EXIT_1;
+			}
+
 	 /****************************
       *  END - IMPORT DIMENSION  *
 	  ***************************/
@@ -1147,7 +1160,7 @@ int task_init(oph_operator_struct * handle)
 		//Retreive ID dbms list 
 		if (oph_odb_stge_retrieve_dbmsinstance_id_list
 		    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fs_type, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
-		     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number,
+		     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, id_user, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number,
 		     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbmsxhost_number, &id_dbmss, &dbmss_length)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DBMS_LIST_ERROR);
@@ -1245,12 +1258,9 @@ int task_init(oph_operator_struct * handle)
 		id_datacube[3] = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbmsxhost_number;
 		id_datacube[4] = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbxdbms_number;
 		id_datacube[5] = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragxdb_number;
-
-		flush = 0;
 	}
       __OPH_EXIT_1:
-	if (!handle->proc_rank && flush && id_datacube_out)
-		oph_odb_cube_delete_from_datacube_table(oDB, id_datacube_out);
+
 	if (!((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->run)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 	//Broadcast to all other processes the result         
@@ -1260,6 +1270,7 @@ int task_init(oph_operator_struct * handle)
 	if (!id_datacube[0] || !id_datacube[1]) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube[1], OPH_LOG_OPH_RANDCUBE_MASTER_TASK_INIT_FAILED_NO_CONTAINER, container_name);
+		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->execute_error = 1;
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_output_datacube = id_datacube[0];
@@ -1333,6 +1344,8 @@ int task_execute(oph_operator_struct * handle)
 
 	if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id < 0 && handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+
+	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->execute_error = 1;
 
 	int i, j, k;
 	int id_datacube_out = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_output_datacube;
@@ -1538,9 +1551,8 @@ int task_execute(oph_operator_struct * handle)
 		free(tmp_uri);
 	}
 
-	if (!handle->proc_rank && (result != OPH_ANALYTICS_OPERATOR_SUCCESS))
-		oph_odb_cube_delete_from_datacube_table(&((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->oDB,
-							((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_output_datacube);
+	if (result == OPH_ANALYTICS_OPERATOR_SUCCESS)
+		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->execute_error = 0;
 
 	return result;
 }
@@ -1564,6 +1576,80 @@ int task_destroy(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
+	short int proc_error = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->execute_error;
+	int id_datacube = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_output_datacube;
+	short int global_error = 0;
+
+	//Reduce results
+	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
+
+	if (global_error) {
+		//For error checking
+		char id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
+		memset(id_string, 0, sizeof(id_string));
+
+		if (handle->proc_rank == 0) {
+			ophidiadb *oDB = &((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->oDB;
+			oph_odb_datacube cube;
+			oph_odb_cube_init_datacube(&cube);
+
+			//retrieve input datacube
+			if (oph_odb_cube_retrieve_datacube(oDB, id_datacube, &cube)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_DATACUBE_READ_ERROR);
+			} else {
+				//Copy fragment id relative index set 
+				strncpy(id_string, cube.frag_relative_index_set, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
+			}
+			oph_odb_cube_free_datacube(&cube);
+		}
+		//Broadcast to all other processes the fragment relative index        
+		MPI_Bcast(id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
+
+		//Check if sequential part has been completed
+		if (id_string[0] == 0) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_MASTER_TASK_INIT_FAILED);
+		} else {
+			if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id >= 0 || handle->proc_rank == 0) {
+				//Partition fragment relative index string
+				char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
+				char *new_ptr = new_id_string;
+				if (oph_ids_get_substring_from_string
+				    (id_string, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id,
+				     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_number, &new_ptr)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to split IDs fragment string\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_RANDCUBE_ID_STRING_SPLIT_ERROR);
+				} else {
+					//Delete fragments
+					int start_position =
+					    (int) floor((double) ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id /
+							((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragxdb_number);
+					int row_number = (int)
+					    ceil((double)
+						 (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id +
+						  ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_number) /
+						 ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragxdb_number) - start_position;
+
+					if (oph_dproc_delete_data
+					    (id_datacube, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container,
+							OPH_LOG_OPH_DELETE_DB_READ_ERROR);
+					}
+				}
+			}
+		}
+		//Before deleting wait for all process to reach this point
+		MPI_Barrier(MPI_COMM_WORLD);
+
+		//Delete from OphidiaDB
+		if (handle->proc_rank == 0) {
+			oph_dproc_clean_odb(&((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->oDB, id_datacube,
+					    ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container);
+		}
+	}
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 

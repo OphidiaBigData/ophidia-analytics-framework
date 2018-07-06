@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -282,24 +282,26 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, int *fs_type, ch
  * \param ioserver_type Server type to be used. 
  * \param fs_type Filesystem type. It may be 0 (local disk), 1 (global) or 2 (inmemory)
  * \param hots_partition Name of the host partition to be used
+ * \param id_user User identifier
  * \param hots_number Variable that contains the requested I/O hosts
  * \param dbmsxhots_number Variable that contain the requested DBMS number per host
  * \param exists Variable that contains 0 if the container.datacube doesn't exists and 1 otherwise
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int host_number, int dbmsxhost_number, int *exist);
+int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int *exist);
 
 /**
  * \brief Function to count maximum number of host and DBMS available in OphidiaDB
  * \param oDB Pointer to the OphidiaDB
  * \param ioserver_type Server type to be used. 
  * \param fs_type Filesystem type. It may be 0 (local disk), 1 (global) or 2 (inmemory)
- * \param hots_partition Name of the host partition to be used
+ * \param host_partition Name of the host partition to be used
+ * \param id_user User indentifier
  * \param hots_number Variable that will contain the number of hosts
  * \param dbmsxhots_number Variable that will contain the number of DBMS per host
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, int server_type, char *ioserver_type, char *host_partition, int *host_number, int *dbmsxhost_number);
+int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, int server_type, char *ioserver_type, char *host_partition, int id_user, int *host_number, int *dbmsxhost_number);
 
 /**
  * \brief Function to retrieve fragment list from OphidiaDB given datacube id
@@ -342,10 +344,11 @@ int oph_odb_stge_find_datacube_fragmentation_list(ophidiadb * oDB, int level, in
  * \param host_status Status of the host to filter on (may be null)
  * \param dbms_status Status of the dbms instance to filter on (may be null)
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
+ * \param id_user Reference to user-defined host partitions
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *hostname, char *partition_name, int fs_type, char *ioserver_type, char *host_status, char *dbms_status,
-					    MYSQL_RES ** information_list);
+					    MYSQL_RES ** information_list, int id_user);
 
 /**
  * \brief Function to retrieve list of fragments name related to datacube and id_dbms
@@ -435,14 +438,15 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
  * \param Pointer to OphidiaDB
  * \param ioserver_type I/O Server type to be used.
  * \param fs_type Filesystem type. It may be 0 (local disk), 1 (global) or 2 (inmemory)
- * \param hots_partition Name of the host partition to be used
- * \param hots_number Variable that contains the requested I/O hosts number
+ * \param host_partition Name of the host partition to be used
+ * \param id_user User identifier
+ * \param host_number Variable that contains the requested I/O hosts number
  * \param dbmsxhots_number Variable that contain the requested DBMS number per host
  * \param id_dbmss Pointer to be filled with the ids (it has to be freed)
  * \param size Pointer with the length of id_dbmss
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int host_number, int dbmsxhost_number, int **id_dbmss, int *size);
+int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int **id_dbmss, int *size);
 
 /**
  * \brief Function to retrieve the number of datacubes stored in the database instance
@@ -461,5 +465,12 @@ int oph_odb_stge_get_number_of_datacube_for_db(ophidiadb * oDB, int id_db, int *
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_stge_insert_into_dbinstance_partitioned_tables(ophidiadb * oDB, oph_odb_db_instance * db, int id_datacube);
+
+int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_user, char reserved, int hosts, int *id_hostpartition);
+int oph_odb_stge_add_all_hosts_to_partition(ophidiadb * oDB, int id_hostpartition, char reserved);
+int oph_odb_stge_add_some_hosts_to_partition(ophidiadb * oDB, int id_hostpartition, int host_number, char reserved, int *num_rows);
+int oph_odb_stge_add_host_to_partition(ophidiadb * oDB, int id_hostpartition, int id_host, char reserved);
+int oph_odb_stge_delete_hostpartition(ophidiadb * oDB, const char *name, int id_user, char reserved, int *num_rows);
+int oph_odb_stge_delete_hostpartition_by_id(ophidiadb * oDB, int id_hostpartition);
 
 #endif				/* __OPH_ODB_STGE_H__ */

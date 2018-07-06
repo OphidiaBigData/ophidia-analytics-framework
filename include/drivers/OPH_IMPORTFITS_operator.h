@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -75,6 +75,7 @@
  * \param leap_month Value of the leap month - Not used
  * \param memory_size Maximum amount of memory available
  * \param description Free description to be associated with output cube
+ * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
 struct _OPH_IMPORTFITS_operator_handle {
 	ophidiadb oDB;
@@ -87,6 +88,7 @@ struct _OPH_IMPORTFITS_operator_handle {
 	int hdu;		/* Set the data HDU; default is the primary HDU (0) */
 	char *partition_input;
 	char *grid_name;
+	char check_grid;
 	int fs_type;
 	char *ioserver_type;
 	int id_output_datacube;
@@ -124,6 +126,7 @@ struct _OPH_IMPORTFITS_operator_handle {
 
 	long long memory_size;
 	char *description;
+	short int execute_error;
 };
 typedef struct _OPH_IMPORTFITS_operator_handle OPH_IMPORTFITS_operator_handle;
 

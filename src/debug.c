@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,11 +22,12 @@
 #include <string.h>
 #include <time.h>
 
+#include "oph_common.h"
+#define MAX_LOG_LINE OPH_COMMON_BUFFER_LEN
+
 extern int msglevel;		/* the higher, the more messages... */
 char *prefix = NULL;
 char **backtrace = NULL;
-
-#define MAX_LOG_LINE 1024
 
 #if defined(NDEBUG) && defined(__GNUC__)
 /* Nothing. pmesg has been "defined away" in debug.h already. */

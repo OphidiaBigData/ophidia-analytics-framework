@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -491,10 +491,8 @@ int task_init(oph_operator_struct * handle)
 				free(stream_broad);
 				goto __OPH_EXIT_1;
 			} else if ((errno != ENOENT) || oph_dir_r_mkdir(path)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_DIR_CREATION_ERROR, path);
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_DIR_CREATION_ERROR, path);
-				free(stream_broad);
-				goto __OPH_EXIT_1;
+				pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_DIR_CREATION_ERROR, path);
+				logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_DIR_CREATION_ERROR, path);
 			}
 		}
 		//If dir already exists then exit
@@ -1253,7 +1251,7 @@ int task_execute(oph_operator_struct * handle)
 				if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->export_metadata)	// Add metadata
 				{
 					if (oph_odb_meta_find_complete_metadata_list
-					    (&oDB_slave, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0, NULL, NULL, NULL, &read_result)) {
+					    (&oDB_slave, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0, NULL, NULL, NULL, NULL, &read_result)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 						oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);

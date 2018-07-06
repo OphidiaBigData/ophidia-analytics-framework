@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2017 CMCC Foundation
+#    Copyright (C) 2012-2018 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 #
 
 AC_PREREQ([2.60])
-AC_INIT([ophidia-analytics-framework], [1.1.0], [ophidia-info@cmcc.it])
+AC_INIT([ophidia-analytics-framework], [1.3.0], [ophidia-info@cmcc.it])
 
 AC_CONFIG_AUX_DIR([config])
 
@@ -77,6 +77,16 @@ if test -n $HAVE_MYSQL; then
   AC_MSG_NOTICE([MySQL libraries available])
 else
 	AC_MSG_ERROR([MySQL libraries not found! Aborting configure!])
+fi
+
+AC_CHECK_LIB(pthread, pthread_create)
+if test "$ac_cv_lib_pthread_pthread_create" = yes ; then
+   CFLAGS="$CFLAGS -D_REENTRANT"
+else
+   AC_CHECK_LIB(pthreads, pthread_create)
+   if test "$ac_cv_lib_pthreads_pthread_create" = yes ; then
+      CFLAGS="$CFLAGS -D_REENTRANT"
+   fi
 fi
 
 optimization="no"
@@ -519,7 +529,7 @@ case "${host}" in
                                     if (test "x$debug" = "x1") || (test "x$debug" = "x2"); then
 										OPT+=" -g3 -Wall -Wextra -O0"
 									else
-										OPT+=" -O2"
+										OPT+=" -O3"
 									fi
 			            if test "x$optimization" = "xyes" ; then
 			                 CFLAGS="-O3 -finline-functions -funswitch-loops -fgcse-after-reload -ftree-loop-linear -ftree-loop-im -ftree-loop-ivcanon -fivopts -ftree-vectorize -ftracer -fgcse-sm -fgcse-las -fgcse-after-reload -funroll-loops -freorder-blocks-and-partition -fweb"

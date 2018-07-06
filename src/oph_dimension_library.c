@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -800,6 +800,8 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 
 		tm_value.tm_year += 1900;
 		tm_value.tm_mon++;
+		if (!n && !tm_value.tm_mday)
+			tm_value.tm_mday++;
 		if (oph_date_to_day(tm_value.tm_year, tm_value.tm_mon, tm_value.tm_mday, &value_time, dim)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
 			return OPH_DIM_DATA_ERROR;

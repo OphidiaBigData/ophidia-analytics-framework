@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -136,13 +136,14 @@ int oph_odb_meta_insert_into_manage_table(ophidiadb * oDB, int id_metadatainstan
  * \param metadata_keys Array of metadata keys to filter on
  * \param metadata_keys_num Number of metadata keys to filter on
  * \param id_metadatainstance Id of the instance to filter
+ * \param metadata_variable Variable associated with metadata to filter on
  * \param metadata_type Type of metadata to filter on
  * \param metadata_value Value of metadata to filter on
  * \param metadata_list MySQL result structure filled with results (it must be free'd outside the function)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, char *id_metadatainstance, char *metadata_type, char *metadata_value,
-					     MYSQL_RES ** metadata_list);
+int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, char *id_metadatainstance, char *metadata_variable,
+					     char *metadata_type, char *metadata_value, MYSQL_RES ** metadata_list);
 
 /**
  * \brief Function to update the metadatainstance table
@@ -162,10 +163,14 @@ int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatai
  * \param metadata_keys Array of metadata keys to filter on
  * \param metadata_keys_num Number of metadata keys to filter on
  * \param id_metadatainstance Id of the instance to filter
+ * \param metadata_variable Variable associated with metadata to filter on
+ * \param metadata_type Type of metadata to filter on
+ * \param metadata_value Value of metadata to filter on
  * \param force Force update of functional metadata associated to vocabulary
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, int id_metadatainstance, int force);
+int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, int id_metadatainstance, char *metadata_variable,
+						    char *metadata_type, char *metadata_value, int force);
 
 /**
  * \brief Function to copy the list of metadata instances of a cube to another cube

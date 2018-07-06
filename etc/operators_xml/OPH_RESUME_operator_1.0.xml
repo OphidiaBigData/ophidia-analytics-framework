@@ -57,7 +57,7 @@ SUBMISSION STRING: &quot;operator=oph_resume;id=1;&quot;</abstract>
 		<argument type="int" mandatory="no" default="0" minvalue="0">id</argument>
 		<argument type="string" mandatory="no" default="workflow" values="workflow|marker">id_type</argument>
 		<argument type="string" mandatory="no" default="response" values="request|response">document_type</argument>
-		<argument type="int" mandatory="no" default="1" minvalue="0" maxvalue="5">level</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="0" maxvalue="5" values="0|1|2|3|4|5">level</argument>
 		<argument type="string" mandatory="no" default="">user</argument>
 		<argument type="string" mandatory="no" default="11111111">status_filter</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">save</argument>

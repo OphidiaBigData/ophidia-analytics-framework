@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -479,8 +479,8 @@ int oph_odb_meta_insert_into_manage_table(ophidiadb * oDB, int id_metadatainstan
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, char *id_metadatainstance, char *metadata_type, char *metadata_value,
-					     MYSQL_RES ** metadata_list)
+int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, char *id_metadatainstance, char *metadata_variable,
+					     char *metadata_type, char *metadata_value, MYSQL_RES ** metadata_list)
 {
 	(*metadata_list) = NULL;
 
@@ -497,12 +497,13 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 	char query[MYSQL_BUFLEN];
 	int n = 0;
 
-	if (id_metadatainstance != NULL) {
-		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_READ_INSTANCES, id_datacube, id_metadatainstance, "%", "%", "");
-	} else {
+	if (id_metadatainstance)
+		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_READ_INSTANCES, id_datacube, id_metadatainstance, "", "%", "%", "%", "");
+	else {
 		if (!metadata_keys) {
 			//read all keys
-			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_READ_INSTANCES, id_datacube, "%", (metadata_type ? metadata_type : "%"), (metadata_value ? metadata_value : "%"), "");
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_READ_INSTANCES, id_datacube, "%", metadata_variable ? "" : "metadatainstance.variable IS NULL OR",
+				     metadata_variable ? metadata_variable : "%", metadata_type ? metadata_type : "%", metadata_value ? metadata_value : "%", "");
 		} else {
 			//read a group of keys
 			char key_filter[MYSQL_BUFLEN];
@@ -519,8 +520,8 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 			len -= m;
 			snprintf(ptr, len, ")");
 
-			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_READ_INSTANCES, id_datacube, "%", (metadata_type ? metadata_type : "%"), (metadata_value ? metadata_value : "%"),
-				     key_filter);
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_READ_INSTANCES, id_datacube, "%", metadata_variable ? "" : "metadatainstance.variable IS NULL OR",
+				     metadata_variable ? metadata_variable : "%", metadata_type ? metadata_type : "%", metadata_value ? metadata_value : "%", key_filter);
 		}
 	}
 
@@ -596,7 +597,8 @@ int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatai
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, int id_metadatainstance, int force)
+int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, int id_metadatainstance, char *metadata_variable,
+						    char *metadata_type, char *metadata_value, int force)
 {
 	if (!oDB || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -652,7 +654,8 @@ int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb * oDB, int id_data
 	if (id_metadatainstance)
 		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_DELETE_INSTANCE, id_metadatainstance, id_datacube);
 	else
-		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_DELETE_INSTANCES, id_datacube, key_filter);
+		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_DELETE_INSTANCES, id_datacube, metadata_variable ? "" : "variable IS NULL OR",
+			     metadata_variable ? metadata_variable : "%", metadata_type ? metadata_type : "%", metadata_value ? metadata_value : "%", key_filter);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;

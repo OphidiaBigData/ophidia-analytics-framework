@@ -3,7 +3,7 @@
 <primitive name="oph_predicate" version="1.0">
     <info>
         <abstract>[Behaviour]
-Evaluates a predicate. If &apos;expression0&apos; satisfies &apos;comparison&apos; then &apos;expression1&apos; is executed, else &apos;expression2&apos; is executed.
+Evaluates a predicate. For each item of input array, if &apos;expression0&apos; satisfies &apos;comparison&apos; then &apos;expression1&apos; is executed, else &apos;expression2&apos; is executed.
 
 [Parameters]
 - input measure type : Ophidia typing. Supported types are:
@@ -22,7 +22,14 @@ Evaluates a predicate. If &apos;expression0&apos; satisfies &apos;comparison&apo
 					&apos;oph_byte&apos;.
 - measure : input measure.
 - expression 0 : first expression.
-- comparison : condition to be verified.
+- comparison : condition to be verified. Only one of the following values are allowed:
+					'OPH_MORE_THAN_ZERO', 'OPH_POSITIVE', '&gt;0' or '&gt;' in case expression 1 has to evaluated only if input value is positive;
+					'OPH_LESS_THAN_ZERO', 'OPH_NEGATIVE', '&lt;0' or '&lt;' in case expression 1 has to evaluated only if input value is negative;
+					'OPH_EQUAL_TO_ZERO', 'OPH_ZERO', '==0' or '0' in case expression 1 has to evaluated only if input value is zero;
+					'OPH_MORE_OR_EQUAL_TO_ZERO', 'OPH_NOT_NEGATIVE', '&gt;=0' or '&gt;=' in case expression 1 has to evaluated only if input value is not negative;
+					'OPH_LESS_OR_EQUAL_TO_ZERO', 'OPH_NOT_POSITIVE', '&lt;=0' or '&lt;=' in case expression 1 has to evaluated only if input value is not positive;
+					'OPH_NOT_EQUAL_TO_ZERO', 'OPH_NOT_ZERO', '!=0', '!=', '&lt;&gt;0' or '&lt;&gt;' in case expression 1 has to evaluated only if input value is not zero;
+					'OPH_NULL', 'NULL', 'NAN', 'MISSED', 'MISS', 'ISNULL', 'ISNAN' or 'ISMISSED' in case expression 1 has to evaluated only for missing values.
 - expression 1 : expression executed if expression 0 satisfies comparison.
 - expression 2 : expression executed if expression 0 does not satisfy comparison.
                  

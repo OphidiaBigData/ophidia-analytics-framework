@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -148,8 +148,30 @@ int oph_odb_init_ophidiadb(ophidiadb * oDB)
 	oDB->pwd = NULL;
 	oDB->conn = NULL;
 
+	if (mysql_library_init(0, NULL, NULL)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
 	return OPH_ODB_SUCCESS;
 }
+
+int oph_odb_init_ophidiadb_thread(ophidiadb * oDB)
+{
+	if (!oDB) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	oDB->name = NULL;
+	oDB->hostname = NULL;
+	oDB->username = NULL;
+	oDB->pwd = NULL;
+	oDB->conn = NULL;
+
+	return OPH_ODB_SUCCESS;
+}
+
 
 int oph_odb_free_ophidiadb(ophidiadb * oDB)
 {
@@ -177,7 +199,40 @@ int oph_odb_free_ophidiadb(ophidiadb * oDB)
 	if (oDB->conn) {
 		oph_odb_disconnect_from_ophidiadb(oDB);
 		oDB->conn = NULL;
+		mysql_library_end();
 	}
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_free_ophidiadb_thread(ophidiadb * oDB)
+{
+	if (!oDB) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oDB->name) {
+		free(oDB->name);
+		oDB->name = NULL;
+	}
+	if (oDB->hostname) {
+		free(oDB->hostname);
+		oDB->hostname = NULL;
+	}
+	if (oDB->username) {
+		free(oDB->username);
+		oDB->username = NULL;
+	}
+	if (oDB->pwd) {
+		free(oDB->pwd);
+		oDB->pwd = NULL;
+	}
+	if (oDB->conn) {
+		oph_odb_disconnect_from_ophidiadb(oDB);
+		oDB->conn = NULL;
+	}
+
 	return OPH_ODB_SUCCESS;
 }
 
@@ -186,11 +241,6 @@ int oph_odb_connect_to_ophidiadb(ophidiadb * oDB)
 	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
-	}
-
-	if (mysql_library_init(0, NULL, NULL)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
-		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	oDB->conn = NULL;
@@ -245,6 +295,6 @@ int oph_odb_disconnect_from_ophidiadb(ophidiadb * oDB)
 		mysql_close(oDB->conn);
 		oDB->conn = NULL;
 	}
-	mysql_library_end();
+
 	return OPH_ODB_SUCCESS;
 }

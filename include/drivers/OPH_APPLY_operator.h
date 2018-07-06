@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -59,6 +59,8 @@
  * \param num_reference_to_dim Number of references to keyword 'dimension' in main query
  * \param array_values Pointer to value of main implicit dimension of input cube
  * \param description Free description to be associated with output cube
+ * \param execute_error Flag set to 1 in case of error has to be handled in destroy
+ * \param on_reduce Flag set to 1 in case the values of implicit dimension has to updated due to a reduction primitive
  */
 struct _OPH_APPLY_operator_handle {
 	ophidiadb oDB;
@@ -94,6 +96,8 @@ struct _OPH_APPLY_operator_handle {
 	char *array_values;
 	long long array_length;
 	char *description;
+	short int execute_error;
+	char on_reduce;
 };
 typedef struct _OPH_APPLY_operator_handle OPH_APPLY_operator_handle;
 

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,6 +27,9 @@
 #include "debug.h"
 #include "oph_ioserver_log_error_codes.h"
 
+#include <pthread.h>
+
+pthread_mutex_t libtool_lock = PTHREAD_MUTEX_INITIALIZER;
 extern int msglevel;
 
 static int oph_find_server_plugin(const char *server_type, char **dyn_lib);
@@ -98,11 +101,14 @@ int oph_ioserver_setup(const char *server_type, oph_ioserver_handler ** handle)
 		return OPH_IOSERVER_SUCCESS;
 
 	//LTDL_SET_PRELOADED_SYMBOLS();
+	pthread_mutex_lock(&libtool_lock);
 	if (lt_dlinit() != 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_DLINIT_ERROR, lt_dlerror());
 		logging_server(LOG_ERROR, __FILE__, __LINE__, internal_handle->server_type, OPH_IOSERVER_LOG_DLINIT_ERROR, lt_dlerror());
+		pthread_mutex_unlock(&libtool_lock);
 		return OPH_IOSERVER_DLOPEN_ERR;
 	}
+	pthread_mutex_unlock(&libtool_lock);
 
 	if (oph_find_server_plugin(internal_handle->server_type, &internal_handle->lib)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_LIB_NOT_FOUND);
@@ -110,20 +116,26 @@ int oph_ioserver_setup(const char *server_type, oph_ioserver_handler ** handle)
 		return OPH_IOSERVER_LIB_NOT_FOUND;
 	}
 
+	pthread_mutex_lock(&libtool_lock);
 	if (!(internal_handle->dlh = (lt_dlhandle) lt_dlopen(internal_handle->lib))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_DLOPEN_ERROR, lt_dlerror());
 		logging_server(LOG_ERROR, __FILE__, __LINE__, internal_handle->server_type, OPH_IOSERVER_LOG_DLOPEN_ERROR, lt_dlerror());
+		pthread_mutex_unlock(&libtool_lock);
 		return OPH_IOSERVER_DLOPEN_ERR;
 	}
+	pthread_mutex_unlock(&libtool_lock);
 
 	char func_name[OPH_IOSERVER_BUFLEN] = { '\0' };
 	snprintf(func_name, OPH_IOSERVER_BUFLEN, OPH_IOSERVER_SETUP_FUNC, internal_handle->server_type);
 
+	pthread_mutex_lock(&libtool_lock);
 	if (!(_SERVER_setup = (int (*)(oph_ioserver_handler *)) lt_dlsym(internal_handle->dlh, func_name))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
 		logging_server(LOG_ERROR, __FILE__, __LINE__, internal_handle->server_type, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
+		pthread_mutex_unlock(&libtool_lock);
 		return OPH_IOSERVER_DLSYM_ERR;
 	}
+	pthread_mutex_unlock(&libtool_lock);
 
 	*handle = internal_handle;
 	return _SERVER_setup(*handle);
@@ -146,11 +158,14 @@ int oph_ioserver_connect(oph_ioserver_handler * handle, oph_ioserver_params * co
 	char func_name[OPH_IOSERVER_BUFLEN] = { '\0' };
 	snprintf(func_name, OPH_IOSERVER_BUFLEN, OPH_IOSERVER_CONNECT_FUNC, handle->server_type);
 
+	pthread_mutex_lock(&libtool_lock);
 	if (!(_SERVER_connect = (int (*)(oph_ioserver_handler *, oph_ioserver_params *, void **)) lt_dlsym(handle->dlh, func_name))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
+		pthread_mutex_unlock(&libtool_lock);
 		return OPH_IOSERVER_DLSYM_ERR;
 	}
+	pthread_mutex_unlock(&libtool_lock);
 
 	return _SERVER_connect(handle, conn_params, connection);
 }
@@ -172,11 +187,14 @@ int oph_ioserver_use_db(oph_ioserver_handler * handle, const char *db_name, void
 	char func_name[OPH_IOSERVER_BUFLEN] = { '\0' };
 	snprintf(func_name, OPH_IOSERVER_BUFLEN, OPH_IOSERVER_USE_DB_FUNC, handle->server_type);
 
+	pthread_mutex_lock(&libtool_lock);
 	if (!(_SERVER_use_db = (int (*)(oph_ioserver_handler *, const char *, void *)) lt_dlsym(handle->dlh, func_name))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
+		pthread_mutex_unlock(&libtool_lock);
 		return OPH_IOSERVER_DLSYM_ERR;
 	}
+	pthread_mutex_unlock(&libtool_lock);
 
 	return _SERVER_use_db(handle, db_name, connection);
 }
@@ -198,11 +216,14 @@ int oph_ioserver_setup_query(oph_ioserver_handler * handle, void *connection, co
 	char func_name[OPH_IOSERVER_BUFLEN] = { '\0' };
 	snprintf(func_name, OPH_IOSERVER_BUFLEN, OPH_IOSERVER_SETUP_QUERY_FUNC, handle->server_type);
 
+	pthread_mutex_lock(&libtool_lock);
 	if (!(_SERVER_setup_query = (int (*)(oph_ioserver_handler *, void *, const char *, unsigned long long, oph_ioserver_query_arg **, oph_ioserver_query **)) lt_dlsym(handle->dlh, func_name))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
+		pthread_mutex_unlock(&libtool_lock);
 		return OPH_IOSERVER_DLSYM_ERR;
 	}
+	pthread_mutex_unlock(&libtool_lock);
 
 	return _SERVER_setup_query(handle, connection, operation, tot_run, args, query);
 }
@@ -224,11 +245,14 @@ int oph_ioserver_execute_query(oph_ioserver_handler * handle, void *connection, 
 	char func_name[OPH_IOSERVER_BUFLEN] = { '\0' };
 	snprintf(func_name, OPH_IOSERVER_BUFLEN, OPH_IOSERVER_EXECUTE_QUERY_FUNC, handle->server_type);
 
+	pthread_mutex_lock(&libtool_lock);
 	if (!(_SERVER_execute_query = (int (*)(oph_ioserver_handler *, void *, oph_ioserver_query *)) lt_dlsym(handle->dlh, func_name))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
+		pthread_mutex_unlock(&libtool_lock);
 		return OPH_IOSERVER_DLSYM_ERR;
 	}
+	pthread_mutex_unlock(&libtool_lock);
 
 	return _SERVER_execute_query(handle, connection, query);
 }
@@ -250,11 +274,14 @@ int oph_ioserver_free_query(oph_ioserver_handler * handle, oph_ioserver_query * 
 	char func_name[OPH_IOSERVER_BUFLEN] = { '\0' };
 	snprintf(func_name, OPH_IOSERVER_BUFLEN, OPH_IOSERVER_FREE_QUERY_FUNC, handle->server_type);
 
+	pthread_mutex_lock(&libtool_lock);
 	if (!(_SERVER_free_query = (int (*)(oph_ioserver_handler *, oph_ioserver_query *)) lt_dlsym(handle->dlh, func_name))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
+		pthread_mutex_unlock(&libtool_lock);
 		return OPH_IOSERVER_DLSYM_ERR;
 	}
+	pthread_mutex_unlock(&libtool_lock);
 
 	return _SERVER_free_query(handle, query);
 }
@@ -276,11 +303,14 @@ int oph_ioserver_close(oph_ioserver_handler * handle, void *connection)
 	char func_name[OPH_IOSERVER_BUFLEN] = { '\0' };
 	snprintf(func_name, OPH_IOSERVER_BUFLEN, OPH_IOSERVER_CLOSE_FUNC, handle->server_type);
 
+	pthread_mutex_lock(&libtool_lock);
 	if (!(_SERVER_close = (int (*)(oph_ioserver_handler *, void *)) lt_dlsym(handle->dlh, func_name))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
+		pthread_mutex_unlock(&libtool_lock);
 		return OPH_IOSERVER_DLSYM_ERR;
 	}
+	pthread_mutex_unlock(&libtool_lock);
 
 	return _SERVER_close(handle, connection);
 }
@@ -302,11 +332,15 @@ int oph_ioserver_cleanup(oph_ioserver_handler * handle)
 	char func_name[OPH_IOSERVER_BUFLEN] = { '\0' };
 	snprintf(func_name, OPH_IOSERVER_BUFLEN, OPH_IOSERVER_CLEANUP_FUNC, handle->server_type);
 
+	pthread_mutex_lock(&libtool_lock);
 	if (!(_SERVER_cleanup = (int (*)(oph_ioserver_handler *)) lt_dlsym(handle->dlh, func_name))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
+		pthread_mutex_unlock(&libtool_lock);
 		return OPH_IOSERVER_DLSYM_ERR;
 	}
+	pthread_mutex_unlock(&libtool_lock);
+
 	//Release operator resources
 	int res;
 	if ((res = _SERVER_cleanup(handle))) {
@@ -328,18 +362,24 @@ int oph_ioserver_cleanup(oph_ioserver_handler * handle)
 		handle->lib = NULL;
 	}
 
+	pthread_mutex_lock(&libtool_lock);
 	if ((lt_dlclose(handle->dlh))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_DLCLOSE_ERROR, lt_dlerror());
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_DLCLOSE_ERROR, lt_dlerror());
+		pthread_mutex_unlock(&libtool_lock);
 		return OPH_IOSERVER_DLCLOSE_ERR;
 	}
+	pthread_mutex_unlock(&libtool_lock);
 	handle->dlh = NULL;
 
+	pthread_mutex_lock(&libtool_lock);
 	if (lt_dlexit()) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_DLEXIT_ERROR, lt_dlerror());
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_DLEXIT_ERROR, lt_dlerror());
+		pthread_mutex_unlock(&libtool_lock);
 		return OPH_IOSERVER_DLEXIT_ERR;
 	}
+	pthread_mutex_unlock(&libtool_lock);
 
 	free(handle);
 	handle = NULL;
@@ -364,11 +404,14 @@ int oph_ioserver_get_result(oph_ioserver_handler * handle, void *connection, oph
 	char func_name[OPH_IOSERVER_BUFLEN] = { '\0' };
 	snprintf(func_name, OPH_IOSERVER_BUFLEN, OPH_IOSERVER_GET_RESULT_FUNC, handle->server_type);
 
+	pthread_mutex_lock(&libtool_lock);
 	if (!(_SERVER_get_result = (int (*)(oph_ioserver_handler *, void *, oph_ioserver_result **)) lt_dlsym(handle->dlh, func_name))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
+		pthread_mutex_unlock(&libtool_lock);
 		return OPH_IOSERVER_DLSYM_ERR;
 	}
+	pthread_mutex_unlock(&libtool_lock);
 
 	return _SERVER_get_result(handle, connection, result);
 }
@@ -390,11 +433,14 @@ int oph_ioserver_fetch_row(oph_ioserver_handler * handle, oph_ioserver_result * 
 	char func_name[OPH_IOSERVER_BUFLEN] = { '\0' };
 	snprintf(func_name, OPH_IOSERVER_BUFLEN, OPH_IOSERVER_FETCH_ROW_FUNC, handle->server_type);
 
+	pthread_mutex_lock(&libtool_lock);
 	if (!(_SERVER_fetch_row = (int (*)(oph_ioserver_handler *, oph_ioserver_result *, oph_ioserver_row **)) lt_dlsym(handle->dlh, func_name))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
+		pthread_mutex_unlock(&libtool_lock);
 		return OPH_IOSERVER_DLSYM_ERR;
 	}
+	pthread_mutex_unlock(&libtool_lock);
 
 	return _SERVER_fetch_row(handle, result, current_row);
 }
@@ -416,11 +462,14 @@ int oph_ioserver_free_result(oph_ioserver_handler * handle, oph_ioserver_result 
 	char func_name[OPH_IOSERVER_BUFLEN] = { '\0' };
 	snprintf(func_name, OPH_IOSERVER_BUFLEN, OPH_IOSERVER_FREE_RESULT_FUNC, handle->server_type);
 
+	pthread_mutex_lock(&libtool_lock);
 	if (!(_SERVER_free_result = (int (*)(oph_ioserver_handler *, oph_ioserver_result *)) lt_dlsym(handle->dlh, func_name))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
+		pthread_mutex_unlock(&libtool_lock);
 		return OPH_IOSERVER_DLSYM_ERR;
 	}
+	pthread_mutex_unlock(&libtool_lock);
 
 	return _SERVER_free_result(handle, result);
 }
