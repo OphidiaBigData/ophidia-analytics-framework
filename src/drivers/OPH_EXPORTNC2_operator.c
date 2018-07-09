@@ -506,6 +506,8 @@ int task_init(oph_operator_struct * handle)
 		if (!stream_broad) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MEMORY_ERROR, "stream broad");
+			oph_odb_cube_free_datacube(&cube);
+			mysql_free_result(dim_rows);
 			goto __OPH_EXIT_1;
 		}
 		memcpy(stream_broad, stream, (size_t) (number_of_dimensions * OPH_DIM_STREAM_ELEMENTS * OPH_DIM_STREAM_LENGTH * sizeof(char)));
