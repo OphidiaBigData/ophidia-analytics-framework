@@ -2940,7 +2940,7 @@ int task_init(oph_operator_struct * handle)
 				tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
 				dim_inst[i].size = tmp_var.varsize;
 				dim_inst[i].concept_level = measure->dims_concept_level[i];
-				dim_inst[i].unlimited = measure->dims_unlim[i];
+				dim_inst[i].unlimited = measure->dims_unlim[i] ? 1 : 0;
 
 				if ((tmp_var.varid >= 0) && oph_nc_compare_nc_c_types(id_container_out, tmp_var.vartype, tot_dims[j].dimension_type)) {
 					pmesg(LOG_WARNING, __FILE__, __LINE__, "Dimension type in NC file doesn't correspond to the one stored in OphidiaDB\n");
