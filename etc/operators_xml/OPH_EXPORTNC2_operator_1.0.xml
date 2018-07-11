@@ -20,8 +20,8 @@ It exports data of a datacube into a sinlge NetCDF files.
 - cdd : absolute path corresponding to the current directory on data repository.
 - force : flag used to force file creation. An existant file is overwritten with &quot;yes&quot; whereas
           the file is created only if it does not exist with &quot;no&quot; (default).
-- export_metadata: exports also metadata with &quot;yes&quot; (default)
-                   or only data with &quot;no&quot;.
+- export_metadata: exports also metadata with &quot;yes&quot; (default) or only data with &quot;no&quot;;
+                   with &quot;postpone&quot; metadata are also saved, but only after all the data are written.
             
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -50,7 +50,7 @@ SUBMISSION STRING: &quot;operator=oph_exportnc2;cube=http://www.example.com/1/1;
 		<argument type="string" mandatory="no" default="default">output_name</argument>
 		<argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
-		<argument type="string" mandatory="no" default="yes" values="yes|no">export_metadata</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no|postpone">export_metadata</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
