@@ -48,6 +48,7 @@
 #include <netcdf_par.h>
 
 #define OPH_EXPLORENC_POSTPONE "postpone"
+#define OPH_EXPLORENC_FILLVALUE "_FillValue"
 
 int _oph_get_next_count(size_t * id, unsigned int *sizemax, int i, int n)
 {
@@ -1895,7 +1896,13 @@ int task_reduce(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
-	if (!handle->proc_rank && ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path && ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata < 0) {
+	if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->cached_flag)
+		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+
+	if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata < 0)
+		MPI_Barrier(MPI_COMM_WORLD);
+
+	if (!handle->proc_rank && ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path && (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata < 0)) {
 
 		char *mvariable = NULL, *mkey = NULL, *mtype, *mvalue;
 		int retval, ncid, cmode = NC_WRITE, varidp;
@@ -1903,6 +1910,12 @@ int task_reduce(oph_operator_struct * handle)
 		MYSQL_ROW row;
 
 		if ((retval = nc_open(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, cmode, &ncid))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to open netcdf file '%s': %s\n",
+				((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, nc_strerror(retval));
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		if ((retval = nc_redef(ncid))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to open netcdf file '%s': %s\n",
 				((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, nc_strerror(retval));
@@ -1916,13 +1929,18 @@ int task_reduce(oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 			retval = NC_EBADTYPE;
 		}
+
 		while (!retval && ((row = mysql_fetch_row(read_result)))) {
 			mvariable = row[1];
 			mkey = row[2];
 			mtype = row[3];
 			mvalue = row[4];
 			retval = NC_EBADTYPE;
-			if (mvariable && ((retval = nc_inq_varid(ncid, mvariable, &varidp)))) {
+			if (!strcmp(mkey, OPH_EXPLORENC_FILLVALUE)) {	// Skip OPH_EXPLORENC_FILLVALUE in this mode
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "Attribute '%s' cannot be set with this mode... skipping.\n", OPH_EXPLORENC_FILLVALUE);
+				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Attribute '%s' cannot be set with this mode... skipping\n", OPH_EXPLORENC_FILLVALUE);
+				retval = NC_NOERR;
+			} else if (mvariable && ((retval = nc_inq_varid(ncid, mvariable, &varidp)))) {
 				if (retval == NC_ENOTVAR)
 					retval = NC_NOERR;	// Skip metadata associated with collapsed variables
 			} else if (!strcmp(mtype, OPH_COMMON_METADATA_TYPE_TEXT))
@@ -1952,6 +1970,7 @@ int task_reduce(oph_operator_struct * handle)
 					nc_strerror(retval));
 			}
 		}
+
 		mysql_free_result(read_result);
 		nc_close(ncid);
 

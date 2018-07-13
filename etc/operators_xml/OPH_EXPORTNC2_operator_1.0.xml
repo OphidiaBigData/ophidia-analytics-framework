@@ -22,7 +22,8 @@ It exports data of a datacube into a sinlge NetCDF files.
           the file is created only if it does not exist with &quot;no&quot; (default).
 - export_metadata: exports also metadata with &quot;yes&quot; (default) or only data with &quot;no&quot;;
                    with &quot;postpone&quot; metadata are also saved, but only after all the data are written.
-            
+                   Special metadata &quot;_FillValue&quot; cannot be saved with &quot;postpone&quot;.
+
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
               asynchronous mode, sync for synchronous mode with json-compliant output.
