@@ -650,7 +650,7 @@ int task_execute(oph_operator_struct * handle)
 	else if (WEXITSTATUS(error) == 127)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_COMMAND_NOT_EXECUTED);
 	else if (WEXITSTATUS(error) != 0)
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, return_code);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "%s\n", return_code);
 
 	return error ? OPH_ANALYTICS_OPERATOR_COMMAND_ERROR : OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
