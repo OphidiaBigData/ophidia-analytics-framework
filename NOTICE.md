@@ -80,6 +80,10 @@ https://creativecommons.org/licenses/by-sa/3.0/#
 MIT-like License</br>
 https://heasarc.gsfc.nasa.gov/fitsio/c/f_user/node9.html
 
+- cURL</br>
+MIT License</br>
+http://curl.haxx.se/docs/copyright.html
+
 <b>Note</b>:</br>
 This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit.
 

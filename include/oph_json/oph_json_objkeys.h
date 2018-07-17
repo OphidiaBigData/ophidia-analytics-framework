@@ -135,6 +135,7 @@
 #define OPH_JSON_OBJKEY_CONCATNC					"concatnc"
 #define OPH_JSON_OBJKEY_INTERCUBE					"intercube"
 #define OPH_JSON_OBJKEY_MERGECUBES					"mergecubes"
+#define OPH_JSON_OBJKEY_B2DROP						"b2drop"
 #define OPH_JSON_OBJKEY_SCRIPT						"script"
 #define OPH_JSON_OBJKEY_SCRIPT_URL					"script_url"
 #define OPH_JSON_OBJKEY_SCRIPT_RETURNCODE			"script_returncode"
