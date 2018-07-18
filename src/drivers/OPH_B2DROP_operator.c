@@ -146,6 +146,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			free(((OPH_B2DROP_operator_handle *) handle->operator_handle)->src_file_path);
 			((OPH_B2DROP_operator_handle *) handle->operator_handle)->src_file_path = strdup(tmp);
 			free(value);
+		} else {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Path is not correct\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Path is not correct\n");
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 	} else {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of 'http://' is forbidden\n");
@@ -213,7 +217,16 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 
 	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
-		if (!(((OPH_B2DROP_operator_handle *) handle->operator_handle)->auth_file_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		char *base_src_path = NULL;
+		if (oph_pid_get_base_src_path(&base_src_path)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", base_src_path ? base_src_path : "", *value != '/' ? "/" : "", value);
+		free(base_src_path);
+
+		if (!(((OPH_B2DROP_operator_handle *) handle->operator_handle)->auth_file_path = (char *) strndup(tmp, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_B2DROP_MEMORY_ERROR_INPUT, OPH_IN_PARAM_AUTH_FILE_PATH);
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
@@ -281,10 +294,8 @@ int task_execute(oph_operator_struct * handle)
 	curl_easy_setopt(hnd, CURLOPT_INFILESIZE_LARGE, in_file_size);
 	curl_easy_setopt(hnd, CURLOPT_READDATA, in_file);
 	curl_easy_setopt(hnd, CURLOPT_URL, ((OPH_B2DROP_operator_handle *) handle->operator_handle)->dst_file_path);
-
-	if (!((OPH_B2DROP_operator_handle *) handle->operator_handle)->auth_file_path)
-		curl_easy_setopt(hnd, CURLOPT_NETRC, 1L);
-	else
+	curl_easy_setopt(hnd, CURLOPT_NETRC, CURL_NETRC_REQUIRED);
+	if (((OPH_B2DROP_operator_handle *) handle->operator_handle)->auth_file_path)
 		curl_easy_setopt(hnd, CURLOPT_NETRC_FILE, ((OPH_B2DROP_operator_handle *) handle->operator_handle)->auth_file_path);
 	curl_easy_setopt(hnd, CURLOPT_USERPWD, NULL);
 
