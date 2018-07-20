@@ -4056,6 +4056,7 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb_thread(&oDB_slave);
+					mysql_thread_end();
 					res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				}
 			}
@@ -4071,6 +4072,7 @@ int task_execute(oph_operator_struct * handle)
 				oph_odb_stge_free_dbms_list(&dbmss);
 				oph_odb_free_ophidiadb_thread(&oDB_slave);
 				oph_dc_cleanup_dbms(server);
+				mysql_thread_end();
 				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				break;
 			}

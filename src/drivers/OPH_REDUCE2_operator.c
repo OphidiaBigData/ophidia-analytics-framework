@@ -1416,6 +1416,7 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb_thread(&oDB_slave);
+					mysql_thread_end();
 					res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				}
 			}
@@ -1446,6 +1447,7 @@ int task_execute(oph_operator_struct * handle)
 				oph_odb_stge_free_dbms_list(&dbmss);
 				oph_odb_free_ophidiadb_thread(&oDB_slave);
 				oph_dc_cleanup_dbms(server);
+				mysql_thread_end();
 				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				break;
 			}
@@ -1461,8 +1463,9 @@ int task_execute(oph_operator_struct * handle)
 					res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 					break;
 				}
+
 				//For each fragment
-				for (k = first_frag; (k < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); k++) {
+				for (k = first_frag; (k < frags.size) && (frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); k++) {
 					//Check Fragment - DB Association
 					if (frags.value[k].db_instance != &(dbs.value[j]))
 						continue;
@@ -1514,6 +1517,7 @@ int task_execute(oph_operator_struct * handle)
 			oph_dc_disconnect_from_dbms(server, &(dbmss.value[i]));
 
 			if (res != OPH_ANALYTICS_OPERATOR_SUCCESS) {
+				oph_odb_stge_free_fragment_list(&frags);
 				oph_odb_stge_free_db_list(&dbs);
 				oph_odb_stge_free_dbms_list(&dbmss);
 				oph_odb_free_ophidiadb_thread(&oDB_slave);
