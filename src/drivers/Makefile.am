@@ -273,7 +273,7 @@ liboph_operators_listoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
 liboph_permuteoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_permuteoperator_la_SOURCES = OPH_PERMUTE_operator.c
 liboph_permuteoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_permuteoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_driver_proc
+liboph_permuteoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -lpthread -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_driver_proc
 
 liboph_primitives_listoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_primitives_listoperator_la_SOURCES = OPH_PRIMITIVES_LIST_operator.c
@@ -308,7 +308,7 @@ liboph_restorecontaineroperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -l
 liboph_rollupoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_rollupoperator_la_SOURCES = OPH_ROLLUP_operator.c
 liboph_rollupoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_rollupoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_driver_proc
+liboph_rollupoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -lpthread  -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_driver_proc
 
 liboph_scriptoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"
 liboph_scriptoperator_la_SOURCES = OPH_SCRIPT_operator.c
