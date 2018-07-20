@@ -19,8 +19,7 @@ Start and stop a cluster of I/O servers.
 - exec_mode : operator execution mode. Possible values are async (default) for
               asynchronous mode, sync for synchronous mode with json-compliant output.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
-                  cancel : show result data as text.
-        
+
 [Examples]       
 Start 3 I/O servers:
 OPH_TERM: oph_cluster nhosts=3;host_partition=cluster;
@@ -36,6 +35,6 @@ SUBMISSION STRING: &quot;operator=oph_cluster;nhosts=3;host_partition=cluster;&q
 		<argument type="string" mandatory="yes">host_partition</argument>
 		<argument type="string" mandatory="no" default="deploy" values="deploy|undeploy">action</argument>
 		<argument type="int" mandatory="no" minvalue="1" default="1">nhosts</argument>
-		<argument type="string" mandatory="no" default="all" values="all|none|io_server">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none">objkey_filter</argument>
     </args>
 </operator>
