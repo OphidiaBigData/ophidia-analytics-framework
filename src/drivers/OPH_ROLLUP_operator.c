@@ -886,8 +886,7 @@ int task_execute(oph_operator_struct * handle)
 
 			if (oph_dc_connect_to_dbms(server, &(dbmss.value[i]), 0)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_ROLLUP_DBMS_CONNECTION_ERROR,
-					(dbmss.value[i]).id_dbms);
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_ROLLUP_DBMS_CONNECTION_ERROR, (dbmss.value[i]).id_dbms);
 				oph_dc_disconnect_from_dbms(server, &(dbmss.value[i]));
 				oph_odb_stge_free_fragment_list(&frags);
 				oph_odb_stge_free_db_list(&dbs);
@@ -898,7 +897,6 @@ int task_execute(oph_operator_struct * handle)
 				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				break;
 			}
-
 			//For each DB
 			for (j = first_db; j < dbs.size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; j++) {
 				//Check DB - DBMS Association
@@ -907,12 +905,10 @@ int task_execute(oph_operator_struct * handle)
 
 				if (oph_dc_use_db_of_dbms(server, &(dbmss.value[i]), &(dbs.value[j]))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_ROLLUP_DB_SELECTION_ERROR,
-						(dbs.value[j]).db_name);
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_ROLLUP_DB_SELECTION_ERROR, (dbs.value[j]).db_name);
 					res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 					break;
 				}
-
 				//For each fragment
 				for (k = first_frag; (k < frags.size) && (frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); k++) {
 					//Check Fragment - DB Association
@@ -922,10 +918,10 @@ int task_execute(oph_operator_struct * handle)
 					tuplexfragment = frags.value[k].key_end - frags.value[k].key_start + 1;	// Under the assumption that IDs are consecutive without any holes
 
 					if (frags.value[k].key_end && ((tuplexfragment < oper_handle->size)
-									   || (tuplexfragment % (oper_handle->size)))) {
+								       || (tuplexfragment % (oper_handle->size)))) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__,
-							  "Internal error: too many tuples (%d) to be aggregated (maximum is %d, try to merge fragments before rolling up the dimension) or bad parameter value\n",
-							  oper_handle->size, tuplexfragment);
+						      "Internal error: too many tuples (%d) to be aggregated (maximum is %d, try to merge fragments before rolling up the dimension) or bad parameter value\n",
+						      oper_handle->size, tuplexfragment);
 						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
 							OPH_LOG_OPH_ROLLUP_MAX_TUPLE_ROLLINGUP_ERROR, oper_handle->size, tuplexfragment);
 						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -935,39 +931,31 @@ int task_execute(oph_operator_struct * handle)
 
 					if (oph_dc_generate_fragment_name(NULL, id_datacube_out, proc_rank, (current_frag_count + frag_count + 1), &frag_name_out)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag name exceed limit.\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_ROLLUP_STRING_BUFFER_OVERFLOW,
-							"fragment name", frag_name_out);
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_ROLLUP_STRING_BUFFER_OVERFLOW, "fragment name", frag_name_out);
 						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						break;
 					}
-
 					//OPH_ROLLUP mysql plugin
 					if (compressed)
 						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_ROLLUP_PLUGIN_COMPR, oper_handle->measure_type,
-								 oper_handle->measure_type, MYSQL_FRAG_MEASURE,
-								 oper_handle->size);
+							     oper_handle->measure_type, MYSQL_FRAG_MEASURE, oper_handle->size);
 					else
 						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_ROLLUP_PLUGIN, oper_handle->measure_type,
-								 oper_handle->measure_type, MYSQL_FRAG_MEASURE,
-								 oper_handle->size);
+							     oper_handle->measure_type, MYSQL_FRAG_MEASURE, oper_handle->size);
 					if (n >= OPH_COMMON_BUFFER_LEN) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_ROLLUP_STRING_BUFFER_OVERFLOW,
-							"MySQL operation name", operation);
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_ROLLUP_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
 						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						break;
 					}
-
 					//ROLLUP fragment
 					size_ = oper_handle->size;
 					if (oph_dc_create_fragment_from_query(server, &(frags.value[k]), frag_name_out, operation, 0, &size_, 0)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_ROLLUP_NEW_FRAG_ERROR,
-							frag_name_out);
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_ROLLUP_NEW_FRAG_ERROR, frag_name_out);
 						res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 						break;
 					}
-
 					//Change fragment fields
 					frags.value[k].id_datacube = id_datacube_out;
 					strncpy(frags.value[k].fragment_name, frag_name_out, OPH_ODB_STGE_FRAG_NAME_SIZE);
@@ -976,12 +964,10 @@ int task_execute(oph_operator_struct * handle)
 						frags.value[k].key_start = 1 + (frags.value[k].key_start - 1) / oper_handle->size;
 						frags.value[k].key_end = 1 + (frags.value[k].key_end - 1) / oper_handle->size;
 					}
-
 					//Insert new fragment
 					if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &(frags.value[k]))) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update fragment table.\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_ROLLUP_FRAGMENT_INSERT_ERROR,
-							frag_name_out);
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_ROLLUP_FRAGMENT_INSERT_ERROR, frag_name_out);
 						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						break;
 					}
