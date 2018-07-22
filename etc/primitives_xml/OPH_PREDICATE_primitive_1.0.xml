@@ -3,7 +3,7 @@
 <primitive name="oph_predicate" version="1.0">
     <info>
         <abstract>[Behaviour]
-Evaluates a predicate. If &apos;expression0&apos; satisfies &apos;comparison&apos; then &apos;expression1&apos; is executed, else &apos;expression2&apos; is executed.
+Evaluates a predicate. For each item of input array, if &apos;expression0&apos; satisfies &apos;comparison&apos; then &apos;expression1&apos; is executed, else &apos;expression2&apos; is executed.
 
 [Parameters]
 - input measure type : Ophidia typing. Supported types are:
@@ -22,7 +22,14 @@ Evaluates a predicate. If &apos;expression0&apos; satisfies &apos;comparison&apo
 					&apos;oph_byte&apos;.
 - measure : input measure.
 - expression 0 : first expression.
-- comparison : condition to be verified.
+- comparison : condition to be verified. Only one of the following values are allowed:
+					&apos;OPH_MORE_THAN_ZERO&apos;, &apos;OPH_POSITIVE&apos;, &apos;&gt;0&apos; or &apos;&gt;&apos; in case expression 1 has to evaluated only if input value is positive;
+					&apos;OPH_LESS_THAN_ZERO&apos;, &apos;OPH_NEGATIVE&apos;, &apos;&lt;0&apos; or &apos;&lt;&apos; in case expression 1 has to evaluated only if input value is negative;
+					&apos;OPH_EQUAL_TO_ZERO&apos;, &apos;OPH_ZERO&apos;, &apos;==0&apos; or &apos;0&apos; in case expression 1 has to evaluated only if input value is zero;
+					&apos;OPH_MORE_OR_EQUAL_TO_ZERO&apos;, &apos;OPH_NOT_NEGATIVE&apos;, &apos;&gt;=0&apos; or &apos;&gt;=&apos; in case expression 1 has to evaluated only if input value is not negative;
+					&apos;OPH_LESS_OR_EQUAL_TO_ZERO&apos;, &apos;OPH_NOT_POSITIVE&apos;, &apos;&lt;=0&apos; or &apos;&lt;=&apos; in case expression 1 has to evaluated only if input value is not positive;
+					&apos;OPH_NOT_EQUAL_TO_ZERO&apos;, &apos;OPH_NOT_ZERO&apos;, &apos;!=0&apos;, &apos;!=&apos;, &apos;&lt;&gt;0&apos; or &apos;&lt;&gt;&apos; in case expression 1 has to evaluated only if input value is not zero;
+					&apos;OPH_NULL&apos;, &apos;NULL&apos;, &apos;NAN&apos;, &apos;MISSED&apos;, &apos;MISS&apos;, &apos;ISNULL&apos;, &apos;ISNAN&apos; or &apos;ISMISSED&apos; in case expression 1 has to evaluated only for missing values.
 - expression 1 : expression executed if expression 0 satisfies comparison.
 - expression 2 : expression executed if expression 0 does not satisfy comparison.
                  
@@ -31,7 +38,7 @@ Binary-array.
 
 [Examples]
 Extract measures with temperature values greater than 300 K.
-oph_predicate(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;x-300&apos;,&apos;>0&apos;,&apos;1&apos;,&apos;0&apos;)</abstract>
+oph_predicate(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;x-300&apos;,&apos;&gt;0&apos;,&apos;1&apos;,&apos;0&apos;)</abstract>
         <author>CMCC Foundation</author>
         <category>Transformation</category>
         <creationdate>27/07/2013</creationdate>
