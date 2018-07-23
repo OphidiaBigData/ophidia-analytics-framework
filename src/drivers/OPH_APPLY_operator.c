@@ -835,6 +835,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+
+	value = hashtbl_get(task_tbl, OPH_ARG_NTHREAD);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_NTHREAD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_APPLY_MISSING_INPUT_PARAMETER, OPH_ARG_NTHREAD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_APPLY_operator_handle *) handle->operator_handle)->nthread = (unsigned int) strtol(value, NULL, 10);
+
 	//For error checking
 	int id_datacube_in[3] = { 0, 0, 0 };
 
@@ -1202,6 +1211,24 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		oph_odb_cube_free_datacube(&cube);
+
+		int tot_frag_num = 0;
+		if (oph_ids_count_number_of_ids(((OPH_APPLY_operator_handle *) handle->operator_handle)->fragment_ids, &tot_frag_num)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get total number of IDs\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_AGGREGATE_RETREIVE_IDS_ERROR);
+			if (old_measure)
+				free(old_measure);
+			goto __OPH_EXIT_1;
+		}
+		//Check that product of ncores and nthread is at most equal to total number of fragments        
+		if (((OPH_APPLY_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > tot_frag_num) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of cores per number of threads is bigger than total fragments\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container,
+				"Number of cores per number of threads is bigger than total fragments\n");
+			if (old_measure)
+				free(old_measure);
+			goto __OPH_EXIT_1;
+		}
 
 		oph_odb_cubehasdim *cubedims = NULL;
 		int number_of_dimensions = 0;

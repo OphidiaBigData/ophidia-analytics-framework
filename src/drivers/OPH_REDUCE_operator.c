@@ -392,6 +392,7 @@ int task_init(oph_operator_struct * handle)
 
 		int tot_frag_num = 0;
 		if (oph_ids_count_number_of_ids(((OPH_REDUCE_operator_handle *) handle->operator_handle)->fragment_ids, &tot_frag_num)) {
+			oph_odb_cube_free_datacube(&cube);
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get total number of IDs\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_REDUCE_RETREIVE_IDS_ERROR);
 			goto __OPH_EXIT_1;

@@ -337,6 +337,22 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 
+		int tot_frag_num = 0;
+		if (oph_ids_count_number_of_ids(((OPH_ROLLUP_operator_handle *) handle->operator_handle)->fragment_ids, &tot_frag_num)) {
+			oph_odb_cube_free_datacube(&cube);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get total number of IDs\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_ROLLUP_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DUPLICATE_RETREIVE_IDS_ERROR);
+			goto __OPH_EXIT_1;
+		}
+		//Check that product of ncores and nthread is at most equal to total number of fragments        
+		if (((OPH_ROLLUP_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > tot_frag_num) {
+			oph_odb_cube_free_datacube(&cube);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of cores per number of threads is bigger than total fragments\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_ROLLUP_operator_handle *) handle->operator_handle)->id_input_container,
+				"Number of cores per number of threads is bigger than total fragments\n");
+			goto __OPH_EXIT_1;
+		}
+
 		oph_odb_cubehasdim *cubedims = NULL;
 		int number_of_dimensions = 0;
 		int last_insertd_id = 0;
