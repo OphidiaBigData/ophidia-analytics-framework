@@ -16,8 +16,8 @@ Start and stop a cluster of I/O servers.
 - host_partition : name of user-defined partition to be used to group hosts.
 
 [System parameters]
-- exec_mode : operator execution mode. Possible values are async for asynchronous mode,
-              sync for synchronous mode with json-compliant output (default).
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
 
 [Examples]       
