@@ -965,7 +965,7 @@ int task_destroy(oph_operator_struct * handle)
 		//Delete fragments
 		if (((OPH_DRILLDOWN_operator_handle *) handle->operator_handle)->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
 			if ((oph_dproc_delete_data(id_datacube, ((OPH_DRILLDOWN_operator_handle *) handle->operator_handle)->id_input_container,
-						   ((OPH_DRILLDOWN_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0))) {
+						   ((OPH_DRILLDOWN_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0, 1))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DRILLDOWN_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}

@@ -1633,7 +1633,7 @@ int task_destroy(oph_operator_struct * handle)
 						 ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragxdb_number) - start_position;
 
 					if (oph_dproc_delete_data
-					    (id_datacube, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number)) {
+					    (id_datacube, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number, 1)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_DELETE_DB_READ_ERROR);

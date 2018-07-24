@@ -170,7 +170,7 @@ liboph_datacube_la_LIBADD = -lz -lm @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_
 liboph_driver_proc_la_SOURCES = oph_driver_procedure_library.c
 liboph_driver_proc_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
 liboph_driver_proc_la_LDFLAGS = -static
-liboph_driver_proc_la_LIBADD = -lz -lm @LIBLTDL@ -L. -ldebug -lophidiadb -loph_datacube  
+liboph_driver_proc_la_LIBADD = -lz -lm @LIBLTDL@ -L. -lpthread -ldebug -lophidiadb -loph_datacube  
 
 if HAVE_NETCDF
 liboph_nc_la_SOURCES = oph_nc_library.c
