@@ -1933,7 +1933,7 @@ int task_reduce(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
-	if (!handle->proc_rank) {
+	if (handle->proc_rank == 0) {
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->execute_error = 1;
 
 		ophidiadb *oDB = &((OPH_APPLY_operator_handle *) handle->operator_handle)->oDB;
@@ -2315,8 +2315,7 @@ int task_destroy(oph_operator_struct * handle)
 		//Delete fragments
 		if (((OPH_APPLY_operator_handle *) handle->operator_handle)->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
 			if ((oph_dproc_delete_data(id_datacube, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container,
-						   ((OPH_APPLY_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0,
-						   ((OPH_APPLY_operator_handle *) handle->operator_handle)->nthread))) {
+						   ((OPH_APPLY_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0, ((OPH_APPLY_operator_handle *) handle->operator_handle)->nthread))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}

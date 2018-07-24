@@ -916,7 +916,6 @@ int task_execute(oph_operator_struct * handle)
 								frags.value[k].key_start = key_start + tuple_count;
 							frags.value[k].key_end = key_start + tuple_count + txfrag - 1;
 						}
-
 						//Insert new fragment
 						if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &(frags.value[k]))) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update fragment table.\n");
@@ -1076,8 +1075,7 @@ int task_destroy(oph_operator_struct * handle)
 		//Delete fragments
 		if (((OPH_SPLIT_operator_handle *) handle->operator_handle)->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
 			if ((oph_dproc_delete_data(id_datacube, ((OPH_SPLIT_operator_handle *) handle->operator_handle)->id_input_container,
-						   ((OPH_SPLIT_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0,
-						   ((OPH_SPLIT_operator_handle *) handle->operator_handle)->nthread))) {
+						   ((OPH_SPLIT_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0, ((OPH_SPLIT_operator_handle *) handle->operator_handle)->nthread))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SPLIT_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}

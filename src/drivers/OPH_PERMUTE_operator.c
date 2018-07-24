@@ -989,7 +989,6 @@ int task_execute(oph_operator_struct * handle)
 						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						break;
 					}
-
 					//PERMUTE mysql plugin
 					if (compressed)
 						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_PERMUTE_PLUGIN_COMPR, oper_handle->measure_type,
