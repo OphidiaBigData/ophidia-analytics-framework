@@ -149,7 +149,7 @@ liboph_deleteoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} -loph_driver_proc $(BASIC
 liboph_deletecontaineroperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_deletecontaineroperator_la_SOURCES = OPH_DELETECONTAINER_operator.c
 liboph_deletecontaineroperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_deletecontaineroperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_dimension
+liboph_deletecontaineroperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_dimension -loph_driver_proc
 
 liboph_drilldownoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_drilldownoperator_la_SOURCES = OPH_DRILLDOWN_operator.c

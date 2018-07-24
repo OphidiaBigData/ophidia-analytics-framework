@@ -40,6 +40,7 @@
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
+ * \param force Flag used to force file creation
  */
 struct _OPH_DELETECONTAINER_operator_handle {
 	ophidiadb oDB;
@@ -52,6 +53,7 @@ struct _OPH_DELETECONTAINER_operator_handle {
 	char **objkeys;
 	int objkeys_num;
 	char *sessionid;
+	int force;
 };
 typedef struct _OPH_DELETECONTAINER_operator_handle OPH_DELETECONTAINER_operator_handle;
 

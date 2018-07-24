@@ -1514,7 +1514,7 @@ int task_destroy(oph_operator_struct * handle)
 	//Reduce results
 	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
 
-	if (handle->proc_rank == 0 && global_error == 0)) {
+	if (handle->proc_rank == 0 && global_error == 0) {
 		//Master process print output datacube PID
 		char *tmp_uri = NULL;
 		if (oph_pid_get_uri(&tmp_uri)) {
