@@ -179,6 +179,8 @@ UNLOCK TABLES;
 -- Table structure for table `hostpartition`
 --
 
+-- Note: the constraint to foreign key `idjob` has been removed in order to enable dynamic clustering
+
 DROP TABLE IF EXISTS `hostpartition`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -191,7 +193,6 @@ CREATE TABLE `hostpartition` (
   `iduser` int(10) unsigned NULL DEFAULT NULL,
   `idjob` int(10) unsigned DEFAULT NULL,
   CONSTRAINT `iduser_h` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `idjob_h` FOREIGN KEY (`idjob`) REFERENCES `job` (`idjob`) ON DELETE SET NULL ON UPDATE CASCADE,
   PRIMARY KEY (`idhostpartition`),
   UNIQUE KEY `user_partition` (`partitionname`, `iduser`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
