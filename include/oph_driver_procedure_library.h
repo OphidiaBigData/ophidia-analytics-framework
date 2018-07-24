@@ -37,6 +37,16 @@
 int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids, int start_position, int row_number, int thread_number);
 
 /**
+ * \brief Procedure used to delete all fragments associated to a datacube. Parallelism is applied at the level of frags. 
+ * \param id_datacube Id of the datacube
+ * \param id_container Id of the container where the datacube belongs
+ * \param fragment_ids Contains the string of fragment relative index
+ * \param thread_number Number of posix threads to be used for delete procedure
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_dproc_delete_data_frags(int id_datacube, int id_container, char *fragment_ids, int thread_number);
+
+/**
  * \brief Procedure to remove all datacube information from OphidiaDB
  * \param oDB Contains the parameters and the connection to OphidiaDB
  * \param id_datacube Id of the datacube
