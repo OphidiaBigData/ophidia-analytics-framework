@@ -13,6 +13,10 @@
 - Extend values of argument 'comparison' of oph_predicate [#46](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/46)
 - XML description of OPH_CLUSTER
 
+### Removed:
+
+- Remove constraint for hostpartition.idjob in order to enable dynamic clustering
+
 ## v1.3.0 - 2018-06-18
 
 ### Fixed:
