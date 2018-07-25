@@ -81,6 +81,7 @@ struct _oph_operator_struct {
 	int proc_rank;
 	char *lib;
 	void *dlh;
+	void *soap_data;
 };
 typedef struct _oph_operator_struct oph_operator_struct;
 

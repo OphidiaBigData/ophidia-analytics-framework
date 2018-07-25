@@ -37,6 +37,7 @@ Dimension values are used as input filters.
                   -- yyyy-mm-dd hh:mm
                   -- yyyy-mm-dd hh:mm:ss
                   Interval bounds must be separated with &quot;_&quot;.
+                  Refer to a season using the corresponding code: DJF for winter, MAM for spring, JJA for summer or SON for autumn.
 - subset_type : if set to &quot;index&quot; (default), the subset_filter is considered on dimension index. 
                 With &quot;coord&quot;, filter is considered on dimension values.
                 In case of single value, that value is used for all the dimensions.

@@ -58,6 +58,7 @@
  * \param force Flag used to force file creation
  * \param misc Flag used to save file in export/misc folder
  * \param memory_size Maximum amount of memory available
+ * \param nc_file_path File name
  */
 struct _OPH_EXPORTNC2_operator_handle {
 	ophidiadb oDB;
@@ -87,6 +88,7 @@ struct _OPH_EXPORTNC2_operator_handle {
 	int force;
 	int misc;
 	long long memory_size;
+	char *nc_file_path;
 };
 typedef struct _OPH_EXPORTNC2_operator_handle OPH_EXPORTNC2_operator_handle;
 

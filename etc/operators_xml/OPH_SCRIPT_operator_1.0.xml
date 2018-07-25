@@ -14,6 +14,9 @@ The script can eventually process some environmental variables passed by the ope
 - OPH_SCRIPT_SESSION_CODE : is the &lt;session_code&gt;
 - OPH_SCRIPT_WORKFLOW_ID : is the workflow identifier
 - OPH_SCRIPT_MARKER_ID : is the marker identifier associated with the job
+- OPH_SCRIPT_SERVER_HOST : is the IP address or DNS name of the host where Ophidia Server is running
+- OPH_SCRIPT_SERVER_PORT : is the port number associated with Ophidia Server
+- OPH_SCRIPT_USER : is the submitter identifier
 
 [Parameters]
 - script : name of the script to be executed; by default no operation is performed. The script has to be registered at server side.

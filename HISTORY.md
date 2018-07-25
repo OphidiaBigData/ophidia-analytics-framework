@@ -1,10 +1,21 @@
 
-## New features
+## Next release
 
-## Changed:
+### Fixed:
+
+- Return message printed in log of OPH_SCRIPT
+- Bug in usage of 'unlimited' property for dimensions [#44](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/44)
+- Submissing string check in case of long strings
+
+### Changed:
 
 - Extend operators associated with of oph_normalize
 - Extend values of argument 'comparison' of oph_predicate [#46](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/46)
+- XML description of OPH_CLUSTER
+
+### Removed:
+
+- Remove constraint for hostpartition.idjob in order to enable dynamic clustering
 
 ## v1.3.0 - 2018-06-18
 

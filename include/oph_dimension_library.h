@@ -55,11 +55,11 @@
 #define OPH_CONF_DIMDB_NAME		"DIMDB_NAME"
 #define OPH_CONF_DIMDB_HOST		"DIMDB_HOST"
 #define OPH_CONF_DIMDB_PORT		"DIMDB_PORT"
-#define OPH_CONF_DIMDB_LOGIN		"DIMDB_LOGIN"
+#define OPH_CONF_DIMDB_LOGIN	"DIMDB_LOGIN"
 #define OPH_CONF_DIMDB_PWD		"DIMDB_PWD"
 
-
-#define OPH_DIM_SUBSET_SEPARATOR	",_"
+#define OPH_DIM_SUBSET_SEPARATOR1	","
+#define OPH_DIM_SUBSET_SEPARATOR	OPH_DIM_SUBSET_SEPARATOR1"_"
 #define OPH_DIM_SUBSET_SEPARATOR2	':'
 
 /**
@@ -290,6 +290,15 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
  * \return 0 if successfull, -1 otherwise
  */
 int oph_dim_update_value(char *dim_row, const char *dimension_type, unsigned int first, unsigned int last);
+
+/**
+ * \brief Function to evaluate the time subset string from a season subset string
+ * \param subset_string Subset string to be parsed
+ * \param dim Dimension metadata
+ * \param output_string Char vector to be used for output subset string; it must be already allocated
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_dim_parse_season_subset(const char *subset_string, oph_odb_dimension * dim, char *output_string, char *data, unsigned long long data_size);
 
 /**
  * \brief Function to evaluate the traditional subset string from a time subset string

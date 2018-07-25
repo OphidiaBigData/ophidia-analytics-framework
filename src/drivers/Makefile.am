@@ -320,7 +320,7 @@ liboph_rollupoperator_la_SOURCES = OPH_ROLLUP_operator.c
 liboph_rollupoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_rollupoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_driver_proc
 
-liboph_scriptoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"
+liboph_scriptoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" -I../oph_gsoap
 liboph_scriptoperator_la_SOURCES = OPH_SCRIPT_operator.c
 liboph_scriptoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_scriptoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_directory

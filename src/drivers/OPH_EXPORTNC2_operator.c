@@ -49,6 +49,8 @@
 
 #define OPH_EXPORTNC_DEFAULT_OUTPUT_PATH "default"
 #define OPH_EXPORTNC_LOCAL_OUTPUT_PATH "local"
+#define OPH_EXPLORENC_POSTPONE "postpone"
+#define OPH_EXPLORENC_FILLVALUE "_FillValue"
 
 int _oph_get_next_count(size_t * id, unsigned int *sizemax, int i, int n)
 {
@@ -112,6 +114,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->force = 0;
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->misc = 0;
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->memory_size = 0;
+	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path = NULL;
 
 	char *datacube_name;
 	char *value;
@@ -174,6 +177,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	if (!strcmp(value, OPH_COMMON_YES_VALUE))
 		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata = 1;
+	else if (!strcmp(value, OPH_EXPLORENC_POSTPONE))
+		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata = -1;
 
 	if (handle->proc_rank == 0) {
 		//Only master process has to initialize and open connection to management OphidiaDB
@@ -1185,8 +1190,8 @@ int task_execute(oph_operator_struct * handle)
 			goto __OPH_EXIT_2;
 		}
 
-		if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata)	// Add metadata
-		{
+		if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata > 0) {
+
 			int varidp, msize, mbuffer;
 			char *mvariable = NULL, *mkey = NULL, *mtype, *mvalue, *buffer = NULL;
 			if (handle->proc_rank)	// Slave
@@ -1889,6 +1894,10 @@ int task_execute(oph_operator_struct * handle)
 				}
 			}
 		}
+
+		if (!handle->proc_rank && (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata < 0))
+			((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path = strdup(file_name);
+
 	} else
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
@@ -1909,6 +1918,88 @@ int task_reduce(oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_NULL_OPERATOR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->cached_flag)
+		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+
+	if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata < 0)
+		MPI_Barrier(MPI_COMM_WORLD);
+
+	if (!handle->proc_rank && ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path && (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata < 0)) {
+
+		char *mvariable = NULL, *mkey = NULL, *mtype, *mvalue;
+		int retval, ncid, cmode = NC_WRITE, varidp;
+		MYSQL_RES *read_result = NULL;
+		MYSQL_ROW row;
+
+		if ((retval = nc_open(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, cmode, &ncid))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to open netcdf file '%s': %s\n",
+				((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, nc_strerror(retval));
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		if ((retval = nc_redef(ncid))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to open netcdf file '%s': %s\n",
+				((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, nc_strerror(retval));
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+
+		if (oph_odb_meta_find_complete_metadata_list
+		    (&((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->oDB, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0, NULL, NULL, NULL, NULL,
+		     &read_result)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
+			retval = NC_EBADTYPE;
+		}
+
+		while (!retval && ((row = mysql_fetch_row(read_result)))) {
+			mvariable = row[1];
+			mkey = row[2];
+			mtype = row[3];
+			mvalue = row[4];
+			retval = NC_EBADTYPE;
+			if (!strcmp(mkey, OPH_EXPLORENC_FILLVALUE)) {	// Skip OPH_EXPLORENC_FILLVALUE in this mode
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "Attribute '%s' cannot be set with this mode... skipping.\n", OPH_EXPLORENC_FILLVALUE);
+				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Attribute '%s' cannot be set with this mode... skipping\n", OPH_EXPLORENC_FILLVALUE);
+				retval = NC_NOERR;
+			} else if (mvariable && ((retval = nc_inq_varid(ncid, mvariable, &varidp)))) {
+				if (retval == NC_ENOTVAR)
+					retval = NC_NOERR;	// Skip metadata associated with collapsed variables
+			} else if (!strcmp(mtype, OPH_COMMON_METADATA_TYPE_TEXT))
+				retval = nc_put_att_text(ncid, mvariable ? varidp : NC_GLOBAL, mkey, strlen(mvalue), mvalue);
+			else if (!strcmp(mtype, OPH_COMMON_BYTE_TYPE)) {
+				unsigned char svalue = (unsigned char) strtol(mvalue, NULL, 10);
+				retval = nc_put_att_uchar(ncid, mvariable ? varidp : NC_GLOBAL, mkey, NC_BYTE, 1, &svalue);
+			} else if (!strcmp(mtype, OPH_COMMON_SHORT_TYPE)) {
+				short svalue = (short) strtol(mvalue, NULL, 10);
+				retval = nc_put_att_short(ncid, mvariable ? varidp : NC_GLOBAL, mkey, NC_SHORT, 1, &svalue);
+			} else if (!strcmp(mtype, OPH_COMMON_INT_TYPE)) {
+				int svalue = (int) strtol(mvalue, NULL, 10);
+				retval = nc_put_att_int(ncid, mvariable ? varidp : NC_GLOBAL, mkey, NC_INT, 1, &svalue);
+			} else if (!strcmp(mtype, OPH_COMMON_LONG_TYPE)) {
+				long long svalue = (long long) strtoll(mvalue, NULL, 10);
+				retval = nc_put_att_longlong(ncid, mvariable ? varidp : NC_GLOBAL, mkey, NC_INT64, 1, &svalue);
+			} else if (!strcmp(mtype, OPH_COMMON_FLOAT_TYPE)) {
+				float svalue = (float) strtof(mvalue, NULL);
+				retval = nc_put_att_float(ncid, mvariable ? varidp : NC_GLOBAL, mkey, NC_FLOAT, 1, &svalue);
+			} else if (!strcmp(mtype, OPH_COMMON_DOUBLE_TYPE)) {
+				double svalue = (double) strtod(mvalue, NULL);
+				retval = nc_put_att_double(ncid, mvariable ? varidp : NC_GLOBAL, mkey, NC_DOUBLE, 1, &svalue);
+			}
+			if (retval) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable ? mvariable : "", mkey ? mkey : "", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable ? mvariable : "", mkey ? mkey : "",
+					nc_strerror(retval));
+			}
+		}
+
+		mysql_free_result(read_result);
+		nc_close(ncid);
+
+		if (retval)
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -1979,6 +2070,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->sessionid) {
 		free((char *) ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->sessionid);
 		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->sessionid = NULL;
+	}
+	if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path) {
+		free((char *) ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path);
+		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path = NULL;
 	}
 	free((OPH_EXPORTNC2_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
