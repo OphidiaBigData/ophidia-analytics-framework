@@ -73,6 +73,6 @@ SUBMISSION STRING: &quot;operator=oph_instances;level=2;host_filter=all;&quot;</
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-		<argument type="string" mandatory="no" default="all" values="all|none|instances">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|instances|instances_summary">objkey_filter</argument>
     </args>
 </operator>
