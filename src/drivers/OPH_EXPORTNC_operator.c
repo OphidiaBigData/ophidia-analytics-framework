@@ -1621,14 +1621,14 @@ int task_execute(oph_operator_struct * handle)
 				if (!((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user_defined) {
 					// Save the summary
 					snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC_OUTPUT_PATH_SUMMARY, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path, file);
-					FILE *file = fopen(jsonbuf, "w");
-					if (file) {
-						fprintf(file, "<HTML>\n<HEAD>\n<TITLE>File list</TITLE>\n</HEAD>\n<BODY>\n<UL>\n");
+					FILE *html_file = fopen(jsonbuf, "w");
+					if (html_file) {
+						fprintf(html_file, "<HTML>\n<HEAD>\n<TITLE>File list</TITLE>\n</HEAD>\n<BODY>\n<UL>\n");
 						for (type = 0; type < ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number; ++type)
-							fprintf(file, "<LI><A href=" OPH_EXPORTNC_OUTPUT_PATH_MORE_FILES ">" OPH_EXPORTNC_OUTPUT_FILE "</A></LI>\n",
+							fprintf(html_file, "<LI><A href=" OPH_EXPORTNC_OUTPUT_PATH_MORE_FILES ">" OPH_EXPORTNC_OUTPUT_FILE "</A></LI>\n",
 								((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link, file, type, file, type);
-						fprintf(file, "</UL>\n</BODY>\n</HTML>\n");
-						fclose(file);
+						fprintf(html_file, "</UL>\n</BODY>\n</HTML>\n");
+						fclose(html_file);
 					}
 				}
 				// Save the link

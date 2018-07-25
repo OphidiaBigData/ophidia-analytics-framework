@@ -49,8 +49,8 @@
 
 #define OPH_EXPORTNC_DEFAULT_OUTPUT_PATH "default"
 #define OPH_EXPORTNC_LOCAL_OUTPUT_PATH "local"
-#define OPH_EXPLORENC_POSTPONE "postpone"
-#define OPH_EXPLORENC_FILLVALUE "_FillValue"
+#define OPH_EXPORTNC_POSTPONE "postpone"
+#define OPH_EXPORTNC_FILLVALUE "_FillValue"
 
 int _oph_get_next_count(size_t * id, unsigned int *sizemax, int i, int n)
 {
@@ -177,7 +177,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	if (!strcmp(value, OPH_COMMON_YES_VALUE))
 		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata = 1;
-	else if (!strcmp(value, OPH_EXPLORENC_POSTPONE))
+	else if (!strcmp(value, OPH_EXPORTNC_POSTPONE))
 		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata = -1;
 
 	if (handle->proc_rank == 0) {
@@ -1960,9 +1960,9 @@ int task_reduce(oph_operator_struct * handle)
 			mtype = row[3];
 			mvalue = row[4];
 			retval = NC_EBADTYPE;
-			if (!strcmp(mkey, OPH_EXPLORENC_FILLVALUE)) {	// Skip OPH_EXPLORENC_FILLVALUE in this mode
-				pmesg(LOG_WARNING, __FILE__, __LINE__, "Attribute '%s' cannot be set with this mode... skipping.\n", OPH_EXPLORENC_FILLVALUE);
-				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Attribute '%s' cannot be set with this mode... skipping\n", OPH_EXPLORENC_FILLVALUE);
+			if (!strcmp(mkey, OPH_EXPORTNC_FILLVALUE)) {	// Skip OPH_EXPORTNC_FILLVALUE in this mode
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "Attribute '%s' cannot be set with this mode... skipping.\n", OPH_EXPORTNC_FILLVALUE);
+				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Attribute '%s' cannot be set with this mode... skipping\n", OPH_EXPORTNC_FILLVALUE);
 				retval = NC_NOERR;
 			} else if (mvariable && ((retval = nc_inq_varid(ncid, mvariable, &varidp)))) {
 				if (retval == NC_ENOTVAR)
