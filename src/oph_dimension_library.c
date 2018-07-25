@@ -828,7 +828,7 @@ int oph_dim_parse_season_subset(const char *subset_string, oph_odb_dimension * d
 	max_year = tm_base.tm_year - 1900;
 
 	int i, n = 0, nn;
-	char type, first = 0;
+	unsigned char type, first = 0;
 	char season[5], temp2[MYSQL_BUFLEN], temp3[MYSQL_BUFLEN];
 	for (i = 0; i < 5; ++i)
 		season[i] = 0;
