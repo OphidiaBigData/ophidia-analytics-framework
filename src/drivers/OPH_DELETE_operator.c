@@ -374,8 +374,8 @@ int task_execute(oph_operator_struct * handle)
 
 	int ret = OPH_ANALYTICS_OPERATOR_SUCCESS;
 	if ((ret =
-	     oph_dproc_delete_data_frags(id_datacube, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container,
-					 ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids, ((OPH_DELETE_operator_handle *) handle->operator_handle)->nthread))) {
+	     oph_dproc_delete_data(id_datacube, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container,
+					 ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0, ((OPH_DELETE_operator_handle *) handle->operator_handle)->nthread))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 	}

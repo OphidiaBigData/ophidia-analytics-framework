@@ -279,7 +279,6 @@ int task_execute(oph_operator_struct * handle)
 					mysql_free_result(info_list);
 					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				}
-
 				//Loop on datacubues
 				int id_datacube = 0;
 				int ret = OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -289,7 +288,7 @@ int task_execute(oph_operator_struct * handle)
 					//For each ROW
 					while ((row = mysql_fetch_row(info_list))) {
 						if (row[2] && row[3]) {
-							id_datacube = (int)strtol(row[3], NULL, 10);
+							id_datacube = (int) strtol(row[3], NULL, 10);
 
 							oph_odb_datacube cube;
 							oph_odb_cube_init_datacube(&cube);
@@ -300,7 +299,7 @@ int task_execute(oph_operator_struct * handle)
 								ret = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 								continue;
 							}
-							
+
 							if (oph_dproc_delete_data(id_datacube, oper_handle->id_input_container, cube.frag_relative_index_set, 0, 0, 1)) {
 								oph_odb_cube_free_datacube(&cube);
 								pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to delete fragments\n");
@@ -308,9 +307,10 @@ int task_execute(oph_operator_struct * handle)
 							}
 							oph_odb_cube_free_datacube(&cube);
 
-							if(oph_dproc_clean_odb(oDB, id_datacube, oper_handle->id_input_container)){
+							if (oph_dproc_clean_odb(oDB, id_datacube, oper_handle->id_input_container)) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Master destroy procedure has failed\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETECONTAINER_MASTER_TASK_DESTROY_FAILED);
+								logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->id_input_container,
+									OPH_LOG_OPH_DELETECONTAINER_MASTER_TASK_DESTROY_FAILED);
 								ret = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 							}
 						}

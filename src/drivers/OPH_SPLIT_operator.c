@@ -743,7 +743,7 @@ int task_execute(oph_operator_struct * handle)
 
 		//Each process has to be connected to a slave ophidiadb
 		ophidiadb oDB_slave;
-		oph_odb_init_ophidiadb(&oDB_slave);
+		oph_odb_init_ophidiadb_thread(&oDB_slave);
 		int i, j, k, m;
 
 		int res = OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -822,7 +822,7 @@ int task_execute(oph_operator_struct * handle)
 		}
 
 		//For each DBMS
-		for (i = first_dbms; (i < dbmss.size) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
+		for (i = first_dbms; (i < dbmss.size) && (in_frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
 
 			if (oph_dc_connect_to_dbms(server, &(dbmss.value[i]), 0)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
@@ -838,7 +838,7 @@ int task_execute(oph_operator_struct * handle)
 				break;
 			}
 			//For each DB
-			for (j = first_db; j < dbs.size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; j++) {
+			for (j = first_db; j < dbs.size && (in_frag_count < fragxthread) && res == OPH_ANALYTICS_OPERATOR_SUCCESS; j++) {
 				//Check DB - DBMS Association
 				if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
 					continue;

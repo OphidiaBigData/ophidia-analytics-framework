@@ -85,7 +85,7 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 
 		//Each process has to be connected to a slave ophidiadb
 		ophidiadb oDB_slave;
-		oph_odb_init_ophidiadb(&oDB_slave);
+		oph_odb_init_ophidiadb_thread(&oDB_slave);
 		int i, j, k;
 
 		int res = OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -174,20 +174,21 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 			}
 		}
 
-		int dbxthread = (int) floor((double) (dbs.size / num_threads));
-		int remainder = (int) dbs.size % num_threads;
-		//Compute starting number of dbs deleted by other threads
-		unsigned int current_db_count = l * dbxthread + (l < remainder ? l : remainder);
+		int fragxthread = (int) floor((double) (frags.size / num_threads));
+		int remainder = (int) frags.size % num_threads;
+		//Compute starting number of fragments deleted by other threads
+		unsigned int current_frag_count = l * fragxthread + (l < remainder ? l : remainder);
 
 		//Update number of fragments to be inserted
 		if (l < remainder)
-			dbxthread += 1;
+			fragxthread += 1;
 
-		int db_count = 0;
-		int first_dbms, first_db = current_db_count;
+		int frag_count = 0, db_count = 0;
+		int first_dbms, first_db, first_frag = current_frag_count;
+		int dbxthread = 0;
 
-		//If number of DBS is lower than thread number exit from these threads
-		if (first_db >= dbs.size) {
+		//If number of frags is lower than thread number exit from these threads
+		if (first_frag >= frags.size) {
 			//Early termination
 			oph_dc_cleanup_dbms(server);
 			oph_odb_stge_free_fragment_list(&frags);
@@ -201,11 +202,27 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 			pthread_exit((void *) ret_val);
 		}
 
-		for (first_dbms = 0; first_dbms < dbmss.size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_dbms++) {
-			//Find dbms associated to db
-			if (dbs.value[current_db_count].id_dbms == dbmss.value[current_db_count].id_dbms)
+		for (first_db = 0; first_db < dbs.size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_db++) {
+			//Find db associated to fragment
+			if (frags.value[current_frag_count].id_db == dbs.value[first_db].id_db)
 				break;
 		}
+		for (first_dbms = 0; first_dbms < dbmss.size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_dbms++) {
+			//Find dbms associated to db
+			if (dbs.value[first_db].id_dbms == dbmss.value[first_dbms].id_dbms)
+				break;
+		}
+
+		//Count number of DBs related to this thread
+		frag_count = db_count = 1;
+		for (k = first_frag + 1; (k < frags.size) && (frag_count < fragxthread); k++) {
+			if (frags.value[k-1].db_instance != frags.value[k].db_instance)
+				db_count++;
+
+			frag_count++;
+		}
+		//Reset frag_count
+		frag_count = 0;
 
 		//For each DBMS
 		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
@@ -235,6 +252,7 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 					//If the db stores just one datacube then directly drop the dbinstance
 					if (datacubexdb_number == 1) {
 						//Database drop
+						//TODO Check that only proc/thread working on first fragment of DBs performs the DB deletion
 						if (oph_dc_delete_db(server, &(dbs.value[j]))) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while dropping database.\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_DELETE_DROP_DB_ERROR, (dbs.value[j]).db_name);
@@ -255,10 +273,12 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 							continue;
 						}
 						//For each fragment
-						for (k = 0; k < frags.size; k++) {
+						for (k = first_frag; (k < frags.size) && (frag_count < fragxthread); k++) {
 							//Check Fragment - DB Association
 							if (frags.value[k].db_instance != &(dbs.value[j]))
 								continue;
+
+							frag_count++;
 
 							//Delete fragment
 							if (oph_dc_delete_fragment(server, &(frags.value[k]))) {
@@ -387,7 +407,7 @@ int oph_dproc_delete_data_frags(int id_datacube, int id_container, char *fragmen
 
 		//Each process has to be connected to a slave ophidiadb
 		ophidiadb oDB_slave;
-		oph_odb_init_ophidiadb(&oDB_slave);
+		oph_odb_init_ophidiadb_thread(&oDB_slave);
 		int i, j, k;
 
 		int res = OPH_ANALYTICS_OPERATOR_SUCCESS;
