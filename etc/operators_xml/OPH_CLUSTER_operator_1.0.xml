@@ -34,7 +34,7 @@ SUBMISSION STRING: &quot;operator=oph_cluster;nhost=3;host_partition=cluster;&qu
 		<argument type="string" mandatory="no" default="sync" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="yes">host_partition</argument>
 		<argument type="string" mandatory="no" default="deploy" values="deploy|undeploy">action</argument>
-		<argument type="int" mandatory="no" minvalue="1" default="1">nhosts</argument>
+		<argument type="int" mandatory="no" minvalue="1" default="1">nhost</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none">objkey_filter</argument>
     </args>
 </operator>
