@@ -282,6 +282,11 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 
 	//Initialize environment
 	oph_operator_struct_initializer(task_number, task_rank, handle);
+#ifdef OPH_STANDALONE_MODE
+	handle->soap_data = NULL;
+#else
+	handle->soap_data = &data;
+#endif
 
 	oph_tp_start_xml_parser();
 
