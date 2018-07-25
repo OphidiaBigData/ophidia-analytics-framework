@@ -33,6 +33,7 @@ OPERATOR_XML=
 OPERATOR_XML+=etc/operators_xml/OPH_AGGREGATE2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_AGGREGATE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_APPLY_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_B2DROP_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CANCEL_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CLUSTER_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CONTAINERSCHEMA_operator_1.0.xml

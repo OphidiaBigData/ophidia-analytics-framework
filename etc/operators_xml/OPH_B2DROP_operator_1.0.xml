@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_B2DROP" version="1.0">
+    <info>
+        <abstract>[Type]
+Data Access.
+
+[Behaviour]
+It uploads a file onto a B2DROP remote folder. Note that in order to be able to use the operator, a netrc file with the credentials to B2DROP is required. Commonly the hidden .netrc file resides in the user's home directory.
+
+[Parameters]
+- auth_path: absolute path to the netrc file containing the B2DROP login information. 
+			 Note that it is not possible to use double dots (..) within the path. 
+			 If no path is provided, the user's home will be used (default).
+- src_path: path to the file to be uploaded to B2DROP. The path can be absolute or relative. 
+			In case of relative path the cdd argument will be pre-pended. 
+			Note that it is not possible to use double dots (..) within the path.
+- dst_path: path where the file will be uploaded on B2DROP. In case no path is specified, 
+			the base path and the input file name will be used (default).
+- cdd : absolute path corresponding to the current directory on data repository.
+
+[System parameters]
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  b2drop : show operator's output.
+
+[Examples]
+Upload the file &quot;test.nc&quot; into B2DROP base folder:
+OPH_TERM: oph_b2drop src_path=test.nc;
+SUBMISSION STRING: &quot;operator=oph_b2drop;src_path=test.nc;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <category>Miscellaneous</category>
+        <creationdate>12/07/2018</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <permission>execute</permission>
+    </info>
+    <args>
+		<argument type="string" mandatory="no" default="-">auth_path</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">src_path</argument>
+		<argument type="string" mandatory="no" default="-">dst_path</argument>
+		<argument type="string" mandatory="no" default="/">cdd</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|b2drop">objkey_filter</argument>
+    </args>
+</operator>

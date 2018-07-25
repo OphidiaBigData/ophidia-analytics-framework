@@ -31,6 +31,7 @@
 #define OPH_PID_BASE_SRC_PATH		"BASE_SRC_PATH"
 #define OPH_PID_BASE_USER_PATH		"BASE_USER_PATH"
 #define OPH_PID_USER_SPACE		"USER_SPACE"
+#define OPH_PID_B2DROP_WEBDAV	"B2DROP_WEBDAV"
 
 #define OPH_PID_SLASH			"/"
 
@@ -42,6 +43,13 @@
 #define OPH_PID_SIZE			512
 
 #define OPH_PID_BUFFER_SIZE		256
+
+/** 
+ * \brief Function to load configuration data
+ * \brief b2drop_webdav Pointer to the memory area where b2drop_webdav will be written; it has to be freed
+ * \return 0 if successfull, N otherwise
+ */
+int oph_pid_get_b2drop_webdav_url(char **b2drop_webdav);
 
 /** 
  * \brief Function to load configuration data
