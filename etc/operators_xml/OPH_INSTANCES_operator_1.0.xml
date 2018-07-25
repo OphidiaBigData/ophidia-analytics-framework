@@ -20,7 +20,7 @@ It shows information about host partitions, hosts and dbms instances.
           If it is non-zero then &quot;host_filter&quot; is negleted.
 - host_partition : in &quot;read&quot; mode it is an optional filter on host partition name and can be used only with level 3.
                    If no partition is specified, then the list of all partitions is shown.
-                   In &quot;add&quot; or &quot;remove&quot; mode it is the name of the new partition.
+                   In &quot;add&quot; mode it is the name of the new partition.
                    In &quot;remove&quot; mode it is the name of the partition to be removed.
 - filesystem_filter : optional filter on the type of filesystem used. Used only with level 2:
 				       &quot;local&quot; for local disks only,
