@@ -352,35 +352,29 @@ if test "x${cfitsio}" = "xyes"; then
 fi
 
 #Check if curl is installed
-curl="no"
+curl="yes"
 AC_ARG_ENABLE(curl,
-        [  --enable-curl
-            Turn on cURL flags],
-        [curl="yes"
-            AC_MSG_NOTICE("cURL support enabled")],
-        [curl="no"]
+        [  --disable-curl
+            Turn off cURL flags (Enabled by default)],
+        [curl="no"
+            AC_MSG_NOTICE("cURL support disabled. Some operators will not be installed!")],
+        [curl="yes"]
         )
 AM_CONDITIONAL([HAVE_CURL], [test "x$curl" = "xyes"])
 
 if test "x${curl}" = "xyes"; then
 
-	PKG_CHECK_MODULES(CURL, libcurl >= 0.23)
+	PKG_CHECK_MODULES(CURL, libcurl >= 7.23)
 	AC_ARG_WITH(libcurl_header_path,
 		   [  --with-libcurl-header-path=PATH 		Location of libcurl includes directory],
-		   [
-			libcurl_header_path="$withval"
-		   ],
-		 [
-		libcurl_header_path="$CURL_CFLAGS"
-		 ])
+		   [ libcurl_header_path="$withval" ],
+		   [ libcurl_header_path="$CURL_CFLAGS"]
+		  )
 	AC_ARG_WITH(libcurl_lib_path,
 		   [  --with-libcurl-lib-path=PATH 		Location of libcurl.a],
-		   [
-			libcurl_lib_path="$withval"
-		   ],
-		 [
-		libcurl_lib_path="$CURL_LIBS"
-		 ])
+		   [ libcurl_lib_path="$withval" ],
+		   [ libcurl_lib_path="$CURL_LIBS"]
+		  )
 
 	LIBCURL_INCLUDE="$libcurl_header_path"
 	AC_SUBST(LIBCURL_INCLUDE)
