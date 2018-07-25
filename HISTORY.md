@@ -7,14 +7,22 @@
 - Bug in usage of 'unlimited' property for dimensions [#44](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/44)
 - Submissing string check in case of long strings
 
+### Added:
+
+- New operator OPH_B2DROP [#53](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/53)
+- 'dim_type' argument to OPH_MERGECUBES2 operator [#50](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/50)
+- new environment variables to OPH_SCRIPT operator (OPH_SCRIPT_SERVER_HOST, OPH_SCRIPT_SERVER_PORT and OPH_SCRIPT_USER) [#49](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/49)
+- Support to extract seasons with OPH_SUBSET and OPH_EXPLORECUBE operators [#48](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/48)
+- Summary info to OPH_INSTANCES [#47](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/47)
+
 ### Changed:
 
+- Exportnc operators to support 'local' keyword for 'output_path' argument 
+- Extend OPH_CUBESCHEMA operator to compute number of cube elements [#52](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/52)
+- Extend OPH_EXPORTNC2 to allow also postponed metadata saving [#51](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/51)
 - Extend operators associated with of oph_normalize
 - Extend values of argument 'comparison' of oph_predicate [#46](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/46)
 - XML description of OPH_CLUSTER
-
-### Removed:
-
 - Remove constraint for hostpartition.idjob in order to enable dynamic clustering
 
 ## v1.3.0 - 2018-06-18
