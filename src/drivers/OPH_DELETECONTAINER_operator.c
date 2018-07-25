@@ -60,6 +60,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	//1 - Set up struct to empty values
+	((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->nthread = 0;
 	((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->id_input_container = 0;
 	((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->container_input = NULL;
 	((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->cwd = NULL;
@@ -108,6 +109,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "sessionid");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
+
+	value = hashtbl_get(task_tbl, OPH_ARG_NTHREAD);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_NTHREAD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETECONTAINER_MISSING_INPUT_PARAMETER, OPH_ARG_NTHREAD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->nthread = (unsigned int) strtol(value, NULL, 10);
 
 	container_name = (!hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT) ? "NO-CONTAINER" : hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT));
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT);
@@ -300,7 +309,7 @@ int task_execute(oph_operator_struct * handle)
 								continue;
 							}
 
-							if (oph_dproc_delete_data(id_datacube, oper_handle->id_input_container, cube.frag_relative_index_set, 0, 0, 1)) {
+							if (oph_dproc_delete_data(id_datacube, oper_handle->id_input_container, cube.frag_relative_index_set, 0, 0, oper_handle->nthread)) {
 								oph_odb_cube_free_datacube(&cube);
 								pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to delete fragments\n");
 								logging(LOG_WARNING, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_DELETECONTAINER_DB_READ_ERROR);

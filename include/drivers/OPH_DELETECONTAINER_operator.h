@@ -40,6 +40,7 @@
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
+ * \param nthread Number of posix threads related to each MPI task
  * \param force Flag used to force file creation
  */
 struct _OPH_DELETECONTAINER_operator_handle {
@@ -53,6 +54,7 @@ struct _OPH_DELETECONTAINER_operator_handle {
 	char **objkeys;
 	int objkeys_num;
 	char *sessionid;
+	unsigned int nthread;
 	int force;
 };
 typedef struct _OPH_DELETECONTAINER_operator_handle OPH_DELETECONTAINER_operator_handle;
