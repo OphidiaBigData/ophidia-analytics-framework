@@ -71,6 +71,7 @@
  * \param offset List of offsets used to enlarge subset intervals
  * \param offset_num Number of offsets
  * \param subset_types Array of flags indicating whether filters are expressed as indexes or values
+ * \param nthread Number of posix threads related to each MPI task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
 struct _OPH_SUBSET_operator_handle {
@@ -107,6 +108,7 @@ struct _OPH_SUBSET_operator_handle {
 	double *offset;
 	int offset_num;
 	char *subset_types;
+	unsigned int nthread;
 	short int execute_error;
 };
 typedef struct _OPH_SUBSET_operator_handle OPH_SUBSET_operator_handle;

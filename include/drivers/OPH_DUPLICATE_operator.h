@@ -43,6 +43,7 @@
  * \param sessionid SessionID
  * \param id_user ID of submitter
  * \param description Free description to be associated with output cube
+ * \param nthread Number of posix threads related to each MPI task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
 struct _OPH_DUPLICATE_operator_handle {
@@ -62,6 +63,7 @@ struct _OPH_DUPLICATE_operator_handle {
 	char *sessionid;
 	int id_user;
 	char *description;
+	unsigned int nthread;
 	short int execute_error;
 };
 typedef struct _OPH_DUPLICATE_operator_handle OPH_DUPLICATE_operator_handle;

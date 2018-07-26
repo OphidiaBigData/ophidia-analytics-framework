@@ -36,6 +36,7 @@
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
  * \param server Pointer to I/O server handler
+ * \param nthread Number of posix threads related to each MPI task
  * \param sessionid SessionID
  */
 struct _OPH_DELETE_operator_handle {
@@ -49,6 +50,7 @@ struct _OPH_DELETE_operator_handle {
 	char **objkeys;
 	int objkeys_num;
 	oph_ioserver_handler *server;
+	unsigned int nthread;
 	char *sessionid;
 };
 typedef struct _OPH_DELETE_operator_handle OPH_DELETE_operator_handle;

@@ -6,7 +6,7 @@
 Data Process.
 
 [Behaviour]
-It removes an empty container with related dimensions and grids. The container can be deleted logically or physically.
+It removes a container with related dimensions and grids. The container can be deleted logically or physically.
 
 [Parameters]
 - container : name of the input container.
@@ -17,6 +17,9 @@ It removes an empty container with related dimensions and grids. The container c
 - hidden : status of container to be deleted, considered only when delete_type is &apos;physical&apos;:
            -- yes : container to be removed is hidden (default)
            -- no : container to be removed isn't hidden
+- nthreads : maximum number of parallel threads to be used (min. 1). Used only when the force argument is set to &quot;yes&quot; 
+- force : flag used to force the removal of a non-empy container. Note that with &quot;yes&quot; all datacubes inside the container will be deleted, whereas with &quot;no&quot; (default) the container will be removed only if it is already empty.
+
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -44,6 +47,8 @@ SUBMISSION STRING: &quot;operator=oph_deletecontainer;container=container1;cwd=/
 		<argument type="string" mandatory="no" default="logical" values="logical|physical">delete_type</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">hidden</argument>
 		<argument type="string" mandatory="yes">cwd</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">nthreads</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>

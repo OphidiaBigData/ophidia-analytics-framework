@@ -4056,6 +4056,7 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb_thread(&oDB_slave);
+					mysql_thread_end();
 					res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				}
 			}
@@ -4071,6 +4072,7 @@ int task_execute(oph_operator_struct * handle)
 				oph_odb_stge_free_dbms_list(&dbmss);
 				oph_odb_free_ophidiadb_thread(&oDB_slave);
 				oph_dc_cleanup_dbms(server);
+				mysql_thread_end();
 				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				break;
 			}
@@ -4512,7 +4514,8 @@ int task_destroy(oph_operator_struct * handle)
 						 ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragxdb_number) - start_position;
 
 					if (oph_dproc_delete_data
-					    (id_datacube, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number)) {
+					    (id_datacube, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number,
+					     ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nthread)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_DELETE_DB_READ_ERROR);

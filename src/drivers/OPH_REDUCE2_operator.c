@@ -420,6 +420,7 @@ int task_init(oph_operator_struct * handle)
 
 		int tot_frag_num = 0;
 		if (oph_ids_count_number_of_ids(((OPH_REDUCE2_operator_handle *) handle->operator_handle)->fragment_ids, &tot_frag_num)) {
+			oph_odb_cube_free_datacube(&cube);
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get total number of IDs\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_REDUCE2_RETREIVE_IDS_ERROR);
 			goto __OPH_EXIT_1;
@@ -1359,7 +1360,7 @@ int task_execute(oph_operator_struct * handle)
 
 		//Each process has to be connected to a slave ophidiadb
 		ophidiadb oDB_slave;
-		oph_odb_init_ophidiadb(&oDB_slave);
+		oph_odb_init_ophidiadb_thread(&oDB_slave);
 		oph_odb_fragment_list frags;
 		oph_odb_db_instance_list dbs;
 		oph_odb_dbms_instance_list dbmss;
@@ -1416,6 +1417,7 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb_thread(&oDB_slave);
+					mysql_thread_end();
 					res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				}
 			}
@@ -1435,7 +1437,7 @@ int task_execute(oph_operator_struct * handle)
 		}
 
 		//For each DBMS
-		for (i = first_dbms; (i < dbmss.size) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
+		for (i = first_dbms; (i < dbmss.size) && (frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
 
 			if (oph_dc_connect_to_dbms(server, &(dbmss.value[i]), 0)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
@@ -1446,11 +1448,12 @@ int task_execute(oph_operator_struct * handle)
 				oph_odb_stge_free_dbms_list(&dbmss);
 				oph_odb_free_ophidiadb_thread(&oDB_slave);
 				oph_dc_cleanup_dbms(server);
+				mysql_thread_end();
 				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				break;
 			}
 			//For each DB
-			for (j = first_db; j < dbs.size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; j++) {
+			for (j = first_db; j < dbs.size && (frag_count < fragxthread) && res == OPH_ANALYTICS_OPERATOR_SUCCESS; j++) {
 				//Check DB - DBMS Association
 				if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
 					continue;
@@ -1462,7 +1465,7 @@ int task_execute(oph_operator_struct * handle)
 					break;
 				}
 				//For each fragment
-				for (k = first_frag; (k < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); k++) {
+				for (k = first_frag; (k < frags.size) && (frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); k++) {
 					//Check Fragment - DB Association
 					if (frags.value[k].db_instance != &(dbs.value[j]))
 						continue;
@@ -1514,6 +1517,7 @@ int task_execute(oph_operator_struct * handle)
 			oph_dc_disconnect_from_dbms(server, &(dbmss.value[i]));
 
 			if (res != OPH_ANALYTICS_OPERATOR_SUCCESS) {
+				oph_odb_stge_free_fragment_list(&frags);
 				oph_odb_stge_free_db_list(&dbs);
 				oph_odb_stge_free_dbms_list(&dbmss);
 				oph_odb_free_ophidiadb_thread(&oDB_slave);
@@ -1659,7 +1663,8 @@ int task_destroy(oph_operator_struct * handle)
 		//Delete fragments
 		if (((OPH_REDUCE2_operator_handle *) handle->operator_handle)->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
 			if ((oph_dproc_delete_data(id_datacube, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
-						   ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0))) {
+						   ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0,
+						   ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->nthread))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}
