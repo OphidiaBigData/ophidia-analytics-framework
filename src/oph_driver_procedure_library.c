@@ -216,7 +216,7 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 		//Count number of DBs related to this thread
 		dbxthread = 1;
 		for (k = first_frag + 1; (k < frags.size) && (k < first_frag + fragxthread); k++) {
-			if (frags.value[k-1].db_instance != frags.value[k].db_instance)
+			if (frags.value[k - 1].db_instance != frags.value[k].db_instance)
 				dbxthread++;
 		}
 
@@ -224,9 +224,9 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 		int frag_to_delete[dbxthread];
 		frag_to_delete[i = 0] = 1;
 		for (k = first_frag + 1; (k < frags.size) && (k < first_frag + fragxthread); k++) {
-			if (frags.value[k-1].db_instance != frags.value[k].db_instance)
+			if (frags.value[k - 1].db_instance != frags.value[k].db_instance)
 				frag_to_delete[++i] = 0;
-			frag_to_delete[i]++;			
+			frag_to_delete[i]++;
 		}
 
 		//For each DBMS
@@ -278,7 +278,7 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 						}
 						//For each fragment
 						frag_count = 0;
-						for (k = first_frag; (k < frags.size) && (frag_count < frag_to_delete[db_count-1]); k++) {
+						for (k = first_frag; (k < frags.size) && (frag_count < frag_to_delete[db_count - 1]); k++) {
 							//Check Fragment - DB Association
 							if (frags.value[k].db_instance != &(dbs.value[j]))
 								continue;

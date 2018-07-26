@@ -714,7 +714,7 @@ int task_execute(oph_operator_struct * handle)
 			logging(LOG_WARNING, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_GET_ELEMENTS_ERROR, datacube_name);
 			num_elements = 0;
 		}
-		if(num_elements == 0){
+		if (num_elements == 0) {
 			oph_odb_cubehasdim *cubedims = NULL;
 			int number_of_dimensions = 0;
 
