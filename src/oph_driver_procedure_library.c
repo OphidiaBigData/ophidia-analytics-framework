@@ -214,19 +214,24 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 		}
 
 		//Count number of DBs related to this thread
-		frag_count = db_count = 1;
-		for (k = first_frag + 1; (k < frags.size) && (frag_count < fragxthread); k++) {
+		dbxthread = 1;
+		for (k = first_frag + 1; (k < frags.size) && (k < first_frag + fragxthread); k++) {
 			if (frags.value[k-1].db_instance != frags.value[k].db_instance)
-				db_count++;
-
-			frag_count++;
+				dbxthread++;
 		}
-		//Reset frag_count
-		frag_count = 0;
+
+		//Build array of fragments x DB
+		int frag_to_delete[dbxthread];
+		frag_to_delete[i = 0] = 1;
+		for (k = first_frag + 1; (k < frags.size) && (k < first_frag + fragxthread); k++) {
+			if (frags.value[k-1].db_instance != frags.value[k].db_instance)
+				frag_to_delete[++i] = 0;
+			frag_to_delete[i]++;			
+		}
 
 		//For each DBMS
 		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
-			for (i = first_dbms; i < dbmss.size; i++) {
+			for (i = first_dbms; i < dbmss.size && (db_count < dbxthread); i++) {
 				if (oph_dc_connect_to_dbms(server, &(dbmss.value[i]), 0)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DBMS_CONNECTION_ERROR, (dbmss.value[i]).id_dbms);
@@ -252,7 +257,6 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 					//If the db stores just one datacube then directly drop the dbinstance
 					if (datacubexdb_number == 1) {
 						//Database drop
-						//TODO Check that only proc/thread working on first fragment of DBs performs the DB deletion
 						if (oph_dc_delete_db(server, &(dbs.value[j]))) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while dropping database.\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_DELETE_DROP_DB_ERROR, (dbs.value[j]).db_name);
@@ -273,7 +277,8 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 							continue;
 						}
 						//For each fragment
-						for (k = first_frag; (k < frags.size) && (frag_count < fragxthread); k++) {
+						frag_count = 0;
+						for (k = first_frag; (k < frags.size) && (frag_count < frag_to_delete[db_count-1]); k++) {
 							//Check Fragment - DB Association
 							if (frags.value[k].db_instance != &(dbs.value[j]))
 								continue;
