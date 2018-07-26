@@ -550,6 +550,45 @@ int task_init(oph_operator_struct * handle)
 			}
 		}
 
+		//Check if file exists
+		char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' };
+		snprintf(file_name, sizeof(file_name), OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE, path,
+			 ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name ? ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->
+			 output_name : ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure);
+		if (stat(file_name, &st)) {
+			if (errno == EACCES) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_PERMISSION_ERROR, file_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_PERMISSION_ERROR,
+					file_name);
+				free(stream_broad);
+				goto __OPH_EXIT_1;
+			} else if (errno != ENOENT) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_FILE_STAT_ERROR, file_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_FILE_STAT_ERROR,
+					file_name);
+				free(stream_broad);
+				goto __OPH_EXIT_1;
+			}
+		}
+		//File exists
+		else {
+			//If it is not a regular file
+			if (!S_ISREG(st.st_mode)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_OVERWRITE_FOLDER_ERROR, file_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_OVERWRITE_FOLDER_ERROR,
+					file_name);
+				free(stream_broad);
+				goto __OPH_EXIT_1;
+			}
+			if (!((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->force) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_DATACUBE_EXPORTED);
+				logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_DATACUBE_EXPORTED);
+				id_string[0][0] = -1;
+				free(stream_broad);
+				goto __OPH_EXIT_1;
+			}
+		}
+
 		strncpy(id_string[0], ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->fragment_ids, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
 		strncpy(id_string[1], ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
 		strncpy(id_string[2], ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure_type, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
