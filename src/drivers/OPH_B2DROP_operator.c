@@ -184,7 +184,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		value = pointer ? pointer + 1 : ((OPH_B2DROP_operator_handle *) handle->operator_handle)->src_file_path;
 	}
 	char *webdav_url = NULL;
-	if (oph_pid_get_b2drop_webdav_url(&webdav_url)) {
+	if (oph_pid_get_b2drop_webdav_url(&webdav_url) || !webdav_url) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read B2DROP webdav URL\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read B2DROP webdav URL\n");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
