@@ -49,6 +49,7 @@ It shows information about host partitions, hosts and dbms instances.
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   instances : show operator's output table.
+                  instances_summary : show operator's output table with summary.
 
 [Examples]
 Show all information about hosts and dbms instances :
