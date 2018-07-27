@@ -1,5 +1,5 @@
 
-## Next release
+## v1.4.0 - 2018-07-27
 
 ### Fixed:
 
