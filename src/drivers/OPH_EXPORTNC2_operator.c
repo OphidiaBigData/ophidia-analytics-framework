@@ -552,9 +552,9 @@ int task_init(oph_operator_struct * handle)
 
 		//Check if file exists
 		char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' };
-		snprintf(file_name, sizeof(file_name), OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE, path,
-			 ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name ? ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->
-			 output_name : ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure);
+		char *output_name = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name;
+		snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE, path,
+			 output_name ? output_name : ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure);
 		if (stat(file_name, &st)) {
 			if (errno == EACCES) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_PERMISSION_ERROR, file_name);

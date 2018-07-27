@@ -813,8 +813,10 @@ int task_init(oph_operator_struct * handle)
 		dim[l].id_container = ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_output_container;
 		if (((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_name)
 			snprintf(dim[l].dimension_name, OPH_ODB_DIM_DIMENSION_SIZE, "%s", ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_name);
-		else
+		else {
 			snprintf(dim[l].dimension_name, OPH_ODB_DIM_DIMENSION_SIZE, "d%d", ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_output_datacube);
+			((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_name = strdup(dim[l].dimension_name);
+		}
 		int size = 0;
 		if (oph_dim_check_data_type(((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_type, &size)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid dimension type %s\n", ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_type);

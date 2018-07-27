@@ -7,6 +7,7 @@
 - Return message printed in log of OPH_SCRIPT
 - Bug in usage of 'unlimited' property for dimensions [#44](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/44)
 - Submissing string check in case of long strings
+- Bug in setting 'dim_name' of OPH_MERGECUBES2
 
 ### Added:
 
