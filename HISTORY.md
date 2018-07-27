@@ -3,6 +3,7 @@
 
 ### Fixed:
 
+- Bug in OPH_EXPORTNC2 [#55](https://github.com/OphidiaBigData/ophidia-analytics-framework/issue/55)
 - Operators to set JSON reponse only after global error check [#45](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/45)
 - Return message printed in log of OPH_SCRIPT
 - Bug in usage of 'unlimited' property for dimensions [#44](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/44)
@@ -25,7 +26,7 @@
 - Extend OPH_CUBESCHEMA operator to compute number of cube elements [#52](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/52)
 - Extend OPH_EXPORTNC2 to allow also postponed metadata saving [#51](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/51)
 - Extend operators associated with of oph_normalize
-- Extend values of argument 'comparison' of oph_predicate [#46](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/46)
+- Extend values of argument 'comparison' of oph_predicate [#46](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/46) [#43](https://github.com/OphidiaBigData/ophidia-analytics-framework/issue/43)
 - XML description of OPH_CLUSTER
 - Remove constraint for hostpartition.idjob in order to enable dynamic clustering
 
