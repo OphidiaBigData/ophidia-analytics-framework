@@ -17,11 +17,13 @@ In order to compile and run the Ophidia Analytics Framework, make sure you have 
 5. openssl and openssl-devel
 6. mysql-community-server
 7. nectdf and netcdf-devel
-8. globus-common-devel (only for GSI support)
-9. globus-gsi-credential-devel (only for GSI support)
-10. globus-gsi-proxy-core-devel (only for GSI support)
-11. globus-gssapi-gsi-devel (only for GSI support)
-12. voms-devel (only for GSI support)
+8. libcurl and libcurl-devel
+9. globus-common-devel (only for GSI support)
+10. globus-gsi-credential-devel (only for GSI support)
+11. globus-gsi-proxy-core-devel (only for GSI support)
+12. globus-gssapi-gsi-devel (only for GSI support)
+13. voms-devel (only for GSI support)
+14. cfitsio-devel (only for FITS support)
 
 **Note**:
 This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit.
