@@ -204,7 +204,7 @@ int check_subset_string(char *curfilter, int i, NETCDF_var * measure, int is_ind
 	NETCDF_var tmp_var;
 	int ii, retval, dims_id[NC_MAX_VAR_DIMS];
 	char *endfilter = strchr(curfilter, OPH_DIM_SUBSET_SEPARATOR2);
-	if (!endfilter) {
+	if (!endfilter && !offset) {
 		//Only single point
 		//Check curfilter
 		if (strlen(curfilter) < 1) {
