@@ -260,7 +260,7 @@ int task_init(oph_operator_struct * handle)
 			id_string[0] = 0;
 		} else {
 			//Check that product of ncores and nthread is at most equal to total number of fragments        
-			if (((OPH_DELETE_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > tot_frag_num) {
+			if (((OPH_DELETE_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > (unsigned int) tot_frag_num) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of cores per number of threads is bigger than total fragments\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container,
 					"Number of cores per number of threads is bigger than total fragments\n");
