@@ -75,7 +75,7 @@ static int oph_parse_server_name(const char *server_name, char **server_type, ch
 	return OPH_IOSERVER_SUCCESS;
 }
 
-int oph_ioserver_setup(const char *server_type, oph_ioserver_handler ** handle)
+int oph_ioserver_setup(const char *server_type, oph_ioserver_handler ** handle, char is_thread)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_NULL_HANDLE);
@@ -89,6 +89,10 @@ int oph_ioserver_setup(const char *server_type, oph_ioserver_handler ** handle)
 	internal_handle->server_subtype = NULL;
 	internal_handle->lib = NULL;
 	internal_handle->dlh = NULL;
+	internal_handle->is_thread = 0;
+
+	if (is_thread != 0)
+		internal_handle->is_thread = 1;
 
 	//Set storage server type 
 	if (oph_parse_server_name(server_type, &internal_handle->server_type, &internal_handle->server_subtype)) {

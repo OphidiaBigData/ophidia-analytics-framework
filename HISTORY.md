@@ -1,4 +1,10 @@
 
+## Next release
+
+### Fixed:
+
+- Bug in multi-thread operators using mysql io server type [#56](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/56)
+
 ## v1.4.0 - 2018-07-27
 
 ### Fixed:
