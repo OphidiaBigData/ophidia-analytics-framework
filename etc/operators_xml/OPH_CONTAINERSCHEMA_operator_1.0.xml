@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_CONTAINERSCHEMA" version="1.0">
+    <info>
+        <abstract>[Type]
+Metadata Access.
+
+[Behaviour]
+It shows some information about a container: description, vocabulary, dimension list, etc.
+
+[Parameters]
+- container : name of the input container.
+- cwd : absolute path corresponding to the current working directory.
+
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+        
+[Examples]       
+Show schema of &quot;container1&quot; :
+OPH_TERM: oph_containerschema container=container1;
+SUBMISSION STRING: &quot;operator=oph_containerschema;container=container1;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <category>Metadata</category>
+        <creationdate>28/02/2018</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <permission>read</permission>
+    </info>
+    <args>
+		<argument type="string" mandatory="yes">container</argument>
+		<argument type="string" mandatory="yes">cwd</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|containerschema_info|containerschema_diminfo">objkey_filter</argument>
+    </args>
+</operator>
+

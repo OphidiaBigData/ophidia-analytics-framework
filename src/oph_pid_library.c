@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,6 +42,7 @@ long long oph_memory_size = -1;
 char *oph_base_src_path = NULL;
 char *oph_base_user_path = NULL;
 char oph_user_space = -1;
+char *oph_b2drop_webdav_url = NULL;
 
 int oph_pid_create_pid(const char *url, int id_container, int id_datacube, char **pid)
 {
@@ -129,6 +130,16 @@ int _oph_pid_load_data()
 			} else if (!strncmp(buffer, OPH_PID_USER_SPACE, strlen(OPH_PID_USER_SPACE)) && !strncmp(buffer, OPH_PID_USER_SPACE, strlen(buffer))) {
 				if (!strcasecmp(position, "yes"))
 					oph_user_space = 1;
+			} else if (!oph_b2drop_webdav_url && !strncmp(buffer, OPH_PID_B2DROP_WEBDAV, strlen(OPH_PID_B2DROP_WEBDAV))) {
+				if (!(oph_b2drop_webdav_url = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					fclose(file);
+					return OPH_PID_MEMORY_ERROR;
+				}
+				strncpy(oph_b2drop_webdav_url, position, strlen(position) + 1);
+				oph_b2drop_webdav_url[strlen(position)] = '\0';
+				while (((size = strlen(oph_b2drop_webdav_url) - 1) >= 0) && oph_b2drop_webdav_url[size] == '/')
+					oph_b2drop_webdav_url[size] = '\0';
 			}
 		}
 	}
@@ -139,6 +150,30 @@ int _oph_pid_load_data()
 
 	if (oph_user_space < 0)
 		oph_user_space = 0;
+
+	return OPH_PID_SUCCESS;
+}
+
+int oph_pid_get_b2drop_webdav_url(char **b2drop_webdav)
+{
+	if (!b2drop_webdav) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_PID_NULL_PARAM;
+	}
+	*b2drop_webdav = NULL;
+
+	if (!oph_b2drop_webdav_url) {
+		int res;
+		if ((res = _oph_pid_load_data()))
+			return res;
+	}
+	if (!oph_b2drop_webdav_url)
+		return OPH_PID_SUCCESS;
+
+	if (!(*b2drop_webdav = strdup(oph_b2drop_webdav_url))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_PID_MEMORY_ERROR;
+	}
 
 	return OPH_PID_SUCCESS;
 }

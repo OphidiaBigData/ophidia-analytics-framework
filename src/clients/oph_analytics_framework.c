@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -79,15 +79,15 @@ int main(int argc, char *argv[])
 		if (!myrank)
 			gettimeofday(&start_time, NULL);
 
-		char task_string[OPH_COMMON_BUFFER_LEN + 1];
-		strncpy(task_string, argv[1], OPH_COMMON_BUFFER_LEN);
-		task_string[OPH_COMMON_BUFFER_LEN] = 0;
+		char task_string[OPH_COMMON_BUFFER_LEN];
+		int n = snprintf(task_string, OPH_COMMON_BUFFER_LEN, "%s", argv[1]);
 		if (!myrank)
 			pmesg(LOG_INFO, __FILE__, __LINE__, "Task string:\n%s\n", task_string);
 
-		if ((res = oph_af_execute_framework(task_string, size, myrank))) {
+		if (n >= OPH_COMMON_BUFFER_LEN)
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Submission string is too long! ERROR: %d\n", res);
+		else if ((res = oph_af_execute_framework(task_string, size, myrank)))
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Framework execution failed! ERROR: %d\n", res);
-		}
 
 		MPI_Barrier(MPI_COMM_WORLD);
 		if (!myrank) {

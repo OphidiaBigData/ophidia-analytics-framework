@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -727,6 +727,152 @@ int oph_dim_update_value(char *dim_row, const char *dimension_type, unsigned int
 	return OPH_DIM_SUCCESS;
 }
 
+int _oph_dim_get_base_time(oph_odb_dimension * dim, long long *base_time)
+{
+	if (!dim || !base_time) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_DIM_NULL_PARAM;
+	}
+	*base_time = 0;
+
+	struct tm tm_value;
+	memset(&tm_value, 0, sizeof(struct tm));
+	if (dim->base_time && strlen(dim->base_time)) {
+		strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", &tm_value);
+		tm_value.tm_year += 1900;
+		tm_value.tm_mon++;
+		if (oph_date_to_day(tm_value.tm_year, tm_value.tm_mon, tm_value.tm_mday, base_time, dim)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
+			return OPH_DIM_DATA_ERROR;
+		}
+		*base_time = tm_value.tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_value.tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_value.tm_hour + OPH_ODB_DIM_HOUR_NUMBER * (*base_time)));
+	}
+
+	return OPH_DIM_SUCCESS;
+}
+
+int _oph_dim_get_scaling_factor(oph_odb_dimension * dim, double *scaling_factor)
+{
+	if (!dim || !scaling_factor) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_DIM_NULL_PARAM;
+	}
+	*scaling_factor = 1.0;
+
+	switch (dim->units[0]) {
+		case 'd':
+			*scaling_factor *= 4.0;
+		case '6':
+			*scaling_factor *= 2.0;
+		case '3':
+			*scaling_factor *= 3.0;
+		case 'h':
+			*scaling_factor *= 60.0;
+		case 'm':
+			*scaling_factor *= 60.0;
+		case 's':
+			break;
+		default:
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unrecognized or unsupported units in '%s'\n", dim->units);
+	}
+
+	return OPH_DIM_SUCCESS;
+}
+
+int oph_dim_parse_season_subset(const char *subset_string, oph_odb_dimension * dim, char *output_string, char *data, unsigned long long data_size)
+{
+	if (!subset_string || !dim || !output_string || !data || !data_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_DIM_NULL_PARAM;
+	}
+	if (!dim->calendar || !strlen(dim->calendar))
+		return OPH_DIM_TIME_PARSING_ERROR;
+	*output_string = 0;
+
+	char *pch = NULL, *save_pointer = NULL, temp[MYSQL_BUFLEN];
+	snprintf(temp, MYSQL_BUFLEN, "%s", subset_string);
+
+	long long base_time = 0, value_time;
+	double min, max, scaling_factor;
+	if (oph_dim_get_double_value_of(data, 0, dim->dimension_type, &min))
+		return OPH_DIM_DATA_ERROR;
+	if (oph_dim_get_double_value_of(data, data_size - 1, dim->dimension_type, &max))
+		return OPH_DIM_DATA_ERROR;
+	if (_oph_dim_get_base_time(dim, &base_time))
+		return OPH_DIM_DATA_ERROR;
+	if (_oph_dim_get_scaling_factor(dim, &scaling_factor))
+		return OPH_DIM_DATA_ERROR;
+
+	// Get bounds as years
+	int min_year, max_year;
+	struct tm tm_base;
+	memset(&tm_base, 0, sizeof(struct tm));
+	value_time = (long long) (min * scaling_factor) + base_time;
+	value_time /= OPH_ODB_DIM_SECOND_NUMBER;	// minutes
+	value_time /= OPH_ODB_DIM_MINUTE_NUMBER;	// hours
+	value_time /= OPH_ODB_DIM_HOUR_NUMBER;	// days
+	if (oph_day_to_date(value_time, &tm_base.tm_year, &tm_base.tm_mon, &tm_base.tm_mday, &tm_base.tm_wday, &tm_base.tm_yday, dim)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
+		return OPH_DIM_DATA_ERROR;
+	}
+	min_year = tm_base.tm_year - 1900;
+	memset(&tm_base, 0, sizeof(struct tm));
+	value_time = (long long) (max * scaling_factor) + base_time;
+	value_time /= OPH_ODB_DIM_SECOND_NUMBER;	// minutes
+	value_time /= OPH_ODB_DIM_MINUTE_NUMBER;	// hours
+	value_time /= OPH_ODB_DIM_HOUR_NUMBER;	// days
+	if (oph_day_to_date(value_time, &tm_base.tm_year, &tm_base.tm_mon, &tm_base.tm_mday, &tm_base.tm_wday, &tm_base.tm_yday, dim)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
+		return OPH_DIM_DATA_ERROR;
+	}
+	max_year = tm_base.tm_year - 1900;
+
+	int i, n = 0, nn;
+	unsigned char type, first = 0;
+	char season[5], temp2[MYSQL_BUFLEN], temp3[MYSQL_BUFLEN];
+	for (i = 0; i < 5; ++i)
+		season[i] = 0;
+	while ((pch = strtok_r(pch ? NULL : temp, OPH_DIM_SUBSET_SEPARATOR1, &save_pointer))) {
+		if (!strcmp(pch, OPH_DIM_TIME_WINTER))
+			type = 1;
+		else if (!strcmp(pch, OPH_DIM_TIME_SPRING))
+			type = 2;
+		else if (!strcmp(pch, OPH_DIM_TIME_SUMMER))
+			type = 3;
+		else if (!strcmp(pch, OPH_DIM_TIME_AUTUMN))
+			type = 4;
+		else {
+			type = 0;
+			n += snprintf(output_string + n, MYSQL_BUFLEN - n, "%s%s", first ? OPH_DIM_SUBSET_SEPARATOR1 : "", pch);
+		}
+		if (type && !season[type]) {
+			season[type] = 1;	// Avoid to repeat the same season more times
+			*temp2 = nn = 0;
+			type *= 3;
+			for (i = min_year; i <= max_year; ++i) {
+				memset(&tm_base, 0, sizeof(struct tm));
+				tm_base.tm_mon = type - 4;
+				tm_base.tm_year = i;
+				if (tm_base.tm_mon < 0) {
+					tm_base.tm_mon = 11;
+					tm_base.tm_year--;
+				}
+				strftime(temp3, MYSQL_BUFLEN, "%Y-%m", &tm_base);
+				nn += snprintf(temp2 + nn, MYSQL_BUFLEN - nn, "%s%s%c", i > min_year ? OPH_DIM_SUBSET_SEPARATOR1 : "", temp3, OPH_DIM_SUBSET_SEPARATOR[1]);
+				memset(&tm_base, 0, sizeof(struct tm));
+				tm_base.tm_mon = type - 1;
+				tm_base.tm_year = i;
+				strftime(temp3, MYSQL_BUFLEN, "%Y-%m", &tm_base);
+				nn += snprintf(temp2 + nn, MYSQL_BUFLEN - nn, "%s", temp3);
+			}
+			n += snprintf(output_string + n, MYSQL_BUFLEN - n, "%s%s", first ? OPH_DIM_SUBSET_SEPARATOR1 : "", temp2);
+		}
+		first = 1;
+	}
+
+	return OPH_DIM_SUCCESS;
+}
+
 int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim, char *output_string)
 {
 	if (!subset_string || !dim || !output_string) {
@@ -736,38 +882,6 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 	if (!dim->calendar || !strlen(dim->calendar))
 		return OPH_DIM_TIME_PARSING_ERROR;
 	*output_string = 0;
-
-	struct tm tm_value;
-	memset(&tm_value, 0, sizeof(struct tm));
-	long long base_time = 0, value_time;
-	if (dim->base_time && strlen(dim->base_time)) {
-		strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", &tm_value);
-		tm_value.tm_year += 1900;
-		tm_value.tm_mon++;
-		if (oph_date_to_day(tm_value.tm_year, tm_value.tm_mon, tm_value.tm_mday, &base_time, dim)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
-			return OPH_DIM_DATA_ERROR;
-		}
-		base_time = tm_value.tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_value.tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_value.tm_hour + OPH_ODB_DIM_HOUR_NUMBER * base_time));
-	}
-
-	double scaling_factor = 1.0, _value;
-	switch (dim->units[0]) {
-		case 'd':
-			scaling_factor *= 4.0;
-		case '6':
-			scaling_factor *= 2.0;
-		case '3':
-			scaling_factor *= 3.0;
-		case 'h':
-			scaling_factor *= 60.0;
-		case 'm':
-			scaling_factor *= 60.0;
-		case 's':
-			break;
-		default:
-			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unrecognized or unsupported units in '%s'\n", dim->units);
-	}
 
 	int n, nn, nnn;
 	char *pch = NULL, *save_pointer = NULL, temp[MYSQL_BUFLEN];
@@ -789,6 +903,14 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 	separator[nn] = 0;
 	n = nn = 0;
 
+	struct tm tm_value;
+	long long base_time = 0, value_time;
+	double scaling_factor, _value;
+	if (_oph_dim_get_base_time(dim, &base_time))
+		return OPH_DIM_DATA_ERROR;
+	if (_oph_dim_get_scaling_factor(dim, &scaling_factor))
+		return OPH_DIM_DATA_ERROR;
+
 	while ((pch = strtok_r(pch ? NULL : temp, OPH_DIM_SUBSET_SEPARATOR, &save_pointer))) {
 		value_time = 0;
 		memset(&tm_value, 0, sizeof(struct tm));
@@ -800,6 +922,8 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 
 		tm_value.tm_year += 1900;
 		tm_value.tm_mon++;
+		if (!n && !tm_value.tm_mday)
+			tm_value.tm_mday++;
 		if (oph_date_to_day(tm_value.tm_year, tm_value.tm_mon, tm_value.tm_mday, &value_time, dim)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
 			return OPH_DIM_DATA_ERROR;

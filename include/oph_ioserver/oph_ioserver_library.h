@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,6 +43,9 @@
 
 #define OPH_IOSERVER_SEPARATOR '_'
 
+#define OPH_IOSERVER_MYSQL_TYPE		"mysql_table"
+#define OPH_IOSERVER_OPHIDIAIO_TYPE	"ophidiaio_memory"
+
 //*************Error codes***************//
 
 #define OPH_IOSERVER_SUCCESS			           0
@@ -81,12 +84,14 @@
  * \param server_subtype  Name of storage device used within the server
  * \param lib             Dynamic library path
  * \param dlh             Libtool handler to dynamic library
+ * \param is_thread       Flag set to non-zero if handler is used within a thread
  */
 struct _oph_ioserver {
 	char *server_type;
 	char *server_subtype;
 	char *lib;
 	void *dlh;
+	char is_thread;
 };
 typedef struct _oph_ioserver oph_ioserver_handler;
 
@@ -222,9 +227,10 @@ int (*_SERVER_free_result) (oph_ioserver_handler * handle, oph_ioserver_result *
  * \brief               Function to initialize data store server library. WARNING: Call this function before any other function to initialize the dynamic library.
  * \param server_type   String with the name of server plugin to use
  * \param handle        Address to pointer for dynamic server plugin handle
+ * \param is_thread     Flag set to non-zero if handler is used within a thread
  * \return              0 if successfull, non-0 otherwise
  */
-int oph_ioserver_setup(const char *server_type, oph_ioserver_handler ** handle);
+int oph_ioserver_setup(const char *server_type, oph_ioserver_handler ** handle, char is_thread);
 
 /**
  * \brief               Function to connect to data store server.

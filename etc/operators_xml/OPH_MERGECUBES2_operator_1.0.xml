@@ -12,12 +12,11 @@ data cubes can be merged. A new implicit dimension will be created.
 
 [Parameters]
 - cubes : name of the datacubes to merge. The names must be in PID format.
-         Multiple-value field: list of cubes separated by &quot;|&quot; can be provided.
-         At least two datacubes must be specified.  
-- schedule : scheduling algorithm. The only possible value is 0,
-         for a static linear block distribution of resources.
+          Multiple-value field: list of cubes separated by &quot;|&quot; can be provided.
+- schedule : scheduling algorithm. The only possible value is 0, for a static linear block distribution of resources.
 - container : name of the container to be used to store the output cube; by default it is the input container.
 - dim : name of the new dimension to be created; by default a unique random name is chosen.
+- dim_type: data type associated with the new dimension. Default value is &quot;long&quot;.
 - number : number of replies of the first cube; by default the first cube is considered only once.
 - description : additional description to be associated with the output cube.
         
@@ -49,6 +48,7 @@ SUBMISSION STRING: &quot;operator=oph_mergecubes2;cubes=http://www.example.com/1
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">dim</argument>
+		<argument type="string" mandatory="no" default="long" values="double|float|int|long|short|byte">dim_type</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">number</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|mergecubes">objkey_filter</argument>

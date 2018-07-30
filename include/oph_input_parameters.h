@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -41,12 +41,16 @@
 #define OPH_IN_PARAM_MEASURE_NAME				"measure"
 #define OPH_IN_PARAM_MEASURE_TYPE				"measure_type"
 #define OPH_IN_PARAM_CHECK_TYPE					"check_type"
+#define OPH_IN_PARAM_AUTH_FILE_PATH				"auth_path"
 #define OPH_IN_PARAM_SRC_FILE_PATH				"src_path"
+#define OPH_IN_PARAM_DST_FILE_PATH				"dst_path"
 #define OPH_IN_PARAM_DIMENSION_NUMBER				"ndim"
 #define OPH_IN_PARAM_DIMENSION_NAME				"dim"
 #define OPH_IN_PARAM_DIMENSION_TYPE				"dim_type"
 #define OPH_IN_PARAM_DIMENSION_SIZE				"dim_size"
 #define OPH_IN_PARAM_DIMENSION_LEVEL				"concept_level"
+#define OPH_IN_PARAM_EI_DIMENSION_LEVEL				"dim_level"
+#define OPH_IN_PARAM_EI_DIMENSION_TYPE				"dim_array"
 #define OPH_IN_PARAM_REDUCTION_OPERATION			"operation"
 #define OPH_IN_PARAM_REDUCTION_SIZE				"group_size"
 #define OPH_IN_PARAM_CUBEIO_HIERARCHY_DIRECTION			"branch"
@@ -97,6 +101,7 @@
 #define OPH_IN_PARAM_IOSERVER_TYPE				"ioserver"
 #define OPH_IN_PARAM_FS_TYPE					"filesystem"
 #define OPH_IN_PARAM_IMPORTDIM_GRID_NAME			"grid"
+#define OPH_IN_PARAM_CHECK_GRID					"check_grid"
 #define OPH_IN_PARAM_VOCABULARY					"vocabulary"
 #define OPH_IN_PARAM_IMPORT_METADATA				"import_metadata"
 #define OPH_IN_PARAM_EXPORT_METADATA				"export_metadata"
@@ -123,6 +128,7 @@
 #define OPH_IN_PARAM_METADATA_ID				"metadata_id"
 #define OPH_IN_PARAM_METADATA_TYPE				"metadata_type"
 #define OPH_IN_PARAM_METADATA_VARIABLE				"variable"
+#define OPH_IN_PARAM_METADATA_VARIABLE_FILTER	"variable_filter"
 #define OPH_IN_PARAM_METADATA_VALUE				"metadata_value"
 #define OPH_IN_PARAM_METADATA_TYPE_FILTER			"metadata_type_filter"
 #define OPH_IN_PARAM_METADATA_VALUE_FILTER			"metadata_value_filter"
@@ -172,13 +178,16 @@
 #define OPH_IN_PARAM_NUMBER					"number"
 #define OPH_IN_PARAM_FILE					"file"
 #define OPH_IN_PARAM_DEPTH					"depth"
-#define OPH_IN_PARAM_REALPATH				"realpath"
+#define OPH_IN_PARAM_REALPATH					"realpath"
+#define OPH_IN_PARAM_ON_REDUCE					"on_reduce"
+#define OPH_IN_PARAM_ACTION					"action"
 
 #define OPH_IN_PARAM_SCRIPT					"script"
 #define OPH_IN_PARAM_ARGS					"args"
 #define OPH_IN_PARAM_STDOUT					"stdout"
 #define OPH_IN_PARAM_STDERR					"stderr"
 
+#define OPH_ARG_NTHREAD						"nthreads"
 #define OPH_ARG_USERNAME					"username"
 #define OPH_ARG_SESSIONID					"sessionid"
 #define OPH_ARG_WORKFLOWID					"workflowid"

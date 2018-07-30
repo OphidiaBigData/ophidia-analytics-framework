@@ -23,37 +23,39 @@ It provides CRUD operations (Create, Read, Update and Delete) on OphidiaDB metad
                Note that the name of a key can be related to multiple instances or values, so specifying
                the name of only 1 key can result in multiple rows returned by the operator.
                If it is necessary to interact with only 1 particular instance, use the parameter metadata_id instead.
-- variable : name of the variable to which we can associate a new metadata key. This value is considered
-            only in insert mode and its default value (&quot;global&quot;) can be used to insert a global metadata.           
+- variable : name of the variable to which we can associate a new metadata key.
+             Its default value (&quot;global&quot;) can be used to refer to a global metadata.
 - metadata_id : id of the particular metadata instance to interact with.
-              It cannot be used in insert mode.
-              It is mandatory in update mode.
-              It can be used in read or delete mode to specify a particular instance to be read or deleted.
-              In read or delete modes, if specified it will mute the values of the parameter metadata_key;
-              if not specified, it will be used its default value (0) in order to use metadata_key to select
-              appropriate content.
+                It cannot be used in insert mode.
+                It is mandatory in update mode.
+                It can be used in read or delete mode to specify a particular instance to be read or deleted.
+                In read or delete modes, if specified it will mute the values of the parameter metadata_key;
+                if not specified, it will be used its default value (0) in order to use metadata_key to select
+                appropriate content.
 - metadata_type : name of the type of the to-be-inserted metadata.
-                To change the type of already-inserted metadata, use a combination of a deletion and an insertion.
-                Default value is &quot;text&quot; but other values include &quot;image&quot;,
-                &quot;video&quot;,&quot;audio&quot; and &quot;url&quot;, even if all contents will be saved as strings.
-                Numerical data types are also available as well.
+                  To change the type of already-inserted metadata, use a combination of a deletion and an insertion.
+                  Default value is &quot;text&quot; but other values include &quot;image&quot;,
+                  &quot;video&quot;,&quot;audio&quot; and &quot;url&quot;, even if all contents will be saved as strings.
+                  Numerical data types are also available as well.
 - metadata_value : string value to be assigned to specified metadata.
-                 Valid only in insert or update modes.
-                 In insert mode more values can be listed by using &quot;|&quot; as separator.
-                 Default value is &quot;null&quot;.
-- metadata_type_filter : optional filter on the type of returned metadata valid in read mode only.
-                       This filter will be considered only when metadata_id is not specified or
-                       equal to its default value (0).
-                       This filter is used with the SQL search pattern &quot;filter&quot;, so use one
-                       of the values of metadata_type or &quot;all&quot; to select all types (default).
-- metadata_value_filter : optional filter on the value of returned metadata valid in read mode only.
-                        This filter will be considered only when metadata_id is not specified or
-                        equal to its default value (0).
-                        This filter is used with the SQL search pattern %filter% in order to select
-                        values containing &quot;filter&quot;. Use &quot;all&quot; (default) to mute this filter.
+                   Valid only in insert or update modes.
+                   In insert mode more values can be listed by using &quot;|&quot; as separator.
+                   Default value is &quot;null&quot;.
+- variable_filter : optional filter on variable name, valid in read/delete mode only.
+                    This filter will be considered only when metadata_id is not specified or equal to its default value (0).
+                    This filter is used with the SQL search pattern %filter% in order to select variables containing &quot;filter&quot;.
+                    Use &quot;all&quot; (default) to mute this filter.
+- metadata_type_filter : optional filter on the type of returned metadata, valid in read/delete mode only.
+                         This filter will be considered only when metadata_id is not specified or equal to its default value (0).
+                         This filter is used with the SQL search pattern %filter% in order to select types containing &quot;filter&quot;.
+                         Use &quot;all&quot; (default) to mute this filter.
+- metadata_value_filter : optional filter on the value of returned metadata, valid in read/delete mode only.
+                          This filter will be considered only when metadata_id is not specified or equal to its default value (0).
+                          This filter is used with the SQL search pattern %filter% in order to select values containing &quot;filter&quot;.
+                          Use &quot;all&quot; (default) to mute this filter.
 - force : force update or deletion of functional metadata associated to a vocabulary (e.g. time metadata).
-        By default update or deletion of functiona metadata is not allowed (&quot;no&quot;)
-        Set to &quot;yes&quot; to allow modification of functional metadata.
+          By default update or deletion of functiona metadata is not allowed (&quot;no&quot;)
+          Set to &quot;yes&quot; to allow modification of functional metadata.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -85,6 +87,7 @@ SUBMISSION STRING: &quot;operator=oph_metadata;mode=insert;cube=http://www.examp
 		<argument type="int" mandatory="no" default="0" minvalue="0">metadata_id</argument>
 		<argument type="string" mandatory="no" default="text" values="text|image|video|audio|url|double|float|long|int|short">metadata_type</argument>
 		<argument type="string" mandatory="no" default="-">metadata_value</argument>
+		<argument type="string" mandatory="no" default="all">variable_filter</argument>
 		<argument type="string" mandatory="no" default="all">metadata_type_filter</argument>
 		<argument type="string" mandatory="no" default="all">metadata_value_filter</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>

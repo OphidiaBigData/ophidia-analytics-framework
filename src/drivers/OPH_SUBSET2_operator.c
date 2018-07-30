@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,6 +33,7 @@
 #include "oph_pid_library.h"
 #include "oph_json_library.h"
 #include "oph_datacube_library.h"
+#include "oph_driver_procedure_library.h"
 
 #include "debug.h"
 
@@ -76,6 +77,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->number_of_dim = 0;
 	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->frags_size = 0;
 	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->grid_name = NULL;
+	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->check_grid = 0;
 	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->objkeys_num = -1;
 	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->server = NULL;
@@ -85,6 +87,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->offset = NULL;
 	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->offset_num = 0;
+	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->execute_error = 0;
 
 	int i, j;
 	for (i = 0; i < OPH_SUBSET_LIB_MAX_DIM; ++i) {
@@ -378,6 +381,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 	}
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CHECK_GRID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CHECK_GRID);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_SUBSET2_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CHECK_GRID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN))
+		((OPH_SUBSET2_operator_handle *) handle->operator_handle)->check_grid = 1;
+
 	value = hashtbl_get(task_tbl, OPH_ARG_IDJOB);
 	if (!value)
 		((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_job = 0;
@@ -416,7 +428,7 @@ int task_init(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
-	int pointer, stream_max_size = 6 + OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE + 3 * sizeof(int) + 3 * OPH_TP_TASKLEN, flush = 1;
+	int pointer, stream_max_size = 6 + OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE + 3 * sizeof(int) + 3 * OPH_TP_TASKLEN;
 	char stream[stream_max_size];
 	memset(stream, 0, sizeof(stream));
 	*stream = 0;
@@ -1392,7 +1404,7 @@ int task_init(oph_operator_struct * handle)
 					    && (stored_dim_insts[d].size == dim_inst[l].size) && (stored_dim_insts[d].concept_level == dim_inst[l].concept_level))
 						break;
 				//If original dimension is found and has size 0 then do not compare
-				if (!(d < stored_dim_num && !dim_inst[l].size)) {
+				if (!((d < stored_dim_num) && !dim_inst[l].size) && ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->check_grid) {
 					if ((d >= stored_dim_num)
 					    || oph_dim_compare_dimension(db, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, dim_inst[l].size, dim_row, stored_dim_insts[d].fk_id_dimension_index,
 									 &match) || match) {
@@ -1466,6 +1478,12 @@ int task_init(oph_operator_struct * handle)
 		if (stored_dim_insts)
 			free(stored_dim_insts);
 
+		if (id_grid && oph_odb_dim_enable_grid(oDB, id_grid)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to enable grid\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container, "Unable to enable grid\n");
+			free(cubedims);
+			goto __OPH_EXIT_1;
+		}
 		// End - Dimension table management
 
 		oph_subset_vector_free(subset_struct, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->number_of_dim);
@@ -1539,18 +1557,15 @@ int task_init(oph_operator_struct * handle)
 			strncpy(params3, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->apply_clause_type, OPH_TP_TASKLEN);
 		else
 			*params3 = '\0';
-
-		flush = 0;
 	}
       __OPH_EXIT_1:
-	if (!handle->proc_rank && flush)
-		oph_odb_cube_delete_from_datacube_table(&((OPH_SUBSET2_operator_handle *) handle->operator_handle)->oDB, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_output_datacube);
 
 	//Broadcast to all other processes the fragment relative index
 	MPI_Bcast(stream, stream_max_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 	if (*stream == 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET2_MASTER_TASK_INIT_FAILED);
+		((OPH_SUBSET2_operator_handle *) handle->operator_handle)->execute_error = 1;
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -1558,21 +1573,25 @@ int task_init(oph_operator_struct * handle)
 		if (!(((OPH_SUBSET2_operator_handle *) handle->operator_handle)->fragment_ids = (char *) strndup(id_string[0], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET2_MEMORY_ERROR_INPUT, "fragment ids");
+			((OPH_SUBSET2_operator_handle *) handle->operator_handle)->execute_error = 1;
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 		if (!(((OPH_SUBSET2_operator_handle *) handle->operator_handle)->where_clause = (char *) strndup(params, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET2_MEMORY_ERROR_INPUT, "WHERE clause");
+			((OPH_SUBSET2_operator_handle *) handle->operator_handle)->execute_error = 1;
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 		if (!(((OPH_SUBSET2_operator_handle *) handle->operator_handle)->apply_clause = (char *) strndup(params2, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET2_MEMORY_ERROR_INPUT, "APPLY clause");
+			((OPH_SUBSET2_operator_handle *) handle->operator_handle)->execute_error = 1;
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 		if (!(((OPH_SUBSET2_operator_handle *) handle->operator_handle)->apply_clause_type = (char *) strndup(params3, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET2_MEMORY_ERROR_INPUT, "APPLY clause");
+			((OPH_SUBSET2_operator_handle *) handle->operator_handle)->execute_error = 1;
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 
@@ -1591,6 +1610,7 @@ int task_init(oph_operator_struct * handle)
 		if (*(((OPH_SUBSET2_operator_handle *) handle->operator_handle)->keys) < 0) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET2_MASTER_TASK_INIT_FAILED);
+			((OPH_SUBSET2_operator_handle *) handle->operator_handle)->execute_error = 1;
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 	}
@@ -1608,6 +1628,8 @@ int task_distribute(oph_operator_struct * handle)
 
 	int id_number;
 	char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
+
+	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->execute_error = 1;
 
 	//Get total number of fragment IDs
 	if (oph_ids_count_number_of_ids(((OPH_SUBSET2_operator_handle *) handle->operator_handle)->fragment_ids, &id_number)) {
@@ -1645,9 +1667,10 @@ int task_distribute(oph_operator_struct * handle)
 			((OPH_SUBSET2_operator_handle *) handle->operator_handle)->fragment_id_start_position = -1;
 	}
 
-	if (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0)
+	if (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0) {
+		((OPH_SUBSET2_operator_handle *) handle->operator_handle)->execute_error = 0;
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
-
+	}
 	//Partition fragment relative index string
 	char *new_ptr = new_id_string;
 	if (oph_ids_get_substring_from_string
@@ -1665,6 +1688,7 @@ int task_distribute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
+	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->execute_error = 0;
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -1679,6 +1703,8 @@ int task_execute(oph_operator_struct * handle)
 
 	if (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+
+	((OPH_SUBSET2_operator_handle *) handle->operator_handle)->execute_error = 1;
 
 	int i, j, k;
 
@@ -1854,7 +1880,39 @@ int task_execute(oph_operator_struct * handle)
 	oph_odb_stge_free_db_list(&dbs);
 	oph_odb_stge_free_dbms_list(&dbmss);
 
-	if (handle->proc_rank == 0 && (result == OPH_ANALYTICS_OPERATOR_SUCCESS)) {
+	if (result == OPH_ANALYTICS_OPERATOR_SUCCESS)
+		((OPH_SUBSET2_operator_handle *) handle->operator_handle)->execute_error = 0;
+
+	return result;
+}
+
+int task_reduce(oph_operator_struct * handle)
+{
+	if (!handle || !handle->operator_handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET2_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+}
+
+int task_destroy(oph_operator_struct * handle)
+{
+	if (!handle || !handle->operator_handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET2_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	short int proc_error = ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->execute_error;
+	int id_datacube = ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_output_datacube;
+	short int global_error = 0;
+
+	//Reduce results
+	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
+
+	if (handle->proc_rank == 0 && global_error == 0) {
 		//Master process print output datacube PID
 		char *tmp_uri = NULL;
 		if (oph_pid_get_uri(&tmp_uri)) {
@@ -1897,31 +1955,24 @@ int task_execute(oph_operator_struct * handle)
 		free(tmp_uri);
 	}
 
-	if (!handle->proc_rank && (result != OPH_ANALYTICS_OPERATOR_SUCCESS))
-		oph_odb_cube_delete_from_datacube_table(&((OPH_SUBSET2_operator_handle *) handle->operator_handle)->oDB, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_output_datacube);
+	if (global_error) {
+		//Delete fragments
+		if (((OPH_SUBSET2_operator_handle *) handle->operator_handle)->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
+			if ((oph_dproc_delete_data(id_datacube, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container,
+						   ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0, 1))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
+			}
+		}
+		//Before deleting wait for all process to reach this point
+		MPI_Barrier(MPI_COMM_WORLD);
 
-	return result;
-}
-
-int task_reduce(oph_operator_struct * handle)
-{
-	if (!handle || !handle->operator_handle) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET2_NULL_OPERATOR_HANDLE);
-		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+		//Delete from OphidiaDB
+		if (handle->proc_rank == 0) {
+			oph_dproc_clean_odb(&((OPH_SUBSET2_operator_handle *) handle->operator_handle)->oDB, id_datacube,
+					    ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container);
+		}
 	}
-
-	return OPH_ANALYTICS_OPERATOR_SUCCESS;
-}
-
-int task_destroy(oph_operator_struct * handle)
-{
-	if (!handle || !handle->operator_handle) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET2_NULL_OPERATOR_HANDLE);
-		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
-	}
-
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 

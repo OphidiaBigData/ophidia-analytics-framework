@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -70,6 +70,11 @@
 #define OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR "since"
 
 #define OPH_DIM_TIME_CL_IS_TIME(cl) ((cl!=OPH_COMMON_BASE_CONCEPT_LEVEL) && (cl!=OPH_COMMON_CONCEPT_LEVEL_UNKNOWN))
+
+#define OPH_DIM_TIME_WINTER "DJF"
+#define OPH_DIM_TIME_SPRING "MAM"
+#define OPH_DIM_TIME_SUMMER "JJA"
+#define OPH_DIM_TIME_AUTUMN "SON"
 
 #define OPH_DIM_STREAM_ELEMENTS 11
 #define OPH_DIM_STREAM_LENGTH 64
@@ -168,6 +173,15 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensionin
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_dimension * dim, int id_datacube);
+
+/**
+ * \brief Function to retrieve dimensions from OphidiaDB given the id_dimension
+ * \param oDB Pointer to the OphidiaDB
+ * \param id_dimensioninst ID of the dimension instance to be found
+ * \param dimension_name Pointer to string to be filled
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_dim_retrieve_dimension_name_from_instance_id(ophidiadb * oDB, int id_dimensioninst, char **dimension_name);
 
 /**
  * \brief Function to retrieve dimension instances from OphidiaDB given the id_dimensioninst
@@ -269,12 +283,20 @@ int oph_odb_dim_delete_from_grid_table(ophidiadb * oDB, int id_container);
 /**
  * \brief Function that updates OphidiaDB adding the new grid
  * \param oDB Pointer to OphidiaDB
- * \param grid Pointer to grid to be added
+ * \param grid Pointer to grid to be added (disabled by default)
  * \param last_insertd_id ID of last inserted datacube
  * \param grid_exist Flag set in case a grid with the same name already exists
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid * grid, int *last_insertd_id, int *grid_exist);
+
+/**
+ * \brief Function that updates OphidiaDB adding the new grid
+ * \param oDB Pointer to OphidiaDB
+ * \param id_grid Identifier of the grid to be enabled
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_dim_enable_grid(ophidiadb * oDB, int id_grid);
 
 /**
  * \brief Function that updates OphidiaDB adding the new dimension
@@ -337,5 +359,9 @@ int oph_odb_dim_set_time_dimension(ophidiadb * oDB, int id_datacube, char *dimen
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_dim_update_time_dimension(oph_odb_dimension * dim, char **templates, char **values, int nattr);
+
+int oph_odb_dim_delete_dimensioninstance(ophidiadb * oDB, int id_dimensioninst);
+
+int oph_odb_dim_retrieve_dimensions(ophidiadb * oDB, int id_datacube, char ***dimension_names, int *dimension_names_num);
 
 #endif				/* __OPH_ODB_DIM_H__ */

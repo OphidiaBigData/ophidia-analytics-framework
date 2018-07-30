@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -81,6 +81,7 @@ struct _oph_operator_struct {
 	int proc_rank;
 	char *lib;
 	void *dlh;
+	void *soap_data;
 };
 typedef struct _oph_operator_struct oph_operator_struct;
 

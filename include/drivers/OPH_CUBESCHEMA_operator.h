@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,6 +38,11 @@
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
  * \param base64 Flag used in representation of output data
+ * \param action Comamnd type: read or write.
+ * \param dim_type Type of a new dimension
+ * \param concept_level Concept level of a new dimension
+ * \param dim_level Level of a new dimension in dimension list
+ * \param dim_array Kind of a new dimension (implicit or explicit)
  */
 struct _OPH_CUBESCHEMA_operator_handle {
 	ophidiadb oDB;
@@ -53,6 +58,10 @@ struct _OPH_CUBESCHEMA_operator_handle {
 	int objkeys_num;
 	char *sessionid;
 	int base64;
+	char action;
+	char concept_level;
+	int dim_level;
+	char dim_array;
 };
 typedef struct _OPH_CUBESCHEMA_operator_handle OPH_CUBESCHEMA_operator_handle;
 

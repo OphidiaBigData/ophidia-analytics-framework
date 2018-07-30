@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,8 +38,9 @@
  * \param id_input_datacube ID of the datacube to export
  * \param id_input_container ID of the input container related to datacube to export
  * \param output_path Name of the output path in prefix to save files
- * \param output_link URL to file
+ * \param output_path_user Name of the output path set by the user
  * \param output_path_user_defined 1 in case of a user-defined output path
+ * \param output_link URL to file
  * \param output_name Filename for output files
  * \param export_metadata Flag to indicate if metadata has to be exported with data
  * \param schedule_algo Number of the distribution algorithm to use 
@@ -63,8 +64,9 @@ struct _OPH_EXPORTNC_operator_handle {
 	int id_input_datacube;
 	int id_input_container;
 	char *output_path;
-	char *output_link;
+	char *output_path_user;
 	int output_path_user_defined;
+	char *output_link;
 	char *output_name;
 	int export_metadata;
 	int schedule_algo;

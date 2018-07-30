@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -109,12 +109,13 @@
 #define OPH_JSON_OBJKEY_SPLIT						"split"
 #define OPH_JSON_OBJKEY_MERGE						"merge"
 #define OPH_JSON_OBJKEY_INSTANCES					"instances"
+#define OPH_JSON_OBJKEY_INSTANCES_SUMMARY			"instances_summary"
 #define OPH_JSON_OBJKEY_TASKS						"tasks"
 #define OPH_JSON_OBJKEY_FIND_LIST					"find_list"
 #define OPH_JSON_OBJKEY_FIND_SUMMARY					"find_summary"
 #define OPH_JSON_OBJKEY_IMPORTNC					"importnc"
-#define OPH_JSON_OBJKEY_IMPORTFITS                                      "importfits"
-#define OPH_JSON_OBJKEY_IMPORTFITS_SUMMARY                              "importfits_summary"
+#define OPH_JSON_OBJKEY_IMPORTFITS					"importfits"
+#define OPH_JSON_OBJKEY_IMPORTFITS_SUMMARY			"importfits_summary"
 #define OPH_JSON_OBJKEY_EXPORTNC					"exportnc"
 #define OPH_JSON_OBJKEY_EXPORTNC2					"exportnc2"
 #define OPH_JSON_OBJKEY_EXPLORENC					"explorenc"
@@ -135,8 +136,13 @@
 #define OPH_JSON_OBJKEY_CONCATNC					"concatnc"
 #define OPH_JSON_OBJKEY_INTERCUBE					"intercube"
 #define OPH_JSON_OBJKEY_MERGECUBES					"mergecubes"
+#define OPH_JSON_OBJKEY_B2DROP						"b2drop"
 #define OPH_JSON_OBJKEY_SCRIPT						"script"
-#define OPH_JSON_OBJKEY_FS						"fs"
+#define OPH_JSON_OBJKEY_SCRIPT_URL					"script_url"
+#define OPH_JSON_OBJKEY_SCRIPT_RETURNCODE			"script_returncode"
+#define OPH_JSON_OBJKEY_FS							"fs"
+#define OPH_JSON_OBJKEY_CONTAINERSCHEMA_INFO 		"containerschema_info"
+#define OPH_JSON_OBJKEY_CONTAINERSCHEMA_DIMINFO 	"containerschema_diminfo"
 
 
 #endif

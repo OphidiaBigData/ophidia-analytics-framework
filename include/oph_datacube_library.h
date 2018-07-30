@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -57,6 +57,13 @@
  * \param server_type Type of I/O server to initialize
  */
 int oph_dc_setup_dbms(oph_ioserver_handler ** server, char *server_type);
+
+/**
+ * \brief Function to initialize I/O server in a thread
+ * \param server Address of pointer to I/O server structure
+ * \param server_type Type of I/O server to initialize
+ */
+int oph_dc_setup_dbms_thread(oph_ioserver_handler ** server, char *server_type);
 
 /**
  * \brief Function to finalize I/O server

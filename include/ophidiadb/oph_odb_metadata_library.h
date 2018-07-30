@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -90,11 +90,10 @@ int oph_odb_meta_check_metadatainstance_existance(ophidiadb * oDB, int metadatai
  * \param key_label Key to be found
  * \param key_variable Variable the key refers to (lat,lon,time,t2m...)
  * \param id_container Id of the container of the key to be found
- * \param add Flag indicating if anew metadata key has to be added in case the key is not found
  * \param id_metadatakey Id of the metadata key to be found, 0 if not found
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_meta_retrieve_metadatakey_id(ophidiadb * oDB, char *key_label, char *key_variable, int id_container, int add, int *id_metadatakey);
+int oph_odb_meta_retrieve_metadatakey_id(ophidiadb * oDB, char *key_label, char *key_variable, int id_container, int *id_metadatakey);
 
 /**
  * \brief Function to retrieve id of a metadatatype from its name (that is unique)
@@ -111,11 +110,14 @@ int oph_odb_meta_retrieve_metadatatype_id(ophidiadb * oDB, char *metadatatype_na
  * \param id_datacube Id of the container related to the instance
  * \param id_metadatakey Id of key of instance
  * \param id_metadatatype Id of type of instance
+ * \param metadata_key Key of the instance
+ * \param metadata_variable Variable associated with of the instance
  * \param metadata_value Value of the instance
  * \param last_insertd_id Id of the insterted instance
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_datacube, int id_metadatakey, int id_metadatatype, char *metadata_value, int *last_insertd_id);
+int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_datacube, int id_metadatakey, int id_metadatatype, char *metadata_key, char *metadata_variable, char *metadata_value,
+						    int *last_insertd_id);
 
 /**
  * \brief Function to insert a new row in manage table
@@ -134,13 +136,14 @@ int oph_odb_meta_insert_into_manage_table(ophidiadb * oDB, int id_metadatainstan
  * \param metadata_keys Array of metadata keys to filter on
  * \param metadata_keys_num Number of metadata keys to filter on
  * \param id_metadatainstance Id of the instance to filter
+ * \param metadata_variable Variable associated with metadata to filter on
  * \param metadata_type Type of metadata to filter on
  * \param metadata_value Value of metadata to filter on
  * \param metadata_list MySQL result structure filled with results (it must be free'd outside the function)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, char *id_metadatainstance, char *metadata_type, char *metadata_value,
-					     MYSQL_RES ** metadata_list);
+int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, char *id_metadatainstance, char *metadata_variable,
+					     char *metadata_type, char *metadata_value, MYSQL_RES ** metadata_list);
 
 /**
  * \brief Function to update the metadatainstance table
@@ -160,10 +163,14 @@ int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatai
  * \param metadata_keys Array of metadata keys to filter on
  * \param metadata_keys_num Number of metadata keys to filter on
  * \param id_metadatainstance Id of the instance to filter
+ * \param metadata_variable Variable associated with metadata to filter on
+ * \param metadata_type Type of metadata to filter on
+ * \param metadata_value Value of metadata to filter on
  * \param force Force update of functional metadata associated to vocabulary
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, int id_metadatainstance, int force);
+int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, int id_metadatainstance, char *metadata_variable,
+						    char *metadata_type, char *metadata_value, int force);
 
 /**
  * \brief Function to copy the list of metadata instances of a cube to another cube
@@ -208,14 +215,6 @@ int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, con
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_meta_check_for_time_dimension(ophidiadb * oDB, int id_datacube, const char *dimension_name, int *count);
-
-/**
- * \brief Delete the metadata keys specified for a datacube
- * \param oDB Pointer to OphidiaDB
- * \param id_datacube PID of the datacube
- * \return 0 if successfull, -1 otherwise
- */
-int oph_odb_meta_delete_keys_of_cube(ophidiadb * oDB, int id_datacube);
 
 /**
  * \brief Function to correct the list of metadata keys of a cube having a different measure name

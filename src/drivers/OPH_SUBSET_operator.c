@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <mpi.h>
+#include <math.h>
 
 #include "oph_analytics_operator_library.h"
 
@@ -33,11 +34,14 @@
 #include "oph_pid_library.h"
 #include "oph_json_library.h"
 #include "oph_datacube_library.h"
+#include "oph_driver_procedure_library.h"
 
 #include "debug.h"
 
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
+
+#include <pthread.h>
 
 int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
@@ -62,6 +66,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	//1 - Set up struct to empty values
+	((OPH_SUBSET_operator_handle *) handle->operator_handle)->nthread = 0;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_datacube = 0;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container = 0;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_output_datacube = 0;
@@ -76,6 +81,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->number_of_dim = 0;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->frags_size = 0;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->grid_name = NULL;
+	((OPH_SUBSET_operator_handle *) handle->operator_handle)->check_grid = 0;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->objkeys_num = -1;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->server = NULL;
@@ -85,7 +91,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->offset = NULL;
 	((OPH_SUBSET_operator_handle *) handle->operator_handle)->offset_num = 0;
-	((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_type = 0;
+	((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types = NULL;
+	((OPH_SUBSET_operator_handle *) handle->operator_handle)->execute_error = 0;
 
 	int i, j;
 	for (i = 0; i < OPH_SUBSET_LIB_MAX_DIM; ++i) {
@@ -121,6 +128,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "sessionid");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
+
+	value = hashtbl_get(task_tbl, OPH_ARG_NTHREAD);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_NTHREAD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SUBSET_MISSING_INPUT_PARAMETER, OPH_ARG_NTHREAD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_SUBSET_operator_handle *) handle->operator_handle)->nthread = (unsigned int) strtol(value, NULL, 10);
+
 	//3 - Fill struct with the correct data 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DATACUBE_INPUT);
 	datacube_in = value;
@@ -364,6 +380,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 	oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 
+	char **sub_types = NULL;
+	int number_of_sub_types = 0;
+
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_FILTER_TYPE);
@@ -371,7 +390,33 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			OPH_IN_PARAM_SUBSET_FILTER_TYPE);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_type = !strncmp(value, OPH_SUBSET_TYPE_COORD, OPH_TP_TASKLEN);
+	if (oph_tp_parse_multiple_value_param(value, &sub_types, &number_of_sub_types)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SUBSET_INVALID_INPUT_STRING);
+		oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (number_of_sub_dims && (number_of_sub_types > number_of_sub_dims)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SUBSET_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
+		oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types = (char *) calloc(1 + number_of_sub_dims, sizeof(char));
+	if (!((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "subset_types");
+		oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+	if (number_of_sub_dims) {
+		for (i = 0; i < number_of_sub_types; ++i)
+			((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types[i] = !strncmp(sub_types[i], OPH_SUBSET_TYPE_COORD, OPH_TP_TASKLEN);
+		if (number_of_sub_types == 1)
+			for (; i < number_of_sub_dims; ++i)
+				((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types[i] = ((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types[0];
+	}
+	oph_tp_free_multiple_value_param_list(sub_types, number_of_sub_types);
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SCHEDULE_ALGORITHM);
 	if (!value) {
@@ -394,6 +439,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CHECK_GRID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CHECK_GRID);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_SUBSET_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CHECK_GRID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN))
+		((OPH_SUBSET_operator_handle *) handle->operator_handle)->check_grid = 1;
 
 	value = hashtbl_get(task_tbl, OPH_ARG_IDJOB);
 	if (!value)
@@ -430,7 +484,7 @@ int task_init(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
-	int pointer, stream_max_size = 6 + OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE + 3 * sizeof(int) + 3 * OPH_TP_TASKLEN, flush = 1;
+	int pointer, stream_max_size = 6 + OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE + 3 * sizeof(int) + 3 * OPH_TP_TASKLEN;
 	char stream[stream_max_size];
 	memset(stream, 0, sizeof(stream));
 	*stream = 0;
@@ -594,7 +648,7 @@ int task_init(oph_operator_struct * handle)
 			size_string = &(size_string_vector[d][0]);
 			snprintf(size_string, OPH_COMMON_BUFFER_LEN, "%lld,%lld", block_size, dim_size[d][dim_number[d] - 1]);
 
-			if (!((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_type) {
+			if (!((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types[d]) {
 
 				// Parsing indexes
 				subset_struct[d] = 0;
@@ -656,7 +710,7 @@ int task_init(oph_operator_struct * handle)
 				goto __OPH_EXIT_1;
 			}
 
-			if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_type) {
+			if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types[d]) {
 
 				if (compressed) {
 					n = snprintf(operation, OPH_COMMON_BUFFER_LEN, "uncompress(%s)", MYSQL_DIMENSION);
@@ -706,6 +760,26 @@ int task_init(oph_operator_struct * handle)
 
 				// Pre-parsing time dimensions
 				if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->time_filter && dim[l].calendar && strlen(dim[l].calendar)) {
+					if ((n =
+					     oph_dim_parse_season_subset(((OPH_SUBSET_operator_handle *) handle->operator_handle)->task[d], &(dim[l]), temp, dim_row,
+									 dim_size[d][dim_number[d] - 1]))) {
+						if (n != OPH_DIM_TIME_PARSING_ERROR) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing time values.\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container,
+								OPH_LOG_OPH_SUBSET_PARSE_ERROR, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->task[d]);
+							if (dim_row)
+								free(dim_row);
+							oph_subset_vector_free(subset_struct, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->number_of_dim);
+							oph_odb_cube_free_datacube(&cube);
+							free(cubedims);
+							oph_dim_disconnect_from_dbms(db->dbms_instance);
+							oph_dim_unload_dim_dbinstance(db);
+							goto __OPH_EXIT_1;
+						}
+					} else {
+						free(((OPH_SUBSET_operator_handle *) handle->operator_handle)->task[d]);
+						((OPH_SUBSET_operator_handle *) handle->operator_handle)->task[d] = strndup(temp, OPH_TP_TASKLEN);
+					}
 					if ((n = oph_dim_parse_time_subset(((OPH_SUBSET_operator_handle *) handle->operator_handle)->task[d], &(dim[l]), temp))) {
 						if (n != OPH_DIM_TIME_PARSING_ERROR) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing time values.\n");
@@ -1205,6 +1279,30 @@ int task_init(oph_operator_struct * handle)
 			}
 		}
 
+		int tot_frag_num = 0;
+		if (oph_ids_count_number_of_ids(((OPH_SUBSET_operator_handle *) handle->operator_handle)->fragment_ids, &tot_frag_num)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get total number of IDs\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DUPLICATE_RETREIVE_IDS_ERROR);
+			oph_odb_cube_free_datacube(&cube);
+			free(cubedims);
+			oph_subset_vector_free(subset_struct, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->number_of_dim);
+			oph_dim_disconnect_from_dbms(db->dbms_instance);
+			oph_dim_unload_dim_dbinstance(db);
+			goto __OPH_EXIT_1;
+		}
+		//Check that product of ncores and nthread is at most equal to total number of fragments        
+		if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > tot_frag_num) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of cores per number of threads is bigger than total fragments\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container,
+				"Number of cores per number of threads is bigger than total fragments\n");
+			oph_odb_cube_free_datacube(&cube);
+			free(cubedims);
+			oph_subset_vector_free(subset_struct, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->number_of_dim);
+			oph_dim_disconnect_from_dbms(db->dbms_instance);
+			oph_dim_unload_dim_dbinstance(db);
+			goto __OPH_EXIT_1;
+		}
+
 		if (implicit_dim_number) {
 			int first = 1;
 			char buffer[OPH_TP_TASKLEN];
@@ -1452,7 +1550,7 @@ int task_init(oph_operator_struct * handle)
 					    && (stored_dim_insts[d].size == dim_inst[l].size) && (stored_dim_insts[d].concept_level == dim_inst[l].concept_level))
 						break;
 				//If original dimension is found and has size 0 then do not compare
-				if (!(d < stored_dim_num && !dim_inst[l].size)) {
+				if (!((d < stored_dim_num) && !dim_inst[l].size) && ((OPH_SUBSET_operator_handle *) handle->operator_handle)->check_grid) {
 					if ((d >= stored_dim_num)
 					    || oph_dim_compare_dimension(db, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, dim_inst[l].size, dim_row, stored_dim_insts[d].fk_id_dimension_index,
 									 &match) || match) {
@@ -1525,6 +1623,12 @@ int task_init(oph_operator_struct * handle)
 		if (stored_dim_insts)
 			free(stored_dim_insts);
 
+		if (id_grid && oph_odb_dim_enable_grid(oDB, id_grid)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to enable grid\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, "Unable to enable grid\n");
+			free(cubedims);
+			goto __OPH_EXIT_1;
+		}
 		// End - Dimension table management
 
 		oph_subset_vector_free(subset_struct, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->number_of_dim);
@@ -1598,18 +1702,15 @@ int task_init(oph_operator_struct * handle)
 			strncpy(params3, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->apply_clause_type, OPH_TP_TASKLEN);
 		else
 			*params3 = '\0';
-
-		flush = 0;
 	}
       __OPH_EXIT_1:
-	if (!handle->proc_rank && flush)
-		oph_odb_cube_delete_from_datacube_table(&((OPH_SUBSET_operator_handle *) handle->operator_handle)->oDB, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_output_datacube);
 
 	//Broadcast to all other processes the fragment relative index
 	MPI_Bcast(stream, stream_max_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 	if (*stream == 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_MASTER_TASK_INIT_FAILED);
+		((OPH_SUBSET_operator_handle *) handle->operator_handle)->execute_error = 1;
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -1617,21 +1718,25 @@ int task_init(oph_operator_struct * handle)
 		if (!(((OPH_SUBSET_operator_handle *) handle->operator_handle)->fragment_ids = (char *) strndup(id_string[0], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_MEMORY_ERROR_INPUT, "fragment ids");
+			((OPH_SUBSET_operator_handle *) handle->operator_handle)->execute_error = 1;
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 		if (!(((OPH_SUBSET_operator_handle *) handle->operator_handle)->where_clause = (char *) strndup(params, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_MEMORY_ERROR_INPUT, "WHERE clause");
+			((OPH_SUBSET_operator_handle *) handle->operator_handle)->execute_error = 1;
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 		if (!(((OPH_SUBSET_operator_handle *) handle->operator_handle)->apply_clause = (char *) strndup(params2, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_MEMORY_ERROR_INPUT, "APPLY clause");
+			((OPH_SUBSET_operator_handle *) handle->operator_handle)->execute_error = 1;
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 		if (!(((OPH_SUBSET_operator_handle *) handle->operator_handle)->apply_clause_type = (char *) strndup(params3, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_MEMORY_ERROR_INPUT, "APPLY clause");
+			((OPH_SUBSET_operator_handle *) handle->operator_handle)->execute_error = 1;
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 
@@ -1650,6 +1755,7 @@ int task_init(oph_operator_struct * handle)
 		if (*(((OPH_SUBSET_operator_handle *) handle->operator_handle)->keys) < 0) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_MASTER_TASK_INIT_FAILED);
+			((OPH_SUBSET_operator_handle *) handle->operator_handle)->execute_error = 1;
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 	}
@@ -1667,6 +1773,8 @@ int task_distribute(oph_operator_struct * handle)
 
 	int id_number;
 	char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
+
+	((OPH_SUBSET_operator_handle *) handle->operator_handle)->execute_error = 1;
 
 	//Get total number of fragment IDs
 	if (oph_ids_count_number_of_ids(((OPH_SUBSET_operator_handle *) handle->operator_handle)->fragment_ids, &id_number)) {
@@ -1704,9 +1812,10 @@ int task_distribute(oph_operator_struct * handle)
 			((OPH_SUBSET_operator_handle *) handle->operator_handle)->fragment_id_start_position = -1;
 	}
 
-	if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0)
+	if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0) {
+		((OPH_SUBSET_operator_handle *) handle->operator_handle)->execute_error = 0;
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
-
+	}
 	//Partition fragment relative index string
 	char *new_ptr = new_id_string;
 	if (oph_ids_get_substring_from_string
@@ -1724,6 +1833,7 @@ int task_distribute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
+	((OPH_SUBSET_operator_handle *) handle->operator_handle)->execute_error = 0;
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -1736,183 +1846,340 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
-	if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0)
+	OPH_SUBSET_operator_handle *oper_handle = (OPH_SUBSET_operator_handle *) handle->operator_handle;
+
+	if (oper_handle->fragment_id_start_position < 0 && handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	int i, j, k;
+	oper_handle->execute_error = 1;
 
-	int id_datacube_out = ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_output_datacube;
-	int id_datacube_in = ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_datacube;
-	int compressed = ((OPH_SUBSET_operator_handle *) handle->operator_handle)->compressed;
+	int l;
 
-	oph_odb_fragment_list frags;
-	oph_odb_db_instance_list dbs;
-	oph_odb_dbms_instance_list dbmss;
+	int num_threads = oper_handle->nthread;
+	int res[num_threads];
 
-	//Each process has to be connected to a slave ophidiadb
-	ophidiadb oDB_slave;
-	oph_odb_init_ophidiadb(&oDB_slave);
-
-	if (oph_odb_read_ophidiadb_config_file(&oDB_slave)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_OPHIDIADB_CONFIGURATION_FILE);
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
-
-	if (oph_odb_connect_to_ophidiadb(&oDB_slave)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_OPHIDIADB_CONNECTION_ERROR);
-		oph_odb_free_ophidiadb(&oDB_slave);
+	//In multi-thread code mysql_library_init must be called before starting the threads
+	if (mysql_library_init(0, NULL, NULL)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "MySQL initialization error\n");
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
-	//retrieve connection string
-	if (oph_odb_stge_fetch_fragment_connection_string(&oDB_slave, id_datacube_in, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->fragment_ids, &frags, &dbs, &dbmss)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve connection strings\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_CONNECTION_STRINGS_NOT_FOUND);
-		oph_odb_free_ophidiadb(&oDB_slave);
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
 
-	char operation[OPH_COMMON_BUFFER_LEN];
-	char query[OPH_COMMON_BUFFER_LEN];
-	char frag_name_out[OPH_ODB_STGE_FRAG_NAME_SIZE];
-	int n, result = OPH_ANALYTICS_OPERATOR_SUCCESS, frag_count = 0, index = 0;
 
-	if (oph_dc_setup_dbms(&(((OPH_SUBSET_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);
-		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-	}
-	//For each DBMS
-	for (i = 0; (i < dbmss.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
+	struct _thread_struct {
+		OPH_SUBSET_operator_handle *oper_handle;
+		unsigned int current_thread;
+		unsigned int total_threads;
+		int proc_rank;
+	};
+	typedef struct _thread_struct thread_struct;
 
-		if (oph_dc_connect_to_dbms(((OPH_SUBSET_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_DBMS_CONNECTION_ERROR,
-				(dbmss.value[i]).id_dbms);
-			result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	void *exec_thread(void *ts) {
+
+		OPH_SUBSET_operator_handle *oper_handle = ((thread_struct *) ts)->oper_handle;
+		int l = ((thread_struct *) ts)->current_thread;
+		int num_threads = ((thread_struct *) ts)->total_threads;
+		int proc_rank = ((thread_struct *) ts)->proc_rank;
+
+		int id_datacube_out = oper_handle->id_output_datacube;
+		int id_datacube_in = oper_handle->id_input_datacube;
+		int compressed = oper_handle->compressed;
+
+		oph_odb_fragment_list frags;
+		oph_odb_db_instance_list dbs;
+		oph_odb_dbms_instance_list dbmss;
+
+		//Each process has to be connected to a slave ophidiadb
+		ophidiadb oDB_slave;
+		oph_odb_init_ophidiadb_thread(&oDB_slave);
+		int i, j, k;
+
+		int res = OPH_ANALYTICS_OPERATOR_SUCCESS;
+
+		if (oph_odb_read_ophidiadb_config_file(&oDB_slave)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_SUBSET_OPHIDIADB_CONFIGURATION_FILE);
+			res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-		//For each DB
-		for (j = 0; (j < dbs.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS); j++) {
-			//Check DB - DBMS Association
-			if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
-				continue;
 
-			if (oph_dc_use_db_of_dbms(((OPH_SUBSET_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_DB_SELECTION_ERROR,
-					(dbs.value[j]).db_name);
-				result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
+			if (oph_odb_connect_to_ophidiadb(&oDB_slave)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_SUBSET_OPHIDIADB_CONNECTION_ERROR);
+				oph_odb_free_ophidiadb_thread(&oDB_slave);
+				mysql_thread_end();
+				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			}
+		}
+		//retrieve connection string
+		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
+			if (oph_odb_stge_fetch_fragment_connection_string(&oDB_slave, id_datacube_in, oper_handle->fragment_ids, &frags, &dbs, &dbmss)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve connection strings\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_SUBSET_CONNECTION_STRINGS_NOT_FOUND);
+				oph_odb_free_ophidiadb_thread(&oDB_slave);
+				mysql_thread_end();
+				res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+		}
+
+		int fragxthread = (int) floor((double) (frags.size / num_threads));
+		int remainder = (int) frags.size % num_threads;
+		//Compute starting number of fragments inserted by other threads
+		unsigned int current_frag_count = l * fragxthread + (l < remainder ? l : remainder);
+
+		//Update number of fragments to be inserted
+		if (l < remainder)
+			fragxthread += 1;
+
+		char operation[OPH_COMMON_BUFFER_LEN];
+		char query[OPH_COMMON_BUFFER_LEN];
+		char frag_name_out[OPH_ODB_STGE_FRAG_NAME_SIZE];
+		int n, in_frag_count = 0, out_frag_count = 0, index = 0;
+
+		oph_ioserver_handler *server = NULL;
+
+		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
+			if (!server) {
+				if (oph_dc_setup_dbms_thread(&(server), (dbmss.value[0]).io_server_type)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_SUBSET_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);
+					oph_odb_stge_free_fragment_list(&frags);
+					oph_odb_stge_free_db_list(&dbs);
+					oph_odb_stge_free_dbms_list(&dbmss);
+					oph_odb_free_ophidiadb_thread(&oDB_slave);
+					mysql_thread_end();
+					res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+				}
+			}
+		}
+		int first_dbms, first_db, first_frag = current_frag_count;
+
+		for (first_db = 0; first_db < dbs.size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_db++) {
+			//Find db associated to fragment
+			if (frags.value[current_frag_count].id_db == dbs.value[first_db].id_db)
+				break;
+		}
+		for (first_dbms = 0; first_dbms < dbmss.size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_dbms++) {
+			//Find dbms associated to db
+			if (dbs.value[first_db].id_dbms == dbmss.value[first_dbms].id_dbms)
+				break;
+		}
+
+		//For each DBMS
+		for (i = first_dbms; (i < dbmss.size) && (in_frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
+
+			if (oph_dc_connect_to_dbms(server, &(dbmss.value[i]), 0)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_SUBSET_DBMS_CONNECTION_ERROR, (dbmss.value[i]).id_dbms);
+				oph_dc_disconnect_from_dbms(server, &(dbmss.value[i]));
+				oph_odb_stge_free_fragment_list(&frags);
+				oph_odb_stge_free_db_list(&dbs);
+				oph_odb_stge_free_dbms_list(&dbmss);
+				oph_odb_free_ophidiadb_thread(&oDB_slave);
+				oph_dc_cleanup_dbms(server);
+				mysql_thread_end();
+				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				break;
 			}
-			//For each fragment
-			for (k = 0; (k < frags.size) && (result == OPH_ANALYTICS_OPERATOR_SUCCESS); k++) {
-				//Check Fragment - DB Association
-				if (frags.value[k].db_instance != &(dbs.value[j]))
+			//For each DB
+			for (j = first_db; j < dbs.size && (in_frag_count < fragxthread) && res == OPH_ANALYTICS_OPERATOR_SUCCESS; j++) {
+				//Check DB - DBMS Association
+				if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
 					continue;
 
-				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &frag_name_out)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag name exceed limit.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_SUBSET_STRING_BUFFER_OVERFLOW, "fragment name", frag_name_out);
-					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				if (oph_dc_use_db_of_dbms(server, &(dbmss.value[i]), &(dbs.value[j]))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_SUBSET_DB_SELECTION_ERROR, (dbs.value[j]).db_name);
+					res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 					break;
 				}
-				//SUBSET mysql plugin
-				if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->frags_size) {
-					// Change some fragment fields
-					index = frags.value[k].frag_relative_index - 1;
-					frags.value[k].key_start =
-					    ((OPH_SUBSET_operator_handle *) handle->operator_handle)->keys[index + ((OPH_SUBSET_operator_handle *) handle->operator_handle)->frags_size];
-					frags.value[k].key_end = ((OPH_SUBSET_operator_handle *) handle->operator_handle)->keys[index];
-				}
+				//For each fragment
+				for (k = first_frag; (k < frags.size) && (in_frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); k++) {
+					//Check Fragment - DB Association
+					if (frags.value[k].db_instance != &(dbs.value[j]))
+						continue;
 
-				if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->apply_clause && strlen(((OPH_SUBSET_operator_handle *) handle->operator_handle)->apply_clause)) {
-					if (compressed)
-						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_SUBSET_PLUGIN_COMPR2, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->apply_clause_type,
-							     MYSQL_FRAG_MEASURE, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->apply_clause);
-					else
-						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_SUBSET_PLUGIN2, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->apply_clause_type,
-							     MYSQL_FRAG_MEASURE, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->apply_clause);
-				} else
-					n = snprintf(operation, OPH_COMMON_BUFFER_LEN, "%s", MYSQL_FRAG_MEASURE);
-				if (n >= OPH_COMMON_BUFFER_LEN) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_SUBSET_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
-					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					break;
-				}
-				//SUBSET fragment
-				int tmp = frags.value[k].key_start;
-				if (tmp) {
-
+					if (oph_dc_generate_fragment_name(NULL, id_datacube_out, proc_rank, (current_frag_count + out_frag_count + 1), &frag_name_out)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag name exceed limit.\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_SUBSET_STRING_BUFFER_OVERFLOW, "fragment name", frag_name_out);
+						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+						break;
+					}
 					//SUBSET mysql plugin
-#ifdef OPH_DEBUG_MYSQL
-					if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->frags_size)
-						printf("ORIGINAL QUERY: " OPH_SUBSET_QUERY2_MYSQL "\n", frags.value[k].db_instance->db_name, frags.value[k].fragment_name, tmp, operation,
-						       frags.value[k].db_instance->db_name, frag_name_out, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->where_clause);
-					else
-						printf("ORIGINAL QUERY: " OPH_SUBSET_QUERY2_MYSQL "\n", frags.value[k].db_instance->db_name, frags.value[k].fragment_name, 0, operation,
-						       frags.value[k].db_instance->db_name, frag_name_out, "");
-#endif
-					if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->frags_size)
-						n = snprintf(query, OPH_COMMON_BUFFER_LEN, OPH_SUBSET_QUERY2, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, tmp, operation,
-							     frags.value[k].db_instance->db_name, frag_name_out, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->where_clause);
-					else
-						n = snprintf(query, OPH_COMMON_BUFFER_LEN, OPH_SUBSET_QUERY2, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, 0, operation,
-							     frags.value[k].db_instance->db_name, frag_name_out, "");
+					if (oper_handle->frags_size) {
+						// Change some fragment fields
+						index = frags.value[k].frag_relative_index - 1;
+						frags.value[k].key_start = oper_handle->keys[index + oper_handle->frags_size];
+						frags.value[k].key_end = oper_handle->keys[index];
+					}
+
+					if (oper_handle->apply_clause && strlen(oper_handle->apply_clause)) {
+						if (compressed)
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_SUBSET_PLUGIN_COMPR2, oper_handle->apply_clause_type,
+								     MYSQL_FRAG_MEASURE, oper_handle->apply_clause);
+						else
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_SUBSET_PLUGIN2, oper_handle->apply_clause_type,
+								     MYSQL_FRAG_MEASURE, oper_handle->apply_clause);
+					} else
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, "%s", MYSQL_FRAG_MEASURE);
 					if (n >= OPH_COMMON_BUFFER_LEN) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container,
-							OPH_LOG_OPH_SUBSET_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
-						result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_SUBSET_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
+						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						break;
 					}
 					//SUBSET fragment
-					if (oph_dc_create_fragment_from_query(((OPH_SUBSET_operator_handle *) handle->operator_handle)->server, &(frags.value[k]), NULL, query, 0, 0, 0)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in creating function.\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container,
-							OPH_LOG_OPH_SUBSET_NEW_FRAG_ERROR, frag_name_out);
-						result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-						break;
-					}
-					//Change the other fragment fields
-					frags.value[k].id_datacube = id_datacube_out;
-					strncpy(frags.value[k].fragment_name, frag_name_out, OPH_ODB_STGE_FRAG_NAME_SIZE);
-					frags.value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
-					if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->frags_size)
-						frags.value[k].frag_relative_index =
-						    ((OPH_SUBSET_operator_handle *) handle->operator_handle)->keys[index + 2 * ((OPH_SUBSET_operator_handle *) handle->operator_handle)->frags_size];
+					int tmp = frags.value[k].key_start;
+					if (tmp) {
 
-					//Insert new fragment
-					if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &(frags.value[k]))) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update fragment table.\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container,
-							OPH_LOG_OPH_SUBSET_FRAGMENT_INSERT_ERROR, frag_name_out);
-						result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-						break;
+						//SUBSET mysql plugin
+#ifdef OPH_DEBUG_MYSQL
+						if (oper_handle->frags_size)
+							printf("ORIGINAL QUERY: " OPH_SUBSET_QUERY2_MYSQL "\n", frags.value[k].db_instance->db_name, frags.value[k].fragment_name, tmp, operation,
+							       frags.value[k].db_instance->db_name, frag_name_out, oper_handle->where_clause);
+						else
+							printf("ORIGINAL QUERY: " OPH_SUBSET_QUERY2_MYSQL "\n", frags.value[k].db_instance->db_name, frags.value[k].fragment_name, 0, operation,
+							       frags.value[k].db_instance->db_name, frag_name_out, "");
+#endif
+						if (oper_handle->frags_size)
+							n = snprintf(query, OPH_COMMON_BUFFER_LEN, OPH_SUBSET_QUERY2, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, tmp, operation,
+								     frags.value[k].db_instance->db_name, frag_name_out, oper_handle->where_clause);
+						else
+							n = snprintf(query, OPH_COMMON_BUFFER_LEN, OPH_SUBSET_QUERY2, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, 0, operation,
+								     frags.value[k].db_instance->db_name, frag_name_out, "");
+						if (n >= OPH_COMMON_BUFFER_LEN) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
+								OPH_LOG_OPH_SUBSET_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
+							res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
+						//SUBSET fragment
+						if (oph_dc_create_fragment_from_query(server, &(frags.value[k]), NULL, query, 0, 0, 0)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in creating function.\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_SUBSET_NEW_FRAG_ERROR, frag_name_out);
+							res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+							break;
+						}
+						//Change the other fragment fields
+						frags.value[k].id_datacube = id_datacube_out;
+						strncpy(frags.value[k].fragment_name, frag_name_out, OPH_ODB_STGE_FRAG_NAME_SIZE);
+						frags.value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
+						if (oper_handle->frags_size)
+							frags.value[k].frag_relative_index = oper_handle->keys[index + 2 * oper_handle->frags_size];
+
+						//Insert new fragment
+						if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &(frags.value[k]))) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update fragment table.\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_SUBSET_FRAGMENT_INSERT_ERROR, frag_name_out);
+							res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+							break;
+						}
+						out_frag_count++;
 					}
-					frag_count++;
+					in_frag_count++;
 				}
 			}
+			oph_dc_disconnect_from_dbms(server, &(dbmss.value[i]));
+
+			if (res != OPH_ANALYTICS_OPERATOR_SUCCESS) {
+				oph_odb_stge_free_fragment_list(&frags);
+				oph_odb_stge_free_db_list(&dbs);
+				oph_odb_stge_free_dbms_list(&dbmss);
+				oph_odb_free_ophidiadb_thread(&oDB_slave);
+				oph_dc_cleanup_dbms(server);
+				mysql_thread_end();
+			}
 		}
-		oph_dc_disconnect_from_dbms(((OPH_SUBSET_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+
+		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
+			oph_odb_stge_free_fragment_list(&frags);
+			oph_odb_stge_free_db_list(&dbs);
+			oph_odb_stge_free_dbms_list(&dbmss);
+			oph_odb_free_ophidiadb_thread(&oDB_slave);
+			oph_dc_cleanup_dbms(server);
+			mysql_thread_end();
+		}
+
+		int *ret_val = (int *) malloc(sizeof(int));
+		*ret_val = res;
+		pthread_exit((void *) ret_val);
 	}
 
-	if (oph_dc_cleanup_dbms(((OPH_SUBSET_operator_handle *) handle->operator_handle)->server)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_IOPLUGIN_CLEANUP_ERROR,
-			(dbmss.value[0]).id_dbms);
-		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	pthread_t threads[num_threads];
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+	thread_struct ts[num_threads];
+
+	int rc;
+	for (l = 0; l < num_threads; l++) {
+		ts[l].oper_handle = oper_handle;
+		ts[l].total_threads = num_threads;
+		ts[l].proc_rank = handle->proc_rank;
+		ts[l].current_thread = l;
+
+		rc = pthread_create(&threads[l], &attr, exec_thread, (void *) &(ts[l]));
+		if (rc) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create thread %d: %d.\n", l, rc);
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Unable to create thread %d: %d.\n", l, rc);
+		}
 	}
 
-	oph_odb_free_ophidiadb(&oDB_slave);
-	oph_odb_stge_free_fragment_list(&frags);
-	oph_odb_stge_free_db_list(&dbs);
-	oph_odb_stge_free_dbms_list(&dbmss);
+	pthread_attr_destroy(&attr);
+	void *ret_val = NULL;
+	for (l = 0; l < num_threads; l++) {
+		rc = pthread_join(threads[l], &ret_val);
+		res[l] = *((int *) ret_val);
+		free(ret_val);
+		if (rc) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while joining thread %d: %d.\n", l, rc);
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Error while joining thread %d: %d.\n", l, rc);
+		}
+	}
 
-	if (handle->proc_rank == 0 && (result == OPH_ANALYTICS_OPERATOR_SUCCESS)) {
+	//In multi-thread code mysql_library_end must be called after executing the threads
+	mysql_library_end();
+
+	for (l = 0; l < num_threads; l++) {
+		if (res[l] != OPH_ANALYTICS_OPERATOR_SUCCESS) {
+			oper_handle->execute_error = 1;
+			return res[l];
+		}
+	}
+
+	oper_handle->execute_error = 0;
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+}
+
+int task_reduce(oph_operator_struct * handle)
+{
+	if (!handle || !handle->operator_handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+}
+
+int task_destroy(oph_operator_struct * handle)
+{
+	if (!handle || !handle->operator_handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	short int proc_error = ((OPH_SUBSET_operator_handle *) handle->operator_handle)->execute_error;
+	int id_datacube = ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_output_datacube;
+	short int global_error = 0;
+
+	//Reduce results
+	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
+
+	if (handle->proc_rank == 0 && global_error == 0) {
 		//Master process print output datacube PID
 		char *tmp_uri = NULL;
 		if (oph_pid_get_uri(&tmp_uri)) {
@@ -1955,31 +2222,23 @@ int task_execute(oph_operator_struct * handle)
 		free(tmp_uri);
 	}
 
-	if (!handle->proc_rank && (result != OPH_ANALYTICS_OPERATOR_SUCCESS))
-		oph_odb_cube_delete_from_datacube_table(&((OPH_SUBSET_operator_handle *) handle->operator_handle)->oDB, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_output_datacube);
+	if (global_error) {
+		//Delete fragments
+		if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
+			if ((oph_dproc_delete_data(id_datacube, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container,
+						   ((OPH_SUBSET_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->nthread))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
+			}
+		}
+		//Before deleting wait for all process to reach this point
+		MPI_Barrier(MPI_COMM_WORLD);
 
-	return result;
-}
-
-int task_reduce(oph_operator_struct * handle)
-{
-	if (!handle || !handle->operator_handle) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_NULL_OPERATOR_HANDLE);
-		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+		//Delete from OphidiaDB
+		if (handle->proc_rank == 0) {
+			oph_dproc_clean_odb(&((OPH_SUBSET_operator_handle *) handle->operator_handle)->oDB, id_datacube, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container);
+		}
 	}
-
-	return OPH_ANALYTICS_OPERATOR_SUCCESS;
-}
-
-int task_destroy(oph_operator_struct * handle)
-{
-	if (!handle || !handle->operator_handle) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_SUBSET_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_SUBSET_NULL_OPERATOR_HANDLE);
-		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
-	}
-
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -2044,6 +2303,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->offset) {
 		free((double *) ((OPH_SUBSET_operator_handle *) handle->operator_handle)->offset);
 		((OPH_SUBSET_operator_handle *) handle->operator_handle)->offset = NULL;
+	}
+	if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types) {
+		free((char *) ((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types);
+		((OPH_SUBSET_operator_handle *) handle->operator_handle)->subset_types = NULL;
 	}
 	free((OPH_SUBSET_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;

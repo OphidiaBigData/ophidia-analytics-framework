@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,6 +35,8 @@ int oph_soap_read_config_file(oph_soap_data * data)
 	data->server = 0;
 	data->username = 0;
 	data->password = 0;
+	data->host = 0;
+	data->port = 0;
 
 	char config[OPH_COMMON_BUFFER_LEN];
 	snprintf(config, sizeof(config), OPH_SOAP_SERVER_CONFIGURATION, OPH_ANALYTICS_LOCATION);
@@ -45,8 +47,6 @@ int oph_soap_read_config_file(oph_soap_data * data)
 	char buffer[OPH_COMMON_BUFFER_LEN];
 	char *position;
 
-	char *host = NULL, *port = NULL;
-
 	if (!fgets(buffer, OPH_COMMON_BUFFER_LEN, file)) {
 		fclose(file);
 		return -3;
@@ -55,57 +55,53 @@ int oph_soap_read_config_file(oph_soap_data * data)
 	position = strchr(buffer, '=');
 	if (position != NULL) {
 		position++;
-		if (!(host = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
+		if (!(data->host = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
 			fclose(file);
 			return -4;
 		}
-		strncpy(host, position, strlen(position) + 1);
-		host[strlen(position)] = '\0';
+		strncpy(data->host, position, strlen(position) + 1);
+		data->host[strlen(position)] = '\0';
 	}
 
 	if (!fgets(buffer, OPH_COMMON_BUFFER_LEN, file)) {
 		fclose(file);
-		if (host)
-			free(host);
+		if (data->host)
+			free(data->host);
 		return -3;
 	}
 	buffer[strlen(buffer) - 1] = '\0';
 	position = strchr(buffer, '=');
 	if (position != NULL) {
 		position++;
-		if (!(port = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
+		if (!(data->port = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
 			fclose(file);
-			if (host)
-				free(host);
+			if (data->host)
+				free(data->host);
 			return -4;
 		}
-		strncpy(port, position, strlen(position) + 1);
-		port[strlen(position)] = '\0';
+		strncpy(data->port, position, strlen(position) + 1);
+		data->port[strlen(position)] = '\0';
 	}
 
 	int n;
 #ifdef WITH_OPENSSL
-	n = 1 + snprintf(0, 0, OPH_SOAP_URL_WITH_OPENSSL, host, port);
+	n = 1 + snprintf(0, 0, OPH_SOAP_URL_WITH_OPENSSL, data->host, data->port);
 #else
-	n = 1 + snprintf(0, 0, OPH_SOAP_URL_WITHOUT_OPENSSL, host, port);
+	n = 1 + snprintf(0, 0, OPH_SOAP_URL_WITHOUT_OPENSSL, data->host, data->port);
 #endif
 	if (!(data->server = (char *) malloc(n * sizeof(char)))) {
 		fclose(file);
-		if (host)
-			free(host);
-		if (port)
-			free(port);
+		if (data->host)
+			free(data->host);
+		if (data->port)
+			free(data->port);
 		return -4;
 	}
 #ifdef WITH_OPENSSL
-	snprintf(data->server, n, OPH_SOAP_URL_WITH_OPENSSL, host, port);
+	snprintf(data->server, n, OPH_SOAP_URL_WITH_OPENSSL, data->host, data->port);
 #else
-	snprintf(data->server, n, OPH_SOAP_URL_WITHOUT_OPENSSL, host, port);
+	snprintf(data->server, n, OPH_SOAP_URL_WITHOUT_OPENSSL, data->host, data->port);
 #endif
-	if (host)
-		free(host);
-	if (port)
-		free(port);
 
 	if (!fgets(buffer, OPH_COMMON_BUFFER_LEN, file)) {
 		fclose(file);
@@ -194,6 +190,14 @@ int oph_soap_free_data(oph_soap_data * data)
 		if (data->password) {
 			free(data->password);
 			data->password = 0;
+		}
+		if (data->host) {
+			free(data->host);
+			data->host = 0;
+		}
+		if (data->port) {
+			free(data->port);
+			data->port = 0;
 		}
 	}
 	return 0;

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -213,7 +213,7 @@ int oph_af_create_job(ophidiadb * oDB, char *task_string, HASHTBL * task_tbl, in
 	if ((res = oph_odb_job_retrieve_job_id(oDB, sessionid, markerid, id_job))) {
 		if (res != OPH_ODB_NO_ROW_FOUND) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve job id\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_OPHIDIADB_READ_ERROR, "'idjob'");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_OPHIDIADB_READ_ERROR, "idjob");
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 #endif
@@ -236,7 +236,7 @@ int oph_af_create_job(ophidiadb * oDB, char *task_string, HASHTBL * task_tbl, in
 
 int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, int task_number, int task_rank)
 {
-	int res = 0, idjob = 0;
+	int res = 0, idjob = -1;
 	ophidiadb oDB;
 	oph_json *oper_json = NULL;
 
@@ -282,6 +282,11 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 
 	//Initialize environment
 	oph_operator_struct_initializer(task_number, task_rank, handle);
+#ifdef OPH_STANDALONE_MODE
+	handle->soap_data = NULL;
+#else
+	handle->soap_data = &data;
+#endif
 
 	oph_tp_start_xml_parser();
 
@@ -373,7 +378,9 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+#ifndef OPH_STANDALONE_MODE
 	hashtbl_insert(task_tbl, OPH_ARG_IDJOB, notify_jobid);
+#endif
 
 	char tmp_value[OPH_TP_TASKLEN];
 #ifndef OPH_STANDALONE_MODE
@@ -807,7 +814,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		}
 #endif
 
-		if (!idjob) {
+		if (idjob < 0) {
 			if (oph_af_create_job(&oDB, task_string, task_tbl, &idjob)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to save job parameters into OphidiaDB. Check access parameters.\n");
 				oph_tp_end_xml_parser();
@@ -845,7 +852,8 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 			snprintf(tmp_value, sizeof(tmp_value), "%d", idjob);
 			hashtbl_insert(task_tbl, OPH_ARG_IDJOB, tmp_value);
 		}
-		oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_START);
+		if (idjob)
+			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_START);
 
 #ifndef OPH_STANDALONE_MODE
 /* gSOAP notification start */
@@ -889,7 +897,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	gettimeofday(&stime, NULL);
 #endif
 
-	if (!task_rank)
+	if (!task_rank && idjob)
 		oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_SET_ENV);
 
 	//Initialize all processes handles
@@ -901,7 +909,8 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 			oph_exit_task();
 		hashtbl_destroy(task_tbl);
 		if (!task_rank) {
-			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_SET_ENV_ERROR);
+			if (idjob)
+				oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_SET_ENV_ERROR);
 			oph_odb_free_ophidiadb(&oDB);
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, OPH_LOG_ANALITICS_OPERATOR_SET_ENV_ERROR, "");
@@ -952,18 +961,20 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	gettimeofday(&stime, NULL);
 #endif
 
-	if (!task_rank)
+	if (!task_rank && idjob)
 		oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_INIT);
 
 	//Perform task initializazion procedures (optional)
 	if ((res = oph_init_task(handle))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task initilization failed [Code: %d]!\n", res);
+		oph_destroy_task(handle);
 		oph_unset_env(handle);
 		oph_tp_end_xml_parser();
 		if (handle->dlh)
 			oph_exit_task();
 		if (!task_rank) {
-			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_INIT_ERROR);
+			if (idjob)
+				oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_INIT_ERROR);
 			oph_odb_free_ophidiadb(&oDB);
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, OPH_LOG_ANALITICS_OPERATOR_INIT_ERROR, "");
@@ -1012,18 +1023,20 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	gettimeofday(&stime, NULL);
 #endif
 
-	if (!task_rank)
+	if (!task_rank && idjob)
 		oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DISTRIBUTE);
 
 	//Perform workload distribution activities (optional)
 	if ((res = oph_distribute_task(handle))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task distribution failed [Code: %d]!\n", res);
+		oph_destroy_task(handle);
 		oph_unset_env(handle);
 		oph_tp_end_xml_parser();
 		if (handle->dlh)
 			oph_exit_task();
 		if (!task_rank) {
-			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DISTRIBUTE_ERROR);
+			if (idjob)
+				oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DISTRIBUTE_ERROR);
 			oph_odb_free_ophidiadb(&oDB);
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, OPH_LOG_ANALITICS_OPERATOR_DISTRIBUTE_ERROR, "");
@@ -1072,18 +1085,20 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	gettimeofday(&stime, NULL);
 #endif
 
-	if (!task_rank)
+	if (!task_rank && idjob)
 		oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_EXECUTE);
 
 	//Perform distributive part of task
 	if ((res = oph_execute_task(handle))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task execution failed [Code: %d]!\n", res);
+		oph_destroy_task(handle);
 		oph_unset_env(handle);
 		oph_tp_end_xml_parser();
 		if (handle->dlh)
 			oph_exit_task();
 		if (!task_rank) {
-			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_EXECUTE_ERROR);
+			if (idjob)
+				oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_EXECUTE_ERROR);
 			oph_odb_free_ophidiadb(&oDB);
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, OPH_LOG_ANALITICS_OPERATOR_EXECUTE_ERROR, "");
@@ -1132,18 +1147,20 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	gettimeofday(&stime, NULL);
 #endif
 
-	if (!task_rank)
+	if (!task_rank && idjob)
 		oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_REDUCE);
 
 	//Perform reduction of results
 	if ((res = oph_reduce_task(handle))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Task reduction failed [Code: %d]!\n", res);
+		oph_destroy_task(handle);
 		oph_unset_env(handle);
 		oph_tp_end_xml_parser();
 		if (handle->dlh)
 			oph_exit_task();
 		if (!task_rank) {
-			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_REDUCE_ERROR);
+			if (idjob)
+				oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_REDUCE_ERROR);
 			oph_odb_free_ophidiadb(&oDB);
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, OPH_LOG_ANALITICS_OPERATOR_REDUCE_ERROR, "");
@@ -1192,7 +1209,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	gettimeofday(&stime, NULL);
 #endif
 
-	if (!task_rank)
+	if (!task_rank && idjob)
 		oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DESTROY);
 
 	//Reset task specific initialization procedures
@@ -1203,7 +1220,8 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		if (handle->dlh)
 			oph_exit_task();
 		if (!task_rank) {
-			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DESTROY_ERROR);
+			if (idjob)
+				oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DESTROY_ERROR);
 			oph_odb_free_ophidiadb(&oDB);
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, OPH_LOG_ANALITICS_OPERATOR_DESTROY_ERROR, "");
@@ -1252,7 +1270,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	gettimeofday(&stime, NULL);
 #endif
 
-	if (!task_rank)
+	if (!task_rank && idjob)
 		oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_UNSET_ENV);
 
 	//Release task and dynamic library resources
@@ -1262,7 +1280,8 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		if (handle->dlh)
 			oph_exit_task();
 		if (!task_rank) {
-			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_UNSET_ENV_ERROR);
+			if (idjob)
+				oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_UNSET_ENV_ERROR);
 			oph_odb_free_ophidiadb(&oDB);
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, OPH_LOG_ANALITICS_OPERATOR_UNSET_ENV_ERROR, "");
@@ -1325,7 +1344,8 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 
 	int return_code = 0;
 	if (!task_rank) {
-		oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_COMPLETED);
+		if (idjob)
+			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_COMPLETED);
 		oph_odb_free_ophidiadb(&oDB);
 
 		if (oph_json_add_text(oper_json, OPH_JSON_OBJKEY_STATUS, "SUCCESS", NULL)) {

@@ -1,6 +1,6 @@
 --
 --    Ophidia Analytics Framework
---    Copyright (C) 2012-2017 CMCC Foundation
+--    Copyright (C) 2012-2018 CMCC Foundation
 --
 --    This program is free software: you can redistribute it and/or modify
 --    it under the terms of the GNU General Public License as published by
@@ -91,12 +91,13 @@ CREATE TABLE `dbmsinstance` (
   `idhost` int(10) unsigned NOT NULL,
   `login` varchar(256) DEFAULT NULL,
   `password` varchar(256) DEFAULT NULL,
-  `port` int(11) DEFAULT NULL,
+  `port` int(11) NOT NULL,
   `ioservertype`  varchar(256) NOT NULL DEFAULT 'mysql_table',
   `fstype`  int(10) NOT NULL DEFAULT 0,
   `status`  varchar(4) NOT NULL DEFAULT "up",
   PRIMARY KEY (`iddbmsinstance`),
   KEY `idhost` (`idhost`),
+  UNIQUE KEY `port_host` (`idhost`, `port`),
   CONSTRAINT `idhost` FOREIGN KEY (`idhost`) REFERENCES `host` (`idhost`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -157,9 +158,11 @@ CREATE TABLE `host` (
   `cores` int(10) unsigned DEFAULT NULL,
   `memory` int(10) unsigned DEFAULT NULL,
   `status` varchar(4) NOT NULL DEFAULT "up",
-  `priority` int(10) unsigned NOT NULL DEFAULT 0,
+  `datacubecount` int(10) unsigned NOT NULL DEFAULT 0,
+  `lastupdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`idhost`),
-  KEY `idhost` (`idhost`)
+  KEY `idhost` (`idhost`),
+  UNIQUE KEY `hostname` (`hostname`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -176,6 +179,8 @@ UNLOCK TABLES;
 -- Table structure for table `hostpartition`
 --
 
+-- Note: the constraint to foreign key `idjob` has been removed in order to enable dynamic clustering
+
 DROP TABLE IF EXISTS `hostpartition`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -183,7 +188,13 @@ CREATE TABLE `hostpartition` (
   `idhostpartition` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `partitionname` varchar(64) NOT NULL,
   `hidden` tinyint(1) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`idhostpartition`)
+  `reserved` tinyint(1) NOT NULL DEFAULT 0,
+  `hosts` int(10) unsigned NULL DEFAULT 0,
+  `iduser` int(10) unsigned NULL DEFAULT NULL,
+  `idjob` int(10) unsigned DEFAULT NULL,
+  CONSTRAINT `iduser_h` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`) ON DELETE CASCADE ON UPDATE CASCADE,
+  PRIMARY KEY (`idhostpartition`),
+  UNIQUE KEY `user_partition` (`partitionname`, `iduser`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -206,7 +217,7 @@ DROP TABLE IF EXISTS `hashost`;
 CREATE TABLE `hashost` (
   `idhostpartition` int(10) unsigned NOT NULL,
   `idhost` int(10) unsigned NOT NULL,
-  `priority` int(10) unsigned NULL DEFAULT NULL,
+  `datacubecount` int(10) unsigned NULL DEFAULT 0,
   PRIMARY KEY (`idhostpartition`, `idhost`),
   CONSTRAINT `idhost_hh` FOREIGN KEY (`idhost`) REFERENCES `host` (`idhost`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `idhostpartition_hh` FOREIGN KEY (`idhostpartition`) REFERENCES `hostpartition` (`idhostpartition`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -367,6 +378,25 @@ CREATE TABLE `datacube` (
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER TRIGGER_before_delete_datacube BEFORE DELETE ON datacube 
+FOR EACH ROW BEGIN
+UPDATE IGNORE host SET datacubecount = IF(datacubecount > 0, datacubecount - 1, 0) where idhost in (select distinct(idhost) from datacube inner join partitioned on datacube.iddatacube = partitioned.iddatacube inner join dbinstance on dbinstance.iddbinstance = partitioned.iddbinstance inner join dbmsinstance on dbmsinstance.iddbmsinstance = dbinstance.iddbmsinstance where datacube.iddatacube = OLD.iddatacube);
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+
 --
 -- Dumping data for table `datacube`
 --
@@ -428,7 +458,7 @@ CREATE TABLE `job` (
   `nchildrentotal` int(10) unsigned DEFAULT NULL,
   `nchildrencompleted` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`idjob`),
-  CONSTRAINT `idparent_j` FOREIGN KEY (`idparent`) REFERENCES `job` (`idjob`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `idparent_j` FOREIGN KEY (`idparent`) REFERENCES `job` (`idjob`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `iduser_j` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `idsession_j` FOREIGN KEY (`idsession`) REFERENCES `session` (`idsession`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
@@ -441,6 +471,43 @@ CREATE TABLE `job` (
 LOCK TABLES `job` WRITE;
 /*!40000 ALTER TABLE `job` DISABLE KEYS */;
 /*!40000 ALTER TABLE `job` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `jobaccounting`
+--
+
+DROP TABLE IF EXISTS `jobaccounting`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `jobaccounting` (
+  `idjob` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `idparent` int(10) unsigned DEFAULT NULL,
+  `markerid` int(10) unsigned NOT NULL,
+  `workflowid` int(10) unsigned DEFAULT NULL,
+  `idsession` int(10) unsigned DEFAULT NULL,
+  `iduser` int(10) unsigned DEFAULT NULL,
+  `creationdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `status` varchar(64) NOT NULL,
+  `submissionstring` varchar(2048) DEFAULT NULL,
+  `timestart` timestamp NULL DEFAULT NULL,
+  `timeend` timestamp NULL DEFAULT NULL,
+  `nchildrentotal` int(10) unsigned DEFAULT NULL,
+  `nchildrencompleted` int(10) unsigned DEFAULT NULL,
+  PRIMARY KEY (`idjob`),
+  CONSTRAINT `idparent_ja` FOREIGN KEY (`idparent`) REFERENCES `jobaccounting` (`idjob`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `iduser_ja` FOREIGN KEY (`iduser`) REFERENCES `user` (`iduser`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `idsession_ja` FOREIGN KEY (`idsession`) REFERENCES `session` (`idsession`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `jobaccounting`
+--
+
+LOCK TABLES `jobaccounting` WRITE;
+/*!40000 ALTER TABLE `jobaccounting` DISABLE KEYS */;
+/*!40000 ALTER TABLE `jobaccounting` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -517,6 +584,25 @@ CREATE TABLE `partitioned` (
   CONSTRAINT `iddatacube_p` FOREIGN KEY (`iddatacube`) REFERENCES `datacube` (`iddatacube`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8 */ ;
+/*!50003 SET character_set_results = utf8 */ ;
+/*!50003 SET collation_connection  = utf8_general_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER TRIGGER_after_insert_datacube AFTER INSERT ON partitioned 
+FOR EACH ROW BEGIN
+UPDATE host SET datacubecount = datacubecount + 1 WHERE idhost IN (SELECT dbmsinstance.idhost AS idhost FROM dbmsinstance INNER JOIN dbinstance ON dbmsinstance.iddbmsinstance = dbinstance.iddbmsinstance INNER JOIN (select idhost FROM partitioned INNER JOIN dbinstance on dbinstance.iddbinstance = partitioned.iddbinstance INNER JOIN dbmsinstance on dbmsinstance.iddbmsinstance = dbinstance.iddbmsinstance where partitioned.iddatacube = NEW.iddatacube GROUP BY idhost HAVING count(idhost) = 1)tmp ON tmp.idhost = dbmsinstance.idhost WHERE dbinstance.iddbinstance = NEW.iddbinstance);
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Dumping data for table `partitioned`
@@ -599,6 +685,7 @@ DROP TABLE IF EXISTS `grid`;
 CREATE TABLE `grid` (
   `idgrid` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `gridname` varchar(256) NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT '0',
   PRIMARY KEY (`idgrid`),
   UNIQUE KEY (`gridname`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
@@ -800,13 +887,15 @@ DROP TABLE IF EXISTS `metadatainstance`;
 CREATE TABLE `metadatainstance` (
   `idmetadatainstance` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `iddatacube` int(10) unsigned NOT NULL,
-  `idkey` int(10) unsigned NOT NULL,
+  `idkey` int(10) unsigned DEFAULT NULL,
   `idtype` int(10) unsigned NOT NULL,
+  `label` varchar(256) NOT NULL,
+  `variable` varchar(256) DEFAULT NULL,
   `value` LONGBLOB NOT NULL,
   `size` int(10) unsigned NOT NULL DEFAULT 1,
   PRIMARY KEY (`idmetadatainstance`),
   FOREIGN KEY (`iddatacube`) REFERENCES `datacube` (`iddatacube`) ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY (`idkey`) REFERENCES `metadatakey` (`idkey`) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (`idkey`) REFERENCES `metadatakey` (`idkey`) ON DELETE SET NULL ON UPDATE CASCADE,
   FOREIGN KEY (`idtype`) REFERENCES `metadatatype` (`idtype`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -89,6 +89,20 @@ const char *oph_dc_stringof(char type_flag)
 	return 0;
 }
 
+int oph_dc_setup_dbms_thread(oph_ioserver_handler ** server, char *server_type)
+{
+	if (!server) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_DC_NULL_PARAM;
+	}
+
+	if (oph_ioserver_setup(server_type, server, 1)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup server library\n");
+		return OPH_DC_SERVER_ERROR;
+	}
+	return OPH_DC_SUCCESS;
+}
+
 int oph_dc_setup_dbms(oph_ioserver_handler ** server, char *server_type)
 {
 	if (!server) {
@@ -96,7 +110,7 @@ int oph_dc_setup_dbms(oph_ioserver_handler ** server, char *server_type)
 		return OPH_DC_NULL_PARAM;
 	}
 
-	if (oph_ioserver_setup(server_type, server)) {
+	if (oph_ioserver_setup(server_type, server, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup server library\n");
 		return OPH_DC_SERVER_ERROR;
 	}

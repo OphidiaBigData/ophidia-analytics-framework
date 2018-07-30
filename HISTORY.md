@@ -1,4 +1,108 @@
 
+## Next release
+
+### Fixed:
+
+- Bug in multi-thread operators using mysql io server type [#56](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/56)
+
+## v1.4.0 - 2018-07-27
+
+### Fixed:
+
+- Bug in OPH_EXPORTNC2 [#55](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/55)
+- Operators to set JSON reponse only after global error check [#45](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/45)
+- Return message printed in log of OPH_SCRIPT
+- Bug in usage of 'unlimited' property for dimensions [#44](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/44)
+- Submissing string check in case of long strings
+- Bug in setting 'dim_name' of OPH_MERGECUBES2
+
+### Added:
+
+- New operator OPH_B2DROP [#53](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/53)
+- 'dim_type' argument to OPH_MERGECUBES2 operator [#50](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/50)
+- new environment variables to OPH_SCRIPT operator (OPH_SCRIPT_SERVER_HOST, OPH_SCRIPT_SERVER_PORT and OPH_SCRIPT_USER) [#49](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/49)
+- Support to extract seasons with OPH_SUBSET and OPH_EXPLORECUBE operators [#48](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/48)
+- Summary info to OPH_INSTANCES [#47](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/47)
+
+### Changed:
+
+- several operators and roll-back procedure to support multi-threaded execution [#54](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/54)
+- OPH_DELETECONTAINER operator in order to delete also non-empty containers [#20](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/20)
+- Exportnc operators to support 'local' keyword for 'output_path' argument 
+- Extend OPH_CUBESCHEMA operator to compute number of cube elements [#52](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/52)
+- Extend OPH_EXPORTNC2 to allow also postponed metadata saving [#51](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/51)
+- Extend operators associated with of oph_normalize
+- Extend values of argument 'comparison' of oph_predicate [#46](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/46) [#43](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/43)
+- XML description of OPH_CLUSTER
+- Remove constraint for hostpartition.idjob in order to enable dynamic clustering
+
+## v1.3.0 - 2018-06-18
+
+### Fixed:
+
+- Bug in handling idjob for massive operations
+- Link to output of OPH_SCRIPT in session space
+- OphidiaDB cube library to allow exploration of cubes without dimensions
+- Code building when standalone configuration option is enabled [#30](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/30)
+- OPH_APPLY operator to avoid updating dimension metadata in case the array size is not changed
+
+### Added:
+
+- New operator OPH_IMPORTNC2 [#42](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/42)
+- Functionalities to manage reserved host partitions [#40](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/40)
+- XML file of OPH_CLUSTER  [#40](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/40)
+- XML for new primitive oph_sequence [#35](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/35)
+- New operator OPH_CONTAINERSCHEMA [#34](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/34)
+
+### Changed:
+
+- Definition of OphidiaDB 'hostpartition', 'hashost' and 'job' tables
+- OPH_REDUCE2 operator and some common libraries to support multi-threaded execution [#42](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/42)
+- Job tracking for accounting purposes [#41](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/41)
+- OPH_INSTANCES operator to manage user-defined host partitions [#39](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/39)
+- OPH_IMPORTNC operator to allow different number of fragments per DB [#38](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/38)
+- OPH_METADATA operator to filter also on variable name [#37](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/37)
+- XML of oph_gsl_quantile primitive [#36](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/36)
+- OPH_CUBESCHEMA operator to also add dimensions [#33](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/33)
+- OPH_APPLY operator to update dimension values according to the new parameter 'on_reduce'
+
+## v1.2.0 - 2018-02-16
+
+### Fixed:
+
+- Improve metadata management to prevent deadlocks [#22](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/22)
+- Drop old reference to autocommit
+- Bug in handling parameter 'realpath' of OPH_FS
+- Dimension type check in OPH_IMPORTNC
+- Change auto-setting of concept level to monthly
+- Bug [#17](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/17)
+- XML description of OPH_IMPORTFITS
+
+### Added:
+
+- Add support for rollback in case of errors [#27](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/27)
+- Add optional flag for grid check [#26](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/26)
+- New primitive oph_normalize [#25](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/25)
+- New primitive oph_replace [#23](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/23)
+- Fields 'category' and 'multivalue' to XML descriptions
+- Calendar '365_day'
+- New primitive oph_padding
+- New options to handle directories to OPH_FS
+- Option OPH_CDD to OPH_GET_CONFIG
+- Print input command and output in text log of OPH_SCRIPT
+
+### Changed:
+
+- OphidiaDB to count number of data cubes managed by the hosts [#29](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/29)
+- Allow to import data without dimension values [#28](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/28)
+- Extend subset_types to allow index/coord per dimension [#24](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/24)
+- Change VFS category name
+- Relax error on folder creation in OPH_EXPORTNC
+- Allow to merge one cube with OPH_MERGECUBES
+- Adapt OPH_SCRIPT to include stdout and stderr in JSON Response
+- Remove check for maximum query size from OPH_MERGECUBE
+- Queries of OPH_SEARCH
+
 ## v1.1.0 - 2017-07-28
 
 ### Fixed:

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2018 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -1228,10 +1228,15 @@ int oph_to_mysql_type(oph_ioserver_handler * handle, oph_ioserver_arg_types oph_
 //Initialize storage server plugin
 int _mysql_setup(oph_ioserver_handler * handle)
 {
-	if (mysql_library_init(0, NULL, NULL)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_LIB_INIT_ERROR);
-		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_LIB_INIT_ERROR);
-		return MYSQL_IO_ERROR;
+	if (!handle)
+		pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
+
+	if (handle->is_thread == 0) {
+		if (mysql_library_init(0, NULL, NULL)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_LIB_INIT_ERROR);
+			logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_LIB_INIT_ERROR);
+			return MYSQL_IO_ERROR;
+		}
 	}
 
 	return MYSQL_IO_SUCCESS;
@@ -1520,7 +1525,10 @@ int _mysql_cleanup(oph_ioserver_handler * handle)
 {
 	if (!handle)
 		pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
-	mysql_library_end();
+
+	if (handle->is_thread == 0)
+		mysql_library_end();
+
 	return MYSQL_IO_SUCCESS;
 }
 
