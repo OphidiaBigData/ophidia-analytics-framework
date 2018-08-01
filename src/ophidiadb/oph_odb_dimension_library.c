@@ -104,7 +104,7 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensionin
 				strncpy(dim->dimension_type, OPH_DIM_INDEX_DATA_TYPE, OPH_ODB_DIM_DIMENSION_TYPE_SIZE);	// A reduced dimension is handled by indexes
 		}
 		dim_inst->id_grid = dim_grid->id_grid = row[12] ? (int) strtol(row[12], NULL, 10) : 0;
-		dim_inst->unlimited = row[20] ? (char) row[20][0] : 0;
+		dim_inst->unlimited = row[20] && row[20][0] && (row[20][0] == '1') ? 1 : 0;
 		memset(&(dim_grid->grid_name), 0, OPH_ODB_DIM_GRID_SIZE + 1);
 		if (row[13])
 			strncpy(dim_grid->grid_name, row[13], OPH_ODB_DIM_GRID_SIZE);
@@ -683,7 +683,7 @@ int oph_odb_dim_retrieve_dimension_instance(ophidiadb * oDB, int id_dimensionins
 		dim_inst->fk_id_dimension_index = (row[4] ? (int) strtol(row[4], NULL, 10) : 0);
 		dim_inst->concept_level = (char) row[5][0];
 		dim_inst->fk_id_dimension_label = (row[6] ? (int) strtol(row[6], NULL, 10) : 0);
-		dim_inst->unlimited = row[9] ? (char) row[9][0] : 0;
+		dim_inst->unlimited = row[9] && row[9][0] && (row[9][0] == '1') ? 1 : 0;
 		if (row[7])
 			strncpy(dimension_name, row[7], OPH_ODB_DIM_DIMENSION_SIZE);
 		if (row[8])
@@ -1225,10 +1225,10 @@ int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb * oDB, oph_odb_dim
 	int n;
 	if (dim_inst->id_grid)
 		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_DIMENSION_INST, dim_inst->id_dimension, dim_inst->size, dim_inst->fk_id_dimension_index, dim_inst->id_grid,
-			     dim_inst->concept_level, dim_inst->unlimited, dim_inst->fk_id_dimension_label);
+			     dim_inst->concept_level, (int) dim_inst->unlimited, dim_inst->fk_id_dimension_label);
 	else
 		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_DIMENSION_INST_2, dim_inst->id_dimension, dim_inst->size, dim_inst->fk_id_dimension_index,
-			     dim_inst->concept_level, dim_inst->unlimited, dim_inst->fk_id_dimension_label);
+			     dim_inst->concept_level, (int) dim_inst->unlimited, dim_inst->fk_id_dimension_label);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;

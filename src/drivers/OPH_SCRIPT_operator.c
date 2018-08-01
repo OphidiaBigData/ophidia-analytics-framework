@@ -42,6 +42,7 @@
 #include "oph_framework_paths.h"
 #include "oph_pid_library.h"
 #include "oph_directory_library.h"
+#include "oph_soap.h"
 
 #define MAX_OUT_LEN 500*1024
 #define OPH_SCRIPT_MARKER '\''
@@ -529,6 +530,10 @@ int task_execute(oph_operator_struct * handle)
 		      ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->workflow_id ? ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->workflow_id : 0);
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_MARKER_ID=%s ",
 		      ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->marker_id ? ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->marker_id : 0);
+	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_SERVER_HOST='%s' ", ((oph_soap_data *) handle->soap_data)->host ? ((oph_soap_data *) handle->soap_data)->host : "");
+	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_SERVER_PORT=%s ", ((oph_soap_data *) handle->soap_data)->port ? ((oph_soap_data *) handle->soap_data)->port : "");
+	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_SCRIPT_USER='%s' ",
+		      ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->user ? ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->user : "");
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "%s ", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->script);
 
 	char *new_arg = NULL, *arg;
@@ -650,7 +655,7 @@ int task_execute(oph_operator_struct * handle)
 	else if (WEXITSTATUS(error) == 127)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_COMMAND_NOT_EXECUTED);
 	else if (WEXITSTATUS(error) != 0)
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, return_code);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "%s\n", return_code);
 
 	return error ? OPH_ANALYTICS_OPERATOR_COMMAND_ERROR : OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

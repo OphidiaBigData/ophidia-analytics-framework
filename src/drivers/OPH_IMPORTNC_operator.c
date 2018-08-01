@@ -197,7 +197,7 @@ int check_subset_string(char *curfilter, int i, NETCDF_var * measure, int is_ind
 	NETCDF_var tmp_var;
 	int ii, retval, dims_id[NC_MAX_VAR_DIMS];
 	char *endfilter = strchr(curfilter, OPH_DIM_SUBSET_SEPARATOR2);
-	if (!endfilter) {
+	if (!endfilter && !offset) {
 		//Only single point
 		//Check curfilter
 		if (strlen(curfilter) < 1) {
@@ -2928,7 +2928,7 @@ int task_init(oph_operator_struct * handle)
 				tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
 				dim_inst[i].size = tmp_var.varsize;
 				dim_inst[i].concept_level = measure->dims_concept_level[i];
-				dim_inst[i].unlimited = measure->dims_unlim[i];
+				dim_inst[i].unlimited = measure->dims_unlim[i] ? 1 : 0;
 
 				if ((tmp_var.varid >= 0) && oph_nc_compare_nc_c_types(id_container_out, tmp_var.vartype, tot_dims[j].dimension_type)) {
 					pmesg(LOG_WARNING, __FILE__, __LINE__, "Dimension type in NC file doesn't correspond to the one stored in OphidiaDB\n");
@@ -4108,7 +4108,38 @@ int task_execute(oph_operator_struct * handle)
 	oph_odb_stge_free_dbms_list(&dbmss);
 	oph_odb_free_ophidiadb(&oDB_slave);
 
-	if (handle->proc_rank == 0) {
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->execute_error = 0;
+
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+}
+
+int task_reduce(oph_operator_struct * handle)
+{
+	if (!handle || !handle->operator_handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+}
+
+int task_destroy(oph_operator_struct * handle)
+{
+	if (!handle || !handle->operator_handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	short int proc_error = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->execute_error;
+	int id_datacube = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_output_datacube;
+	short int global_error = 0;
+
+	//Reduce results
+	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
+
+	if (handle->proc_rank == 0 && global_error == 0) {
 		//Master process print output datacube PID
 		char *tmp_uri = NULL;
 		if (oph_pid_get_uri(&tmp_uri)) {
@@ -4149,37 +4180,6 @@ int task_execute(oph_operator_struct * handle)
 
 		free(tmp_uri);
 	}
-
-	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->execute_error = 0;
-
-	return OPH_ANALYTICS_OPERATOR_SUCCESS;
-}
-
-int task_reduce(oph_operator_struct * handle)
-{
-	if (!handle || !handle->operator_handle) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_NULL_OPERATOR_HANDLE);
-		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
-	}
-
-	return OPH_ANALYTICS_OPERATOR_SUCCESS;
-}
-
-int task_destroy(oph_operator_struct * handle)
-{
-	if (!handle || !handle->operator_handle) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_NULL_OPERATOR_HANDLE);
-		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
-	}
-
-	short int proc_error = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->execute_error;
-	int id_datacube = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_output_datacube;
-	short int global_error = 0;
-
-	//Reduce results
-	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
 
 	if (global_error) {
 		//For error checking
@@ -4231,7 +4231,7 @@ int task_destroy(oph_operator_struct * handle)
 						 ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number) - start_position;
 
 					if (oph_dproc_delete_data
-					    (id_datacube, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number)) {
+					    (id_datacube, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number, 1)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_DELETE_DB_READ_ERROR);

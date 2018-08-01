@@ -62,6 +62,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	//1 - Set up struct to empty values
+	((OPH_DELETE_operator_handle *) handle->operator_handle)->nthread = 0;
 	((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_datacube = 0;
 	((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids = NULL;
 	((OPH_DELETE_operator_handle *) handle->operator_handle)->objkeys = NULL;
@@ -108,6 +109,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+
+	value = hashtbl_get(task_tbl, OPH_ARG_NTHREAD);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_NTHREAD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETE_MISSING_INPUT_PARAMETER, OPH_ARG_NTHREAD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_DELETE_operator_handle *) handle->operator_handle)->nthread = (unsigned int) strtol(value, NULL, 10);
+
 	//For error checking
 	int id_datacube_in[2] = { 0, 0 };
 
@@ -242,6 +252,21 @@ int task_init(oph_operator_struct * handle)
 				strncpy(id_string, ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
 			}
 		}
+
+		int tot_frag_num = 0;
+		if (oph_ids_count_number_of_ids(((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids, &tot_frag_num)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get total number of IDs\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_AGGREGATE2_RETREIVE_IDS_ERROR);
+			id_string[0] = 0;
+		} else {
+			//Check that product of ncores and nthread is at most equal to total number of fragments        
+			if (((OPH_DELETE_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > (unsigned int) tot_frag_num) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of cores per number of threads is bigger than total fragments\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container,
+					"Number of cores per number of threads is bigger than total fragments\n");
+				id_string[0] = 0;
+			}
+		}
 	}
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
@@ -350,7 +375,7 @@ int task_execute(oph_operator_struct * handle)
 	int ret = OPH_ANALYTICS_OPERATOR_SUCCESS;
 	if ((ret =
 	     oph_dproc_delete_data(id_datacube, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container,
-				   ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0))) {
+				   ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0, ((OPH_DELETE_operator_handle *) handle->operator_handle)->nthread))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 	}

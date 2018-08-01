@@ -39,9 +39,9 @@
 #define MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_DIMENSION_WITH_TIME_METADATA2	"UPDATE `dimension` SET idhierarchy = %d, basetime = '%s', units = '%s', calendar = '%s', leapyear = %d, leapmonth = %d WHERE iddimension = %d;"
 #define MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_DIMENSION_WITH_TIME_METADATA3	"UPDATE `dimensioninstance` SET conceptlevel = '%c' WHERE iddimensioninstance = %d"
 
-#define MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_DIMENSION_INST			"INSERT INTO `dimensioninstance` (`iddimension`, `size`, `fkiddimensionindex`, `idgrid`, `conceptlevel`, `unlimited`, `fkiddimensionlabel`) VALUES (%d, %d, %d, %d, '%c', %d, %d);"
+#define MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_DIMENSION_INST			"INSERT INTO `dimensioninstance` (`iddimension`, `size`, `fkiddimensionindex`, `idgrid`, `conceptlevel`, `unlimited`, `fkiddimensionlabel`) VALUES (%d, %d, %d, %d, '%c', '%d', %d);"
 
-#define MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_DIMENSION_INST_2		"INSERT INTO `dimensioninstance` (`iddimension`, `size`, `fkiddimensionindex`, `conceptlevel`, `unlimited`, `fkiddimensionlabel`) VALUES (%d, %d, %d, '%c', %d, %d);"
+#define MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_DIMENSION_INST_2		"INSERT INTO `dimensioninstance` (`iddimension`, `size`, `fkiddimensionindex`, `conceptlevel`, `unlimited`, `fkiddimensionlabel`) VALUES (%d, %d, %d, '%c', '%d', %d);"
 
 #define MYSQL_QUERY_DIM_RETRIEVE_DIMENSION_INSTANCE_ID			"SELECT dimensioninstance.iddimensioninstance FROM (cubehasdim INNER JOIN dimensioninstance ON cubehasdim.iddimensioninstance = dimensioninstance.iddimensioninstance) INNER JOIN dimension ON dimension.iddimension = dimensioninstance.iddimension WHERE iddatacube = %d and dimensionname='%s';"
 #define MYSQL_QUERY_DIM_RETRIEVE_DIMENSION_INSTANCE_ID2			"SELECT dimensioninstance.iddimensioninstance, dimension.iddimension, idhierarchy FROM (cubehasdim INNER JOIN dimensioninstance ON cubehasdim.iddimensioninstance = dimensioninstance.iddimensioninstance) INNER JOIN dimension ON dimension.iddimension = dimensioninstance.iddimension WHERE iddatacube = %d and dimensionname='%s';"

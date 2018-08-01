@@ -148,3 +148,6 @@ LIB @MYSQL_LDFLAGS@
 [OPH_SCRIPT]
 @DRIVER_PATH@/liboph_scriptoperator.so
 LIB @MYSQL_LDFLAGS@
+[OPH_B2DROP]
+@DRIVER_PATH@/liboph_b2dropoperator.so
+LIB @MYSQL_LDFLAGS@

@@ -204,7 +204,7 @@ int check_subset_string(char *curfilter, int i, NETCDF_var * measure, int is_ind
 	NETCDF_var tmp_var;
 	int ii, retval, dims_id[NC_MAX_VAR_DIMS];
 	char *endfilter = strchr(curfilter, OPH_DIM_SUBSET_SEPARATOR2);
-	if (!endfilter) {
+	if (!endfilter && !offset) {
 		//Only single point
 		//Check curfilter
 		if (strlen(curfilter) < 1) {
@@ -657,7 +657,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_ARG_NTHREAD);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nthread = (unsigned int) strtol(value, NULL, 10);
+	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nthread = (int) strtol(value, NULL, 10);
 
 	if (strstr(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, "..")) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
@@ -2940,7 +2940,7 @@ int task_init(oph_operator_struct * handle)
 				tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
 				dim_inst[i].size = tmp_var.varsize;
 				dim_inst[i].concept_level = measure->dims_concept_level[i];
-				dim_inst[i].unlimited = measure->dims_unlim[i];
+				dim_inst[i].unlimited = measure->dims_unlim[i] ? 1 : 0;
 
 				if ((tmp_var.varid >= 0) && oph_nc_compare_nc_c_types(id_container_out, tmp_var.vartype, tot_dims[j].dimension_type)) {
 					pmesg(LOG_WARNING, __FILE__, __LINE__, "Dimension type in NC file doesn't correspond to the one stored in OphidiaDB\n");
@@ -4050,12 +4050,13 @@ int task_execute(oph_operator_struct * handle)
 
 		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
 			if (!server) {
-				if (oph_dc_setup_dbms(&(server), dbmss.value[0].io_server_type)) {
+				if (oph_dc_setup_dbms_thread(&(server), dbmss.value[0].io_server_type)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_IOPLUGIN_SETUP_ERROR, dbmss.value[0].id_dbms);
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb_thread(&oDB_slave);
+					mysql_thread_end();
 					res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				}
 			}
@@ -4071,6 +4072,7 @@ int task_execute(oph_operator_struct * handle)
 				oph_odb_stge_free_dbms_list(&dbmss);
 				oph_odb_free_ophidiadb_thread(&oDB_slave);
 				oph_dc_cleanup_dbms(server);
+				mysql_thread_end();
 				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				break;
 			}
@@ -4265,7 +4267,7 @@ int task_execute(oph_operator_struct * handle)
 
 		if (res[l] == OPH_ANALYTICS_OPERATOR_SUCCESS) {
 			if (!server) {
-				if (oph_dc_setup_dbms(&(server), dbmss.value[0].io_server_type)) {
+				if (oph_dc_setup_dbms_thread(&(server), dbmss.value[0].io_server_type)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_IOPLUGIN_SETUP_ERROR, dbmss.value[0].id_dbms);
 					oph_odb_stge_free_db_list(&dbs);
@@ -4512,7 +4514,8 @@ int task_destroy(oph_operator_struct * handle)
 						 ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragxdb_number) - start_position;
 
 					if (oph_dproc_delete_data
-					    (id_datacube, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number)) {
+					    (id_datacube, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number,
+					     ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nthread)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_DELETE_DB_READ_ERROR);

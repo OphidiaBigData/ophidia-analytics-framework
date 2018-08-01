@@ -38,6 +38,7 @@
  * \param id_input_datacube ID of the datacube to export
  * \param id_input_container ID of the input container related to datacube to export
  * \param output_path Name of the output path in prefix to save files
+ * \param output_path_user Name of the output path set by the user
  * \param output_path_user_defined 1 in case of a user-defined output path
  * \param output_link URL to file
  * \param output_name Filename for output files
@@ -57,6 +58,7 @@
  * \param force Flag used to force file creation
  * \param misc Flag used to save file in export/misc folder
  * \param memory_size Maximum amount of memory available
+ * \param nc_file_path File name
  */
 struct _OPH_EXPORTNC2_operator_handle {
 	ophidiadb oDB;
@@ -64,8 +66,9 @@ struct _OPH_EXPORTNC2_operator_handle {
 	int id_input_datacube;
 	int id_input_container;
 	char *output_path;
-	char *output_link;
+	char *output_path_user;
 	int output_path_user_defined;
+	char *output_link;
 	char *output_name;
 	int export_metadata;
 	int schedule_algo;
@@ -85,6 +88,7 @@ struct _OPH_EXPORTNC2_operator_handle {
 	int force;
 	int misc;
 	long long memory_size;
+	char *nc_file_path;
 };
 typedef struct _OPH_EXPORTNC2_operator_handle OPH_EXPORTNC2_operator_handle;
 

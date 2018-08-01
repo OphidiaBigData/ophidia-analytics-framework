@@ -1499,7 +1499,7 @@ int task_execute(oph_operator_struct * handle)
 				tmp_var.varsize = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
 			dim_inst[i].size = tmp_var.varsize;
 			dim_inst[i].concept_level = 0;
-			dim_inst[i].unlimited = measure->dims_unlim[i];
+			dim_inst[i].unlimited = measure->dims_unlim[i] ? 1 : 0;
 
 			//Modified to allow subsetting
 			tmp_var.dims_start_index = &(measure->dims_start_index[i]);

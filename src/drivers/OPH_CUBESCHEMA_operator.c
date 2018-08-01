@@ -710,9 +710,35 @@ int task_execute(oph_operator_struct * handle)
 		//Compute derivated fields
 		long long num_elements = 0;
 		if ((oph_odb_cube_get_datacube_num_elements(oDB, id_datacube, &num_elements))) {
-			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retrieve cubeelements number\n");
+			pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_CUBESCHEMA_GET_ELEMENTS_ERROR, datacube_name);
 			logging(LOG_WARNING, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_GET_ELEMENTS_ERROR, datacube_name);
 			num_elements = 0;
+		}
+		if (num_elements == 0) {
+			oph_odb_cubehasdim *cubedims = NULL;
+			int number_of_dimensions = 0;
+
+			if (oph_odb_cube_retrieve_cubehasdim_list(oDB, id_datacube, &cubedims, &number_of_dimensions)) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_CUBESCHEMA_GET_ELEMENTS_ERROR, datacube_name);
+				logging(LOG_WARNING, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_GET_ELEMENTS_ERROR, datacube_name);
+				num_elements = 0;
+			} else {
+				int l;
+				num_elements = 1;
+				for (l = 0; l < number_of_dimensions; l++) {
+					if (cubedims[l].level && cubedims[l].size) {
+						num_elements *= cubedims[l].size;
+					}
+				}
+				free(cubedims);
+
+				//Set cubelements number 
+				if ((oph_odb_cube_set_datacube_num_elements(oDB, id_datacube, num_elements))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CUBESCHEMA_SET_NUMBER_ELEMENTS_ERROR);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_SET_NUMBER_ELEMENTS_ERROR);
+					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+				}
+			}
 		}
 		long long size = 0;
 		if ((oph_odb_cube_get_datacube_size(oDB, id_datacube, &size))) {
@@ -720,6 +746,7 @@ int task_execute(oph_operator_struct * handle)
 			logging(LOG_WARNING, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_GET_SIZE_ERROR, datacube_name);
 			size = 0;
 		}
+
 		int id_number = 0;
 		if (oph_ids_count_number_of_ids(cube.frag_relative_index_set, &id_number)) {
 			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to get total number of fragments\n");

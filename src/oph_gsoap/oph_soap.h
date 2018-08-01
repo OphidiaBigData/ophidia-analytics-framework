@@ -29,6 +29,8 @@ typedef struct {
 	char *server;
 	char *username;
 	char *password;
+	char *host;
+	char *port;
 	int timeout;
 	int recv_timeout;
 } oph_soap_data;

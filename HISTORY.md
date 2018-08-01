@@ -1,4 +1,41 @@
 
+## Next release
+
+### Fixed:
+
+- Bug in multi-thread operators using mysql io server type [#56](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/56)
+
+## v1.4.0 - 2018-07-27
+
+### Fixed:
+
+- Bug in OPH_EXPORTNC2 [#55](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/55)
+- Operators to set JSON reponse only after global error check [#45](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/45)
+- Return message printed in log of OPH_SCRIPT
+- Bug in usage of 'unlimited' property for dimensions [#44](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/44)
+- Submissing string check in case of long strings
+- Bug in setting 'dim_name' of OPH_MERGECUBES2
+
+### Added:
+
+- New operator OPH_B2DROP [#53](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/53)
+- 'dim_type' argument to OPH_MERGECUBES2 operator [#50](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/50)
+- new environment variables to OPH_SCRIPT operator (OPH_SCRIPT_SERVER_HOST, OPH_SCRIPT_SERVER_PORT and OPH_SCRIPT_USER) [#49](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/49)
+- Support to extract seasons with OPH_SUBSET and OPH_EXPLORECUBE operators [#48](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/48)
+- Summary info to OPH_INSTANCES [#47](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/47)
+
+### Changed:
+
+- several operators and roll-back procedure to support multi-threaded execution [#54](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/54)
+- OPH_DELETECONTAINER operator in order to delete also non-empty containers [#20](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/20)
+- Exportnc operators to support 'local' keyword for 'output_path' argument 
+- Extend OPH_CUBESCHEMA operator to compute number of cube elements [#52](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/52)
+- Extend OPH_EXPORTNC2 to allow also postponed metadata saving [#51](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/51)
+- Extend operators associated with of oph_normalize
+- Extend values of argument 'comparison' of oph_predicate [#46](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/46) [#43](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/43)
+- XML description of OPH_CLUSTER
+- Remove constraint for hostpartition.idjob in order to enable dynamic clustering
+
 ## v1.3.0 - 2018-06-18
 
 ### Fixed:
