@@ -22,8 +22,8 @@ Evaluates a predicate3. For each item of input array, if &apos;condition&apos; i
 					&apos;oph_byte&apos;.
 - measure : input measure.
 - condition : condition to be verified. Any boolean expression is acceptable.
-- expression 1 : expression executed if condition is met.
-- expression 2 : expression executed if condition is not met.
+- expression 1 : expression executed if condition is met. Use &apos;INDEX&apos; to return the index of element in the array.
+- expression 2 : expression executed if condition is not met. Use &apos;INDEX&apos; to return the index of element in the array.
 - occurrence : if is set to a number &apos;n&apos; then expression 1 is evaluated only for the &apos;n&apos;-th of the condition; otherwise the expression 2 is evaluated.
                Use &apos;first&apos; or &apos;begin&apos; for the first occurrence.
                Use &apos;last&apos; or &apos;end&apos; for the last occurrence.
