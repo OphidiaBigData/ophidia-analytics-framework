@@ -184,7 +184,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	//Else retreive container ID
-	if ((oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, 0, &((OPH_SHOWGRID_operator_handle *) handle->operator_handle)->id_input_container))) {
+	if ((oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, &((OPH_SHOWGRID_operator_handle *) handle->operator_handle)->id_input_container))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container or it is hidden\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SHOWGRID_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;

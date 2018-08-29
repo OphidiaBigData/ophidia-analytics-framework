@@ -800,7 +800,6 @@ CREATE TABLE `container` (
   `idparent` int(10) unsigned DEFAULT NULL,
   `containername` varchar(256) NOT NULL,
   `operator` varchar(256) DEFAULT NULL,
-  `hidden` int(1) NOT NULL DEFAULT 0,
   `description` varchar(2048) DEFAULT NULL,
   `idvocabulary` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`idcontainer`),

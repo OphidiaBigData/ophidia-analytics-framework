@@ -11,7 +11,6 @@ Levels from 0 to 2 show information about the folder tree. If the cwd is empty t
 Level 3 is similar to level 2 but it also shows additional information about the data cubes.
 Level 4 shows the location of the specified datacube.
 Levels from 5 to 8 show information about fragmentation of the input datacube.
-If a container is hidden a &quot;*&quot; is set next to its name.
 Folders are identified by an ending &quot;/&quot;.
 Any filter can use SQL wildcards (%, _, etc.)
 
@@ -52,10 +51,6 @@ Any filter can use SQL wildcards (%, _, etc.)
 					  The argument is considered only for the first three levels and may have the following values:
 			      -- no : research only in current path (default)
             -- yes : research recursively starting from current path
-- hidden : type of containers to be shown.
-		   The argument is considered only for the first three levels and may have the following values:
-           -- no : only visible containers are shown (default)
-           -- yes : both hidden and visible containers are shown.
       
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -94,7 +89,6 @@ SUBMISSION STRING: &quot;operator=oph_list;level=2;cwd=/session-code;&quot;</abs
 		<argument type="string" mandatory="no" default="all">src_filter</argument>
 		<argument type="string" mandatory="no" default="all">db_filter</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">recursive</argument>
-		<argument type="string" mandatory="no" default="no" values="yes|no">hidden</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|list">objkey_filter</argument>
     </args>
 </operator>

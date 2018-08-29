@@ -243,7 +243,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			free(uri2);
 		uri2 = NULL;
 		if (id_datacube_in[0]) {
-			if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[2], 1, &folder_id))) {
+			if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[2], &folder_id))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[2], OPH_LOG_OPH_INTERCUBE_DATACUBE_FOLDER_ERROR, datacube_in[0]);
 				id_datacube_in[0] = 0;
@@ -273,7 +273,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
 			if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
-				if (oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, value, 0, &id_datacube_in[3])) {
+				if (oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, value, &id_datacube_in[3])) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified container or it is hidden\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[2], OPH_LOG_GENERIC_DATACUBE_FOLDER_ERROR, value);
 					id_datacube_in[0] = 0;

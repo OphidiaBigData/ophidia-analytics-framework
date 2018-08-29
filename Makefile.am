@@ -89,7 +89,6 @@ OPERATOR_XML+=etc/operators_xml/OPH_PUBLISH_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_RANDCUBE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_REDUCE2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_REDUCE_operator_1.0.xml
-OPERATOR_XML+=etc/operators_xml/OPH_RESTORECONTAINER_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_RESUME_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_ROLLUP_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_SCRIPT_operator_1.0.xml

@@ -34,8 +34,6 @@
  * \param container_input Name of the input container to be deleted
  * \param user Name of the user that wants to create the container
  * \param cwd Absolute path where the container is created 
- * \param hidden Used to select the correct container to delete
- * \param delete_type Specifies the type of removal (0 = logical, 1 = physical)
  * \param id_input_container ID of the input container to delete
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
@@ -47,8 +45,6 @@ struct _OPH_DELETECONTAINER_operator_handle {
 	ophidiadb oDB;
 	char *cwd;
 	char *user;
-	int hidden;
-	int delete_type;
 	int id_input_container;
 	char *container_input;
 	char **objkeys;
