@@ -3808,9 +3808,14 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 
 	if (remainder_rows > 0) {
 		*list_string = n = 0;
+		nn = tmp2 + tmp3;
 		for (j = 0; j < remainder_rows; j++) {
 			strcpy(list_string + n, compressed ? OPH_NC_CONCAT_COMPRESSED_ROW : OPH_NC_CONCAT_ROW);
 			n += tmp;
+			strcpy(input_measure_type + nn, "|" OPH_NC_CONCAT_TYPE);	// Data from file
+			nn += 1 + tmp2;
+			strcpy(input_measure_type + nn, measure_type);
+			nn += tmp3;
 		}
 
 		snprintf(plugin_string, plugin_size, compressed ? OPH_NC_CONCAT_PLUGIN_COMPR : OPH_NC_CONCAT_PLUGIN, input_measure_type, measure_type, list_string);
