@@ -46,6 +46,7 @@ int oph_operator_struct_initializer(int size, int myrank, oph_operator_struct * 
 	handle->output_json = NULL;
 	handle->output_path = NULL;
 	handle->output_name = NULL;
+	handle->output_code = 0;
 	handle->proc_number = size;
 	handle->proc_rank = myrank;
 	handle->lib = NULL;
