@@ -2720,8 +2720,13 @@ int task_destroy(oph_operator_struct * handle)
 				}
 			}
 		}
-		//Before deleting wait for all process to reach this point
-		MPI_Barrier(MPI_COMM_WORLD);
+
+		if (handle->output_code)
+			proc_error = (short int) handle->output_code;
+		else
+			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
+		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
+		handle->output_code = global_error;
 
 		if (handle->proc_rank == 0) {
 			int id_container = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container;
@@ -2794,7 +2799,10 @@ int task_destroy(oph_operator_struct * handle)
 			oph_dproc_clean_odb(&((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->oDB, id_datacube,
 					    ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container);
 		}
+
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
