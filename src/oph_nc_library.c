@@ -762,9 +762,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 		sizeof_var = (array_length) * sizeof(double);
 
 	//Compute number of tuples per insert (regular case)
-	long long regular_rows = 0;
-	long long regular_times = 0;
-	long long remainder_rows = 0;
+	unsigned long long regular_rows = 0, regular_times = 0, remainder_rows = 0, jj = 0, l;
 
 	if (sizeof_var >= OPH_NC_BLOCK_SIZE) {
 		//Use the same algorithm
@@ -797,15 +795,12 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 
-	int j = 0;
-	int n;
-
-	n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
+	int n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
 	if (compressed == 1) {
 #ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
 #endif
-		for (j = 0; j < regular_rows; j++) {
+		for (jj = 0; jj < regular_rows; jj++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 		}
@@ -813,7 +808,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
 #endif
-		for (j = 0; j < regular_rows; j++) {
+		for (jj = 0; jj < regular_rows; jj++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
 		}
@@ -827,9 +822,6 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 		free(query_string);
 		return OPH_NC_ERROR;
 	}
-
-	int l;
-
 	//Create binary array
 	char *binary = 0;
 	int res;
@@ -988,7 +980,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 	}
 
 
-	int jj = 0;
+	int j = 0;
 
 	//Flag set to 0 if implicit dimensions are not in the order specified in the file
 	short int imp_dim_ordered = 1;
@@ -1113,9 +1105,9 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 
 			for (i = 0; i < measure->nexp; i++) {
 				*(start_pointer[i]) -= 1;
-				for (ii = 0; ii < measure->ndims; ii++) {
-					if (start_pointer[i] == &(start[ii]))
-						*(start_pointer[i]) += measure->dims_start_index[ii];
+				for (j = 0; j < measure->ndims; j++) {
+					if (start_pointer[i] == &(start[j]))
+						*(start_pointer[i]) += measure->dims_start_index[j];
 				}
 			}
 
@@ -1239,7 +1231,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
 #endif
-			for (j = 0; j < remainder_rows; j++) {
+			for (jj = 0; jj < remainder_rows; jj++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 			}
@@ -1247,7 +1239,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
 #endif
-			for (j = 0; j < remainder_rows; j++) {
+			for (jj = 0; jj < remainder_rows; jj++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
 			}
@@ -1291,9 +1283,9 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 
 			for (i = 0; i < measure->nexp; i++) {
 				*(start_pointer[i]) -= 1;
-				for (ii = 0; ii < measure->ndims; ii++) {
-					if (start_pointer[i] == &(start[ii]))
-						*(start_pointer[i]) += measure->dims_start_index[ii];
+				for (j = 0; j < measure->ndims; j++) {
+					if (start_pointer[i] == &(start[j]))
+						*(start_pointer[i]) += measure->dims_start_index[j];
 				}
 			}
 			//Fill array
@@ -1498,9 +1490,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		return oph_nc_populate_fragment_from_nc2(server, frag, ncid, tuplexfrag_number, array_length, compressed, measure);
 	}
 	//Compute number of tuples per insert (regular case)
-	long long regular_rows = 0;
-	long long regular_times = 0;
-	long long remainder_rows = 0;
+	unsigned long long regular_rows = 0, regular_times = 0, remainder_rows = 0, jj = 0, l;
 
 	if (sizeof_var >= OPH_NC_BLOCK_SIZE) {
 		//Use the same algorithm
@@ -1532,15 +1522,13 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 
-	int j = 0;
-	int n;
 
-	n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
+	int n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
 	if (compressed == 1) {
 #ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
 #endif
-		for (j = 0; j < regular_rows; j++) {
+		for (jj = 0; jj < regular_rows; jj++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 		}
@@ -1548,7 +1536,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
 #endif
-		for (j = 0; j < regular_rows; j++) {
+		for (jj = 0; jj < regular_rows; jj++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
 		}
@@ -1562,9 +1550,6 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		free(query_string);
 		return OPH_NC_ERROR;
 	}
-
-	int l;
-
 	//Create binary array
 	char *binary_cache = 0;
 	int res;
@@ -1751,14 +1736,14 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		}
 	}
 
-	int jj = 0;
+	int j = 0;
+	oph_nc_compute_dimension_id(idDim[j], sizemax, measure->nexp, start_pointer);
 
-	oph_nc_compute_dimension_id(idDim[jj], sizemax, measure->nexp, start_pointer);
 	for (i = 0; i < measure->nexp; i++) {
 		*(start_pointer[i]) -= 1;
-		for (ii = 0; ii < measure->ndims; ii++) {
-			if (start_pointer[i] == &(start[ii])) {
-				*(start_pointer[i]) += measure->dims_start_index[ii];
+		for (j = 0; j < measure->ndims; j++) {
+			if (start_pointer[i] == &(start[j])) {
+				*(start_pointer[i]) += measure->dims_start_index[j];
 			}
 		}
 	}
@@ -1960,7 +1945,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
 #endif
-			for (j = 0; j < remainder_rows; j++) {
+			for (jj = 0; jj < remainder_rows; jj++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 			}
@@ -1968,7 +1953,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
 #endif
-			for (j = 0; j < remainder_rows; j++) {
+			for (jj = 0; jj < remainder_rows; jj++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
 			}
@@ -2183,9 +2168,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 	//Compute number of tuples per insert (regular case)
-	long long regular_rows = 0;
-	long long regular_times = 0;
-	long long remainder_rows = 0;
+	unsigned long long regular_rows = 0, regular_times = 0, remainder_rows = 0, jj = 0, l;
 
 	long long block_size = 512 * 1024;	//Maximum size that could be transfered
 	long long block_rows = 1000;	//Maximum number of lines that could be transfered
@@ -2229,14 +2212,12 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 
-	int n;
-
-	n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
+	int n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
 	if (compressed == 1) {
 #ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
 #endif
-		for (j = 0; j < regular_rows; j++) {
+		for (jj = 0; jj < regular_rows; jj++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 		}
@@ -2244,15 +2225,13 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
 #endif
-		for (j = 0; j < regular_rows; j++) {
+		for (jj = 0; jj < regular_rows; jj++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
 		}
 	}
 	query_string[n - 1] = ';';
 	query_string[n] = 0;
-
-	int l;
 
 	//Create binary array
 	char *binary_cache = 0;
@@ -2429,9 +2408,9 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 
 	for (i = 0; i < measure->nexp; i++) {
 		*(start_pointer[i]) -= 1;
-		for (ii = 0; ii < measure->ndims; ii++) {
-			if (start_pointer[i] == &(start[ii])) {
-				*(start_pointer[i]) += measure->dims_start_index[ii];
+		for (j = 0; j < measure->ndims; j++) {
+			if (start_pointer[i] == &(start[j])) {
+				*(start_pointer[i]) += measure->dims_start_index[j];
 			}
 		}
 	}
@@ -2725,7 +2704,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
 #endif
-			for (j = 0; j < remainder_rows; j++) {
+			for (jj = 0; jj < remainder_rows; jj++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 			}
@@ -2733,7 +2712,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
 #endif
-			for (j = 0; j < remainder_rows; j++) {
+			for (jj = 0; jj < remainder_rows; jj++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
 			}
@@ -3399,9 +3378,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		sizeof_var = (array_length) * sizeof(double);
 
 	//Compute number of tuples per insert (regular case)
-	long long regular_rows = 0;
-	long long regular_times = 0;
-	long long remainder_rows = 0;
+	unsigned long long regular_rows = 0, regular_times = 0, remainder_rows = 0, jj, l;
 
 	if (sizeof_var >= OPH_NC_BLOCK_SIZE) {
 		//Use the same algorithm
@@ -3443,7 +3420,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		return OPH_NC_ERROR;
 	}
 
-	int j = 0, n = 0, nn = 0, tmp = (int) strlen(compressed ? OPH_NC_CONCAT_COMPRESSED_ROW : OPH_NC_CONCAT_ROW);
+	int j = 0, n = 0, nn = 0, tmp = (int) strlen(compressed ? OPH_NC_CONCAT_COMPRESSED_ROW : OPH_NC_CONCAT_ROW), res;
 
 	*list_string = 0;
 	*input_measure_type = 0;
@@ -3451,7 +3428,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 	nn += tmp2;
 	strcpy(input_measure_type + nn, measure_type);
 	nn += tmp3;
-	for (j = 0; j < regular_rows; j++) {
+	for (jj = 0; jj < regular_rows; jj++) {
 		strcpy(list_string + n, compressed ? OPH_NC_CONCAT_COMPRESSED_ROW : OPH_NC_CONCAT_ROW);
 		n += tmp;
 		strcpy(input_measure_type + nn, "|" OPH_NC_CONCAT_TYPE);	// Data from file
@@ -3468,7 +3445,6 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 	}
 	//Create binary array
 	char *binary = 0;
-	int l, res;
 
 	if (type_flag == OPH_NC_BYTE_FLAG)
 		res = oph_iob_bin_array_create_b(&binary, array_length * regular_rows);
@@ -3560,8 +3536,6 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 			return OPH_NC_ERROR;
 		}
 	}
-
-	int jj = 0;
 
 	//Flag set to 0 if implicit dimensions are not in the order specified in the file
 	short int imp_dim_ordered = 1;
@@ -3714,9 +3688,9 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 			oph_nc_compute_dimension_id(idDim[jj], sizemax, measure->nexp, start_pointer);
 			for (i = 0; i < measure->nexp; i++) {
 				*(start_pointer[i]) -= 1;
-				for (ii = 0; ii < measure->ndims; ii++) {
-					if (start_pointer[i] == &(start[ii]))
-						*(start_pointer[i]) += measure->dims_start_index[ii];
+				for (j = 0; j < measure->ndims; j++) {
+					if (start_pointer[i] == &(start[j]))
+						*(start_pointer[i]) += measure->dims_start_index[j];
 				}
 			}
 
@@ -3808,7 +3782,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 	if (remainder_rows > 0) {
 		*list_string = n = 0;
 		nn = tmp2 + tmp3;
-		for (j = 0; j < remainder_rows; j++) {
+		for (jj = 0; jj < remainder_rows; jj++) {
 			strcpy(list_string + n, compressed ? OPH_NC_CONCAT_COMPRESSED_ROW : OPH_NC_CONCAT_ROW);
 			n += tmp;
 			nn += 1 + tmp2 + tmp3;
@@ -3856,9 +3830,9 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 
 			for (i = 0; i < measure->nexp; i++) {
 				*(start_pointer[i]) -= 1;
-				for (ii = 0; ii < measure->ndims; ii++) {
-					if (start_pointer[i] == &(start[ii]))
-						*(start_pointer[i]) += measure->dims_start_index[ii];
+				for (j = 0; j < measure->ndims; j++) {
+					if (start_pointer[i] == &(start[j]))
+						*(start_pointer[i]) += measure->dims_start_index[j];
 				}
 			}
 			//Fill array
