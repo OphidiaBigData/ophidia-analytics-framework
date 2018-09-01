@@ -171,6 +171,7 @@
 #define OPH_LOG_GENERIC_USER_ID_ERROR						"Unable to retreive user id\n"
 #define OPH_LOG_GENERIC_READ_METADATA_ERROR					"Unable to read metadata table\n"
 #define OPH_LOG_GENERIC_WRITE_METADATA_ERROR					"Unable to write metadata '%s:%s': %s\n"
+#define OPH_LOG_GENERIC_PROCESS_ERROR							"One or more processes have failed in a previous step of data processing\n"
 
 /*++++++++++++++++++++++FRAMEWORK+++++++++++++++++++++++++++*/
 
