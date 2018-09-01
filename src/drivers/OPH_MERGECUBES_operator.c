@@ -1580,6 +1580,9 @@ int task_destroy(oph_operator_struct * handle)
 					    ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0]);
 		}
 
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_GENERIC_PROCESS_ERROR);
+
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
