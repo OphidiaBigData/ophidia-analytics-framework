@@ -434,7 +434,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 
 	int level = 1;
-	int m2u[measure->ndims];
 	if (exp_dim_names != NULL) {
 		for (i = 0; i < measure->nexp; i++) {
 			flag = 0;
@@ -442,7 +441,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			for (j = 0; j < ndims; j++) {
 				if (!strcmp(dimname, measure->dims_name[j])) {
 					flag = 1;
-					m2u[i] = j;
 					break;
 				}
 			}
@@ -470,7 +468,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					}
 				}
 				if (flag) {
-					m2u[k] = i;
 					measure->dims_oph_level[i] = level++;
 					measure->dims_type[i] = 1;
 					k++;
@@ -479,8 +476,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		} else {
 			//Use order in nc file
 			for (i = 0; i < measure->nexp; i++) {
-				m2u[i] = i;
-
 				measure->dims_oph_level[i] = level++;
 				measure->dims_type[i] = 1;
 			}
@@ -495,7 +490,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			for (j = 0; j < ndims; j++) {
 				if (!strcmp(dimname, measure->dims_name[j])) {
 					flag = 1;
-					m2u[i] = j;
 					break;
 				}
 			}
@@ -512,7 +506,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	} else {
 		//Use order in nc file
 		for (i = measure->nexp; i < measure->ndims; i++) {
-			m2u[i] = i;
 			measure->dims_type[i] = 0;
 			measure->dims_oph_level[i] = level++;
 		}
