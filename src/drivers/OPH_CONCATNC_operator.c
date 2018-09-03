@@ -133,16 +133,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	//For error checking
-	int stream_size = OPH_ODB_CUBE_MEASURE_SIZE + 2 * sizeof(int) + 3, pointer = 0;
+	int stream_size = OPH_ODB_CUBE_MEASURE_SIZE + 2 * sizeof(int) + 1;
 	char stream[stream_size];
 	memset(stream, 0, sizeof(stream));
-	*stream = 0;
-	char *id_string[3];
-	id_string[0] = stream + pointer;
-	pointer += 1 + sizeof(int);
-	id_string[1] = stream + pointer;
-	pointer += 1 + sizeof(int);
-	id_string[2] = stream + pointer;
+	int id_in_datacube = 0, id_in_container = 0;
 
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
@@ -174,28 +168,31 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		char *uri = NULL;
 		int folder_id = 0;
 		int permission = 0;
-		if (oph_pid_parse_pid(datacube_in, ((int *) id_string) + 1, (int *) id_string, &uri)) {
+		if (oph_pid_parse_pid(datacube_in, &id_in_container, &id_in_datacube, &uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse the PID string\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((int *) id_string)[1], OPH_LOG_OPH_CONCATNC_PID_ERROR, datacube_in);
-			((int *) id_string)[0] = ((int *) id_string)[1] = 0;
-		} else if ((oph_odb_cube_check_if_datacube_not_present_by_pid(oDB, uri, ((int *) id_string)[1], ((int *) id_string)[0], &exists)) || !exists) {
+			logging(LOG_ERROR, __FILE__, __LINE__, id_in_container, OPH_LOG_OPH_CONCATNC_PID_ERROR, datacube_in);
+			id_in_datacube = id_in_container = 0;
+		} else if ((oph_odb_cube_check_if_datacube_not_present_by_pid(oDB, uri, id_in_container, id_in_datacube, &exists)) || !exists) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container - datacube combination\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((int *) id_string)[1], OPH_LOG_OPH_CONCATNC_NO_INPUT_DATACUBE, datacube_in);
-			((int *) id_string)[0] = ((int *) id_string)[1] = 0;
-		} else if ((oph_odb_cube_check_datacube_availability(oDB, ((int *) id_string)[0], 0, &status)) || !status) {
+			logging(LOG_ERROR, __FILE__, __LINE__, id_in_container, OPH_LOG_OPH_CONCATNC_NO_INPUT_DATACUBE, datacube_in);
+			id_in_datacube = id_in_container = 0;
+		} else if ((oph_odb_cube_check_datacube_availability(oDB, id_in_datacube, 0, &status)) || !status) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "I/O nodes storing datacube aren't available\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((int *) id_string)[1], OPH_LOG_OPH_CONCATNC_DATACUBE_AVAILABILITY_ERROR, datacube_in);
-			((int *) id_string)[0] = ((int *) id_string)[1] = 0;
-		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, ((int *) id_string)[1], 1, &folder_id))) {
+			logging(LOG_ERROR, __FILE__, __LINE__, id_in_container, OPH_LOG_OPH_CONCATNC_DATACUBE_AVAILABILITY_ERROR, datacube_in);
+			id_in_datacube = id_in_container = 0;
+		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_in_container, 1, &folder_id))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((int *) id_string)[1], OPH_LOG_OPH_CONCATNC_DATACUBE_FOLDER_ERROR, datacube_in);
-			((int *) id_string)[0] = ((int *) id_string)[1] = 0;
+			logging(LOG_ERROR, __FILE__, __LINE__, id_in_container, OPH_LOG_OPH_CONCATNC_DATACUBE_FOLDER_ERROR, datacube_in);
+			id_in_datacube = id_in_container = 0;
 		} else if ((oph_odb_fs_check_folder_session(folder_id, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->sessionid, oDB, &permission)) || !permission) {
 			//Check if user can work on datacube
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "User %s is not allowed to work on this datacube\n", username);
-			logging(LOG_ERROR, __FILE__, __LINE__, ((int *) id_string)[1], OPH_LOG_OPH_CONCATNC_DATACUBE_PERMISSION_ERROR, username);
-			((int *) id_string)[0] = ((int *) id_string)[1] = 0;
+			logging(LOG_ERROR, __FILE__, __LINE__, id_in_container, OPH_LOG_OPH_CONCATNC_DATACUBE_PERMISSION_ERROR, username);
+			id_in_datacube = id_in_container = 0;
 		}
+		memcpy(stream, (char *)&id_in_datacube, sizeof(id_in_datacube));
+		memcpy(stream + sizeof(int), (char *)&id_in_container, sizeof(id_in_container));
+	
 		if (uri)
 			free(uri);
 		uri = NULL;
@@ -210,13 +207,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		oph_odb_cube_init_datacube(&cube);
 
 		//retrieve input datacube
-		if (oph_odb_cube_retrieve_datacube(oDB, ((int *) id_string)[0], &cube)) {
+		if (oph_odb_cube_retrieve_datacube(oDB, id_in_datacube, &cube)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CONCATNC_DATACUBE_READ_ERROR);
 			oph_odb_cube_free_datacube(&cube);
 			break;
 		}
-		strcpy(id_string[2], cube.measure);
+		strcpy(stream + 2*sizeof(int), cube.measure);
 
 		oph_odb_cube_free_datacube(&cube);
 		break;
@@ -225,23 +222,27 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	//MPI_Barrier(MPI_COMM_WORLD);
 	MPI_Bcast(stream, stream_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
-	//Check if sequential part has been completed
-	if (((int *) id_string)[0] == 0) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((int *) id_string)[1], OPH_LOG_OPH_CONCATNC_NO_INPUT_DATACUBE, datacube_in);
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
-	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_datacube = ((int *) id_string)[0];
+	id_in_datacube = *((int *) stream);
+	id_in_container = *((int *)(stream + sizeof(int)));
+	char *var_name = (char * )(stream + 2*sizeof(int));
 
-	if (((int *) id_string)[1] == 0) {
+	//Check if sequential part has been completed
+	if (id_in_datacube == 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((int *) id_string)[1], OPH_LOG_OPH_CONCATNC_NO_INPUT_CONTAINER, datacube_in);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_in_container, OPH_LOG_OPH_CONCATNC_NO_INPUT_DATACUBE, datacube_in);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container = ((int *) id_string)[1];
+	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_datacube = id_in_datacube;
+
+	if (id_in_container == 0) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_in_container, OPH_LOG_OPH_CONCATNC_NO_INPUT_CONTAINER, datacube_in);
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container = id_in_container;
 
 	NETCDF_var *measure = ((NETCDF_var *) & (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->measure));
-	strcpy(measure->varname, id_string[2]);
+	strcpy(measure->varname, var_name);
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DESCRIPTION);
 	if (!value) {
