@@ -190,9 +190,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, id_in_container, OPH_LOG_OPH_CONCATNC_DATACUBE_PERMISSION_ERROR, username);
 			id_in_datacube = id_in_container = 0;
 		}
-		memcpy(stream, (char *)&id_in_datacube, sizeof(id_in_datacube));
-		memcpy(stream + sizeof(int), (char *)&id_in_container, sizeof(id_in_container));
-	
+		memcpy(stream, (char *) &id_in_datacube, sizeof(id_in_datacube));
+		memcpy(stream + sizeof(int), (char *) &id_in_container, sizeof(id_in_container));
+
 		if (uri)
 			free(uri);
 		uri = NULL;
@@ -213,7 +213,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			oph_odb_cube_free_datacube(&cube);
 			break;
 		}
-		strcpy(stream + 2*sizeof(int), cube.measure);
+		strcpy(stream + 2 * sizeof(int), cube.measure);
 
 		oph_odb_cube_free_datacube(&cube);
 		break;
@@ -223,8 +223,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	MPI_Bcast(stream, stream_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
 	id_in_datacube = *((int *) stream);
-	id_in_container = *((int *)(stream + sizeof(int)));
-	char *var_name = (char * )(stream + 2*sizeof(int));
+	id_in_container = *((int *) (stream + sizeof(int)));
+	char *var_name = (char *) (stream + 2 * sizeof(int));
 
 	//Check if sequential part has been completed
 	if (id_in_datacube == 0) {
