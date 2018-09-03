@@ -172,27 +172,27 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		char *uri = NULL;
 		int folder_id = 0;
 		int permission = 0;
-		if (oph_pid_parse_pid(datacube_in, ((int *) id_string) + 1, (int *) id_string, &uri)) {
+		if (oph_pid_parse_pid(datacube_in, (int *) id_string[1], (int *) id_string[0], &uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse the PID string\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((int *) id_string)[1], OPH_LOG_OPH_CONCATNC_PID_ERROR, datacube_in);
-			((int *) id_string)[0] = ((int *) id_string)[1] = 0;
-		} else if ((oph_odb_cube_check_if_datacube_not_present_by_pid(oDB, uri, ((int *) id_string)[1], ((int *) id_string)[0], &exists)) || !exists) {
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_PID_ERROR, datacube_in);
+			id_string[0] = id_string[1] = NULL;
+		} else if ((oph_odb_cube_check_if_datacube_not_present_by_pid(oDB, uri, *(int *) id_string[1], *(int *) id_string[0], &exists)) || !exists) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container - datacube combination\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((int *) id_string)[1], OPH_LOG_OPH_CONCATNC_NO_INPUT_DATACUBE, datacube_in);
-			((int *) id_string)[0] = ((int *) id_string)[1] = 0;
-		} else if ((oph_odb_cube_check_datacube_availability(oDB, ((int *) id_string)[0], 0, &status)) || !status) {
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_NO_INPUT_DATACUBE, datacube_in);
+			id_string[0] = id_string[1] = NULL;
+		} else if ((oph_odb_cube_check_datacube_availability(oDB, *(int *) id_string[0], 0, &status)) || !status) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "I/O nodes storing datacube aren't available\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((int *) id_string)[1], OPH_LOG_OPH_CONCATNC_DATACUBE_AVAILABILITY_ERROR, datacube_in);
-			((int *) id_string)[0] = ((int *) id_string)[1] = 0;
-		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, ((int *) id_string)[1], 1, &folder_id))) {
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_DATACUBE_AVAILABILITY_ERROR, datacube_in);
+			id_string[0] = id_string[1] = NULL;
+		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, *(int *) id_string[1], 1, &folder_id))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((int *) id_string)[1], OPH_LOG_OPH_CONCATNC_DATACUBE_FOLDER_ERROR, datacube_in);
-			((int *) id_string)[0] = ((int *) id_string)[1] = 0;
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_DATACUBE_FOLDER_ERROR, datacube_in);
+			id_string[0] = id_string[1] = NULL;
 		} else if ((oph_odb_fs_check_folder_session(folder_id, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->sessionid, oDB, &permission)) || !permission) {
 			//Check if user can work on datacube
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "User %s is not allowed to work on this datacube\n", username);
-			logging(LOG_ERROR, __FILE__, __LINE__, ((int *) id_string)[1], OPH_LOG_OPH_CONCATNC_DATACUBE_PERMISSION_ERROR, username);
-			((int *) id_string)[0] = ((int *) id_string)[1] = 0;
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_DATACUBE_PERMISSION_ERROR, username);
+			id_string[0] = id_string[1] = NULL;
 		}
 		if (uri)
 			free(uri);
@@ -200,7 +200,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 		if (oph_odb_user_retrieve_user_id(oDB, username, &(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_user))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to extract userid.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_USER_ID_ERROR);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_USER_ID_ERROR);
 			break;
 		}
 		//Get id from measure name
@@ -208,9 +208,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		oph_odb_cube_init_datacube(&cube);
 
 		//retrieve input datacube
-		if (oph_odb_cube_retrieve_datacube(oDB, ((int *) id_string)[0], &cube)) {
+		if (oph_odb_cube_retrieve_datacube(oDB, *(int *) id_string[0], &cube)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CONCATNC_DATACUBE_READ_ERROR);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_DATACUBE_READ_ERROR);
 			oph_odb_cube_free_datacube(&cube);
 			break;
 		}
@@ -224,19 +224,19 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	MPI_Bcast(stream, stream_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
 	//Check if sequential part has been completed
-	if (((int *) id_string)[0] == 0) {
+	if (!id_string[0]) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((int *) id_string)[1], OPH_LOG_OPH_CONCATNC_NO_INPUT_DATACUBE, datacube_in);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_NO_INPUT_DATACUBE, datacube_in);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_datacube = ((int *) id_string)[0];
+	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_datacube = *(int *) id_string[0];
 
-	if (((int *) id_string)[1] == 0) {
+	if (!id_string[1]) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((int *) id_string)[1], OPH_LOG_OPH_CONCATNC_NO_INPUT_CONTAINER, datacube_in);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_NO_INPUT_CONTAINER, datacube_in);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container = ((int *) id_string)[1];
+	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container = *(int *) id_string[1];
 
 	NETCDF_var *measure = ((NETCDF_var *) & (((OPH_CONCATNC_operator_handle *) handle->operator_handle)->measure));
 	strcpy(measure->varname, id_string[2]);
@@ -312,10 +312,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->schedule_algo = (int) strtol(value, NULL, 10);
 
 	int i;
-	char **exp_dim_names = NULL;
-	char **imp_dim_names = NULL;
-	int exp_number_of_dim_names = 0;
-	int imp_number_of_dim_names = 0;
 
 	//Open netcdf file
 	int retval, j = 0;
@@ -347,177 +343,82 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	measure->ndims = ndims;
 
-	if (!(measure->dims_name = (char **) malloc(measure->ndims * sizeof(char *)))) {
+	if (!(measure->dims_name = (char **) calloc(measure->ndims, sizeof(char *)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_NO_CONTAINER, "NO-CONTAINER", "measure dims_name");
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
-	memset(measure->dims_name, 0, measure->ndims * sizeof(char *));
-
-	if (!(measure->dims_length = (size_t *) malloc(measure->ndims * sizeof(size_t)))) {
+	if (!(measure->dims_length = (size_t *) calloc(measure->ndims, sizeof(size_t)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_NO_CONTAINER, "NO-CONTAINER", "measure dims_length");
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
-	if (!(measure->dims_unlim = (char *) malloc(measure->ndims * sizeof(char)))) {
+	if (!(measure->dims_unlim = (char *) calloc(measure->ndims, sizeof(char)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_NO_CONTAINER, "NO-CONTAINER", "measure dims_unlim");
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
-	if (!(measure->dims_type = (short int *) malloc(measure->ndims * sizeof(short int)))) {
+	if (!(measure->dims_type = (short int *) calloc(measure->ndims, sizeof(short int)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_NO_CONTAINER, "NO-CONTAINER", "measure dims_type");
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	if (!(measure->dims_oph_level = (short int *) calloc(measure->ndims, sizeof(short int)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_NO_CONTAINER, "NO-CONTAINER", "measure dims_oph_level");
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	if (!(measure->dims_concept_level = (char *) calloc(measure->ndims, sizeof(char)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_NO_CONTAINER, "NO-CONTAINER", "measure dims_concept_level");
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
-	memset(measure->dims_concept_level, 0, measure->ndims * sizeof(char));
-
-	//Extract dimension ids following order in the nc file
-	if (!(measure->dims_id = (int *) malloc(measure->ndims * sizeof(int)))) {
+	if (!(measure->dims_id = (int *) calloc(measure->ndims, sizeof(int)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_NO_CONTAINER, "NO-CONTAINER", "measure dims_id");
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	if ((retval = nc_inq_vardimid(ncid, measure->varid, measure->dims_id))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_NC_INC_VAR_ERROR_NO_CONTAINER, "NO-CONTAINER", nc_strerror(retval));
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	int unlimdimid;
 	if ((retval = nc_inq_unlimdim(ncid, &unlimdimid))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_NC_INC_VAR_ERROR_NO_CONTAINER, "NO-CONTAINER", nc_strerror(retval));
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	//Extract dimensions information and check names provided by task string
 	char *dimname;
-	short int flag = 0;
 	for (i = 0; i < ndims; i++) {
 		measure->dims_unlim[i] = measure->dims_id[i] == unlimdimid;
 		measure->dims_name[i] = (char *) malloc((NC_MAX_NAME + 1) * sizeof(char));
 		if ((retval = nc_inq_dim(ncid, measure->dims_id[i], measure->dims_name[i], &measure->dims_length[i]))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_NC_INC_VAR_ERROR_NO_CONTAINER, "NO-CONTAINER", nc_strerror(retval));
-			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 	}
 
+	// This part is useless: effettive setting is postponed
+
+	// TODO: it is assumed that there is only one implicit dimension
+	measure->nexp = ndims - 1;
+
+	// TODO: use order in nc file, but OPH_IMPORTNC exploits user data
 	int level = 1;
-	int m2u[measure->ndims];
-	if (exp_dim_names != NULL) {
-		for (i = 0; i < measure->nexp; i++) {
-			flag = 0;
-			dimname = exp_dim_names[i];
-			for (j = 0; j < ndims; j++) {
-				if (!strcmp(dimname, measure->dims_name[j])) {
-					flag = 1;
-					m2u[i] = j;
-					break;
-				}
-			}
-			if (!flag) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension %s related to variable %s in in nc file\n", dimname, measure->varname);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, "NO-CONTAINER", dimname, measure->varname);
-				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-			}
-			measure->dims_oph_level[j] = level++;
-			measure->dims_type[j] = 1;
-		}
-	} else {
-		if (imp_dim_names != NULL) {
-			int k = 0;
-			for (i = 0; i < measure->ndims; i++) {
-				flag = 1;
-				for (j = 0; j < measure->nimp; j++) {
-					dimname = imp_dim_names[j];
-					if (!strcmp(dimname, measure->dims_name[i])) {
-						//Found implicit dimension
-						flag = 0;
-						break;
-					}
-				}
-				if (flag) {
-					m2u[k] = i;
-					measure->dims_oph_level[i] = level++;
-					measure->dims_type[i] = 1;
-					k++;
-				}
-			}
-		} else {
-			//Use order in nc file
-			for (i = 0; i < measure->nexp; i++) {
-				m2u[i] = i;
-
-				measure->dims_oph_level[i] = level++;
-				measure->dims_type[i] = 1;
-			}
-		}
+	for (i = 0; i < measure->nexp; i++) {
+		measure->dims_oph_level[i] = level++;
+		measure->dims_type[i] = 1;
 	}
 
+	// TODO: use order in nc file, but OPH_IMPORTNC exploits user data
 	level = 1;
-	if (imp_dim_names != NULL) {
-		for (i = measure->nexp; i < measure->ndims; i++) {
-			flag = 0;
-			dimname = imp_dim_names[i - measure->nexp];
-			for (j = 0; j < ndims; j++) {
-				if (!strcmp(dimname, measure->dims_name[j])) {
-					flag = 1;
-					m2u[i] = j;
-					break;
-				}
-			}
-			if (!flag) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension %s related to variable %s in in nc file\n", dimname, measure->varname);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, "NO-CONTAINER", dimname, measure->varname);
-				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-			}
-			measure->dims_type[j] = 0;
-			measure->dims_oph_level[j] = level++;
-		}
-	} else {
-		//Use order in nc file
-		for (i = measure->nexp; i < measure->ndims; i++) {
-			m2u[i] = i;
-			measure->dims_type[i] = 0;
-			measure->dims_oph_level[i] = level++;
-		}
+	for (i = measure->nexp; i < measure->ndims; i++) {
+		measure->dims_type[i] = 0;
+		measure->dims_oph_level[i] = level++;
 	}
-
-	oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-	oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 
 //ADDED TO MANAGE SUBSETTED IMPORT
 
@@ -830,7 +731,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			continue;
 		measure->varsize *= (measure->dims_end_index[j] - measure->dims_start_index[j]) + 1;
 	}
-
 
 	// Other arguments
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CHECK_EXP_DIM);
@@ -1734,10 +1634,38 @@ int task_init(oph_operator_struct * handle)
 	}
 
 	MPI_Bcast(measure_stream, 3 + 3 * ndim, MPI_INT, 0, MPI_COMM_WORLD);
-	measure->vartype = measure_stream[1];
+
+	// Previous data are not considered
+	if (measure->dims_length)
+		free(measure->dims_length);
+	if (measure->dims_type)
+		free(measure->dims_type);
+	if (measure->dims_oph_level)
+		free(measure->dims_oph_level);
 	measure->dims_length = (size_t *) malloc(ndim * sizeof(size_t));
+	if (!measure->dims_length) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_INPUT, "dim_length");
+		if (measure_stream)
+			free(measure_stream);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
 	measure->dims_type = (short int *) malloc(ndim * sizeof(short int));
+	if (!measure->dims_type) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_INPUT, "dims_type");
+		if (measure_stream)
+			free(measure_stream);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
 	measure->dims_oph_level = (short int *) malloc(ndim * sizeof(short int));
+	if (!measure->dims_oph_level) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_INPUT, "oph_level");
+		if (measure_stream)
+			free(measure_stream);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
 
 	int l;
 	for (l = 0; l < ndim; l++) {
@@ -1746,6 +1674,7 @@ int task_init(oph_operator_struct * handle)
 		measure->dims_oph_level[l] = (short int) measure_stream[3 + l];
 	}
 	measure->varid = measure_stream[0];
+	measure->vartype = measure_stream[1];
 	measure->nexp = measure_stream[2];
 	measure->ndims = ndim;
 
@@ -2071,6 +2000,10 @@ int env_unset(oph_operator_struct * handle)
 	if (measure->dims_id) {
 		free((int *) measure->dims_id);
 		measure->dims_id = NULL;
+	}
+	if (measure->dims_unlim) {
+		free((char *) measure->dims_unlim);
+		measure->dims_unlim = NULL;
 	}
 	if (measure->dims_length) {
 		free((size_t *) measure->dims_length);

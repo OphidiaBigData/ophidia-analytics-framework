@@ -1036,7 +1036,7 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, in
 					int residual_len = 0;
 					int source_len = 0;
 					if (pid2) {
-						snprintf(source_buffer, OPH_COMMON_BUFFER_LEN, OPH_LIST_TASK_FILE_INPUT " %s" OPH_LIST_TASK_DATACUBE_INPUT " %s", row[7], pid2);
+						snprintf(source_buffer, OPH_COMMON_BUFFER_LEN, OPH_LIST_TASK_FILE_INPUT " %s - " OPH_LIST_TASK_DATACUBE_INPUT " %s", row[7], pid2);
 						source_len = strlen(row[7]) + strlen(OPH_LIST_TASK_FILE_INPUT) + 1;
 					} else {
 						snprintf(source_buffer, OPH_COMMON_BUFFER_LEN, "%s", row[7]);
