@@ -1805,7 +1805,6 @@ int task_distribute(oph_operator_struct * handle)
 		((OPH_CONCATNC_operator_handle *) handle->operator_handle)->execute_error = 0;
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 	}
-
 	//Partition fragment relative index string
 	char *new_ptr = new_id_string;
 	if (oph_ids_get_substring_from_string
@@ -1882,8 +1881,7 @@ int task_execute(oph_operator_struct * handle)
 
 	if (oph_dc_setup_dbms(&(oper_handle->server), (dbmss.value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATNC_IOPLUGIN_SETUP_ERROR,
-			(dbmss.value[0]).id_dbms);
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATNC_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 	//For each DBMS
@@ -1891,8 +1889,7 @@ int task_execute(oph_operator_struct * handle)
 
 		if (oph_dc_connect_to_dbms(oper_handle->server, &(dbmss.value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATNC_DBMS_CONNECTION_ERROR,
-				(dbmss.value[i]).id_dbms);
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATNC_DBMS_CONNECTION_ERROR, (dbmss.value[i]).id_dbms);
 			result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 		//For each DB
@@ -1903,8 +1900,7 @@ int task_execute(oph_operator_struct * handle)
 
 			if (oph_dc_use_db_of_dbms(oper_handle->server, &(dbmss.value[i]), &(dbs.value[j]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATNC_DB_SELECTION_ERROR,
-					(dbs.value[j]).db_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATNC_DB_SELECTION_ERROR, (dbs.value[j]).db_name);
 				result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				break;
 			}
@@ -1923,8 +1919,7 @@ int task_execute(oph_operator_struct * handle)
 				//Connection string
 				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &fragment_name)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag name exceed limit.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
-						OPH_LOG_OPH_CONCATNC_STRING_BUFFER_OVERFLOW, "fragment name", fragment_name);
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATNC_STRING_BUFFER_OVERFLOW, "fragment name", fragment_name);
 					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					break;
 				}
@@ -1932,26 +1927,22 @@ int task_execute(oph_operator_struct * handle)
 				//Create Empty fragment
 				if (oph_dc_create_empty_fragment(oper_handle->server, &tmp_frag)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating fragment.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
-						OPH_LOG_OPH_CONCATNC_FRAGMENT_CREATION_ERROR, tmp_frag.fragment_name);
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATNC_FRAGMENT_CREATION_ERROR, tmp_frag.fragment_name);
 					result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 					break;
 				}
 				//Append fragment
 				if (oph_nc_append_fragment_from_nc
-				    (oper_handle->server, &(frags.value[k]), &tmp_frag, oper_handle->ncid,
-				     oper_handle->compressed, (NETCDF_var *) & (oper_handle->measure))) {
+				    (oper_handle->server, &(frags.value[k]), &tmp_frag, oper_handle->ncid, oper_handle->compressed, (NETCDF_var *) & (oper_handle->measure))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATNC_FRAG_POPULATE_ERROR,
-						tmp_frag.fragment_name, "");
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATNC_FRAG_POPULATE_ERROR, tmp_frag.fragment_name, "");
 					result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 					break;
 				}
 				//Insert new fragment
 				if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &tmp_frag)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update fragment table.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
-						OPH_LOG_OPH_CONCATNC_FRAGMENT_INSERT_ERROR, frag_name_out);
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATNC_FRAGMENT_INSERT_ERROR, frag_name_out);
 					result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 					break;
 				}
@@ -1962,8 +1953,7 @@ int task_execute(oph_operator_struct * handle)
 	}
 	if (oph_dc_cleanup_dbms(oper_handle->server)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATNC_IOPLUGIN_CLEANUP_ERROR,
-			(dbmss.value[0]).id_dbms);
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATNC_IOPLUGIN_CLEANUP_ERROR, (dbmss.value[0]).id_dbms);
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 
