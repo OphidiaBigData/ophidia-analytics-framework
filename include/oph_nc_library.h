@@ -225,6 +225,19 @@ int oph_nc_get_next_nc_id(size_t * id, unsigned int *sizemax, int n);
 int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int ncid, int compressed, NETCDF_var * measure);
 
 /**
+ * \brief Append nc data to a fragment (Optimized version with single read per fragment)
+ * \param server Pointer to I/O server structure
+ * \param old_frag Structure with information about the old fragment
+ * \param new_frag Structure with information about the new fragment
+ * \param ncid Id of nc file
+ * \param compressed If the data to insert is compressed (1) or not (0)
+ * \param measure Structure containing measure data and information to be stored
+ * \param memory_size Value of maximum memory available
+ * \return 0 if successfull
+ */
+int oph_nc_append_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int ncid, int compressed, NETCDF_var * measure, long long memory_size);
+
+/**
  * \brief Retrieve a dimension coordinated variable data from a NetCDF file
  * \param id_container Id of output container (used by logging function)
  * \param ncid Id of nc file

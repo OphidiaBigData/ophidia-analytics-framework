@@ -82,6 +82,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->server = NULL;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->sessionid = NULL;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_user = 0;
+	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->memory_size = 0;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->time_filter = 1;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset = NULL;
@@ -305,6 +306,12 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 	}
 
+	if (oph_pid_get_memory_size(&(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->memory_size))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_OPHIDIADB_CONFIGURATION_FILE, "NO-CONTAINER");
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SCHEDULE_ALGORITHM);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SCHEDULE_ALGORITHM);
@@ -408,6 +415,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	// TODO: it is assumed that there is only one implicit dimension
 	measure->nexp = ndims - 1;
+	measure->nimp = 1;
 
 	// TODO: use order in nc file, but OPH_IMPORTNC exploits user data
 	int level = 1;
@@ -1869,8 +1877,8 @@ int task_execute(oph_operator_struct * handle)
 					break;
 				}
 				//Append fragment
-				if (oph_nc_append_fragment_from_nc
-				    (oper_handle->server, &(frags.value[k]), &tmp_frag, oper_handle->ncid, oper_handle->compressed, (NETCDF_var *) & (oper_handle->measure))) {
+				if (oph_nc_append_fragment_from_nc2
+				    (oper_handle->server, &(frags.value[k]), &tmp_frag, oper_handle->ncid, oper_handle->compressed, (NETCDF_var *) & (oper_handle->measure), oper_handle->memory_size)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATNC_FRAG_POPULATE_ERROR, tmp_frag.fragment_name, "");
 					result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;

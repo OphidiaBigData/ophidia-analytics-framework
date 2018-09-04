@@ -3939,6 +3939,588 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 	return OPH_NC_SUCCESS;
 }
 
+int oph_nc_append_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int ncid, int compressed, NETCDF_var * measure, long long memory_size)
+{
+	if (!old_frag || !new_frag || !ncid || !measure || !server) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_NC_ERROR;
+	}
+
+	if (oph_dc_check_connection_to_db(server, old_frag->db_instance->dbms_instance, old_frag->db_instance, 0)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
+		return OPH_NC_ERROR;
+	}
+	int tuplexfrag_number = old_frag->key_end - old_frag->key_start + 1;
+
+	char type_flag = '\0';
+	switch (measure->vartype) {
+		case NC_BYTE:
+		case NC_CHAR:
+			type_flag = OPH_NC_BYTE_FLAG;
+			break;
+		case NC_SHORT:
+			type_flag = OPH_NC_SHORT_FLAG;
+			break;
+		case NC_INT:
+			type_flag = OPH_NC_INT_FLAG;
+			break;
+		case NC_INT64:
+			type_flag = OPH_NC_LONG_FLAG;
+			break;
+		case NC_FLOAT:
+			type_flag = OPH_NC_FLOAT_FLAG;
+			break;
+		case NC_DOUBLE:
+			type_flag = OPH_NC_DOUBLE_FLAG;
+			break;
+		default:
+			type_flag = OPH_NC_DOUBLE_FLAG;
+	}
+
+	//start and count array must be sorted in base of the real order of dimensions in the nc file
+	//sizemax must be sorted in base of the oph_level value
+	unsigned int *sizemax = (unsigned int *) malloc((measure->nexp) * sizeof(unsigned int));
+	size_t *start = (size_t *) malloc((measure->ndims) * sizeof(size_t));
+	size_t *count = (size_t *) malloc((measure->ndims) * sizeof(size_t));
+	//Sort start in base of oph_level of explicit dimension
+	size_t **start_pointer = (size_t **) malloc((measure->nexp) * sizeof(size_t *));
+	//Set count
+	int max_exp_lev = measure->nexp;
+	short int i;
+	for (i = 0; i < measure->ndims; i++) {
+		//External explicit
+		if (measure->dims_type[i] && measure->dims_oph_level[i] != max_exp_lev) {
+			count[i] = 1;
+		} else {
+			//Implicit
+			//Modified to allow subsetting
+			if (measure->dims_start_index[i] == measure->dims_end_index[i])
+				count[i] = 1;
+			else
+				count[i] = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
+			start[i] = measure->dims_start_index[i];
+		}
+	}
+	int array_length = 1;
+	for (i = 0; i < measure->ndims; i++)
+		if (!measure->dims_type[i])
+			array_length *= count[i];
+
+	long long sizeof_var = 0;
+	if (type_flag == OPH_NC_BYTE_FLAG)
+		sizeof_var = (array_length) * sizeof(char);
+	else if (type_flag == OPH_NC_SHORT_FLAG)
+		sizeof_var = (array_length) * sizeof(short);
+	else if (type_flag == OPH_NC_INT_FLAG)
+		sizeof_var = (array_length) * sizeof(int);
+	else if (type_flag == OPH_NC_LONG_FLAG)
+		sizeof_var = (array_length) * sizeof(long long);
+	else if (type_flag == OPH_NC_FLOAT_FLAG)
+		sizeof_var = (array_length) * sizeof(float);
+	else if (type_flag == OPH_NC_DOUBLE_FLAG)
+		sizeof_var = (array_length) * sizeof(double);
+	else
+		sizeof_var = (array_length) * sizeof(double);
+
+	long long memory_size_mb = memory_size * OPH_NC_MEMORY_BLOCK;
+
+	//Flag set to 1 if whole fragment fits in memory
+	//Conservative choice. At most we insert the whole fragment, hence we need 2 equal buffers: 1 to read and 1 to write 
+	short int whole_fragment = ((tuplexfrag_number * sizeof_var) > (long long) (memory_size_mb / 2) ? 0 : 1);
+
+	//pmesg(LOG_ERROR, __FILE__, __LINE__, "Memory set: %lld\n",memory_size_mb);
+
+	//Flag set to 1 if dimension are not in the order specified
+	short int dimension_ordered = 1;
+	unsigned int *weight = (unsigned int *) malloc((measure->ndims) * sizeof(unsigned int));
+	for (i = 0; i < measure->ndims; i++) {
+		//Assign 0 to explicit dimensions and 1 to implicit
+		weight[i] = (measure->dims_type[i] ? 0 : 1);
+	}
+	//Check if explicit are before implicit
+	for (i = 1; i < measure->ndims; i++) {
+		if (weight[i] < weight[i - 1]) {
+			dimension_ordered = 0;
+			break;
+		}
+	}
+	free(weight);
+
+	//Flag set to 1 if explicit dimension is splitted on more fragments, or more than one exp dimensions are in fragment
+	short int whole_explicit = 0;
+	for (i = 0; i < measure->ndims; i++) {
+		//External explicit
+		if (measure->dims_type[i] && measure->dims_oph_level[i] == max_exp_lev) {
+			if (measure->dims_start_index[i] == measure->dims_end_index[i])
+				whole_explicit = (1 == tuplexfrag_number ? 1 : 0);
+			else
+				whole_explicit = ((measure->dims_end_index[i] - measure->dims_start_index[i] + 1) == tuplexfrag_number ? 1 : 0);
+			break;
+		}
+	}
+
+	//If flag is set call old approach, else continue
+	if (!whole_fragment || dimension_ordered || !whole_explicit) {
+		return oph_nc_append_fragment_from_nc(server, old_frag, new_frag, ncid, compressed, measure);
+	}
+	//Compute number of tuples per insert (regular case)
+	unsigned long long regular_rows = 0, regular_times = 0, remainder_rows = 0, jj, l;
+
+	if (sizeof_var >= OPH_NC_BLOCK_SIZE) {
+		//Use the same algorithm
+		regular_rows = 1;
+		regular_times = tuplexfrag_number;
+	} else if (tuplexfrag_number * sizeof_var <= OPH_NC_BLOCK_SIZE) {
+		//Do single insert
+		if (tuplexfrag_number <= OPH_NC_BLOCK_ROWS) {
+			regular_rows = tuplexfrag_number;
+			regular_times = 1;
+		} else {
+			regular_rows = OPH_NC_BLOCK_ROWS;
+			regular_times = (long long) tuplexfrag_number / regular_rows;
+			remainder_rows = (long long) tuplexfrag_number % regular_rows;
+		}
+	} else {
+		//Compute num rows x insert and remainder
+		regular_rows = ((long long) (OPH_NC_BLOCK_SIZE / sizeof_var) >= OPH_NC_BLOCK_ROWS ? OPH_NC_BLOCK_ROWS : (long long) (OPH_NC_BLOCK_SIZE / sizeof_var));
+		regular_times = (long long) tuplexfrag_number / regular_rows;
+		remainder_rows = (long long) tuplexfrag_number % regular_rows;
+	}
+
+	//Alloc query String
+	int tmp2 = strlen(OPH_NC_CONCAT_TYPE);
+	char measure_type[OPH_ODB_CUBE_MEASURE_TYPE_SIZE];
+	if (oph_nc_get_c_type(measure->vartype, measure_type))
+		return OPH_NC_ERROR;
+	int tmp3 = strlen(measure_type);
+	long long input_measure_size = (tmp2 + strlen(measure_type) + 1) * (regular_rows + 1), list_size = 0, plugin_size = 0, where_size = 0, query_size = 0;
+	list_size = strlen(compressed ? OPH_NC_CONCAT_COMPRESSED_ROW : OPH_NC_CONCAT_ROW) * regular_rows;
+	plugin_size = 1 + snprintf(NULL, 0, compressed ? OPH_NC_CONCAT_PLUGIN_COMPR : OPH_NC_CONCAT_PLUGIN, "", measure_type, "") + list_size + input_measure_size;
+	where_size = 1 + snprintf(NULL, 0, OPH_NC_CONCAT_WHERE, (long long) old_frag->key_end, (long long) old_frag->key_end);
+	query_size = 1 + snprintf(NULL, 0, OPH_DC_SQ_INSERT_SELECT_FRAG_FINAL, new_frag->fragment_name, "", old_frag->fragment_name, "") + plugin_size + where_size;
+
+	char input_measure_type[input_measure_size], list_string[list_size + 1], plugin_string[plugin_size + 1], where_string[where_size + 1];
+	char *query_string = (char *) malloc(query_size * sizeof(char));
+	if (!(query_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(start);
+		free(count);
+		free(start_pointer);
+		free(sizemax);
+		return OPH_NC_ERROR;
+	}
+
+	int j = 0, n = 0, nn = 0, tmp = (int) strlen(compressed ? OPH_NC_CONCAT_COMPRESSED_ROW : OPH_NC_CONCAT_ROW), res;
+
+	*list_string = 0;
+	*input_measure_type = 0;
+	strcpy(input_measure_type + nn, OPH_NC_CONCAT_TYPE);	// Input data cube
+	nn += tmp2;
+	strcpy(input_measure_type + nn, measure_type);
+	nn += tmp3;
+	for (jj = 0; jj < regular_rows; jj++) {
+		strcpy(list_string + n, compressed ? OPH_NC_CONCAT_COMPRESSED_ROW : OPH_NC_CONCAT_ROW);
+		n += tmp;
+		strcpy(input_measure_type + nn, "|" OPH_NC_CONCAT_TYPE);	// Data from file
+		nn += 1 + tmp2;
+		strcpy(input_measure_type + nn, measure_type);
+		nn += tmp3;
+	}
+
+	//Create binary array
+	char *binary_cache = 0;
+
+	//Create a binary array to store the whole fragment
+	if (type_flag == OPH_NC_BYTE_FLAG)
+		res = oph_iob_bin_array_create_b(&binary_cache, array_length * tuplexfrag_number);
+	else if (type_flag == OPH_NC_SHORT_FLAG)
+		res = oph_iob_bin_array_create_s(&binary_cache, array_length * tuplexfrag_number);
+	else if (type_flag == OPH_NC_INT_FLAG)
+		res = oph_iob_bin_array_create_i(&binary_cache, array_length * tuplexfrag_number);
+	else if (type_flag == OPH_NC_LONG_FLAG)
+		res = oph_iob_bin_array_create_l(&binary_cache, array_length * tuplexfrag_number);
+	else if (type_flag == OPH_NC_FLOAT_FLAG)
+		res = oph_iob_bin_array_create_f(&binary_cache, array_length * tuplexfrag_number);
+	else if (type_flag == OPH_NC_DOUBLE_FLAG)
+		res = oph_iob_bin_array_create_d(&binary_cache, array_length * tuplexfrag_number);
+	else
+		res = oph_iob_bin_array_create_d(&binary_cache, array_length * tuplexfrag_number);
+	if (res) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array creation: %d\n", res);
+		free(binary_cache);
+		free(query_string);
+		free(start);
+		free(count);
+		free(start_pointer);
+		free(sizemax);
+		return OPH_NC_ERROR;
+	}
+
+	//Create array for rows to be insert
+	char *binary_insert = 0;
+	res = 0;
+	if (type_flag == OPH_NC_BYTE_FLAG)
+		res = oph_iob_bin_array_create_b(&binary_insert, array_length * regular_rows);
+	else if (type_flag == OPH_NC_SHORT_FLAG)
+		res = oph_iob_bin_array_create_s(&binary_insert, array_length * regular_rows);
+	else if (type_flag == OPH_NC_INT_FLAG)
+		res = oph_iob_bin_array_create_i(&binary_insert, array_length * regular_rows);
+	else if (type_flag == OPH_NC_LONG_FLAG)
+		res = oph_iob_bin_array_create_l(&binary_insert, array_length * regular_rows);
+	else if (type_flag == OPH_NC_FLOAT_FLAG)
+		res = oph_iob_bin_array_create_f(&binary_insert, array_length * regular_rows);
+	else if (type_flag == OPH_NC_DOUBLE_FLAG)
+		res = oph_iob_bin_array_create_d(&binary_insert, array_length * regular_rows);
+	else
+		res = oph_iob_bin_array_create_d(&binary_insert, array_length * regular_rows);
+	if (res) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array creation: %d\n", res);
+		free(binary_cache);
+		free(binary_insert);
+		free(query_string);
+		free(start);
+		free(count);
+		free(start_pointer);
+		free(sizemax);
+		return OPH_NC_ERROR;
+	}
+
+	unsigned long long c_arg = regular_rows, ii;
+	oph_ioserver_query *query = NULL;
+	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(1 + c_arg, sizeof(oph_ioserver_query_arg *));
+	if (!(args)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(binary_cache);
+		free(binary_insert);
+		free(start);
+		free(count);
+		free(start_pointer);
+		free(sizemax);
+		return OPH_NC_ERROR;
+	}
+
+	for (ii = 0; ii < c_arg; ii++) {
+		args[ii] = (oph_ioserver_query_arg *) calloc(1, sizeof(oph_ioserver_query_arg));
+		if (!args[ii]) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate input arguments\n");
+			free(query_string);
+			free(binary_cache);
+			free(binary_insert);
+			for (ii = 0; ii < c_arg; ii++)
+				if (args[ii])
+					free(args[ii]);
+			free(args);
+			free(start);
+			free(count);
+			free(start_pointer);
+			free(sizemax);
+			return OPH_NC_ERROR;
+		}
+	}
+	args[c_arg] = NULL;
+
+	for (ii = 0; ii < regular_rows; ii++) {
+		args[ii]->arg_length = sizeof_var;
+		args[ii]->arg_type = OPH_IOSERVER_TYPE_BLOB;
+		args[ii]->arg_is_null = 0;
+		args[ii]->arg = (char *) (binary_insert + sizeof_var * ii);
+	}
+
+	//Check
+	int total = 1;
+	for (i = 0; i < measure->ndims; i++)
+		total *= count[i];
+
+	if (total != array_length * tuplexfrag_number) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "ARRAY_LENGTH = %d, TOTAL = %d\n", array_length, total);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array creation: %d\n", res);
+		free(binary_cache);
+		free(binary_insert);
+		free(query_string);
+		for (ii = 0; ii < c_arg; ii++)
+			if (args[ii])
+				free(args[ii]);
+		free(args);
+		free(start);
+		free(count);
+		free(start_pointer);
+		free(sizemax);
+		return OPH_NC_ERROR;
+	}
+
+	short int flag = 0;
+	short int curr_lev;
+	for (curr_lev = 1; curr_lev <= measure->nexp; curr_lev++) {
+		flag = 0;
+		//Find dimension with oph_level = curr_lev
+		for (i = 0; i < measure->ndims; i++) {
+			if (measure->dims_type[i] && measure->dims_oph_level[i] == curr_lev) {
+				//Modified to allow subsetting
+				if (measure->dims_start_index[i] == measure->dims_end_index[i])
+					sizemax[curr_lev - 1] = 1;
+				else
+					sizemax[curr_lev - 1] = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
+				start_pointer[curr_lev - 1] = &(start[i]);
+				flag = 1;
+				break;
+			}
+		}
+		if (!flag) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid explicit dimensions in task string \n");
+			free(binary_cache);
+			free(binary_insert);
+			free(query_string);
+			for (ii = 0; ii < c_arg; ii++)
+				if (args[ii])
+					free(args[ii]);
+			free(args);
+			free(start);
+			free(count);
+			free(start_pointer);
+			free(sizemax);
+			return OPH_NC_ERROR;
+		}
+	}
+
+	oph_nc_compute_dimension_id(old_frag->key_start, sizemax, measure->nexp, start_pointer);
+
+	for (i = 0; i < measure->nexp; i++) {
+		*(start_pointer[i]) -= 1;
+		for (j = 0; j < measure->ndims; j++) {
+			if (start_pointer[i] == &(start[j])) {
+				*(start_pointer[i]) += measure->dims_start_index[j];
+			}
+		}
+	}
+
+	//Fill binary cache
+	res = -1;
+
+	if (type_flag == OPH_NC_INT_FLAG) {
+		res = nc_get_vara_int(ncid, measure->varid, start, count, (int *) (binary_cache));
+	} else if (type_flag == OPH_NC_BYTE_FLAG) {
+		res = nc_get_vara_uchar(ncid, measure->varid, start, count, (unsigned char *) (binary_cache));
+	} else if (type_flag == OPH_NC_SHORT_FLAG) {
+		res = nc_get_vara_short(ncid, measure->varid, start, count, (short *) (binary_cache));
+	} else if (type_flag == OPH_NC_LONG_FLAG) {
+		res = nc_get_vara_longlong(ncid, measure->varid, start, count, (long long *) (binary_cache));
+	} else if (type_flag == OPH_NC_FLOAT_FLAG) {
+		res = nc_get_vara_float(ncid, measure->varid, start, count, (float *) (binary_cache));
+	} else if (type_flag == OPH_NC_DOUBLE_FLAG) {
+		res = nc_get_vara_double(ncid, measure->varid, start, count, (double *) (binary_cache));
+	} else {
+		res = nc_get_vara_double(ncid, measure->varid, start, count, (double *) (binary_cache));
+	}
+
+	if (res != 0) {
+		OPH_NC_ERR(res);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
+		free(query_string);
+		free(binary_cache);
+		free(binary_insert);
+		for (ii = 0; ii < c_arg; ii++)
+			if (args[ii])
+				free(args[ii]);
+		free(args);
+		free(start);
+		free(count);
+		free(start_pointer);
+		free(sizemax);
+		return OPH_NC_ERROR;
+	}
+
+	free(start);
+	free(start_pointer);
+	free(sizemax);
+
+	//Prepare structures for buffer insert update
+	int tmp_index = 0;
+	unsigned int *counters = (unsigned int *) malloc((measure->nimp + 1) * sizeof(unsigned int));
+	int *file_indexes = (int *) malloc((measure->nimp + 1) * sizeof(int));
+	unsigned int *products = (unsigned int *) malloc((measure->nimp + 1) * sizeof(unsigned));
+	unsigned int *limits = (unsigned int *) malloc((measure->nimp + 1) * sizeof(unsigned));
+	int k = 0;
+
+	//Setup arrays for recursive selection
+	for (i = 0; i < measure->ndims; i++) {
+		//Implicit and internal explicit
+		if (!(measure->dims_type[i] && measure->dims_oph_level[i] != max_exp_lev)) {
+			//If internal explicit use first position
+			if (measure->dims_type[i]) {
+				tmp_index = 0;
+			} else {
+				tmp_index = measure->dims_oph_level[i];
+			}
+			counters[tmp_index] = 0;
+			products[tmp_index] = 1;
+			limits[tmp_index] = count[i];
+			file_indexes[tmp_index] = k++;
+		}
+	}
+	//Compute products
+	for (k = 0; k < (measure->nimp + 1); k++) {
+		//Last dimension in file has product 1
+		for (i = (file_indexes[k] + 1); i < (measure->nimp + 1); i++) {
+			flag = 0;
+			//For each index following multiply
+			for (j = 0; j < (measure->nimp + 1); j++) {
+				if (file_indexes[j] == i) {
+					products[k] *= limits[j];
+					flag = 1;
+					break;
+				}
+			}
+			if (!flag) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid dimensions in task string \n");
+				free(binary_cache);
+				free(binary_insert);
+				free(query_string);
+				for (ii = 0; ii < c_arg; ii++)
+					if (args[ii])
+						free(args[ii]);
+				free(args);
+				free(count);
+				free(counters);
+				free(file_indexes);
+				free(products);
+				free(limits);
+				return OPH_NC_ERROR;
+			}
+		}
+	}
+
+	free(count);
+	free(file_indexes);
+
+	size_t sizeof_type = (int) sizeof_var / array_length;
+
+	snprintf(plugin_string, plugin_size, compressed ? OPH_NC_CONCAT_PLUGIN_COMPR : OPH_NC_CONCAT_PLUGIN, input_measure_type, measure_type, list_string);
+
+	for (l = 0; l < regular_times; l++) {
+		//Update counters and limit for explicit internal dimension
+		memset(counters, 0, measure->nimp + 1);
+		limits[0] = (l + 1) * regular_rows;
+		counters[0] = l * regular_rows;
+
+		//TODO Check if resetup every time is required
+		snprintf(where_string, where_size, OPH_NC_CONCAT_WHERE, old_frag->key_start + l * regular_rows, old_frag->key_start + (l + 1) * regular_rows - 1);
+		snprintf(query_string, query_size, (remainder_rows > 0)
+			 || (l < regular_times - 1) ? OPH_DC_SQ_INSERT_SELECT_FRAG : OPH_DC_SQ_INSERT_SELECT_FRAG_FINAL, new_frag->fragment_name, plugin_string, old_frag->fragment_name, where_string);
+
+		query = NULL;
+		if (oph_ioserver_setup_query(server, old_frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
+			free(query_string);
+			free(binary_cache);
+			free(binary_insert);
+			for (ii = 0; ii < c_arg; ii++)
+				if (args[ii])
+					free(args[ii]);
+			free(args);
+			free(counters);
+			free(products);
+			free(limits);
+			return OPH_NC_ERROR;
+		}
+
+		oph_nc_cache_to_buffer(measure->nimp + 1, counters, limits, products, binary_cache, binary_insert, sizeof_type);
+
+		if (oph_ioserver_execute_query(server, old_frag->db_instance->dbms_instance->conn, query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
+			free(query_string);
+			free(binary_cache);
+			free(binary_insert);
+			for (ii = 0; ii < c_arg; ii++)
+				if (args[ii])
+					free(args[ii]);
+			free(args);
+			oph_ioserver_free_query(server, query);
+			free(counters);
+			free(products);
+			free(limits);
+			return OPH_NC_ERROR;
+		}
+
+		oph_ioserver_free_query(server, query);
+	}
+
+	if (remainder_rows > 0) {
+		*list_string = n = 0;
+		nn = tmp2 + tmp3;
+		for (jj = 0; jj < remainder_rows; jj++) {
+			strcpy(list_string + n, compressed ? OPH_NC_CONCAT_COMPRESSED_ROW : OPH_NC_CONCAT_ROW);
+			n += tmp;
+			nn += 1 + tmp2 + tmp3;
+		}
+		input_measure_type[nn] = 0;
+
+		snprintf(plugin_string, plugin_size, compressed ? OPH_NC_CONCAT_PLUGIN_COMPR : OPH_NC_CONCAT_PLUGIN, input_measure_type, measure_type, list_string);
+		snprintf(where_string, where_size, OPH_NC_CONCAT_WHERE, old_frag->key_start + l * regular_rows, old_frag->key_start + (l + 1) * regular_rows - 1);
+		snprintf(query_string, query_size, OPH_DC_SQ_INSERT_SELECT_FRAG_FINAL, new_frag->fragment_name, plugin_string, old_frag->fragment_name, where_string);
+
+		for (ii = remainder_rows; ii < c_arg; ii++) {
+			if (args[ii]) {
+				free(args[ii]);
+				args[ii] = NULL;
+			}
+		}
+
+		query = NULL;
+		if (oph_ioserver_setup_query(server, old_frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
+			free(query_string);
+			free(binary_cache);
+			free(binary_insert);
+			for (ii = 0; ii < c_arg; ii++)
+				if (args[ii])
+					free(args[ii]);
+			free(args);
+			free(counters);
+			free(products);
+			free(limits);
+			return OPH_NC_ERROR;
+		}
+
+		//Update counters and limit for explicit internal dimension
+		memset(counters, 0, measure->nimp + 1);
+		limits[0] = regular_times * regular_rows + remainder_rows;
+		counters[0] = regular_times * regular_rows;
+		oph_nc_cache_to_buffer(measure->nimp + 1, counters, limits, products, binary_cache, binary_insert, sizeof_type);
+
+		if (oph_ioserver_execute_query(server, old_frag->db_instance->dbms_instance->conn, query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
+			free(query_string);
+			free(binary_cache);
+			free(binary_insert);
+			for (ii = 0; ii < c_arg; ii++)
+				if (args[ii])
+					free(args[ii]);
+			free(args);
+			oph_ioserver_free_query(server, query);
+			free(counters);
+			free(products);
+			free(limits);
+			return OPH_NC_ERROR;
+		}
+
+		oph_ioserver_free_query(server, query);
+	}
+
+	free(query_string);
+	free(binary_cache);
+	free(binary_insert);
+	for (ii = 0; ii < c_arg; ii++)
+		if (args[ii])
+			free(args[ii]);
+	free(args);
+	free(counters);
+	free(products);
+	free(limits);
+
+	return OPH_NC_SUCCESS;
+}
+
 int oph_nc_get_dim_array2(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, int start_index, int end_index, char **dim_array)
 {
 	if (!ncid || !dim_type || !dim_size || !dim_array) {

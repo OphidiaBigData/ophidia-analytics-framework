@@ -153,7 +153,7 @@ if (test "x$debug" = "x1") || (test "x$debug" = "x2"); then
  	AC_SUBST(OPT)
 else
 	debug="0"
-	OPT+=" -O2"
+	OPT+=" -O3"
 	AC_SUBST(OPT)
 fi
 AM_CONDITIONAL(DEBUG_1, test "x$debug" = "x1")

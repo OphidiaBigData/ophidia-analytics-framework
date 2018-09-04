@@ -55,6 +55,7 @@
  * \param server Pointer to I/O server handler
  * \param sessionid SessionID
  * \param id_user ID of submitter
+ * \param memory_size Maximum amount of memory available
  * \param description Free description to be associated with output cube
  * \param time_filter Flag used in case time filters are expressed as dates
  * \param dim_offset Offset to be added to dimension values of imported data
@@ -85,6 +86,7 @@ struct _OPH_CONCATNC_operator_handle {
 	oph_ioserver_handler *server;
 	char *sessionid;
 	int id_user;
+	long long memory_size;
 	char *description;
 	int time_filter;
 	double *dim_offset;
