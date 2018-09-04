@@ -3404,8 +3404,14 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 	//Alloc query String
 	int tmp2 = strlen(OPH_NC_CONCAT_TYPE);
 	char measure_type[OPH_ODB_CUBE_MEASURE_TYPE_SIZE];
-	if (oph_nc_get_c_type(measure->vartype, measure_type))
+	if (oph_nc_get_c_type(measure->vartype, measure_type)) {
+		free(start);
+		free(count);
+		free(start_pointer);
+		free(sizemax);
 		return OPH_NC_ERROR;
+	}
+
 	int tmp3 = strlen(measure_type);
 	long long input_measure_size = (tmp2 + strlen(measure_type) + 1) * (regular_rows + 1), list_size = 0, plugin_size = 0, where_size = 0, query_size = 0;
 	list_size = strlen(compressed ? OPH_NC_CONCAT_COMPRESSED_ROW : OPH_NC_CONCAT_ROW) * regular_rows;
@@ -3417,6 +3423,10 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 	char *query_string = (char *) malloc(query_size * sizeof(char));
 	if (!(query_string)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(start);
+		free(count);
+		free(start_pointer);
+		free(sizemax);
 		return OPH_NC_ERROR;
 	}
 
@@ -3441,6 +3451,10 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 	if (!(idDim)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		free(query_string);
+		free(start);
+		free(count);
+		free(start_pointer);
+		free(sizemax);
 		return OPH_NC_ERROR;
 	}
 	//Create binary array
@@ -3465,6 +3479,10 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		free(binary);
 		free(query_string);
 		free(idDim);
+		free(start);
+		free(count);
+		free(start_pointer);
+		free(sizemax);
 		return OPH_NC_ERROR;
 	}
 
@@ -3476,6 +3494,10 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		free(query_string);
 		free(binary);
 		free(idDim);
+		free(start);
+		free(count);
+		free(start_pointer);
+		free(sizemax);
 		return OPH_NC_ERROR;
 	}
 
@@ -3490,6 +3512,10 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 				if (args[ii])
 					free(args[ii]);
 			free(args);
+			free(start);
+			free(count);
+			free(start_pointer);
+			free(sizemax);
 			return OPH_NC_ERROR;
 		}
 	}
@@ -3588,7 +3614,6 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 			free(count);
 			free(start_pointer);
 			free(sizemax);
-
 			return OPH_NC_ERROR;
 		}
 		//Prepare structures for buffer insert update
@@ -4061,6 +4086,10 @@ int oph_nc_append_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fragm
 
 	//If flag is set call old approach, else continue
 	if (!whole_fragment || dimension_ordered || !whole_explicit) {
+		free(start);
+		free(count);
+		free(start_pointer);
+		free(sizemax);
 		return oph_nc_append_fragment_from_nc(server, old_frag, new_frag, ncid, compressed, measure);
 	}
 	//Compute number of tuples per insert (regular case)
@@ -4090,8 +4119,14 @@ int oph_nc_append_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fragm
 	//Alloc query String
 	int tmp2 = strlen(OPH_NC_CONCAT_TYPE);
 	char measure_type[OPH_ODB_CUBE_MEASURE_TYPE_SIZE];
-	if (oph_nc_get_c_type(measure->vartype, measure_type))
+	if (oph_nc_get_c_type(measure->vartype, measure_type)) {
+		free(start);
+		free(count);
+		free(start_pointer);
+		free(sizemax);
 		return OPH_NC_ERROR;
+	}
+
 	int tmp3 = strlen(measure_type);
 	long long input_measure_size = (tmp2 + strlen(measure_type) + 1) * (regular_rows + 1), list_size = 0, plugin_size = 0, where_size = 0, query_size = 0;
 	list_size = strlen(compressed ? OPH_NC_CONCAT_COMPRESSED_ROW : OPH_NC_CONCAT_ROW) * regular_rows;
@@ -4402,7 +4437,6 @@ int oph_nc_append_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fragm
 		limits[0] = (l + 1) * regular_rows;
 		counters[0] = l * regular_rows;
 
-		//TODO Check if resetup every time is required
 		snprintf(where_string, where_size, OPH_NC_CONCAT_WHERE, old_frag->key_start + l * regular_rows, old_frag->key_start + (l + 1) * regular_rows - 1);
 		snprintf(query_string, query_size, (remainder_rows > 0)
 			 || (l < regular_times - 1) ? OPH_DC_SQ_INSERT_SELECT_FRAG : OPH_DC_SQ_INSERT_SELECT_FRAG_FINAL, new_frag->fragment_name, plugin_string, old_frag->fragment_name, where_string);
