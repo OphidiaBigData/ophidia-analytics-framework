@@ -4155,7 +4155,6 @@ int oph_nc_append_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fragm
 		free(sizemax);
 		return OPH_NC_ERROR;
 	}
-
 	//Create array for rows to be insert
 	char *binary_insert = 0;
 	res = 0;
@@ -4481,7 +4480,6 @@ int oph_nc_append_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fragm
 			free(limits);
 			return OPH_NC_ERROR;
 		}
-
 		//Update counters and limit for explicit internal dimension
 		memset(counters, 0, measure->nimp + 1);
 		limits[0] = regular_times * regular_rows + remainder_rows;
