@@ -45,6 +45,15 @@
 #define OPH_UTL_PB_SIZE     1125899906842624.0
 
 /** 
+ * \brief Function get size of array from its length and type
+ * \param oph_type String with the type used in the array
+ * \param array_length Length of the array
+ * \param size Size of array to be computed
+ * \return 0 if successfull, N otherwise
+ */
+int oph_utl_get_array_size(char *oph_type, long long array_length, long long *size);
+
+/** 
  * \brief Function to shorten path string
  * \param max_size Maximum number of chars to be considered
  * \param start_size Strating point in the string
