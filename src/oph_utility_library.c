@@ -32,21 +32,21 @@ int oph_utl_get_array_size(char *oph_type, long long array_length, long long *si
 		return OPH_UTL_ERROR;
 	}
 
-	if (strncmp(oph_type, OPH_COMMON_BYTE_TYPE, strlen(OPH_COMMON_BYTE_TYPE)) == 0) {
+	if (strncasecmp(oph_type, OPH_COMMON_BYTE_TYPE, strlen(OPH_COMMON_BYTE_TYPE)) == 0) {
 		*size = (long long) array_length *sizeof(char);
-	} else if (strncmp(oph_type, OPH_COMMON_SHORT_TYPE, strlen(OPH_COMMON_SHORT_TYPE)) == 0) {
+	} else if (strncasecmp(oph_type, OPH_COMMON_SHORT_TYPE, strlen(OPH_COMMON_SHORT_TYPE)) == 0) {
 		*size = (long long) array_length *sizeof(short int);
-	} else if (strncmp(oph_type, OPH_COMMON_INT_TYPE, strlen(OPH_COMMON_INT_TYPE)) == 0) {
+	} else if (strncasecmp(oph_type, OPH_COMMON_INT_TYPE, strlen(OPH_COMMON_INT_TYPE)) == 0) {
 		*size = (long long) array_length *sizeof(int);
-	} else if (strncmp(oph_type, OPH_COMMON_LONG_TYPE, strlen(OPH_COMMON_LONG_TYPE)) == 0) {
+	} else if (strncasecmp(oph_type, OPH_COMMON_LONG_TYPE, strlen(OPH_COMMON_LONG_TYPE)) == 0) {
 		*size = (long long) array_length *sizeof(long);
-	} else if (strncmp(oph_type, OPH_COMMON_FLOAT_TYPE, strlen(OPH_COMMON_FLOAT_TYPE)) == 0) {
+	} else if (strncasecmp(oph_type, OPH_COMMON_FLOAT_TYPE, strlen(OPH_COMMON_FLOAT_TYPE)) == 0) {
 		*size = (long long) array_length *sizeof(float);
-	} else if (strncmp(oph_type, OPH_COMMON_DOUBLE_TYPE, strlen(OPH_COMMON_DOUBLE_TYPE)) == 0) {
+	} else if (strncasecmp(oph_type, OPH_COMMON_DOUBLE_TYPE, strlen(OPH_COMMON_DOUBLE_TYPE)) == 0) {
 		*size = (long long) array_length *sizeof(double);
-	} else if (strncmp(oph_type, OPH_COMMON_STRING_TYPE, strlen(OPH_COMMON_STRING_TYPE)) == 0) {
+	} else if (strncasecmp(oph_type, OPH_COMMON_STRING_TYPE, strlen(OPH_COMMON_STRING_TYPE)) == 0) {
 		*size = (long long) array_length *sizeof(char);
-	} else if (strncmp(oph_type, OPH_COMMON_BIT_TYPE, strlen(OPH_COMMON_BIT_TYPE)) == 0) {
+	} else if (strncasecmp(oph_type, OPH_COMMON_BIT_TYPE, strlen(OPH_COMMON_BIT_TYPE)) == 0) {
 		*size = (long long) ceil((float) array_length / 8.0);
 	} else {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized type\n");
