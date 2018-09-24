@@ -171,6 +171,7 @@
 #define OPH_LOG_GENERIC_USER_ID_ERROR						"Unable to retreive user id\n"
 #define OPH_LOG_GENERIC_READ_METADATA_ERROR					"Unable to read metadata table\n"
 #define OPH_LOG_GENERIC_WRITE_METADATA_ERROR					"Unable to write metadata '%s:%s': %s\n"
+#define OPH_LOG_GENERIC_RESOURCE_CHECK_ERROR				"Number of cores per number of threads is bigger than total fragments\n"
 
 /*++++++++++++++++++++++FRAMEWORK+++++++++++++++++++++++++++*/
 
