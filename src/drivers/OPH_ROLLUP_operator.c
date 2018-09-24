@@ -345,7 +345,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		//Check that product of ncores and nthread is at most equal to total number of fragments        
-		if (((OPH_ROLLUP_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > (unsigned int) tot_frag_num) {
+		if (((OPH_ROLLUP_operator_handle *) handle->operator_handle)->nthread > 1 && ((OPH_ROLLUP_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > (unsigned int) tot_frag_num) {
 			oph_odb_cube_free_datacube(&cube);
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of cores per number of threads is bigger than total fragments\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_ROLLUP_operator_handle *) handle->operator_handle)->id_input_container,
