@@ -60,6 +60,7 @@
  * \param sessionid SessionID
  * \param description Free description to be associated with output cube
  * \param id_job ID of the job related to the task
+ * \param rand_algo Type of algorithm used for generating random values
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
 struct _OPH_RANDCUBE_operator_handle {
@@ -97,6 +98,7 @@ struct _OPH_RANDCUBE_operator_handle {
 	char *sessionid;
 	char *description;
 	int id_job;
+	char *rand_algo; 
 	short int execute_error;
 };
 typedef struct _OPH_RANDCUBE_operator_handle OPH_RANDCUBE_operator_handle;

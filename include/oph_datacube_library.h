@@ -280,9 +280,10 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * server, unsigned lon
  * \param array_length Number of elements to insert in a single row
  * \param data_type Type of data to be inserted INT, FLOAT, DOUBLE (default DOUBLE)
  * \param compressed If the data to insert is compressed (1) or not (0)
+ * \param algorithm Type of algorithm used for random number generation
  * \return 0 if successfull, N otherwise
  */
-int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_odb_fragment * m, int tuple_number, int array_length, char *data_type, int compressed);
+int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_odb_fragment * m, int tuple_number, int array_length, char *data_type, int compressed, char *algorithm);
 
 /** 
  * \brief Function to read a physical table with filtering parameters

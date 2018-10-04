@@ -89,6 +89,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->sessionid = NULL;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->execute_error = 0;
+	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->rand_algo = NULL;
 
 	//3 - Fill struct with the correct data
 	char *container_name, *value;
@@ -530,6 +531,18 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_ALGORITHM);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_ALGORITHM);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_ALGORITHM);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->rand_algo = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MEMORY_ERROR_INPUT_NO_CONTAINER, OPH_IN_PARAM_ALGORITHM);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
 	value = hashtbl_get(task_tbl, OPH_ARG_IDJOB);
@@ -1467,7 +1480,7 @@ int task_execute(oph_operator_struct * handle)
 					if (oph_dc_populate_fragment_with_rand_data
 					    (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &new_frag,
 					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->array_length,
-					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->measure_type, 1)) {
+					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->measure_type, 1, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->rand_algo)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment with compressed data.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_RANDCUBE_FRAG_POPULATE_ERROR, new_frag.fragment_name, "compressed");
@@ -1478,7 +1491,7 @@ int task_execute(oph_operator_struct * handle)
 					if (oph_dc_populate_fragment_with_rand_data
 					    (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &new_frag,
 					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->array_length,
-					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->measure_type, 0)) {
+					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->measure_type, 0, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->rand_algo)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment with uncompressed data.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_RANDCUBE_FRAG_POPULATE_ERROR, new_frag.fragment_name, "uncompressed");
@@ -1744,6 +1757,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->description);
 		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->description = NULL;
+	}
+	if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->rand_algo) {
+		free((char *) ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->rand_algo);
+		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->rand_algo = NULL;
 	}
 	free((OPH_RANDCUBE_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
