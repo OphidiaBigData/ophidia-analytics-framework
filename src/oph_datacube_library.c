@@ -1486,6 +1486,75 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 	return OPH_DC_SUCCESS;
 }
 
+int oph_dc_populate_fragment_with_rand_data2(oph_ioserver_handler * server, oph_odb_fragment * frag, int tuple_number, int array_length, char *data_type, int compressed, char *algorithm)
+{
+	if (!frag || !data_type || !server || !algorithm) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_DC_NULL_PARAM;
+	}
+
+	if (oph_dc_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
+		return OPH_DC_SERVER_ERROR;
+	}
+
+	char type_flag = oph_dc_typeof(data_type);
+	if (!type_flag) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
+		return OPH_DC_DATA_ERROR;
+	}
+
+	if (strcmp(algorithm, OPH_COMMON_RAND_ALGO_TEMP) != 0 && strcmp(algorithm, OPH_COMMON_RAND_ALGO_DEFAULT) != 0) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading algorithm type\n");
+		return OPH_DC_DATA_ERROR;
+	}
+	//Alloc query String
+	long long query_size = 0;
+	char *insert_query = OPH_DC_SQ_CREATE_FRAG_FROM_RAND;
+	if (compressed == 1) {
+		query_size = snprintf(NULL, 0, insert_query, frag->fragment_name, OPH_IOSERVER_SQ_VAL_YES, data_type, tuple_number, frag->key_start, array_length, algorithm) + 1;
+	} else {
+		query_size = snprintf(NULL, 0, insert_query, frag->fragment_name, OPH_IOSERVER_SQ_VAL_NO, data_type, tuple_number, frag->key_start, array_length, algorithm) + 1;
+	}
+
+	char *query_string = (char *) malloc(query_size * sizeof(char));
+	if (!(query_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_DC_DATA_ERROR;
+	}
+
+	int n = 0;
+	if (compressed == 1) {
+		n = snprintf(query_string, query_size, insert_query, frag->fragment_name, OPH_IOSERVER_SQ_VAL_YES, data_type, tuple_number, frag->key_start, array_length, algorithm);
+	} else {
+		n = snprintf(query_string, query_size, insert_query, frag->fragment_name, OPH_IOSERVER_SQ_VAL_NO, data_type, tuple_number, frag->key_start, array_length, algorithm);
+	}
+	if (n >= query_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		free(query_string);
+		return OPH_DC_DATA_ERROR;
+	}
+
+	oph_ioserver_query *query = NULL;
+	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, NULL, &query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
+		free(query_string);
+		return OPH_DC_SERVER_ERROR;
+	}
+
+	if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
+		free(query_string);
+		oph_ioserver_free_query(server, query);
+		return OPH_DC_SERVER_ERROR;
+	}
+
+	oph_ioserver_free_query(server, query);
+	free(query_string);
+
+	return OPH_DC_SUCCESS;
+}
+
 int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned long long tot_rows, short int exec_flag, oph_odb_fragment * new_frag, oph_odb_fragment * old_frag, long long *first_id,
 				       long long *last_id, oph_ioserver_query ** exec_query, oph_ioserver_query_arg *** exec_args)
 {
