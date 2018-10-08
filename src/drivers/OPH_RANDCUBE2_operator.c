@@ -1536,8 +1536,8 @@ int task_execute(oph_operator_struct * handle)
 					strcpy(new_frag.fragment_name, fragment_name);
 					//Create  and populate fragment
 					if (oph_dc_populate_fragment_with_rand_data2
-					    (oper_handle->server, &new_frag,
-					     oper_handle->tuplexfrag_number, oper_handle->array_length, oper_handle->measure_type, oper_handle->compressed, oper_handle->rand_algo)) {
+					    (server, &new_frag, oper_handle->tuplexfrag_number, oper_handle->array_length, oper_handle->measure_type, oper_handle->compressed,
+					     oper_handle->rand_algo)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_RANDCUBE_FRAG_POPULATE_ERROR, new_frag.fragment_name, "");
 						res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
