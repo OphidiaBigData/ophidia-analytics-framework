@@ -11,8 +11,9 @@ Set parameters in a workflow environment.
 [Parameters]
 - key : name of the parameter. It should comply with IEEE Std 1003.1-2001 conventions, unless brackets {} are adopted to refer it.
 - value : value of the parameter. By default it will se to 1. It can be accessed with @key or @{key}.
-- subset_filter : set to &quot;yes&quot; in case &quot;value&quot; is an index array and subset string has to be stored on behalf of the list of numbers.
-                  Only arrays of integers are considered.
+- subset_filter : set to &quot;yes&quot; in case &quot;value&quot; is an index array and subset strings have to be stored on behalf of the list of numbers.
+                  Use &quot;real&quot; in case &quot;value&quot; contains real numbers.
+- offset : expected difference between two consecutive items of input array in case subset_strings have to be evaluated. By default, it will se to &quot;1&quot;.
 - id : workflow identifier. By default the hosting workflow is selected. The target workflow must have been submitted in the same session.
 
 [Examples]
@@ -28,7 +29,8 @@ SUBMISSION STRING: &quot;operator=oph_set;key=var;value=10;&quot;</abstract>
     <args>
 		<argument type="string" mandatory="yes" multivalue="yes">key</argument>
 		<argument type="string" mandatory="no" default="-" multivalue="yes">value</argument>
-		<argument type="string" mandatory="no" default="no" values="yes|no">subset_filter</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no|real">subset_filter</argument>
+		<argument type="real" mandatory="no" default="1" minvalue="0">offset</argument>
 		<argument type="int" mandatory="no" default="@OPH_WORKFLOW_ID" minvalue="1">id</argument>
     </args>
 </operator>
