@@ -915,6 +915,7 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 	}
 
 	int m = 0, res = 0;
+	double rand_mes;
 
 	if (type_flag == OPH_DC_BYTE_FLAG) {
 		char measure_b;
@@ -929,7 +930,8 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 				}
 			}
 		} else {
-			measure_b = (char) ceil(((float) rand() / RAND_MAX) * 40.0 - 5.0);
+			rand_mes = ((float) rand() / RAND_MAX) * 40.0 - 5.0;
+			measure_b = (char) ceil(rand_mes);
 			res = oph_iob_bin_array_add_b(binary, &measure_b, (long long) 0);
 
 			if (res) {
@@ -938,7 +940,8 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 			}
 
 			for (m = 1; m < array_length; m++) {
-				measure_b = (char) ceil((float) measure_b * 0.99 + (((float) rand() / RAND_MAX) * 6.0 - 3.0));
+				rand_mes = rand_mes * 0.9 + 0.1 * (((float) rand() / RAND_MAX) * 40.0 - 5.0);
+				measure_b = (char) ceil(rand_mes);
 				res = oph_iob_bin_array_add_b(binary, &measure_b, (long long) m);
 
 				if (res) {
@@ -960,7 +963,8 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 				}
 			}
 		} else {
-			measure_s = (short) ceil(((float) rand() / RAND_MAX) * 40.0 - 5.0);
+			rand_mes = ((float) rand() / RAND_MAX) * 40.0 - 5.0;
+			measure_s = (short) ceil(rand_mes);
 			res = oph_iob_bin_array_add_s(binary, &measure_s, (long long) 0);
 
 			if (res) {
@@ -969,7 +973,8 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 			}
 
 			for (m = 1; m < array_length; m++) {
-				measure_s = (short) ceil((float) measure_s * 0.99 + (((float) rand() / RAND_MAX) * 6.0 - 3.0));
+				rand_mes = rand_mes * 0.9 + 0.1 * (((float) rand() / RAND_MAX) * 40.0 - 5.0);
+				measure_s = (short) ceil(rand_mes);
 				res = oph_iob_bin_array_add_s(binary, &measure_s, (long long) m);
 
 				if (res) {
@@ -991,7 +996,8 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 				}
 			}
 		} else {
-			measure_i = (int) ceil(((float) rand() / RAND_MAX) * 40.0 - 5.0);
+			rand_mes = ((float) rand() / RAND_MAX) * 40.0 - 5.0;
+			measure_i = (int) ceil(rand_mes);
 			res = oph_iob_bin_array_add_i(binary, &measure_i, (long long) 0);
 
 			if (res) {
@@ -1000,7 +1006,8 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 			}
 
 			for (m = 1; m < array_length; m++) {
-				measure_i = (int) ceil((float) measure_i * 0.99 + (((double) rand() / RAND_MAX) * 6.0 - 3.0));
+				rand_mes = rand_mes * 0.9 + 0.1 * (((float) rand() / RAND_MAX) * 40.0 - 5.0);
+				measure_i = (int) ceil(rand_mes);
 				res = oph_iob_bin_array_add_i(binary, &measure_i, (long long) m);
 
 				if (res) {
@@ -1022,7 +1029,8 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 				}
 			}
 		} else {
-			measure_l = (long long) ceil(((double) rand() / RAND_MAX) * 40.0 - 5.0);
+			rand_mes = ((float) rand() / RAND_MAX) * 40.0 - 5.0;
+			measure_l = (long long) ceil(rand_mes);
 			res = oph_iob_bin_array_add_l(binary, &measure_l, (long long) 0);
 
 			if (res) {
@@ -1031,7 +1039,8 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 			}
 
 			for (m = 1; m < array_length; m++) {
-				measure_l = (long long) ceil((double) measure_l * 0.99 + (((double) rand() / RAND_MAX) * 6.0 - 3.0));
+				rand_mes = rand_mes * 0.9 + 0.1 * (((float) rand() / RAND_MAX) * 40.0 - 5.0);
+				measure_l = (long long) ceil(rand_mes);
 				res = oph_iob_bin_array_add_l(binary, &measure_l, (long long) m);
 
 				if (res) {
@@ -1053,7 +1062,8 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 				}
 			}
 		} else {
-			measure_f = ((float) rand() / RAND_MAX) * 40.0 - 5.0;
+			rand_mes = ((float) rand() / RAND_MAX) * 40.0 - 5.0;
+			measure_f = (float) rand_mes;
 			res = oph_iob_bin_array_add_f(binary, &measure_f, (long long) 0);
 
 			if (res) {
@@ -1062,7 +1072,8 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 			}
 
 			for (m = 1; m < array_length; m++) {
-				measure_f = measure_f * 0.99 + ((float) rand() / RAND_MAX) * 6.0 - 3.0;
+				rand_mes = rand_mes * 0.9 + 0.1 * (((float) rand() / RAND_MAX) * 40.0 - 5.0);
+				measure_f = (float) rand_mes;
 				res = oph_iob_bin_array_add_f(binary, &measure_f, (long long) m);
 
 				if (res) {
@@ -1084,7 +1095,8 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 				}
 			}
 		} else {
-			measure_d = ((double) rand() / RAND_MAX) * 40.0 - 5.0;
+			rand_mes = ((double) rand() / RAND_MAX) * 40.0 - 5.0;
+			measure_d = rand_mes;
 			res = oph_iob_bin_array_add_d(binary, &measure_d, (long long) 0);
 
 			if (res) {
@@ -1093,7 +1105,8 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 			}
 
 			for (m = 1; m < array_length; m++) {
-				measure_d = measure_d * 0.99 + ((double) rand() / RAND_MAX) * 6.0 - 3.0;
+				rand_mes = rand_mes * 0.9 + 0.1 * (((double) rand() / RAND_MAX) * 40.0 - 5.0);
+				measure_d = rand_mes;
 				res = oph_iob_bin_array_add_d(binary, &measure_d, (long long) m);
 
 				if (res) {
@@ -1115,7 +1128,8 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 				}
 			}
 		} else {
-			measure_c = (char) ceil(((float) rand() / RAND_MAX) * 40.0 - 5.0);
+			rand_mes = ((float) rand() / RAND_MAX) * 40.0 - 5.0;
+			measure_c = (char) ceil(rand_mes);
 			res = oph_iob_bin_array_add_c(binary, &measure_c, (long long) 0);
 
 			if (res) {
@@ -1124,7 +1138,8 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 			}
 
 			for (m = 1; m < array_length; m++) {
-				measure_c = (char) ceil((float) measure_c * 0.99 + (((float) rand() / RAND_MAX) * 6.0 - 3.0));
+				rand_mes = rand_mes * 0.9 + 0.1 * (((float) rand() / RAND_MAX) * 40.0 - 5.0);
+				measure_c = (char) ceil(rand_mes);
 				res = oph_iob_bin_array_add_c(binary, &measure_c, (long long) m);
 
 				if (res) {
