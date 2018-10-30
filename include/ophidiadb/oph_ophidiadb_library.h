@@ -115,4 +115,12 @@ int oph_odb_check_connection_to_ophidiadb(ophidiadb * oDB);
  */
 int oph_odb_disconnect_from_ophidiadb(ophidiadb * oDB);
 
+/**
+ * \brief Function to query the OphidiaDB (retries the execution in case of lock-related issues)
+ * \param structure containig OphidiaDB parameters
+ * \param string with query to be performed
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_query_ophidiadb(ophidiadb * oDB, char *query);
+
 #endif				/* __OPH_OPHIDIA_DB__ */

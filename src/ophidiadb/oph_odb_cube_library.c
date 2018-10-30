@@ -872,7 +872,7 @@ int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb * oDB, oph_od
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 				return OPH_ODB_STR_BUFF_OVERFLOW;
 			}
-			if (mysql_query(oDB->conn, insertQuery)) {
+			if (oph_odb_query_ophidiadb(oDB, insertQuery)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 				return OPH_ODB_MYSQL_ERROR;
 			}
@@ -1044,7 +1044,7 @@ int oph_odb_cube_delete_from_datacube_table(ophidiadb * oDB, int id_datacube)
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	if (mysql_query(oDB->conn, deleteQuery)) {
+	if (oph_odb_query_ophidiadb(oDB, deleteQuery)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}

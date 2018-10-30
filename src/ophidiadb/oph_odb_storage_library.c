@@ -1908,7 +1908,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	if (mysql_query(oDB->conn, selectQuery)) {
+	if (oph_odb_query_ophidiadb(oDB, selectQuery)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		mysql_commit(oDB->conn);
 		mysql_autocommit(oDB->conn, 1);
@@ -2037,7 +2037,7 @@ int oph_odb_stge_insert_into_dbinstance_partitioned_tables(ophidiadb * oDB, oph_
 			return OPH_ODB_STR_BUFF_OVERFLOW;
 		}
 
-		if (mysql_query(oDB->conn, insertQuery)) {
+		if (oph_odb_query_ophidiadb(oDB, insertQuery)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 			return OPH_ODB_MYSQL_ERROR;
 		}
