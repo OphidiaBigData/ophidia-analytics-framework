@@ -23,8 +23,8 @@ returns a new datacube as result of the specified operation applied element by e
               -- mask: take all elements of cube corresponding to 1s in cube2,
                     remaining elements are set to 0 (int, byte, short or long) or NaN (float or double);
               -- max: return the maximum value between the corresponding elements one by one;
-              -- min: return the minimum value between the corresponding elements one by one.
-              -- arg_max: return 1 if the maximum value is associated with the first cube, 2 otherwise.
+              -- min: return the minimum value between the corresponding elements one by one;
+              -- arg_max: return 1 if the maximum value is associated with the first cube, 2 otherwise;
               -- arg_min: return 1 if the minimum value is associated with the first cube, 2 otherwise.
 - missingvalue : value to be considered as missing value; by default it is NAN (for float and double).
 - measure : name of the new measure resulting from the specified operation
