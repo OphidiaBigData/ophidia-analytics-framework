@@ -1,6 +1,10 @@
 
 ## Next release
 
+### Added:
+
+- UNIQUE constraints to several OphidiaDB tables [#61](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/61)
+
 ### Fixed:
 
 - Bug in multi-thread operators using mysql io server type [#56](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/56)
