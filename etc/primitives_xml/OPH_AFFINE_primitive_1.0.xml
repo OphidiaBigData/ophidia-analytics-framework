@@ -23,12 +23,13 @@ Apply an affine transformation to each element of the measure array: each item i
 - measure : input measure.
 - scalar value : number to be multiplied by each element of the input measure. Default is 1.
 - translation value : number to be summed to output measure after the multiplication. Default is 0.
-  
+- missingvalue : value to be considered as missing value; by default it is NAN (for &apos;oph_double&apos; and &apos;oph_float&apos;).
+
 [Return type]
 Binary-array.
         
 [Examples]
-Multiply by 2 each element of the input array and sum 10 to the results.
+Multiply each element of the input array by 2 and sum 10 to the results.
 oph_affine(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,2,10)</abstract>
         <author>CMCC Foundation</author>
         <category>Arithmetic</category>
@@ -43,5 +44,6 @@ oph_affine(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,2,10)</abstract
 		<argument type="binary-array" mandatory="yes">measure</argument>
 		<argument type="double" mandatory="no" default="1">scalar value</argument>
 		<argument type="double" mandatory="no" default="0">translation value</argument>
+		<argument type="double" mandatory="no" default="NAN">missingvalue</argument>
     </args>
 </primitive>
