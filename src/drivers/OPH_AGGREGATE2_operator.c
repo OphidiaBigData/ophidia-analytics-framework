@@ -428,7 +428,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		//Check that product of ncores and nthread is at most equal to total number of fragments        
-		if (((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > tot_frag_num) {
+		if (((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > (unsigned int) tot_frag_num) {
 			oph_odb_cube_free_datacube(&cube);
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of cores per number of threads is bigger than total fragments\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_input_container,
@@ -1468,7 +1468,7 @@ int task_execute(oph_operator_struct * handle)
 
 		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
 			if (!server) {
-				if (oph_dc_setup_dbms(&(server), (dbmss.value[0]).io_server_type)) {
+				if (oph_dc_setup_dbms_thread(&(server), (dbmss.value[0]).io_server_type)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE2_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);
 					oph_odb_stge_free_fragment_list(&frags);

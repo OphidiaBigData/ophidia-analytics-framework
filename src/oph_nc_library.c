@@ -223,29 +223,28 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 		return OPH_NC_ERROR;
 	}
 
-	int c_arg = 3, ii;
+	unsigned char c_arg = 2, ii;
 	oph_ioserver_query *query = NULL;
-	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(c_arg, sizeof(oph_ioserver_query_arg *));
+	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(1 + c_arg, sizeof(oph_ioserver_query_arg *));
 	if (!(args)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		free(binary);
 		return OPH_NC_ERROR;
 	}
 
-	for (ii = 0; ii < c_arg - 1; ii++) {
+	for (ii = 0; ii < c_arg; ii++) {
 		args[ii] = (oph_ioserver_query_arg *) calloc(1, sizeof(oph_ioserver_query_arg));
 		if (!args[ii]) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate input arguments\n");
 			free(binary);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
 			return OPH_NC_ERROR;
 		}
-
 	}
-	args[c_arg - 1] = NULL;
+	args[c_arg] = NULL;
 
 	args[0]->arg_length = sizeof(unsigned long long);
 	args[0]->arg_type = OPH_IOSERVER_TYPE_LONGLONG;
@@ -261,7 +260,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, insert_query, tuplexfrag_number, args, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 		free(binary);
-		for (ii = 0; ii < c_arg - 1; ii++)
+		for (ii = 0; ii < c_arg; ii++)
 			if (args[ii])
 				free(args[ii]);
 		free(args);
@@ -301,7 +300,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "ARRAY_LENGTH = %d, TOTAL = %d\n", array_length, total);
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array creation: %d\n", res);
 		free(binary);
-		for (ii = 0; ii < c_arg - 1; ii++)
+		for (ii = 0; ii < c_arg; ii++)
 			if (args[ii])
 				free(args[ii]);
 		free(args);
@@ -333,7 +332,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 		if (!flag) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid explicit dimensions in task string \n");
 			free(binary);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -387,7 +386,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 		if (res) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array creation: %d\n", res);
 			free(binary);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -435,7 +434,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 				if (!flag) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid dimensions in task string \n");
 					free(binary);
-					for (ii = 0; ii < c_arg - 1; ii++)
+					for (ii = 0; ii < c_arg; ii++)
 						if (args[ii])
 							free(args[ii]);
 					free(args);
@@ -476,7 +475,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 				OPH_NC_ERR(res);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
 				free(binary);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -500,7 +499,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 				OPH_NC_ERR(res);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
 				free(binary);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -524,7 +523,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 				OPH_NC_ERR(res);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
 				free(binary);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -548,7 +547,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 				OPH_NC_ERR(res);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
 				free(binary);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -572,7 +571,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 				OPH_NC_ERR(res);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
 				free(binary);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -596,7 +595,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 				OPH_NC_ERR(res);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
 				free(binary);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -620,7 +619,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 				OPH_NC_ERR(res);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
 				free(binary);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -652,7 +651,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(binary);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -674,7 +673,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 		idDim++;
 	}
 	free(binary);
-	for (ii = 0; ii < c_arg - 1; ii++)
+	for (ii = 0; ii < c_arg; ii++)
 		if (args[ii])
 			free(args[ii]);
 	free(args);
@@ -750,9 +749,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 		sizeof_var = (array_length) * sizeof(double);
 
 	//Compute number of tuples per insert (regular case)
-	long long regular_rows = 0;
-	long long regular_times = 0;
-	long long remainder_rows = 0;
+	unsigned long long regular_rows = 0, regular_times = 0, remainder_rows = 0, jj = 0, l;
 
 	long block_size = 512 * 1024;	//Maximum size that could be transfered
 	long block_rows = 1000;	//Maximum number of lines that could be transfered
@@ -795,15 +792,12 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 
-	int j = 0;
-	int n;
-
-	n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
+	int n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
 	if (compressed == 1) {
 #ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
 #endif
-		for (j = 0; j < regular_rows; j++) {
+		for (jj = 0; jj < regular_rows; jj++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 		}
@@ -811,7 +805,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
 #endif
-		for (j = 0; j < regular_rows; j++) {
+		for (jj = 0; jj < regular_rows; jj++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
 		}
@@ -825,9 +819,6 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 		free(query_string);
 		return OPH_NC_ERROR;
 	}
-
-	int l;
-
 	//Create binary array
 	char *binary = 0;
 	int res;
@@ -854,9 +845,9 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 
-	int c_arg = 1 + regular_rows * 2, ii;
+	unsigned long long c_arg = regular_rows * 2, ii;
 	oph_ioserver_query *query = NULL;
-	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(c_arg, sizeof(oph_ioserver_query_arg *));
+	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(1 + c_arg, sizeof(oph_ioserver_query_arg *));
 	if (!(args)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		free(query_string);
@@ -865,21 +856,21 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 
-	for (ii = 0; ii < c_arg - 1; ii++) {
+	for (ii = 0; ii < c_arg; ii++) {
 		args[ii] = (oph_ioserver_query_arg *) calloc(1, sizeof(oph_ioserver_query_arg));
 		if (!args[ii]) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate input arguments\n");
 			free(query_string);
 			free(idDim);
 			free(binary);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
 			return OPH_NC_ERROR;
 		}
 	}
-	args[c_arg - 1] = NULL;
+	args[c_arg] = NULL;
 
 	for (ii = 0; ii < regular_rows; ii++) {
 		args[2 * ii]->arg_length = sizeof(unsigned long long);
@@ -897,7 +888,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, regular_times, args, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 		free(binary);
-		for (ii = 0; ii < c_arg - 1; ii++)
+		for (ii = 0; ii < c_arg; ii++)
 			if (args[ii])
 				free(args[ii]);
 		free(args);
@@ -939,7 +930,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 		free(binary);
 		free(query_string);
 		free(idDim);
-		for (ii = 0; ii < c_arg - 1; ii++)
+		for (ii = 0; ii < c_arg; ii++)
 			if (args[ii])
 				free(args[ii]);
 		free(args);
@@ -973,7 +964,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 			free(binary);
 			free(query_string);
 			free(idDim);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -987,7 +978,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 	}
 
 
-	int jj = 0;
+	int j = 0;
 
 	//Flag set to 0 if implicit dimensions are not in the order specified in the file
 	short int imp_dim_ordered = 1;
@@ -1032,7 +1023,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 			free(binary);
 			free(query_string);
 			free(idDim);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -1082,7 +1073,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 					free(binary);
 					if (binary_tmp)
 						free(binary_tmp);
-					for (ii = 0; ii < c_arg - 1; ii++)
+					for (ii = 0; ii < c_arg; ii++)
 						if (args[ii])
 							free(args[ii]);
 					free(args);
@@ -1112,9 +1103,9 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 
 			for (i = 0; i < measure->nexp; i++) {
 				*(start_pointer[i]) -= 1;
-				for (ii = 0; ii < measure->ndims; ii++) {
-					if (start_pointer[i] == &(start[ii]))
-						*(start_pointer[i]) += measure->dims_start_index[ii];
+				for (j = 0; j < measure->ndims; j++) {
+					if (start_pointer[i] == &(start[j]))
+						*(start_pointer[i]) += measure->dims_start_index[j];
 				}
 			}
 
@@ -1141,7 +1132,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 				free(query_string);
 				free(idDim);
 				free(binary);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -1179,7 +1170,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 			free(binary);
 			if (binary_tmp)
 				free(binary_tmp);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -1221,7 +1212,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 			free(binary);
 			if (binary_tmp)
 				free(binary_tmp);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -1244,7 +1235,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
 #endif
-			for (j = 0; j < remainder_rows; j++) {
+			for (jj = 0; jj < remainder_rows; jj++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 			}
@@ -1252,7 +1243,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
 #endif
-			for (j = 0; j < remainder_rows; j++) {
+			for (jj = 0; jj < remainder_rows; jj++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
 			}
@@ -1274,7 +1265,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 			free(binary);
 			if (binary_tmp)
 				free(binary_tmp);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -1296,9 +1287,9 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 
 			for (i = 0; i < measure->nexp; i++) {
 				*(start_pointer[i]) -= 1;
-				for (ii = 0; ii < measure->ndims; ii++) {
-					if (start_pointer[i] == &(start[ii]))
-						*(start_pointer[i]) += measure->dims_start_index[ii];
+				for (j = 0; j < measure->ndims; j++) {
+					if (start_pointer[i] == &(start[j]))
+						*(start_pointer[i]) += measure->dims_start_index[j];
 				}
 			}
 			//Fill array
@@ -1326,7 +1317,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 				free(binary);
 				if (binary_tmp)
 					free(binary_tmp);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -1361,7 +1352,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 			free(binary);
 			if (binary_tmp)
 				free(binary_tmp);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -1387,7 +1378,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 	free(binary);
 	if (binary_tmp)
 		free(binary_tmp);
-	for (ii = 0; ii < c_arg - 1; ii++)
+	for (ii = 0; ii < c_arg; ii++)
 		if (args[ii])
 			free(args[ii]);
 	free(args);
@@ -1502,9 +1493,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		return oph_nc_populate_fragment_from_nc2(server, frag, ncid, tuplexfrag_number, array_length, compressed, measure);
 	}
 	//Compute number of tuples per insert (regular case)
-	long long regular_rows = 0;
-	long long regular_times = 0;
-	long long remainder_rows = 0;
+	unsigned long long regular_rows = 0, regular_times = 0, remainder_rows = 0, jj = 0, l;
 
 	long long block_size = 512 * 1024;	//Maximum size that could be transfered
 	long long block_rows = 1000;	//Maximum number of lines that could be transfered
@@ -1547,15 +1536,13 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 
-	int j = 0;
-	int n;
 
-	n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
+	int n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
 	if (compressed == 1) {
 #ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
 #endif
-		for (j = 0; j < regular_rows; j++) {
+		for (jj = 0; jj < regular_rows; jj++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 		}
@@ -1563,7 +1550,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
 #endif
-		for (j = 0; j < regular_rows; j++) {
+		for (jj = 0; jj < regular_rows; jj++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
 		}
@@ -1577,9 +1564,6 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		free(query_string);
 		return OPH_NC_ERROR;
 	}
-
-	int l;
-
 	//Create binary array
 	char *binary_cache = 0;
 	int res;
@@ -1632,9 +1616,9 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 
-	int c_arg = 1 + regular_rows * 2, ii;
+	unsigned long long c_arg = regular_rows * 2, ii;
 	oph_ioserver_query *query = NULL;
-	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(c_arg, sizeof(oph_ioserver_query_arg *));
+	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(1 + c_arg, sizeof(oph_ioserver_query_arg *));
 	if (!(args)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		free(query_string);
@@ -1644,7 +1628,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 
-	for (ii = 0; ii < c_arg - 1; ii++) {
+	for (ii = 0; ii < c_arg; ii++) {
 		args[ii] = (oph_ioserver_query_arg *) calloc(1, sizeof(oph_ioserver_query_arg));
 		if (!args[ii]) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate input arguments\n");
@@ -1652,14 +1636,14 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 			free(idDim);
 			free(binary_cache);
 			free(binary_insert);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
 			return OPH_NC_ERROR;
 		}
 	}
-	args[c_arg - 1] = NULL;
+	args[c_arg] = NULL;
 
 	for (ii = 0; ii < regular_rows; ii++) {
 		args[2 * ii]->arg_length = sizeof(unsigned long long);
@@ -1678,7 +1662,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 		free(binary_cache);
 		free(binary_insert);
-		for (ii = 0; ii < c_arg - 1; ii++)
+		for (ii = 0; ii < c_arg; ii++)
 			if (args[ii])
 				free(args[ii]);
 		free(args);
@@ -1719,7 +1703,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		free(binary_insert);
 		free(query_string);
 		free(idDim);
-		for (ii = 0; ii < c_arg - 1; ii++)
+		for (ii = 0; ii < c_arg; ii++)
 			if (args[ii])
 				free(args[ii]);
 		free(args);
@@ -1754,7 +1738,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 			free(binary_insert);
 			free(query_string);
 			free(idDim);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -1767,15 +1751,14 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		}
 	}
 
-	int jj = 0;
-
-	oph_nc_compute_dimension_id(idDim[jj], sizemax, measure->nexp, start_pointer);
+	int j = 0;
+	oph_nc_compute_dimension_id(idDim[j], sizemax, measure->nexp, start_pointer);
 
 	for (i = 0; i < measure->nexp; i++) {
 		*(start_pointer[i]) -= 1;
-		for (ii = 0; ii < measure->ndims; ii++) {
-			if (start_pointer[i] == &(start[ii])) {
-				*(start_pointer[i]) += measure->dims_start_index[ii];
+		for (j = 0; j < measure->ndims; j++) {
+			if (start_pointer[i] == &(start[j])) {
+				*(start_pointer[i]) += measure->dims_start_index[j];
 			}
 		}
 	}
@@ -1823,7 +1806,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		free(idDim);
 		free(binary_cache);
 		free(binary_insert);
-		for (ii = 0; ii < c_arg - 1; ii++)
+		for (ii = 0; ii < c_arg; ii++)
 			if (args[ii])
 				free(args[ii]);
 		free(args);
@@ -1882,7 +1865,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 				free(binary_insert);
 				free(query_string);
 				free(idDim);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -1927,7 +1910,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 			free(idDim);
 			free(binary_cache);
 			free(binary_insert);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -1965,7 +1948,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 			free(idDim);
 			free(binary_cache);
 			free(binary_insert);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -1981,7 +1964,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
 #endif
-			for (j = 0; j < remainder_rows; j++) {
+			for (jj = 0; jj < remainder_rows; jj++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 			}
@@ -1989,7 +1972,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
 #endif
-			for (j = 0; j < remainder_rows; j++) {
+			for (jj = 0; jj < remainder_rows; jj++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
 			}
@@ -2010,7 +1993,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 			free(idDim);
 			free(binary_cache);
 			free(binary_insert);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -2042,7 +2025,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 			free(idDim);
 			free(binary_cache);
 			free(binary_insert);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -2070,7 +2053,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 	free(idDim);
 	free(binary_cache);
 	free(binary_insert);
-	for (ii = 0; ii < c_arg - 1; ii++)
+	for (ii = 0; ii < c_arg; ii++)
 		if (args[ii])
 			free(args[ii]);
 	free(args);
@@ -2204,9 +2187,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 	//Compute number of tuples per insert (regular case)
-	long long regular_rows = 0;
-	long long regular_times = 0;
-	long long remainder_rows = 0;
+	unsigned long long regular_rows = 0, regular_times = 0, remainder_rows = 0, jj = 0, l;
 
 	long long block_size = 512 * 1024;	//Maximum size that could be transfered
 	long long block_rows = 1000;	//Maximum number of lines that could be transfered
@@ -2250,14 +2231,12 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 
-	int n;
-
-	n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
+	int n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
 	if (compressed == 1) {
 #ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
 #endif
-		for (j = 0; j < regular_rows; j++) {
+		for (jj = 0; jj < regular_rows; jj++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 		}
@@ -2265,15 +2244,13 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
 #endif
-		for (j = 0; j < regular_rows; j++) {
+		for (jj = 0; jj < regular_rows; jj++) {
 			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 			n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
 		}
 	}
 	query_string[n - 1] = ';';
 	query_string[n] = 0;
-
-	int l;
 
 	//Create binary array
 	char *binary_cache = 0;
@@ -2330,9 +2307,9 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 
-	int c_arg = 1 + regular_rows * 2, ii;
+	unsigned long long c_arg = regular_rows * 2, ii;
 	oph_ioserver_query *query = NULL;
-	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(c_arg, sizeof(oph_ioserver_query_arg *));
+	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(1 + c_arg, sizeof(oph_ioserver_query_arg *));
 	if (!(args)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		free(query_string);
@@ -2343,7 +2320,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		return OPH_NC_ERROR;
 	}
 
-	for (ii = 0; ii < c_arg - 1; ii++) {
+	for (ii = 0; ii < c_arg; ii++) {
 		args[ii] = (oph_ioserver_query_arg *) calloc(1, sizeof(oph_ioserver_query_arg));
 		if (!args[ii]) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate input arguments\n");
@@ -2351,7 +2328,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			if (binary_cache)
 				free(binary_cache);
 			free(binary_insert);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -2359,7 +2336,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			return OPH_NC_ERROR;
 		}
 	}
-	args[c_arg - 1] = NULL;
+	args[c_arg] = NULL;
 
 	unsigned long long *idDim = (unsigned long long *) calloc(regular_rows, sizeof(unsigned long long));
 	if (!(idDim)) {
@@ -2368,7 +2345,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		if (binary_cache)
 			free(binary_cache);
 		free(binary_insert);
-		for (ii = 0; ii < c_arg - 1; ii++)
+		for (ii = 0; ii < c_arg; ii++)
 			if (args[ii])
 				free(args[ii]);
 		free(args);
@@ -2396,7 +2373,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		if (binary_cache)
 			free(binary_cache);
 		free(binary_insert);
-		for (ii = 0; ii < c_arg - 1; ii++)
+		for (ii = 0; ii < c_arg; ii++)
 			if (args[ii])
 				free(args[ii]);
 		free(args);
@@ -2432,7 +2409,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			free(binary_insert);
 			free(query_string);
 			free(idDim);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -2450,9 +2427,9 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 
 	for (i = 0; i < measure->nexp; i++) {
 		*(start_pointer[i]) -= 1;
-		for (ii = 0; ii < measure->ndims; ii++) {
-			if (start_pointer[i] == &(start[ii])) {
-				*(start_pointer[i]) += measure->dims_start_index[ii];
+		for (j = 0; j < measure->ndims; j++) {
+			if (start_pointer[i] == &(start[j])) {
+				*(start_pointer[i]) += measure->dims_start_index[j];
 			}
 		}
 	}
@@ -2496,7 +2473,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		free(binary_insert);
 		free(query_string);
 		free(idDim);
-		for (ii = 0; ii < c_arg - 1; ii++)
+		for (ii = 0; ii < c_arg; ii++)
 			if (args[ii])
 				free(args[ii]);
 		free(args);
@@ -2570,7 +2547,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		if (binary_cache)
 			free(binary_cache);
 		free(binary_insert);
-		for (ii = 0; ii < c_arg - 1; ii++)
+		for (ii = 0; ii < c_arg; ii++)
 			if (args[ii])
 				free(args[ii]);
 		free(args);
@@ -2625,7 +2602,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 					free(binary_insert);
 					free(query_string);
 					free(idDim);
-					for (ii = 0; ii < c_arg - 1; ii++)
+					for (ii = 0; ii < c_arg; ii++)
 						if (args[ii])
 							free(args[ii]);
 					free(args);
@@ -2672,7 +2649,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			if (binary_cache)
 				free(binary_cache);
 			free(binary_insert);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -2706,7 +2683,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			if (binary_cache)
 				free(binary_cache);
 			free(binary_insert);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -2733,7 +2710,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			if (binary_cache)
 				free(binary_cache);
 			free(binary_insert);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -2746,7 +2723,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
 #endif
-			for (j = 0; j < remainder_rows; j++) {
+			for (jj = 0; jj < remainder_rows; jj++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
 			}
@@ -2754,7 +2731,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
 #endif
-			for (j = 0; j < remainder_rows; j++) {
+			for (jj = 0; jj < remainder_rows; jj++) {
 				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
 				n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
 			}
@@ -2776,7 +2753,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			if (binary_cache)
 				free(binary_cache);
 			free(binary_insert);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -2792,7 +2769,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			if (binary_cache)
 				free(binary_cache);
 			free(binary_insert);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -2816,7 +2793,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 	if (binary_cache)
 		free(binary_cache);
 	free(binary_insert);
-	for (ii = 0; ii < c_arg - 1; ii++)
+	for (ii = 0; ii < c_arg; ii++)
 		if (args[ii])
 			free(args[ii]);
 	free(args);
@@ -3499,8 +3476,8 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 
 	oph_ioserver_query *query = NULL;
 
-	int c_arg = 3, ii;
-	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(c_arg, sizeof(oph_ioserver_query_arg *));
+	unsigned char c_arg = 2, ii;
+	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(1 + c_arg, sizeof(oph_ioserver_query_arg *));
 	if (!(args)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		free(binary);
@@ -3512,7 +3489,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		return OPH_NC_ERROR;
 	}
 
-	for (ii = 0; ii < c_arg - 1; ii++) {
+	for (ii = 0; ii < c_arg; ii++) {
 		args[ii] = (oph_ioserver_query_arg *) calloc(1, sizeof(oph_ioserver_query_arg));
 		if (!args[ii]) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate input arguments\n");
@@ -3522,7 +3499,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 			free(start_pointer);
 			free(sizemax);
 			oph_ioserver_free_result(server, frag_rows);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -3530,7 +3507,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		}
 
 	}
-	args[c_arg - 1] = NULL;
+	args[c_arg] = NULL;
 
 	args[0]->arg_length = sizeof(unsigned long long);
 	args[0]->arg_type = OPH_IOSERVER_TYPE_LONGLONG;
@@ -3551,7 +3528,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		free(start_pointer);
 		free(sizemax);
 		oph_ioserver_free_result(server, frag_rows);
-		for (ii = 0; ii < c_arg - 1; ii++)
+		for (ii = 0; ii < c_arg; ii++)
 			if (args[ii])
 				free(args[ii]);
 		free(args);
@@ -3580,7 +3557,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 			free(start_pointer);
 			free(sizemax);
 			oph_ioserver_free_result(server, frag_rows);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -3603,7 +3580,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		if (!old_row->row) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read fragment row\n");
 			free(binary);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -3628,7 +3605,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 				OPH_NC_ERR(res);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
 				free(binary);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -3646,7 +3623,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 				OPH_NC_ERR(res);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
 				free(binary);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -3664,7 +3641,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 				OPH_NC_ERR(res);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
 				free(binary);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -3682,7 +3659,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 				OPH_NC_ERR(res);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
 				free(binary);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -3700,7 +3677,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 				OPH_NC_ERR(res);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
 				free(binary);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -3718,7 +3695,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 				OPH_NC_ERR(res);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
 				free(binary);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -3736,7 +3713,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 				OPH_NC_ERR(res);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
 				free(binary);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
@@ -3753,7 +3730,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		if (oph_ioserver_execute_query(server, new_frag->db_instance->dbms_instance->conn, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(binary);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -3768,7 +3745,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		idDim++;
 	}
 	free(binary);
-	for (ii = 0; ii < c_arg - 1; ii++)
+	for (ii = 0; ii < c_arg; ii++)
 		if (args[ii])
 			free(args[ii]);
 	free(args);

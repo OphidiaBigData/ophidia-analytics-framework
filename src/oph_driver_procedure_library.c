@@ -162,7 +162,7 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 		}
 
 		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
-			if (oph_dc_setup_dbms(&(server), (dbmss.value[0]).io_server_type)) {
+			if (oph_dc_setup_dbms_thread(&(server), (dbmss.value[0]).io_server_type)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);
 				oph_odb_stge_free_fragment_list(&frags);

@@ -860,6 +860,28 @@ int task_init(oph_operator_struct * handle)
 					 ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
 					 ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
 					 MYSQL_FRAG_ID, MYSQL_FRAG_ID);
+		} else if (!strcmp(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->operation, OPH_INTERCUBE_OPERATION_ARG_MAX)) {
+			if (((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->compressed)
+				snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_INTERCUBE_QUERY_COMPR_ARG_MAX, MYSQL_FRAG_ID,
+					 ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
+					 ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
+					 MYSQL_FRAG_ID, MYSQL_FRAG_ID);
+			else
+				snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_INTERCUBE_QUERY_ARG_MAX, MYSQL_FRAG_ID,
+					 ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
+					 ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
+					 MYSQL_FRAG_ID, MYSQL_FRAG_ID);
+		} else if (!strcmp(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->operation, OPH_INTERCUBE_OPERATION_ARG_MIN)) {
+			if (((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->compressed)
+				snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_INTERCUBE_QUERY_COMPR_ARG_MIN, MYSQL_FRAG_ID,
+					 ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
+					 ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
+					 MYSQL_FRAG_ID, MYSQL_FRAG_ID);
+			else
+				snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_INTERCUBE_QUERY_ARG_MIN, MYSQL_FRAG_ID,
+					 ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
+					 ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, MYSQL_FRAG_MEASURE, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
+					 MYSQL_FRAG_ID, MYSQL_FRAG_ID);
 		} else if (!strcmp(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->operation, OPH_INTERCUBE_OPERATION_CORR)) {
 			if (((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->compressed)
 				snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_INTERCUBE_QUERY_COMPR_CORR, MYSQL_FRAG_ID,
@@ -1227,6 +1249,10 @@ int task_execute(oph_operator_struct * handle)
 						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MAX);
 					} else if (!strcmp(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->operation, OPH_INTERCUBE_OPERATION_MIN)) {
 						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MIN);
+					} else if (!strcmp(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->operation, OPH_INTERCUBE_OPERATION_ARG_MAX)) {
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ARG_MAX);
+					} else if (!strcmp(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->operation, OPH_INTERCUBE_OPERATION_ARG_MIN)) {
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ARG_MIN);
 					} else if (!strcmp(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->operation, OPH_INTERCUBE_OPERATION_CORR)) {
 						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_CORR);
 					} else {
@@ -1417,6 +1443,36 @@ int task_execute(oph_operator_struct * handle)
 							       ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, _ms, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
 							       frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, frags.value[k].fragment_name,
 							       MYSQL_FRAG_ID, frags2.value[k].fragment_name, MYSQL_FRAG_ID);
+					} else if (!strcmp(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->operation, OPH_INTERCUBE_OPERATION_ARG_MAX)) {
+						if (compressed)
+							printf("ORIGINAL QUERY: " OPH_INTERCUBE_QUERY2_COMPR_MYSQL_ARG_MAX "\n", frag_name_out, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
+							       frags.value[k].fragment_name, MYSQL_FRAG_ID, MYSQL_FRAG_ID, frags.value[k].fragment_name, MYSQL_FRAG_MEASURE,
+							       frags2.value[k].fragment_name, MYSQL_FRAG_MEASURE, ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
+							       ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, _ms, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
+							       frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, frags.value[k].fragment_name,
+							       MYSQL_FRAG_ID, frags2.value[k].fragment_name, MYSQL_FRAG_ID);
+						else
+							printf("ORIGINAL QUERY: " OPH_INTERCUBE_QUERY2_MYSQL_ARG_MAX "\n", frag_name_out, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
+							       frags.value[k].fragment_name, MYSQL_FRAG_ID, MYSQL_FRAG_ID, frags.value[k].fragment_name, MYSQL_FRAG_MEASURE,
+							       frags2.value[k].fragment_name, MYSQL_FRAG_MEASURE, ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
+							       ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, _ms, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
+							       frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, frags.value[k].fragment_name,
+							       MYSQL_FRAG_ID, frags2.value[k].fragment_name, MYSQL_FRAG_ID);
+					} else if (!strcmp(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->operation, OPH_INTERCUBE_OPERATION_ARG_MIN)) {
+						if (compressed)
+							printf("ORIGINAL QUERY: " OPH_INTERCUBE_QUERY2_COMPR_MYSQL_ARG_MIN "\n", frag_name_out, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
+							       frags.value[k].fragment_name, MYSQL_FRAG_ID, MYSQL_FRAG_ID, frags.value[k].fragment_name, MYSQL_FRAG_MEASURE,
+							       frags2.value[k].fragment_name, MYSQL_FRAG_MEASURE, ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
+							       ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, _ms, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
+							       frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, frags.value[k].fragment_name,
+							       MYSQL_FRAG_ID, frags2.value[k].fragment_name, MYSQL_FRAG_ID);
+						else
+							printf("ORIGINAL QUERY: " OPH_INTERCUBE_QUERY2_MYSQL_ARG_MIN "\n", frag_name_out, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
+							       frags.value[k].fragment_name, MYSQL_FRAG_ID, MYSQL_FRAG_ID, frags.value[k].fragment_name, MYSQL_FRAG_MEASURE,
+							       frags2.value[k].fragment_name, MYSQL_FRAG_MEASURE, ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
+							       ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, _ms, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
+							       frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, frags.value[k].fragment_name,
+							       MYSQL_FRAG_ID, frags2.value[k].fragment_name, MYSQL_FRAG_ID);
 					} else if (!strcmp(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->operation, OPH_INTERCUBE_OPERATION_CORR)) {
 						if (compressed)
 							printf("ORIGINAL QUERY: " OPH_INTERCUBE_QUERY2_COMPR_MYSQL_CORR "\n", frag_name_out, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
@@ -1589,6 +1645,40 @@ int task_execute(oph_operator_struct * handle)
 								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
 						else
 							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_MIN, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
+								     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
+								     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
+								     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
+								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
+								     frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, OPH_INTERCUBE_FRAG1,
+								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
+					} else if (!strcmp(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->operation, OPH_INTERCUBE_OPERATION_ARG_MAX)) {
+						if (compressed)
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_COMPR_ARG_MAX, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
+								     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
+								     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
+								     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
+								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
+								     frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, OPH_INTERCUBE_FRAG1,
+								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
+						else
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_ARG_MAX, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
+								     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
+								     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
+								     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
+								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
+								     frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, OPH_INTERCUBE_FRAG1,
+								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
+					} else if (!strcmp(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->operation, OPH_INTERCUBE_OPERATION_ARG_MIN)) {
+						if (compressed)
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_COMPR_ARG_MIN, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
+								     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
+								     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
+								     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
+								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
+								     frags.value[k].fragment_name, frags2.value[k].db_instance->db_name, frags2.value[k].fragment_name, OPH_INTERCUBE_FRAG1,
+								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
+						else
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_ARG_MIN, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
 								     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
 								     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type,
 								     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
