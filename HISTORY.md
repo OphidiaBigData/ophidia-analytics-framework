@@ -9,6 +9,10 @@
 
 - Bug in multi-thread operators using mysql io server type [#56](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/56)
 
+### Changed:
+
+- Checks in OPH_DELETE operator to support deletion of datacubes even when I/O nodes are not available
+
 ## v1.4.0 - 2018-07-27
 
 ### Fixed:
