@@ -1787,14 +1787,16 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int **id_dbmss, int *size)
+int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int **id_dbmss, int *size,
+					       int **id_hosts)
 {
-	if (!oDB || !host_number || !dbmsxhost_number || !id_dbmss || !size || fs_type < 0 || fs_type > 2 || !ioserver_type) {
+	if (!oDB || !host_number || !dbmsxhost_number || !id_dbmss || !size || fs_type < 0 || fs_type > 2 || !ioserver_type || !host_partition || !id_hosts) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
 	*id_dbmss = NULL;
 	*size = 0;
+	*id_hosts = NULL;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -1843,22 +1845,27 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 	}
 
 	*size = host_number * dbmsxhost_number;
-	if (!(*id_dbmss = (int *) malloc((*size) * sizeof(int)))) {
+	if (!(*id_dbmss = (int *) calloc(*size, sizeof(int)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		mysql_free_result(res);
 		mysql_commit(oDB->conn);
 		mysql_autocommit(oDB->conn, 1);
 		return OPH_ODB_MEMORY_ERROR;
 	}
-	memset(*id_dbmss, 0, (*size) * sizeof(int));
 
 	int counter = 0;
 	int old_id = 0;
 	int i = 0, j = 0;
 
-	int id_hosts[host_number];
-	memset(id_hosts, 0, host_number * sizeof(int));
-
+	if (!(*id_hosts = (int *) calloc(host_number, sizeof(int)))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		mysql_free_result(res);
+		mysql_commit(oDB->conn);
+		mysql_autocommit(oDB->conn, 1);
+		free(*id_dbmss);
+		*id_dbmss = NULL;
+		return OPH_ODB_MEMORY_ERROR;
+	}
 	//Get dbmsxhost_number of dbms for host_number times
 	while ((row = mysql_fetch_row(res))) {
 		if ((int) strtol(row[0], NULL, 10) != old_id)
@@ -1868,7 +1875,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 			(*id_dbmss)[i] = (int) strtol(row[1], NULL, 10);
 			i++;
 			if (!counter)
-				id_hosts[j++] = old_id;
+				(*id_hosts)[j++] = old_id;
 			counter++;
 		}
 		if ((i == *size) || (j > host_number))
@@ -1882,6 +1889,8 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 		mysql_autocommit(oDB->conn, 1);
 		free(*id_dbmss);
 		*id_dbmss = NULL;
+		free(*id_hosts);
+		*id_hosts = NULL;
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 	if (i < *size) {
@@ -1890,21 +1899,25 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 		mysql_autocommit(oDB->conn, 1);
 		free(*id_dbmss);
 		*id_dbmss = NULL;
+		free(*id_hosts);
+		*id_hosts = NULL;
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 
 	int bsize = host_number * (1 + OPH_COMMON_MAX_INT_LENGHT);
 	char buffer[bsize];
 	for (j = n = 0; j < host_number; j++)
-		n += snprintf(buffer + n, bsize - n, "%s%d", j ? "," : "", id_hosts[j]);
+		n += snprintf(buffer + n, bsize - n, "%s%d", j ? "," : "", (*id_hosts)[j]);
 
-	n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_INCREASE_CUBE_COUNT_OF_HOSTS, buffer);
+	n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_BOOK_HOSTS, 1, buffer, host_partition);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		mysql_commit(oDB->conn);
 		mysql_autocommit(oDB->conn, 1);
 		free(*id_dbmss);
 		*id_dbmss = NULL;
+		free(*id_hosts);
+		*id_hosts = NULL;
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
@@ -1914,6 +1927,8 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 		mysql_autocommit(oDB->conn, 1);
 		free(*id_dbmss);
 		*id_dbmss = NULL;
+		free(*id_hosts);
+		*id_hosts = NULL;
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
@@ -1922,6 +1937,8 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 		mysql_autocommit(oDB->conn, 1);
 		free(*id_dbmss);
 		*id_dbmss = NULL;
+		free(*id_hosts);
+		*id_hosts = NULL;
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
@@ -1929,6 +1946,40 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		free(*id_dbmss);
 		*id_dbmss = NULL;
+		free(*id_hosts);
+		*id_hosts = NULL;
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_stge_unbook_hosts(ophidiadb * oDB, char *host_partition, int id_user, int host_number, int *id_hosts)
+{
+	if (!oDB || !host_partition || !host_number || !id_hosts) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	int j, n, bsize = host_number * (1 + OPH_COMMON_MAX_INT_LENGHT);
+	char buffer[bsize];
+	for (j = n = 0; j < host_number; j++)
+		n += snprintf(buffer + n, bsize - n, "%s%d", j ? "," : "", id_hosts[j]);
+
+	char selectQuery[MYSQL_BUFLEN];
+	n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_BOOK_HOSTS, 0, buffer, host_partition, id_user);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (oph_odb_query_ophidiadb(oDB, selectQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
 

@@ -442,11 +442,24 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
  * \param id_user User identifier
  * \param host_number Variable that contains the requested I/O hosts number
  * \param dbmsxhots_number Variable that contain the requested DBMS number per host
- * \param id_dbmss Pointer to be filled with the ids (it has to be freed)
+ * \param id_dbmss Pointer to be filled with the ids of the dbms instances (it has to be freed)
  * \param size Pointer with the length of id_dbmss
+ * \param id_hosts Pointer to be filled with the ids of the hosts (it has to be freed)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int **id_dbmss, int *size);
+int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int **id_dbmss, int *size,
+					       int **id_hosts);
+
+/**
+ * \brief Function to unbook hosts
+ * \param Pointer to OphidiaDB
+ * \param host_partition Name of the host partition to be used
+ * \param id_user User identifier
+ * \param host_number Variable that contains the requested I/O hosts number
+ * \param id_hosts Pointer to the ids of the hosts (it has to be freed)
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_stge_unbook_hosts(ophidiadb * oDB, char *host_partition, int id_user, int host_number, int *id_hosts);
 
 /**
  * \brief Function to retrieve the number of datacubes stored in the database instance

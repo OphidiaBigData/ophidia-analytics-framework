@@ -218,6 +218,7 @@ CREATE TABLE `hashost` (
   `idhostpartition` int(10) unsigned NOT NULL,
   `idhost` int(10) unsigned NOT NULL,
   `datacubecount` int(10) unsigned NULL DEFAULT 0,
+  `booked` tinyint(1) NOT NULL DEFAULT 0,
   PRIMARY KEY (`idhostpartition`, `idhost`),
   CONSTRAINT `idhost_hh` FOREIGN KEY (`idhost`) REFERENCES `host` (`idhost`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `idhostpartition_hh` FOREIGN KEY (`idhostpartition`) REFERENCES `hostpartition` (`idhostpartition`) ON DELETE CASCADE ON UPDATE CASCADE
