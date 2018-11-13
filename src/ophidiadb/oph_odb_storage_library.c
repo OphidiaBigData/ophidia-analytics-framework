@@ -1909,7 +1909,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 	for (j = n = 0; j < host_number; j++)
 		n += snprintf(buffer + n, bsize - n, "%s%d", j ? "," : "", (*id_hosts)[j]);
 
-	n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_BOOK_HOSTS, 1, buffer, host_partition);
+	n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_BOOK_HOSTS, 1, buffer, host_partition, id_user);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		mysql_commit(oDB->conn);
