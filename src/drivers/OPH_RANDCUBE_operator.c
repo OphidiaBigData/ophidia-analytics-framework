@@ -1161,7 +1161,7 @@ int task_init(oph_operator_struct * handle)
 		if (oph_odb_stge_retrieve_dbmsinstance_id_list
 		    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fs_type, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
 		     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, id_user, host_num,
-		     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbmsxhost_number, &id_dbmss, &dbmss_length, &id_hosts)) {
+		     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbmsxhost_number, &id_dbmss, &dbmss_length, &id_hosts, 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DBMS_LIST_ERROR);
 			if (id_dbmss)

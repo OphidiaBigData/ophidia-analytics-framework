@@ -445,10 +445,11 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
  * \param id_dbmss Pointer to be filled with the ids of the dbms instances (it has to be freed)
  * \param size Pointer with the length of id_dbmss
  * \param id_hosts Pointer to be filled with the ids of the hosts (it has to be freed)
+ * \param policy Policy identifier to be adopted in list available dbms
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int **id_dbmss, int *size,
-					       int **id_hosts);
+					       int **id_hosts, int policy);
 
 /**
  * \brief Function to unbook hosts

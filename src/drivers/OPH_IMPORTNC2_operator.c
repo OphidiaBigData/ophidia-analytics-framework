@@ -3699,7 +3699,7 @@ int task_init(oph_operator_struct * handle)
 		//Retreive ID dbms list
 		if (oph_odb_stge_retrieve_dbmsinstance_id_list
 		    (oDB, storage_type, ioserver_type, host_partition, id_user, host_num,
-		     ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->dbmsxhost_number, &id_dbmss, &dbmss_length, &id_hosts)) {
+		     ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->dbmsxhost_number, &id_dbmss, &dbmss_length, &id_hosts, 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DBMS_LIST_ERROR);
 			if (id_dbmss)

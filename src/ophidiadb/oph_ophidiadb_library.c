@@ -33,11 +33,6 @@
 
 extern int msglevel;
 
-#define OPH_ODB_LOCK_ERROR 1213
-#define OPH_ODB_LOCK_WAIT_ERROR 1205
-#define OPH_ODB_MAX_ATTEMPTS 5
-#define OPH_ODB_WAITING_TIME 2
-
 int oph_odb_read_ophidiadb_config_file(ophidiadb * oDB)
 {
 	if (!oDB) {
@@ -312,7 +307,7 @@ int oph_odb_query_ophidiadb(ophidiadb * oDB, char *query)
 		return OPH_ODB_NULL_PARAM;
 	}
 
-	short int runs = 0;
+	short runs = 0;
 	int ret = 0;
 	do {
 		if ((ret = mysql_query(oDB->conn, query))) {
@@ -326,7 +321,7 @@ int oph_odb_query_ophidiadb(ophidiadb * oDB, char *query)
 			}
 		} else
 			break;
-	} while (runs < OPH_ODB_MAX_ATTEMPTS);
+	} while (runs < OPH_ODB_MAX_ATTEMPTS);	// Useless
 
 
 	return OPH_ODB_SUCCESS;
