@@ -1844,11 +1844,18 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 
 		res = mysql_store_result(oDB->conn);
 		if (mysql_num_rows(res) < 1) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "No rows found by query\n");
 			mysql_free_result(res);
-			mysql_commit(oDB->conn);
-			mysql_autocommit(oDB->conn, 1);
-			return OPH_ODB_MYSQL_ERROR;
+			if (runs < OPH_ODB_MAX_ATTEMPTS) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "Not enough hosts for the operation... retrying\n");
+				sleep(OPH_ODB_WAITING_TIME);
+				runs++;
+				continue;
+			} else {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough hosts for the operation\n");
+				mysql_commit(oDB->conn);
+				mysql_autocommit(oDB->conn, 1);
+				return OPH_ODB_TOO_MANY_ROWS;
+			}
 		}
 		if (mysql_field_count(oDB->conn) != 2) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Too many fields found by query\n");
@@ -1907,24 +1914,25 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 			return OPH_ODB_TOO_MANY_ROWS;
 		}
 
-		if (i >= *size)
-			break;
-		else {
+		if (i < *size) {
+			free(*id_dbmss);
+			*id_dbmss = NULL;
+			free(*id_hosts);
+			*id_hosts = NULL;
 			if (runs < OPH_ODB_MAX_ATTEMPTS) {
 				pmesg(LOG_WARNING, __FILE__, __LINE__, "Not enough hosts for the operation... retrying\n");
 				sleep(OPH_ODB_WAITING_TIME);
 				runs++;
+				continue;
 			} else {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough hosts for the operation\n");
 				mysql_commit(oDB->conn);
 				mysql_autocommit(oDB->conn, 1);
-				free(*id_dbmss);
-				*id_dbmss = NULL;
-				free(*id_hosts);
-				*id_hosts = NULL;
 				return OPH_ODB_TOO_MANY_ROWS;
 			}
 		}
+
+		break;
 
 	} while (runs < OPH_ODB_MAX_ATTEMPTS);	// Useless
 
