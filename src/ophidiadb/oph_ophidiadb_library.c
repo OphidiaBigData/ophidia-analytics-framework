@@ -307,7 +307,7 @@ int oph_odb_query_ophidiadb(ophidiadb * oDB, char *query)
 		return OPH_ODB_NULL_PARAM;
 	}
 
-	short runs = 0;
+	short runs = 1;
 	int ret = 0;
 	do {
 		if ((ret = mysql_query(oDB->conn, query))) {
@@ -321,7 +321,7 @@ int oph_odb_query_ophidiadb(ophidiadb * oDB, char *query)
 			}
 		} else
 			break;
-	} while (runs < OPH_ODB_MAX_ATTEMPTS);	// Useless
+	} while (runs <= OPH_ODB_MAX_ATTEMPTS);	// Useless
 
 
 	return OPH_ODB_SUCCESS;

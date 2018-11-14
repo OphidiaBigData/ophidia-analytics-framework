@@ -1829,7 +1829,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 	}
 
 	int counter, old_id, i, j;
-	short runs = 0;
+	short runs = 1;
 	MYSQL_RES *res;
 	MYSQL_ROW row;
 
@@ -1934,7 +1934,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 
 		break;
 
-	} while (runs < OPH_ODB_MAX_ATTEMPTS);	// Useless
+	} while (runs <= OPH_ODB_MAX_ATTEMPTS);	// Useless
 
 	int bsize = host_number * (1 + OPH_COMMON_MAX_INT_LENGHT);
 	char buffer[bsize];
