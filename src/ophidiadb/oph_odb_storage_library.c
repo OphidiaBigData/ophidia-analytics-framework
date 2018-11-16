@@ -1828,7 +1828,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	int counter, old_id, i, j;
+	int counter, new_id, old_id, i, j;
 	short runs = 1;
 	MYSQL_RES *res;
 	MYSQL_ROW row;
@@ -1888,14 +1888,19 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 
 		//Get dbmsxhost_number of dbms for host_number times
 		while ((row = mysql_fetch_row(res))) {
-			if ((int) strtol(row[0], NULL, 10) != old_id)
+			new_id = (int) strtol(row[0], NULL, 10);
+			if (new_id != old_id)
 				counter = 0;
-			old_id = (int) strtol(row[0], NULL, 10);
+			old_id = new_id;
 			if (counter < dbmsxhost_number) {
 				(*id_dbmss)[i] = (int) strtol(row[1], NULL, 10);
 				i++;
-				if (!counter)
-					(*id_hosts)[j++] = old_id;
+				if (!counter) {
+					if (j < host_number)
+						(*id_hosts)[j++] = old_id;
+					else
+						j++;
+				}
 				counter++;
 			}
 			if ((i == *size) || (j > host_number))
