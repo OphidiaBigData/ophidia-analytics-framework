@@ -22,10 +22,6 @@ It shows information about host partitions, hosts and dbms instances.
                    If no partition is specified, then the list of all partitions is shown.
                    In &quot;add&quot; mode it is the name of the new partition.
                    In &quot;remove&quot; mode it is the name of the partition to be removed.
-- filesystem_filter : optional filter on the type of filesystem used. Used only with level 2:
-				       &quot;local&quot; for local disks only,
-				       &quot;global&quot; for GPFS disks only,
-				       &quot;all&quot; (default) for all disks.
 - ioserver_filter : optional filter on the type of I/O server used. Used only with level 2:
 				       &quot;mysql_table&quot; for MySQL I/O servers only,
 				       &quot;ophidiaio_memory&quot; for Ophidia I/O servers only,
@@ -34,10 +30,6 @@ It shows information about host partitions, hosts and dbms instances.
 				       &quot;up&quot; for up hosts only,
 				       &quot;down&quot; for down hosts only,
 				       &quot;all&quot; (default) for all hosts.
-- dbms_status : optional filter on the status of dbms instances. Used only with level 2:
-				       &quot;up&quot; for up instances only,
-				       &quot;down&quot; for down instances only,
-				       &quot;all&quot; (default) for all instances.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -67,10 +59,8 @@ SUBMISSION STRING: &quot;operator=oph_instances;level=2;host_filter=all;&quot;</
 		<argument type="string" mandatory="no" default="all">host_filter</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="0">nhost</argument>
 		<argument type="string" mandatory="no" default="all">host_partition</argument>
-		<argument type="string" mandatory="no" default="all" values="local|global|all">filesystem_filter</argument>
 		<argument type="string" mandatory="no" default="all" values="mysql_table|ophidiaio_memory|all">ioserver_filter</argument>
 		<argument type="string" mandatory="no" default="all" values="up|down|all">host_status</argument>
-		<argument type="string" mandatory="no" default="all" values="up|down|all">dbms_status</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>

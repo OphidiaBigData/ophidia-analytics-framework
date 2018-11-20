@@ -463,7 +463,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->run = 1;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->objkeys_num = -1;
-	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fs_type = 0;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->ioserver_type = NULL;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->server = NULL;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->sessionid = NULL;
@@ -1817,20 +1816,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_FS_TYPE);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_FS_TYPE);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_FS_TYPE);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (strncmp(value, OPH_COMMON_IO_FS_GLOBAL, OPH_TP_TASKLEN) == 0) {
-		((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fs_type = OPH_COMMON_IO_FS_GLOBAL_TYPE;
-	} else if (strncmp(value, OPH_COMMON_IO_FS_LOCAL, OPH_TP_TASKLEN) == 0) {
-		((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fs_type = OPH_COMMON_IO_FS_LOCAL_TYPE;
-	} else {
-		((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fs_type = OPH_COMMON_IO_FS_DEFAULT_TYPE;
-	}
-
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_IOSERVER_TYPE);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IOSERVER_TYPE);
@@ -2026,7 +2011,6 @@ int task_init(oph_operator_struct * handle)
 		int *dbmsxhost_number = &((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->dbmsxhost_number;
 		int *dbxdbms_number = &((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->dbxdbms_number;
 		int *fragxdb_number = &((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragxdb_number;
-		int storage_type = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fs_type;
 		char *host_partition = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->partition_input;
 		char *ioserver_type = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->ioserver_type;
 		int run = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->run;
@@ -2054,11 +2038,11 @@ int task_init(oph_operator_struct * handle)
 		int user_arg_prod = 0;
 
 		//If default values are used: select fylesystem and partition
-		if ((!strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(host_partition))
-		     && !strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT))) || storage_type == OPH_COMMON_IO_FS_DEFAULT_TYPE) {
+		if (!strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(host_partition))
+		    && !strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT))) {
 			if (oph_odb_stge_get_default_host_partition_fs
-			    (oDB, &((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fs_type, ioserver_type, &((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->partition_input,
-			     (*host_number > 0 ? *host_number : 1), *dbmsxhost_number, &exist_part) || !exist_part) {
+			    (oDB, ioserver_type, &((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->partition_input, (*host_number > 0 ? *host_number : 1), *dbmsxhost_number, &exist_part)
+			    || !exist_part) {
 				if (run) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts or dbms per host is too big or server type and partition are not available!\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
@@ -2073,13 +2057,11 @@ int task_init(oph_operator_struct * handle)
 			}
 			//The previous function may change the memory area of the string
 			host_partition = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->partition_input;
-			storage_type = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fs_type;
 
 		} else {
 			//Check if are available DBMS and HOST number into specified partition and of server type
 			if (*host_number > 0 || *dbmsxhost_number > 0) {
-				if ((oph_odb_stge_check_number_of_host_dbms
-				     (oDB, storage_type, ioserver_type, host_partition, id_user, (*host_number > 0 ? *host_number : 1), *dbmsxhost_number, &exist_part))
+				if ((oph_odb_stge_check_number_of_host_dbms(oDB, ioserver_type, host_partition, id_user, (*host_number > 0 ? *host_number : 1), *dbmsxhost_number, &exist_part))
 				    || !exist_part) {
 					if (run) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts or dbms per host is too big or server type and partition are not available!\n");
@@ -2098,7 +2080,7 @@ int task_init(oph_operator_struct * handle)
 
 		if (*host_number <= 0) {
 			//Check how many DBMS and HOST are available into specified partition and of server type
-			if (oph_odb_stge_count_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, id_user, &nhost, &ndbms) || !nhost || !ndbms) {
+			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, host_partition, id_user, &nhost, &ndbms) || !nhost || !ndbms) {
 				if (run) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host and dbms or server type and partition are not available!\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
@@ -2247,7 +2229,7 @@ int task_init(oph_operator_struct * handle)
 
 		if (frag_param_error) {
 			//Check how many DBMS and HOST are available into specified partition and of server type
-			if (oph_odb_stge_count_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, id_user, &nhost, &ndbms) || !nhost || !ndbms) {
+			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, host_partition, id_user, &nhost, &ndbms) || !nhost || !ndbms) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or dbms or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
 				goto __OPH_EXIT_1;
@@ -2308,7 +2290,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		//Check if are available DBMS and HOST number into specified partition and of server type
-		if ((oph_odb_stge_check_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, id_user, *host_number, *dbmsxhost_number, &exist_part)) || !exist_part) {
+		if ((oph_odb_stge_check_number_of_host_dbms(oDB, ioserver_type, host_partition, id_user, *host_number, *dbmsxhost_number, &exist_part)) || !exist_part) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts - dbms per host is too big or server type and partition are not available!\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
 				((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->host_number, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->dbmsxhost_number,
@@ -3701,7 +3683,7 @@ int task_init(oph_operator_struct * handle)
 		int *id_dbmss = NULL, *id_hosts = NULL;
 		//Retreive ID dbms list
 		if (oph_odb_stge_retrieve_dbmsinstance_id_list
-		    (oDB, storage_type, ioserver_type, host_partition, id_user, host_num,
+		    (oDB, ioserver_type, host_partition, id_user, host_num,
 		     ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->dbmsxhost_number, id_datacube_out, &id_dbmss, &dbmss_length, &id_hosts, 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DBMS_LIST_ERROR);

@@ -35,7 +35,6 @@
  * \param grid_name Name of the grid used to specify dimensions
  * \param id_output_datacube ID of the output datacube created
  * \param id_input_container ID of the output container used/created
- * \param fs_type Type of file system used
  * \param ioserver_type Type of I/O server used
  * \param number_of_exp_dimensions Number of input explicit dimension 
  * \param number_of_imp_dimensions Number of input implicit dimension 
@@ -72,7 +71,6 @@ struct _OPH_RANDCUBE2_operator_handle {
 	int run;
 	char *partition_input;
 	char *grid_name;
-	int fs_type;
 	char *ioserver_type;
 	int id_output_datacube;
 	int id_input_container;

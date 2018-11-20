@@ -14,10 +14,7 @@ WARNING: It imports only mono-dimensional coordinate variables.
 - cwd : absolute path corresponding to the current working directory,
         used to select the folder where the container is located
 - host_partition : name of I/O host partition used to store data. 
-                   If default value &quot;auto&quot; is specified, the first host partition available will be used. 
-- filesystem : type of filesystem used to store data.
-               Possible values are &quot;local&quot;, &quot;global&quot; or &quot;auto&quot; (default).
-               In the last case the first filesystem available will be used. 
+                   If default value &quot;auto&quot; is specified, the first host partition available will be used.
 - ioserver : type of I/O server used to store data.
              Only possible values is: &quot;ophidiaio_memory&quot;.
 - import_metadata: imports also metadata with &quot;yes&quot; (default) or only data with &quot;no&quot;.
@@ -118,7 +115,6 @@ SUBMISSION STRING: &quot;operator=oph_importnc2;cwd=/session-code1;container=con
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="no" default="auto">host_partition</argument>
-		<argument type="string" mandatory="no" default="auto" values="auto|local|global">filesystem</argument>
 		<argument type="string" mandatory="no" default="ophidiaio_memory" values="ophidiaio_memory">ioserver</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">import_metadata</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">check_compliance</argument>

@@ -83,7 +83,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->run = 1;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->objkeys_num = -1;
-	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fs_type = 0;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type = NULL;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server = NULL;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->sessionid = NULL;
@@ -468,20 +467,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_FS_TYPE);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_FS_TYPE);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_FS_TYPE);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (strncmp(value, OPH_COMMON_IO_FS_GLOBAL, OPH_TP_TASKLEN) == 0) {
-		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fs_type = OPH_COMMON_IO_FS_GLOBAL_TYPE;
-	} else if (strncmp(value, OPH_COMMON_IO_FS_LOCAL, OPH_TP_TASKLEN) == 0) {
-		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fs_type = OPH_COMMON_IO_FS_LOCAL_TYPE;
-	} else {
-		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fs_type = OPH_COMMON_IO_FS_DEFAULT_TYPE;
-	}
-
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_IOSERVER_TYPE);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IOSERVER_TYPE);
@@ -596,14 +581,13 @@ int task_init(oph_operator_struct * handle)
 	   *INPUT PARAMETERS CHECK - BEGIN*
 	   ********************************/
 
-		int exist_part = 0, storage_type = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fs_type;
+		int exist_part = 0;
 		char *host_partition = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input;
 		//If default values are used: select fylesystem and partition
-		if ((!strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(host_partition))
-		     && !strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT))) || storage_type == OPH_COMMON_IO_FS_DEFAULT_TYPE) {
+		if (!strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(host_partition))
+		    && !strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT))) {
 			if (oph_odb_stge_get_default_host_partition_fs
-			    (oDB, &((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fs_type, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
-			     &((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input,
+			    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type, &((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input,
 			     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number > 0 ? ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number : 1,
 			     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbmsxhost_number, &exist_part) || !exist_part) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts or dbms per host is too big or server type and partition are not available!\n");
@@ -619,7 +603,7 @@ int task_init(oph_operator_struct * handle)
 		if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number < 0 || ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbmsxhost_number < 0) {
 			//Check if are available DBMS and HOST number into specified partition and of server type
 			if (oph_odb_stge_count_number_of_host_dbms
-			    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fs_type, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
+			    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
 			     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, id_user, &nhost, &ndbms) || !nhost || !ndbms) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or dbms or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
@@ -633,7 +617,7 @@ int task_init(oph_operator_struct * handle)
 		}
 		//Check if are available DBMS and HOST number into specified partition and of server type
 		if ((oph_odb_stge_check_number_of_host_dbms
-		     (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fs_type, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
+		     (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
 		      ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, id_user, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number,
 		      ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbmsxhost_number, &exist_part)) || !exist_part) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts - dbms per host is too big or server type and partition are not available!\n");
@@ -1175,7 +1159,7 @@ int task_init(oph_operator_struct * handle)
 		int *id_dbmss = NULL, *id_hosts = NULL;
 		//Retreive ID dbms list 
 		if (oph_odb_stge_retrieve_dbmsinstance_id_list
-		    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fs_type, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
+		    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
 		     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, id_user, host_num,
 		     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbmsxhost_number, id_datacube_out, &id_dbmss, &dbmss_length, &id_hosts, 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");

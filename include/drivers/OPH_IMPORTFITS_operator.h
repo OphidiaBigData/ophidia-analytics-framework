@@ -42,7 +42,6 @@
  * \param fits_file_path Path of the fits file to import
  * \param partition_input Name of the host partition used to store data
  * \param grid_name Name of the grid used to specify dimensions - Not used
- * \param fs_type Type of file system used
  * \param ioserver_type Type of I/O server used
  * \param id_output_datacube ID of the output datacube created
  * \param id_input_container ID of the output container used/created
@@ -89,7 +88,6 @@ struct _OPH_IMPORTFITS_operator_handle {
 	char *partition_input;
 	char *grid_name;
 	char check_grid;
-	int fs_type;
 	char *ioserver_type;
 	int id_output_datacube;
 	int id_input_container;
