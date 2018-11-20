@@ -63,7 +63,7 @@
 
 #define MYSQL_QUERY_STGE_RETRIEVE_DATACUBEXDB_NUMBER 		"SELECT COUNT(*) FROM partitioned WHERE iddbinstance = %d;"
 
-#define MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST 		"SELECT host.idhost, iddbmsinstance FROM hostpartition INNER JOIN hashost ON hostpartition.idhostpartition = hashost.idhostpartition INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE partitionname = '%s' AND dbmsinstance.status = 'up' AND fstype = %d AND ioservertype = '%s' AND (NOT reserved OR iduser = %d) AND NOT booked %s FOR UPDATE;"
+#define MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST 		"SELECT host.idhost, iddbmsinstance FROM hostpartition INNER JOIN hashost ON hostpartition.idhostpartition = hashost.idhostpartition INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE partitionname = '%s' AND dbmsinstance.status = 'up' AND fstype = %d AND ioservertype = '%s' AND (NOT reserved OR iduser = %d) %s FOR UPDATE;"
 #define MYSQL_STGE_POLICY_RR						"ORDER BY CASE hidden WHEN 0 THEN host.importcount ELSE hashost.importcount END, port"
 #define MYSQL_STGE_POLICY_LOOP						"AND NOT CASE hidden WHEN 0 THEN host.importcount ELSE hashost.importcount END ORDER BY port"
 
@@ -79,6 +79,6 @@
 #define MYSQL_QUERY_STGE_CHECK_ALL_HOSTS			"SELECT MAX(nhosts) AS mhosts FROM (SELECT COUNT(*) AS nhosts FROM hashost INNER JOIN hostpartition ON hashost.idhostpartition = hostpartition.idhostpartition WHERE hidden = 0 GROUP BY idhost) AS chosts;"
 #define MYSQL_QUERY_STGE_CHECK_HOST					"SELECT COUNT(*) FROM hashost INNER JOIN hostpartition ON hashost.idhostpartition = hostpartition.idhostpartition WHERE hidden = 0 AND idhost = %d;"
 
-#define MYSQL_QUERY_STGE_BOOK_HOSTS					"UPDATE hashost SET booked = %d WHERE idhost IN (%s) AND idhostpartition IN (SELECT idhostpartition FROM hostpartition WHERE partitionname = '%s' AND reserved AND iduser = %d);"
+#define MYSQL_QUERY_STGE_CONNECT_CUBE_TO_HOST		"INSERT INTO imported (idhost, iddatacube) VALUES %s;"
 
 #endif				/* __OPH_ODB_STGE_QUERY_H__ */
