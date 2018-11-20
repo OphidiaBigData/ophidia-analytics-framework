@@ -25,8 +25,6 @@ Support is provided only for images fits files.
 - schedule : scheduling algorithm. The only possible value is 0,
 		     for a static linear block distribution of resources.
 - nhost : number of output hosts. With default value (&apos;0&apos;) all host available in the host partition are used.
-- ndbms : number of the output DBMS per host. With default value (&apos;0&apos;) all DBMS instance available per host are used.
-- ndb : number of output database per host. Default value is &apos;1&apos;.
 - nfrag : number of fragments per database. With default value (&apos;0&apos;) the number of fragments will be the ratio of
           the product of sizes of the n-1 most outer explicit dimensions to the product of the other arguments.
 - measure : name of the measure related to the FITS file. If not provided &quot;image&quot; will be used (default).
@@ -92,8 +90,6 @@ SUBMISSION STRING: &quot;operator=oph_importfits;cwd=/session-code1;container=co
 		<argument type="string" mandatory="no" default="yes" values="yes|no">import_metadata</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="0">nhost</argument>
-		<argument type="int" mandatory="no" minvalue="1" default="1">ndbms</argument>
-		<argument type="int" mandatory="no" minvalue="1" default="1">ndb</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="0">nfrag</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
 		<argument type="string" mandatory="no" default="image">measure</argument>

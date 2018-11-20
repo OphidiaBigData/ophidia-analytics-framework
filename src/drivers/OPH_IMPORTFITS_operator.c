@@ -375,7 +375,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number = (int) strtol(value, NULL, 10);
 	if (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number == 0)
 		((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number = -1;	// All the host of the partition
-
+/*
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DBMS_NUMBER);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DBMS_NUMBER);
@@ -393,6 +393,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbxdbms_number = (int) strtol(value, NULL, 10);	// 'All by means of special value 0' is not defined in this case
+*/
+	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbmsxhost_number = 1;
+	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbxdbms_number = 1;
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_FRAGMENENT_NUMBER);
 	if (!value) {

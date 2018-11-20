@@ -179,7 +179,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number = (int) strtol(value, NULL, 10);
 	if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number == 0)
 		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number = -1;
-
+/*
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DBMS_NUMBER);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DBMS_NUMBER);
@@ -199,6 +199,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbxdbms_number = (int) strtol(value, NULL, 10);
+*/
+	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbmsxhost_number = 1;
+	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dbxdbms_number = 1;
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_FRAGMENENT_NUMBER);
 	if (!value) {
