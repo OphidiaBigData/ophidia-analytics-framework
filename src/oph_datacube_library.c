@@ -905,9 +905,257 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_odb_fragment * frag, int tuple_number, int array_length, char *data_type, int compressed)
+
+int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char rand_alg)
 {
-	if (!frag || !data_type || !server) {
+
+	if (!binary || !array_length) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_DC_NULL_PARAM;
+	}
+
+	int m = 0, res = 0;
+	double rand_mes;
+
+	if (type_flag == OPH_DC_BYTE_FLAG) {
+		char measure_b;
+		if (rand_alg == 0) {
+			for (m = 0; m < array_length; m++) {
+				measure_b = (char) ceil(((float) rand() / RAND_MAX) * 1000.0);
+				res = oph_iob_bin_array_add_b(binary, &measure_b, (long long) m);
+
+				if (res) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+					return OPH_DC_SERVER_ERROR;
+				}
+			}
+		} else {
+			rand_mes = ((float) rand() / RAND_MAX) * 40.0 - 5.0;
+			measure_b = (char) ceil(rand_mes);
+			res = oph_iob_bin_array_add_b(binary, &measure_b, (long long) 0);
+
+			if (res) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+				return OPH_DC_SERVER_ERROR;
+			}
+
+			for (m = 1; m < array_length; m++) {
+				rand_mes = rand_mes * 0.9 + 0.1 * (((float) rand() / RAND_MAX) * 40.0 - 5.0);
+				measure_b = (char) ceil(rand_mes);
+				res = oph_iob_bin_array_add_b(binary, &measure_b, (long long) m);
+
+				if (res) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+					return OPH_DC_SERVER_ERROR;
+				}
+			}
+		}
+	} else if (type_flag == OPH_DC_SHORT_FLAG) {
+		short measure_s;
+		if (rand_alg == 0) {
+			for (m = 0; m < array_length; m++) {
+				measure_s = (short) ceil(((float) rand() / RAND_MAX) * 1000.0);
+				res = oph_iob_bin_array_add_s(binary, &measure_s, (long long) m);
+
+				if (res) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+					return OPH_DC_SERVER_ERROR;
+				}
+			}
+		} else {
+			rand_mes = ((float) rand() / RAND_MAX) * 40.0 - 5.0;
+			measure_s = (short) ceil(rand_mes);
+			res = oph_iob_bin_array_add_s(binary, &measure_s, (long long) 0);
+
+			if (res) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+				return OPH_DC_SERVER_ERROR;
+			}
+
+			for (m = 1; m < array_length; m++) {
+				rand_mes = rand_mes * 0.9 + 0.1 * (((float) rand() / RAND_MAX) * 40.0 - 5.0);
+				measure_s = (short) ceil(rand_mes);
+				res = oph_iob_bin_array_add_s(binary, &measure_s, (long long) m);
+
+				if (res) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+					return OPH_DC_SERVER_ERROR;
+				}
+			}
+		}
+	} else if (type_flag == OPH_DC_INT_FLAG) {
+		int measure_i;
+		if (rand_alg == 0) {
+			for (m = 0; m < array_length; m++) {
+				measure_i = (int) ceil(((float) rand() / RAND_MAX) * 1000.0);
+				res = oph_iob_bin_array_add_i(binary, &measure_i, (long long) m);
+
+				if (res) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+					return OPH_DC_SERVER_ERROR;
+				}
+			}
+		} else {
+			rand_mes = ((float) rand() / RAND_MAX) * 40.0 - 5.0;
+			measure_i = (int) ceil(rand_mes);
+			res = oph_iob_bin_array_add_i(binary, &measure_i, (long long) 0);
+
+			if (res) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+				return OPH_DC_SERVER_ERROR;
+			}
+
+			for (m = 1; m < array_length; m++) {
+				rand_mes = rand_mes * 0.9 + 0.1 * (((float) rand() / RAND_MAX) * 40.0 - 5.0);
+				measure_i = (int) ceil(rand_mes);
+				res = oph_iob_bin_array_add_i(binary, &measure_i, (long long) m);
+
+				if (res) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+					return OPH_DC_SERVER_ERROR;
+				}
+			}
+		}
+	} else if (type_flag == OPH_DC_LONG_FLAG) {
+		long long measure_l;
+		if (rand_alg == 0) {
+			for (m = 0; m < array_length; m++) {
+				measure_l = (long long) ceil(((double) rand() / RAND_MAX) * 1000.0);
+				res = oph_iob_bin_array_add_l(binary, &measure_l, (long long) m);
+
+				if (res) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+					return OPH_DC_SERVER_ERROR;
+				}
+			}
+		} else {
+			rand_mes = ((float) rand() / RAND_MAX) * 40.0 - 5.0;
+			measure_l = (long long) ceil(rand_mes);
+			res = oph_iob_bin_array_add_l(binary, &measure_l, (long long) 0);
+
+			if (res) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+				return OPH_DC_SERVER_ERROR;
+			}
+
+			for (m = 1; m < array_length; m++) {
+				rand_mes = rand_mes * 0.9 + 0.1 * (((float) rand() / RAND_MAX) * 40.0 - 5.0);
+				measure_l = (long long) ceil(rand_mes);
+				res = oph_iob_bin_array_add_l(binary, &measure_l, (long long) m);
+
+				if (res) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+					return OPH_DC_SERVER_ERROR;
+				}
+			}
+		}
+	} else if (type_flag == OPH_DC_FLOAT_FLAG) {
+		float measure_f;
+		if (rand_alg == 0) {
+			for (m = 0; m < array_length; m++) {
+				measure_f = ((float) rand() / RAND_MAX) * 1000.0;
+				res = oph_iob_bin_array_add_f(binary, &measure_f, (long long) m);
+
+				if (res) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+					return OPH_DC_SERVER_ERROR;
+				}
+			}
+		} else {
+			rand_mes = ((float) rand() / RAND_MAX) * 40.0 - 5.0;
+			measure_f = (float) rand_mes;
+			res = oph_iob_bin_array_add_f(binary, &measure_f, (long long) 0);
+
+			if (res) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+				return OPH_DC_SERVER_ERROR;
+			}
+
+			for (m = 1; m < array_length; m++) {
+				rand_mes = rand_mes * 0.9 + 0.1 * (((float) rand() / RAND_MAX) * 40.0 - 5.0);
+				measure_f = (float) rand_mes;
+				res = oph_iob_bin_array_add_f(binary, &measure_f, (long long) m);
+
+				if (res) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+					return OPH_DC_SERVER_ERROR;
+				}
+			}
+		}
+	} else if (type_flag == OPH_DC_DOUBLE_FLAG) {
+		double measure_d;
+		if (rand_alg == 0) {
+			for (m = 0; m < array_length; m++) {
+				measure_d = ((double) rand() / RAND_MAX) * 1000.0;
+				res = oph_iob_bin_array_add_d(binary, &measure_d, (long long) m);
+
+				if (res) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+					return OPH_DC_SERVER_ERROR;
+				}
+			}
+		} else {
+			rand_mes = ((double) rand() / RAND_MAX) * 40.0 - 5.0;
+			measure_d = rand_mes;
+			res = oph_iob_bin_array_add_d(binary, &measure_d, (long long) 0);
+
+			if (res) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+				return OPH_DC_SERVER_ERROR;
+			}
+
+			for (m = 1; m < array_length; m++) {
+				rand_mes = rand_mes * 0.9 + 0.1 * (((double) rand() / RAND_MAX) * 40.0 - 5.0);
+				measure_d = rand_mes;
+				res = oph_iob_bin_array_add_d(binary, &measure_d, (long long) m);
+
+				if (res) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+					return OPH_DC_SERVER_ERROR;
+				}
+			}
+		}
+	} else if (type_flag == OPH_DC_BIT_FLAG) {
+		char measure_c;
+		if (rand_alg == 0) {
+			for (m = 0; m < array_length; m++) {
+				measure_c = (char) ceil(((float) rand() / RAND_MAX) * 1000.0);
+				res = oph_iob_bin_array_add_c(binary, &measure_c, (long long) m);
+
+				if (res) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+					return OPH_DC_SERVER_ERROR;
+				}
+			}
+		} else {
+			rand_mes = ((float) rand() / RAND_MAX) * 40.0 - 5.0;
+			measure_c = (char) ceil(rand_mes);
+			res = oph_iob_bin_array_add_c(binary, &measure_c, (long long) 0);
+
+			if (res) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+				return OPH_DC_SERVER_ERROR;
+			}
+
+			for (m = 1; m < array_length; m++) {
+				rand_mes = rand_mes * 0.9 + 0.1 * (((float) rand() / RAND_MAX) * 40.0 - 5.0);
+				measure_c = (char) ceil(rand_mes);
+				res = oph_iob_bin_array_add_c(binary, &measure_c, (long long) m);
+
+				if (res) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+					return OPH_DC_SERVER_ERROR;
+				}
+			}
+		}
+	}
+
+	return OPH_DC_SUCCESS;
+}
+
+int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_odb_fragment * frag, int tuple_number, int array_length, char *data_type, int compressed, char *algorithm)
+{
+	if (!frag || !data_type || !server || !algorithm) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DC_NULL_PARAM;
 	}
@@ -923,36 +1171,17 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 		return OPH_DC_DATA_ERROR;
 	}
 
-	char insert_query[QUERY_BUFLEN];
-	int n;
-
-	if (compressed == 1) {
-#ifdef OPH_DEBUG_MYSQL
-		printf("ORIGINAL QUERY: " MYSQL_DC_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
-#endif
-		n = snprintf(insert_query, QUERY_BUFLEN, OPH_DC_SQ_INSERT_COMPRESSED_FRAG, frag->fragment_name);
+	char rand_alg = 0;
+	if (strcmp(algorithm, OPH_COMMON_RAND_ALGO_TEMP) == 0) {
+		rand_alg = 1;
+	} else if (strcmp(algorithm, OPH_COMMON_RAND_ALGO_DEFAULT) == 0) {
+		rand_alg = 0;
 	} else {
-#ifdef OPH_DEBUG_MYSQL
-		printf("ORIGINAL QUERY: " MYSQL_DC_INSERT_FRAG "\n", frag->fragment_name);
-#endif
-		n = snprintf(insert_query, QUERY_BUFLEN, OPH_DC_SQ_INSERT_FRAG, frag->fragment_name);
-	}
-	if (n >= QUERY_BUFLEN) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading algorithm type\n");
+		return OPH_DC_DATA_ERROR;
 	}
 
 	unsigned long long sizeof_var = 0;
-
-	char measure_b;
-	short measure_s;
-	int measure_i;
-	long long measure_l;
-	float measure_f;
-	double measure_d;
-	char measure_c;
-
-	unsigned long long idDim = 0;
 
 	if (type_flag == OPH_DC_BYTE_FLAG)
 		sizeof_var = array_length * sizeof(char);
@@ -972,115 +1201,174 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 			sizeof_var++;
 		array_length = sizeof_var;	// a bit array correspond to a char array with 1/8 elements
 	}
-	//Create binary array
-	char *binary = 0;
-	int res = 0;
+	//Compute number of tuples per insert (regular case)
+	unsigned long long regular_rows = 0, regular_times = 0, remainder_rows = 0;
 
-	if (type_flag == OPH_DC_BYTE_FLAG)
-		res = oph_iob_bin_array_create_b(&binary, array_length);
-	else if (type_flag == OPH_DC_SHORT_FLAG)
-		res = oph_iob_bin_array_create_s(&binary, array_length);
-	else if (type_flag == OPH_DC_INT_FLAG)
-		res = oph_iob_bin_array_create_i(&binary, array_length);
-	else if (type_flag == OPH_DC_LONG_FLAG)
-		res = oph_iob_bin_array_create_l(&binary, array_length);
-	else if (type_flag == OPH_DC_FLOAT_FLAG)
-		res = oph_iob_bin_array_create_f(&binary, array_length);
-	else if (type_flag == OPH_DC_DOUBLE_FLAG)
-		res = oph_iob_bin_array_create_d(&binary, array_length);
-	else if (type_flag == OPH_DC_BIT_FLAG)
-		res = oph_iob_bin_array_create_c(&binary, array_length);
+	long block_size = 512 * 1024;	//Maximum size that could be transfered
+	long block_rows = 1000;	//Maximum number of lines that could be transfered
 
-	if (res) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array creation: %d\n", res);
-		return OPH_DC_SERVER_ERROR;
+	if (sizeof_var >= block_size) {
+		//Use the same algorithm
+		regular_rows = 1;
+		regular_times = tuple_number;
+		remainder_rows = 0;
+	} else if (tuple_number * sizeof_var <= block_size) {
+		//Do single insert
+		if (tuple_number <= block_rows) {
+			regular_rows = tuple_number;
+			regular_times = 1;
+			remainder_rows = 0;
+		} else {
+			regular_rows = block_rows;
+			regular_times = (int) tuple_number / regular_rows;
+			remainder_rows = (int) tuple_number % regular_rows;
+		}
+	} else {
+		//Compute num rows x insert and remainder
+		regular_rows = ((int) block_size / sizeof_var >= block_rows ? block_rows : (int) block_size / sizeof_var);
+		regular_times = (int) tuple_number / regular_rows;
+		remainder_rows = (int) tuple_number % regular_rows;
 	}
 
+	//Alloc query String
+	long long query_size = 0;
+	char *insert_query = (remainder_rows > 0 ? OPH_DC_SQ_MULTI_INSERT_FRAG : OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL);
+	if (compressed == 1) {
+		query_size = snprintf(NULL, 0, insert_query, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW) * regular_rows + 1;
+	} else {
+		query_size = snprintf(NULL, 0, insert_query, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_ROW) * regular_rows + 1;
+	}
 
-	oph_ioserver_query *query = NULL;
-	int c_arg = 3, ii;
-	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(c_arg, sizeof(oph_ioserver_query_arg *));
-	if (!(args)) {
+	char *query_string = (char *) malloc(query_size * sizeof(char));
+	if (!(query_string)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		free(binary);
 		return OPH_DC_DATA_ERROR;
 	}
 
-	for (ii = 0; ii < c_arg - 1; ii++) {
-		args[ii] = (oph_ioserver_query_arg *) calloc(1, sizeof(oph_ioserver_query_arg));
-		if (!args[ii]) {
+	int i, j, k;
+	int n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
+	if (compressed == 1) {
+#ifdef OPH_DEBUG_MYSQL
+		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
+#endif
+		for (j = 0; j < regular_rows; j++) {
+			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
+			n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
+		}
+	} else {
+#ifdef OPH_DEBUG_MYSQL
+		printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
+#endif
+		for (j = 0; j < regular_rows; j++) {
+			strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
+			n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
+		}
+	}
+	query_string[n - 1] = ';';
+	query_string[n] = 0;
+
+	unsigned long long *idDim = (unsigned long long *) calloc(regular_rows, sizeof(unsigned long long));
+	if (!(idDim)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		return OPH_DC_DATA_ERROR;
+	}
+	//Create binary array
+	char *binary = 0;
+	int res;
+
+	if (type_flag == OPH_DC_BYTE_FLAG)
+		res = oph_iob_bin_array_create_b(&binary, array_length * regular_rows);
+	else if (type_flag == OPH_DC_SHORT_FLAG)
+		res = oph_iob_bin_array_create_s(&binary, array_length * regular_rows);
+	else if (type_flag == OPH_DC_INT_FLAG)
+		res = oph_iob_bin_array_create_i(&binary, array_length * regular_rows);
+	else if (type_flag == OPH_DC_LONG_FLAG)
+		res = oph_iob_bin_array_create_l(&binary, array_length * regular_rows);
+	else if (type_flag == OPH_DC_FLOAT_FLAG)
+		res = oph_iob_bin_array_create_f(&binary, array_length * regular_rows);
+	else if (type_flag == OPH_DC_DOUBLE_FLAG)
+		res = oph_iob_bin_array_create_d(&binary, array_length * regular_rows);
+	else if (type_flag == OPH_DC_BIT_FLAG)
+		res = oph_iob_bin_array_create_c(&binary, array_length * regular_rows);
+	else
+		res = oph_iob_bin_array_create_d(&binary, array_length * regular_rows);
+	if (res) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array creation: %d\n", res);
+		free(binary);
+		free(query_string);
+		free(idDim);
+		return OPH_DC_DATA_ERROR;
+	}
+
+	unsigned long long c_arg = regular_rows * 2;
+	oph_ioserver_query *query = NULL;
+	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(1 + c_arg, sizeof(oph_ioserver_query_arg *));
+	if (!(args)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(binary);
+		free(idDim);
+		return OPH_DC_DATA_ERROR;
+	}
+
+	for (i = 0; i < c_arg; i++) {
+		args[i] = (oph_ioserver_query_arg *) calloc(1, sizeof(oph_ioserver_query_arg));
+		if (!args[i]) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate input arguments\n");
-			for (ii = 0; ii < c_arg - 1; ii++)
-				if (args[ii])
-					free(args[ii]);
-			free(args);
+			free(query_string);
+			free(idDim);
 			free(binary);
+			for (i = 0; i < c_arg; i++)
+				if (args[i])
+					free(args[i]);
+			free(args);
 			return OPH_DC_DATA_ERROR;
 		}
 	}
-	args[c_arg - 1] = NULL;
+	args[c_arg] = NULL;
 
 
-	args[0]->arg_length = sizeof(unsigned long long);
-	args[0]->arg_type = OPH_IOSERVER_TYPE_LONGLONG;
-	args[0]->arg_is_null = 0;
+	for (i = 0; i < regular_rows; i++) {
+		args[2 * i]->arg_length = sizeof(unsigned long long);
+		args[2 * i]->arg_type = OPH_IOSERVER_TYPE_LONGLONG;
+		args[2 * i]->arg_is_null = 0;
+		args[2 * i]->arg = (unsigned long long *) (&(idDim[i]));
 
-	args[1]->arg_length = sizeof_var;
-	args[1]->arg_type = OPH_IOSERVER_TYPE_BLOB;
-	args[1]->arg_is_null = 0;
-
-	args[1]->arg = (char *) (binary);
-	args[0]->arg = (unsigned long long *) (&idDim);
-
-	idDim = frag->key_start;
-
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, insert_query, tuple_number, args, &query)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
-		free(binary);
-		for (ii = 0; ii < c_arg - 1; ii++)
-			if (args[ii])
-				free(args[ii]);
-		free(args);
-		return OPH_DC_SERVER_ERROR;
+		args[2 * i + 1]->arg_length = sizeof_var;
+		args[2 * i + 1]->arg_type = OPH_IOSERVER_TYPE_BLOB;
+		args[2 * i + 1]->arg_is_null = 0;
+		args[2 * i + 1]->arg = (char *) (binary + sizeof_var * i);
+		idDim[i] = frag->key_start + i;
 	}
 
-	int l, m;
+	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, regular_times, args, &query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
+		free(query_string);
+		free(idDim);
+		free(binary);
+		for (i = 0; i < c_arg; i++)
+			if (args[i])
+				free(args[i]);
+		free(args);
+		return OPH_DC_DATA_ERROR;
+	}
+
 	struct timeval time;
 	gettimeofday(&time, NULL);
 	srand(time.tv_sec * 1000000 + time.tv_usec);
-	for (l = 0; l < tuple_number; l++) {
 
-		//Fill array                            
-		for (m = 0; m < array_length; m++) {
-			if (type_flag == OPH_DC_BYTE_FLAG) {
-				measure_b = (((float) rand() / RAND_MAX) * 100.0);
-				res = oph_iob_bin_array_add_b(binary, &measure_b, (long long) m);
-			} else if (type_flag == OPH_DC_SHORT_FLAG) {
-				measure_s = (((float) rand() / RAND_MAX) * 1000.0);
-				res = oph_iob_bin_array_add_s(binary, &measure_s, (long long) m);
-			} else if (type_flag == OPH_DC_INT_FLAG) {
-				measure_i = (((double) rand() / RAND_MAX) * 1000.0);
-				res = oph_iob_bin_array_add_i(binary, &measure_i, (long long) m);
-			} else if (type_flag == OPH_DC_LONG_FLAG) {
-				measure_l = (((double) rand() / RAND_MAX) * 1000.0);
-				res = oph_iob_bin_array_add_l(binary, &measure_l, (long long) m);
-			} else if (type_flag == OPH_DC_FLOAT_FLAG) {
-				measure_f = ((float) rand() / RAND_MAX) * 1000.0;
-				res = oph_iob_bin_array_add_f(binary, &measure_f, (long long) m);
-			} else if (type_flag == OPH_DC_DOUBLE_FLAG) {
-				measure_d = ((double) rand() / RAND_MAX) * 1000.0;
-				res = oph_iob_bin_array_add_d(binary, &measure_d, (long long) m);
-			} else if (type_flag == OPH_DC_BIT_FLAG) {
-				measure_c = ((char) rand() / RAND_MAX) * 1000.0;
-				res = oph_iob_bin_array_add_c(binary, &measure_c, (long long) m);
-			}
-
-			if (res) {
+	//Fill array
+	for (k = 0; k < regular_times; k++) {
+		for (j = 0; j < regular_rows; j++) {
+			if (_oph_dc_build_rand_row(binary + j * sizeof_var, array_length, type_flag, rand_alg)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+				free(query_string);
+				free(idDim);
 				free(binary);
-				for (ii = 0; ii < c_arg - 1; ii++)
-					if (args[ii])
-						free(args[ii]);
+				for (i = 0; i < c_arg; i++)
+					if (args[i])
+						free(args[i]);
 				free(args);
 				oph_ioserver_free_query(server, query);
 				return OPH_DC_SERVER_ERROR;
@@ -1089,23 +1377,195 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 
 		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
+			free(query_string);
+			free(idDim);
 			free(binary);
-			for (ii = 0; ii < c_arg - 1; ii++)
-				if (args[ii])
-					free(args[ii]);
+			for (i = 0; i < c_arg - 1; i++)
+				if (args[i])
+					free(args[i]);
+			free(args);
+			oph_ioserver_free_query(server, query);
+			return OPH_DC_SERVER_ERROR;
+		}
+		//Increase idDim
+		for (i = 0; i < regular_rows; i++) {
+			idDim[i] += regular_rows;
+		}
+	}
+
+	oph_ioserver_free_query(server, query);
+	free(query_string);
+	query_string = NULL;
+
+	if (remainder_rows > 0) {
+
+		if (compressed == 1) {
+			query_size = snprintf(NULL, 0, OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW) * regular_rows + 1;
+		} else {
+			query_size = snprintf(NULL, 0, OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL, frag->fragment_name) - 1 + strlen(OPH_DC_SQ_MULTI_INSERT_ROW) * regular_rows + 1;
+		}
+
+		query_string = (char *) malloc(query_size * sizeof(char));
+		if (!(query_string)) {
+			free(query_string);
+			free(idDim);
+			free(binary);
+			for (i = 0; i < c_arg - 1; i++)
+				if (args[i])
+					free(args[i]);
+			free(args);
+			return OPH_DC_DATA_ERROR;
+		}
+
+		query = NULL;
+		n = snprintf(query_string, query_size, OPH_DC_SQ_MULTI_INSERT_FRAG_FINAL, frag->fragment_name) - 1;
+		if (compressed == 1) {
+#ifdef OPH_DEBUG_MYSQL
+			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_COMPRESSED_FRAG "\n", frag->fragment_name);
+#endif
+			for (j = 0; j < remainder_rows; j++) {
+				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW));
+				n += strlen(OPH_DC_SQ_MULTI_INSERT_COMPRESSED_ROW);
+			}
+		} else {
+#ifdef OPH_DEBUG_MYSQL
+			printf("ORIGINAL QUERY: " MYSQL_DC_MULTI_INSERT_FRAG "\n", frag->fragment_name);
+#endif
+			for (j = 0; j < remainder_rows; j++) {
+				strncpy(query_string + n, OPH_DC_SQ_MULTI_INSERT_ROW, strlen(OPH_DC_SQ_MULTI_INSERT_ROW));
+				n += strlen(OPH_DC_SQ_MULTI_INSERT_ROW);
+			}
+		}
+		query_string[n - 1] = ';';
+		query_string[n] = 0;
+
+		for (i = remainder_rows * 2; i < c_arg; i++) {
+			if (args[i]) {
+				free(args[i]);
+				args[i] = NULL;
+			}
+		}
+
+		if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
+			free(query_string);
+			free(idDim);
+			free(binary);
+			for (i = 0; i < c_arg; i++)
+				if (args[i])
+					free(args[i]);
+			free(args);
+			return OPH_DC_DATA_ERROR;
+		}
+
+		for (j = 0; j < remainder_rows; j++) {
+			if (_oph_dc_build_rand_row(binary + j * sizeof_var, array_length, type_flag, rand_alg)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling: %d\n", res);
+				free(query_string);
+				free(idDim);
+				free(binary);
+				for (i = 0; i < c_arg; i++)
+					if (args[i])
+						free(args[i]);
+				free(args);
+				oph_ioserver_free_query(server, query);
+				return OPH_DC_SERVER_ERROR;
+			}
+		}
+
+		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
+			free(query_string);
+			free(idDim);
+			free(binary);
+			for (i = 0; i < c_arg - 1; i++)
+				if (args[i])
+					free(args[i]);
 			free(args);
 			oph_ioserver_free_query(server, query);
 			return OPH_DC_SERVER_ERROR;
 		}
 
-		idDim++;
+		oph_ioserver_free_query(server, query);
 	}
+
+	if (query_string)
+		free(query_string);
+	free(idDim);
 	free(binary);
-	for (ii = 0; ii < c_arg - 1; ii++)
-		if (args[ii])
-			free(args[ii]);
+	for (i = 0; i < c_arg - 1; i++)
+		if (args[i])
+			free(args[i]);
 	free(args);
+
+	return OPH_DC_SUCCESS;
+}
+
+int oph_dc_populate_fragment_with_rand_data2(oph_ioserver_handler * server, oph_odb_fragment * frag, int tuple_number, int array_length, char *data_type, int compressed, char *algorithm)
+{
+	if (!frag || !data_type || !server || !algorithm) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_DC_NULL_PARAM;
+	}
+
+	if (oph_dc_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
+		return OPH_DC_SERVER_ERROR;
+	}
+
+	char type_flag = oph_dc_typeof(data_type);
+	if (!type_flag) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
+		return OPH_DC_DATA_ERROR;
+	}
+
+	if (strcmp(algorithm, OPH_COMMON_RAND_ALGO_TEMP) != 0 && strcmp(algorithm, OPH_COMMON_RAND_ALGO_DEFAULT) != 0) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading algorithm type\n");
+		return OPH_DC_DATA_ERROR;
+	}
+	//Alloc query String
+	long long query_size = 0;
+	char *insert_query = OPH_DC_SQ_CREATE_FRAG_FROM_RAND;
+	if (compressed == 1) {
+		query_size = snprintf(NULL, 0, insert_query, frag->fragment_name, OPH_IOSERVER_SQ_VAL_YES, data_type, tuple_number, frag->key_start, array_length, algorithm) + 1;
+	} else {
+		query_size = snprintf(NULL, 0, insert_query, frag->fragment_name, OPH_IOSERVER_SQ_VAL_NO, data_type, tuple_number, frag->key_start, array_length, algorithm) + 1;
+	}
+
+	char *query_string = (char *) malloc(query_size * sizeof(char));
+	if (!(query_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_DC_DATA_ERROR;
+	}
+
+	int n = 0;
+	if (compressed == 1) {
+		n = snprintf(query_string, query_size, insert_query, frag->fragment_name, OPH_IOSERVER_SQ_VAL_YES, data_type, tuple_number, frag->key_start, array_length, algorithm);
+	} else {
+		n = snprintf(query_string, query_size, insert_query, frag->fragment_name, OPH_IOSERVER_SQ_VAL_NO, data_type, tuple_number, frag->key_start, array_length, algorithm);
+	}
+	if (n >= query_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		free(query_string);
+		return OPH_DC_DATA_ERROR;
+	}
+
+	oph_ioserver_query *query = NULL;
+	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, NULL, &query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
+		free(query_string);
+		return OPH_DC_SERVER_ERROR;
+	}
+
+	if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
+		free(query_string);
+		oph_ioserver_free_query(server, query);
+		return OPH_DC_SERVER_ERROR;
+	}
+
 	oph_ioserver_free_query(server, query);
+	free(query_string);
 
 	return OPH_DC_SUCCESS;
 }
