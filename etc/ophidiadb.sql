@@ -158,7 +158,7 @@ CREATE TABLE `host` (
   `cores` int(10) unsigned DEFAULT NULL,
   `memory` int(10) unsigned DEFAULT NULL,
   `status` varchar(4) NOT NULL DEFAULT "up",
-  `datacubecount` int(10) unsigned NOT NULL DEFAULT 0,
+  `importcount` int(10) unsigned NOT NULL DEFAULT 0,
   `lastupdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `idinstancemysql` int(10) unsigned NULL DEFAULT NULL,
   `idinstanceophidiaio` int(10) unsigned NULL DEFAULT NULL,
@@ -226,8 +226,7 @@ DROP TABLE IF EXISTS `hashost`;
 CREATE TABLE `hashost` (
   `idhostpartition` int(10) unsigned NOT NULL,
   `idhost` int(10) unsigned NOT NULL,
-  `datacubecount` int(10) unsigned NULL DEFAULT 0,
-  `booked` tinyint(1) NOT NULL DEFAULT 0,
+  `importcount` int(10) unsigned NULL DEFAULT 0,
   PRIMARY KEY (`idhostpartition`, `idhost`),
   CONSTRAINT `idhost_hh` FOREIGN KEY (`idhost`) REFERENCES `host` (`idhost`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `idhostpartition_hh` FOREIGN KEY (`idhostpartition`) REFERENCES `hostpartition` (`idhostpartition`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -397,9 +396,9 @@ CREATE TABLE `datacube` (
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER TRIGGER_before_delete_datacube BEFORE DELETE ON datacube 
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER TRIGGER_before_delete_imported BEFORE DELETE ON imported 
 FOR EACH ROW BEGIN
-UPDATE IGNORE host SET datacubecount = IF(datacubecount > 0, datacubecount - 1, 0) where idhost in (select distinct(idhost) from datacube inner join partitioned on datacube.iddatacube = partitioned.iddatacube inner join dbinstance on dbinstance.iddbinstance = partitioned.iddbinstance inner join dbmsinstance on dbmsinstance.iddbmsinstance = dbinstance.iddbmsinstance where datacube.iddatacube = OLD.iddatacube);
+UPDATE IGNORE host SET importcount = IF(importcount > 0, importcount - 1, 0) where idhost in (select distinct(idhost) from imported where imported.iddatacube = OLD.iddatacube);
 END */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -605,9 +604,9 @@ CREATE TABLE `partitioned` (
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER TRIGGER_after_insert_datacube AFTER INSERT ON partitioned 
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER TRIGGER_after_insert_datacube AFTER INSERT ON imported 
 FOR EACH ROW BEGIN
-UPDATE host SET datacubecount = datacubecount + 1 WHERE idhost IN (SELECT dbmsinstance.idhost AS idhost FROM dbmsinstance INNER JOIN dbinstance ON dbmsinstance.iddbmsinstance = dbinstance.iddbmsinstance INNER JOIN (select idhost FROM partitioned INNER JOIN dbinstance on dbinstance.iddbinstance = partitioned.iddbinstance INNER JOIN dbmsinstance on dbmsinstance.iddbmsinstance = dbinstance.iddbmsinstance where partitioned.iddatacube = NEW.iddatacube GROUP BY idhost HAVING count(idhost) = 1)tmp ON tmp.idhost = dbmsinstance.idhost WHERE dbinstance.iddbinstance = NEW.iddbinstance);
+UPDATE host SET importcount = importcount + 1 WHERE idhost IN (SELECT imported.idhost AS idhost FROM imported WHERE imported.iddatacube = NEW.iddatacube);
 END */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
