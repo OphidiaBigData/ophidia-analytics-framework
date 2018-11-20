@@ -945,7 +945,7 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, int *fs_type, ch
 		snprintf(tmp_fs_type, 2, "%d", *fs_type);
 	}
 
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS, (partition_default ? "%" : *host_partition), tmp_fs_type, ioserver_type, dbmsxhost_number, host_number);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS, (partition_default ? "%" : *host_partition), tmp_fs_type, ioserver_type, host_number);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -1819,8 +1819,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 
 	char selectQuery[MYSQL_BUFLEN];
 	//Select all up host that have at least dbmsxhost_number
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST, host_partition, fs_type, ioserver_type, id_user, host_partition, fs_type, ioserver_type, id_user,
-			 dbmsxhost_number, spolicy);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST, host_partition, fs_type, ioserver_type, id_user, host_partition, fs_type, ioserver_type, id_user, spolicy);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		mysql_commit(oDB->conn);
