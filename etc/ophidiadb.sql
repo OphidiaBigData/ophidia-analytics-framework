@@ -160,9 +160,18 @@ CREATE TABLE `host` (
   `status` varchar(4) NOT NULL DEFAULT "up",
   `datacubecount` int(10) unsigned NOT NULL DEFAULT 0,
   `lastupdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `idinstancemysql` int(10) unsigned NULL DEFAULT NULL,
+  `idinstanceophidiaio` int(10) unsigned NULL DEFAULT NULL,
+  `idhostpartition` int(10) unsigned NULL DEFAULT NULL,
   PRIMARY KEY (`idhost`),
   KEY `idhost` (`idhost`),
   UNIQUE KEY `hostname` (`hostname`)
+  KEY `idinstancemysql` (`idinstancemysql`),
+  CONSTRAINT `idinstancemysql` FOREIGN KEY (`idinstancemysql`) REFERENCES `dbmsinstance` (`iddbmsinstance`) ON DELETE SET NULL ON UPDATE CASCADE,
+  KEY `idinstanceophidiaio` (`idinstancemysql`),
+  CONSTRAINT `idinstanceophidiaio` FOREIGN KEY (`idinstanceophidiaio`) REFERENCES `dbmsinstance` (`iddbmsinstance`) ON DELETE SET NULL ON UPDATE CASCADE,
+  KEY `idhostpartition` (`idhostpartition`),
+  CONSTRAINT `idhostpartition` FOREIGN KEY (`idhostpartition`) REFERENCES `hostpartition` (`idhostpartition`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -613,6 +622,35 @@ DELIMITER ;
 LOCK TABLES `partitioned` WRITE;
 /*!40000 ALTER TABLE `partitioned` DISABLE KEYS */;
 /*!40000 ALTER TABLE `partitioned` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `partitioned`
+--
+
+DROP TABLE IF EXISTS `imported`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `imported` (
+  `idimported` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `idhost` int(10) unsigned NOT NULL,
+  `iddatacube` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`idimported`),
+  UNIQUE KEY `host_datacube` (`idhost`, `iddatacube`),
+  KEY `idhost` (`idhost`),
+  CONSTRAINT `idhost_i` FOREIGN KEY (`idhost`) REFERENCES `host` (`idhost`) ON DELETE CASCADE ON UPDATE CASCADE,
+  KEY `iddatacube` (`iddatacube`),
+  CONSTRAINT `iddatacube_i` FOREIGN KEY (`iddatacube`) REFERENCES `datacube` (`iddatacube`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `partitioned`
+--
+
+LOCK TABLES `imported` WRITE;
+/*!40000 ALTER TABLE `imported` DISABLE KEYS */;
+/*!40000 ALTER TABLE `imported` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
