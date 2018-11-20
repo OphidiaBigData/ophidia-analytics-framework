@@ -1191,17 +1191,21 @@ int task_init(oph_operator_struct * handle)
 	  /********************************
 	   * DB INSTANCE CREATION - BEGIN *
 	   ********************************/
-		int dbmss_length;
-		int *id_dbmss;
+		int dbmss_length, host_num = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number;
+		int *id_dbmss = NULL, *id_hosts = NULL;
 		//Retreive ID dbms list 
 		if (oph_odb_stge_retrieve_dbmsinstance_id_list
 		    (oDB, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fs_type, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->ioserver_type,
-		     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->partition_input, id_user, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number,
-		     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number, &id_dbmss, &dbmss_length)) {
+		     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->partition_input, id_user, host_num,
+		     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number, &id_dbmss, &dbmss_length, &id_hosts, 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DBMS_LIST_ERROR);
 			if (id_dbmss)
 				free(id_dbmss);
+			if (id_hosts) {
+				oph_odb_stge_unbook_hosts(oDB, host_partition, id_user, host_num, id_hosts);
+				free(id_hosts);
+			}
 			goto __OPH_EXIT_1;
 		}
 
@@ -1216,6 +1220,8 @@ int task_init(oph_operator_struct * handle)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive DBMS\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DBMS_ERROR, db.id_dbms);
 				free(id_dbmss);
+				oph_odb_stge_unbook_hosts(oDB, host_partition, id_user, host_num, id_hosts);
+				free(id_hosts);
 				goto __OPH_EXIT_1;
 			}
 			db.dbms_instance = &dbms;
@@ -1225,6 +1231,8 @@ int task_init(oph_operator_struct * handle)
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_IOPLUGIN_SETUP_ERROR, db.id_dbms);
 					free(id_dbmss);
+					oph_odb_stge_unbook_hosts(oDB, host_partition, id_user, host_num, id_hosts);
+					free(id_hosts);
 					goto __OPH_EXIT_1;
 				}
 			}
@@ -1234,6 +1242,8 @@ int task_init(oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DBMS_CONNECTION_ERROR, dbms.id_dbms);
 				oph_dc_disconnect_from_dbms(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->server, &(dbms));
 				free(id_dbmss);
+				oph_odb_stge_unbook_hosts(oDB, host_partition, id_user, host_num, id_hosts);
+				free(id_hosts);
 				goto __OPH_EXIT_1;
 			}
 
@@ -1243,6 +1253,8 @@ int task_init(oph_operator_struct * handle)
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of Db instance  name exceed limit.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_STRING_BUFFER_OVERFLOW, "DB instance name", db_name);
 					free(id_dbmss);
+					oph_odb_stge_unbook_hosts(oDB, host_partition, id_user, host_num, id_hosts);
+					free(id_hosts);
 					oph_dc_disconnect_from_dbms(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->server, &(dbms));
 					goto __OPH_EXIT_1;
 				}
@@ -1251,6 +1263,8 @@ int task_init(oph_operator_struct * handle)
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create new db\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_NEW_DB_ERROR, db.db_name);
 					free(id_dbmss);
+					oph_odb_stge_unbook_hosts(oDB, host_partition, id_user, host_num, id_hosts);
+					free(id_hosts);
 					oph_dc_disconnect_from_dbms(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->server, &(dbms));
 					goto __OPH_EXIT_1;
 				}
@@ -1259,6 +1273,8 @@ int task_init(oph_operator_struct * handle)
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update dbinstance table\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DB_INSERT_ERROR, db.db_name);
 					free(id_dbmss);
+					oph_odb_stge_unbook_hosts(oDB, host_partition, id_user, host_num, id_hosts);
+					free(id_hosts);
 					oph_dc_disconnect_from_dbms(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->server, &(dbms));
 					goto __OPH_EXIT_1;
 				}
@@ -1266,6 +1282,12 @@ int task_init(oph_operator_struct * handle)
 			oph_dc_disconnect_from_dbms(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->server, &(dbms));
 		}
 		free(id_dbmss);
+
+		if (oph_odb_stge_unbook_hosts(oDB, host_partition, id_user, host_num, id_hosts)) {
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to unbook hosts\n");
+			logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, "Unable to unbook hosts\n");
+		}
+		free(id_hosts);
 	  /********************************
 	   *  DB INSTANCE CREATION - END  *
 	   ********************************/
