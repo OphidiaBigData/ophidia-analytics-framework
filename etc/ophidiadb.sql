@@ -93,8 +93,6 @@ CREATE TABLE `dbmsinstance` (
   `password` varchar(256) DEFAULT NULL,
   `port` int(11) NOT NULL,
   `ioservertype`  varchar(256) NOT NULL DEFAULT 'mysql_table',
-  `fstype`  int(10) NOT NULL DEFAULT 0,
-  `status`  varchar(4) NOT NULL DEFAULT "up",
   PRIMARY KEY (`iddbmsinstance`),
   KEY `idhost` (`idhost`),
   UNIQUE KEY `port_host` (`idhost`, `port`),
@@ -160,18 +158,9 @@ CREATE TABLE `host` (
   `status` varchar(4) NOT NULL DEFAULT "up",
   `importcount` int(10) unsigned NOT NULL DEFAULT 0,
   `lastupdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `idinstancemysql` int(10) unsigned NULL DEFAULT NULL,
-  `idinstanceophidiaio` int(10) unsigned NULL DEFAULT NULL,
-  `idhostpartition` int(10) unsigned NULL DEFAULT NULL,
   PRIMARY KEY (`idhost`),
   KEY `idhost` (`idhost`),
   UNIQUE KEY `hostname` (`hostname`)
-  KEY `idinstancemysql` (`idinstancemysql`),
-  CONSTRAINT `idinstancemysql` FOREIGN KEY (`idinstancemysql`) REFERENCES `dbmsinstance` (`iddbmsinstance`) ON DELETE SET NULL ON UPDATE CASCADE,
-  KEY `idinstanceophidiaio` (`idinstancemysql`),
-  CONSTRAINT `idinstanceophidiaio` FOREIGN KEY (`idinstanceophidiaio`) REFERENCES `dbmsinstance` (`iddbmsinstance`) ON DELETE SET NULL ON UPDATE CASCADE,
-  KEY `idhostpartition` (`idhostpartition`),
-  CONSTRAINT `idhostpartition` FOREIGN KEY (`idhostpartition`) REFERENCES `hostpartition` (`idhostpartition`) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

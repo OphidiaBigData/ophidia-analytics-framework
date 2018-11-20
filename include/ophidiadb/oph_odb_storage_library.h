@@ -59,7 +59,6 @@ typedef struct {
  * \param login login to connect to DBMS instance
  * \param pwd Password to connect to DBMS instance as login
  * \param port port where the DBMS instance
- * \param fs_type If the disk is local (0) or global (1)
  * \param io_server_type String with IO server type
  * \param conn Connection to dbms instance
  */
@@ -69,7 +68,6 @@ typedef struct {
 	char login[OPH_ODB_STGE_LOGIN_SIZE + 1];
 	char pwd[OPH_ODB_STGE_PWD_SIZE + 1];
 	int port;
-	int fs_type;
 	char io_server_type[OPH_ODB_STGE_SERVER_NAME_SIZE + 1];
 	void *conn;
 } oph_odb_dbms_instance;
@@ -267,20 +265,18 @@ int oph_odb_stge_fetch_fragment_connection_string_for_deletion(ophidiadb * oDB, 
  * \brief Function to get default values for host partition and/or file system
  * \param oDB Pointer to the OphidiaDB
  * \param ioserver_type Server type to be used. 
- * \param fs_type Pointer to filesystem type. If set to - 1 it will be updated with the first available. It may be 0 (local disk), 1 (global) or 2 (inmemory)
  * \param hots_partition Pointer to name of the host partition. If set to 'auto' the first available will be used
  * \param hots_number Variable that contains the requested I/O hosts
  * \param dbmsxhots_number Variable that contain the requested DBMS number per host
  * \param exists Variable that contains 0 if the host partition of file system doesn't exists and 1 otherwise
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, int *fs_type, char *ioserver_type, char **host_partition, int host_number, int dbmsxhost_number, int *exist);
+int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_type, char **host_partition, int host_number, int dbmsxhost_number, int *exist);
 
 /**
  * \brief Function to check if number of host and DBMS in OphidiaDB are available
  * \param oDB Pointer to the OphidiaDB
  * \param ioserver_type Server type to be used. 
- * \param fs_type Filesystem type. It may be 0 (local disk), 1 (global) or 2 (inmemory)
  * \param hots_partition Name of the host partition to be used
  * \param id_user User identifier
  * \param hots_number Variable that contains the requested I/O hosts
@@ -288,20 +284,19 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, int *fs_type, ch
  * \param exists Variable that contains 0 if the container.datacube doesn't exists and 1 otherwise
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int *exist);
+int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int *exist);
 
 /**
  * \brief Function to count maximum number of host and DBMS available in OphidiaDB
  * \param oDB Pointer to the OphidiaDB
  * \param ioserver_type Server type to be used. 
- * \param fs_type Filesystem type. It may be 0 (local disk), 1 (global) or 2 (inmemory)
  * \param host_partition Name of the host partition to be used
  * \param id_user User indentifier
  * \param hots_number Variable that will contain the number of hosts
  * \param dbmsxhots_number Variable that will contain the number of DBMS per host
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, int server_type, char *ioserver_type, char *host_partition, int id_user, int *host_number, int *dbmsxhost_number);
+int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int *host_number, int *dbmsxhost_number);
 
 /**
  * \brief Function to retrieve fragment list from OphidiaDB given datacube id
@@ -342,13 +337,11 @@ int oph_odb_stge_find_datacube_fragmentation_list(ophidiadb * oDB, int level, in
  * \param partition_name Name of the partition to filter on (may be null)
  * \param server_type Filter on server_type attribute. It may be 0 (local disk), 1 (global), 2 (inmemory) or 3 (all)
  * \param host_status Status of the host to filter on (may be null)
- * \param dbms_status Status of the dbms instance to filter on (may be null)
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \param id_user Reference to user-defined host partitions
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *hostname, char *partition_name, int fs_type, char *ioserver_type, char *host_status, char *dbms_status,
-					    MYSQL_RES ** information_list, int id_user);
+int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *hostname, char *partition_name, char *ioserver_type, char *host_status, MYSQL_RES ** information_list, int id_user);
 
 /**
  * \brief Function to retrieve list of fragments name related to datacube and id_dbms
@@ -437,7 +430,6 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
  * \brief Function to retrieve the list of ID of available DBMS instances
  * \param Pointer to OphidiaDB
  * \param ioserver_type I/O Server type to be used.
- * \param fs_type Filesystem type. It may be 0 (local disk), 1 (global) or 2 (inmemory)
  * \param host_partition Name of the host partition to be used
  * \param id_user User identifier
  * \param host_number Variable that contains the requested I/O hosts number
@@ -449,7 +441,7 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
  * \param policy Policy identifier to be adopted in list available dbms
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int id_datacube,
+int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int id_datacube,
 					       int **id_dbmss, int *size, int **id_hosts, int policy);
 
 /**

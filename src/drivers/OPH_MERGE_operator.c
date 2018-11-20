@@ -1245,7 +1245,7 @@ int task_execute(oph_operator_struct * handle)
 					strncpy(dbms_out.pwd, dbmss_in.value[i].pwd, OPH_ODB_STGE_PWD_SIZE);
 					dbms_out.pwd[OPH_ODB_STGE_PWD_SIZE] = 0;
 					dbms_out.port = dbmss_in.value[i].port;
-					dbms_out.fs_type = dbmss_in.value[i].fs_type;
+					//dbms_out.fs_type = dbmss_in.value[i].fs_type;
 
 					//Copy dbs_in.value[j] in db_out
 					strncpy(dbms_out.hostname, dbmss_in.value[i].hostname, OPH_ODB_STGE_HOST_NAME_SIZE);

@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <mysql.h>
 #include "debug.h"
@@ -190,9 +191,8 @@ int oph_odb_stge_retrieve_dbmsinstance(ophidiadb * oDB, int id_dbms, oph_odb_dbm
 		memset(&(dbms->pwd), 0, OPH_ODB_STGE_PWD_SIZE + 1);
 		strncpy(dbms->pwd, row[3], OPH_ODB_STGE_PWD_SIZE);
 		dbms->port = (row[4] ? (int) strtol(row[4], NULL, 10) : 0);
-		dbms->fs_type = (row[5] ? (int) strtol(row[5], NULL, 10) : 0);
 		memset(&(dbms->io_server_type), 0, OPH_ODB_STGE_SERVER_NAME_SIZE + 1);
-		strncpy(dbms->io_server_type, row[6], OPH_ODB_STGE_SERVER_NAME_SIZE);
+		strncpy(dbms->io_server_type, row[5], OPH_ODB_STGE_SERVER_NAME_SIZE);
 	}
 	mysql_free_result(res);
 
@@ -863,9 +863,9 @@ int oph_odb_stge_fetch_fragment_connection_string_for_deletion(ophidiadb * oDB, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int id_user, int *host_number, int *dbmsxhost_number)
+int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int *host_number, int *dbmsxhost_number)
 {
-	if (!oDB || !host_number || !dbmsxhost_number || !host_partition || fs_type < 0 || fs_type > 2 || !ioserver_type) {
+	if (!oDB || !host_number || !dbmsxhost_number || !host_partition || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
@@ -876,7 +876,7 @@ int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *i
 	}
 
 	char selectQuery[MYSQL_BUFLEN];
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_COUNT_HOST_DBMS, host_partition, fs_type, ioserver_type, id_user);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_COUNT_HOST_DBMS, host_partition, ioserver_type, id_user);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -911,9 +911,9 @@ int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *i
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, int *fs_type, char *ioserver_type, char **host_partition, int host_number, int dbmsxhost_number, int *exist)
+int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_type, char **host_partition, int host_number, int dbmsxhost_number, int *exist)
 {
-	if (!oDB || !host_number || !dbmsxhost_number || !host_partition || !exist || !fs_type || !ioserver_type) {
+	if (!oDB || !host_number || !dbmsxhost_number || !host_partition || !exist || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
@@ -923,10 +923,8 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, int *fs_type, ch
 	//Check if arguments are admissible
 	short int partition_default = (!strncmp(*host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(*host_partition))
 				       && !strncmp(*host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT)) ? 1 : 0);
-	short int fs_default = (*fs_type == OPH_COMMON_IO_FS_DEFAULT_TYPE ? 1 : 0);
 
-	//At least one default value and Fs type should be between -1 and 2
-	if ((!partition_default && !fs_default) || (*fs_type < -1 || *fs_type > 2)) {
+	if (!partition_default) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Default arguments not valid.\n");
 		return OPH_ODB_NULL_PARAM;
 	}
@@ -938,14 +936,7 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, int *fs_type, ch
 
 	char selectQuery[MYSQL_BUFLEN];
 
-	char tmp_fs_type[2] = { '\0' };
-	if (*fs_type == OPH_COMMON_IO_FS_DEFAULT_TYPE) {
-		snprintf(tmp_fs_type, 2, "%s", "%");
-	} else {
-		snprintf(tmp_fs_type, 2, "%d", *fs_type);
-	}
-
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS, (partition_default ? "%" : *host_partition), tmp_fs_type, ioserver_type, host_number);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS, (partition_default ? "%" : *host_partition), ioserver_type, host_number);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -974,15 +965,14 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, int *fs_type, ch
 	row = mysql_fetch_row(res);
 	free(*host_partition);
 	*host_partition = (char *) strndup(row[0], strlen(row[0]));
-	*fs_type = (int) strtol(row[1], NULL, 10);
 
 	mysql_free_result(res);
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int *exist)
+int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int *exist)
 {
-	if (!oDB || !host_number || !dbmsxhost_number || !host_partition || !exist || fs_type < 0 || fs_type > 2 || !ioserver_type) {
+	if (!oDB || !host_number || !dbmsxhost_number || !host_partition || !exist || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
@@ -995,7 +985,7 @@ int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *i
 	}
 
 	char selectQuery[MYSQL_BUFLEN];
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_HOST_DBMS_NUMBER, host_partition, fs_type, ioserver_type, id_user);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_HOST_DBMS_NUMBER, host_partition, ioserver_type, id_user);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -1274,8 +1264,7 @@ int oph_odb_stge_find_datacube_fragmentation_list(ophidiadb * oDB, int level, in
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *hostname, char *partition_name, int fs_type, char *ioserver_type, char *host_status, char *dbms_status,
-					    MYSQL_RES ** information_list, int id_user)
+int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *hostname, char *partition_name, char *ioserver_type, char *host_status, MYSQL_RES ** information_list, int id_user)
 {
 	(*information_list) = NULL;
 
@@ -1296,48 +1285,34 @@ int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *ho
 	n = 0;
 	where_clause[0] = 0;
 	char *p1 = hostname;
-	int p2 = fs_type;
 	char *p3 = partition_name;
 	char *p4 = host_status;
-	char *p5 = dbms_status;
 	char *p6 = ioserver_type;
-	if (p2 > 2 || p2 < 0)
-		p2 = 2;
 	//If level is one than only the host status filter can be used
 	if (level == 1) {
-		p1 = p3 = p5 = p6 = NULL;
-		p2 = 2;
+		p1 = p3 = p6 = NULL;
 	}
-	//If level is two than host status, dbms status, hostname and ioservertype filters can be used
+	//If level is two than host status, hostname and ioservertype filters can be used
 	else if (level == 2) {
 		p3 = NULL;
 	}
 	//If level is three than only partition_name and host_status filters can be used
 	else {
-		p1 = p5 = p6 = NULL;
-		p2 = 2;
+		p1 = p6 = NULL;
 	}
 
-	if (p1 || p2 != 2 || p3 || p4 || p5 || p6)
+	if (p1 || p3 || p4 || p6)
 		n += snprintf(where_clause + n, MYSQL_BUFLEN, "AND ");
 	if (level == 1 && p4)
 		n += snprintf(where_clause + n, MYSQL_BUFLEN, "host.status ='%s' ", p4);
 	if (level == 2) {
 		if (p1)
 			n += snprintf(where_clause + n, MYSQL_BUFLEN, "hostname='%s' ", p1);
-		if (p2 != 2 && p1)
-			n += snprintf(where_clause + n, MYSQL_BUFLEN, "AND ");
-		if (p2 != 2)
-			n += snprintf(where_clause + n, MYSQL_BUFLEN, "fstype=%d ", p2);
-		if (p4 && (p1 || p2 != 2))
+		if (p4 && (p1))
 			n += snprintf(where_clause + n, MYSQL_BUFLEN, "AND ");
 		if (p4)
 			n += snprintf(where_clause + n, MYSQL_BUFLEN, "host.status ='%s' ", p4);
-		if (p5 && (p1 || p2 != 2 || p4))
-			n += snprintf(where_clause + n, MYSQL_BUFLEN, "AND ");
-		if (p5)
-			n += snprintf(where_clause + n, MYSQL_BUFLEN, "dbmsinstance.status ='%s' ", p5);
-		if (p6 && (p1 || p2 != 2 || p4 || p5))
+		if (p6 && (p1 || p4))
 			n += snprintf(where_clause + n, MYSQL_BUFLEN, "AND ");
 		if (p6)
 			n += snprintf(where_clause + n, MYSQL_BUFLEN, "ioservertype ='%s' ", p6);
@@ -1787,10 +1762,10 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int id_datacube,
+int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int id_datacube,
 					       int **id_dbmss, int *size, int **id_hosts, int policy)
 {
-	if (!oDB || !host_number || !dbmsxhost_number || !id_datacube || !id_dbmss || !size || fs_type < 0 || fs_type > 2 || !ioserver_type || !host_partition || !id_hosts) {
+	if (!oDB || !host_number || !dbmsxhost_number || !id_datacube || !id_dbmss || !size || !ioserver_type || !host_partition || !id_hosts) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
@@ -1819,7 +1794,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, cha
 
 	char selectQuery[MYSQL_BUFLEN];
 	//Select all up host that have at least dbmsxhost_number
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST, host_partition, fs_type, ioserver_type, id_user, spolicy);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST, host_partition, ioserver_type, id_user, spolicy);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		mysql_commit(oDB->conn);
