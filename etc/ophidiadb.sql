@@ -396,7 +396,7 @@ CREATE TABLE `datacube` (
 /*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
 /*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
 DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER TRIGGER_before_delete_imported BEFORE DELETE ON imported 
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER TRIGGER_before_delete_datacube BEFORE DELETE ON datacube 
 FOR EACH ROW BEGIN
 UPDATE IGNORE host SET importcount = IF(importcount > 0, importcount - 1, 0) where idhost in (select distinct(idhost) from imported where imported.iddatacube = OLD.iddatacube);
 END */;;
@@ -624,7 +624,7 @@ LOCK TABLES `partitioned` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `partitioned`
+-- Table structure for table `imported`
 --
 
 DROP TABLE IF EXISTS `imported`;
@@ -644,7 +644,7 @@ CREATE TABLE `imported` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `partitioned`
+-- Dumping data for table `imported`
 --
 
 LOCK TABLES `imported` WRITE;

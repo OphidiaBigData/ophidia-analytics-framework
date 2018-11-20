@@ -49,7 +49,7 @@
 #define MYSQL_STGE_FRAGMENT_RELATIVE_INDEX_COND1 		"fragrelativeindex = %d"
 #define MYSQL_STGE_FRAGMENT_RELATIVE_INDEX_COND2 		"fragrelativeindex >= %d AND fragrelativeindex <= %d"
 
-#define MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS      	"SELECT partitionname, fstype FROM hostpartition INNER JOIN hashost ON hostpartition.idhostpartition = hashost.idhostpartition INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost=host.idhost WHERE partitionname like '%s' AND host.status = 'up' AND dbmsinstance.status = 'up' AND fstype like '%s' AND ioservertype='%s' GROUP BY fstype, idhostpartition HAVING count(idhost) >= %d limit 1;"
+#define MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS      	"SELECT partitionname, fstype FROM hostpartition INNER JOIN hashost ON hostpartition.idhostpartition = hashost.idhostpartition INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost=host.idhost WHERE partitionname like '%s' AND host.status = 'up' AND dbmsinstance.status = 'up' AND fstype like '%s' AND ioservertype='%s' GROUP BY fstype, hostpartition.idhostpartition HAVING count(host.idhost) >= %d limit 1;"
 
 #define MYSQL_QUERY_STGE_RETRIEVE_HOST_DBMS_NUMBER		"SELECT count(iddbmsinstance) FROM hostpartition INNER JOIN hashost ON hostpartition.idhostpartition = hashost.idhostpartition INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost=host.idhost WHERE partitionname = '%s' AND host.status = 'up' AND dbmsinstance.status = 'up' AND fstype=%d AND ioservertype='%s' AND (NOT reserved OR iduser = %d) GROUP BY host.idhost;"
 
