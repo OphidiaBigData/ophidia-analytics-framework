@@ -176,7 +176,7 @@ int oph_odb_stge_retrieve_dbmsinstance(ophidiadb * oDB, int id_dbms, oph_odb_dbm
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 
-	if (mysql_field_count(oDB->conn) != 7) {
+	if (mysql_field_count(oDB->conn) != 6) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;

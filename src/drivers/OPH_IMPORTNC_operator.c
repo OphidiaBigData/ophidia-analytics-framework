@@ -1993,7 +1993,7 @@ int task_init(oph_operator_struct * handle)
 		int admissible_frag_number = 0;
 		int user_arg_prod = 0;
 
-		//If default values are used: select fylesystem and partition
+		//If default values are used: select partition
 		if (!strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(host_partition))
 		    && !strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT))) {
 			if (oph_odb_stge_get_default_host_partition_fs
@@ -4081,6 +4081,9 @@ int task_destroy(oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_NULL_OPERATOR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
+
+	if (!((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->run)
+		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	short int proc_error = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->execute_error;
 	int id_datacube = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_output_datacube;

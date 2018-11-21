@@ -2564,6 +2564,9 @@ int task_destroy(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
+	if (!((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->run)
+		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+
 	short int proc_error = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->execute_error;
 	int id_datacube = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_output_datacube;
 	short int global_error = 0;

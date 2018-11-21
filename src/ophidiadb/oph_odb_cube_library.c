@@ -355,7 +355,7 @@ int _oph_odb_cube_retrieve_datacube(ophidiadb * oDB, int id_datacube, oph_odb_da
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 
-	if (mysql_field_count(oDB->conn) != 13) {
+	if (mysql_field_count(oDB->conn) != 11) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
