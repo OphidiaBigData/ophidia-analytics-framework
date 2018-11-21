@@ -611,16 +611,15 @@ int task_execute(oph_operator_struct * handle)
 						}
 						break;
 					case 2:
-						printf("+----------------------+-------------+----------------+----------+-----------------+----------------------+-----------------+\n");
-						printf("| %-20s | %-11s | %-14s | %-8s | %-15s | %-20s | %-15s |\n", "HOSTNAME", "HOST STATUS", "DBMS INSTANCE", "PORT", "FILESYSTEM TYPE",
-						       "I/O SERVER TYPE", "INSTANCE STATUS");
-						printf("+----------------------+-------------+----------------+----------+-----------------+----------------------+-----------------+\n");
+						printf("+----------------------+-------------+----------------+----------+----------------------+\n");
+						printf("| %-20s | %-11s | %-14s | %-8s | %-20s |\n", "HOSTNAME", "HOST STATUS", "DBMS INSTANCE", "PORT", "I/O SERVER TYPE");
+						printf("+----------------------+-------------+----------------+----------+----------------------+\n");
 
 						// SET TABLE COLUMN FOR JSON
 						if (objkey_printable) {
 							char **jsonkeys = NULL;
 							char **fieldtypes = NULL;
-							int num_fields = 7, iii, jjj = 0;
+							int num_fields = 5, iii, jjj = 0;
 							jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
 							if (!jsonkeys) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -675,31 +674,7 @@ int task_execute(oph_operator_struct * handle)
 								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 							}
 							jjj++;
-							jsonkeys[jjj] = strdup("FILESYSTEM TYPE");
-							if (!jsonkeys[jjj]) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-								for (iii = 0; iii < jjj; iii++)
-									if (jsonkeys[iii])
-										free(jsonkeys[iii]);
-								if (jsonkeys)
-									free(jsonkeys);
-								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-							}
-							jjj++;
 							jsonkeys[jjj] = strdup("I/O SERVER TYPE");
-							if (!jsonkeys[jjj]) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
-								for (iii = 0; iii < jjj; iii++)
-									if (jsonkeys[iii])
-										free(jsonkeys[iii]);
-								if (jsonkeys)
-									free(jsonkeys);
-								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-							}
-							jjj++;
-							jsonkeys[jjj] = strdup("INSTANCE STATUS");
 							if (!jsonkeys[jjj]) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "key");
@@ -774,40 +749,6 @@ int task_execute(oph_operator_struct * handle)
 							}
 							jjj++;
 							fieldtypes[jjj] = strdup(OPH_JSON_INT);
-							if (!fieldtypes[jjj]) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-								for (iii = 0; iii < num_fields; iii++)
-									if (jsonkeys[iii])
-										free(jsonkeys[iii]);
-								if (jsonkeys)
-									free(jsonkeys);
-								for (iii = 0; iii < jjj; iii++)
-									if (fieldtypes[iii])
-										free(fieldtypes[iii]);
-								if (fieldtypes)
-									free(fieldtypes);
-								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-							}
-							jjj++;
-							fieldtypes[jjj] = strdup(OPH_JSON_STRING);
-							if (!fieldtypes[jjj]) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
-								for (iii = 0; iii < num_fields; iii++)
-									if (jsonkeys[iii])
-										free(jsonkeys[iii]);
-								if (jsonkeys)
-									free(jsonkeys);
-								for (iii = 0; iii < jjj; iii++)
-									if (fieldtypes[iii])
-										free(fieldtypes[iii]);
-								if (fieldtypes)
-									free(fieldtypes);
-								return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-							}
-							jjj++;
-							fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 							if (!fieldtypes[jjj]) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "fieldtype");
@@ -1254,15 +1195,13 @@ int task_execute(oph_operator_struct * handle)
 							}
 							break;
 						case 2:
-							printf("| %-20s | %-11s | %-14s | %-8s | %-15s | %-20s | %-15s |\n", (row[1] ? row[1] : "-"), (row[2] ? row[2] : "-"),
-							       (row[0] ? row[0] : "-"), (row[3] ? row[3] : "-"),
-							       (row[4] ? (row[4][0] == '0' ? OPH_COMMON_IO_FS_LOCAL : OPH_COMMON_IO_FS_GLOBAL) : "-"), (row[5] ? row[5] : "-"),
-							       (row[6] ? row[6] : "-"));
+							printf("| %-20s | %-11s | %-14s | %-8s | %-20s |\n", (row[1] ? row[1] : "-"), (row[2] ? row[2] : "-"),
+							       (row[0] ? row[0] : "-"), (row[3] ? row[3] : "-"), (row[4] ? row[4] : "-"));
 
 							// ADD ROW TO JSON GRID
 							if (objkey_printable) {
 								char **jsonvalues = NULL;
-								int num_fields = 7, iii, jjj;
+								int num_fields = 5, iii, jjj;
 								jsonvalues = (char **) calloc(num_fields, sizeof(char *));
 								if (!jsonvalues) {
 									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -1270,10 +1209,7 @@ int task_execute(oph_operator_struct * handle)
 									return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 								}
 								for (jjj = 0; jjj < num_fields; jjj++) {
-									if (jjj == 4)
-										jsonvalues[jjj] = strdup((row[jjj] ? (row[jjj][0] == '0' ? OPH_COMMON_IO_FS_LOCAL : OPH_COMMON_IO_FS_GLOBAL) : ""));
-									else
-										jsonvalues[jjj] = strdup(row[jjj] ? row[jjj] : "");
+									jsonvalues[jjj] = strdup(row[jjj] ? row[jjj] : "");
 									if (!jsonvalues[jjj]) {
 										pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "value");
@@ -1373,7 +1309,7 @@ int task_execute(oph_operator_struct * handle)
 							printf("+----------------------+\n");
 						break;
 					case 2:
-						printf("+----------------------+-------------+----------------+----------+-----------------+----------------------+-----------------+\n");
+						printf("+----------------------+-------------+----------------+----------+----------------------+\n");
 						break;
 					case 1:
 						printf("+----------------------+----------+--------+-------------+\n");

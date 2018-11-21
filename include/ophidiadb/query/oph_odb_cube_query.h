@@ -56,9 +56,9 @@
 
 #define MYSQL_QUERY_CUBE_FIND_DATACUBE_CONTAINER_2_1		"SELECT datacube.idcontainer, iddatacube FROM container LEFT JOIN datacube ON container.idcontainer = datacube.idcontainer  WHERE idfolder IN (%s) AND hidden = 0;"
 
-#define MYSQL_QUERY_CUBE_CHECK_DATACUBE_STORAGE_STATUS		"SELECT count(*) FROM partitioned INNER JOIN dbinstance ON dbinstance.iddbinstance=partitioned.iddbinstance INNER JOIN dbmsinstance ON dbinstance.iddbmsinstance=dbmsinstance.iddbmsinstance INNER JOIN host ON dbmsinstance.idhost=host.idhost  WHERE iddatacube = %d AND (host.status = 'down' OR dbmsinstance.status = 'down');"
+#define MYSQL_QUERY_CUBE_CHECK_DATACUBE_STORAGE_STATUS		"SELECT count(*) FROM partitioned INNER JOIN dbinstance ON dbinstance.iddbinstance=partitioned.iddbinstance INNER JOIN dbmsinstance ON dbinstance.iddbmsinstance=dbmsinstance.iddbmsinstance INNER JOIN host ON dbmsinstance.idhost=host.idhost  WHERE iddatacube = %d AND host.status = 'down';"
 
-#define MYSQL_QUERY_CUBE_CHECK_DATACUBE_STORAGE_STATUS_2	"SELECT count(*) FROM fragment INNER JOIN dbinstance ON dbinstance.iddbinstance=fragment.iddbinstance INNER JOIN dbmsinstance ON dbinstance.iddbmsinstance=dbmsinstance.iddbmsinstance INNER JOIN host ON dbmsinstance.idhost=host.idhost  WHERE idfragment = %d AND (host.status = 'down' OR dbmsinstance.status = 'down');"
+#define MYSQL_QUERY_CUBE_CHECK_DATACUBE_STORAGE_STATUS_2	"SELECT count(*) FROM fragment INNER JOIN dbinstance ON dbinstance.iddbinstance=fragment.iddbinstance INNER JOIN dbmsinstance ON dbinstance.iddbmsinstance=dbmsinstance.iddbmsinstance INNER JOIN host ON dbmsinstance.idhost=host.idhost  WHERE idfragment = %d AND host.status = 'down';"
 
 #define MYSQL_QUERY_CUBE_RETRIEVE_SOURCE_ID			"SELECT idsource FROM `source` WHERE uri = '%s';"
 
