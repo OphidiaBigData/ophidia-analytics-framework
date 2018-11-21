@@ -57,8 +57,7 @@ typedef struct {
 /**
  * \brief Structure that contain all parameters needed by DataCube
  * \param id_datacube id of the DataCube
- * \param dbmsxdatacube Number of dbms used to contain DataCube
- * \param dbxdbms Number of databases for each dbms
+ * \param hostxdatacube Number of hosts used to contain DataCube
  * \param fragmentxdb Number of fragments for each database (upper bound)
  * \param tuplexfragment Number of tuples for each fragment (upper bound)
  * \param measure Measure name
@@ -74,8 +73,6 @@ typedef struct {
 typedef struct {
 	int id_datacube;
 	int hostxdatacube;
-	int dbmsxhost;
-	int dbxdbms;
 	int fragmentxdb;
 	int tuplexfragment;
 	char measure[OPH_ODB_CUBE_MEASURE_SIZE + 1];

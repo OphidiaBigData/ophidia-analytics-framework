@@ -383,7 +383,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		// Checking fragmentation structure
-		if ((cube.hostxdatacube != cube2.hostxdatacube) || (cube.dbmsxhost != cube2.dbmsxhost) || (cube.dbxdbms != cube2.dbxdbms) || (cube.fragmentxdb != cube2.fragmentxdb)
+		if ((cube.hostxdatacube != cube2.hostxdatacube) || (cube.fragmentxdb != cube2.fragmentxdb)
 		    || (cube.tuplexfragment != cube2.tuplexfragment)) {
 			oph_odb_cube_free_datacube(&cube);
 			oph_odb_cube_free_datacube(&cube2);

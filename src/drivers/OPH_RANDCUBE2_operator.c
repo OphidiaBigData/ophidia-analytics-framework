@@ -188,29 +188,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number = (int) strtol(value, NULL, 10);
 	if (((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number == 0)
 		((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number = -1;
-/*
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DBMS_NUMBER);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DBMS_NUMBER);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_DBMS_NUMBER);
-
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number = (int) strtol(value, NULL, 10);
-	if (((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number == 0)
-		((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number = -1;
-
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DB_NUMBER);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DB_NUMBER);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_DB_NUMBER);
-
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbxdbms_number = (int) strtol(value, NULL, 10);
-*/
-	((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number = 1;
-	((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbxdbms_number = 1;
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_FRAGMENENT_NUMBER);
 	if (!value) {
@@ -566,7 +543,7 @@ int task_init(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 	//For error checking
-	int id_datacube[6] = { 0, 0, 0, 0, 0, 0 }, flush = 1, id_datacube_out = 0;
+	int id_datacube[4] = { 0, 0, 0, 0 }, flush = 1, id_datacube_out = 0;
 	char *container_name = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->container_input;
 	ophidiadb *oDB = &((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->oDB;
 
@@ -596,9 +573,7 @@ int task_init(oph_operator_struct * handle)
 	   *INPUT PARAMETERS CHECK - BEGIN*
 	   ********************************/
 
-		long long total_frag_number =
-		    ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number * ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number *
-		    ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbxdbms_number * ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number;
+		long long total_frag_number = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number * ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number;
 
 		//Check that product of ncores and nthread is at most equal to total number of fragments        
 		if (((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > total_frag_number) {
@@ -615,42 +590,38 @@ int task_init(oph_operator_struct * handle)
 		    && !strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT))) {
 			if (oph_odb_stge_get_default_host_partition_fs
 			    (oDB, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->ioserver_type, &((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->partition_input,
-			     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number > 0 ? ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number : 1,
-			     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number, &exist_part) || !exist_part) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts or dbms per host is too big or server type and partition are not available!\n");
+			     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number > 0 ? ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number : 1, &exist_part)
+			    || !exist_part) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
-					((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number,
-					host_partition);
+					((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number, host_partition);
 				goto __OPH_EXIT_1;
 			}
 		}
 
 		exist_part = 0;
-		int nhost = 0, ndbms = 0;
-		if (((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number < 0 || ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number < 0) {
+		int nhost = 0;
+		if (((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number < 0) {
 			//Check if are available DBMS and HOST number into specified partition and of server type
 			if (oph_odb_stge_count_number_of_host_dbms
 			    (oDB, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->ioserver_type,
-			     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->partition_input, id_user, &nhost, &ndbms) || !nhost || !ndbms) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or dbms or server type and partition are not available!\n");
+			     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->partition_input, id_user, &nhost) || !nhost) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
 					((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->partition_input);
 				goto __OPH_EXIT_1;
 			}
 			if (((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number < 0)
 				((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number = nhost;
-			if (((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number < 0)
-				((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number = ndbms;
 		}
 		//Check if are available DBMS and HOST number into specified partition and of server type
 		if ((oph_odb_stge_check_number_of_host_dbms
 		     (oDB, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->ioserver_type,
-		      ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->partition_input, id_user, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number,
-		      ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number, &exist_part)) || !exist_part) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts - dbms per host is too big or server type and partition are not available!\n");
+		      ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->partition_input, id_user, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number, &exist_part))
+		    || !exist_part) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
-				((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number,
-				((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->partition_input);
+				((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->partition_input);
 			goto __OPH_EXIT_1;
 		}
 
@@ -665,12 +636,6 @@ int task_init(oph_operator_struct * handle)
 			snprintf(jsonbuf_item, OPH_COMMON_BUFFER_LEN, "\tNumber of hosts: %d\n", ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number);
 			if ((s = OPH_COMMON_BUFFER_LEN - strlen(jsonbuf)) > 1)
 				strncat(jsonbuf, jsonbuf_item, s);
-			snprintf(jsonbuf_item, OPH_COMMON_BUFFER_LEN, "\tNumber of DBMSs per hosts: %d\n", ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number);
-			if ((s = OPH_COMMON_BUFFER_LEN - strlen(jsonbuf)) > 1)
-				strncat(jsonbuf, jsonbuf_item, s);
-			snprintf(jsonbuf_item, OPH_COMMON_BUFFER_LEN, "\tNumber of databases per DBMSs: %d\n", ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbxdbms_number);
-			if ((s = OPH_COMMON_BUFFER_LEN - strlen(jsonbuf)) > 1)
-				strncat(jsonbuf, jsonbuf_item, s);
 			snprintf(jsonbuf_item, OPH_COMMON_BUFFER_LEN, "\tNumber of fragments per databases: %d\n", ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number);
 			if ((s = OPH_COMMON_BUFFER_LEN - strlen(jsonbuf)) > 1)
 				strncat(jsonbuf, jsonbuf_item, s);
@@ -678,15 +643,14 @@ int task_init(oph_operator_struct * handle)
 			if ((s = OPH_COMMON_BUFFER_LEN - strlen(jsonbuf)) > 1)
 				strncat(jsonbuf, jsonbuf_item, s);
 			long long tot_tuple_num =
-			    ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number * ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number *
-			    ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbxdbms_number * ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number *
+			    ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number * ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number *
 			    ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 			long long exp_size_prod = 1;
 			for (i = 0; i < ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->number_of_exp_dimensions; i++)
 				exp_size_prod *= ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dimension_size[i];
 			if (tot_tuple_num != exp_size_prod) {
 				snprintf(jsonbuf_item, OPH_COMMON_BUFFER_LEN,
-					 "Product of explicit dimension sizes doesn't match partitioning schema (host, dbmsxhost, dbxdbms, fragxdb, tuplexfrag). It should be %lld, while it is %lld\n",
+					 "Product of explicit dimension sizes doesn't match partitioning schema (host, fragxdb, tuplexfrag). It should be %lld, while it is %lld\n",
 					 tot_tuple_num, exp_size_prod);
 				if ((s = OPH_COMMON_BUFFER_LEN - strlen(jsonbuf)) > 1)
 					strncat(jsonbuf, jsonbuf_item, s);
@@ -713,7 +677,7 @@ int task_init(oph_operator_struct * handle)
 			for (i = 0; i < ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->number_of_exp_dimensions; i++)
 				exp_size_prod *= ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dimension_size[i];
 			if (tot_tuple_num != exp_size_prod) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Product of explicit dimension sizes doesn't match partitioning schema (host, dbmsxhost, dbxdbms, fragxdb, tuplexfrag)\n");
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Product of explicit dimension sizes doesn't match partitioning schema (host, fragxdb, tuplexfrag)\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_SIZES_PARTITION_PARAMS_MISMATCH, tot_tuple_num, exp_size_prod);
 				goto __OPH_EXIT_1;
 			}
@@ -767,8 +731,6 @@ int task_init(oph_operator_struct * handle)
 		oph_odb_cube_init_datacube(&cube);
 
 		cube.hostxdatacube = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number;
-		cube.dbmsxhost = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number;
-		cube.dbxdbms = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbxdbms_number;
 		cube.fragmentxdb = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number;
 		cube.tuplexfragment = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 		cube.id_container = id_container_out;
@@ -778,7 +740,7 @@ int task_init(oph_operator_struct * handle)
 		cube.measure_type[OPH_ODB_CUBE_MEASURE_TYPE_SIZE] = 0;
 		strncpy(cube.frag_relative_index_set, id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
 		cube.frag_relative_index_set[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE] = 0;
-		cube.db_number = cube.hostxdatacube * cube.dbmsxhost * cube.dbxdbms;
+		cube.db_number = cube.hostxdatacube;
 		cube.compressed = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->compressed;
 		cube.id_db = NULL;
 		//New fields
@@ -1183,8 +1145,7 @@ int task_init(oph_operator_struct * handle)
 		//Retreive ID dbms list 
 		if (oph_odb_stge_retrieve_dbmsinstance_id_list
 		    (oDB, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->ioserver_type,
-		     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->partition_input, id_user, host_num,
-		     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number, id_datacube_out, &id_dbmss, &dbmss_length, &id_hosts, 0)) {
+		     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->partition_input, id_user, host_num, id_datacube_out, &id_dbmss, &dbmss_length, &id_hosts, 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DBMS_LIST_ERROR);
 			if (id_dbmss)
@@ -1229,35 +1190,33 @@ int task_init(oph_operator_struct * handle)
 				goto __OPH_EXIT_1;
 			}
 
-			for (i = 0; i < ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbxdbms_number; i++) {
-
-				if (oph_dc_generate_db_name(oDB->name, id_datacube_out, db.id_dbms, 0, i + 1, &db_name)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of Db instance  name exceed limit.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_STRING_BUFFER_OVERFLOW, "DB instance name", db_name);
-					free(id_dbmss);
-					free(id_hosts);
-					oph_dc_disconnect_from_dbms(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->server, &(dbms));
-					goto __OPH_EXIT_1;
-				}
-				strcpy(db.db_name, db_name);
-				if (oph_dc_create_db(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->server, &db)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create new db\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_NEW_DB_ERROR, db.db_name);
-					free(id_dbmss);
-					free(id_hosts);
-					oph_dc_disconnect_from_dbms(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->server, &(dbms));
-					goto __OPH_EXIT_1;
-				}
-				//Insert new database instance and partitions
-				if (oph_odb_stge_insert_into_dbinstance_partitioned_tables(oDB, &db, id_datacube_out)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update dbinstance table\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DB_INSERT_ERROR, db.db_name);
-					free(id_dbmss);
-					free(id_hosts);
-					oph_dc_disconnect_from_dbms(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->server, &(dbms));
-					goto __OPH_EXIT_1;
-				}
+			if (oph_dc_generate_db_name(oDB->name, id_datacube_out, db.id_dbms, 0, 1, &db_name)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of Db instance  name exceed limit.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_STRING_BUFFER_OVERFLOW, "DB instance name", db_name);
+				free(id_dbmss);
+				free(id_hosts);
+				oph_dc_disconnect_from_dbms(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->server, &(dbms));
+				goto __OPH_EXIT_1;
 			}
+			strcpy(db.db_name, db_name);
+			if (oph_dc_create_db(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->server, &db)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create new db\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_NEW_DB_ERROR, db.db_name);
+				free(id_dbmss);
+				free(id_hosts);
+				oph_dc_disconnect_from_dbms(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->server, &(dbms));
+				goto __OPH_EXIT_1;
+			}
+			//Insert new database instance and partitions
+			if (oph_odb_stge_insert_into_dbinstance_partitioned_tables(oDB, &db, id_datacube_out)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update dbinstance table\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DB_INSERT_ERROR, db.db_name);
+				free(id_dbmss);
+				free(id_hosts);
+				oph_dc_disconnect_from_dbms(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->server, &(dbms));
+				goto __OPH_EXIT_1;
+			}
+
 			oph_dc_disconnect_from_dbms(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->server, &(dbms));
 		}
 		free(id_dbmss);
@@ -1287,9 +1246,7 @@ int task_init(oph_operator_struct * handle)
 		id_datacube[0] = id_datacube_out;
 		id_datacube[1] = id_container_out;
 		id_datacube[2] = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number;
-		id_datacube[3] = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number;
-		id_datacube[4] = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbxdbms_number;
-		id_datacube[5] = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number;
+		id_datacube[3] = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number;
 
 		flush = 0;
 	}
@@ -1314,9 +1271,7 @@ int task_init(oph_operator_struct * handle)
 	((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_output_datacube = id_datacube[0];
 	((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container = id_datacube[1];
 	((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number = id_datacube[2];
-	((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number = id_datacube[3];
-	((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbxdbms_number = id_datacube[4];
-	((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number = id_datacube[5];
+	((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number = id_datacube[3];
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -1332,9 +1287,7 @@ int task_distribute(oph_operator_struct * handle)
 	if (!((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->run)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	int frag_total_number =
-	    ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number * ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbmsxhost_number *
-	    ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dbxdbms_number * ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number;
+	int frag_total_number = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number * ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number;
 
 
 	//All processes compute the fragment number to work on

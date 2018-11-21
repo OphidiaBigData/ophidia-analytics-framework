@@ -863,9 +863,9 @@ int oph_odb_stge_fetch_fragment_connection_string_for_deletion(ophidiadb * oDB, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int *host_number, int *dbmsxhost_number)
+int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int *host_number)
 {
-	if (!oDB || !host_number || !dbmsxhost_number || !host_partition || !ioserver_type) {
+	if (!oDB || !host_number || !host_partition || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
@@ -904,16 +904,15 @@ int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type,
 
 	if ((row = mysql_fetch_row(res))) {
 		*host_number = (int) strtol((row[0] ? row[0] : "0"), NULL, 10);
-		*dbmsxhost_number = (int) strtol((row[1] ? row[1] : "0"), NULL, 10);
 	}
 
 	mysql_free_result(res);
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_type, char **host_partition, int host_number, int dbmsxhost_number, int *exist)
+int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_type, char **host_partition, int host_number, int *exist)
 {
-	if (!oDB || !host_number || !dbmsxhost_number || !host_partition || !exist || !ioserver_type) {
+	if (!oDB || !host_number || !host_partition || !exist || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
@@ -970,9 +969,9 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_t
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int *exist)
+int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int host_number, int *exist)
 {
-	if (!oDB || !host_number || !dbmsxhost_number || !host_partition || !exist || !ioserver_type) {
+	if (!oDB || !host_number || !host_partition || !exist || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
@@ -997,7 +996,6 @@ int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type,
 	}
 
 	MYSQL_RES *res;
-	MYSQL_ROW row;
 	res = mysql_store_result(oDB->conn);
 	int num = 0;
 	if ((num = mysql_num_rows(res)) < 1) {
@@ -1009,19 +1007,11 @@ int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type,
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
+	mysql_free_result(res);
 
-	if (num < host_number)
-		return OPH_ODB_SUCCESS;
-
-	int i = 0;
-	while ((row = mysql_fetch_row(res))) {
-		if ((int) strtol(row[0], NULL, 10) >= dbmsxhost_number)
-			i++;
-	}
-	if (i >= host_number)
+	if (num >= host_number)
 		*exist = 1;
 
-	mysql_free_result(res);
 	return OPH_ODB_SUCCESS;
 }
 
@@ -1762,10 +1752,10 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int id_datacube,
+int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int host_number, int id_datacube,
 					       int **id_dbmss, int *size, int **id_hosts, int policy)
 {
-	if (!oDB || !host_number || !dbmsxhost_number || !id_datacube || !id_dbmss || !size || !ioserver_type || !host_partition || !id_hosts) {
+	if (!oDB || !host_number || !id_datacube || !id_dbmss || !size || !ioserver_type || !host_partition || !id_hosts) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
@@ -1793,7 +1783,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 	}
 
 	char selectQuery[MYSQL_BUFLEN];
-	//Select all up host that have at least dbmsxhost_number
+	//Select all up host
 	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST, host_partition, ioserver_type, id_user, spolicy);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
@@ -1802,7 +1792,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	int counter, new_id, old_id, i, j;
+	int i, j;
 	short runs = 1;
 	MYSQL_RES *res;
 	MYSQL_ROW row;
@@ -1839,7 +1829,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 			return OPH_ODB_TOO_MANY_ROWS;
 		}
 
-		*size = host_number * dbmsxhost_number;
+		*size = host_number;
 		if (!(*id_dbmss = (int *) calloc(*size, sizeof(int)))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			mysql_free_result(res);
@@ -1848,7 +1838,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 			return OPH_ODB_MEMORY_ERROR;
 		}
 
-		if (!(*id_hosts = (int *) calloc(host_number, sizeof(int)))) {
+		if (!(*id_hosts = (int *) calloc(*size, sizeof(int)))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			mysql_free_result(res);
 			mysql_commit(oDB->conn);
@@ -1858,40 +1848,16 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 			return OPH_ODB_MEMORY_ERROR;
 		}
 
-		counter = old_id = i = j = 0;
-
-		//Get dbmsxhost_number of dbms for host_number times
+		i = 0;
+		//Get dbmss and hosts
 		while ((row = mysql_fetch_row(res))) {
-			new_id = (int) strtol(row[0], NULL, 10);
-			if (new_id != old_id)
-				counter = 0;
-			old_id = new_id;
-			if (counter < dbmsxhost_number) {
-				(*id_dbmss)[i] = (int) strtol(row[1], NULL, 10);
-				i++;
-				if (!counter) {
-					if (j < host_number)
-						(*id_hosts)[j++] = old_id;
-					else
-						j++;
-				}
-				counter++;
-			}
-			if ((i == *size) || (j > host_number))
+			(*id_hosts)[i] = (int) strtol(row[0], NULL, 10);
+			(*id_dbmss)[i] = (int) strtol(row[1], NULL, 10);
+			i++;
+			if (i == *size)
 				break;
 		}
 		mysql_free_result(res);
-
-		if (j > host_number) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Bad processing of host list\n");
-			mysql_commit(oDB->conn);
-			mysql_autocommit(oDB->conn, 1);
-			free(*id_dbmss);
-			*id_dbmss = NULL;
-			free(*id_hosts);
-			*id_hosts = NULL;
-			return OPH_ODB_TOO_MANY_ROWS;
-		}
 
 		if (i < *size) {
 			free(*id_dbmss);

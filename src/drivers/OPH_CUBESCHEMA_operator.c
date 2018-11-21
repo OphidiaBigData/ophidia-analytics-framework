@@ -897,10 +897,10 @@ int task_execute(oph_operator_struct * handle)
 		}
 
 		printf("+--------------+-------------+-------------+-------------+------------+------------+------------+----------------------+----------------------+\n");
-		printf("| %-12s | %-11s | %-11s | %-11s | %-10s | %-10s | %-10s | CUBESIZE[%s%-9s | %-20s |\n", "HOSTxCUBE", "DBMSxHOST", "DBxDBMS", "FRAGxDB", "ROWxFRAG", "ELEMxROW", "COMPRESSED",
+		printf("| %-12s | %-11s | %-10s | %-10s | %-10s | CUBESIZE[%s%-9s | %-20s |\n", "HOSTxCUBE", "FRAGxDB", "ROWxFRAG", "ELEMxROW", "COMPRESSED",
 		       (unit[0] ? unit : "  "), "]", "NUM.ELEMENTS");
 		printf("+--------------+-------------+-------------+-------------+------------+------------+------------+----------------------+----------------------+\n");
-		printf("| %-12d | %-11d | %-11d | %-11d | %-10d | %-10s | %-10s | %-20s | %-20s |\n", cube.hostxdatacube, cube.dbmsxhost, cube.dbxdbms, cube.fragmentxdb, cube.tuplexfragment,
+		printf("| %-12d | %-11d | %-10d | %-10s | %-10s | %-20s | %-20s |\n", cube.hostxdatacube, cube.fragmentxdb, cube.tuplexfragment,
 		       array_buf, (cube.compressed == 1 ? OPH_COMMON_YES_VALUE : OPH_COMMON_NO_VALUE), size_buf, elements_buf);
 		printf("+--------------+-------------+-------------+-------------+------------+------------+------------+----------------------+----------------------+\n\n");
 
@@ -2072,48 +2072,6 @@ int task_execute(oph_operator_struct * handle)
 			}
 			jjj++;
 			snprintf(jsontmp, OPH_COMMON_BUFFER_LEN, "%d", cube.hostxdatacube);
-			jsonvalues[jjj] = strdup(jsontmp);
-			if (!jsonvalues[jjj]) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
-				for (iii = 0; iii < jjj; iii++)
-					if (jsonvalues[iii])
-						free(jsonvalues[iii]);
-				if (jsonvalues)
-					free(jsonvalues);
-				oph_odb_cube_free_datacube(&cube);
-				if (creationdate)
-					free(creationdate);
-				if (description)
-					free(description);
-				if (pid)
-					free(pid);
-				free(cubedims);
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			jjj++;
-			snprintf(jsontmp, OPH_COMMON_BUFFER_LEN, "%d", cube.dbmsxhost);
-			jsonvalues[jjj] = strdup(jsontmp);
-			if (!jsonvalues[jjj]) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
-				for (iii = 0; iii < jjj; iii++)
-					if (jsonvalues[iii])
-						free(jsonvalues[iii]);
-				if (jsonvalues)
-					free(jsonvalues);
-				oph_odb_cube_free_datacube(&cube);
-				if (creationdate)
-					free(creationdate);
-				if (description)
-					free(description);
-				if (pid)
-					free(pid);
-				free(cubedims);
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			jjj++;
-			snprintf(jsontmp, OPH_COMMON_BUFFER_LEN, "%d", cube.dbxdbms);
 			jsonvalues[jjj] = strdup(jsontmp);
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");

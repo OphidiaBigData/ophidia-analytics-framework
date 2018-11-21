@@ -146,6 +146,6 @@ SUBMISSION STRING: &quot;operator=oph_importnc2;cwd=/session-code1;container=con
 		<argument type="int" mandatory="no" default="0" minvalue="0">leap_year</argument>
 		<argument type="int" mandatory="no" default="2" minvalue="1" maxvalue="12">leap_month</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
-		<argument type="string" mandatory="no" default="all" values="all|none|importnc">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|importnc2">objkey_filter</argument>
     </args>
 </operator>

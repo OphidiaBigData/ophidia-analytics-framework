@@ -53,7 +53,7 @@
 
 #define MYSQL_QUERY_STGE_RETRIEVE_HOST_DBMS_NUMBER		"SELECT count(iddbmsinstance) FROM hostpartition INNER JOIN hashost ON hostpartition.idhostpartition = hashost.idhostpartition INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost=host.idhost WHERE partitionname = '%s' AND host.status = 'up' AND ioservertype='%s' AND (NOT reserved OR iduser = %d) GROUP BY host.idhost;"
 
-#define MYSQL_QUERY_STGE_RETRIEVE_COUNT_HOST_DBMS		"SELECT count(dbms), min(dbms) FROM (SELECT count(iddbmsinstance) AS dbms FROM hostpartition INNER JOIN hashost ON hostpartition.idhostpartition = hashost.idhostpartition INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost=host.idhost WHERE partitionname = '%s' AND host.status = 'up' AND ioservertype='%s'  AND (NOT reserved OR iduser = %d) GROUP BY host.idhost)tmp;"
+#define MYSQL_QUERY_STGE_RETRIEVE_COUNT_HOST_DBMS		"SELECT count(dbms) FROM (SELECT count(iddbmsinstance) AS dbms FROM hostpartition INNER JOIN hashost ON hostpartition.idhostpartition = hashost.idhostpartition INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost=host.idhost WHERE partitionname = '%s' AND host.status = 'up' AND ioservertype='%s'  AND (NOT reserved OR iduser = %d) GROUP BY host.idhost)tmp;"
 
 #define MYSQL_QUERY_STGE_DELETE_OPHIDIADB_DB 			"DELETE FROM `dbinstance` WHERE `iddbinstance` = %d"
 

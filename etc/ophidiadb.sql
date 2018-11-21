@@ -357,8 +357,6 @@ CREATE TABLE `datacube` (
   `creationdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `description` varchar(2048) DEFAULT NULL,
   `hostxdatacube` int(10) DEFAULT NULL,
-  `dbmsxhost` int(10) DEFAULT NULL,
-  `dbxdbms` int(10) DEFAULT NULL,
   `fragmentxdb` int(10) DEFAULT NULL,
   `tuplexfragment` int(10) DEFAULT NULL,
   `measure` varchar(256) NOT NULL,

@@ -267,11 +267,10 @@ int oph_odb_stge_fetch_fragment_connection_string_for_deletion(ophidiadb * oDB, 
  * \param ioserver_type Server type to be used. 
  * \param hots_partition Pointer to name of the host partition. If set to 'auto' the first available will be used
  * \param hots_number Variable that contains the requested I/O hosts
- * \param dbmsxhots_number Variable that contain the requested DBMS number per host
  * \param exists Variable that contains 0 if the host partition of file system doesn't exists and 1 otherwise
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_type, char **host_partition, int host_number, int dbmsxhost_number, int *exist);
+int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_type, char **host_partition, int host_number, int *exist);
 
 /**
  * \brief Function to check if number of host and DBMS in OphidiaDB are available
@@ -280,11 +279,10 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_t
  * \param hots_partition Name of the host partition to be used
  * \param id_user User identifier
  * \param hots_number Variable that contains the requested I/O hosts
- * \param dbmsxhots_number Variable that contain the requested DBMS number per host
  * \param exists Variable that contains 0 if the container.datacube doesn't exists and 1 otherwise
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int *exist);
+int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int host_number, int *exist);
 
 /**
  * \brief Function to count maximum number of host and DBMS available in OphidiaDB
@@ -293,10 +291,9 @@ int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type,
  * \param host_partition Name of the host partition to be used
  * \param id_user User indentifier
  * \param hots_number Variable that will contain the number of hosts
- * \param dbmsxhots_number Variable that will contain the number of DBMS per host
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int *host_number, int *dbmsxhost_number);
+int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int *host_number);
 
 /**
  * \brief Function to retrieve fragment list from OphidiaDB given datacube id
@@ -433,7 +430,6 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
  * \param host_partition Name of the host partition to be used
  * \param id_user User identifier
  * \param host_number Variable that contains the requested I/O hosts number
- * \param dbmsxhots_number Variable that contain the requested DBMS number per host
  * \param id_datacube Id of the datacube to be created
  * \param id_dbmss Pointer to be filled with the ids of the dbms instances (it has to be freed)
  * \param size Pointer with the length of id_dbmss
@@ -441,7 +437,7 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
  * \param policy Policy identifier to be adopted in list available dbms
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int host_number, int dbmsxhost_number, int id_datacube,
+int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int host_number, int id_datacube,
 					       int **id_dbmss, int *size, int **id_hosts, int policy);
 
 /**

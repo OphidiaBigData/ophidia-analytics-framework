@@ -365,19 +365,17 @@ int _oph_odb_cube_retrieve_datacube(ophidiadb * oDB, int id_datacube, oph_odb_da
 		cube->id_datacube = (row[0] ? (int) strtol(row[0], NULL, 10) : 0);
 		cube->id_container = (row[1] ? (int) strtol(row[1], NULL, 10) : 0);
 		cube->hostxdatacube = (row[2] ? (int) strtol(row[2], NULL, 10) : 0);
-		cube->dbmsxhost = (row[3] ? (int) strtol(row[3], NULL, 10) : 0);
-		cube->dbxdbms = (row[4] ? (int) strtol(row[4], NULL, 10) : 0);
-		cube->fragmentxdb = (row[5] ? (int) strtol(row[5], NULL, 10) : 0);
-		cube->tuplexfragment = (row[6] ? (int) strtol(row[6], NULL, 10) : 0);
+		cube->fragmentxdb = (row[3] ? (int) strtol(row[3], NULL, 10) : 0);
+		cube->tuplexfragment = (row[4] ? (int) strtol(row[4], NULL, 10) : 0);
 		memset(&(cube->measure), 0, OPH_ODB_CUBE_MEASURE_SIZE + 1);
-		strncpy(cube->measure, row[7], OPH_ODB_CUBE_MEASURE_SIZE);
+		strncpy(cube->measure, row[5], OPH_ODB_CUBE_MEASURE_SIZE);
 		memset(&(cube->measure_type), 0, OPH_ODB_CUBE_MEASURE_TYPE_SIZE + 1);
-		strncpy(cube->measure_type, row[8], OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
+		strncpy(cube->measure_type, row[6], OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
 		memset(&(cube->frag_relative_index_set), 0, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE + 1);
-		strncpy(cube->frag_relative_index_set, row[9], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
-		cube->compressed = (row[10] ? (int) strtol(row[10], NULL, 10) : 0);
-		cube->level = (row[11] ? (int) strtol(row[11], NULL, 10) : 0);
-		cube->id_source = (row[12] ? (int) strtol(row[12], NULL, 10) : 0);
+		strncpy(cube->frag_relative_index_set, row[7], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
+		cube->compressed = (row[8] ? (int) strtol(row[8], NULL, 10) : 0);
+		cube->level = (row[9] ? (int) strtol(row[9], NULL, 10) : 0);
+		cube->id_source = (row[10] ? (int) strtol(row[10], NULL, 10) : 0);
 	}
 	mysql_free_result(res);
 
@@ -834,17 +832,17 @@ int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb * oDB, oph_od
 	int n;
 	if (cube->id_source) {
 		if (strlen(cube->description))
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_2, cube->id_container, cube->hostxdatacube, cube->dbmsxhost, cube->dbxdbms, cube->fragmentxdb,
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_2, cube->id_container, cube->hostxdatacube, cube->fragmentxdb,
 				     cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level, cube->id_source, cube->description);
 		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE, cube->id_container, cube->hostxdatacube, cube->dbmsxhost, cube->dbxdbms, cube->fragmentxdb,
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE, cube->id_container, cube->hostxdatacube, cube->fragmentxdb,
 				     cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level, cube->id_source);
 	} else {
 		if (strlen(cube->description))
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_3, cube->id_container, cube->hostxdatacube, cube->dbmsxhost, cube->dbxdbms, cube->fragmentxdb,
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_3, cube->id_container, cube->hostxdatacube, cube->fragmentxdb,
 				     cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level, cube->description);
 		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_1, cube->id_container, cube->hostxdatacube, cube->dbmsxhost, cube->dbxdbms, cube->fragmentxdb,
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_1, cube->id_container, cube->hostxdatacube, cube->fragmentxdb,
 				     cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level);
 	}
 	if (n >= MYSQL_BUFLEN) {

@@ -926,8 +926,6 @@ int task_init(oph_operator_struct * handle)
 			}
 
 			cube.hostxdatacube = 0;
-			cube.dbmsxhost = 0;
-			cube.dbxdbms = 0;
 			cube.fragmentxdb = 0;
 			cube.tuplexfragment = 0;
 
@@ -961,7 +959,7 @@ int task_init(oph_operator_struct * handle)
 						}
 						new_id_db[new_db_number++] = frags.value[i].id_db;
 					}
-					// cube.dbmsxhost && cube.hostxdatacube
+
 					if (id_host >= 0) {
 						if (id_host == frags.value[i].id_host) {
 							if (id_dbms < 0) {
@@ -979,8 +977,6 @@ int task_init(oph_operator_struct * handle)
 							if (id_dbms != frags.value[i].id_dbms)
 								num_dbms++;
 						} else {
-							if (cube.dbmsxhost < num_dbms)
-								cube.dbmsxhost = num_dbms;
 							id_host = frags.value[i].id_host;
 							num_dbms = 1;
 							cube.hostxdatacube++;
@@ -990,7 +986,6 @@ int task_init(oph_operator_struct * handle)
 						cube.hostxdatacube = num_dbms = 1;
 					}
 
-					// cube.dbxdbms
 					if (id_dbms >= 0) {
 						if (id_dbms == frags.value[i].id_dbms) {
 							if (id_db < 0) {
@@ -1008,8 +1003,6 @@ int task_init(oph_operator_struct * handle)
 							if (id_db != frags.value[i].id_db)
 								num_db++;
 						} else {
-							if (cube.dbxdbms < num_db)
-								cube.dbxdbms = num_db;
 							id_dbms = frags.value[i].id_dbms;
 							num_db = 1;
 						}
@@ -1057,10 +1050,6 @@ int task_init(oph_operator_struct * handle)
 					prev_id = frags.value[i].frag_relative_index;
 				}
 
-			if (cube.dbmsxhost < num_dbms)
-				cube.dbmsxhost = num_dbms;	// Last fragment
-			if (cube.dbxdbms < num_db)
-				cube.dbxdbms = num_db;	// Last fragment
 			if (cube.fragmentxdb < num_frag)
 				cube.fragmentxdb = num_frag;	// Last fragment
 

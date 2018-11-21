@@ -52,8 +52,6 @@
  * \param fragment_number Number of fragments that a process has to manage
  * \param fragment_id_start_position First fragment in the relative index set to work on
  * \param host_number Number of host to work on
- * \param dbmsxhost_number Number of dbms to use fo creation
- * \param dbxdbms_number Number of databases to create for each dbms
  * \param fragxdb_number Number of fragments for each database (upper bound)
  * \param tuplexfrag_number Number of tuples for each fragment (upper bound)
  * \param array_length Number of elements to store into a row
@@ -102,8 +100,6 @@ struct _OPH_IMPORTNC2_operator_handle {
 	int fragment_number;
 	int fragment_first_id;
 	int host_number;
-	int dbmsxhost_number;
-	int dbxdbms_number;
 	int fragxdb_number;
 	int tuplexfrag_number;
 	int array_length;
