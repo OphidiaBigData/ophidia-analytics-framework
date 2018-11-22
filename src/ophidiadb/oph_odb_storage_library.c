@@ -1752,27 +1752,42 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int host_number, int id_datacube,
-					       int **id_dbmss, int *size, int **id_hosts, int policy)
+int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int host_number, int id_datacube, int **id_dbmss, int **id_hosts, int policy)
 {
-	if (!oDB || !host_number || !id_datacube || !id_dbmss || !size || !ioserver_type || !host_partition || !id_hosts) {
+	if (!oDB || !host_number || !id_datacube || !id_dbmss || !ioserver_type || !host_partition || !id_hosts) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
 	*id_dbmss = NULL;
-	*size = 0;
 	*id_hosts = NULL;
+
+
+	if (!(*id_dbmss = (int *) calloc(host_number, sizeof(int)))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_ODB_MEMORY_ERROR;
+	}
+
+	if (!(*id_hosts = (int *) calloc(host_number, sizeof(int)))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(*id_dbmss);
+		*id_dbmss = NULL;
+		return OPH_ODB_MEMORY_ERROR;
+	}
+
+	int i, j;
+	MYSQL_RES *res;
+	MYSQL_ROW row;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		free(*id_dbmss);
+		*id_dbmss = NULL;
+		free(*id_hosts);
+		*id_hosts = NULL;
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
-	if (mysql_autocommit(oDB->conn, 0)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		return OPH_ODB_MYSQL_ERROR;
-	}
-
+	//Prepare queries
 	const char *spolicy;
 	switch (policy) {
 		case 1:
@@ -1784,68 +1799,86 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 
 	char selectQuery[MYSQL_BUFLEN];
 	//Select all up host
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST, host_partition, ioserver_type, id_user, spolicy);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST, host_partition, ioserver_type, id_user, spolicy, host_number);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		mysql_commit(oDB->conn);
-		mysql_autocommit(oDB->conn, 1);
+		free(*id_dbmss);
+		*id_dbmss = NULL;
+		free(*id_hosts);
+		*id_hosts = NULL;
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	int i, j;
+	char updateQuery[MYSQL_BUFLEN];
+	//Update host counters
+	n = snprintf(updateQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_UPDATE_IMPORT_COUNT, id_datacube);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		free(*id_dbmss);
+		*id_dbmss = NULL;
+		free(*id_hosts);
+		*id_hosts = NULL;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	char insertQuery[MYSQL_BUFLEN];
+	int bsize = host_number * (4 + 2 * OPH_COMMON_MAX_INT_LENGHT);
+	char buffer[bsize];
+
 	short runs = 1;
-	MYSQL_RES *res;
-	MYSQL_ROW row;
-
+	int ret = 0;
 	do {
-
-		if (oph_odb_query_ophidiadb(oDB, selectQuery)) {
+		//Start transaction
+		if (mysql_autocommit(oDB->conn, 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-			mysql_commit(oDB->conn);
-			mysql_autocommit(oDB->conn, 1);
+			free(*id_dbmss);
+			*id_dbmss = NULL;
+			free(*id_hosts);
+			*id_hosts = NULL;
 			return OPH_ODB_MYSQL_ERROR;
 		}
 
-		res = mysql_store_result(oDB->conn);
-		if (mysql_num_rows(res) < 1) {
-			mysql_free_result(res);
-			if (runs < OPH_ODB_MAX_ATTEMPTS) {
-				pmesg(LOG_WARNING, __FILE__, __LINE__, "Not enough hosts for the operation... retrying\n");
+		//Run select query
+		if ((ret = mysql_query(oDB->conn, selectQuery))) {
+			mysql_rollback(oDB->conn);
+			mysql_autocommit(oDB->conn, 1);
+			if (((ret == OPH_ODB_LOCK_ERROR) || (ret == OPH_ODB_LOCK_WAIT_ERROR)) && (runs < OPH_ODB_MAX_ATTEMPTS)) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "MySQL query error ... retrying: %s\n", mysql_error(oDB->conn));
 				sleep(OPH_ODB_WAITING_TIME);
 				runs++;
 				continue;
 			} else {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough hosts for the operation\n");
-				mysql_commit(oDB->conn);
-				mysql_autocommit(oDB->conn, 1);
-				return OPH_ODB_TOO_MANY_ROWS;
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+				free(*id_dbmss);
+				*id_dbmss = NULL;
+				free(*id_hosts);
+				*id_hosts = NULL;
+				return OPH_ODB_MYSQL_ERROR;
 			}
 		}
-		if (mysql_field_count(oDB->conn) != 2) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Too many fields found by query\n");
-			mysql_free_result(res);
-			mysql_commit(oDB->conn);
-			mysql_autocommit(oDB->conn, 1);
-			return OPH_ODB_TOO_MANY_ROWS;
-		}
 
-		*size = host_number;
-		if (!(*id_dbmss = (int *) calloc(*size, sizeof(int)))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			mysql_free_result(res);
-			mysql_commit(oDB->conn);
-			mysql_autocommit(oDB->conn, 1);
-			return OPH_ODB_MEMORY_ERROR;
-		}
-
-		if (!(*id_hosts = (int *) calloc(*size, sizeof(int)))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			mysql_free_result(res);
-			mysql_commit(oDB->conn);
+		//Get query results
+		res = mysql_store_result(oDB->conn);
+		if (mysql_num_rows(res) < host_number) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough hosts for the operation\n");
+			mysql_rollback(oDB->conn);
 			mysql_autocommit(oDB->conn, 1);
 			free(*id_dbmss);
 			*id_dbmss = NULL;
-			return OPH_ODB_MEMORY_ERROR;
+			free(*id_hosts);
+			*id_hosts = NULL;
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+		if (mysql_field_count(oDB->conn) != 2 || mysql_num_rows(res) > host_number) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Results found by query are not correct\n");
+			mysql_free_result(res);
+			mysql_rollback(oDB->conn);
+			mysql_autocommit(oDB->conn, 1);
+			free(*id_dbmss);
+			*id_dbmss = NULL;
+			free(*id_hosts);
+			*id_hosts = NULL;
+			return OPH_ODB_TOO_MANY_ROWS;
 		}
 
 		i = 0;
@@ -1854,79 +1887,86 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 			(*id_hosts)[i] = (int) strtol(row[0], NULL, 10);
 			(*id_dbmss)[i] = (int) strtol(row[1], NULL, 10);
 			i++;
-			if (i == *size)
-				break;
 		}
 		mysql_free_result(res);
 
-		if (i < *size) {
+		for (j = n = 0; j < host_number; j++)
+			n += snprintf(buffer + n, bsize - n, "%s(%d,%d)", j ? "," : "", (*id_hosts)[j], id_datacube);
+
+		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_CONNECT_CUBE_TO_HOST, buffer);
+		if (n >= MYSQL_BUFLEN) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+			mysql_rollback(oDB->conn);
+			mysql_autocommit(oDB->conn, 1);
 			free(*id_dbmss);
 			*id_dbmss = NULL;
 			free(*id_hosts);
 			*id_hosts = NULL;
-			if (runs < OPH_ODB_MAX_ATTEMPTS) {
-				pmesg(LOG_WARNING, __FILE__, __LINE__, "Not enough hosts for the operation... retrying\n");
+			return OPH_ODB_STR_BUFF_OVERFLOW;
+		}
+
+		//Run insert query
+		if ((ret = mysql_query(oDB->conn, insertQuery))) {
+			mysql_rollback(oDB->conn);
+			mysql_autocommit(oDB->conn, 1);
+			if (((ret == OPH_ODB_LOCK_ERROR) || (ret == OPH_ODB_LOCK_WAIT_ERROR)) && (runs < OPH_ODB_MAX_ATTEMPTS)) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "MySQL query error ... retrying: %s\n", mysql_error(oDB->conn));
 				sleep(OPH_ODB_WAITING_TIME);
 				runs++;
 				continue;
 			} else {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough hosts for the operation\n");
-				mysql_commit(oDB->conn);
-				mysql_autocommit(oDB->conn, 1);
-				return OPH_ODB_TOO_MANY_ROWS;
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+				free(*id_dbmss);
+				*id_dbmss = NULL;
+				free(*id_hosts);
+				*id_hosts = NULL;
+				return OPH_ODB_MYSQL_ERROR;
 			}
+		}
+
+		//Run update query
+		if ((ret = mysql_query(oDB->conn, updateQuery))) {
+			mysql_rollback(oDB->conn);
+			mysql_autocommit(oDB->conn, 1);
+			if (((ret == OPH_ODB_LOCK_ERROR) || (ret == OPH_ODB_LOCK_WAIT_ERROR)) && (runs < OPH_ODB_MAX_ATTEMPTS)) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "MySQL query error ... retrying: %s\n", mysql_error(oDB->conn));
+				sleep(OPH_ODB_WAITING_TIME);
+				runs++;
+				continue;
+			} else {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+				free(*id_dbmss);
+				*id_dbmss = NULL;
+				free(*id_hosts);
+				*id_hosts = NULL;
+				return OPH_ODB_MYSQL_ERROR;
+			}
+		}
+
+		//End transaction
+		if (mysql_commit(oDB->conn)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			mysql_autocommit(oDB->conn, 1);
+			free(*id_dbmss);
+			*id_dbmss = NULL;
+			free(*id_hosts);
+			*id_hosts = NULL;
+			return OPH_ODB_MYSQL_ERROR;
+		}
+
+		if (mysql_autocommit(oDB->conn, 1)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			free(*id_dbmss);
+			*id_dbmss = NULL;
+			free(*id_hosts);
+			*id_hosts = NULL;
+			return OPH_ODB_MYSQL_ERROR;
 		}
 
 		break;
 
 	} while (runs <= OPH_ODB_MAX_ATTEMPTS);	// Useless
 
-	int bsize = host_number * (4 + 2 * OPH_COMMON_MAX_INT_LENGHT);
-	char buffer[bsize];
-	for (j = n = 0; j < host_number; j++)
-		n += snprintf(buffer + n, bsize - n, "%s(%d,%d)", j ? "," : "", (*id_hosts)[j], id_datacube);
-
-	n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_CONNECT_CUBE_TO_HOST, buffer);
-	if (n >= MYSQL_BUFLEN) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		mysql_commit(oDB->conn);
-		mysql_autocommit(oDB->conn, 1);
-		free(*id_dbmss);
-		*id_dbmss = NULL;
-		free(*id_hosts);
-		*id_hosts = NULL;
-		return OPH_ODB_STR_BUFF_OVERFLOW;
-	}
-
-	if (oph_odb_query_ophidiadb(oDB, selectQuery)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		mysql_commit(oDB->conn);
-		mysql_autocommit(oDB->conn, 1);
-		free(*id_dbmss);
-		*id_dbmss = NULL;
-		free(*id_hosts);
-		*id_hosts = NULL;
-		return OPH_ODB_MYSQL_ERROR;
-	}
-
-	if (mysql_commit(oDB->conn)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		mysql_autocommit(oDB->conn, 1);
-		free(*id_dbmss);
-		*id_dbmss = NULL;
-		free(*id_hosts);
-		*id_hosts = NULL;
-		return OPH_ODB_MYSQL_ERROR;
-	}
-
-	if (mysql_autocommit(oDB->conn, 1)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		free(*id_dbmss);
-		*id_dbmss = NULL;
-		free(*id_hosts);
-		*id_hosts = NULL;
-		return OPH_ODB_MYSQL_ERROR;
-	}
 
 	return OPH_ODB_SUCCESS;
 }

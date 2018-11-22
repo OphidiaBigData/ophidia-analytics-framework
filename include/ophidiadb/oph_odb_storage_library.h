@@ -432,13 +432,12 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
  * \param host_number Variable that contains the requested I/O hosts number
  * \param id_datacube Id of the datacube to be created
  * \param id_dbmss Pointer to be filled with the ids of the dbms instances (it has to be freed)
- * \param size Pointer with the length of id_dbmss
  * \param id_hosts Pointer to be filled with the ids of the hosts (it has to be freed)
  * \param policy Policy identifier to be adopted in list available dbms
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_type, char *host_partition, int id_user, int host_number, int id_datacube,
-					       int **id_dbmss, int *size, int **id_hosts, int policy);
+					       int **id_dbmss, int **id_hosts, int policy);
 
 /**
  * \brief Function to retrieve the number of datacubes stored in the database instance

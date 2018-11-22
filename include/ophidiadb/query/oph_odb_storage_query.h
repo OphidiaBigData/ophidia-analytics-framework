@@ -63,9 +63,11 @@
 
 #define MYSQL_QUERY_STGE_RETRIEVE_DATACUBEXDB_NUMBER 		"SELECT COUNT(*) FROM partitioned WHERE iddbinstance = %d;"
 
-#define MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST 		"SELECT host.idhost, iddbmsinstance FROM hostpartition INNER JOIN hashost ON hostpartition.idhostpartition = hashost.idhostpartition INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE partitionname = '%s' AND host.status = 'up' AND ioservertype = '%s' AND (NOT reserved OR iduser = %d) %s FOR UPDATE;"
+#define MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST 		"SELECT host.idhost, iddbmsinstance FROM hostpartition INNER JOIN hashost ON hostpartition.idhostpartition = hashost.idhostpartition INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE partitionname = '%s' AND host.status = 'up' AND ioservertype = '%s' AND (NOT reserved OR iduser = %d) %s LIMIT %d FOR UPDATE;"
 #define MYSQL_STGE_POLICY_RR						"ORDER BY CASE hidden WHEN 0 THEN host.importcount ELSE hashost.importcount END, port"
 #define MYSQL_STGE_POLICY_LOOP						"AND NOT CASE hidden WHEN 0 THEN host.importcount ELSE hashost.importcount END ORDER BY port"
+
+#define MYSQL_QUERY_STGE_UPDATE_IMPORT_COUNT 		"UPDATE host SET importcount = importcount + 1 WHERE idhost IN (SELECT imported.idhost AS idhost FROM imported WHERE imported.iddatacube = %d);"
 
 #define MYSQL_QUERY_STGE_RETRIVE_PARTITION_STORAGE_INSTANCES	"SELECT dbmsinstance.iddbmsinstance FROM hostpartition INNER JOIN hashost ON hostpartition.idhostpartition = hashost.idhostpartition INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost=host.idhost WHERE partitionname = '%s' AND host.status = 'up' ORDER BY host.idhost, dbmsinstance.iddbmsinstance ASC;"
 
