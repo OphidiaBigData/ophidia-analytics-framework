@@ -269,7 +269,7 @@ int oph_odb_stge_fetch_fragment_connection_string_for_deletion(ophidiadb * oDB, 
  * \param id_host_partition Pointer to id of the host partition
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_get_host_partition_by_name(ophidiadb * oDB, char *host_partition, int id_user, int *id_host_partition);
+int oph_odb_stge_get_host_partition_by_name(ophidiadb * oDB, char *host_partition, int id_user, int *id_host_partition, char *hidden);
 
 /**
  * \brief Function to get default values for host partition and/or file system

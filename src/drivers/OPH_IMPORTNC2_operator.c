@@ -2013,6 +2013,7 @@ int task_init(oph_operator_struct * handle)
 		int admissible_frag_number = 0;
 		int user_arg_prod = 0;
 		int id_host_partition = 0;
+		char hidden = 0;
 
 		//If default values are used: select fylesystem and partition
 		if (!strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(host_partition))
@@ -2029,7 +2030,7 @@ int task_init(oph_operator_struct * handle)
 				}
 			}
 		} else {
-			if (oph_odb_stge_get_host_partition_by_name(oDB, host_partition, id_user, &id_host_partition)) {
+			if (oph_odb_stge_get_host_partition_by_name(oDB, host_partition, id_user, &id_host_partition, &hidden)) {
 				if (run) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Failed to load partition '%s'!\n", host_partition);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Failed to load partition '%s'!\n", host_partition);
@@ -3650,7 +3651,7 @@ int task_init(oph_operator_struct * handle)
 		dbmss_length = host_num = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->host_number;
 		int *id_dbmss = NULL, *id_hosts = NULL;
 		//Retreive ID dbms list
-		if (oph_odb_stge_retrieve_dbmsinstance_id_list(oDB, ioserver_type, id_host_partition, 0, host_num, id_datacube_out, &id_dbmss, &id_hosts, 0)) {
+		if (oph_odb_stge_retrieve_dbmsinstance_id_list(oDB, ioserver_type, id_host_partition, hidden, host_num, id_datacube_out, &id_dbmss, &id_hosts, 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DBMS_LIST_ERROR);
 			if (id_dbmss)

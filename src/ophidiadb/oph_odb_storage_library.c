@@ -2337,13 +2337,14 @@ int oph_odb_stge_delete_hostpartition_by_id(ophidiadb * oDB, int id_hostpartitio
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_get_host_partition_by_name(ophidiadb * oDB, char *host_partition, int id_user, int *id_host_partition)
+int oph_odb_stge_get_host_partition_by_name(ophidiadb * oDB, char *host_partition, int id_user, int *id_host_partition, char *hidden)
 {
-	if (!oDB || !host_partition || !id_user || !id_host_partition) {
+	if (!oDB || !host_partition || !id_user || !id_host_partition || !hidden) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
 	*id_host_partition = 0;
+	*hidden = 0;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -2368,15 +2369,17 @@ int oph_odb_stge_get_host_partition_by_name(ophidiadb * oDB, char *host_partitio
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
-	if (mysql_field_count(oDB->conn) != 1) {
+	if (mysql_field_count(oDB->conn) != 2) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 
 	MYSQL_ROW row;
-	if ((row = mysql_fetch_row(res)))
+	if ((row = mysql_fetch_row(res))) {
 		*id_host_partition = (int) strtol(row[0], NULL, 10);
+		*hidden = (char) strtol(row[1], NULL, 10);
+	}
 	mysql_free_result(res);
 
 	return OPH_ODB_SUCCESS;

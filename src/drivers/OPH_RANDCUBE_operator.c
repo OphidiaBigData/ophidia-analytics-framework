@@ -559,7 +559,8 @@ int task_init(oph_operator_struct * handle)
 	   ********************************/
 
 		int id_host_partition = 0;
-		char *host_partition = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input;
+		char hidden = 0, *host_partition = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input;
+
 		//If default values are used: select fylesystem and partition
 		if (!strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(host_partition))
 		    && !strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT))) {
@@ -573,7 +574,7 @@ int task_init(oph_operator_struct * handle)
 				goto __OPH_EXIT_1;
 			}
 		} else {
-			if (oph_odb_stge_get_host_partition_by_name(oDB, host_partition, id_user, &id_host_partition)) {
+			if (oph_odb_stge_get_host_partition_by_name(oDB, host_partition, id_user, &id_host_partition, &hidden)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Failed to load partition '%s'!\n", host_partition);
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Failed to load partition '%s'!\n", host_partition);
 				goto __OPH_EXIT_1;
@@ -1125,7 +1126,7 @@ int task_init(oph_operator_struct * handle)
 		int *id_dbmss = NULL, *id_hosts = NULL;
 		//Retreive ID dbms list 
 		if (oph_odb_stge_retrieve_dbmsinstance_id_list
-		    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type, id_host_partition, 0, host_num, id_datacube_out, &id_dbmss, &id_hosts, 0)) {
+		    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type, id_host_partition, hidden, host_num, id_datacube_out, &id_dbmss, &id_hosts, 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DBMS_LIST_ERROR);
 			if (id_dbmss)

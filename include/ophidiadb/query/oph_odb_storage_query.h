@@ -34,7 +34,7 @@
 #define MYSQL_QUERY_STGE_RETRIEVE_INSTANCES_LIST_1 		"SELECT idhost,hostname,memory,cores,status FROM host %s ORDER BY hostname ASC;"
 #define MYSQL_QUERY_STGE_RETRIEVE_INSTANCES_LIST_2 		"SELECT iddbmsinstance, hostname, status, port, ioservertype  FROM dbmsinstance INNER JOIN host ON dbmsinstance.idhost = host.idhost %s ORDER BY hostname, iddbmsinstance ASC;"
 #define MYSQL_QUERY_STGE_RETRIEVE_INSTANCES_LIST_3 		"SELECT partitionname, hostname, status, reserved FROM hostpartition INNER JOIN hashost ON hashost.idhostpartition = hostpartition.idhostpartition INNER JOIN host ON host.idhost = hashost.idhost WHERE (iduser IS NULL OR iduser = %d) %s ORDER BY hostname ASC;"
-#define MYSQL_QUERY_STGE_RETRIEVE_INSTANCES_LIST_3_PART 	"SELECT partitionname, iduser, reserved FROM hostpartition WHERE hidden = 0 AND (iduser IS NULL OR iduser = %d) ORDER BY partitionname ASC;"
+#define MYSQL_QUERY_STGE_RETRIEVE_INSTANCES_LIST_3_PART 	"SELECT partitionname, iduser, reserved FROM hostpartition WHERE NOT hidden AND (iduser IS NULL OR iduser = %d) ORDER BY partitionname ASC;"
 #define MYSQL_QUERY_STGE_RETRIEVE_FRAGMENTE_NAME_LIST 		"SELECT fragmentname FROM dbinstance INNER JOIN fragment on fragment.iddbinstance=dbinstance.iddbinstance WHERE iddbmsinstance = %d AND iddatacube = %d ORDER BY iddbmsinstance, dbinstance.iddbinstance, fragment.fragrelativeindex ASC;"
 #define MYSQL_QUERY_STGE_RETRIEVE_FRAGMENTE_NAME_LIST_LIMIT	"SELECT fragmentname FROM dbinstance INNER JOIN fragment on fragment.iddbinstance=dbinstance.iddbinstance WHERE iddbmsinstance = %d AND iddatacube = %d ORDER BY iddbmsinstance, dbinstance.iddbinstance, fragment.fragrelativeindex ASC LIMIT %d, %d;"
 #define MYSQL_QUERY_STGE_RETRIEVE_FRAG 				"SELECT idfragment, iddatacube, iddbinstance, fragrelativeindex, fragmentname, keystart, keyend FROM fragment WHERE fragmentname = '%s';"
@@ -76,11 +76,11 @@
 #define MYSQL_QUERY_STGE_DELETE_PARTITION			"DELETE FROM hostpartition WHERE partitionname = '%s' AND iduser = %d %s;"
 #define MYSQL_QUERY_STGE_DELETE_PARTITION2			"DELETE FROM hostpartition WHERE idhostpartition = %d;"
 
-#define MYSQL_QUERY_STGE_CHECK_ALL_HOSTS			"SELECT MAX(nhosts) AS mhosts FROM (SELECT COUNT(*) AS nhosts FROM hashost INNER JOIN hostpartition ON hashost.idhostpartition = hostpartition.idhostpartition WHERE hidden = 0 GROUP BY idhost) AS chosts;"
-#define MYSQL_QUERY_STGE_CHECK_HOST					"SELECT COUNT(*) FROM hashost INNER JOIN hostpartition ON hashost.idhostpartition = hostpartition.idhostpartition WHERE hidden = 0 AND idhost = %d;"
+#define MYSQL_QUERY_STGE_CHECK_ALL_HOSTS			"SELECT MAX(nhosts) AS mhosts FROM (SELECT COUNT(*) AS nhosts FROM hashost INNER JOIN hostpartition ON hashost.idhostpartition = hostpartition.idhostpartition WHERE NOT hidden GROUP BY idhost) AS chosts;"
+#define MYSQL_QUERY_STGE_CHECK_HOST					"SELECT COUNT(*) FROM hashost INNER JOIN hostpartition ON hashost.idhostpartition = hostpartition.idhostpartition WHERE NOT hidden AND idhost = %d;"
 
 #define MYSQL_QUERY_STGE_CONNECT_CUBE_TO_HOST		"INSERT INTO imported (idhost, iddatacube) VALUES %s;"
 
-#define MYSQL_QUERY_STGE_GET_IDPARTITION_FROM_NAME	"SELECT idhostpartition FROM hostpartition WHERE partitionname = '%s' AND (NOT reserved OR iduser = %d);"
+#define MYSQL_QUERY_STGE_GET_IDPARTITION_FROM_NAME	"SELECT idhostpartition, hidden FROM hostpartition WHERE partitionname = '%s' AND (NOT reserved OR iduser = %d);"
 
 #endif				/* __OPH_ODB_STGE_QUERY_H__ */
