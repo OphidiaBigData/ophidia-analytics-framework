@@ -1104,32 +1104,36 @@ int task_init(oph_operator_struct * handle)
 
 		int admissible_frag_number = 0;
 		int user_arg_prod = 0;
+		int id_host_partition = 0;
 
 		//If default values are used: select fylesystem and partition
 		if (!strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(host_partition))
 		    && !strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT))) {
-			if (oph_odb_stge_get_default_host_partition_fs
-			    (oDB, ioserver_type, &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->partition_input, (*host_number > 0 ? *host_number : 1), &exist_part)
-			    || !exist_part) {
+			if (oph_odb_stge_get_default_host_partition_fs(oDB, ioserver_type, &id_host_partition, *host_number > 0 ? *host_number : 1) || !id_host_partition) {
 				if (run) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
 						((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number, host_partition);
 					goto __OPH_EXIT_1;
 				} else {
-					//If simulated run then reset values
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
 					frag_param_error = 1;
 				}
 			}
-			//The previous function may change the memory area of the string
-			host_partition = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->partition_input;
-
 		} else {
+			if (oph_odb_stge_get_host_partition_by_name(oDB, host_partition, id_user, &id_host_partition)) {
+				if (run) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Failed to load partition '%s'!\n", host_partition);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Failed to load partition '%s'!\n", host_partition);
+					goto __OPH_EXIT_1;
+				} else {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Failed to load partition '%s'!\n", host_partition);
+					frag_param_error = 1;
+				}
+			}
 			//Check if are available DBMS and HOST number into specified partition and of server type
 			if (*host_number > 0) {
-				if ((oph_odb_stge_check_number_of_host_dbms(oDB, ioserver_type, host_partition, id_user, (*host_number > 0 ? *host_number : 1), &exist_part))
-				    || !exist_part) {
+				if ((oph_odb_stge_check_number_of_host_dbms(oDB, ioserver_type, id_host_partition, *host_number, &exist_part)) || !exist_part) {
 					if (run) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
@@ -1146,7 +1150,7 @@ int task_init(oph_operator_struct * handle)
 
 		if (*host_number <= 0) {
 			//Check how many DBMS and HOST are available into specified partition and of server type
-			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, host_partition, id_user, &nhost) || !nhost) {
+			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
 				if (run) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
@@ -1304,7 +1308,7 @@ int task_init(oph_operator_struct * handle)
 
 		if (frag_param_error) {
 			//Check how many DBMS and HOST are available into specified partition and of server type
-			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, host_partition, id_user, &nhost) || !nhost) {
+			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
 				goto __OPH_EXIT_1;
@@ -1354,7 +1358,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		//Check if are available DBMS and HOST number into specified partition and of server type
-		if ((oph_odb_stge_check_number_of_host_dbms(oDB, ioserver_type, host_partition, id_user, *host_number, &exist_part)) || !exist_part) {
+		if ((oph_odb_stge_check_number_of_host_dbms(oDB, ioserver_type, id_host_partition, *host_number, &exist_part)) || !exist_part) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts - dbms per host is too big or server type and partition are not available!\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
 				((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number, host_partition);
@@ -2198,7 +2202,7 @@ int task_init(oph_operator_struct * handle)
 		dbmss_length = host_num = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number;
 		int *id_dbmss = NULL, *id_hosts = NULL;
 		//Retreive ID dbms list
-		if (oph_odb_stge_retrieve_dbmsinstance_id_list(oDB, ioserver_type, host_partition, id_user, host_num, id_datacube_out, &id_dbmss, &id_hosts, 0)) {
+		if (oph_odb_stge_retrieve_dbmsinstance_id_list(oDB, ioserver_type, id_host_partition, 0, host_num, id_datacube_out, &id_dbmss, &id_hosts, 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_DBMS_LIST_ERROR);
 			if (id_dbmss)

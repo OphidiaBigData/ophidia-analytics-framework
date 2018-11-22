@@ -558,29 +558,33 @@ int task_init(oph_operator_struct * handle)
 	   *INPUT PARAMETERS CHECK - BEGIN*
 	   ********************************/
 
-		int exist_part = 0;
+		int id_host_partition = 0;
 		char *host_partition = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input;
 		//If default values are used: select fylesystem and partition
 		if (!strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(host_partition))
 		    && !strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT))) {
 			if (oph_odb_stge_get_default_host_partition_fs
-			    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type, &((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input,
-			     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number > 0 ? ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number : 1, &exist_part)
-			    || !exist_part) {
+			    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type, &id_host_partition,
+			     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number > 0 ? ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number : 1)
+			    || !id_host_partition) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
 					((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number, host_partition);
 				goto __OPH_EXIT_1;
 			}
+		} else {
+			if (oph_odb_stge_get_host_partition_by_name(oDB, host_partition, id_user, &id_host_partition)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Failed to load partition '%s'!\n", host_partition);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Failed to load partition '%s'!\n", host_partition);
+				goto __OPH_EXIT_1;
+			}
 		}
 
-		exist_part = 0;
+		int exist_part = 0;
 		int nhost = 0;
 		if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number < 0) {
 			//Check if are available DBMS and HOST number into specified partition and of server type
-			if (oph_odb_stge_count_number_of_host_dbms
-			    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
-			     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, id_user, &nhost) || !nhost) {
+			if (oph_odb_stge_count_number_of_host_dbms(oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type, id_host_partition, &nhost) || !nhost) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or dbms or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
 					((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input);
@@ -591,9 +595,8 @@ int task_init(oph_operator_struct * handle)
 		}
 		//Check if are available DBMS and HOST number into specified partition and of server type
 		if ((oph_odb_stge_check_number_of_host_dbms
-		     (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
-		      ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, id_user, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number, &exist_part))
-		    || !exist_part) {
+		     (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type, id_host_partition, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number,
+		      &exist_part)) || !exist_part) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
 				((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input);
@@ -1122,8 +1125,7 @@ int task_init(oph_operator_struct * handle)
 		int *id_dbmss = NULL, *id_hosts = NULL;
 		//Retreive ID dbms list 
 		if (oph_odb_stge_retrieve_dbmsinstance_id_list
-		    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type,
-		     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input, id_user, host_num, id_datacube_out, &id_dbmss, &id_hosts, 0)) {
+		    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type, id_host_partition, 0, host_num, id_datacube_out, &id_dbmss, &id_hosts, 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DBMS_LIST_ERROR);
 			if (id_dbmss)
