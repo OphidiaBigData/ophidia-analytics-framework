@@ -3811,7 +3811,7 @@ int task_init(oph_operator_struct * handle)
 		oph_odb_cube_delete_from_datacube_table(&((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB, id_datacube_out);
 	}
 	//Broadcast to all other processes the result
-	MPI_Bcast(id_datacube, 8, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(id_datacube, 6, MPI_INT, 0, MPI_COMM_WORLD);
 
 	//Check if sequential part has been completed
 	if (!id_datacube[0] || !id_datacube[1]) {
