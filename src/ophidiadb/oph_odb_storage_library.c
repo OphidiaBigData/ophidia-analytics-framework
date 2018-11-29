@@ -1549,6 +1549,43 @@ int oph_odb_stge_insert_into_fragment_table(ophidiadb * oDB, oph_odb_fragment * 
 	return OPH_ODB_SUCCESS;
 }
 
+int oph_odb_stge_insert_into_fragment_table2(ophidiadb * oDB, oph_odb_fragment * fragment, int frag_num)
+{
+	if (!oDB || !fragment || !frag_num) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char insertQuery[MYSQL_BUFLEN], buffer[MYSQL_BUFLEN];
+	int l = 0, n = 0;
+
+	//Setup full query for multi-insert statement
+	for(l = 0; l < frag_num; l++){
+		if((fragment[l]).id_datacube != 0){
+			n += snprintf(buffer + n, MYSQL_BUFLEN, "(%d, %d, %d, '%s', %d, %d),", (fragment[l]).id_db, (fragment[l]).id_datacube, (fragment[l]).frag_relative_index, (fragment[l]).fragment_name, (fragment[l]).key_start, (fragment[l]).key_end);
+		}
+	}
+	buffer[n-1] = ';';
+
+	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_UPDATE_OPHIDIADB_FRAG2, buffer);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, insertQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
 int oph_odb_stge_retrieve_container_id_from_fragment_name(ophidiadb * oDB, char *frag_name, int *id_container)
 {
 	if (!oDB || !frag_name || !id_container) {

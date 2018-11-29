@@ -119,12 +119,18 @@ int oph_dc_setup_dbms(oph_ioserver_handler ** server, char *server_type)
 
 int oph_dc_connect_to_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, unsigned long flag)
 {
-	if (!dbms || !server) {
+	return oph_dc_connect_to_dbms2(server, dbms, flag, &dbms->conn);
+}
+
+
+int oph_dc_connect_to_dbms2(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, unsigned long flag, void **conn)
+{
+	if (!dbms || !server || !conn) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DC_NULL_PARAM;
 	}
 
-	dbms->conn = NULL;
+	*conn = NULL;
 	oph_ioserver_params conn_params;
 	conn_params.host = dbms->hostname;
 	conn_params.user = dbms->login;
@@ -133,7 +139,7 @@ int oph_dc_connect_to_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance 
 	conn_params.db_name = NULL;
 	conn_params.opt_flag = flag;
 
-	if (oph_ioserver_connect(server, &conn_params, &dbms->conn)) {
+	if (oph_ioserver_connect(server, &conn_params, conn)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Server connection error\n");
 		oph_dc_disconnect_from_dbms(server, dbms);
 		return OPH_DC_SERVER_ERROR;
@@ -143,18 +149,23 @@ int oph_dc_connect_to_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance 
 
 int oph_dc_use_db_of_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, oph_odb_db_instance * db)
 {
-	if (!dbms || !db || !server) {
+	return oph_dc_use_db_of_dbms2(server, dbms, db, dbms->conn);
+}
+
+int oph_dc_use_db_of_dbms2(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, oph_odb_db_instance * db, void **conn)
+{
+	if (!dbms || !db || !server || !conn) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameters\n");
 		return OPH_DC_NULL_PARAM;
 	}
 
-	if (oph_dc_check_connection_to_db(server, dbms, NULL, 0)) {
+	if (oph_dc_check_connection_to_db2(server, dbms, NULL, 0, conn)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to dbms.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (dbms->conn) {
-		if (oph_ioserver_use_db(server, db->db_name, dbms->conn)) {
+	if (*conn) {
+		if (oph_ioserver_use_db(server, db->db_name, *conn)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set default database\n");
 			return OPH_DC_SERVER_ERROR;
 		}
@@ -168,12 +179,18 @@ int oph_dc_use_db_of_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance *
 
 int oph_dc_check_connection_to_db(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, oph_odb_db_instance * db, unsigned long flag)
 {
-	if (!dbms || !server) {
+	return oph_dc_check_connection_to_db2(server, dbms, db, flag, &dbms->conn);
+}
+
+
+int oph_dc_check_connection_to_db2(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, oph_odb_db_instance * db, unsigned long flag, void **conn)
+{
+	if (!dbms || !server || !conn) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameters\n");
 		return OPH_DC_NULL_PARAM;
 	}
 
-	if (!(dbms->conn)) {
+	if (!(*conn)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Connection was somehow closed.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
@@ -186,21 +203,27 @@ int oph_dc_check_connection_to_db(oph_ioserver_handler * server, oph_odb_dbms_in
 	conn_params.db_name = (db ? db->db_name : NULL);
 	conn_params.opt_flag = flag;
 
-	if (oph_ioserver_connect(server, &conn_params, &dbms->conn)) {
+	if (oph_ioserver_connect(server, &conn_params, conn)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Server connection error\n");
 		return OPH_DC_SERVER_ERROR;
 	}
 	return OPH_DC_SUCCESS;
 }
 
+
 int oph_dc_disconnect_from_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms)
 {
-	if (!dbms || !server) {
+	return oph_dc_disconnect_from_dbms2(server, dbms, &dbms->conn);
+}
+
+int oph_dc_disconnect_from_dbms2(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, void **conn)
+{
+	if (!dbms || !server || !(*conn)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DC_NULL_PARAM;
 	}
 
-	oph_ioserver_close(server, dbms->conn);
+	oph_ioserver_close(server, *conn);
 	return OPH_DC_SUCCESS;
 }
 

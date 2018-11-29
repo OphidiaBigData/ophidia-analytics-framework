@@ -40,6 +40,7 @@
 #define MYSQL_QUERY_STGE_RETRIEVE_FRAG 				"SELECT idfragment, iddatacube, iddbinstance, fragrelativeindex, fragmentname, keystart, keyend FROM fragment WHERE fragmentname = '%s';"
 #define MYSQL_QUERY_STGE_RETRIEVE_DB 				"SELECT dbmsinstance.iddbmsinstance, login, password, port, hostname, ioservertype, dbinstance.iddbinstance, dbname FROM dbmsinstance INNER JOIN host ON dbmsinstance.idhost=host.idhost INNER JOIN dbinstance on dbinstance.iddbmsinstance=dbmsinstance.iddbmsinstance WHERE dbinstance.iddbinstance = %d AND status = 'up';"
 #define MYSQL_QUERY_STGE_UPDATE_OPHIDIADB_FRAG 			"INSERT INTO `fragment` (`iddbinstance`, `iddatacube`, `fragrelativeindex`, `fragmentname`, `keystart`, `keyend`) VALUES (%d, %d, %d, '%s', %d, %d)"
+#define MYSQL_QUERY_STGE_UPDATE_OPHIDIADB_FRAG2 			"INSERT INTO `fragment` (`iddbinstance`, `iddatacube`, `fragrelativeindex`, `fragmentname`, `keystart`, `keyend`) VALUES %s"
 #define MYSQL_QUERY_STGE_RETRIEVE_CONTAINER_FROM_FRAGMENT	 "SELECT idcontainer from fragment INNER JOIN datacube on datacube.iddatacube = fragment.iddatacube where fragmentname = '%s';"
 #define MYSQL_QUERY_STGE_UPDATE_OPHIDIADB_DB 			"INSERT INTO `dbinstance` (`iddbmsinstance`, `dbname`) VALUES (%d, '%s')"
 #define MYSQL_QUERY_STGE_UPDATE_OPHIDIADB_PART 			"INSERT INTO `partitioned` (`iddbinstance`, `iddatacube`) VALUES (%d, %d)"

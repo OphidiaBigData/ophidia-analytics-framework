@@ -2802,14 +2802,14 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 }
 
 
-int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fragment * frag, char *nc_file_path, int tuplexfrag_number, int compressed, NETCDF_var * measure)
+int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fragment * frag, char *nc_file_path, int tuplexfrag_number, int compressed, NETCDF_var * measure, void **conn)
 {
-	if (!frag || !nc_file_path || !tuplexfrag_number || !measure || !server) {
+	if (!frag || !nc_file_path || !tuplexfrag_number || !measure || !server || !conn) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_NC_ERROR;
 	}
 
-	if (oph_dc_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
+	if (oph_dc_check_connection_to_db2(server, frag->db_instance->dbms_instance, frag->db_instance, 0, conn)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
 		return OPH_NC_ERROR;
 	}
@@ -2970,13 +2970,13 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fra
 	free(dims_end_string);
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, *conn, query_string, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		free(query_string);
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+	if (oph_ioserver_execute_query(server, *conn, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
 		free(query_string);
 		oph_ioserver_free_query(server, query);

@@ -393,6 +393,8 @@ int oph_odb_stge_delete_from_dbinstance_table(ophidiadb * oDB, int id_db);
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_stge_insert_into_fragment_table(ophidiadb * oDB, oph_odb_fragment * fragment);
+int oph_odb_stge_insert_into_fragment_table2(ophidiadb * oDB, oph_odb_fragment * fragment, int frag_num);
+
 
 /**
  * \brief Function to retrieve id of the container of a fragment
