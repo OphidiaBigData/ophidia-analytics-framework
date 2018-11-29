@@ -418,6 +418,28 @@ AC_SUBST(JANSON_LIBS)
 JANSSON_LIBDIR=`pkg-config --variable=libdir jansson`
 AC_SUBST(JANSSON_LIBDIR)
 
+PKG_CHECK_MODULES(MONGOC, libmongoc-1.0 >= 1.3.6)
+AC_ARG_WITH(mongoc_header_path,
+	[  --with-mongoc-header-path=PATH	Location of MongoDB C driver includes directory],
+	[
+		mongoc_header_path="$withval"
+	],
+	[
+		mongoc_header_path="$MONGOC_CFLAGS"
+	])
+AC_ARG_WITH(mongoc_lib_path,
+	[  --with-mongoc-lib-path=PATH		Location of MongoDB C driver lib],
+	[
+		mongoc_lib_path="$withval"
+	],
+	[
+		mongoc_lib_path="$MONGOC_LIBS"
+	])
+MONGOC_CFLAGS="$mongoc_header_path"
+AC_SUBST(MONGOC_CFLAGS)
+MONGOC_LIBS="$mongoc_lib_path"
+AC_SUBST(MONGOC_LIBS)
+
 ophidiaio_server_support=no
 OPHIDIAIO_SERVER_PATH=
 AC_ARG_WITH(ophidiaio_server_path,
