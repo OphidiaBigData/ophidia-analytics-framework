@@ -4024,13 +4024,12 @@ int task_execute(oph_operator_struct * handle)
 
 		oph_ioserver_handler *server = NULL;
 
-		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
-			if (!server) {
-				if (oph_dc_setup_dbms_thread(&(server), dbmss->value[0].io_server_type)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_IOPLUGIN_SETUP_ERROR, dbmss->value[0].id_dbms);
-					res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-				}
+		if (!server) {
+			if (oph_dc_setup_dbms_thread(&(server), dbmss->value[0].io_server_type)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_IOPLUGIN_SETUP_ERROR, dbmss->value[0].id_dbms);
+				mysql_thread_end();
+				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
 		}
 
@@ -4043,6 +4042,7 @@ int task_execute(oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_DBMS_CONNECTION_ERROR, (dbmss->value[i]).id_dbms);
 				oph_dc_disconnect_from_dbms2(server, &(dbmss->value[i]), &connection);
 				oph_dc_cleanup_dbms(server);
+				mysql_thread_end();
 				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				break;
 			}
@@ -4053,6 +4053,7 @@ int task_execute(oph_operator_struct * handle)
 				oph_dc_disconnect_from_dbms2(server, &(dbmss->value[i]), &connection);
 				oph_dc_cleanup_dbms(server);
 				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+				mysql_thread_end();
 				break;
 			}
 			//Compute number of fragments to insert in DB
@@ -4107,12 +4108,16 @@ int task_execute(oph_operator_struct * handle)
 
 			oph_dc_disconnect_from_dbms2(server, &(dbmss->value[i]), &connection);
 
-			if (res != OPH_ANALYTICS_OPERATOR_SUCCESS)
+			if (res != OPH_ANALYTICS_OPERATOR_SUCCESS) {
 				oph_dc_cleanup_dbms(server);
+				mysql_thread_end();
+			}
 		}
 
-		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS)
+		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
 			oph_dc_cleanup_dbms(server);
+			mysql_thread_end();
+		}
 
 		int *ret_val = (int *) malloc(sizeof(int));
 		*ret_val = res;

@@ -245,6 +245,10 @@ int oph_dc_create_fragment_from_query_with_aggregation(oph_ioserver_handler * se
 int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
 							long long *start_id, long long *block_size, char *param, long long param_size);
 
+int oph_dc_create_fragment_from_query_with_aggregation3(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
+							long long *start_id, long long *block_size, char *param, long long param_size, void **connection);
+
+
 /** 
  * \brief Function to append new_frag to old_frag
  * \param server Pointer to I/O server structure
@@ -406,6 +410,9 @@ int oph_dc_create_fragment_from_query(oph_ioserver_handler * server, oph_odb_fra
  */
 int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id,
 				       long long *block_size);
+
+int oph_dc_create_fragment_from_query_with_param3(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
+						   long long *start_id, long long *block_size, char *param, long long param_size, int num, void **connection);
 
 /**
  * \brief Function to generate a new fragment name 
