@@ -124,6 +124,19 @@ int oph_odb_read_ophidiadb_config_file(ophidiadb * oDB)
 			oDB->username = argument_value;
 		} else if (!strncasecmp(argument, OPH_CONF_OPHDB_PWD, strlen(OPH_CONF_OPHDB_PWD))) {
 			oDB->pwd = argument_value;
+#ifdef OPH_ODB_MNG
+		} else if (!strncasecmp(argument, OPH_CONF_MNGDB_NAME, strlen(OPH_CONF_MNGDB_NAME))) {
+			oDB->mng_name = argument_value;
+		} else if (!strncasecmp(argument, OPH_CONF_MNGDB_HOST, strlen(OPH_CONF_MNGDB_HOST))) {
+			oDB->mng_hostname = argument_value;
+		} else if (!strncasecmp(argument, OPH_CONF_MNGDB_PORT, strlen(OPH_CONF_MNGDB_PORT))) {
+			oDB->mng_server_port = (int) strtol(argument_value, NULL, 10);
+			free(argument_value);
+		} else if (!strncasecmp(argument, OPH_CONF_MNGDB_LOGIN, strlen(OPH_CONF_MNGDB_LOGIN))) {
+			oDB->mng_username = argument_value;
+		} else if (!strncasecmp(argument, OPH_CONF_MNGDB_PWD, strlen(OPH_CONF_MNGDB_PWD))) {
+			oDB->mng_pwd = argument_value;
+#endif
 		} else {
 			free(argument_value);
 		}
@@ -153,6 +166,17 @@ int oph_odb_init_ophidiadb(ophidiadb * oDB)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
 		return OPH_ODB_MYSQL_ERROR;
 	}
+#ifdef OPH_ODB_MNG
+
+	oDB->mng_name = NULL;
+	oDB->mng_hostname = NULL;
+	oDB->mng_username = NULL;
+	oDB->mng_pwd = NULL;
+	oDB->mng_conn = NULL;
+
+	mongoc_init();
+
+#endif
 
 	return OPH_ODB_SUCCESS;
 }
@@ -169,6 +193,16 @@ int oph_odb_init_ophidiadb_thread(ophidiadb * oDB)
 	oDB->username = NULL;
 	oDB->pwd = NULL;
 	oDB->conn = NULL;
+
+#ifdef OPH_ODB_MNG
+
+	oDB->mng_name = NULL;
+	oDB->mng_hostname = NULL;
+	oDB->mng_username = NULL;
+	oDB->mng_pwd = NULL;
+	oDB->mng_conn = NULL;
+
+#endif
 
 	return OPH_ODB_SUCCESS;
 }
@@ -202,6 +236,30 @@ int oph_odb_free_ophidiadb(ophidiadb * oDB)
 		oDB->conn = NULL;
 		mysql_library_end();
 	}
+#ifdef OPH_ODB_MNG
+
+	if (oDB->mng_name) {
+		free(oDB->mng_name);
+		oDB->mng_name = NULL;
+	}
+	if (oDB->mng_hostname) {
+		free(oDB->mng_hostname);
+		oDB->mng_hostname = NULL;
+	}
+	if (oDB->mng_username) {
+		free(oDB->mng_username);
+		oDB->mng_username = NULL;
+	}
+	if (oDB->mng_pwd) {
+		free(oDB->mng_pwd);
+		oDB->mng_pwd = NULL;
+	}
+	if (oDB->mng_conn) {
+		oph_odb_disconnect_from_mongodb(oDB);
+		oDB->mng_conn = NULL;
+		mongoc_cleanup();
+	}
+#endif
 
 	return OPH_ODB_SUCCESS;
 }
@@ -233,6 +291,29 @@ int oph_odb_free_ophidiadb_thread(ophidiadb * oDB)
 		oph_odb_disconnect_from_ophidiadb(oDB);
 		oDB->conn = NULL;
 	}
+#ifdef OPH_ODB_MNG
+
+	if (oDB->mng_name) {
+		free(oDB->mng_name);
+		oDB->mng_name = NULL;
+	}
+	if (oDB->mng_hostname) {
+		free(oDB->mng_hostname);
+		oDB->mng_hostname = NULL;
+	}
+	if (oDB->mng_username) {
+		free(oDB->mng_username);
+		oDB->mng_username = NULL;
+	}
+	if (oDB->mng_pwd) {
+		free(oDB->mng_pwd);
+		oDB->mng_pwd = NULL;
+	}
+	if (oDB->mng_conn) {
+		oph_odb_disconnect_from_mongodb(oDB);
+		oDB->mng_conn = NULL;
+	}
+#endif
 
 	return OPH_ODB_SUCCESS;
 }
@@ -326,3 +407,68 @@ int oph_odb_query_ophidiadb(ophidiadb * oDB, char *query)
 
 	return OPH_ODB_SUCCESS;
 }
+
+#ifdef OPH_ODB_MNG
+int oph_odb_connect_to_mongodb(ophidiadb * oDB)
+{
+	if (!oDB) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	oDB->mng_conn = NULL;
+
+	char uri_string[OPH_ODB_BUFFER_LEN];
+	snprintf(uri_string, OPH_ODB_BUFFER_LEN, OPH_ODB_MNGDB_CONN, oDB->mng_hostname, oDB->server_port);
+
+	mongoc_uri_t *uri = mongoc_uri_new(uri_string);
+	if (!uri) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong connection URI: %s\n", uri_string);
+		oph_odb_disconnect_from_mongodb(oDB);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	/* Connect to database */
+	if ((oDB->mng_conn = mongoc_client_new_from_uri(uri))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MongoDB connection error.\n");
+		mongoc_uri_destroy(uri);
+		oph_odb_disconnect_from_mongodb(oDB);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	mongoc_uri_destroy(uri);
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_check_connection_to_mongodb(ophidiadb * oDB)
+{
+	if (!oDB) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (!(oDB->mng_conn)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Connection was somehow closed.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
+// TODO
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_disconnect_from_mongodb(ophidiadb * oDB)
+{
+	if (!oDB) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oDB->mng_conn) {
+		mongoc_client_destroy(oDB->mng_conn);
+		oDB->mng_conn = NULL;
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+#endif

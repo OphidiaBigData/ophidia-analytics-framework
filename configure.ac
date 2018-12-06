@@ -440,6 +440,9 @@ AC_SUBST(MONGOC_CFLAGS)
 MONGOC_LIBS="$mongoc_lib_path"
 AC_SUBST(MONGOC_LIBS)
 
+have_mongo=yes
+AM_CONDITIONAL([HAVE_MONGO], [test "x$have_mongo" = "xyes"])
+
 ophidiaio_server_support=no
 OPHIDIAIO_SERVER_PATH=
 AC_ARG_WITH(ophidiaio_server_path,
