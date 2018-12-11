@@ -31,6 +31,10 @@ endif
 #define set of libraries commonly called together
 BASIC_LIB = -L.. -lophidiadb -loph_task_parser -loph_idstring -loph_json -ldebug -lhashtbl -loph_pid
 
+if HAVE_MONGO
+driver_CFLAGS += ${MONGOC_CFLAGS} -DOPH_ODB_MNG
+endif
+
 driverdir=${DRIVER_PATH}
 DRIVER=
 

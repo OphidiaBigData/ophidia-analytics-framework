@@ -57,7 +57,9 @@
 #define OPH_CONF_MNGDB_PORT	"MNGDB_PORT"
 #define OPH_CONF_MNGDB_LOGIN	"MNGDB_LOGIN"
 #define OPH_CONF_MNGDB_PWD	"MNGDB_PWD"
-#define OPH_ODB_MNGDB_CONN	"mongodb://%s:%d"
+#define OPH_ODB_MNGDB_CONN	"mongodb://%s:%d?appname=%s"
+#define OPH_ODB_MNGDB_COLL_METADATAINSTANCE	"metadatainstance"
+#define OPH_ODB_MNGDB_COLL_MANAGE	"manage"
 #endif
 
 #define OPH_ODB_LOCK_ERROR 1213
@@ -152,6 +154,18 @@ int oph_odb_disconnect_from_ophidiadb(ophidiadb * oDB);
 int oph_odb_query_ophidiadb(ophidiadb * oDB, char *query);
 
 #ifdef OPH_ODB_MNG
+/**
+ * \brief Function to initilize OphidiaDB structure.
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_init_mongodb(ophidiadb * oDB);
+
+/**
+ * \brief Function to delete OphidiaDB and to free memory allocated in multi-thread environment.
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_free_mongodb(ophidiadb * oDB);
+
 /**
  * \brief Function to connect to the OphidiaDB. WARNING: Call this function before any other function or the system will crash
  * \param structure containing OphidiaDB parameters

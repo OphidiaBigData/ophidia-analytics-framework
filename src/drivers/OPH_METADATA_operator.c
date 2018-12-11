@@ -53,6 +53,7 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 				}
 
 				int idkey, idtype, iduser, idmetadatainstance;
+				char *oidmetadatainstance = NULL;
 				if (!handle->metadata_keys || !handle->metadata_value) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
@@ -100,20 +101,32 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 					//insert into medatainstance table
 					if (oph_odb_meta_insert_into_metadatainstance_table
 					    (oDB, handle->id_datacube_input, idkey, idtype, handle->metadata_keys[i], handle->variable,
-					     handle->metadata_keys_num > 1 ? metadata_values[i] : handle->metadata_value, &idmetadatainstance)) {
+					     handle->metadata_keys_num > 1 ? metadata_values[i] : handle->metadata_value, &idmetadatainstance, &oidmetadatainstance)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
 						if (handle->metadata_keys_num > 1)
 							oph_tp_free_multiple_value_param_list(metadata_values, metadata_values_num);
+						if (oidmetadatainstance) {
+							free(oidmetadatainstance);
+							oidmetadatainstance = NULL;
+						}
 						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 					}
 					//insert into manage table
-					if (oph_odb_meta_insert_into_manage_table(oDB, idmetadatainstance, iduser)) {
+					if (oph_odb_meta_insert_into_manage_table(oDB, idmetadatainstance, iduser, oidmetadatainstance)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
 						if (handle->metadata_keys_num > 1)
 							oph_tp_free_multiple_value_param_list(metadata_values, metadata_values_num);
+						if (oidmetadatainstance) {
+							free(oidmetadatainstance);
+							oidmetadatainstance = NULL;
+						}
 						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+					}
+					if (oidmetadatainstance) {
+						free(oidmetadatainstance);
+						oidmetadatainstance = NULL;
 					}
 				}
 
@@ -259,6 +272,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	oph_odb_init_ophidiadb(oDB);
+#ifdef OPH_ODB_MNG
+	oph_odb_init_mongodb(oDB);
+#endif
 
 	if (oph_odb_read_ophidiadb_config_file(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
@@ -267,6 +283,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 
 	if (oph_odb_connect_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_OPHIDIADB_CONNECTION_ERROR_NO_CONTAINER);
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+	if (oph_odb_connect_to_mongodb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_OPHIDIADB_CONNECTION_ERROR_NO_CONTAINER);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -836,7 +857,14 @@ int env_unset(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	oph_odb_disconnect_from_ophidiadb(&((OPH_METADATA_operator_handle *) handle->operator_handle)->oDB);
+#ifdef OPH_ODB_MNG
+	oph_odb_disconnect_from_mongodb(&((OPH_METADATA_operator_handle *) handle->operator_handle)->oDB);
+#endif
+
 	oph_odb_free_ophidiadb(&((OPH_METADATA_operator_handle *) handle->operator_handle)->oDB);
+#ifdef OPH_ODB_MNG
+	oph_odb_free_mongodb(&((OPH_METADATA_operator_handle *) handle->operator_handle)->oDB);
+#endif
 
 	if (((OPH_METADATA_operator_handle *) handle->operator_handle)->metadata_id_str) {
 		free((char *) ((OPH_METADATA_operator_handle *) handle->operator_handle)->metadata_id_str);

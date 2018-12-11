@@ -391,17 +391,66 @@ int oph_odb_meta_retrieve_metadatatype_id(ophidiadb * oDB, char *metadatatype_na
 }
 
 int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_datacube, int id_metadatakey, int id_metadatatype, char *metadata_key, char *metadata_variable, char *metadata_value,
-						    int *last_insertd_id)
+						    int *last_insertd_id, char **last_inserted_oid)
 {
 	if (!oDB || !id_datacube || !id_metadatatype || !metadata_value || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+	*last_insertd_id = 0;
 	if (!id_metadatakey && !metadata_key) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+#ifdef OPH_ODB_MNG
+	if (!last_inserted_oid) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	*last_inserted_oid = NULL;
 
+	if (oph_odb_check_connection_to_mongodb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	mongoc_collection_t *collection = mongoc_client_get_collection(oDB->mng_conn, oDB->mng_name, OPH_ODB_MNGDB_COLL_METADATAINSTANCE);
+	if (!collection) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	bson_error_t error;
+	bson_oid_t oid;
+	bson_t *doc = bson_new();
+	bson_oid_init(&oid, NULL);
+	BSON_APPEND_OID(doc, "_id", &oid);
+
+	BSON_APPEND_INT32(doc, "iddatacube", id_datacube);
+	BSON_APPEND_INT32(doc, "idtype", id_metadatatype);
+	BSON_APPEND_UTF8(doc, "value", metadata_value);
+	BSON_APPEND_UTF8(doc, "label", metadata_key);
+	if (id_metadatakey)
+		BSON_APPEND_INT32(doc, "idkey", id_metadatakey);
+	if (metadata_variable)
+		BSON_APPEND_UTF8(doc, "variable", metadata_variable);
+
+	if (!mongoc_collection_insert(collection, MONGOC_INSERT_NONE, doc, NULL, &error)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new document into MongoDB: %s\n", error.message);
+		bson_destroy(doc);
+		mongoc_collection_destroy(collection);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	bson_destroy(doc);
+	mongoc_collection_destroy(collection);
+
+	*last_insertd_id = 0;
+
+	char str[25];
+	bson_oid_to_string(&oid, str);
+	*last_inserted_oid = strdup(str);
+#else
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
 		return OPH_ODB_MYSQL_ERROR;
@@ -446,11 +495,12 @@ int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_data
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted id\n");
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
+#endif
 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_insert_into_manage_table(ophidiadb * oDB, int id_metadatainstance, int id_user)
+int oph_odb_meta_insert_into_manage_table(ophidiadb * oDB, int id_metadatainstance, int id_user, char *oid_metadatainstance)
 {
 	if (!oDB || !id_user || !id_metadatainstance) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

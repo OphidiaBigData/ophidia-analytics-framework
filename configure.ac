@@ -440,8 +440,15 @@ AC_SUBST(MONGOC_CFLAGS)
 MONGOC_LIBS="$mongoc_lib_path"
 AC_SUBST(MONGOC_LIBS)
 
-have_mongo=yes
-AM_CONDITIONAL([HAVE_MONGO], [test "x$have_mongo" = "xyes"])
+mongodb="no"
+AC_ARG_ENABLE(mongodb,
+        [ --enable-mongodb
+			Enable MongoDB support],
+        [ mongodb="yes"
+			AC_MSG_NOTICE("MongoDB support enabled") ],
+        [ mongodb="no" ]
+)
+AM_CONDITIONAL([HAVE_MONGO], [test "x$mongodb" = "xyes"])
 
 ophidiaio_server_support=no
 OPHIDIAIO_SERVER_PATH=

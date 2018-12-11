@@ -120,6 +120,7 @@ int oph_odb_read_ophidiadb_config_file(ophidiadb * oDB)
 		} else if (!strncasecmp(argument, OPH_CONF_OPHDB_PORT, strlen(OPH_CONF_OPHDB_PORT))) {
 			oDB->server_port = (int) strtol(argument_value, NULL, 10);
 			free(argument_value);
+			argument_value = NULL;
 		} else if (!strncasecmp(argument, OPH_CONF_OPHDB_LOGIN, strlen(OPH_CONF_OPHDB_LOGIN))) {
 			oDB->username = argument_value;
 		} else if (!strncasecmp(argument, OPH_CONF_OPHDB_PWD, strlen(OPH_CONF_OPHDB_PWD))) {
@@ -132,6 +133,7 @@ int oph_odb_read_ophidiadb_config_file(ophidiadb * oDB)
 		} else if (!strncasecmp(argument, OPH_CONF_MNGDB_PORT, strlen(OPH_CONF_MNGDB_PORT))) {
 			oDB->mng_server_port = (int) strtol(argument_value, NULL, 10);
 			free(argument_value);
+			argument_value = NULL;
 		} else if (!strncasecmp(argument, OPH_CONF_MNGDB_LOGIN, strlen(OPH_CONF_MNGDB_LOGIN))) {
 			oDB->mng_username = argument_value;
 		} else if (!strncasecmp(argument, OPH_CONF_MNGDB_PWD, strlen(OPH_CONF_MNGDB_PWD))) {
@@ -139,8 +141,8 @@ int oph_odb_read_ophidiadb_config_file(ophidiadb * oDB)
 #endif
 		} else {
 			free(argument_value);
+			argument_value = NULL;
 		}
-
 		free(argument);
 	}
 
@@ -162,21 +164,18 @@ int oph_odb_init_ophidiadb(ophidiadb * oDB)
 	oDB->pwd = NULL;
 	oDB->conn = NULL;
 
-	if (mysql_library_init(0, NULL, NULL)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
-		return OPH_ODB_MYSQL_ERROR;
-	}
 #ifdef OPH_ODB_MNG
-
 	oDB->mng_name = NULL;
 	oDB->mng_hostname = NULL;
 	oDB->mng_username = NULL;
 	oDB->mng_pwd = NULL;
 	oDB->mng_conn = NULL;
-
-	mongoc_init();
-
 #endif
+
+	if (mysql_library_init(0, NULL, NULL)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
 
 	return OPH_ODB_SUCCESS;
 }
@@ -195,13 +194,11 @@ int oph_odb_init_ophidiadb_thread(ophidiadb * oDB)
 	oDB->conn = NULL;
 
 #ifdef OPH_ODB_MNG
-
 	oDB->mng_name = NULL;
 	oDB->mng_hostname = NULL;
 	oDB->mng_username = NULL;
 	oDB->mng_pwd = NULL;
 	oDB->mng_conn = NULL;
-
 #endif
 
 	return OPH_ODB_SUCCESS;
@@ -237,7 +234,6 @@ int oph_odb_free_ophidiadb(ophidiadb * oDB)
 		mysql_library_end();
 	}
 #ifdef OPH_ODB_MNG
-
 	if (oDB->mng_name) {
 		free(oDB->mng_name);
 		oDB->mng_name = NULL;
@@ -292,7 +288,6 @@ int oph_odb_free_ophidiadb_thread(ophidiadb * oDB)
 		oDB->conn = NULL;
 	}
 #ifdef OPH_ODB_MNG
-
 	if (oDB->mng_name) {
 		free(oDB->mng_name);
 		oDB->mng_name = NULL;
@@ -409,6 +404,18 @@ int oph_odb_query_ophidiadb(ophidiadb * oDB, char *query)
 }
 
 #ifdef OPH_ODB_MNG
+int oph_odb_init_mongodb(ophidiadb * oDB)
+{
+	mongoc_init();
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_free_mongodb(ophidiadb * oDB)
+{
+	mongoc_cleanup();
+	return OPH_ODB_SUCCESS;
+}
+
 int oph_odb_connect_to_mongodb(ophidiadb * oDB)
 {
 	if (!oDB) {
@@ -419,20 +426,18 @@ int oph_odb_connect_to_mongodb(ophidiadb * oDB)
 	oDB->mng_conn = NULL;
 
 	char uri_string[OPH_ODB_BUFFER_LEN];
-	snprintf(uri_string, OPH_ODB_BUFFER_LEN, OPH_ODB_MNGDB_CONN, oDB->mng_hostname, oDB->server_port);
+	snprintf(uri_string, OPH_ODB_BUFFER_LEN, OPH_ODB_MNGDB_CONN, oDB->mng_hostname, oDB->mng_server_port, "ophidia");
 
 	mongoc_uri_t *uri = mongoc_uri_new(uri_string);
 	if (!uri) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong connection URI: %s\n", uri_string);
-		oph_odb_disconnect_from_mongodb(oDB);
 		return OPH_ODB_MONGODB_ERROR;
 	}
 
 	/* Connect to database */
-	if ((oDB->mng_conn = mongoc_client_new_from_uri(uri))) {
+	if (!(oDB->mng_conn = mongoc_client_new_from_uri(uri))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MongoDB connection error.\n");
 		mongoc_uri_destroy(uri);
-		oph_odb_disconnect_from_mongodb(oDB);
 		return OPH_ODB_MONGODB_ERROR;
 	}
 
@@ -448,11 +453,26 @@ int oph_odb_check_connection_to_mongodb(ophidiadb * oDB)
 		return OPH_ODB_NULL_PARAM;
 	}
 
-	if (!(oDB->mng_conn)) {
+	if (!oDB->mng_conn || !oDB->mng_name) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Connection was somehow closed.\n");
 		return OPH_ODB_MONGODB_ERROR;
 	}
-// TODO
+
+	bson_error_t error;
+	bson_t *command = BCON_NEW("ping", BCON_INT32(1)), reply;
+	int retval = mongoc_client_command_simple(oDB->mng_conn, oDB->mng_name, command, NULL, &reply, &error);
+	if (!retval) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Connection to '%s' was somehow closed: %s\n", oDB->mng_name, error.message);
+		bson_destroy(command);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	char *str = bson_as_json(&reply, NULL);
+	printf("%s\n", str);
+
+	bson_destroy(&reply);
+	bson_destroy(command);
+	bson_free(str);
 
 	return OPH_ODB_SUCCESS;
 }
