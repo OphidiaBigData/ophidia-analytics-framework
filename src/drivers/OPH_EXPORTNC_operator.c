@@ -865,8 +865,6 @@ int task_execute(oph_operator_struct * handle)
 	char operation[OPH_COMMON_BUFFER_LEN];
 	int m, l;
 
-	MYSQL_RES *read_result = NULL;
-	MYSQL_ROW row;
 	char *mvariable, *mkey, *mtype, *mvalue;
 	int varidp;
 
@@ -1258,8 +1256,11 @@ int task_execute(oph_operator_struct * handle)
 
 				if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->export_metadata)	// Add metadata
 				{
+					char **read_result = NULL;
+					int num_rows, num_fields = 8, i, j, k;
+
 					if (oph_odb_meta_find_complete_metadata_list
-					    (&oDB_slave, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0, NULL, NULL, NULL, NULL, &read_result)) {
+					    (&oDB_slave, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0, NULL, NULL, NULL, NULL, &read_result, &num_rows)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 						oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
@@ -1278,11 +1279,11 @@ int task_execute(oph_operator_struct * handle)
 						free(dim_rows);
 						return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 					}
-					while ((row = mysql_fetch_row(read_result))) {
-						mvariable = row[1];
-						mkey = row[2];
-						mtype = row[3];
-						mvalue = row[4];
+					for (j = 0; j < num_rows; ++j) {
+						mvariable = read_result[j * num_fields + 1];
+						mkey = read_result[j * num_fields + 2];
+						mtype = read_result[j * num_fields + 3];
+						mvalue = read_result[j * num_fields + 4];
 						retval = NC_EBADTYPE;
 						if (mvariable && ((retval = nc_inq_varid(ncid, mvariable, &varidp)))) {
 							if (retval == NC_ENOTVAR)
@@ -1312,7 +1313,15 @@ int task_execute(oph_operator_struct * handle)
 							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable ? mvariable : "", mkey, nc_strerror(retval));
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable ? mvariable : "", mkey,
 								nc_strerror(retval));
-							mysql_free_result(read_result);
+							if (read_result) {
+								for (i = 0; i < num_fields; i++)
+									for (j = 0; j < num_rows; ++j) {
+										k = j * num_fields + i;
+										if (read_result[k])
+											free(read_result[k]);
+									}
+								free(read_result);
+							}
 							oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
 							oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 							oph_odb_stge_free_fragment_list(&frags);
@@ -1330,7 +1339,15 @@ int task_execute(oph_operator_struct * handle)
 							return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 						}
 					}
-					mysql_free_result(read_result);
+					if (read_result) {
+						for (i = 0; i < num_fields; i++)
+							for (j = 0; j < num_rows; ++j) {
+								k = j * num_fields + i;
+								if (read_result[k])
+									free(read_result[k]);
+							}
+						free(read_result);
+					}
 				}
 
 				for (m = 0; m < num_of_dims; m++) {

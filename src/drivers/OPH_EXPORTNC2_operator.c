@@ -1284,20 +1284,21 @@ int task_execute(oph_operator_struct * handle)
 				}
 			} else	// Master
 			{
-				MYSQL_RES *read_result = NULL;
-				MYSQL_ROW row;
+				char **read_result = NULL;
+				int num_rows, num_fields = 8, i, j, k;
+
 				if (oph_odb_meta_find_complete_metadata_list
 				    (&((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->oDB, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0, NULL,
-				     NULL, NULL, NULL, &read_result)) {
+				     NULL, NULL, NULL, &read_result, &num_rows)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 					retval = NC_EBADTYPE;
 				}
-				while (!retval && ((row = mysql_fetch_row(read_result)))) {
-					mvariable = row[1];
-					mkey = row[2];
-					mtype = row[3];
-					mvalue = row[4];
+				for (j = 0; !retval && (j < num_rows); ++j) {
+					mvariable = read_result[j * num_fields + 1];
+					mkey = read_result[j * num_fields + 2];
+					mtype = read_result[j * num_fields + 3];
+					mvalue = read_result[j * num_fields + 4];
 
 					mbuffer = 0;
 					buffer = (char *) malloc((mvariable ? strlen(mvariable) : 0) + strlen(mkey) + strlen(mtype) + strlen(mvalue) + 4);
@@ -1352,7 +1353,15 @@ int task_execute(oph_operator_struct * handle)
 					if (retval)
 						break;
 				}
-				mysql_free_result(read_result);
+				if (read_result) {
+					for (i = 0; i < num_fields; i++)
+						for (j = 0; j < num_rows; ++j) {
+							k = j * num_fields + i;
+							if (read_result[k])
+								free(read_result[k]);
+						}
+					free(read_result);
+				}
 
 				mbuffer = 0;
 				MPI_Bcast(&mbuffer, 1, MPI_INT, 0, scomm);	// Null buffer size => end transmission
@@ -1969,8 +1978,6 @@ int task_reduce(oph_operator_struct * handle)
 
 		char *mvariable = NULL, *mkey = NULL, *mtype, *mvalue;
 		int retval, ncid, cmode = NC_WRITE, varidp;
-		MYSQL_RES *read_result = NULL;
-		MYSQL_ROW row;
 
 		if ((retval = nc_open(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, cmode, &ncid))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, nc_strerror(retval));
@@ -1985,19 +1992,22 @@ int task_reduce(oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 
+		char **read_result = NULL;
+		int num_rows, num_fields = 8, i, j, k;
+
 		if (oph_odb_meta_find_complete_metadata_list
 		    (&((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->oDB, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0, NULL, NULL, NULL, NULL,
-		     &read_result)) {
+		     &read_result, &num_rows)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 			retval = NC_EBADTYPE;
 		}
 
-		while (!retval && ((row = mysql_fetch_row(read_result)))) {
-			mvariable = row[1];
-			mkey = row[2];
-			mtype = row[3];
-			mvalue = row[4];
+		for (j = 0; !retval && (j < num_rows); ++j) {
+			mvariable = read_result[j * num_fields + 1];
+			mkey = read_result[j * num_fields + 2];
+			mtype = read_result[j * num_fields + 3];
+			mvalue = read_result[j * num_fields + 4];
 			retval = NC_EBADTYPE;
 			if (!strcmp(mkey, OPH_EXPORTNC_FILLVALUE)) {	// Skip OPH_EXPORTNC_FILLVALUE in this mode
 				pmesg(LOG_WARNING, __FILE__, __LINE__, "Attribute '%s' cannot be set with this mode... skipping.\n", OPH_EXPORTNC_FILLVALUE);
@@ -2034,7 +2044,15 @@ int task_reduce(oph_operator_struct * handle)
 			}
 		}
 
-		mysql_free_result(read_result);
+		if (read_result) {
+			for (i = 0; i < num_fields; i++)
+				for (j = 0; j < num_rows; ++j) {
+					k = j * num_fields + i;
+					if (read_result[k])
+						free(read_result[k]);
+				}
+			free(read_result);
+		}
 		nc_close(ncid);
 
 		if (retval)

@@ -143,7 +143,7 @@ int oph_odb_meta_insert_into_manage_table(ophidiadb * oDB, int id_metadatainstan
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, char *id_metadatainstance, char *metadata_variable,
-					     char *metadata_type, char *metadata_value, MYSQL_RES ** metadata_list);
+					     char *metadata_type, char *metadata_value, char ***metadata_list, int *num_rows);
 
 /**
  * \brief Function to update the metadatainstance table

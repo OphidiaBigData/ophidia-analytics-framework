@@ -1324,12 +1324,14 @@ int task_execute(oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 		//LOAD METADATA
-		int ii = 0, nn = 0;
+		int ii, nn = 0;
 		char **mvariable = NULL, **mkey = NULL, **mvalue = NULL;
 		if (((OPH_PUBLISH_operator_handle *) handle->operator_handle)->publish_metadata) {
-			MYSQL_RES *read_result = NULL;
-			MYSQL_ROW row;
-			if (oph_odb_meta_find_complete_metadata_list(&oDB_slave, datacube_id, NULL, 0, NULL, NULL, NULL, NULL, &read_result)) {
+
+			char **read_result = NULL;
+			int num_fields = 8, i, j, k;
+
+			if (oph_odb_meta_find_complete_metadata_list(&oDB_slave, datacube_id, NULL, 0, NULL, NULL, NULL, NULL, &read_result, &nn)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to load metadata.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_READ_METADATA_ERROR);
 				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -1349,19 +1351,25 @@ int task_execute(oph_operator_struct * handle)
 				oph_odb_free_ophidiadb(&oDB_slave);
 				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
-			nn = mysql_num_rows(read_result);
 			if (nn) {
 				mvariable = (char **) malloc(nn * sizeof(char *));
 				mkey = (char **) malloc(nn * sizeof(char *));
 				mvalue = (char **) malloc(nn * sizeof(char *));
-				while ((row = mysql_fetch_row(read_result))) {
-					mvariable[ii] = row[1] ? strdup(row[1]) : NULL;
-					mkey[ii] = row[2] ? strdup(row[2]) : NULL;
-					mvalue[ii] = row[4] ? strdup(row[4]) : NULL;
-					ii++;
+				for (j = 0; j < nn; ++j) {
+					mvariable[j] = read_result[j * num_fields + 1] ? strdup(read_result[j * num_fields + 1]) : NULL;
+					mkey[j] = read_result[j * num_fields + 2] ? strdup(read_result[j * num_fields + 2]) : NULL;
+					mvalue[j] = read_result[j * num_fields + 4] ? strdup(read_result[j * num_fields + 4]) : NULL;
 				}
 			}
-			mysql_free_result(read_result);
+			if (read_result) {
+				for (i = 0; i < num_fields; i++)
+					for (j = 0; j < nn; ++j) {
+						k = j * num_fields + i;
+						if (read_result[k])
+							free(read_result[k]);
+					}
+				free(read_result);
+			}
 		}
 		oph_odb_free_ophidiadb(&oDB_slave);
 
@@ -1853,30 +1861,38 @@ int task_execute(oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 		//LOAD METADATA
-		int ii = 0, nn = 0;
+		int ii, nn = 0;
 		char **mvariable = NULL, **mkey = NULL, **mvalue = NULL;
 		if (((OPH_PUBLISH_operator_handle *) handle->operator_handle)->publish_metadata) {
-			MYSQL_RES *read_result = NULL;
-			MYSQL_ROW row;
-			if (oph_odb_meta_find_complete_metadata_list(&oDB_slave, datacube_id, NULL, 0, NULL, NULL, NULL, NULL, &read_result)) {
+
+			char **read_result = NULL;
+			int num_fields = 8, i, j, k;
+
+			if (oph_odb_meta_find_complete_metadata_list(&oDB_slave, datacube_id, NULL, 0, NULL, NULL, NULL, NULL, &read_result, &nn)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to load metadata.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_READ_METADATA_ERROR);
 				oph_odb_free_ophidiadb(&oDB_slave);
 				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
-			nn = mysql_num_rows(read_result);
 			if (nn) {
 				mvariable = (char **) malloc(nn * sizeof(char *));
 				mkey = (char **) malloc(nn * sizeof(char *));
 				mvalue = (char **) malloc(nn * sizeof(char *));
-				while ((row = mysql_fetch_row(read_result))) {
-					mvariable[ii] = row[1] ? strdup(row[1]) : NULL;
-					mkey[ii] = row[2] ? strdup(row[2]) : NULL;
-					mvalue[ii] = row[4] ? strdup(row[4]) : NULL;
-					ii++;
+				for (j = 0; j < nn; ++j) {
+					mvariable[j] = read_result[j * num_fields + 1] ? strdup(read_result[j * num_fields + 1]) : NULL;
+					mkey[j] = read_result[j * num_fields + 2] ? strdup(read_result[j * num_fields + 2]) : NULL;
+					mvalue[j] = read_result[j * num_fields + 4] ? strdup(read_result[j * num_fields + 4]) : NULL;
 				}
 			}
-			mysql_free_result(read_result);
+			if (read_result) {
+				for (i = 0; i < num_fields; i++)
+					for (j = 0; j < nn; ++j) {
+						k = j * num_fields + i;
+						if (read_result[k])
+							free(read_result[k]);
+					}
+				free(read_result);
+			}
 		}
 		oph_odb_free_ophidiadb(&oDB_slave);
 
