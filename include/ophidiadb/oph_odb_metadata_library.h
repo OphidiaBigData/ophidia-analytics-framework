@@ -117,7 +117,7 @@ int oph_odb_meta_retrieve_metadatatype_id(ophidiadb * oDB, char *metadatatype_na
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_datacube, int id_metadatakey, int id_metadatatype, char *metadata_key, char *metadata_variable, char *metadata_value,
-						    int *last_insertd_id, char **last_inserted_oid);
+						    int *last_insertd_id);
 
 /**
  * \brief Function to insert a new row in manage table
@@ -127,7 +127,7 @@ int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_data
  * \param last_insertd_id Id of the insterted manage row
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_meta_insert_into_manage_table(ophidiadb * oDB, int id_metadatainstance, int id_user, char *oid_metadatainstance);
+int oph_odb_meta_insert_into_manage_table(ophidiadb * oDB, int id_metadatainstance, int id_user);
 
 /**
  * \brief Function to retrieve list of all metadata information

@@ -57,7 +57,7 @@
 #define OPH_CONF_MNGDB_PORT	"MNGDB_PORT"
 #define OPH_CONF_MNGDB_LOGIN	"MNGDB_LOGIN"
 #define OPH_CONF_MNGDB_PWD	"MNGDB_PWD"
-#define OPH_ODB_MNGDB_CONN	"mongodb://%s:%d?appname=%s"
+#define OPH_ODB_MNGDB_CONN	"mongodb://%s:%d/?appname=%s"
 #define OPH_ODB_MNGDB_COLL_METADATAINSTANCE	"metadatainstance"
 #define OPH_ODB_MNGDB_COLL_MANAGE	"manage"
 #endif

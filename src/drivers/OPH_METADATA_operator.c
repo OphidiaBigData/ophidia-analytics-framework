@@ -53,7 +53,6 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 				}
 
 				int idkey, idtype, iduser, idmetadatainstance;
-				char *oidmetadatainstance = NULL;
 				if (!handle->metadata_keys || !handle->metadata_value) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
@@ -101,32 +100,20 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 					//insert into medatainstance table
 					if (oph_odb_meta_insert_into_metadatainstance_table
 					    (oDB, handle->id_datacube_input, idkey, idtype, handle->metadata_keys[i], handle->variable,
-					     handle->metadata_keys_num > 1 ? metadata_values[i] : handle->metadata_value, &idmetadatainstance, &oidmetadatainstance)) {
+					     handle->metadata_keys_num > 1 ? metadata_values[i] : handle->metadata_value, &idmetadatainstance)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
 						if (handle->metadata_keys_num > 1)
 							oph_tp_free_multiple_value_param_list(metadata_values, metadata_values_num);
-						if (oidmetadatainstance) {
-							free(oidmetadatainstance);
-							oidmetadatainstance = NULL;
-						}
 						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 					}
 					//insert into manage table
-					if (oph_odb_meta_insert_into_manage_table(oDB, idmetadatainstance, iduser, oidmetadatainstance)) {
+					if (oph_odb_meta_insert_into_manage_table(oDB, idmetadatainstance, iduser)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
 						if (handle->metadata_keys_num > 1)
 							oph_tp_free_multiple_value_param_list(metadata_values, metadata_values_num);
-						if (oidmetadatainstance) {
-							free(oidmetadatainstance);
-							oidmetadatainstance = NULL;
-						}
 						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					if (oidmetadatainstance) {
-						free(oidmetadatainstance);
-						oidmetadatainstance = NULL;
 					}
 				}
 
@@ -170,17 +157,17 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_METADATAINSTANCE_FORCE_ERROR, handle->metadata_id);
 					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 				}
-				//Retrieve user id
-				if (oph_odb_user_retrieve_user_id(oDB, handle->user, &iduser)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_RETRIEVE_USER_ID_ERROR, handle->user);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_USER_ID_ERROR, handle->user);
-					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
-				}
 				//update medatainstance table
 				if (oph_odb_meta_update_metadatainstance_table(oDB, handle->metadata_id, handle->id_datacube_input, handle->metadata_value, handle->force)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
 					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+				}
+				//Retrieve user id
+				if (oph_odb_user_retrieve_user_id(oDB, handle->user, &iduser)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_RETRIEVE_USER_ID_ERROR, handle->user);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_USER_ID_ERROR, handle->user);
+					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 				}
 				//insert into manage table
 				if (oph_odb_meta_insert_into_manage_table(oDB, handle->metadata_id, iduser)) {

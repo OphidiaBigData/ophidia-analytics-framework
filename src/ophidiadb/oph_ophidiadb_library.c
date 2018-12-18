@@ -467,12 +467,8 @@ int oph_odb_check_connection_to_mongodb(ophidiadb * oDB)
 		return OPH_ODB_MONGODB_ERROR;
 	}
 
-	char *str = bson_as_json(&reply, NULL);
-	printf("%s\n", str);
-
-	bson_destroy(&reply);
 	bson_destroy(command);
-	bson_free(str);
+	bson_destroy(&reply);
 
 	return OPH_ODB_SUCCESS;
 }

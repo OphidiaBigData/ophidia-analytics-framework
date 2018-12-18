@@ -418,7 +418,7 @@ AC_SUBST(JANSON_LIBS)
 JANSSON_LIBDIR=`pkg-config --variable=libdir jansson`
 AC_SUBST(JANSSON_LIBDIR)
 
-PKG_CHECK_MODULES(MONGOC, libmongoc-1.0 >= 1.3.6)
+PKG_CHECK_MODULES(MONGOC, libmongoc-1.0 >= 1.13.0)
 AC_ARG_WITH(mongoc_header_path,
 	[  --with-mongoc-header-path=PATH	Location of MongoDB C driver includes directory],
 	[
