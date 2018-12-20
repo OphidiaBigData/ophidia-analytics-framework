@@ -184,20 +184,27 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		//Only master process has to initialize and open connection to management OphidiaDB
 		ophidiadb *oDB = &((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->oDB;
 		oph_odb_init_ophidiadb(oDB);
-
+#ifdef OPH_ODB_MNG
+		oph_odb_init_mongodb(oDB);
+#endif
 		if (oph_odb_read_ophidiadb_config_file(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_OPHIDIADB_CONFIGURATION_FILE);
 
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-
 		if (oph_odb_connect_to_ophidiadb(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_OPHIDIADB_CONNECTION_ERROR);
-
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
+#ifdef OPH_ODB_MNG
+		if (oph_odb_connect_to_mongodb(oDB)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_OPHIDIADB_CONNECTION_ERROR);
+			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+		}
+#endif
 		//Check if datacube exists (by ID container and datacube)
 		int exists = 0;
 		int status = 0;
@@ -825,19 +832,26 @@ int task_execute(oph_operator_struct * handle)
 		//Each process has to be connected to a slave ophidiadb
 		ophidiadb oDB_slave;
 		oph_odb_init_ophidiadb(&oDB_slave);
-
+#ifdef OPH_ODB_MNG
+		oph_odb_init_mongodb(&oDB_slave);
+#endif
 		if (oph_odb_read_ophidiadb_config_file(&oDB_slave)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_OPHIDIADB_CONFIGURATION_FILE);
-
+			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			goto __OPH_EXIT_2;
 		}
-
 		if (oph_odb_connect_to_ophidiadb(&oDB_slave)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_OPHIDIADB_CONNECTION_ERROR);
 			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			goto __OPH_EXIT_2;
 		}
@@ -849,11 +863,17 @@ int task_execute(oph_operator_struct * handle)
 			oph_odb_stge_free_db_list(&dbs);
 			oph_odb_stge_free_dbms_list(&dbmss);
 			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			goto __OPH_EXIT_2;
 		}
 
 		oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&oDB_slave);
+#endif
 
 		int n;
 		int frag_count = 0;
@@ -2082,7 +2102,13 @@ int env_unset(oph_operator_struct * handle)
 	//Only master process has to close and release connection to management OphidiaDB
 	if (handle->proc_rank == 0) {
 		oph_odb_disconnect_from_ophidiadb(&((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->oDB);
+#ifdef OPH_ODB_MNG
+		oph_odb_disconnect_from_mongodb(&((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->oDB);
+#endif
 		oph_odb_free_ophidiadb(&((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->oDB);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->oDB);
+#endif
 	}
 	if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path) {
 		free((char *) ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path);

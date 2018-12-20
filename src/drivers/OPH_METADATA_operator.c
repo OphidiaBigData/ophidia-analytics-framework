@@ -278,11 +278,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_OPHIDIADB_CONNECTION_ERROR_NO_CONTAINER);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
+#ifdef OPH_ODB_MNG
 	if (oph_odb_connect_to_mongodb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_OPHIDIADB_CONNECTION_ERROR_NO_CONTAINER);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
+#endif
 	//3 - Fill struct with the correct data
 
 	char *value;
