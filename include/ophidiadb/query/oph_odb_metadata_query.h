@@ -50,6 +50,9 @@
 #ifdef OPH_ODB_MNG
 #define MONGODB_QUERY_META_CHECK_VOCABULARY			"SELECT idvocabulary FROM metadatakey WHERE idvocabulary IS NOT NULL AND idkey IN (%s);"
 #define MONGODB_QUERY_META_GET_TYPE					"SELECT idtype FROM metadatatype WHERE name LIKE '%s';"
+#define MONGODB_QUERY_META_GET_TYPE_BY_ID			"SELECT name FROM metadatatype WHERE idtype = %d;"
+#define MONGODB_QUERY_META_GET_USER_BY_ID			"SELECT username FROM user WHERE iduser = %d;"
+#define MONGODB_QUERY_META_GET_VOCABULARY_BY_IDKEY	"SELECT name FROM metadatakey LEFT JOIN vocabulary ON metadatakey.idvocabulary=vocabulary.idvocabulary WHERE idkey = %d;"
 #endif
 
 #endif				/* __OPH_ODB_META_QUERY_H__ */

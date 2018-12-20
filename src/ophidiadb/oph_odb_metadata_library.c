@@ -646,8 +646,9 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
 		return OPH_ODB_MONGODB_ERROR;
 	}
+	// Query to evaluate number of element to be retrieved
 
-	bson_t *doc = bson_new();
+	bson_t *doc = bson_new(), doc_and, doc_item, *doc_tmp = NULL;
 	if (!doc) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
 		return OPH_ODB_MONGODB_ERROR;
@@ -662,7 +663,6 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 
 		char key_filter[MYSQL_BUFLEN];
 
-		bson_t doc_and, doc_item;
 		BSON_APPEND_ARRAY_BEGIN(doc, "$and", &doc_and);
 
 		BSON_APPEND_DOCUMENT_BEGIN(&doc_and, "iddatacube", &doc_item);
@@ -756,6 +756,7 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 	mongoc_collection_t *collection = mongoc_client_get_collection(oDB->mng_conn, oDB->mng_name, OPH_ODB_MNGDB_COLL_METADATAINSTANCE);
 	if (!collection) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		bson_destroy(doc);
 		return OPH_ODB_MONGODB_ERROR;
 	}
 
@@ -767,8 +768,9 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 		mongoc_collection_destroy(collection);
 		return OPH_ODB_MONGODB_ERROR;
 	}
+	bson_destroy(doc);
+
 	if (!*num_rows) {
-		bson_destroy(doc);
 		mongoc_collection_destroy(collection);
 		return OPH_ODB_SUCCESS;
 	}
@@ -776,64 +778,315 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 	*metadata_list = (char **) calloc(*num_rows * num_fields, sizeof(char *));
 	if (!*metadata_list) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to load data.\n");
+		mongoc_collection_destroy(collection);
+		return OPH_ODB_MEMORY_ERROR;
+	}
+	// Actual query to retrieve metadata
+
+	doc = bson_new();
+	if (!doc) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
+		mongoc_collection_destroy(collection);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	bson_t doc_rules, doc_rule, doc_parameter;
+	BSON_APPEND_ARRAY_BEGIN(doc, "pipeline", &doc_rules);
+
+	BSON_APPEND_DOCUMENT_BEGIN(&doc_rules, "match rule", &doc_rule);
+
+	BSON_APPEND_DOCUMENT_BEGIN(&doc_rule, "$match", &doc_parameter);
+
+	BSON_APPEND_ARRAY_BEGIN(&doc_parameter, "$and", &doc_and);
+
+	BSON_APPEND_DOCUMENT_BEGIN(&doc_and, "iddatacube", &doc_item);
+	BSON_APPEND_INT32(&doc_item, "iddatacube", id_datacube);
+	bson_append_document_end(&doc_and, &doc_item);
+
+	if (id_metadatainstance) {
+
+		BSON_APPEND_DOCUMENT_BEGIN(&doc_and, "idmetadatainstance", &doc_item);
+		BSON_APPEND_INT32(&doc_item, "idmetadatainstance", id_datacube);
+		bson_append_document_end(&doc_and, &doc_item);
+
+	} else {
+
+		char key_filter[MYSQL_BUFLEN];
+
+		if (metadata_variable) {
+			snprintf(key_filter, MYSQL_BUFLEN, "/%s/", metadata_variable);	// Check regex
+			BSON_APPEND_DOCUMENT_BEGIN(&doc_and, "variable", &doc_item);
+			BSON_APPEND_REGEX(&doc_item, "variable", key_filter, NULL);
+			bson_append_document_end(&doc_and, &doc_item);
+		}
+
+		if (metadata_value && strcmp(metadata_value, "%")) {
+			snprintf(key_filter, MYSQL_BUFLEN, "/%s/", metadata_value);	// Check regex
+			BSON_APPEND_DOCUMENT_BEGIN(&doc_and, "value", &doc_item);
+			BSON_APPEND_REGEX(&doc_item, "value", key_filter, NULL);
+			bson_append_document_end(&doc_and, &doc_item);
+		}
+
+		if (metadata_type && strcmp(metadata_type, "%")) {
+
+			n = snprintf(query, MYSQL_BUFLEN, MONGODB_QUERY_META_GET_TYPE, metadata_type);
+			if (n >= MYSQL_BUFLEN) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+				bson_destroy(doc);
+				return OPH_ODB_STR_BUFF_OVERFLOW;
+			}
+			if (mysql_query(oDB->conn, query)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+				bson_destroy(doc);
+				return OPH_ODB_MYSQL_ERROR;
+			}
+
+			MYSQL_RES *res;
+			MYSQL_ROW row;
+			res = mysql_store_result(oDB->conn);
+			if (!mysql_num_rows(res)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "No row found by query\n");
+				bson_destroy(doc);
+				mysql_free_result(res);
+				return OPH_ODB_TOO_MANY_ROWS;
+			}
+			if (mysql_field_count(oDB->conn) != 1) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+				bson_destroy(doc);
+				mysql_free_result(res);
+				return OPH_ODB_TOO_MANY_ROWS;
+			}
+
+			BSON_APPEND_DOCUMENT_BEGIN(&doc_and, "idtype", &doc_item);
+			int i = 0;
+			bson_t doc_or, doc_or_item;
+			char buf[16];
+			const char *key;
+			size_t keylen;
+			BSON_APPEND_ARRAY_BEGIN(&doc_item, "$or", &doc_or);
+			while ((row = mysql_fetch_row(res)) && row[0]) {
+				keylen = bson_uint32_to_string(i++, &key, buf, sizeof buf);
+				bson_append_document_begin(&doc_or, key, (int) keylen, &doc_or_item);
+				BSON_APPEND_INT32(&doc_or_item, "idtype", (int) strtol(row[0], NULL, 10));
+				bson_append_document_end(&doc_or, &doc_or_item);
+			}
+			bson_append_array_end(&doc_item, &doc_or);
+			bson_append_document_end(&doc_and, &doc_item);
+
+			mysql_free_result(res);
+		}
+
+		if (metadata_keys) {
+			BSON_APPEND_DOCUMENT_BEGIN(&doc_and, "label", &doc_item);
+			int i;
+			bson_t doc_or, doc_or_item;
+			char buf[16];
+			const char *key;
+			size_t keylen;
+			BSON_APPEND_ARRAY_BEGIN(&doc_item, "$or", &doc_or);
+			for (i = 0; i < metadata_keys_num; i++) {
+				keylen = bson_uint32_to_string(i, &key, buf, sizeof buf);
+				bson_append_document_begin(&doc_or, key, (int) keylen, &doc_or_item);
+				BSON_APPEND_UTF8(&doc_or_item, "label", metadata_keys[i]);
+				bson_append_document_end(&doc_or, &doc_or_item);
+			}
+			bson_append_array_end(&doc_item, &doc_or);
+			bson_append_document_end(&doc_and, &doc_item);
+		}
+	}
+
+	bson_append_array_end(&doc_parameter, &doc_and);
+
+	bson_append_document_end(&doc_rule, &doc_parameter);
+
+	bson_append_document_end(&doc_rules, &doc_rule);
+
+	BSON_APPEND_DOCUMENT_BEGIN(&doc_rules, "lookup rule", &doc_rule);
+	doc_tmp = BCON_NEW("from", OPH_ODB_MNGDB_COLL_MANAGE, "localField", "idmetadatainstance", "foreignField", "idmetadatainstance", "as", OPH_ODB_MNGDB_COLL_MANAGE);
+	if (!doc_tmp) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
 		bson_destroy(doc);
 		mongoc_collection_destroy(collection);
 		return OPH_ODB_MEMORY_ERROR;
 	}
+	BSON_APPEND_DOCUMENT(&doc_rule, "$lookup", doc_tmp);
+	bson_append_document_end(&doc_rules, &doc_rule);
 
-	mongoc_cursor_t *cursor = mongoc_collection_find(collection, MONGOC_QUERY_NONE, 0, 0, 0, doc, NULL, NULL);
+	BSON_APPEND_DOCUMENT_BEGIN(&doc_rules, "replace rule", &doc_rule);
+	doc_tmp = BCON_NEW("newRoot", "{", "$mergeObjects", "[", "{", "$arrayElemAt", "[", "$manage", BCON_INT32(0), "]", "}", "$$ROOT", "]", "}");
+	if (!doc_tmp) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
+		bson_destroy(doc);
+		mongoc_collection_destroy(collection);
+		return OPH_ODB_MEMORY_ERROR;
+	}
+	BSON_APPEND_DOCUMENT(&doc_rule, "$replaceRoot", doc_tmp);
+	bson_append_document_end(&doc_rules, &doc_rule);
+
+	BSON_APPEND_DOCUMENT_BEGIN(&doc_rules, "group rule", &doc_rule);
+	doc_tmp =
+	    BCON_NEW("_id", "{", "idmetadatainstance", "$idmetadatainstance", "variable", "$variable", "idkey", "$idkey", "idtype", "$idtype", "label", "$label", "value", "$value", "iduser",
+		     "$iduser", "}", "last_modified", "{", "$max", "$managedate", "}");
+	if (!doc_tmp) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
+		bson_destroy(doc);
+		mongoc_collection_destroy(collection);
+		return OPH_ODB_MEMORY_ERROR;
+	}
+	BSON_APPEND_DOCUMENT(&doc_rule, "$group", doc_tmp);
+	bson_append_document_end(&doc_rules, &doc_rule);
+
+	bson_append_array_end(doc, &doc_rules);
+
+	mongoc_cursor_t *cursor = mongoc_collection_aggregate(collection, MONGOC_QUERY_NONE, doc, NULL, NULL);
 	if (!cursor) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find any document.\n");
 		bson_destroy(doc);
 		mongoc_collection_destroy(collection);
 		return OPH_ODB_MONGODB_ERROR;
 	}
+	bson_destroy(doc);
 
-	bson_iter_t iter;
+	bson_iter_t iter, sub_iter;
 	const bson_t *target;
 	int j = 0, k;
-	char buf[16];
+	char buf[64];
 	const char *key;
 	size_t keylen;
+	MYSQL_RES *res;
+	MYSQL_ROW row;
 	while (!mongoc_cursor_error(cursor, &error) && mongoc_cursor_more(cursor) && mongoc_cursor_next(cursor, &target)) {
-
-		_print_bson(target);
-		// "Id", "Variable", "Key", "Type", "Value", "Last_Modified", "User", "Vocabulary"
-
-		if (bson_iter_init(&iter, target)) {
-			k = num_fields * j++;
-			if (bson_iter_find(&iter, "idmetadatainstance") && BSON_ITER_HOLDS_INT32(&iter)) {
-				keylen = bson_uint32_to_string(bson_iter_int32(&iter), &key, buf, sizeof buf);
-				(*metadata_list)[k++] = key ? strdup(key) : NULL;
-			}
-			if (bson_iter_find(&iter, "variable") && BSON_ITER_HOLDS_UTF8(&iter)) {
-				(*metadata_list)[k++] = bson_iter_utf8(&iter, NULL) ? strdup(bson_iter_utf8(&iter, NULL)) : NULL;
-			}
-			if (bson_iter_find(&iter, "label") && BSON_ITER_HOLDS_UTF8(&iter)) {
-				(*metadata_list)[k++] = bson_iter_utf8(&iter, NULL) ? strdup(bson_iter_utf8(&iter, NULL)) : NULL;
-			}
-			if (bson_iter_find(&iter, "type") && BSON_ITER_HOLDS_UTF8(&iter)) {	// TODO
-				(*metadata_list)[k++] = bson_iter_utf8(&iter, NULL) ? strdup(bson_iter_utf8(&iter, NULL)) : NULL;
-			}
-			if (bson_iter_find(&iter, "value") && BSON_ITER_HOLDS_UTF8(&iter)) {
-				(*metadata_list)[k++] = bson_iter_utf8(&iter, NULL) ? strdup(bson_iter_utf8(&iter, NULL)) : NULL;
-			}
-			if (bson_iter_find(&iter, "last_modified") && BSON_ITER_HOLDS_UTF8(&iter)) {
-				(*metadata_list)[k++] = bson_iter_utf8(&iter, NULL) ? strdup(bson_iter_utf8(&iter, NULL)) : NULL;
-			}
-			if (bson_iter_find(&iter, "user") && BSON_ITER_HOLDS_UTF8(&iter)) {	// TODO
-				(*metadata_list)[k++] = bson_iter_utf8(&iter, NULL) ? strdup(bson_iter_utf8(&iter, NULL)) : NULL;
-			}
-			if (bson_iter_find(&iter, "vocabulary") && BSON_ITER_HOLDS_UTF8(&iter)) {	// TODO
-				(*metadata_list)[k++] = bson_iter_utf8(&iter, NULL) ? strdup(bson_iter_utf8(&iter, NULL)) : NULL;
-			}
+		k = num_fields * j;
+		if (bson_iter_init(&iter, target) && bson_iter_find_descendant(&iter, "_id.idmetadatainstance", &sub_iter) && BSON_ITER_HOLDS_INT32(&sub_iter)) {
+			keylen = bson_uint32_to_string(bson_iter_int32(&sub_iter), &key, buf, sizeof buf);
+			(*metadata_list)[k] = key ? strdup(key) : NULL;
 		}
+		k++;		// Go to the next field
+		if (bson_iter_init(&iter, target) && bson_iter_find_descendant(&iter, "_id.variable", &sub_iter) && BSON_ITER_HOLDS_UTF8(&sub_iter))
+			(*metadata_list)[k] = bson_iter_utf8(&sub_iter, NULL) ? strdup(bson_iter_utf8(&sub_iter, NULL)) : NULL;
+		k++;		// Go to the next field
+		if (bson_iter_init(&iter, target) && bson_iter_find_descendant(&iter, "_id.label", &sub_iter) && BSON_ITER_HOLDS_UTF8(&sub_iter))
+			(*metadata_list)[k] = bson_iter_utf8(&sub_iter, NULL) ? strdup(bson_iter_utf8(&sub_iter, NULL)) : NULL;
+		k++;		// Go to the next field
+		if (bson_iter_init(&iter, target) && bson_iter_find_descendant(&iter, "_id.idtype", &sub_iter) && BSON_ITER_HOLDS_INT32(&sub_iter)) {
+			n = snprintf(query, MYSQL_BUFLEN, MONGODB_QUERY_META_GET_TYPE_BY_ID, bson_iter_int32(&sub_iter));
+			if (n >= MYSQL_BUFLEN) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+				mongoc_cursor_destroy(cursor);
+				mongoc_collection_destroy(collection);
+				return OPH_ODB_STR_BUFF_OVERFLOW;
+			}
+			if (mysql_query(oDB->conn, query)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+				mongoc_cursor_destroy(cursor);
+				mongoc_collection_destroy(collection);
+				return OPH_ODB_MYSQL_ERROR;
+			}
+			res = mysql_store_result(oDB->conn);
+			if (mysql_num_rows(res) != 1) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "No row found by query\n");
+				mongoc_cursor_destroy(cursor);
+				mongoc_collection_destroy(collection);
+				mysql_free_result(res);
+				return OPH_ODB_TOO_MANY_ROWS;
+			}
+			if (mysql_field_count(oDB->conn) != 1) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+				mongoc_cursor_destroy(cursor);
+				mongoc_collection_destroy(collection);
+				mysql_free_result(res);
+				return OPH_ODB_TOO_MANY_ROWS;
+			}
+			if ((row = mysql_fetch_row(res)))
+				(*metadata_list)[k] = row[0] ? strdup(row[0]) : NULL;
+			mysql_free_result(res);
+		}
+		k++;		// Go to the next field
+		if (bson_iter_init(&iter, target) && bson_iter_find_descendant(&iter, "_id.value", &sub_iter) && BSON_ITER_HOLDS_UTF8(&sub_iter))
+			(*metadata_list)[k] = bson_iter_utf8(&sub_iter, NULL) ? strdup(bson_iter_utf8(&sub_iter, NULL)) : NULL;
+		k++;		// Go to the next field
+		if (bson_iter_init(&iter, target) && bson_iter_find(&iter, "last_modified") && BSON_ITER_HOLDS_DATE_TIME(&iter)) {
+			time_t timestep = bson_iter_date_time(&iter) / 1000;
+			struct tm timeinfo;
+			*buf = 0;
+			if (localtime_r(&timestep, &timeinfo))
+				strftime(buf, 64, "%Y-%m-%d %H:%M:%S", &timeinfo);
+			(*metadata_list)[k] = buf ? strdup(buf) : NULL;
+		}
+		k++;		// Go to the next field
+		if (bson_iter_init(&iter, target) && bson_iter_find_descendant(&iter, "_id.iduser", &sub_iter) && BSON_ITER_HOLDS_INT32(&sub_iter)) {
+			n = snprintf(query, MYSQL_BUFLEN, MONGODB_QUERY_META_GET_USER_BY_ID, bson_iter_int32(&sub_iter));
+			if (n >= MYSQL_BUFLEN) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+				mongoc_cursor_destroy(cursor);
+				mongoc_collection_destroy(collection);
+				return OPH_ODB_STR_BUFF_OVERFLOW;
+			}
+			if (mysql_query(oDB->conn, query)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+				mongoc_cursor_destroy(cursor);
+				mongoc_collection_destroy(collection);
+				return OPH_ODB_MYSQL_ERROR;
+			}
+			res = mysql_store_result(oDB->conn);
+			if (mysql_num_rows(res) != 1) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "No row found by query\n");
+				mongoc_cursor_destroy(cursor);
+				mongoc_collection_destroy(collection);
+				mysql_free_result(res);
+				return OPH_ODB_TOO_MANY_ROWS;
+			}
+			if (mysql_field_count(oDB->conn) != 1) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+				mongoc_cursor_destroy(cursor);
+				mongoc_collection_destroy(collection);
+				mysql_free_result(res);
+				return OPH_ODB_TOO_MANY_ROWS;
+			}
+			if ((row = mysql_fetch_row(res)))
+				(*metadata_list)[k] = row[0] ? strdup(row[0]) : NULL;
+			mysql_free_result(res);
+		}
+		k++;		// Go to the next field
+		if (bson_iter_init(&iter, target) && bson_iter_find_descendant(&iter, "_id.idkey", &sub_iter) && BSON_ITER_HOLDS_INT32(&sub_iter)) {
+			n = snprintf(query, MYSQL_BUFLEN, MONGODB_QUERY_META_GET_VOCABULARY_BY_IDKEY, bson_iter_int32(&sub_iter));
+			if (n >= MYSQL_BUFLEN) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+				mongoc_cursor_destroy(cursor);
+				mongoc_collection_destroy(collection);
+				return OPH_ODB_STR_BUFF_OVERFLOW;
+			}
+			if (mysql_query(oDB->conn, query)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+				mongoc_cursor_destroy(cursor);
+				mongoc_collection_destroy(collection);
+				return OPH_ODB_MYSQL_ERROR;
+			}
+			res = mysql_store_result(oDB->conn);
+			if (mysql_num_rows(res) != 1) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "No row found by query\n");
+				mongoc_cursor_destroy(cursor);
+				mongoc_collection_destroy(collection);
+				mysql_free_result(res);
+				return OPH_ODB_TOO_MANY_ROWS;
+			}
+			if (mysql_field_count(oDB->conn) != 1) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+				mongoc_cursor_destroy(cursor);
+				mongoc_collection_destroy(collection);
+				mysql_free_result(res);
+				return OPH_ODB_TOO_MANY_ROWS;
+			}
+			if ((row = mysql_fetch_row(res)))
+				(*metadata_list)[k] = row[0] ? strdup(row[0]) : NULL;
+			mysql_free_result(res);
+		}
+		j++;		// Go to the next row
 	}
 
 	if (mongoc_cursor_error(cursor, &error)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find elements in management table: %s.\n", error.message);
 		mongoc_cursor_destroy(cursor);
-		bson_destroy(doc);
 		mongoc_collection_destroy(collection);
 		return OPH_ODB_MONGODB_ERROR;
 	}
@@ -1023,8 +1276,6 @@ int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatai
 	BSON_APPEND_DOCUMENT_BEGIN(update, "$set", &doc_item);
 	BSON_APPEND_UTF8(&doc_item, "value", metadata_value);
 	bson_append_document_end(update, &doc_item);
-
-	_print_bson(update);
 
 	mongoc_collection_t *collection = mongoc_client_get_collection(oDB->mng_conn, oDB->mng_name, OPH_ODB_MNGDB_COLL_METADATAINSTANCE);
 	if (!collection) {
