@@ -87,6 +87,89 @@ int oph_odb_meta_insert_into_metadatainstance_manage_tables(ophidiadb * oDB, con
 	}
 	*last_insertd_id = 0;
 
+#ifdef OPH_ODB_MNG
+
+	if (oph_odb_check_connection_to_mongodb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	bson_oid_t oid;
+	bson_oid_init(&oid, NULL);
+	int id_metadatainstance = bson_oid_hash(&oid);
+	if (!id_metadatainstance) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get anew identifier.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	} else if (id_metadatainstance < 0)
+		id_metadatainstance = -id_metadatainstance;
+
+	bson_t *doc = bson_new();
+	if (!doc) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	BSON_APPEND_OID(doc, "_id", &oid);
+	BSON_APPEND_INT32(doc, "idmetadatainstance", id_metadatainstance);
+	BSON_APPEND_INT32(doc, "iddatacube", id_datacube);
+	BSON_APPEND_INT32(doc, "idtype", id_metadatatype);
+	BSON_APPEND_UTF8(doc, "value", value);
+	BSON_APPEND_UTF8(doc, "label", new_metadatakey);
+	if (id_metadatakey > 0)
+		BSON_APPEND_INT32(doc, "idkey", id_metadatakey);
+	if (new_metadatakey_variable)
+		BSON_APPEND_UTF8(doc, "variable", new_metadatakey_variable);
+
+	bson_error_t error;
+	mongoc_collection_t *collection = mongoc_client_get_collection(oDB->mng_conn, oDB->mng_name, OPH_ODB_MNGDB_COLL_METADATAINSTANCE);
+	if (!collection) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
+	if (!mongoc_collection_insert(collection, MONGOC_INSERT_NONE, doc, NULL, &error)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new document into MongoDB: %s\n", error.message);
+		bson_destroy(doc);
+		mongoc_collection_destroy(collection);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	bson_destroy(doc);
+	mongoc_collection_destroy(collection);
+
+	*last_insertd_id = id_metadatainstance;
+
+	doc = bson_new();
+	if (!doc) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	unsigned long long millisecondsSinceEpoch = (unsigned long long) (tv.tv_sec) * 1000 + (unsigned long long) (tv.tv_usec) / 1000;
+
+	BSON_APPEND_INT32(doc, "idmetadatainstance", id_metadatainstance);
+	BSON_APPEND_INT32(doc, "iduser", id_user);
+	BSON_APPEND_DATE_TIME(doc, "managedate", millisecondsSinceEpoch);
+
+	collection = mongoc_client_get_collection(oDB->mng_conn, oDB->mng_name, OPH_ODB_MNGDB_COLL_MANAGE);
+	if (!collection) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		bson_destroy(doc);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+	if (!mongoc_collection_insert(collection, MONGOC_INSERT_NONE, doc, NULL, &error)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new document into MongoDB: %s\n", error.message);
+		bson_destroy(doc);
+		mongoc_collection_destroy(collection);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	bson_destroy(doc);
+	mongoc_collection_destroy(collection);
+
+#else
+
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
 		return OPH_ODB_MYSQL_ERROR;
@@ -144,6 +227,7 @@ int oph_odb_meta_insert_into_metadatainstance_manage_tables(ophidiadb * oDB, con
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
+#endif
 
 	return OPH_ODB_SUCCESS;
 }
@@ -591,6 +675,7 @@ int oph_odb_meta_insert_into_manage_table(ophidiadb * oDB, int id_metadatainstan
 	mongoc_collection_t *collection = mongoc_client_get_collection(oDB->mng_conn, oDB->mng_name, OPH_ODB_MNGDB_COLL_MANAGE);
 	if (!collection) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		bson_destroy(doc);
 		return OPH_ODB_MONGODB_ERROR;
 	}
 	if (!mongoc_collection_insert(collection, MONGOC_INSERT_NONE, doc, NULL, &error)) {

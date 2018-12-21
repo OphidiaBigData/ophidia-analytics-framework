@@ -268,7 +268,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		//Only master process has to initialize and open connection to management OphidiaDB
 		ophidiadb *oDB = &((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->oDB;
 		oph_odb_init_ophidiadb(oDB);
-
+#ifdef OPH_ODB_MNG
+		oph_odb_init_mongodb(oDB);
+#endif
 		//Check if datacube exists (by ID container and datacube)
 		int exists = 0;
 		int status = 0;
@@ -286,6 +288,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MERGECUBES_OPHIDIADB_CONNECTION_ERROR);
 			id_datacube_in[0] = 0;
 		}
+#ifdef OPH_ODB_MNG
+		else if (oph_odb_connect_to_mongodb(oDB)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MERGECUBES_OPHIDIADB_CONNECTION_ERROR);
+			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+		}
+#endif
 		//Parse first datacube
 		else if (oph_pid_parse_pid(datacube_in[0], &(id_datacube_in[0]), &(id_datacube_in[1]), &uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse the PID string\n");
@@ -1591,8 +1600,10 @@ int env_unset(oph_operator_struct * handle)
 
 	//Only master process has to close and release connection to management OphidiaDB
 	if (handle->proc_rank == 0) {
-		oph_odb_disconnect_from_ophidiadb(&((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->oDB);
 		oph_odb_free_ophidiadb(&((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->oDB);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->oDB);
+#endif
 	}
 	if (((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->fragment_ids) {
 		free((char *) ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->fragment_ids);

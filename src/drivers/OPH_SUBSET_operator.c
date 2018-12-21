@@ -239,7 +239,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		//Only master process has to initialize and open connection to management OphidiaDB
 		ophidiadb *oDB = &((OPH_SUBSET_operator_handle *) handle->operator_handle)->oDB;
 		oph_odb_init_ophidiadb(oDB);
-
+#ifdef OPH_ODB_MNG
+		oph_odb_init_mongodb(oDB);
+#endif
 		if (oph_odb_read_ophidiadb_config_file(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SUBSET_OPHIDIADB_CONFIGURATION_FILE);
@@ -247,7 +249,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-
 		if (oph_odb_connect_to_ophidiadb(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SUBSET_OPHIDIADB_CONNECTION_ERROR);
@@ -255,6 +256,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
+#ifdef OPH_ODB_MNG
+		if (oph_odb_connect_to_mongodb(oDB)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SUBSET_OPHIDIADB_CONNECTION_ERROR);
+			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+		}
+#endif
 		//Check if datacube exists (by ID container and datacube)
 		int exists = 0;
 		int status = 0;
@@ -2239,8 +2249,10 @@ int env_unset(oph_operator_struct * handle)
 
 	//Only master process has to close and release connection to management OphidiaDB
 	if (handle->proc_rank == 0) {
-		oph_odb_disconnect_from_ophidiadb(&((OPH_SUBSET_operator_handle *) handle->operator_handle)->oDB);
 		oph_odb_free_ophidiadb(&((OPH_SUBSET_operator_handle *) handle->operator_handle)->oDB);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&((OPH_SUBSET_operator_handle *) handle->operator_handle)->oDB);
+#endif
 	}
 	if (((OPH_SUBSET_operator_handle *) handle->operator_handle)->fragment_ids) {
 		free((char *) ((OPH_SUBSET_operator_handle *) handle->operator_handle)->fragment_ids);

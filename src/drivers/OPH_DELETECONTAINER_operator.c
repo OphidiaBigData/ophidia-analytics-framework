@@ -74,7 +74,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	ophidiadb *oDB = &((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->oDB;
 	oph_odb_init_ophidiadb(oDB);
-
+#ifdef OPH_ODB_MNG
+	oph_odb_init_mongodb(oDB);
+#endif
 	//Only master process has to continue
 	if (handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -200,6 +202,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETECONTAINER_OPHIDIADB_CONNECTION_ERROR, container_name);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
+#ifdef OPH_ODB_MNG
+	if (oph_odb_connect_to_mongodbdb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETECONTAINER_OPHIDIADB_CONNECTION_ERROR, container_name);
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+#endif
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -445,8 +454,11 @@ int env_unset(oph_operator_struct * handle)
 	if (!handle || !handle->operator_handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	oph_odb_disconnect_from_ophidiadb(&((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->oDB);
 	oph_odb_free_ophidiadb(&((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->oDB);
+#ifdef OPH_ODB_MNG
+	oph_odb_free_mongodb(&((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->oDB);
+#endif
+
 	if (((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->container_input) {
 		free((char *) ((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->container_input);
 		((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->container_input = NULL;
