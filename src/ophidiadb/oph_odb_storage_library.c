@@ -1565,12 +1565,13 @@ int oph_odb_stge_insert_into_fragment_table2(ophidiadb * oDB, oph_odb_fragment *
 	int l = 0, n = 0;
 
 	//Setup full query for multi-insert statement
-	for(l = 0; l < frag_num; l++){
-		if((fragment[l]).id_datacube != 0){
-			n += snprintf(buffer + n, MYSQL_BUFLEN, "(%d, %d, %d, '%s', %d, %d),", (fragment[l]).id_db, (fragment[l]).id_datacube, (fragment[l]).frag_relative_index, (fragment[l]).fragment_name, (fragment[l]).key_start, (fragment[l]).key_end);
+	for (l = 0; l < frag_num; l++) {
+		if ((fragment[l]).id_datacube != 0) {
+			n += snprintf(buffer + n, MYSQL_BUFLEN, "(%d, %d, %d, '%s', %d, %d),", (fragment[l]).id_db, (fragment[l]).id_datacube, (fragment[l]).frag_relative_index,
+				      (fragment[l]).fragment_name, (fragment[l]).key_start, (fragment[l]).key_end);
 		}
 	}
-	buffer[n-1] = ';';
+	buffer[n - 1] = ';';
 
 	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_UPDATE_OPHIDIADB_FRAG2, buffer);
 	if (n >= MYSQL_BUFLEN) {

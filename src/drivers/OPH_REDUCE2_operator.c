@@ -1330,7 +1330,6 @@ int task_execute(oph_operator_struct * handle)
 		oper_handle->sizes = (char *) (&yyy);
 		oper_handle->size_num = set_to_zero = 1;
 	}
-
 	//In multi-thread code mysql_library_init must be called before starting the threads
 	if (mysql_library_init(0, NULL, NULL)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
@@ -1358,7 +1357,6 @@ int task_execute(oph_operator_struct * handle)
 		mysql_thread_end();
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
-
 	//retrieve connection string
 	if (oph_odb_stge_fetch_fragment_connection_string(&oDB_slave, oper_handle->id_input_datacube, oper_handle->fragment_ids, &frags, &dbs, &dbmss)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve connection strings\n");

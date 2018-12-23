@@ -568,10 +568,10 @@ int oph_dc_create_fragment_from_query_with_params(oph_ioserver_handler * server,
 }
 
 int oph_dc_create_fragment_from_query_with_param3(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
-						   long long *start_id, long long *block_size, char *param, long long param_size, int num, void **connection)
+						  long long *start_id, long long *block_size, char *param, long long param_size, int num, void **connection)
 {
 	UNUSED(start_id)
-	if (!old_frag || !operation || (!param && param_size) || (param && !param_size) || !server || !connection) {
+	    if (!old_frag || !operation || (!param && param_size) || (param && !param_size) || !server || !connection) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DC_NULL_PARAM;
 	}
@@ -746,7 +746,7 @@ int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server
 						   long long *start_id, long long *block_size, char *param, long long param_size, int num)
 {
 	UNUSED(start_id)
-	if (!old_frag || !operation || (!param && param_size) || (param && !param_size) || !server) {
+	    if (!old_frag || !operation || (!param && param_size) || (param && !param_size) || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DC_NULL_PARAM;
 	}
@@ -1106,7 +1106,7 @@ int oph_dc_create_fragment_from_query_with_aggregation3(oph_ioserver_handler * s
 {
 	UNUSED(start_id)
 
-	if (!old_frag || !operation || (!param && param_size) || (param && !param_size) || !server || !connection) {
+	    if (!old_frag || !operation || (!param && param_size) || (param && !param_size) || !server || !connection) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DC_NULL_PARAM;
 	}

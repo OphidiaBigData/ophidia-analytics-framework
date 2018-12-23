@@ -12,9 +12,8 @@ WARNING: It imports only mono-dimensional coordinate variables.
 [Parameters]
 - container : name of the input container; by default it will be automatically set to file name.
 - cwd : absolute path corresponding to the current working directory,
-        used to select the folder where the container is located
-- host_partition : name of I/O host partition used to store data. 
-                   If default value &quot;auto&quot; is specified, the first host partition available will be used.
+        used to select the folder where the container is located.
+- host_partition : name of I/O host partition used to store data. By default the first available host partition will be used.
 - ioserver : type of I/O server used to store data.
              Only possible values is: &quot;ophidiaio_memory&quot;.
 - import_metadata: imports also metadata with &quot;yes&quot; (default) or only data with &quot;no&quot;.
