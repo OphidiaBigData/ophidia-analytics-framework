@@ -457,6 +457,16 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 int oph_odb_stge_get_number_of_datacube_for_db(ophidiadb * oDB, int id_db, int *datacubexdb_number);
 
 /**
+ * \brief Function to retrieve the number of datacubes stored in each database instance
+ * \param oDB Pointer to the OphidiaDB
+ * \param db_num Number of database instances
+ * \param id_dbs Array of identifier of the database instances to check
+ * \param datacubexdb_number Array that will contain the datacube number in the database instances
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_stge_get_number_of_datacube_for_dbs(ophidiadb * oDB, int db_num, int *id_dbs, int *datacubexdb_number);
+
+/**
  * \brief Function that updates OphidiaDB adding the new db instances and new partition relations
  * \param oDB Pointer to OphidiaDB
  * \param db Pointer to db_instance

@@ -175,7 +175,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
  * \param measure Structure containing measure data and information to be stored
  * \return 0 if successfull
  */
-int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fragment * frag, char *nc_file_path, int tuplexfrag_number, int compressed, NETCDF_var * measure, void **conn);
+int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fragment * frag, char *nc_file_path, int tuplexfrag_number, int compressed, NETCDF_var * measure);
 
 /**
  * \brief Return the C type given the nc_type

@@ -3920,7 +3920,7 @@ int task_execute(oph_operator_struct * handle)
 	int id_datacube_out = oper_handle->id_output_datacube;
 
 	oph_odb_fragment *new_frag = NULL;
-	if (!(new_frag = (oph_odb_fragment*)calloc(oper_handle->fragment_number, sizeof(oph_odb_fragment)))) {
+	if (!(new_frag = (oph_odb_fragment *) calloc(oper_handle->fragment_number, sizeof(oph_odb_fragment)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
@@ -3958,11 +3958,9 @@ int task_execute(oph_operator_struct * handle)
 		free(new_frag);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
-
 	//Compute DB list starting position and number of rows
 	int start_position = (int) floor((double) oper_handle->fragment_first_id / oper_handle->fragxdb_number);
-	int row_number = (int) ceil((double) (oper_handle->fragment_first_id + oper_handle->fragment_number) /
-		       oper_handle->fragxdb_number) - start_position;
+	int row_number = (int) ceil((double) (oper_handle->fragment_first_id + oper_handle->fragment_number) / oper_handle->fragxdb_number) - start_position;
 
 	if (oph_odb_stge_fetch_db_connection_string(&oDB_slave, id_datacube_out, start_position, row_number, &dbs, &dbmss)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");
@@ -4023,34 +4021,28 @@ int task_execute(oph_operator_struct * handle)
 		int actual_tuplexfrag_number = 0;
 
 		oph_ioserver_handler *server = NULL;
-
-		if (!server) {
-			if (oph_dc_setup_dbms_thread(&(server), dbmss->value[0].io_server_type)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_IOPLUGIN_SETUP_ERROR, dbmss->value[0].id_dbms);
-				mysql_thread_end();
-				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-			}
+		if (oph_dc_setup_dbms_thread(&(server), dbmss->value[0].io_server_type)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_IOPLUGIN_SETUP_ERROR, dbmss->value[0].id_dbms);
+			mysql_thread_end();
+			res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
-
-		void *connection = NULL;
 		//For each DBMS
 		for (i = rel_start; i < rel_row_num && res == OPH_ANALYTICS_OPERATOR_SUCCESS; i++) {
-			connection = NULL;
-			if (oph_dc_connect_to_dbms2(server, &(dbmss->value[i]), 0, &connection)) {
+			if (oph_dc_connect_to_dbms(server, &(dbmss->value[i]), 0)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_DBMS_CONNECTION_ERROR, (dbmss->value[i]).id_dbms);
-				oph_dc_disconnect_from_dbms2(server, &(dbmss->value[i]), &connection);
+				oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
 				oph_dc_cleanup_dbms(server);
 				mysql_thread_end();
 				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				break;
 			}
 
-			if (oph_dc_use_db_of_dbms2(server, &(dbmss->value[i]), &(dbs->value[i]), &connection)) {
+			if (oph_dc_use_db_of_dbms(server, &(dbmss->value[i]), &(dbs->value[i]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_DB_SELECTION_ERROR, (dbs->value[i]).db_name);
-				oph_dc_disconnect_from_dbms2(server, &(dbmss->value[i]), &connection);
+				oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
 				oph_dc_cleanup_dbms(server);
 				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				mysql_thread_end();
@@ -4079,9 +4071,10 @@ int task_execute(oph_operator_struct * handle)
 				}
 				int frag_already_inserted = oper_handle->fragment_first_id + current_frag_count + frag_count;
 
-				new_frag[current_frag_count + frag_count].key_start = (oper_handle->number_unven_frag - frag_already_inserted > 0 ? frag_already_inserted : oper_handle->number_unven_frag)
-				    * oper_handle->tuplexfrag_number +
-				    (frag_already_inserted - oper_handle->number_unven_frag > 0 ? frag_already_inserted - oper_handle->number_unven_frag : 0) * actual_tuplexfrag_number + 1;
+				new_frag[current_frag_count + frag_count].key_start =
+				    (oper_handle->number_unven_frag - frag_already_inserted > 0 ? frag_already_inserted : oper_handle->number_unven_frag)
+				    * oper_handle->tuplexfrag_number + (frag_already_inserted - oper_handle->number_unven_frag >
+									0 ? frag_already_inserted - oper_handle->number_unven_frag : 0) * actual_tuplexfrag_number + 1;
 				new_frag[current_frag_count + frag_count].key_end = (new_frag[current_frag_count + frag_count].key_start - 1) + actual_tuplexfrag_number;
 				new_frag[current_frag_count + frag_count].db_instance = &(dbs->value[i]);
 
@@ -4094,9 +4087,11 @@ int task_execute(oph_operator_struct * handle)
 				strcpy(new_frag[current_frag_count + frag_count].fragment_name, fragment_name);
 				//Create  and populate fragment
 				if (oph_nc_populate_fragment_from_nc5
-				    (server, &(new_frag[current_frag_count + frag_count]), oper_handle->nc_file_path, actual_tuplexfrag_number, oper_handle->compressed, (NETCDF_var *) & (oper_handle->measure), &connection)) {
+				    (server, &(new_frag[current_frag_count + frag_count]), oper_handle->nc_file_path, actual_tuplexfrag_number, oper_handle->compressed,
+				     (NETCDF_var *) & (oper_handle->measure))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_FRAG_POPULATE_ERROR, new_frag[current_frag_count + frag_count].fragment_name, "");
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_FRAG_POPULATE_ERROR,
+						new_frag[current_frag_count + frag_count].fragment_name, "");
 					res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 					break;
 				}
@@ -4106,7 +4101,7 @@ int task_execute(oph_operator_struct * handle)
 			}
 			start_position++;
 
-			oph_dc_disconnect_from_dbms2(server, &(dbmss->value[i]), &connection);
+			oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
 
 			if (res != OPH_ANALYTICS_OPERATOR_SUCCESS) {
 				oph_dc_cleanup_dbms(server);

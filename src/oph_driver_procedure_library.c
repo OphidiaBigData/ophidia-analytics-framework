@@ -56,15 +56,121 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, "MySQL initialization error\n");
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
+	//Each process has to be connected to a slave ophidiadb
+	ophidiadb oDB_slave;
+	oph_odb_init_ophidiadb_thread(&oDB_slave);
+	oph_odb_fragment_list frags;
+	oph_odb_db_instance_list dbs;
+	oph_odb_dbms_instance_list dbmss;
+
+	if (oph_odb_read_ophidiadb_config_file(&oDB_slave)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_OPHIDIADB_CONFIGURATION_FILE);
+		oph_odb_free_ophidiadb_thread(&oDB_slave);
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+
+	if (oph_odb_connect_to_ophidiadb(&oDB_slave)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_OPHIDIADB_CONNECTION_ERROR);
+		oph_odb_free_ophidiadb_thread(&oDB_slave);
+		mysql_thread_end();
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+
+	int no_frag = 0;
+
+	//retrieve fragment connection string
+	if (oph_odb_stge_fetch_fragment_connection_string_for_deletion(&oDB_slave, id_datacube, fragment_ids, &frags, &dbs, &dbmss)) {
+		if (start_position != 0 || row_number != 0) {
+			//retrieve db connection string
+			if (oph_odb_stge_fetch_db_connection_string(&oDB_slave, id_datacube, start_position, row_number, &dbs, &dbmss)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_CONNECTION_STRINGS_NOT_FOUND);
+				oph_odb_free_ophidiadb_thread(&oDB_slave);
+				mysql_thread_end();
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			} else {
+				no_frag = 1;
+			}
+		} else {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_CONNECTION_STRINGS_NOT_FOUND);
+			oph_odb_free_ophidiadb_thread(&oDB_slave);
+			mysql_thread_end();
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+	}
+
+	if (!no_frag && !frags.size) {
+		if (start_position != 0 || row_number != 0) {
+			//retrieve db connection string
+			if (oph_odb_stge_fetch_db_connection_string(&oDB_slave, id_datacube, start_position, row_number, &dbs, &dbmss)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_CONNECTION_STRINGS_NOT_FOUND);
+				oph_odb_stge_free_fragment_list(&frags);
+				oph_odb_stge_free_db_list(&dbs);
+				oph_odb_stge_free_dbms_list(&dbmss);
+				oph_odb_free_ophidiadb_thread(&oDB_slave);
+				mysql_thread_end();
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			} else {
+				no_frag = 1;
+			}
+		} else {
+			//Early termination
+			oph_odb_stge_free_fragment_list(&frags);
+			oph_odb_stge_free_db_list(&dbs);
+			oph_odb_stge_free_dbms_list(&dbmss);
+			oph_odb_free_ophidiadb_thread(&oDB_slave);
+			mysql_thread_end();
+			return OPH_ANALYTICS_OPERATOR_SUCCESS;
+		}
+	}
+	//For each dbinstance count the number of stored datacubes (COUNT ALL TOGETHER)
+	int *datacubexdb_number = NULL;
+	if (!(datacubexdb_number = (int *) calloc(dbs.size, sizeof(int)))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Error allocating memory\n");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+
+	int *id_dbs = NULL;
+	if (!(id_dbs = (int *) calloc(dbs.size, sizeof(int)))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Error allocating memory\n");
+		free(datacubexdb_number);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+
+	int i = 0;
+	for (i = 0; i < dbs.size; i++) {
+		id_dbs[i] = dbs.value[i].id_db;
+	}
+
+	if (oph_odb_stge_get_number_of_datacube_for_dbs(&oDB_slave, dbs.size, id_dbs, datacubexdb_number)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve database instances information.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Unable to retrieve database instances information.\n");
+		oph_odb_stge_free_fragment_list(&frags);
+		oph_odb_stge_free_db_list(&dbs);
+		oph_odb_stge_free_dbms_list(&dbmss);
+		oph_odb_free_ophidiadb_thread(&oDB_slave);
+		mysql_thread_end();
+		free(datacubexdb_number);
+		free(id_dbs);
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+
+	free(id_dbs);
 
 	struct _thread_struct {
 		unsigned int current_thread;
 		unsigned int total_threads;
-		int id_datacube;
 		int id_container;
-		char *fragment_ids;
-		int start_position;
-		int row_number;
+		oph_odb_fragment_list *frags;
+		oph_odb_db_instance_list *dbs;
+		oph_odb_dbms_instance_list *dbmss;
+		int *datacubexdb_number;
 	};
 	typedef struct _thread_struct thread_struct;
 
@@ -72,110 +178,29 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 
 		int l = ((thread_struct *) ts)->current_thread;
 		int num_threads = ((thread_struct *) ts)->total_threads;
-		int id_datacube = ((thread_struct *) ts)->id_datacube;
 		int id_container = ((thread_struct *) ts)->id_container;
-		char *fragment_ids = ((thread_struct *) ts)->fragment_ids;
-		int start_position = ((thread_struct *) ts)->start_position;
-		int row_number = ((thread_struct *) ts)->row_number;
 
-		oph_odb_fragment_list frags;
-		oph_odb_db_instance_list dbs;
-		oph_odb_dbms_instance_list dbmss;
+		oph_odb_fragment_list *frags = ((thread_struct *) ts)->frags;
+		oph_odb_db_instance_list *dbs = ((thread_struct *) ts)->dbs;
+		oph_odb_dbms_instance_list *dbmss = ((thread_struct *) ts)->dbmss;
+
+		int *datacubexdb_number = ((thread_struct *) ts)->datacubexdb_number;
+
 		oph_ioserver_handler *server = NULL;
 
-		//Each process has to be connected to a slave ophidiadb
-		ophidiadb oDB_slave;
-		oph_odb_init_ophidiadb_thread(&oDB_slave);
 		int i, j, k;
 
 		int res = OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-		if (oph_odb_read_ophidiadb_config_file(&oDB_slave)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_OPHIDIADB_CONFIGURATION_FILE);
-			res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		if (oph_dc_setup_dbms_thread(&(server), (dbmss->value[0]).io_server_type)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_IOPLUGIN_SETUP_ERROR, (dbmss->value[0]).id_dbms);
+			mysql_thread_end();
+			res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 
-		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
-			if (oph_odb_connect_to_ophidiadb(&oDB_slave)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_OPHIDIADB_CONNECTION_ERROR);
-				oph_odb_free_ophidiadb_thread(&oDB_slave);
-				mysql_thread_end();
-				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-			}
-		}
-
-		int datacubexdb_number = 0;
-		int no_frag = 0;
-
-		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
-			//retrieve fragment connection string
-			if (oph_odb_stge_fetch_fragment_connection_string_for_deletion(&oDB_slave, id_datacube, fragment_ids, &frags, &dbs, &dbmss)) {
-				if (start_position != 0 || row_number != 0) {
-					//retrieve db connection string
-					if (oph_odb_stge_fetch_db_connection_string(&oDB_slave, id_datacube, start_position, row_number, &dbs, &dbmss)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_CONNECTION_STRINGS_NOT_FOUND);
-						oph_odb_free_ophidiadb_thread(&oDB_slave);
-						mysql_thread_end();
-						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					} else {
-						no_frag = 1;
-					}
-				} else {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_CONNECTION_STRINGS_NOT_FOUND);
-					oph_odb_free_ophidiadb_thread(&oDB_slave);
-					mysql_thread_end();
-					res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-				}
-			}
-		}
-
-		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
-			if (!no_frag && !frags.size) {
-				if (start_position != 0 || row_number != 0) {
-					//retrieve db connection string
-					if (oph_odb_stge_fetch_db_connection_string(&oDB_slave, id_datacube, start_position, row_number, &dbs, &dbmss)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_CONNECTION_STRINGS_NOT_FOUND);
-						oph_odb_free_ophidiadb_thread(&oDB_slave);
-						mysql_thread_end();
-						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					} else {
-						no_frag = 1;
-					}
-				} else {
-					//Early termination
-					oph_odb_stge_free_fragment_list(&frags);
-					oph_odb_stge_free_db_list(&dbs);
-					oph_odb_stge_free_dbms_list(&dbmss);
-					oph_odb_free_ophidiadb_thread(&oDB_slave);
-					mysql_thread_end();
-					res = OPH_ANALYTICS_OPERATOR_SUCCESS;
-					int *ret_val = (int *) malloc(sizeof(int));
-					*ret_val = res;
-					pthread_exit((void *) ret_val);
-				}
-			}
-		}
-
-		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
-			if (oph_dc_setup_dbms_thread(&(server), (dbmss.value[0]).io_server_type)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);
-				oph_odb_stge_free_fragment_list(&frags);
-				oph_odb_stge_free_db_list(&dbs);
-				oph_odb_stge_free_dbms_list(&dbmss);
-				oph_odb_free_ophidiadb_thread(&oDB_slave);
-				mysql_thread_end();
-				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-			}
-		}
-
-		int fragxthread = (int) floor((double) (frags.size / num_threads));
-		int remainder = (int) frags.size % num_threads;
+		int fragxthread = (int) floor((double) (frags->size / num_threads));
+		int remainder = (int) frags->size % num_threads;
 		//Compute starting number of fragments deleted by other threads
 		unsigned int current_frag_count = l * fragxthread + (l < remainder ? l : remainder);
 
@@ -188,13 +213,9 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 		int dbxthread = 0;
 
 		//If number of frags is lower than thread number exit from these threads
-		if (first_frag >= frags.size) {
+		if (first_frag >= frags->size) {
 			//Early termination
 			oph_dc_cleanup_dbms(server);
-			oph_odb_stge_free_fragment_list(&frags);
-			oph_odb_stge_free_db_list(&dbs);
-			oph_odb_stge_free_dbms_list(&dbmss);
-			oph_odb_free_ophidiadb_thread(&oDB_slave);
 			mysql_thread_end();
 			res = OPH_ANALYTICS_OPERATOR_SUCCESS;
 			int *ret_val = (int *) malloc(sizeof(int));
@@ -202,117 +223,102 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 			pthread_exit((void *) ret_val);
 		}
 
-		for (first_db = 0; first_db < dbs.size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_db++) {
+		for (first_db = 0; first_db < dbs->size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_db++) {
 			//Find db associated to fragment
-			if (frags.value[current_frag_count].id_db == dbs.value[first_db].id_db)
+			if (frags->value[current_frag_count].id_db == dbs->value[first_db].id_db)
 				break;
 		}
-		for (first_dbms = 0; first_dbms < dbmss.size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_dbms++) {
+		for (first_dbms = 0; first_dbms < dbmss->size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_dbms++) {
 			//Find dbms associated to db
-			if (dbs.value[first_db].id_dbms == dbmss.value[first_dbms].id_dbms)
+			if (dbs->value[first_db].id_dbms == dbmss->value[first_dbms].id_dbms)
 				break;
 		}
 
 		//Count number of DBs related to this thread
 		dbxthread = 1;
-		for (k = first_frag + 1; (k < frags.size) && (k < first_frag + fragxthread); k++) {
-			if (frags.value[k - 1].db_instance != frags.value[k].db_instance)
+		for (k = first_frag + 1; (k < frags->size) && (k < first_frag + fragxthread); k++) {
+			if (frags->value[k - 1].db_instance != frags->value[k].db_instance)
 				dbxthread++;
 		}
 
 		//Build array of fragments x DB
 		int frag_to_delete[dbxthread];
 		frag_to_delete[i = 0] = 1;
-		for (k = first_frag + 1; (k < frags.size) && (k < first_frag + fragxthread); k++) {
-			if (frags.value[k - 1].db_instance != frags.value[k].db_instance)
+		for (k = first_frag + 1; (k < frags->size) && (k < first_frag + fragxthread); k++) {
+			if (frags->value[k - 1].db_instance != frags->value[k].db_instance)
 				frag_to_delete[++i] = 0;
 			frag_to_delete[i]++;
 		}
 
 		//For each DBMS
 		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
-			for (i = first_dbms; i < dbmss.size && (db_count < dbxthread); i++) {
-				if (oph_dc_connect_to_dbms(server, &(dbmss.value[i]), 0)) {
+			for (i = first_dbms; i < dbmss->size && (db_count < dbxthread); i++) {
+				if (oph_dc_connect_to_dbms(server, &(dbmss->value[i]), 0)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DBMS_CONNECTION_ERROR, (dbmss.value[i]).id_dbms);
-					oph_dc_disconnect_from_dbms(server, &(dbmss.value[i]));
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DBMS_CONNECTION_ERROR, (dbmss->value[i]).id_dbms);
+					oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
 					res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 					continue;
 				}
 				//For each DB
-				for (j = first_db; j < dbs.size && (db_count < dbxthread); j++) {
+				for (j = first_db; j < dbs->size && (db_count < dbxthread); j++) {
 					//Check DB - DBMS Association
-					if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
+					if (dbs->value[j].dbms_instance != &(dbmss->value[i]))
 						continue;
 
 					db_count++;
 
-					//For each dbinstance count the number of stored datacubes
-					if (oph_odb_stge_get_number_of_datacube_for_db(&oDB_slave, dbs.value[j].id_db, &datacubexdb_number)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve database instance information.\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_DELETE_DB_DATACUBE_COUNT_ERROR, (dbs.value[j]).db_name);
-						res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-						continue;
-					}
 					//If the db stores just one datacube then directly drop the dbinstance
-					if (datacubexdb_number == 1) {
+					if (datacubexdb_number[j] == 1) {
 						//Database drop
-						if (oph_dc_delete_db(server, &(dbs.value[j]))) {
+						if (oph_dc_delete_db(server, &(dbs->value[j]))) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while dropping database.\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_DELETE_DROP_DB_ERROR, (dbs.value[j]).db_name);
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_DELETE_DROP_DB_ERROR, (dbs->value[j]).db_name);
 							res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 							continue;
 						}
 						continue;
 					}
 					//In this case the dbinstance may have already been deleted before
-					else if (datacubexdb_number == 0)
+					else if (datacubexdb_number[j] == 0)
 						continue;
 
 					if (!no_frag) {
-						if (oph_dc_use_db_of_dbms(server, &(dbmss.value[i]), &(dbs.value[j]))) {
+						if (oph_dc_use_db_of_dbms(server, &(dbmss->value[i]), &(dbs->value[j]))) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DB_SELECTION_ERROR, (dbs.value[j]).db_name);
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DB_SELECTION_ERROR, (dbs->value[j]).db_name);
 							res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 							continue;
 						}
 						//For each fragment
 						frag_count = 0;
-						for (k = first_frag; (k < frags.size) && (frag_count < frag_to_delete[db_count - 1]); k++) {
+						for (k = first_frag; (k < frags->size) && (frag_count < frag_to_delete[db_count - 1]); k++) {
 							//Check Fragment - DB Association
-							if (frags.value[k].db_instance != &(dbs.value[j]))
+							if (frags->value[k].db_instance != &(dbs->value[j]))
 								continue;
 
 							frag_count++;
 
 							//Delete fragment
-							if (oph_dc_delete_fragment(server, &(frags.value[k]))) {
+							if (oph_dc_delete_fragment(server, &(frags->value[k]))) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while dropping table.\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_DELETE_DROP_FRAGMENT_ERROR, (frags.value[j]).fragment_name);
+								logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_DELETE_DROP_FRAGMENT_ERROR, (frags->value[j]).fragment_name);
 								res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 								continue;
 							}
 						}
 					}
 				}
-				oph_dc_disconnect_from_dbms(server, &(dbmss.value[i]));
+				oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
 			}
 
 			if (res != OPH_ANALYTICS_OPERATOR_SUCCESS) {
-				oph_odb_stge_free_fragment_list(&frags);
-				oph_odb_stge_free_db_list(&dbs);
-				oph_odb_stge_free_dbms_list(&dbmss);
-				oph_odb_free_ophidiadb_thread(&oDB_slave);
 				oph_dc_cleanup_dbms(server);
 				mysql_thread_end();
 			}
 		}
 
 		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
-			oph_odb_stge_free_fragment_list(&frags);
-			oph_odb_stge_free_db_list(&dbs);
-			oph_odb_stge_free_dbms_list(&dbmss);
-			oph_odb_free_ophidiadb_thread(&oDB_slave);
 			oph_dc_cleanup_dbms(server);
 			mysql_thread_end();
 		}
@@ -333,11 +339,11 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 	for (l = 0; l < thread_number; l++) {
 		ts[l].total_threads = thread_number;
 		ts[l].current_thread = l;
-		ts[l].id_datacube = id_datacube;
 		ts[l].id_container = id_container;
-		ts[l].fragment_ids = fragment_ids;
-		ts[l].start_position = start_position;
-		ts[l].row_number = row_number;
+		ts[l].frags = &frags;
+		ts[l].dbs = &dbs;
+		ts[l].dbmss = &dbmss;
+		ts[l].datacubexdb_number = datacubexdb_number;
 
 		rc = pthread_create(&threads[l], &attr, exec_thread, (void *) &(ts[l]));
 		if (rc) {
@@ -358,6 +364,12 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 		}
 	}
 
+	free(datacubexdb_number);
+	oph_odb_stge_free_db_list(&dbs);
+	oph_odb_stge_free_dbms_list(&dbmss);
+	oph_odb_stge_free_fragment_list(&frags);
+	oph_odb_free_ophidiadb_thread(&oDB_slave);
+	mysql_thread_end();
 	//In multi-thread code mysql_library_end must be called after executing the threads
 	mysql_library_end();
 

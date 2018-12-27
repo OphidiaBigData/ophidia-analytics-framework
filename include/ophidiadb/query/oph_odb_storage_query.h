@@ -63,6 +63,7 @@
 #define MYSQL_QUERY_STGE_RETRIEVE_DB_ID 			"SELECT iddbinstance from `dbinstance` where dbname = '%s'"
 
 #define MYSQL_QUERY_STGE_RETRIEVE_DATACUBEXDB_NUMBER 		"SELECT COUNT(*) FROM partitioned WHERE iddbinstance = %d;"
+#define MYSQL_QUERY_STGE_RETRIEVE_DATACUBEXDBS_NUMBER 		"SELECT COUNT(*) FROM partitioned WHERE iddbinstance IN (%s) GROUP BY iddbinstance;"
 
 #define MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST 		"SELECT host.idhost, iddbmsinstance FROM hashost INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE idhostpartition = %d AND status = 'up' AND ioservertype = '%s' "
 #define MYSQL_STGE_POLICY_RR						"ORDER BY CASE %d WHEN 0 THEN host.importcount ELSE hashost.importcount END, port LIMIT %d FOR UPDATE;"
