@@ -598,12 +598,15 @@ int task_init(oph_operator_struct * handle)
 	}
 
 	if (!((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name) {
-		((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name = strdup(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->measure);
+		((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name =
+		    (char *) malloc(strlen(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->measure) + OPH_COMMON_MAX_INT_LENGHT + 2);
 		if (!((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MEMORY_ERROR_INPUT, "output name");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
+		sprintf(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name, "%s_%d", ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->measure,
+			((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube);
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
