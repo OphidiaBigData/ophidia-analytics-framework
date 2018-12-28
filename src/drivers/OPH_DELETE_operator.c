@@ -149,7 +149,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 		//Check if datacube exists (by ID container and datacube)
 		int exists = 0;
-		int status = 0;
+		//int status = 0;
 		char *uri = NULL;
 		int folder_id = 0;
 		int permission = 0;
@@ -371,8 +371,8 @@ int task_execute(oph_operator_struct * handle)
 
 	int num_threads =
 	    (((OPH_DELETE_operator_handle *) handle->operator_handle)->nthread <=
-	     ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_DELETE_operator_handle *) handle->operator_handle)->nthread : ((OPH_DELETE_operator_handle *) handle->
-																			      operator_handle)->fragment_number);
+	     ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_DELETE_operator_handle *) handle->operator_handle)->
+	     nthread : ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_number);
 
 	int ret = OPH_ANALYTICS_OPERATOR_SUCCESS;
 	if ((ret =
