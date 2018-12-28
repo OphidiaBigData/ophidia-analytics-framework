@@ -171,6 +171,7 @@
 #define OPH_LOG_GENERIC_USER_ID_ERROR						"Unable to retreive user id\n"
 #define OPH_LOG_GENERIC_READ_METADATA_ERROR					"Unable to read metadata table\n"
 #define OPH_LOG_GENERIC_WRITE_METADATA_ERROR					"Unable to write metadata '%s:%s': %s\n"
+#define OPH_LOG_GENERIC_PROCESS_ERROR							"One or more processes have failed in a previous step of data processing\n"
 
 /*++++++++++++++++++++++FRAMEWORK+++++++++++++++++++++++++++*/
 
@@ -1517,6 +1518,8 @@
 #define OPH_LOG_OPH_CUBESCHEMA_SIZE_COMPUTE_ERROR			OPH_LOG_GENERIC_SIZE_COMPUTE_ERROR
 
 /*OPH_CUBESIZE OPERATOR LOG ERRORS*/
+#define OPH_LOG_OPH_CUBESIZE_CUBEHASDIM_READ_ERROR 				OPH_LOG_GENERIC_CUBEHASDIM_READ_ERROR
+#define OPH_LOG_OPH_CUBESIZE_COUNT_FRAG_ERROR					"Unable to get total number of fragments\n"
 #define OPH_LOG_OPH_CUBESIZE_SIZE_READ_ERROR 					"Unable to retrieve datacube size for %s\n"
 #define OPH_LOG_OPH_CUBESIZE_NO_DBMS_FOUND 						"No DBMS available\n"
 #define OPH_LOG_OPH_CUBESIZE_PROCESS_IDLE 						"The process %d is idle\n"
