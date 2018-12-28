@@ -24,6 +24,8 @@ Start, stop and get information about clusters of I/O servers.
                   cluster_summary : show cluster status, reserved hosts and available resources;
                   cluster_list : show cluster list;
                   cluster_list_summary : show cluster list summary.
+                  cluster_user : show cluster user list (reserved to administrators);
+                  cluster_user_summary : show cluster user list summary (reserved to administrators).
 
 [Examples]       
 Start 3 I/O servers:
@@ -40,6 +42,6 @@ SUBMISSION STRING: &quot;operator=oph_cluster;action=deploy;nhost=3;host_partiti
 		<argument type="string" mandatory="yes">host_partition</argument>
 		<argument type="string" mandatory="no" default="info" values="info|info_cluster|deploy|undeploy">action</argument>
 		<argument type="int" mandatory="no" minvalue="1" default="1">nhost</argument>
-		<argument type="string" mandatory="no" default="all" values="all|none|cluster_summary|cluster_list|cluster_list_summary">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|cluster_summary|cluster_list|cluster_list_summary|cluster_user|cluster_user_summary">objkey_filter</argument>
     </args>
 </operator>
