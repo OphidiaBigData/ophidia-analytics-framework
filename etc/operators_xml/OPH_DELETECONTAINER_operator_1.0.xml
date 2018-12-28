@@ -11,13 +11,16 @@ It removes a container with related dimensions and grids. The container can be d
 [Parameters]
 - container : name of the input container.
 - cwd : absolute path corresponding to the current working directory
+- container_pid : PID of the input container. If it is set, &apos;container&apos; and &apos;cwd&apos; are negleted.
 - delete_type : type of removal:
                -- logical : logical cancellation (default), that is, set container status to hidden
                -- physical : physical cancellation
 - hidden : status of container to be deleted, considered only when delete_type is &apos;physical&apos;:
            -- yes : container to be removed is hidden (default)
            -- no : container to be removed isn't hidden
-- force : flag used to force the removal of a non-empy container. Considered only when delete_type is &apos;physical&apos;. Note that with &quot;yes&quot; all datacubes inside the container will be deleted, whereas with &quot;no&quot; (default) the container will be removed only if it is already empty.
+- force : flag used to force the removal of a non-empy container. Considered only when delete_type is &apos;physical&apos;.
+          Note that with &quot;yes&quot; all datacubes inside the container will be deleted,
+          whereas with &quot;no&quot; (default) the container will be removed only if it is already empty.
 
 
 [System parameters]    
@@ -30,7 +33,7 @@ It removes a container with related dimensions and grids. The container can be d
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
-		deletecontainer : no output.
+                  deletecontainer : no output.
         
 [Examples]       
 Logically remove the empty visible container &quot;container1&quot; :
@@ -44,9 +47,10 @@ SUBMISSION STRING: &quot;operator=oph_deletecontainer;container=container1;cwd=/
     </info>
     <args>
 		<argument type="string" mandatory="yes">container</argument>
+		<argument type="string" mandatory="yes">cwd</argument>
+		<argument type="string" mandatory="no" default="-">container_pid</argument>
 		<argument type="string" mandatory="no" default="logical" values="logical|physical">delete_type</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">hidden</argument>
-		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>

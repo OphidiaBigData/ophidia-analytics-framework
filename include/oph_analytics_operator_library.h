@@ -77,6 +77,7 @@ struct _oph_operator_struct {
 	char *output_json;
 	char *output_path;
 	char *output_name;
+	int output_code;
 	int proc_number;
 	int proc_rank;
 	char *lib;

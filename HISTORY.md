@@ -1,9 +1,21 @@
 
 ## Next release
 
+### Added:
+
+- UNIQUE constraints to several OphidiaDB tables [#61](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/61)
+
 ### Fixed:
 
 - Bug in multi-thread operators using mysql io server type [#56](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/56)
+
+### Added:
+
+- Add XML description of oph_arg_max_array and oph_arg_min_array primitives
+
+### Changed:
+
+- Checks in OPH_DELETE operator to support deletion of datacubes even when I/O nodes are not available
 
 ## v1.4.0 - 2018-07-27
 
