@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OPH_RANDCUBE_OPERATOR_H
-#define __OPH_RANDCUBE_OPERATOR_H
+#ifndef __OPH_RANDCUBE2_OPERATOR_H
+#define __OPH_RANDCUBE2_OPERATOR_H
 
 //Operator specific headers
 #include "oph_ophidiadb_main.h"
@@ -25,7 +25,7 @@
 #include "oph_ioserver_library.h"
 
 /**
- * \brief Structure of parameters needed by the operator OPH_RANDCUBE_IO. It creates a new datacube filling it with random data
+ * \brief Structure of parameters needed by the operator OPH_RANDCUBE2. It creates a new datacube filling it with random data
  * \param oDB Contains the parameters and the connection to OphidiaDB
  * \param container_input Name of the input container used
  * \param cwd Absolute path where the container is 
@@ -61,9 +61,10 @@
  * \param description Free description to be associated with output cube
  * \param id_job ID of the job related to the task
  * \param rand_algo Type of algorithm used for generating random values
+ * \param nthread Number of pthreads related to each MPI task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
-struct _OPH_RANDCUBE_operator_handle {
+struct _OPH_RANDCUBE2_operator_handle {
 	ophidiadb oDB;
 	char *container_input;
 	char *cwd;
@@ -99,8 +100,9 @@ struct _OPH_RANDCUBE_operator_handle {
 	char *description;
 	int id_job;
 	char *rand_algo; 
+	int nthread;
 	short int execute_error;
 };
-typedef struct _OPH_RANDCUBE_operator_handle OPH_RANDCUBE_operator_handle;
+typedef struct _OPH_RANDCUBE2_operator_handle OPH_RANDCUBE2_operator_handle;
 
-#endif				//__OPH_RANDCUBE_OPERATOR_H
+#endif				//__OPH_RANDCUBE2_OPERATOR_H

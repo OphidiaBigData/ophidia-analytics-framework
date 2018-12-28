@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
-<operator name="OPH_RANDCUBE" version="1.0">
+<operator name="OPH_RANDCUBE2" version="1.0">
     <info>
         <abstract>[Type]
 Data Process.
         	
 [Behaviour]
-It creates a new datacube with random data and dimensions.
+It creates a new datacube with random data and dimensions. Works only with Ophidia I/O server.
 
 [Parameters]
 - container : name of an existing container.
@@ -18,7 +18,7 @@ It creates a new datacube with random data and dimensions.
                Possible values are &quot;local&quot;, &quot;global&quot; or &quot;auto&quot; (default).
                In the last case the first filesystem available will be used. 
 - ioserver : type of I/O server used to store data.
-             Possible values are: &quot;ophidiaio_memory&quot; or &quot;mysql_table&quot; (default)
+             Only possible values is: &quot;ophidiaio_memory&quot; (default)
 - schedule : scheduling algorithm. The only possible value is 0,
 		   for a static linear block distribution of resources.
 - nhost : number of output hosts. With default value (&apos;0&apos;) all host available in the host partition are used.
@@ -29,19 +29,21 @@ It creates a new datacube with random data and dimensions.
 - run : If set to &apos;no&apos; the operator simulates the creation and computes the fragmentation parameters 
 		that would be used, else if set to &apos;yes&apos; the actual cube creation is executed.
 - measure : name of the measure used in the datacube.
-- measure_type : type of measures. Possible values are listed below.
+- measure_type : type of measures. Possible values are &quot;double&quot;, &quot;float&quot; or &quot;int&quot;
 - exp_ndim : used to specify how many dimensions in dim argument, starting from the first one,
-             must be considered as explicit dimensions. NOTE: the new datacube must have at least 
-             one implicit dimension, hence the total number of dimensions is bigger or equal than exp_ndim +1.
-- dim : name of the dimension. Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided.
-- concept_level : concept level short name (must be a single char). Default value is &quot;c&quot;
-                  Multiple-value field: list of concept levels separated by &quot;|&quot; can be provided. 
-- dim_size : size of random dimension.
-             Multiple-value field: list of dimension sizes separated by &quot;|&quot; can be provided. 
+				 must be considered as explicit dimensions. NOTE: the new datacube must have at least 
+				one implicit dimension, hence the total number of dimensions is bigger or equal 
+				than exp_ndim +1.
+- dim: name of the dimension. 
+				Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
+- concept_level: concept level short name (must be a single char). Default value is &quot;c&quot;
+				Multiple-value field: list of concept levels separated by &quot;|&quot; can be provided. 
+- dim_size: size of random dimension.
+				Multiple-value field: list of dimension sizes separated by &quot;|&quot; can be provided. 
 - compressed : if set to &quot;yes&quot;, new data will be compressed.
-               With &quot;no&quot; (default), data will be inserted without compression.
-- grid : optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
-         or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
+			 With &quot;no&quot; (default), data will be inserted without compression.
+- grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
+             or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
 - description : additional description to be associated with the output cube.
 - algorithm : it can be used to specify the type of emulation schema used to generate data. By default values are sampled indipendently from a uniform distribution in the range [0, 1000]. If "temperatures" is used, then values are generated with a first order auto-regressive model to be consistent with temperature values (in Celsius).
         
@@ -49,6 +51,7 @@ It creates a new datacube with random data and dimensions.
 - exec_mode : operator execution mode. Possible values are async (default) for
               asynchronous mode, sync for synchronous mode with json-compliant output.
 - ncores : number of parallel processes to be used (min. 1).       
+- nthreads : number of parallel threads per process to be used (min. 1).
 - sessionid : session identifier used server-side to manage sessions and jobs.
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
@@ -59,23 +62,24 @@ It creates a new datacube with random data and dimensions.
 Generate a random compressed data cube with 1 host, 1 DBMSs/host, 2 dbs/DBMS, 8 fragments/db, 10 tuples/fragment, 
 10 elements/tuple, with &apos;pressure&apos; measure and &apos;lat&apos;, &apos;lon&apos; and &apos;time&apos; 
 dimensions, in the container &apos;container1&apos;:
-OPH_TERM: oph_randcube container=container1;nhost=1;ndbms=1;ndb=2;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;host_partition=test;filesystem=local;
-SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;nhost=1;ndbms=1;ndb=2;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;host_partition=test;filesystem=local;&quot;</abstract>
+OPH_TERM: oph_randcube2 container=container1;nhost=1;ndbms=1;ndb=2;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;host_partition=test;filesystem=local;
+SUBMISSION STRING: &quot;operator=oph_randcube2;container=container1;nhost=1;ndbms=1;ndb=2;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;host_partition=test;filesystem=local;&quot;</abstract>
         <author>CMCC Foundation</author>
         <category>Data Import/Export</category>
-        <creationdate>27/07/2013</creationdate>
+        <creationdate>04/10/2018</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <permission>write</permission>
     </info>
     <args>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">nthreads</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="yes">container</argument>
 		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="no" default="auto">host_partition</argument>
 		<argument type="string" mandatory="no" default="auto" values="auto|local|global">filesystem</argument>
-		<argument type="string" mandatory="no" default="mysql_table" values="mysql_table|ophidiaio_memory">ioserver</argument>
+		<argument type="string" mandatory="no" default="ophidiaio_memory" values="ophidiaio_memory">ioserver</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="0">nhost</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="1">ndbms</argument>
@@ -92,7 +96,7 @@ SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;nhost=1;ndbm
 		<argument type="string" mandatory="no" default="no" values="yes|no">compressed</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
-		<argument type="string" mandatory="no" default="all" values="all|none|randcube">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|randcube2">objkey_filter</argument>
 		<argument type="string" mandatory="no" default="default" values="default|temperatures">algorithm</argument>
     </args>
 </operator>

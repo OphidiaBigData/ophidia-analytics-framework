@@ -103,6 +103,7 @@
 #define OPH_JSON_OBJKEY_DUPLICATE					"duplicate"
 #define OPH_JSON_OBJKEY_APPLY						"apply"
 #define OPH_JSON_OBJKEY_RANDCUBE					"randcube"
+#define OPH_JSON_OBJKEY_RANDCUBE2					"randcube2"
 #define OPH_JSON_OBJKEY_DELETE						"delete"
 #define OPH_JSON_OBJKEY_UNPUBLISH					"unpublish"
 #define OPH_JSON_OBJKEY_DELETECONTAINER					"deletecontainer"
