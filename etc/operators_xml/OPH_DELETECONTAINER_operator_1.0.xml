@@ -11,8 +11,9 @@ It removes a container with related dimensions and grids. The container can be d
 [Parameters]
 - container : name of the input container.
 - cwd : absolute path corresponding to the current working directory
-- force : flag used to force the removal of a non-empy container. Considered only when delete_type is &apos;physical&apos;. Note that with &quot;yes&quot; all datacubes inside the container will be deleted, whereas with &quot;no&quot; (default) the container will be removed only if it is already empty.
-
+- force : flag used to force the removal of a non-empy container.
+          Note that with &quot;yes&quot; all datacubes inside the container will be deleted,
+          whereas with &quot;no&quot; (default) the container will be removed only if it is already empty.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -24,7 +25,7 @@ It removes a container with related dimensions and grids. The container can be d
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
-		deletecontainer : no output.
+                  deletecontainer : no output.
         
 [Examples]       
 Logically remove the empty visible container &quot;container1&quot; :
