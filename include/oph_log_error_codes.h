@@ -132,7 +132,7 @@
 #define OPH_LOG_GENERIC_MASTER_TASK_INIT_FAILED_NO_CONTAINER 		"[CONTAINER: %s] Task init setup in master process has failed.\n"
 #define OPH_LOG_GENERIC_NULL_OPERATOR_HANDLE_NO_CONTAINER 			"[CONTAINER: %s] Null operator struct handle.\n"
 #define OPH_LOG_GENERIC_HOST_DBMS_COUNT_ERROR_NO_CONTAINER 			"[CONTAINER: %s] Unable to look for host and dbms number\n"
-#define OPH_LOG_GENERIC_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER 	"[CONTAINER: %s] Input number of hosts %d is bigger than available or dbms per host %d is bigger than available number or server type and partition %s are not available! \n"
+#define OPH_LOG_GENERIC_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER 	"[CONTAINER: %s] Input number of hosts %d is bigger than available or server type and partition %s are not available! \n"
 #define OPH_LOG_GENERIC_OUTPUT_DATACUBE_EXISTS_NO_CONTAINER	 		"[CONTAINER: %s] Unable to check output datacube or the output datacube %s already exists.\n"
 #define OPH_LOG_GENERIC_CREATE_ID_STRING_ERROR 						"Unable to create fragment ids string\n"
 #define OPH_LOG_GENERIC_DBMS_LIST_ERROR 							"Unable to retrieve DBMS list.\n"
@@ -1007,6 +1007,7 @@
 #define OPH_LOG_OPH_RANDCUBE_MEMORY_ERROR_HANDLE						OPH_LOG_GENERIC_MEMORY_ERROR_HANDLE
 #define OPH_LOG_OPH_RANDCUBE_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING 	OPH_LOG_GENERIC_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING
 #define OPH_LOG_OPH_RANDCUBE_INVALID_INPUT_STRING 						OPH_LOG_GENERIC_INVALID_INPUT_STRING
+#define OPH_LOG_OPH_RANDCUBE_INVALID_INPUT_PARAMETER                   	OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER
 #define OPH_LOG_OPH_RANDCUBE_MISSING_INPUT_PARAMETER					OPH_LOG_GENERIC_MISSING_INPUT_PARAMETER
 #define OPH_LOG_OPH_RANDCUBE_OPHIDIADB_CONFIGURATION_FILE 				OPH_LOG_GENERIC_OPHIDIADB_CONFIGURATION_FILE
 #define OPH_LOG_OPH_RANDCUBE_OPHIDIADB_CONNECTION_ERROR 				OPH_LOG_GENERIC_OPHIDIADB_CONNECTION_ERROR
@@ -1040,7 +1041,7 @@
 #define OPH_LOG_OPH_RANDCUBE_FRAGMENT_CREATION_ERROR 					OPH_LOG_GENERIC_FRAGMENT_CREATION_ERROR
 #define OPH_LOG_OPH_RANDCUBE_FRAG_POPULATE_ERROR 						OPH_LOG_GENERIC_FRAG_POPULATE_ERROR
 #define OPH_LOG_OPH_RANDCUBE_BAD_PARAMETER 							OPH_LOG_GENERIC_BAD_PARAMETER
-#define OPH_LOG_OPH_RANDCUBE_SIZES_PARTITION_PARAMS_MISMATCH			"Product of explicit dimension sizes %ld doesn't match partitioning schema (host, dbmsxhost, dbxdbms, fragxdb, tuplexfrag) number of tuples %d\n"
+#define OPH_LOG_OPH_RANDCUBE_SIZES_PARTITION_PARAMS_MISMATCH			"Product of explicit dimension sizes %ld doesn't match partitioning schema (host, fragxdb, tuplexfrag) number of tuples %d\n"
 #define OPH_LOG_OPH_RANDCUBE_INPUT_DIMENSION_MISMATCH					OPH_LOG_GENERIC_INPUT_DIMENSION_MISMATCH
 #define OPH_LOG_OPH_RANDCUBE_INPUT_GRID_DIMENSION_MISMATCH				OPH_LOG_GENERIC_INPUT_GRID_DIMENSION_MISMATCH
 #define OPH_LOG_OPH_RANDCUBE_DIM_LOAD	 								OPH_LOG_GENERIC_DIM_LOAD_ERROR

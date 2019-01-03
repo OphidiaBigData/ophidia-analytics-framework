@@ -565,8 +565,7 @@ int task_init(oph_operator_struct * handle)
 				goto __OPH_EXIT_1;
 			}
 			// Checking fragmentation structure
-			if ((cube[0].hostxdatacube != cube[cc].hostxdatacube) || (cube[0].dbmsxhost != cube[cc].dbmsxhost) || (cube[0].dbxdbms != cube[cc].dbxdbms)
-			    || (cube[0].fragmentxdb != cube[cc].fragmentxdb) || (cube[0].tuplexfragment != cube[cc].tuplexfragment)) {
+			if ((cube[0].hostxdatacube != cube[cc].hostxdatacube) || (cube[0].fragmentxdb != cube[cc].fragmentxdb) || (cube[0].tuplexfragment != cube[cc].tuplexfragment)) {
 				for (cc = 0; cc < ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->input_datacube_num; cc++)
 					oph_odb_cube_free_datacube(&(cube[cc]));
 				free(cube);

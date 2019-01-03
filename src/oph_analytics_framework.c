@@ -257,6 +257,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	char notify_cube[OPH_TP_TASKLEN];
 	char notify_cwd[OPH_TP_TASKLEN];
 	char notify_message[OPH_COMMON_BUFFER_LEN];
+	*notify_jobid = 0;
 #else
 	*notify_sessionid = 0;
 #endif
@@ -383,6 +384,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 #endif
 
 	char tmp_value[OPH_TP_TASKLEN];
+	*tmp_value = 0;
 #ifndef OPH_STANDALONE_MODE
 	//Find params in task string
 	if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_WORKFLOWID, &tmp_value)) {

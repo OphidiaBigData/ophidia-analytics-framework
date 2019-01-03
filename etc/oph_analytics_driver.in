@@ -40,6 +40,9 @@ LIB	@MYSQL_LDFLAGS@
 [OPH_RANDCUBE]
 @DRIVER_PATH@/liboph_randcubeoperator.so
 LIB	@MYSQL_LDFLAGS@
+[OPH_RANDCUBE2]
+@DRIVER_PATH@/liboph_randcube2operator.so
+LIB	@MYSQL_LDFLAGS@
 [OPH_DELETE]
 @DRIVER_PATH@/liboph_deleteoperator.so
 LIB	@MYSQL_LDFLAGS@

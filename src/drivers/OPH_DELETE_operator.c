@@ -149,7 +149,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 		//Check if datacube exists (by ID container and datacube)
 		int exists = 0;
-		int status = 0;
 		char *uri = NULL;
 		int folder_id = 0;
 		int permission = 0;
@@ -163,11 +162,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_NO_INPUT_DATACUBE, datacube_name);
 			id_datacube_in[0] = 0;
 			id_datacube_in[1] = 0;
-		} else if ((oph_odb_cube_check_datacube_availability(oDB, id_datacube_in[0], 0, &status)) || !status) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "I/O nodes storing datacube aren't available\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_DATACUBE_AVAILABILITY_ERROR, datacube_name);
-			id_datacube_in[0] = 0;
-			id_datacube_in[1] = 0;
+			/*} else if ((oph_odb_cube_check_datacube_availability(oDB, id_datacube_in[0], 0, &status)) || !status) {
+			   pmesg(LOG_ERROR, __FILE__, __LINE__, "I/O nodes storing datacube aren't available\n");
+			   logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_DATACUBE_AVAILABILITY_ERROR, datacube_name);
+			   id_datacube_in[0] = 0;
+			   id_datacube_in[1] = 0; */
 		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], 1, &folder_id))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DELETE_DATACUBE_FOLDER_ERROR, datacube_name);

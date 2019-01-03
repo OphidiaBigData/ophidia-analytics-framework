@@ -364,7 +364,7 @@ AM_CONDITIONAL([HAVE_CURL], [test "x$curl" = "xyes"])
 
 if test "x${curl}" = "xyes"; then
 
-	PKG_CHECK_MODULES(CURL, libcurl >= 7.23)
+	PKG_CHECK_MODULES(CURL, libcurl >= 7.19)
 	AC_ARG_WITH(libcurl_header_path,
 		   [  --with-libcurl-header-path=PATH 		Location of libcurl includes directory],
 		   [ libcurl_header_path="$withval" ],

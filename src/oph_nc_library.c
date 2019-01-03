@@ -270,7 +270,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 	args[1]->arg = (char *) (binary);
 	idDim = frag->key_start;
 
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, insert_query, tuplexfrag_number, args, &query)) {
+	if (oph_ioserver_setup_query(server, insert_query, tuplexfrag_number, args, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 		free(binary);
 		for (ii = 0; ii < c_arg; ii++)
@@ -661,7 +661,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_frag
 			memcpy(binary, binary_tmp, sizeof_var);
 		}
 
-		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(binary);
 			for (ii = 0; ii < c_arg; ii++)
@@ -887,7 +887,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 		idDim[ii] = frag->key_start + ii;
 	}
 
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, regular_times, args, &query)) {
+	if (oph_ioserver_setup_query(server, query_string, regular_times, args, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 		free(binary);
 		for (ii = 0; ii < c_arg; ii++)
@@ -1164,7 +1164,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 			}
 		}
 
-		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(idDim);
@@ -1254,7 +1254,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 			}
 		}
 
-		if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+		if (oph_ioserver_setup_query(server, query_string, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 			free(query_string);
 			free(idDim);
@@ -1341,7 +1341,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fra
 		}
 
 
-		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(idDim);
@@ -1643,7 +1643,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		idDim[ii] = frag->key_start + ii;
 	}
 
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, regular_times, args, &query)) {
+	if (oph_ioserver_setup_query(server, query_string, regular_times, args, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 		free(binary_cache);
 		free(binary_insert);
@@ -1889,7 +1889,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_write_time, NULL);
 #endif
-		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(idDim);
@@ -1968,7 +1968,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 			}
 		}
 
-		if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+		if (oph_ioserver_setup_query(server, query_string, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 			free(query_string);
 			free(idDim);
@@ -2000,7 +2000,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_write_time, NULL);
 #endif
-		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(idDim);
@@ -2347,7 +2347,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		idDim[ii] = frag->key_start + ii;
 	}
 
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+	if (oph_ioserver_setup_query(server, query_string, 1, args, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 		free(idDim);
 		free(query_string);
@@ -2623,7 +2623,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_write_time, NULL);
 #endif
-		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(idDim);
@@ -2657,7 +2657,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			}
 		}
 
-		if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+		if (oph_ioserver_setup_query(server, query_string, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 			free(query_string);
 			free(idDim);
@@ -2727,7 +2727,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			}
 		}
 
-		if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+		if (oph_ioserver_setup_query(server, query_string, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 			free(query_string);
 			free(idDim);
@@ -2743,7 +2743,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_write_time, NULL);
 #endif
-		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(idDim);
@@ -2951,13 +2951,13 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fra
 	free(dims_end_string);
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, query_string, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		free(query_string);
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
 		free(query_string);
 		oph_ioserver_free_query(server, query);
@@ -3684,7 +3684,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 			 || (l < regular_times - 1) ? OPH_DC_SQ_INSERT_SELECT_FRAG : OPH_DC_SQ_INSERT_SELECT_FRAG_FINAL, new_frag->fragment_name, plugin_string, old_frag->fragment_name, where_string);
 
 		query = NULL;
-		if (oph_ioserver_setup_query(server, old_frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+		if (oph_ioserver_setup_query(server, query_string, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 			free(query_string);
 			free(idDim);
@@ -3771,7 +3771,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 			}
 		}
 
-		if (oph_ioserver_execute_query(server, old_frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(idDim);
@@ -3826,7 +3826,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		}
 
 		query = NULL;
-		if (oph_ioserver_setup_query(server, old_frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+		if (oph_ioserver_setup_query(server, query_string, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 			free(query_string);
 			free(idDim);
@@ -3913,7 +3913,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
 		}
 
 
-		if (oph_ioserver_execute_query(server, old_frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(idDim);
@@ -4442,7 +4442,7 @@ int oph_nc_append_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fragm
 			 || (l < regular_times - 1) ? OPH_DC_SQ_INSERT_SELECT_FRAG : OPH_DC_SQ_INSERT_SELECT_FRAG_FINAL, new_frag->fragment_name, plugin_string, old_frag->fragment_name, where_string);
 
 		query = NULL;
-		if (oph_ioserver_setup_query(server, old_frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+		if (oph_ioserver_setup_query(server, query_string, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 			free(query_string);
 			free(binary_cache);
@@ -4459,7 +4459,7 @@ int oph_nc_append_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fragm
 
 		oph_nc_cache_to_buffer(measure->nimp + 1, counters, limits, products, binary_cache, binary_insert, sizeof_type);
 
-		if (oph_ioserver_execute_query(server, old_frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(binary_cache);
@@ -4500,7 +4500,7 @@ int oph_nc_append_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fragm
 		}
 
 		query = NULL;
-		if (oph_ioserver_setup_query(server, old_frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+		if (oph_ioserver_setup_query(server, query_string, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 			free(query_string);
 			free(binary_cache);
@@ -4520,7 +4520,7 @@ int oph_nc_append_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fragm
 		counters[0] = regular_times * regular_rows;
 		oph_nc_cache_to_buffer(measure->nimp + 1, counters, limits, products, binary_cache, binary_insert, sizeof_type);
 
-		if (oph_ioserver_execute_query(server, old_frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(binary_cache);
