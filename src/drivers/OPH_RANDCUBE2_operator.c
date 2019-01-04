@@ -577,12 +577,10 @@ int task_init(oph_operator_struct * handle)
 
 		//Check that product of ncores and nthread is at most equal to total number of fragments        
 		if (((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > total_frag_number) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of cores per number of threads is bigger than requested fragments\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "[CONTAINER NAME %s] Number of cores per number of threads is bigger than requested fragments\n",
-				container_name);
-			goto __OPH_EXIT_1;
+			pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_GENERIC_RESOURCE_CHECK_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_RESOURCE_CHECK_ERROR);
 		}
-
+    
 		int id_host_partition = 0;
 		char hidden = 0, *host_partition = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->partition_input;
 
@@ -1293,7 +1291,6 @@ int task_distribute(oph_operator_struct * handle)
 
 	int frag_total_number = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number * ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number;
 
-
 	//All processes compute the fragment number to work on
 	int div_result = (frag_total_number) / (handle->proc_number);
 	int div_remainder = (frag_total_number) % (handle->proc_number);
@@ -1355,7 +1352,7 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	int num_threads = oper_handle->nthread;
+	int num_threads = (oper_handle->nthread <= oper_handle->fragment_number ? oper_handle->nthread : oper_handle->fragment_number);
 	int res[num_threads];
 
 	//In multi-thread code mysql_library_init must be called before starting the threads
@@ -1588,7 +1585,8 @@ int task_execute(oph_operator_struct * handle)
 	oph_odb_free_ophidiadb_thread(&oDB_slave);
 	free(new_frag);
 	mysql_thread_end();
-	//In multi-thread code mysql_library_end must be called after executing the threads
+
+  //In multi-thread code mysql_library_end must be called after executing the threads
 	mysql_library_end();
 
 	for (l = 0; l < num_threads; l++) {
@@ -1711,6 +1709,12 @@ int task_destroy(oph_operator_struct * handle)
 						OPH_LOG_OPH_RANDCUBE_ID_STRING_SPLIT_ERROR);
 				} else {
 					//Delete fragments
+					int num_threads =
+					    (((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->nthread <=
+					     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_RANDCUBE2_operator_handle *) handle->
+															     operator_handle)->nthread : ((OPH_RANDCUBE2_operator_handle *) handle->
+																			  operator_handle)->fragment_number);
+
 					int start_position =
 					    (int) floor((double) ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragment_first_id /
 							((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number);
@@ -1721,8 +1725,7 @@ int task_destroy(oph_operator_struct * handle)
 						 ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number) - start_position;
 
 					if (oph_dproc_delete_data
-					    (id_datacube, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number,
-					     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->nthread)) {
+					    (id_datacube, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number, num_threads)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_DELETE_DB_READ_ERROR);

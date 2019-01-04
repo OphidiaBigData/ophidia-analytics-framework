@@ -24,23 +24,21 @@ It creates a new datacube with random data and dimensions.
 - run : If set to &apos;no&apos; the operator simulates the creation and computes the fragmentation parameters 
 		that would be used, else if set to &apos;yes&apos; the actual cube creation is executed.
 - measure : name of the measure used in the datacube.
-- measure_type : type of measures. Possible values are &quot;double&quot;, &quot;float&quot; or &quot;int&quot;
+- measure_type : type of measures. Possible values are listed below.
 - exp_ndim : used to specify how many dimensions in dim argument, starting from the first one,
-				 must be considered as explicit dimensions. NOTE: the new datacube must have at least 
-				one implicit dimension, hence the total number of dimensions is bigger or equal 
-				than exp_ndim +1.
-- dim: name of the dimension. 
-				Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
-- concept_level: concept level short name (must be a single char). Default value is &quot;c&quot;
-				Multiple-value field: list of concept levels separated by &quot;|&quot; can be provided. 
-- dim_size: size of random dimension.
-				Multiple-value field: list of dimension sizes separated by &quot;|&quot; can be provided. 
+             must be considered as explicit dimensions. NOTE: the new datacube must have at least 
+             one implicit dimension, hence the total number of dimensions is bigger or equal than exp_ndim +1.
+- dim : name of the dimension. Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided.
+- concept_level : concept level short name (must be a single char). Default value is &quot;c&quot;
+                  Multiple-value field: list of concept levels separated by &quot;|&quot; can be provided. 
+- dim_size : size of random dimension.
+             Multiple-value field: list of dimension sizes separated by &quot;|&quot; can be provided. 
 - compressed : if set to &quot;yes&quot;, new data will be compressed.
-			 With &quot;no&quot; (default), data will be inserted without compression.
-- grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
-             or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
+               With &quot;no&quot; (default), data will be inserted without compression.
+- grid : optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
+         or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
 - description : additional description to be associated with the output cube.
-- algorithm : it can be used to specify the type of emulation schema used to generate data. By default values are sampled indipendently from a uniform distribution in the range [0, 1000]. If "temperatures" is used, then values are generated to be consistent with temperature values (in Celsius).
+- algorithm : it can be used to specify the type of emulation schema used to generate data. By default values are sampled indipendently from a uniform distribution in the range [0, 1000]. If "temperatures" is used, then values are generated with a first order auto-regressive model to be consistent with temperature values (in Celsius).
         
 [System parameters]
 - exec_mode : operator execution mode. Possible values are async (default) for
