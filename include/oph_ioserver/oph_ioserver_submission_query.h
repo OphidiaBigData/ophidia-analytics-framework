@@ -35,6 +35,7 @@
 
 #define OPH_IOSERVER_SQ_OPERATION "operation"
 #define OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT "create_frag_select"
+#define OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT_FILE "create_frag_select_file"
 #define OPH_IOSERVER_SQ_OP_CREATE_FRAG "create_frag"
 #define OPH_IOSERVER_SQ_OP_DROP_FRAG "drop_frag"
 #define OPH_IOSERVER_SQ_OP_CREATE_DB "create_database"
@@ -79,7 +80,6 @@
 #define OPH_IOSERVER_SQ_ARG_DIM_INDEX   "dim_index"
 #define OPH_IOSERVER_SQ_ARG_DIM_START   "dim_start"
 #define OPH_IOSERVER_SQ_ARG_DIM_END     "dim_end"
-#define OPH_IOSERVER_SQ_ARG_DIM_TYPE    "dim_type"
 #define OPH_IOSERVER_SQ_ARG_MEASURE_TYPE    "measure_type"
 #define OPH_IOSERVER_SQ_ARG_ARRAY_LEN 	"array_len"
 #define OPH_IOSERVER_SQ_ARG_ALGORITHM 	"algorithm"
@@ -96,5 +96,6 @@
 #define OPH_IOSERVER_SQ_KW_INFO_SYSTEM_TABLE "@info_system_table"
 #define OPH_IOSERVER_SQ_KW_FUNCTION_FIELDS "@function_fields"
 #define OPH_IOSERVER_SQ_KW_FUNCTION_TABLE "@function_table"
+#define OPH_IOSERVER_SQ_KW_FILE "@file"
 
 #endif				//__OPH_IOSERVER_SUBMISSION_QUERY_H

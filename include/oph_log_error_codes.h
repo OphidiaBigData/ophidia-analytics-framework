@@ -172,6 +172,7 @@
 #define OPH_LOG_GENERIC_READ_METADATA_ERROR					"Unable to read metadata table\n"
 #define OPH_LOG_GENERIC_WRITE_METADATA_ERROR					"Unable to write metadata '%s:%s': %s\n"
 #define OPH_LOG_GENERIC_PROCESS_ERROR							"One or more processes have failed in a previous step of data processing\n"
+#define OPH_LOG_GENERIC_IOSERVER_ERROR							"This operator cannot be used with %s IO sever.\n"
 
 /*++++++++++++++++++++++FRAMEWORK+++++++++++++++++++++++++++*/
 
@@ -733,6 +734,8 @@
 #define OPH_LOG_OPH_CONCATNC_NC_OPEN_ERROR_NO_CONTAINER 				OPH_LOG_GENERIC_NC_OPEN_ERROR_NO_CONTAINER
 #define OPH_LOG_OPH_CONCATNC_NC_INC_VAR_ERROR_NO_CONTAINER 				"[CONTAINER: %s] Unable to read variable informations: %s\n"
 #define OPH_LOG_OPH_CONCATNC_WRONG_DIM_NUMBER_NO_CONTAINER 				"[CONTAINER: %s] Wrong number of dimensions (%d) provided in task string\n"
+#define OPH_LOG_OPH_CONCATNC_INVALID_INPUT_PARAMETER                   	OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER
+#define OPH_LOG_OPH_CONCATNC_IOSERVER_ERROR									OPH_LOG_GENERIC_IOSERVER_ERROR
 #define OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_NO_CONTAINER		 			OPH_LOG_GENERIC_MEMORY_ERROR_NO_CONTAINER
 #define OPH_LOG_OPH_CONCATNC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER 		"[CONTAINER: %s] Unable to find dimension %s related to variable %s in in nc file\n"
 #define OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_HANDLE						OPH_LOG_GENERIC_MEMORY_ERROR_HANDLE
