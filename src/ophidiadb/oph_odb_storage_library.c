@@ -1882,7 +1882,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 		}
 		//Get query results
 		res = mysql_store_result(oDB->conn);
-		if (mysql_num_rows(res) < host_number) {
+		if (((int) mysql_num_rows(res) < host_number)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough hosts for the operation\n");
 			mysql_rollback(oDB->conn);
 			mysql_autocommit(oDB->conn, 1);
@@ -1892,7 +1892,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 			*id_hosts = NULL;
 			return OPH_ODB_TOO_MANY_ROWS;
 		}
-		if (mysql_field_count(oDB->conn) != 2 || mysql_num_rows(res) > host_number) {
+		if (mysql_field_count(oDB->conn) != 2 || ((int) mysql_num_rows(res) > host_number)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Results found by query are not correct\n");
 			mysql_free_result(res);
 			mysql_rollback(oDB->conn);
@@ -2076,7 +2076,7 @@ int oph_odb_stge_get_number_of_datacube_for_dbs(ophidiadb * oDB, int db_num, int
 	res = mysql_store_result(oDB->conn);
 
 	l = 0;
-	if (mysql_num_rows(res) == db_num) {
+	if (((int)mysql_num_rows(res) == db_num)) {
 		if (mysql_field_count(oDB->conn) == 1) {
 			while ((row = mysql_fetch_row(res))) {
 				datacubexdb_number[l++] = (int) strtol(row[0], NULL, 10);

@@ -1359,7 +1359,7 @@ int task_execute(oph_operator_struct * handle)
 
 	int l, i;
 
-	int num_threads = (oper_handle->nthread <= oper_handle->fragment_number ? oper_handle->nthread : oper_handle->fragment_number);
+	int num_threads = (oper_handle->nthread <= (unsigned int) oper_handle->fragment_number ? oper_handle->nthread : (unsigned int) oper_handle->fragment_number);
 	int res[num_threads];
 
 	int set_to_zero = 0, counters = (oper_handle->sizes ? 1 : 0);
@@ -1731,8 +1731,8 @@ int task_destroy(oph_operator_struct * handle)
 		//Delete fragments
 		int num_threads =
 		    (((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->nthread <=
-		     ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_AGGREGATE2_operator_handle *) handle->
-												      operator_handle)->nthread : ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->
+		     (unsigned int) ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_AGGREGATE2_operator_handle *) handle->
+												      operator_handle)->nthread : (unsigned int) ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->
 		     fragment_number);
 
 		if (((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
