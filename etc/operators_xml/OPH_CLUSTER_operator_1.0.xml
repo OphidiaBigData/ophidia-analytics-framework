@@ -16,6 +16,8 @@ Start, stop and get information about clusters of I/O servers.
 	&quot;undeploy&quot;: stop reservation and I/O servers.
 - nhost : number of hosts to be reserved as well as number of I/O servers to be started over them.
 - host_partition : name of user-defined partition to be used to group hosts.
+                   It needs to be set in case of &quot;deploy&quot; or &quot;undeploy&quot;.
+- user_filter : filter on username in case action &quot;info_cluster&quot; is selected (reserved to administrators).
 
 [System parameters]
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -39,9 +41,10 @@ SUBMISSION STRING: &quot;operator=oph_cluster;action=deploy;nhost=3;host_partiti
     </info>
     <args>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-		<argument type="string" mandatory="yes">host_partition</argument>
+		<argument type="string" mandatory="no" default="all">host_partition</argument>
 		<argument type="string" mandatory="no" default="info" values="info|info_cluster|deploy|undeploy">action</argument>
 		<argument type="int" mandatory="no" minvalue="1" default="1">nhost</argument>
+		<argument type="string" mandatory="no" default="all">user_filter</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|cluster_summary|cluster_list|cluster_list_summary|cluster_user|cluster_user_summary">objkey_filter</argument>
     </args>
 </operator>
