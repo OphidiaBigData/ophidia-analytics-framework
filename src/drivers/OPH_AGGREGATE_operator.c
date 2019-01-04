@@ -410,20 +410,15 @@ int task_init(oph_operator_struct * handle)
 
 		int tot_frag_num = 0;
 		if (oph_ids_count_number_of_ids(((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->fragment_ids, &tot_frag_num)) {
-			oph_odb_cube_free_datacube(&cube);
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get total number of IDs\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_AGGREGATE_RETREIVE_IDS_ERROR);
-			goto __OPH_EXIT_1;
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to get total number of IDs\n");
+			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_AGGREGATE_RETREIVE_IDS_ERROR);
+		} else {
+			//Check that product of ncores and nthread is at most equal to total number of fragments        
+			if (((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > (unsigned int) tot_frag_num) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_GENERIC_RESOURCE_CHECK_ERROR);
+				logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_RESOURCE_CHECK_ERROR);
+			}
 		}
-		//Check that product of ncores and nthread is at most equal to total number of fragments        
-		if (((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > (unsigned int) tot_frag_num) {
-			oph_odb_cube_free_datacube(&cube);
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of cores per number of threads is bigger than total fragments\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container,
-				"Number of cores per number of threads is bigger than total fragments\n");
-			goto __OPH_EXIT_1;
-		}
-
 		oph_odb_cubehasdim *cubedims = NULL;
 		int number_of_dimensions = 0;
 		int last_insertd_id = 0;
@@ -1016,7 +1011,7 @@ int task_execute(oph_operator_struct * handle)
 
 	int l;
 
-	int num_threads = oper_handle->nthread;
+	int num_threads = (oper_handle->nthread <= oper_handle->fragment_number ? oper_handle->nthread : oper_handle->fragment_number);
 	int res[num_threads];
 
 	char _ms[OPH_COMMON_MAX_DOUBLE_LENGHT];
@@ -1031,13 +1026,44 @@ int task_execute(oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "MySQL initialization error\n");
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
+	//Each process has to be connected to a slave ophidiadb
+	ophidiadb oDB_slave;
+	oph_odb_init_ophidiadb_thread(&oDB_slave);
+	oph_odb_fragment_list frags;
+	oph_odb_db_instance_list dbs;
+	oph_odb_dbms_instance_list dbmss;
 
+	if (oph_odb_read_ophidiadb_config_file(&oDB_slave)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_OPHIDIADB_CONFIGURATION_FILE);
+		oph_odb_free_ophidiadb_thread(&oDB_slave);
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+
+	if (oph_odb_connect_to_ophidiadb(&oDB_slave)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_OPHIDIADB_CONNECTION_ERROR);
+		oph_odb_free_ophidiadb_thread(&oDB_slave);
+		mysql_thread_end();
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+	//retrieve connection string
+	if (oph_odb_stge_fetch_fragment_connection_string(&oDB_slave, oper_handle->id_input_datacube, oper_handle->fragment_ids, &frags, &dbs, &dbmss)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve connection strings\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_CONNECTION_STRINGS_NOT_FOUND);
+		oph_odb_free_ophidiadb_thread(&oDB_slave);
+		mysql_thread_end();
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
 
 	struct _thread_struct {
 		OPH_AGGREGATE_operator_handle *oper_handle;
 		unsigned int current_thread;
 		unsigned int total_threads;
 		int proc_rank;
+		oph_odb_fragment_list *frags;
+		oph_odb_db_instance_list *dbs;
+		oph_odb_dbms_instance_list *dbmss;
 	};
 	typedef struct _thread_struct thread_struct;
 
@@ -1049,50 +1075,19 @@ int task_execute(oph_operator_struct * handle)
 		int num_threads = ((thread_struct *) ts)->total_threads;
 		int proc_rank = ((thread_struct *) ts)->proc_rank;
 
-		int i, j, k;
+		int i = 0, k;
 
 		int id_datacube_out = oper_handle->id_output_datacube;
-		int id_datacube_in = oper_handle->id_input_datacube;
 		int compressed = oper_handle->compressed;
 
-		oph_odb_fragment_list frags;
-		oph_odb_db_instance_list dbs;
-		oph_odb_dbms_instance_list dbmss;
-
-		//Each process has to be connected to a slave ophidiadb
-		ophidiadb oDB_slave;
-		oph_odb_init_ophidiadb_thread(&oDB_slave);
+		oph_odb_fragment_list *frags = ((thread_struct *) ts)->frags;
+		oph_odb_db_instance_list *dbs = ((thread_struct *) ts)->dbs;
+		oph_odb_dbms_instance_list *dbmss = ((thread_struct *) ts)->dbmss;
 
 		int res = OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-		if (oph_odb_read_ophidiadb_config_file(&oDB_slave)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_OPHIDIADB_CONFIGURATION_FILE);
-			res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
-
-		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
-			if (oph_odb_connect_to_ophidiadb(&oDB_slave)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_OPHIDIADB_CONNECTION_ERROR);
-				oph_odb_free_ophidiadb_thread(&oDB_slave);
-				mysql_thread_end();
-				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-			}
-		}
-		//retrieve connection string
-		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
-			if (oph_odb_stge_fetch_fragment_connection_string(&oDB_slave, id_datacube_in, oper_handle->fragment_ids, &frags, &dbs, &dbmss)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve connection strings\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_CONNECTION_STRINGS_NOT_FOUND);
-				oph_odb_free_ophidiadb_thread(&oDB_slave);
-				mysql_thread_end();
-				res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-			}
-		}
-
-		int fragxthread = (int) floor((double) (frags.size / num_threads));
-		int remainder = (int) frags.size % num_threads;
+		int fragxthread = (int) floor((double) (frags->size / num_threads));
+		int remainder = (int) frags->size % num_threads;
 		//Compute starting number of fragments inserted by other threads
 		unsigned int current_frag_count = l * fragxthread + (l < remainder ? l : remainder);
 
@@ -1107,145 +1102,113 @@ int task_execute(oph_operator_struct * handle)
 
 		oph_ioserver_handler *server = NULL;
 
-		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
-			if (!server) {
-				if (oph_dc_setup_dbms_thread(&(server), (dbmss.value[0]).io_server_type)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);
-					oph_odb_stge_free_fragment_list(&frags);
-					oph_odb_stge_free_db_list(&dbs);
-					oph_odb_stge_free_dbms_list(&dbmss);
-					oph_odb_free_ophidiadb_thread(&oDB_slave);
-					mysql_thread_end();
-					res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-				}
-			}
+		if (oph_dc_setup_dbms_thread(&(server), (dbmss->value[0]).io_server_type)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_IOPLUGIN_SETUP_ERROR, (dbmss->value[0]).id_dbms);
+			mysql_thread_end();
+			res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 		int first_dbms, first_db, first_frag = current_frag_count;
 
-		for (first_db = 0; first_db < dbs.size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_db++) {
+		for (first_db = 0; first_db < dbs->size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_db++) {
 			//Find db associated to fragment
-			if (frags.value[current_frag_count].id_db == dbs.value[first_db].id_db)
+			if (frags->value[current_frag_count].id_db == dbs->value[first_db].id_db)
 				break;
 		}
-		for (first_dbms = 0; first_dbms < dbmss.size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_dbms++) {
+		for (first_dbms = 0; first_dbms < dbmss->size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_dbms++) {
 			//Find dbms associated to db
-			if (dbs.value[first_db].id_dbms == dbmss.value[first_dbms].id_dbms)
+			if (dbs->value[first_db].id_dbms == dbmss->value[first_dbms].id_dbms)
 				break;
 		}
 
 		//For each DBMS
-		for (i = first_dbms; (i < dbmss.size) && (frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
+		for (i = first_dbms; (i < dbmss->size) && (frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
 
-			if (oph_dc_connect_to_dbms(server, &(dbmss.value[i]), 0)) {
+			if (oph_dc_connect_to_dbms(server, &(dbmss->value[i]), 0)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_DBMS_CONNECTION_ERROR, (dbmss.value[i]).id_dbms);
-				oph_dc_disconnect_from_dbms(server, &(dbmss.value[i]));
-				oph_odb_stge_free_fragment_list(&frags);
-				oph_odb_stge_free_db_list(&dbs);
-				oph_odb_stge_free_dbms_list(&dbmss);
-				oph_odb_free_ophidiadb_thread(&oDB_slave);
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_DBMS_CONNECTION_ERROR, (dbmss->value[i]).id_dbms);
+				oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
 				oph_dc_cleanup_dbms(server);
 				mysql_thread_end();
 				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				break;
 			}
-			//For each DB
-			for (j = first_db; j < dbs.size && (frag_count < fragxthread) && res == OPH_ANALYTICS_OPERATOR_SUCCESS; j++) {
-				//Check DB - DBMS Association
-				if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
+
+			if (oph_dc_use_db_of_dbms(server, &(dbmss->value[i]), &(dbs->value[i]))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_DB_SELECTION_ERROR, (dbs->value[i]).db_name);
+				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+				break;
+			}
+			//For each fragment
+			for (k = first_frag; (k < frags->size) && (frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); k++) {
+				//Check Fragment - DB Association
+				if (frags->value[k].db_instance != &(dbs->value[i]))
 					continue;
 
-				if (oph_dc_use_db_of_dbms(server, &(dbmss.value[i]), &(dbs.value[j]))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_DB_SELECTION_ERROR, (dbs.value[j]).db_name);
+				tuplexfragment = frags->value[k].key_end - frags->value[k].key_start + 1;	// Under the assumption that IDs are consecutive without any holes
+
+				if (!(oper_handle->size))
+					size = tuplexfragment;
+				else
+					size = oper_handle->size;
+
+				if (frags->value[k].key_end && ((tuplexfragment < size) || (tuplexfragment % size))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_AGGREGATE_TUPLES_CONSTRAINT_FAILED, size, tuplexfragment);
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_TUPLES_CONSTRAINT_FAILED, size, tuplexfragment);
+					res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+
+				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, proc_rank, (current_frag_count + frag_count + 1), &frag_name_out)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag name exceed limit.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_STRING_BUFFER_OVERFLOW, "fragment name", frag_name_out);
+					res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				//AGGREGATE mysql plugin
+				if (compressed)
+					n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_AGGREGATE_PLUGIN_COMPR, oper_handle->measure_type,
+						     oper_handle->measure_type, MYSQL_FRAG_MEASURE, oper_handle->operation, _ms);
+				else
+					n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_AGGREGATE_PLUGIN, oper_handle->measure_type,
+						     oper_handle->measure_type, MYSQL_FRAG_MEASURE, oper_handle->operation, _ms);
+				if (n >= OPH_COMMON_BUFFER_LEN) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
+					res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				//AGGREGATE fragment
+				size_ = size;
+				if (oph_dc_create_fragment_from_query(server, &(frags->value[k]), frag_name_out, operation, 0, &size_, 0)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_NEW_FRAG_ERROR, frag_name_out);
 					res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 					break;
 				}
-				//For each fragment
-				for (k = first_frag; (k < frags.size) && (frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); k++) {
-					//Check Fragment - DB Association
-					if (frags.value[k].db_instance != &(dbs.value[j]))
-						continue;
-
-					tuplexfragment = frags.value[k].key_end - frags.value[k].key_start + 1;	// Under the assumption that IDs are consecutive without any holes
-
-					if (!(oper_handle->size))
-						size = tuplexfragment;
-					else
-						size = oper_handle->size;
-
-					if (frags.value[k].key_end && ((tuplexfragment < size) || (tuplexfragment % size))) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_AGGREGATE_TUPLES_CONSTRAINT_FAILED, size, tuplexfragment);
-						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_TUPLES_CONSTRAINT_FAILED, size, tuplexfragment);
-						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-						break;
-					}
-
-					if (oph_dc_generate_fragment_name(NULL, id_datacube_out, proc_rank, (current_frag_count + frag_count + 1), &frag_name_out)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag name exceed limit.\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_STRING_BUFFER_OVERFLOW, "fragment name", frag_name_out);
-						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-						break;
-					}
-					//AGGREGATE mysql plugin
-					if (compressed)
-						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_AGGREGATE_PLUGIN_COMPR, oper_handle->measure_type,
-							     oper_handle->measure_type, MYSQL_FRAG_MEASURE, oper_handle->operation, _ms);
-					else
-						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_AGGREGATE_PLUGIN, oper_handle->measure_type,
-							     oper_handle->measure_type, MYSQL_FRAG_MEASURE, oper_handle->operation, _ms);
-					if (n >= OPH_COMMON_BUFFER_LEN) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
-							OPH_LOG_OPH_AGGREGATE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
-						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-						break;
-					}
-					//AGGREGATE fragment
-					size_ = size;
-					if (oph_dc_create_fragment_from_query(server, &(frags.value[k]), frag_name_out, operation, 0, &size_, 0)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_NEW_FRAG_ERROR, frag_name_out);
-						res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-						break;
-					}
-					//Change fragment fields
-					frags.value[k].id_datacube = id_datacube_out;
-					strncpy(frags.value[k].fragment_name, frag_name_out, OPH_ODB_STGE_FRAG_NAME_SIZE);
-					frags.value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
-					if (frags.value[k].key_end) {
-						frags.value[k].key_start = 1 + (frags.value[k].key_start - 1) / size;
-						frags.value[k].key_end = 1 + (frags.value[k].key_end - 1) / size;
-					}
-					//Insert new fragment
-					if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &(frags.value[k]))) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update fragment table.\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_FRAGMENT_INSERT_ERROR, frag_name_out);
-						res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-						break;
-					}
-					frag_count++;
+				//Change fragment fields
+				frags->value[k].id_datacube = id_datacube_out;
+				strncpy(frags->value[k].fragment_name, frag_name_out, OPH_ODB_STGE_FRAG_NAME_SIZE);
+				frags->value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
+				if (frags->value[k].key_end) {
+					frags->value[k].key_start = 1 + (frags->value[k].key_start - 1) / size;
+					frags->value[k].key_end = 1 + (frags->value[k].key_end - 1) / size;
 				}
+				frag_count++;
 			}
 
-			oph_dc_disconnect_from_dbms(server, &(dbmss.value[i]));
+			oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
 
 			if (res != OPH_ANALYTICS_OPERATOR_SUCCESS) {
-				oph_odb_stge_free_fragment_list(&frags);
-				oph_odb_stge_free_db_list(&dbs);
-				oph_odb_stge_free_dbms_list(&dbmss);
-				oph_odb_free_ophidiadb_thread(&oDB_slave);
 				oph_dc_cleanup_dbms(server);
 				mysql_thread_end();
 			}
+			//Update fragment counter
+			first_frag += frag_count;
 		}
 
 		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
-			oph_odb_stge_free_fragment_list(&frags);
-			oph_odb_stge_free_db_list(&dbs);
-			oph_odb_stge_free_dbms_list(&dbmss);
-			oph_odb_free_ophidiadb_thread(&oDB_slave);
 			oph_dc_cleanup_dbms(server);
 			mysql_thread_end();
 		}
@@ -1268,6 +1231,9 @@ int task_execute(oph_operator_struct * handle)
 		ts[l].total_threads = num_threads;
 		ts[l].proc_rank = handle->proc_rank;
 		ts[l].current_thread = l;
+		ts[l].frags = &frags;
+		ts[l].dbs = &dbs;
+		ts[l].dbmss = &dbmss;
 
 		rc = pthread_create(&threads[l], &attr, exec_thread, (void *) &(ts[l]));
 		if (rc) {
@@ -1287,6 +1253,26 @@ int task_execute(oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Error while joining thread %d: %d.\n", l, rc);
 		}
 	}
+
+	oph_odb_stge_free_db_list(&dbs);
+	oph_odb_stge_free_dbms_list(&dbmss);
+
+	//Insert new fragment
+	if (oph_odb_stge_insert_into_fragment_table2(&oDB_slave, frags.value, frags.size)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update fragment table.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Unable to update fragment table.\n");
+		oper_handle->execute_error = 1;
+		oph_odb_stge_free_fragment_list(&frags);
+		oph_odb_free_ophidiadb_thread(&oDB_slave);
+		mysql_thread_end();
+		//In multi-thread code mysql_library_end must be called after executing the threads
+		mysql_library_end();
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+
+	oph_odb_stge_free_fragment_list(&frags);
+	oph_odb_free_ophidiadb_thread(&oDB_slave);
+	mysql_thread_end();
 
 	//In multi-thread code mysql_library_end must be called after executing the threads
 	mysql_library_end();
@@ -1374,23 +1360,39 @@ int task_destroy(oph_operator_struct * handle)
 
 	if (global_error) {
 		//Delete fragments
+		int num_threads =
+		    (((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->nthread <=
+		     ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_AGGREGATE_operator_handle *) handle->
+												     operator_handle)->nthread : ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->
+		     fragment_number);
+
 		if (((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
 			if ((oph_dproc_delete_data(id_datacube, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container,
-						   ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0,
-						   ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->nthread))) {
+						   ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0, num_threads))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}
 		}
-		//Before deleting wait for all process to reach this point
-		MPI_Barrier(MPI_COMM_WORLD);
+
+		if (handle->output_code)
+			proc_error = (short int) handle->output_code;
+		else
+			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
+		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
+		handle->output_code = global_error;
 
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
 			oph_dproc_clean_odb(&((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->oDB, id_datacube,
 					    ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container);
 		}
+
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
+
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 

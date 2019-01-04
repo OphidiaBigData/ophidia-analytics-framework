@@ -2224,10 +2224,8 @@ int task_init(oph_operator_struct * handle)
 		}
 		//Check that product of ncores and nthread is at most equal to total number of fragments        
 		if (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->total_frag_number) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of cores per number of threads is bigger than requested fragments\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "[CONTAINER NAME %s] Number of cores per number of threads is bigger than requested fragments\n",
-				container_name);
-			goto __OPH_EXIT_1;
+			pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_GENERIC_RESOURCE_CHECK_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_RESOURCE_CHECK_ERROR);
 		}
 
 		if (!((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->run) {
@@ -3926,7 +3924,7 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	int num_threads = oper_handle->nthread;
+	int num_threads = (oper_handle->nthread <= oper_handle->fragment_number ? oper_handle->nthread : oper_handle->fragment_number);
 	int res[num_threads];
 
 	//In multi-thread code mysql_library_init must be called before starting the threads
@@ -4021,34 +4019,28 @@ int task_execute(oph_operator_struct * handle)
 		int actual_tuplexfrag_number = 0;
 
 		oph_ioserver_handler *server = NULL;
-
-		if (!server) {
-			if (oph_dc_setup_dbms_thread(&(server), dbmss->value[0].io_server_type)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_IOPLUGIN_SETUP_ERROR, dbmss->value[0].id_dbms);
-				mysql_thread_end();
-				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-			}
+		if (oph_dc_setup_dbms_thread(&(server), dbmss->value[0].io_server_type)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_IOPLUGIN_SETUP_ERROR, dbmss->value[0].id_dbms);
+			mysql_thread_end();
+			res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
-
-		void *connection = NULL;
 		//For each DBMS
 		for (i = rel_start; i < rel_row_num && res == OPH_ANALYTICS_OPERATOR_SUCCESS; i++) {
-			connection = NULL;
-			if (oph_dc_connect_to_dbms2(server, &(dbmss->value[i]), 0, &connection)) {
+			if (oph_dc_connect_to_dbms(server, &(dbmss->value[i]), 0)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_DBMS_CONNECTION_ERROR, (dbmss->value[i]).id_dbms);
-				oph_dc_disconnect_from_dbms2(server, &(dbmss->value[i]), &connection);
+				oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
 				oph_dc_cleanup_dbms(server);
 				mysql_thread_end();
 				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				break;
 			}
 
-			if (oph_dc_use_db_of_dbms2(server, &(dbmss->value[i]), &(dbs->value[i]), &connection)) {
+			if (oph_dc_use_db_of_dbms(server, &(dbmss->value[i]), &(dbs->value[i]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_DB_SELECTION_ERROR, (dbs->value[i]).db_name);
-				oph_dc_disconnect_from_dbms2(server, &(dbmss->value[i]), &connection);
+				oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
 				oph_dc_cleanup_dbms(server);
 				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				mysql_thread_end();
@@ -4094,7 +4086,7 @@ int task_execute(oph_operator_struct * handle)
 				//Create  and populate fragment
 				if (oph_nc_populate_fragment_from_nc5
 				    (server, &(new_frag[current_frag_count + frag_count]), oper_handle->nc_file_path, actual_tuplexfrag_number, oper_handle->compressed,
-				     (NETCDF_var *) & (oper_handle->measure), &connection)) {
+				     (NETCDF_var *) & (oper_handle->measure))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_FRAG_POPULATE_ERROR,
 						new_frag[current_frag_count + frag_count].fragment_name, "");
@@ -4107,7 +4099,7 @@ int task_execute(oph_operator_struct * handle)
 			}
 			start_position++;
 
-			oph_dc_disconnect_from_dbms2(server, &(dbmss->value[i]), &connection);
+			oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
 
 			if (res != OPH_ANALYTICS_OPERATOR_SUCCESS) {
 				oph_dc_cleanup_dbms(server);
@@ -4304,6 +4296,12 @@ int task_destroy(oph_operator_struct * handle)
 						OPH_LOG_OPH_IMPORTNC_ID_STRING_SPLIT_ERROR);
 				} else {
 					//Delete fragments
+					int num_threads =
+					    (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nthread <=
+					     ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_IMPORTNC2_operator_handle *) handle->
+															     operator_handle)->nthread : ((OPH_IMPORTNC2_operator_handle *) handle->
+																			  operator_handle)->fragment_number);
+
 					int start_position =
 					    (int) floor((double) ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragment_first_id /
 							((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragxdb_number);
@@ -4314,8 +4312,7 @@ int task_destroy(oph_operator_struct * handle)
 						 ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragxdb_number) - start_position;
 
 					if (oph_dproc_delete_data
-					    (id_datacube, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number,
-					     ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nthread)) {
+					    (id_datacube, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number, num_threads)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_DELETE_DB_READ_ERROR);
@@ -4323,15 +4320,26 @@ int task_destroy(oph_operator_struct * handle)
 				}
 			}
 		}
-		//Before deleting wait for all process to reach this point
-		MPI_Barrier(MPI_COMM_WORLD);
+
+		if (handle->output_code)
+			proc_error = (short int) handle->output_code;
+		else
+			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
+		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
+		handle->output_code = global_error;
 
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
 			oph_dproc_clean_odb(&((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->oDB, id_datacube,
 					    ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container);
 		}
+
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
+
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
