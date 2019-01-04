@@ -12,8 +12,7 @@ It creates a new datacube with random data and dimensions. Works only with Ophid
 - container : name of an existing container.
 - cwd : absolute path corresponding to the current working directory,
         used to select the folder where the container is located.
-- host_partition : name of I/O host partition used to store data; a test partition is used by default. 
-                   If default value &quot;auto&quot; is specified, the first host partition available will be used.
+- host_partition : name of I/O host partition used to store data. By default the first available host partition will be used.
 - ioserver : type of I/O server used to store data.
              Only possible values is: &quot;ophidiaio_memory&quot; (default)
 - schedule : scheduling algorithm. The only possible value is 0,
@@ -57,8 +56,8 @@ It creates a new datacube with random data and dimensions. Works only with Ophid
 Generate a random compressed data cube with 1 host, 8 fragments/db, 10 tuples/fragment, 
 10 elements/tuple, with &apos;pressure&apos; measure and &apos;lat&apos;, &apos;lon&apos; and &apos;time&apos; 
 dimensions, in the container &apos;container1&apos;:
-OPH_TERM: oph_randcube2 container=container1;nhost=1;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;host_partition=test;
-SUBMISSION STRING: &quot;operator=oph_randcube2;container=container1;nhost=1;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;host_partition=test;&quot;</abstract>
+OPH_TERM: oph_randcube2 container=container1;nhost=1;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;
+SUBMISSION STRING: &quot;operator=oph_randcube2;container=container1;nhost=1;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;&quot;</abstract>
         <author>CMCC Foundation</author>
         <category>Data Import/Export</category>
         <creationdate>04/10/2018</creationdate>
