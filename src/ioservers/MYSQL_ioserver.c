@@ -1453,17 +1453,17 @@ int _mysql_free_query(oph_ioserver_handler * handle, oph_ioserver_query * query)
 
 
 //Close connection to storage server
-int _mysql_close(oph_ioserver_handler * handle, void *connection)
+int _mysql_close(oph_ioserver_handler * handle, void **connection)
 {
-	if (!connection) {
+	if (!(*connection)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
 		return MYSQL_IO_NULL_PARAM;
 	}
 
-	if (connection) {
-		mysql_close((MYSQL *) connection);
-		connection = NULL;
+	if (*connection) {
+		mysql_close((MYSQL *) (*connection));
+		*connection = NULL;
 	}
 
 	return MYSQL_IO_SUCCESS;

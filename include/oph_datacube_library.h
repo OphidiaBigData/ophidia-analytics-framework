@@ -87,7 +87,7 @@ int oph_dc_connect_to_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance 
  * \param m Pointer to db_instance to switch on (may be null)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dc_use_db_of_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * m1, oph_odb_db_instance * m2);
+int oph_dc_use_db_of_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, oph_odb_db_instance * db);
 
 /**
  * \brief Function to check connect status to the DB. WARNING: Do not call this function (or any other) before calling connect_to_dbms
@@ -97,7 +97,7 @@ int oph_dc_use_db_of_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance *
  * \param flag Value for client_flag of connection in case of reconnection, it may be 0 if not used
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dc_check_connection_to_db(oph_ioserver_handler * server, oph_odb_dbms_instance * m1, oph_odb_db_instance * m2, unsigned long flag);
+int oph_dc_check_connection_to_db(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, oph_odb_db_instance * db, unsigned long flag);
 
 /** 
  * \brief Function to disconnect from dbms_instance
@@ -105,7 +105,7 @@ int oph_dc_check_connection_to_db(oph_ioserver_handler * server, oph_odb_dbms_in
  * \param m Pointer to dbms_instance to disconnect from
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dc_disconnect_from_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * m);
+int oph_dc_disconnect_from_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms);
 
 /** 
  * \brief Function to create an empty phisical database

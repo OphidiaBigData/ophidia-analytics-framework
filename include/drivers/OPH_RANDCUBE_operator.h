@@ -35,7 +35,6 @@
  * \param grid_name Name of the grid used to specify dimensions
  * \param id_output_datacube ID of the output datacube created
  * \param id_input_container ID of the output container used/created
- * \param fs_type Type of file system used
  * \param ioserver_type Type of I/O server used
  * \param number_of_exp_dimensions Number of input explicit dimension 
  * \param number_of_imp_dimensions Number of input implicit dimension 
@@ -43,8 +42,6 @@
  * \param fragment_number Number of fragments that a process has to manage
  * \param fragment_id_start_position First fragment in the relative index set to work on
  * \param host_number Number of host to work on
- * \param dbmsxhost_number Number of dbms to use fo creation
- * \param dbxdbms_number Number of databases to create for each dbms
  * \param fragxdb_number Number of fragments for each database (upper bound)
  * \param tuplexfrag_number Number of tuples for each fragment (upper bound)
  * \param array_length Number of elements to store into a row
@@ -71,7 +68,6 @@ struct _OPH_RANDCUBE_operator_handle {
 	int run;
 	char *partition_input;
 	char *grid_name;
-	int fs_type;
 	char *ioserver_type;
 	int id_output_datacube;
 	int id_input_container;
@@ -81,8 +77,6 @@ struct _OPH_RANDCUBE_operator_handle {
 	int fragment_number;
 	int fragment_first_id;
 	int host_number;
-	int dbmsxhost_number;
-	int dbxdbms_number;
 	int fragxdb_number;
 	int tuplexfrag_number;
 	long long array_length;

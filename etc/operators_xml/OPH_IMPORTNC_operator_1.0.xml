@@ -14,18 +14,13 @@ WARNING: It imports only mono-dimensional coordinate variables.
 - cwd : absolute path corresponding to the current working directory,
         used to select the folder where the container is located
 - host_partition : name of I/O host partition used to store data. 
-                   If default value &quot;auto&quot; is specified, the first host partition available will be used. 
-- filesystem : type of filesystem used to store data.
-               Possible values are &quot;local&quot;, &quot;global&quot; or &quot;auto&quot; (default).
-               In the last case the first filesystem available will be used. 
+                   If default value &quot;auto&quot; is specified, the first host partition available will be used.
 - ioserver : type of I/O server used to store data.
              Possible values are: &quot;ophidiaio_memory&quot; or &quot;mysql_table&quot; (default)
 - import_metadata: imports also metadata with &quot;yes&quot; (default) or only data with &quot;no&quot;.
 - check_compliance: checks if all the metadata registered for reference vocabulary are available; no check is done by default.
 - schedule : scheduling algorithm. The only possible value is 0, for a static linear block distribution of resources.
 - nhost : number of output hosts. With default value (&apos;0&apos;) all host available in the host partition are used.
-- ndbms : number of the output DBMS per host. With default value (&apos;0&apos;) all DBMS instance available per host are used.
-- ndb : number of output database per host. Default value is &apos;1&apos;.
 - nfrag : number of fragments per database. With default value (&apos;0&apos;) the number of fragments will be the ratio of
           the product of sizes of the n-1 most outer explicit dimensions to the product of the other arguments.
 - measure : name of the measure related to the NetCDF file.
@@ -118,14 +113,11 @@ SUBMISSION STRING: &quot;operator=oph_importnc;cwd=/session-code1;container=cont
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="no" default="auto">host_partition</argument>
-		<argument type="string" mandatory="no" default="auto" values="auto|local|global">filesystem</argument>
 		<argument type="string" mandatory="no" default="mysql_table" values="mysql_table|ophidiaio_memory">ioserver</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">import_metadata</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">check_compliance</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="0">nhost</argument>
-		<argument type="int" mandatory="no" minvalue="1" default="1">ndbms</argument>
-		<argument type="int" mandatory="no" minvalue="1" default="1">ndb</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="0">nfrag</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
 		<argument type="string" mandatory="yes">measure</argument>

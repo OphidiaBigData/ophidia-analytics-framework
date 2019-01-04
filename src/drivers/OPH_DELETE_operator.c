@@ -149,7 +149,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 		//Check if datacube exists (by ID container and datacube)
 		int exists = 0;
-		//int status = 0;
 		char *uri = NULL;
 		int folder_id = 0;
 		int permission = 0;

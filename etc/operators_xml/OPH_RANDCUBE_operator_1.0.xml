@@ -13,17 +13,12 @@ It creates a new datacube with random data and dimensions.
 - cwd : absolute path corresponding to the current working directory,
         used to select the folder where the container is located.
 - host_partition : name of I/O host partition used to store data; a test partition is used by default. 
-                   If default value &quot;auto&quot; is specified, the first host partition available will be used. 
-- filesystem : type of filesystem used to store data.
-               Possible values are &quot;local&quot;, &quot;global&quot; or &quot;auto&quot; (default).
-               In the last case the first filesystem available will be used. 
+                   If default value &quot;auto&quot; is specified, the first host partition available will be used.
 - ioserver : type of I/O server used to store data.
              Possible values are: &quot;ophidiaio_memory&quot; or &quot;mysql_table&quot; (default)
 - schedule : scheduling algorithm. The only possible value is 0,
 		   for a static linear block distribution of resources.
 - nhost : number of output hosts. With default value (&apos;0&apos;) all host available in the host partition are used.
-- ndbms : number of the output DBMS per host. With &quot;0&quot;, all dbms instance available per host are used. Default is 1. 
-- ndb : number of output database per host. Default value is &apos;1&apos;.
 - nfrag : number of fragments per database.
 - ntuple : number of tuples per fragment.
 - run : If set to &apos;no&apos; the operator simulates the creation and computes the fragmentation parameters 
@@ -56,11 +51,11 @@ It creates a new datacube with random data and dimensions.
                   randcube : show operator's output PID as text in case "run" is "yes", else the parameter check is shown.
 
 [Examples]
-Generate a random compressed data cube with 1 host, 1 DBMSs/host, 2 dbs/DBMS, 8 fragments/db, 10 tuples/fragment, 
+Generate a random compressed data cube with 1 host, 8 fragments/db, 10 tuples/fragment, 
 10 elements/tuple, with &apos;pressure&apos; measure and &apos;lat&apos;, &apos;lon&apos; and &apos;time&apos; 
 dimensions, in the container &apos;container1&apos;:
-OPH_TERM: oph_randcube container=container1;nhost=1;ndbms=1;ndb=2;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;host_partition=test;filesystem=local;
-SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;nhost=1;ndbms=1;ndb=2;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;host_partition=test;filesystem=local;&quot;</abstract>
+OPH_TERM: oph_randcube container=container1;nhost=1;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;host_partition=test;
+SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;nhost=1;nfrag=8;ntuple=10;measure=Pressure;measure_type=double;exp_ndim=2;dim=lat|lon|time;concept_level=c|c|d;dim_size=16|10|10;compressed=yes;host_partition=test;&quot;</abstract>
         <author>CMCC Foundation</author>
         <category>Data Import/Export</category>
         <creationdate>27/07/2013</creationdate>
@@ -74,12 +69,9 @@ SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;nhost=1;ndbm
 		<argument type="string" mandatory="yes">container</argument>
 		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="no" default="auto">host_partition</argument>
-		<argument type="string" mandatory="no" default="auto" values="auto|local|global">filesystem</argument>
 		<argument type="string" mandatory="no" default="mysql_table" values="mysql_table|ophidiaio_memory">ioserver</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="0">nhost</argument>
-		<argument type="int" mandatory="no" minvalue="0" default="1">ndbms</argument>
-		<argument type="int" mandatory="no" minvalue="1" default="1">ndb</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
 		<argument type="int" mandatory="yes" minvalue="1">nfrag</argument>
 		<argument type="int" mandatory="yes" minvalue="1">ntuple</argument>

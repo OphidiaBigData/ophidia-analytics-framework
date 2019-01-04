@@ -19,7 +19,7 @@
 #ifndef __OPH_ODB_CUBE_QUERY_H__
 #define __OPH_ODB_CUBE_QUERY_H__
 
-#define MYSQL_QUERY_CUBE_RETRIEVE_CUBE				"SELECT iddatacube, idcontainer, hostxdatacube, dbmsxhost, dbxdbms, fragmentxdb, tuplexfragment, measure, measuretype, fragrelativeindexset, compress, level, idsource from `datacube` where iddatacube = %d"
+#define MYSQL_QUERY_CUBE_RETRIEVE_CUBE				"SELECT iddatacube, idcontainer, hostxdatacube, fragmentxdb, tuplexfragment, measure, measuretype, fragrelativeindexset, compress, level, idsource from `datacube` where iddatacube = %d"
 
 #define MYSQL_QUERY_CUBE_RETRIEVE_CUBE_ADDITIONAL_INFO		"SELECT creationdate, description from `datacube` where iddatacube = %d"
 
@@ -56,9 +56,9 @@
 
 #define MYSQL_QUERY_CUBE_FIND_DATACUBE_CONTAINER_2_1		"SELECT datacube.idcontainer, iddatacube FROM container LEFT JOIN datacube ON container.idcontainer = datacube.idcontainer  WHERE idfolder IN (%s) AND hidden = 0;"
 
-#define MYSQL_QUERY_CUBE_CHECK_DATACUBE_STORAGE_STATUS		"SELECT count(*) FROM partitioned INNER JOIN dbinstance ON dbinstance.iddbinstance=partitioned.iddbinstance INNER JOIN dbmsinstance ON dbinstance.iddbmsinstance=dbmsinstance.iddbmsinstance INNER JOIN host ON dbmsinstance.idhost=host.idhost  WHERE iddatacube = %d AND (host.status = 'down' OR dbmsinstance.status = 'down');"
+#define MYSQL_QUERY_CUBE_CHECK_DATACUBE_STORAGE_STATUS		"SELECT count(*) FROM partitioned INNER JOIN dbinstance ON dbinstance.iddbinstance=partitioned.iddbinstance INNER JOIN dbmsinstance ON dbinstance.iddbmsinstance=dbmsinstance.iddbmsinstance INNER JOIN host ON dbmsinstance.idhost=host.idhost  WHERE iddatacube = %d AND host.status = 'down';"
 
-#define MYSQL_QUERY_CUBE_CHECK_DATACUBE_STORAGE_STATUS_2	"SELECT count(*) FROM fragment INNER JOIN dbinstance ON dbinstance.iddbinstance=fragment.iddbinstance INNER JOIN dbmsinstance ON dbinstance.iddbmsinstance=dbmsinstance.iddbmsinstance INNER JOIN host ON dbmsinstance.idhost=host.idhost  WHERE idfragment = %d AND (host.status = 'down' OR dbmsinstance.status = 'down');"
+#define MYSQL_QUERY_CUBE_CHECK_DATACUBE_STORAGE_STATUS_2	"SELECT count(*) FROM fragment INNER JOIN dbinstance ON dbinstance.iddbinstance=fragment.iddbinstance INNER JOIN dbmsinstance ON dbinstance.iddbmsinstance=dbmsinstance.iddbmsinstance INNER JOIN host ON dbmsinstance.idhost=host.idhost  WHERE idfragment = %d AND host.status = 'down';"
 
 #define MYSQL_QUERY_CUBE_RETRIEVE_SOURCE_ID			"SELECT idsource FROM `source` WHERE uri = '%s';"
 
@@ -66,10 +66,10 @@
 
 #define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_SOURCE		"INSERT INTO `source` (`uri`) VALUES ('%s')"
 
-#define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE			"INSERT INTO `datacube` (`idcontainer`, `hostxdatacube`, `dbmsxhost`, `dbxdbms`, `fragmentxdb`, `tuplexfragment`, `measure`, `measuretype`, `fragrelativeindexset`, `compress`, `level`, `idsource` ) VALUES (%d, %d, %d, %d, %d, %d, '%s', '%s', '%s', %d, %d, %d );"
-#define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_1		"INSERT INTO `datacube` (`idcontainer`, `hostxdatacube`, `dbmsxhost`, `dbxdbms`, `fragmentxdb`, `tuplexfragment`, `measure`, `measuretype`, `fragrelativeindexset`, `compress`, `level` ) VALUES (%d, %d, %d, %d, %d, %d, '%s', '%s', '%s', %d, %d );"
-#define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_2		"INSERT INTO `datacube` (`idcontainer`, `hostxdatacube`, `dbmsxhost`, `dbxdbms`, `fragmentxdb`, `tuplexfragment`, `measure`, `measuretype`, `fragrelativeindexset`, `compress`, `level`, `idsource`, `description` ) VALUES (%d, %d, %d, %d, %d, %d, '%s', '%s', '%s', %d, %d, %d, '%s' );"
-#define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_3		"INSERT INTO `datacube` (`idcontainer`, `hostxdatacube`, `dbmsxhost`, `dbxdbms`, `fragmentxdb`, `tuplexfragment`, `measure`, `measuretype`, `fragrelativeindexset`, `compress`, `level`, `description` ) VALUES (%d, %d, %d, %d, %d, %d, '%s', '%s', '%s', %d, %d, '%s' );"
+#define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE			"INSERT INTO `datacube` (`idcontainer`, `hostxdatacube`, `fragmentxdb`, `tuplexfragment`, `measure`, `measuretype`, `fragrelativeindexset`, `compress`, `level`, `idsource` ) VALUES (%d, %d, %d, %d, '%s', '%s', '%s', %d, %d, %d );"
+#define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_1		"INSERT INTO `datacube` (`idcontainer`, `hostxdatacube`, `fragmentxdb`, `tuplexfragment`, `measure`, `measuretype`, `fragrelativeindexset`, `compress`, `level` ) VALUES (%d, %d, %d, %d, '%s', '%s', '%s', %d, %d );"
+#define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_2		"INSERT INTO `datacube` (`idcontainer`, `hostxdatacube`, `fragmentxdb`, `tuplexfragment`, `measure`, `measuretype`, `fragrelativeindexset`, `compress`, `level`, `idsource`, `description` ) VALUES (%d, %d, %d, %d, '%s', '%s', '%s', %d, %d, %d, '%s' );"
+#define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_3		"INSERT INTO `datacube` (`idcontainer`, `hostxdatacube`, `fragmentxdb`, `tuplexfragment`, `measure`, `measuretype`, `fragrelativeindexset`, `compress`, `level`, `description` ) VALUES (%d, %d, %d, %d, '%s', '%s', '%s', %d, %d, '%s' );"
 
 #define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_TASK_1		"INSERT INTO `task` (`idoutputcube`, `operation`, `inputnumber`) VALUES (%d, '%s', %d)"
 
