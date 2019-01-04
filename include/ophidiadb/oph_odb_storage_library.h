@@ -393,8 +393,15 @@ int oph_odb_stge_delete_from_dbinstance_table(ophidiadb * oDB, int id_db);
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_stge_insert_into_fragment_table(ophidiadb * oDB, oph_odb_fragment * fragment);
-int oph_odb_stge_insert_into_fragment_table2(ophidiadb * oDB, oph_odb_fragment * fragment, int frag_num);
 
+/**
+ * \brief Function that updates OphidiaDB adding multiple fragments specified
+ * \param oDB Pointer to OphidiaDB
+ * \param fragment Pointer to fragment to be added
+ * \param frag_num Number of fragments to be added
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_stge_insert_into_fragment_table2(ophidiadb * oDB, oph_odb_fragment * fragment, int frag_num);
 
 /**
  * \brief Function to retrieve id of the container of a fragment

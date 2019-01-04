@@ -747,12 +747,28 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
+	//Create structures for output fragments
+	oph_odb_fragment_list out_frags;
+	oph_odb_stge_init_fragment_list(&out_frags);
+	if (!((out_frags.value) = (oph_odb_fragment *) calloc(frags.size * oper_handle->split_number, sizeof(oph_odb_fragment)))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SPLIT_MEMORY_ERROR_HANDLE);
+		oph_odb_stge_free_db_list(&dbs);
+		oph_odb_stge_free_dbms_list(&dbmss);
+		oph_odb_stge_free_fragment_list(&frags);
+		oph_odb_free_ophidiadb_thread(&oDB_slave);
+		mysql_thread_end();
+		return OPH_ODB_MEMORY_ERROR;
+	}
+	out_frags.size = frags.size * oper_handle->split_number;
+
 	struct _thread_struct {
 		OPH_SPLIT_operator_handle *oper_handle;
 		unsigned int current_thread;
 		unsigned int total_threads;
 		int proc_rank;
-		oph_odb_fragment_list *frags;
+		oph_odb_fragment_list *in_frags;
+		oph_odb_fragment_list *out_frags;
 		oph_odb_db_instance_list *dbs;
 		oph_odb_dbms_instance_list *dbmss;
 	};
@@ -767,7 +783,8 @@ int task_execute(oph_operator_struct * handle)
 
 		int id_datacube_out = oper_handle->id_output_datacube;
 
-		oph_odb_fragment_list *frags = ((thread_struct *) ts)->frags;
+		oph_odb_fragment_list *in_frags = ((thread_struct *) ts)->in_frags;
+		oph_odb_fragment_list *out_frags = ((thread_struct *) ts)->out_frags;
 		oph_odb_db_instance_list *dbs = ((thread_struct *) ts)->dbs;
 		oph_odb_dbms_instance_list *dbmss = ((thread_struct *) ts)->dbmss;
 
@@ -775,8 +792,8 @@ int task_execute(oph_operator_struct * handle)
 
 		int res = OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-		int fragxthread = (int) floor((double) (frags->size / num_threads));
-		int remainder = (int) frags->size % num_threads;
+		int fragxthread = (int) floor((double) (in_frags->size / num_threads));
+		int remainder = (int) in_frags->size % num_threads;
 		//Compute starting number of fragments inserted by other threads
 		unsigned int current_frag_count = l * fragxthread + (l < remainder ? l : remainder);
 
@@ -789,7 +806,7 @@ int task_execute(oph_operator_struct * handle)
 		char myquery[OPH_COMMON_BUFFER_LEN];
 		int n, txfrag;
 
-		int in_frag_count = 0, out_frag_count = 0;
+		int in_frag_count = 0, out_frag_count = 0, out_table_index = 0;
 		int tuple_count = 0;
 		int start_index, key_start, tuplexfragment, new_tuplexfragment, new_remainder;
 
@@ -804,7 +821,7 @@ int task_execute(oph_operator_struct * handle)
 
 		for (first_db = 0; first_db < dbs->size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_db++) {
 			//Find db associated to fragment
-			if (frags->value[current_frag_count].id_db == dbs->value[first_db].id_db)
+			if (in_frags->value[current_frag_count].id_db == dbs->value[first_db].id_db)
 				break;
 		}
 		for (first_dbms = 0; first_dbms < dbmss->size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_dbms++) {
@@ -833,20 +850,20 @@ int task_execute(oph_operator_struct * handle)
 				break;
 			}
 			//For each fragment
-			for (k = first_frag; (k < frags->size) && (in_frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); k++) {
+			for (k = first_frag; (k < in_frags->size) && (in_frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); k++) {
 				//Check Fragment - DB Association
-				if (frags->value[k].db_instance != &(dbs->value[i]))
+				if (in_frags->value[k].db_instance != &(dbs->value[i]))
 					continue;
 
-				//Store the name of fragment I'm going to split
-				strncpy(frag_name_in, frags->value[k].fragment_name, OPH_ODB_STGE_FRAG_NAME_SIZE);
+				//Store the name of fragment to be split
+				strncpy(frag_name_in, in_frags->value[k].fragment_name, OPH_ODB_STGE_FRAG_NAME_SIZE);
 				frag_name_in[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
 				tuple_count = 0;
 
-				start_index = frags->value[k].frag_relative_index;
-				key_start = frags->value[k].key_start;
+				start_index = in_frags->value[k].frag_relative_index;
+				key_start = in_frags->value[k].key_start;
 				if (key_start) {
-					tuplexfragment = frags->value[k].key_end - key_start + 1;
+					tuplexfragment = in_frags->value[k].key_end - key_start + 1;
 					new_tuplexfragment = tuplexfragment / oper_handle->split_number;
 					new_remainder = tuplexfragment % oper_handle->split_number;
 				} else
@@ -880,23 +897,25 @@ int task_execute(oph_operator_struct * handle)
 						break;
 					}
 					//Split fragment
-					if (oph_dc_create_fragment_from_query(server, &(frags->value[k]), NULL, myquery, 0, 0, 0)) {
+					if (oph_dc_create_fragment_from_query(server, &(in_frags->value[k]), NULL, myquery, 0, 0, 0)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_SPLIT_NEW_FRAG_ERROR, frag_name_out);
 						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						break;
 					}
-					//Change fragment fields
-					frags->value[k].id_datacube = id_datacube_out;
-					strncpy(frags->value[k].fragment_name, frag_name_out, OPH_ODB_STGE_FRAG_NAME_SIZE);
-					frags->value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
-					frags->value[k].frag_relative_index = (start_index - 1) * oper_handle->split_number + m + 1;
-					if (key_start) {
-						if (m)
-							frags->value[k].key_start = key_start + tuple_count;
-						frags->value[k].key_end = key_start + tuple_count + txfrag - 1;
-					}
+					//Set output fragment fields
+					out_table_index = k * oper_handle->split_number + m;
 
+					out_frags->value[out_table_index].db_instance = in_frags->value[k].db_instance;
+					out_frags->value[out_table_index].id_db = in_frags->value[k].id_db;
+					out_frags->value[out_table_index].id_datacube = id_datacube_out;
+					strncpy(out_frags->value[out_table_index].fragment_name, frag_name_out, OPH_ODB_STGE_FRAG_NAME_SIZE);
+					out_frags->value[out_table_index].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
+					out_frags->value[out_table_index].frag_relative_index = (start_index - 1) * oper_handle->split_number + m + 1;
+					if (key_start) {
+						out_frags->value[out_table_index].key_start = key_start + tuple_count;
+						out_frags->value[out_table_index].key_end = key_start + tuple_count + txfrag - 1;
+					}
 					out_frag_count++;
 					tuple_count += txfrag;
 				}
@@ -936,7 +955,8 @@ int task_execute(oph_operator_struct * handle)
 		ts[l].total_threads = num_threads;
 		ts[l].proc_rank = handle->proc_rank;
 		ts[l].current_thread = l;
-		ts[l].frags = &frags;
+		ts[l].in_frags = &frags;
+		ts[l].out_frags = &out_frags;
 		ts[l].dbs = &dbs;
 		ts[l].dbmss = &dbmss;
 
@@ -961,13 +981,14 @@ int task_execute(oph_operator_struct * handle)
 
 	oph_odb_stge_free_db_list(&dbs);
 	oph_odb_stge_free_dbms_list(&dbmss);
+	oph_odb_stge_free_fragment_list(&frags);
 
 	//Insert all new fragment
-	if (oph_odb_stge_insert_into_fragment_table2(&oDB_slave, frags.value, frags.size)) {
+	if (oph_odb_stge_insert_into_fragment_table2(&oDB_slave, out_frags.value, out_frags.size)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update fragment table.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Unable to update fragment table.\n");
 		oper_handle->execute_error = 1;
-		oph_odb_stge_free_fragment_list(&frags);
+		oph_odb_stge_free_fragment_list(&out_frags);
 		oph_odb_free_ophidiadb_thread(&oDB_slave);
 		mysql_thread_end();
 		//In multi-thread code mysql_library_end must be called after executing the threads
@@ -975,7 +996,7 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
-	oph_odb_stge_free_fragment_list(&frags);
+	oph_odb_stge_free_fragment_list(&out_frags);
 	oph_odb_free_ophidiadb_thread(&oDB_slave);
 	mysql_thread_end();
 	//In multi-thread code mysql_library_end must be called after executing the threads
