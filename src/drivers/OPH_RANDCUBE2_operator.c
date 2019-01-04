@@ -580,7 +580,7 @@ int task_init(oph_operator_struct * handle)
 			pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_GENERIC_RESOURCE_CHECK_ERROR);
 			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_RESOURCE_CHECK_ERROR);
 		}
-    
+
 		int id_host_partition = 0;
 		char hidden = 0, *host_partition = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->partition_input;
 
@@ -1586,7 +1586,7 @@ int task_execute(oph_operator_struct * handle)
 	free(new_frag);
 	mysql_thread_end();
 
-  //In multi-thread code mysql_library_end must be called after executing the threads
+	//In multi-thread code mysql_library_end must be called after executing the threads
 	mysql_library_end();
 
 	for (l = 0; l < num_threads; l++) {
@@ -1711,9 +1711,8 @@ int task_destroy(oph_operator_struct * handle)
 					//Delete fragments
 					int num_threads =
 					    (((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->nthread <=
-					     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_RANDCUBE2_operator_handle *) handle->
-															     operator_handle)->nthread : ((OPH_RANDCUBE2_operator_handle *) handle->
-																			  operator_handle)->fragment_number);
+					     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->
+					     nthread : ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragment_number);
 
 					int start_position =
 					    (int) floor((double) ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragment_first_id /

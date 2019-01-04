@@ -1362,9 +1362,8 @@ int task_destroy(oph_operator_struct * handle)
 		//Delete fragments
 		int num_threads =
 		    (((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->nthread <=
-		     (unsigned int) ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_AGGREGATE_operator_handle *) handle->
-												     operator_handle)->nthread : (unsigned int) ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->
-		     fragment_number);
+		     (unsigned int) ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->
+		     nthread : (unsigned int) ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->fragment_number);
 
 		if (((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
 			if ((oph_dproc_delete_data(id_datacube, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container,

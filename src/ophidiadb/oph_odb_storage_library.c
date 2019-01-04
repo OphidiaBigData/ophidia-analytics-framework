@@ -2076,7 +2076,7 @@ int oph_odb_stge_get_number_of_datacube_for_dbs(ophidiadb * oDB, int db_num, int
 	res = mysql_store_result(oDB->conn);
 
 	l = 0;
-	if (((int)mysql_num_rows(res) == db_num)) {
+	if (((int) mysql_num_rows(res) == db_num)) {
 		if (mysql_field_count(oDB->conn) == 1) {
 			while ((row = mysql_fetch_row(res))) {
 				datacubexdb_number[l++] = (int) strtol(row[0], NULL, 10);

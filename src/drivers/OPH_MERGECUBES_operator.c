@@ -1423,9 +1423,10 @@ int task_execute(oph_operator_struct * handle)
 					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[0],
 					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[1],
 					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[0],
-					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[1], frags[0].value[k].fragment_name, MYSQL_FRAG_MEASURE, frags[1].value[k].fragment_name, MYSQL_FRAG_MEASURE, MYSQL_FRAG_MEASURE,
-					       frags[0].value[k].db_instance->db_name, frags[0].value[k].fragment_name, frags[1].value[k].db_instance->db_name, frags[1].value[k].fragment_name,
-					       frags[0].value[k].fragment_name, MYSQL_FRAG_ID, frags[1].value[k].fragment_name, MYSQL_FRAG_ID);
+					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[1], frags[0].value[k].fragment_name, MYSQL_FRAG_MEASURE,
+					       frags[1].value[k].fragment_name, MYSQL_FRAG_MEASURE, MYSQL_FRAG_MEASURE, frags[0].value[k].db_instance->db_name, frags[0].value[k].fragment_name,
+					       frags[1].value[k].db_instance->db_name, frags[1].value[k].fragment_name, frags[0].value[k].fragment_name, MYSQL_FRAG_ID, frags[1].value[k].fragment_name,
+					       MYSQL_FRAG_ID);
 #endif
 
 				//MERGECUBES fragment

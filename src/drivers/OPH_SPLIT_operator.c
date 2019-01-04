@@ -744,7 +744,6 @@ int task_execute(oph_operator_struct * handle)
 		mysql_thread_end();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-
 	//Create structures for output fragments
 	oph_odb_fragment_list out_frags;
 	oph_odb_stge_init_fragment_list(&out_frags);
@@ -1084,8 +1083,8 @@ int task_destroy(oph_operator_struct * handle)
 		//Delete fragments
 		int num_threads =
 		    (((OPH_SPLIT_operator_handle *) handle->operator_handle)->nthread <=
-		     (unsigned int) ((OPH_SPLIT_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_SPLIT_operator_handle *) handle->
-												 operator_handle)->nthread : (unsigned int) ((OPH_SPLIT_operator_handle *) handle->operator_handle)->fragment_number);
+		     (unsigned int) ((OPH_SPLIT_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_SPLIT_operator_handle *) handle->operator_handle)->
+		     nthread : (unsigned int) ((OPH_SPLIT_operator_handle *) handle->operator_handle)->fragment_number);
 
 		if (((OPH_SPLIT_operator_handle *) handle->operator_handle)->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
 			if ((oph_dproc_delete_data(id_datacube, ((OPH_SPLIT_operator_handle *) handle->operator_handle)->id_input_container,

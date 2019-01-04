@@ -844,8 +844,8 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 						     old_frag->fragment_name, MYSQL_FRAG_ID, *block_size);
 				} else {
 #ifdef OPH_DEBUG_MYSQL
-					printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_G "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number, MYSQL_FRAG_ID, operation,
-					       MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
+					printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_G "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number, MYSQL_FRAG_ID,
+					       operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
 #endif
 					n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_G, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
 						     MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
@@ -1499,7 +1499,8 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_populate_fragment_with_rand_data2(oph_ioserver_handler * server, oph_odb_fragment * frag,  unsigned long long tuple_number, int array_length, char *data_type, int compressed, char *algorithm)
+int oph_dc_populate_fragment_with_rand_data2(oph_ioserver_handler * server, oph_odb_fragment * frag, unsigned long long tuple_number, int array_length, char *data_type, int compressed,
+					     char *algorithm)
 {
 	if (!frag || !data_type || !server || !algorithm) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

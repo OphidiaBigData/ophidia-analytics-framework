@@ -4298,9 +4298,8 @@ int task_destroy(oph_operator_struct * handle)
 					//Delete fragments
 					int num_threads =
 					    (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nthread <=
-					     ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_IMPORTNC2_operator_handle *) handle->
-															     operator_handle)->nthread : ((OPH_IMPORTNC2_operator_handle *) handle->
-																			  operator_handle)->fragment_number);
+					     ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->
+					     nthread : ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragment_number);
 
 					int start_position =
 					    (int) floor((double) ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragment_first_id /
