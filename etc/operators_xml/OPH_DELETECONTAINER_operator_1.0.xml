@@ -14,6 +14,7 @@ It removes a container with related dimensions and grids. The container can be d
 - force : flag used to force the removal of a non-empy container.
           Note that with &quot;yes&quot; all datacubes inside the container will be deleted,
           whereas with &quot;no&quot; (default) the container will be removed only if it is already empty.
+- container_pid : PID of the input container. If it is set, &apos;container&apos; and &apos;cwd&apos; are negleted.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -40,6 +41,7 @@ SUBMISSION STRING: &quot;operator=oph_deletecontainer;container=container1;cwd=/
     <args>
 		<argument type="string" mandatory="yes">container</argument>
 		<argument type="string" mandatory="yes">cwd</argument>
+		<argument type="string" mandatory="no" default="-">container_pid</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>

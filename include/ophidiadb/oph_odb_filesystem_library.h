@@ -85,6 +85,16 @@ int oph_odb_fs_get_session_home_id(char *sessionid, ophidiadb * oDB, int *folder
 int oph_odb_fs_check_folder_session(int folder_id, char *sessionid, ophidiadb * oDB, int *status);
 
 /**
+ * \brief Function used to check if a folder is within session tree
+ * \param container_id Id of the container to be checked
+ * \param sessionid SessionID of the session to be checked
+ * \param oDB Pointer to the OphidiaDB
+ * \param status If the folder is within session tree it will be set to 1, otherwise it will be 0.
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_fs_check_container_session(int container_id, char *sessionid, ophidiadb * oDB, int *status);
+
+/**
  * \brief Function used to retrieve the folder id of a container
  * \param oDB Pointer to the OphidiaDB
  * \param container_id Id of the container
@@ -283,5 +293,15 @@ int oph_odb_fs_add_suffix_to_container_name(ophidiadb * oDB, int containerid);
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_fs_retrieve_container_from_container_name(ophidiadb * oDB, int folder_id, char *container_name, int *id_container, char **description, char **vocabulary);
+
+/**
+ * \brief Function used to retrieve container info from container name
+ * \param Pointer to OphidiaDB
+ * \param container_id Id of the container
+ * \param container_name Pointer to container name
+ * \param folder_id Id of folder where the container should be
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_fs_retrieve_container_name_from_container(ophidiadb * oDB, int container_id, char **container_name, int *folder_id);
 
 #endif				/* __OPH_ODB_FS_H__ */

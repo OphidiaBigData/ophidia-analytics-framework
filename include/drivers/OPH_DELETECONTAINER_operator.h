@@ -32,6 +32,7 @@
  * \brief Structure of parameters needed by the operator OPH_DELETECONTAINER. It removes a datacube from the system
  * \param oDB Contains the parameters and the connection to OphidiaDB
  * \param container_input Name of the input container to be deleted
+ * \param container_id ID of the input container to be deleted
  * \param user Name of the user that wants to create the container
  * \param cwd Absolute path where the container is created 
  * \param id_input_container ID of the input container to delete
@@ -47,6 +48,7 @@ struct _OPH_DELETECONTAINER_operator_handle {
 	char *user;
 	int id_input_container;
 	char *container_input;
+	char *container_id;
 	char **objkeys;
 	int objkeys_num;
 	char *sessionid;

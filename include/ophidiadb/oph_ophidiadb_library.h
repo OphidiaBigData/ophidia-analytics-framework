@@ -45,6 +45,11 @@
 #define OPH_CONF_OPHDB_LOGIN	"OPHDB_LOGIN"
 #define OPH_CONF_OPHDB_PWD	"OPHDB_PWD"
 
+#define OPH_ODB_LOCK_ERROR 1213
+#define OPH_ODB_LOCK_WAIT_ERROR 1205
+#define OPH_ODB_MAX_ATTEMPTS 5
+#define OPH_ODB_WAITING_TIME 2
+
 /**
  * \brief Structure that contain OphidiaDB parameters
  * \param name name of OphidiaDB
@@ -114,5 +119,13 @@ int oph_odb_check_connection_to_ophidiadb(ophidiadb * oDB);
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_disconnect_from_ophidiadb(ophidiadb * oDB);
+
+/**
+ * \brief Function to query the OphidiaDB (retries the execution in case of lock-related issues)
+ * \param structure containig OphidiaDB parameters
+ * \param string with query to be performed
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_query_ophidiadb(ophidiadb * oDB, char *query);
 
 #endif				/* __OPH_OPHIDIA_DB__ */

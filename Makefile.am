@@ -87,6 +87,7 @@ OPERATOR_XML+=etc/operators_xml/OPH_PERMUTE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_PRIMITIVES_LIST_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_PUBLISH_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_RANDCUBE_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_RANDCUBE2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_REDUCE2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_REDUCE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_RESUME_operator_1.0.xml

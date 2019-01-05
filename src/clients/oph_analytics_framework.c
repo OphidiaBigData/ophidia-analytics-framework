@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 		if (!myrank)
 			gettimeofday(&start_time, NULL);
 
-		char task_string[OPH_COMMON_BUFFER_LEN];
+		char task_string[OPH_COMMON_BUFFER_LEN] = { 0 };
 		int n = snprintf(task_string, OPH_COMMON_BUFFER_LEN, "%s", argv[1]);
 		if (!myrank)
 			pmesg(LOG_INFO, __FILE__, __LINE__, "Task string:\n%s\n", task_string);

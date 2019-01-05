@@ -48,6 +48,7 @@ DRIVER+=liboph_rollupoperator.la
 DRIVER+=liboph_duplicateoperator.la
 DRIVER+=liboph_applyoperator.la
 DRIVER+=liboph_randcubeoperator.la
+DRIVER+=liboph_randcube2operator.la
 DRIVER+=liboph_deleteoperator.la
 DRIVER+=liboph_listoperator.la
 DRIVER+=liboph_unpublishoperator.la
@@ -158,7 +159,7 @@ liboph_deleteoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} -loph_driver_proc $(BASIC
 liboph_deletecontaineroperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_deletecontaineroperator_la_SOURCES = OPH_DELETECONTAINER_operator.c
 liboph_deletecontaineroperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_deletecontaineroperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_dimension -loph_driver_proc
+liboph_deletecontaineroperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_dimension -loph_driver_proc -loph_ioserver
 
 liboph_drilldownoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_drilldownoperator_la_SOURCES = OPH_DRILLDOWN_operator.c
@@ -298,6 +299,11 @@ liboph_randcubeoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANA
 liboph_randcubeoperator_la_SOURCES = OPH_RANDCUBE_operator.c
 liboph_randcubeoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_randcubeoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_binary_io -loph_driver_proc
+
+liboph_randcube2operator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
+liboph_randcube2operator_la_SOURCES = OPH_RANDCUBE2_operator.c
+liboph_randcube2operator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_randcube2operator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -lpthread -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_binary_io -loph_driver_proc
 
 liboph_reduceoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
 liboph_reduceoperator_la_SOURCES = OPH_REDUCE_operator.c

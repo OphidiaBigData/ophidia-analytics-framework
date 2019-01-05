@@ -565,8 +565,7 @@ int task_init(oph_operator_struct * handle)
 				goto __OPH_EXIT_1;
 			}
 			// Checking fragmentation structure
-			if ((cube[0].hostxdatacube != cube[cc].hostxdatacube) || (cube[0].dbmsxhost != cube[cc].dbmsxhost) || (cube[0].dbxdbms != cube[cc].dbxdbms)
-			    || (cube[0].fragmentxdb != cube[cc].fragmentxdb) || (cube[0].tuplexfragment != cube[cc].tuplexfragment)) {
+			if ((cube[0].hostxdatacube != cube[cc].hostxdatacube) || (cube[0].fragmentxdb != cube[cc].fragmentxdb) || (cube[0].tuplexfragment != cube[cc].tuplexfragment)) {
 				for (cc = 0; cc < ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->input_datacube_num; cc++)
 					oph_odb_cube_free_datacube(&(cube[cc]));
 				free(cube);
@@ -1424,10 +1423,10 @@ int task_execute(oph_operator_struct * handle)
 					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[0],
 					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[1],
 					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[0],
-					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[1], MYSQL_FRAG_MEASURE, frags[0].value[k].fragment_name, MYSQL_FRAG_ID,
-					       MYSQL_FRAG_ID, frags[0].value[k].fragment_name, MYSQL_FRAG_MEASURE, frags[1].value[k].fragment_name, MYSQL_FRAG_MEASURE, MYSQL_FRAG_MEASURE,
-					       frags[0].value[k].db_instance->db_name, frags[0].value[k].fragment_name, frags[1].value[k].db_instance->db_name, frags[1].value[k].fragment_name,
-					       frags[0].value[k].fragment_name, MYSQL_FRAG_ID, frags[1].value[k].fragment_name, MYSQL_FRAG_ID);
+					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[1], frags[0].value[k].fragment_name, MYSQL_FRAG_MEASURE,
+					       frags[1].value[k].fragment_name, MYSQL_FRAG_MEASURE, MYSQL_FRAG_MEASURE, frags[0].value[k].db_instance->db_name, frags[0].value[k].fragment_name,
+					       frags[1].value[k].db_instance->db_name, frags[1].value[k].fragment_name, frags[0].value[k].fragment_name, MYSQL_FRAG_ID, frags[1].value[k].fragment_name,
+					       MYSQL_FRAG_ID);
 #endif
 
 				//MERGECUBES fragment
@@ -1566,15 +1565,26 @@ int task_destroy(oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}
 		}
-		//Before deleting wait for all process to reach this point
-		MPI_Barrier(MPI_COMM_WORLD);
+
+		if (handle->output_code)
+			proc_error = (short int) handle->output_code;
+		else
+			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
+		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
+		handle->output_code = global_error;
 
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
 			oph_dproc_clean_odb(&((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->oDB, id_datacube,
 					    ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0]);
 		}
+
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_GENERIC_PROCESS_ERROR);
+
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 

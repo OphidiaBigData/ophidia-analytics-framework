@@ -93,8 +93,6 @@ CREATE TABLE `dbmsinstance` (
   `password` varchar(256) DEFAULT NULL,
   `port` int(11) NOT NULL,
   `ioservertype`  varchar(256) NOT NULL DEFAULT 'mysql_table',
-  `fstype`  int(10) NOT NULL DEFAULT 0,
-  `status`  varchar(4) NOT NULL DEFAULT "up",
   PRIMARY KEY (`iddbmsinstance`),
   KEY `idhost` (`idhost`),
   UNIQUE KEY `port_host` (`idhost`, `port`),
@@ -158,7 +156,7 @@ CREATE TABLE `host` (
   `cores` int(10) unsigned DEFAULT NULL,
   `memory` int(10) unsigned DEFAULT NULL,
   `status` varchar(4) NOT NULL DEFAULT "up",
-  `datacubecount` int(10) unsigned NOT NULL DEFAULT 0,
+  `importcount` int(10) unsigned NOT NULL DEFAULT 0,
   `lastupdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`idhost`),
   KEY `idhost` (`idhost`),
@@ -217,7 +215,7 @@ DROP TABLE IF EXISTS `hashost`;
 CREATE TABLE `hashost` (
   `idhostpartition` int(10) unsigned NOT NULL,
   `idhost` int(10) unsigned NOT NULL,
-  `datacubecount` int(10) unsigned NULL DEFAULT 0,
+  `importcount` int(10) unsigned NULL DEFAULT 0,
   PRIMARY KEY (`idhostpartition`, `idhost`),
   CONSTRAINT `idhost_hh` FOREIGN KEY (`idhost`) REFERENCES `host` (`idhost`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `idhostpartition_hh` FOREIGN KEY (`idhostpartition`) REFERENCES `hostpartition` (`idhostpartition`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -305,6 +303,7 @@ CREATE TABLE `user` (
   `registrationdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `accountcertified` tinyint(1) NOT NULL DEFAULT '0',
   `idcountry` smallint(5) unsigned DEFAULT NULL,
+  `maxhosts` int(10) unsigned NULL DEFAULT 0,
   PRIMARY KEY (`iduser`),
   UNIQUE KEY `username` (`username`),
   KEY `idcountry` (`idcountry`)
@@ -359,8 +358,6 @@ CREATE TABLE `datacube` (
   `creationdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `description` varchar(2048) DEFAULT NULL,
   `hostxdatacube` int(10) DEFAULT NULL,
-  `dbmsxhost` int(10) DEFAULT NULL,
-  `dbxdbms` int(10) DEFAULT NULL,
   `fragmentxdb` int(10) DEFAULT NULL,
   `tuplexfragment` int(10) DEFAULT NULL,
   `measure` varchar(256) NOT NULL,
@@ -389,7 +386,7 @@ CREATE TABLE `datacube` (
 DELIMITER ;;
 /*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER TRIGGER_before_delete_datacube BEFORE DELETE ON datacube 
 FOR EACH ROW BEGIN
-UPDATE IGNORE host SET datacubecount = IF(datacubecount > 0, datacubecount - 1, 0) where idhost in (select distinct(idhost) from datacube inner join partitioned on datacube.iddatacube = partitioned.iddatacube inner join dbinstance on dbinstance.iddbinstance = partitioned.iddbinstance inner join dbmsinstance on dbmsinstance.iddbmsinstance = dbinstance.iddbmsinstance where datacube.iddatacube = OLD.iddatacube);
+UPDATE IGNORE host SET importcount = IF(importcount > 0, importcount - 1, 0) where idhost in (select distinct(idhost) from imported where imported.iddatacube = OLD.iddatacube);
 END */;;
 DELIMITER ;
 /*!50003 SET sql_mode              = @saved_sql_mode */ ;
@@ -578,31 +575,13 @@ CREATE TABLE `partitioned` (
   `iddbinstance` int(10) unsigned NOT NULL,
   `iddatacube` int(10) unsigned NOT NULL,
   PRIMARY KEY (`idpartitioned`),
+  UNIQUE KEY `db_datacube` (`iddbinstance`, `iddatacube`),
   KEY `iddbinstance` (`iddbinstance`),
   CONSTRAINT `iddbinstance_p` FOREIGN KEY (`iddbinstance`) REFERENCES `dbinstance` (`iddbinstance`) ON DELETE CASCADE ON UPDATE CASCADE,
   KEY `iddatacube` (`iddatacube`),
   CONSTRAINT `iddatacube_p` FOREIGN KEY (`iddatacube`) REFERENCES `datacube` (`iddatacube`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
-/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
-/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
-/*!50003 SET @saved_col_connection = @@collation_connection */ ;
-/*!50003 SET character_set_client  = utf8 */ ;
-/*!50003 SET character_set_results = utf8 */ ;
-/*!50003 SET collation_connection  = utf8_general_ci */ ;
-/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
-/*!50003 SET sql_mode              = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION' */ ;
-DELIMITER ;;
-/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER TRIGGER_after_insert_datacube AFTER INSERT ON partitioned 
-FOR EACH ROW BEGIN
-UPDATE host SET datacubecount = datacubecount + 1 WHERE idhost IN (SELECT dbmsinstance.idhost AS idhost FROM dbmsinstance INNER JOIN dbinstance ON dbmsinstance.iddbmsinstance = dbinstance.iddbmsinstance INNER JOIN (select idhost FROM partitioned INNER JOIN dbinstance on dbinstance.iddbinstance = partitioned.iddbinstance INNER JOIN dbmsinstance on dbmsinstance.iddbmsinstance = dbinstance.iddbmsinstance where partitioned.iddatacube = NEW.iddatacube GROUP BY idhost HAVING count(idhost) = 1)tmp ON tmp.idhost = dbmsinstance.idhost WHERE dbinstance.iddbinstance = NEW.iddbinstance);
-END */;;
-DELIMITER ;
-/*!50003 SET sql_mode              = @saved_sql_mode */ ;
-/*!50003 SET character_set_client  = @saved_cs_client */ ;
-/*!50003 SET character_set_results = @saved_cs_results */ ;
-/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Dumping data for table `partitioned`
@@ -611,6 +590,35 @@ DELIMITER ;
 LOCK TABLES `partitioned` WRITE;
 /*!40000 ALTER TABLE `partitioned` DISABLE KEYS */;
 /*!40000 ALTER TABLE `partitioned` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `imported`
+--
+
+DROP TABLE IF EXISTS `imported`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `imported` (
+  `idimported` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `idhost` int(10) unsigned NOT NULL,
+  `iddatacube` int(10) unsigned NOT NULL,
+  PRIMARY KEY (`idimported`),
+  UNIQUE KEY `host_datacube` (`idhost`, `iddatacube`),
+  KEY `idhost` (`idhost`),
+  CONSTRAINT `idhost_i` FOREIGN KEY (`idhost`) REFERENCES `host` (`idhost`) ON DELETE CASCADE ON UPDATE CASCADE,
+  KEY `iddatacube` (`iddatacube`),
+  CONSTRAINT `iddatacube_i` FOREIGN KEY (`iddatacube`) REFERENCES `datacube` (`iddatacube`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `imported`
+--
+
+LOCK TABLES `imported` WRITE;
+/*!40000 ALTER TABLE `imported` DISABLE KEYS */;
+/*!40000 ALTER TABLE `imported` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -660,6 +668,7 @@ CREATE TABLE `dimension` (
   `leapyear` int(10) NULL DEFAULT NULL,
   `leapmonth` int(10) unsigned NULL DEFAULT NULL,
   PRIMARY KEY (`iddimension`),
+  UNIQUE KEY `container_dimensionname` (`idcontainer`, `dimensionname`), 
   KEY `idcontainer` (`idcontainer`),
   CONSTRAINT `idcontainer_d` FOREIGN KEY (`idcontainer`) REFERENCES `container` (`idcontainer`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `idhierarchy_d` FOREIGN KEY (`idhierarchy`) REFERENCES `hierarchy` (`idhierarchy`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -745,6 +754,7 @@ CREATE TABLE `cubehasdim` (
   `explicit` tinyint(1) NOT NULL,
   `level` int(10) NOT NULL,
   PRIMARY KEY (`idcubehasdim`),
+  UNIQUE KEY `datacube_dimensioninstance` (`iddatacube`, `iddimensioninstance`), 
   KEY `iddimensioninstance` (`iddimensioninstance`),
   CONSTRAINT `iddimension_cd` FOREIGN KEY (`iddimensioninstance`) REFERENCES `dimensioninstance` (`iddimensioninstance`) ON DELETE CASCADE ON UPDATE CASCADE,
   KEY `iddatacube` (`iddatacube`),
@@ -803,6 +813,7 @@ CREATE TABLE `container` (
   `description` varchar(2048) DEFAULT NULL,
   `idvocabulary` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`idcontainer`),
+  UNIQUE KEY `folder_containername_hidden` (`idfolder`, `containername`, `hidden`),
   KEY `idfolder` (`idfolder`),
   CONSTRAINT `idfolder_c` FOREIGN KEY (`idfolder`) REFERENCES `folder` (`idfolder`) ON DELETE CASCADE ON UPDATE CASCADE,
   KEY `idparent` (`idparent`),
@@ -893,6 +904,7 @@ CREATE TABLE `metadatainstance` (
   `value` LONGBLOB NOT NULL,
   `size` int(10) unsigned NOT NULL DEFAULT 1,
   PRIMARY KEY (`idmetadatainstance`),
+  UNIQUE KEY `datacube_metadatakey` (`iddatacube`, `idkey`),
   FOREIGN KEY (`iddatacube`) REFERENCES `datacube` (`iddatacube`) ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY (`idkey`) REFERENCES `metadatakey` (`idkey`) ON DELETE SET NULL ON UPDATE CASCADE,
   FOREIGN KEY (`idtype`) REFERENCES `metadatatype` (`idtype`) ON DELETE CASCADE ON UPDATE CASCADE

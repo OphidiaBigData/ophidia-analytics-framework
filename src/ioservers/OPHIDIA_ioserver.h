@@ -86,7 +86,7 @@ int _ophidiaio_free_query(oph_ioserver_handler * handle, oph_ioserver_query * qu
  * \param connection    Pointer to server-specific connection structure
  * \return              0 if successfull, non-0 otherwise
  */
-int _ophidiaio_close(oph_ioserver_handler * handle, void *connection);
+int _ophidiaio_close(oph_ioserver_handler * handle, void **connection);
 
 /**
  * \brief               Function to finalize library of data store server and release all dynamic loading resources.

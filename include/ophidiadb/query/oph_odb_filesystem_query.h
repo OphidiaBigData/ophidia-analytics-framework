@@ -28,6 +28,7 @@
 #define MYSQL_QUERY_FS_RETRIEVE_SESSION_FOLDER_ID 	"SELECT idfolder FROM session WHERE sessionid = '%s';"
 #define MYSQL_QUERY_FS_RETRIEVE_CONTAINER_FOLDER_ID 	"SELECT idfolder FROM container WHERE idcontainer = %d;"
 #define MYSQL_QUERY_FS_RETRIEVE_PARENT_FOLDER_ID 	"SELECT idparent FROM folder WHERE idfolder = %d;"
+#define MYSQL_QUERY_FS_RETRIEVE_CONTAINER_NAME		"SELECT containername, idfolder FROM container WHERE idcontainer = %d;"
 
 #define MYSQL_QUERY_FS_RETRIEVE_PARENT_FOLDER 		"SELECT idparent, foldername FROM folder WHERE idfolder = %d;"
 #define MYSQL_QUERY_FS_MV 				"UPDATE container SET container.idfolder=%d, container.containername = '%s' WHERE container.idcontainer=%d;"
