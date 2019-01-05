@@ -296,7 +296,7 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
  * \param algorithm Type of algorithm used for random number generation
  * \return 0 if successfull, N otherwise
  */
-int oph_dc_populate_fragment_with_rand_data2(oph_ioserver_handler * server, oph_odb_fragment * m,  unsigned long long tuple_number, int array_length, char *data_type, int compressed, char *algorithm);
+int oph_dc_populate_fragment_with_rand_data2(oph_ioserver_handler * server, oph_odb_fragment * m, unsigned long long tuple_number, int array_length, char *data_type, int compressed, char *algorithm);
 
 /** 
  * \brief Function to read a physical table with filtering parameters

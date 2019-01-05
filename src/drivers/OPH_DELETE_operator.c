@@ -363,23 +363,19 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
-	if (((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0)
+	OPH_DELETE_operator_handle *oper_handle = (OPH_DELETE_operator_handle *) handle->operator_handle;
+
+	if (oper_handle->fragment_id_start_position < 0 && handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	int id_datacube = ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_datacube;
+	int id_datacube = oper_handle->id_input_datacube;
 
-	int num_threads =
-	    (((OPH_DELETE_operator_handle *) handle->operator_handle)->nthread <=
-	     (unsigned int) ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_DELETE_operator_handle *) handle->
-													 operator_handle)->nthread : (unsigned int) ((OPH_DELETE_operator_handle *) handle->
-																		     operator_handle)->fragment_number);
+	int num_threads = (oper_handle->nthread <= (unsigned int) oper_handle->fragment_number ? oper_handle->nthread : (unsigned int) oper_handle->fragment_number);
 
 	int ret = OPH_ANALYTICS_OPERATOR_SUCCESS;
-	if ((ret =
-	     oph_dproc_delete_data(id_datacube, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container,
-				   ((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0, num_threads))) {
+	if ((ret = oph_dproc_delete_data(id_datacube, oper_handle->id_input_container, oper_handle->fragment_ids, 0, 0, num_threads))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 	}
 
 	return ret;

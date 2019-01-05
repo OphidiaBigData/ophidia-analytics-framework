@@ -4204,11 +4204,13 @@ int task_destroy(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
-	if (!((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->run)
+	OPH_IMPORTNC2_operator_handle *oper_handle = (OPH_IMPORTNC2_operator_handle *) handle->operator_handle;
+
+	if (!oper_handle->run)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	short int proc_error = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->execute_error;
-	int id_datacube = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_output_datacube;
+	short int proc_error = oper_handle->execute_error;
+	int id_datacube = oper_handle->id_output_datacube;
 	short int global_error = 0;
 
 	//Reduce results
@@ -4219,24 +4221,21 @@ int task_destroy(oph_operator_struct * handle)
 		char *tmp_uri = NULL;
 		if (oph_pid_get_uri(&tmp_uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve web server URI.\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_PID_URI_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_PID_URI_ERROR);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-		if (oph_pid_show_pid
-		    (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_output_datacube, tmp_uri)) {
+		if (oph_pid_show_pid(oper_handle->id_input_container, oper_handle->id_output_datacube, tmp_uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to print PID string\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_PID_SHOW_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_PID_SHOW_ERROR);
 			free(tmp_uri);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 		char jsonbuf[OPH_COMMON_BUFFER_LEN];
 		memset(jsonbuf, 0, OPH_COMMON_BUFFER_LEN);
-		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container,
-			 ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_output_datacube);
+		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, oper_handle->id_input_container, oper_handle->id_output_datacube);
 
 		// ADD OUTPUT PID TO JSON AS TEXT
-		if (oph_json_is_objkey_printable
-		    (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->objkeys, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_IMPORTNC2)) {
+		if (oph_json_is_objkey_printable(oper_handle->objkeys, oper_handle->objkeys_num, OPH_JSON_OBJKEY_IMPORTNC2)) {
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_IMPORTNC2, "Output Cube", jsonbuf)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
@@ -4262,14 +4261,14 @@ int task_destroy(oph_operator_struct * handle)
 		memset(id_string, 0, sizeof(id_string));
 
 		if (handle->proc_rank == 0) {
-			ophidiadb *oDB = &((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->oDB;
+			ophidiadb *oDB = &(oper_handle->oDB);
 			oph_odb_datacube cube;
 			oph_odb_cube_init_datacube(&cube);
 
 			//retrieve input datacube
 			if (oph_odb_cube_retrieve_datacube(oDB, id_datacube, &cube)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_DATACUBE_READ_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_DATACUBE_READ_ERROR);
 			} else {
 				//Copy fragment id relative index set 
 				strncpy(id_string, cube.frag_relative_index_set, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
@@ -4282,39 +4281,27 @@ int task_destroy(oph_operator_struct * handle)
 		//Check if sequential part has been completed
 		if (id_string[0] == 0) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_MASTER_TASK_INIT_FAILED);
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_MASTER_TASK_INIT_FAILED);
 		} else {
-			if (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragment_first_id >= 0 || handle->proc_rank == 0) {
+			if (oper_handle->fragment_first_id >= 0 || handle->proc_rank == 0) {
 				//Partition fragment relative index string
 				char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
 				char *new_ptr = new_id_string;
-				if (oph_ids_get_substring_from_string
-				    (id_string, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragment_first_id,
-				     ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragment_number, &new_ptr)) {
+				if (oph_ids_get_substring_from_string(id_string, oper_handle->fragment_first_id, oper_handle->fragment_number, &new_ptr)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to split IDs fragment string\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_IMPORTNC_ID_STRING_SPLIT_ERROR);
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_ID_STRING_SPLIT_ERROR);
 				} else {
 					//Delete fragments
-					int num_threads =
-					    (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nthread <=
-					     ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->
-					     nthread : ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragment_number);
+					int num_threads = (oper_handle->nthread <= oper_handle->fragment_number ? oper_handle->nthread : oper_handle->fragment_number);
 
-					int start_position =
-					    (int) floor((double) ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragment_first_id /
-							((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragxdb_number);
+					int start_position = (int) floor((double) oper_handle->fragment_first_id / oper_handle->fragxdb_number);
 					int row_number = (int)
 					    ceil((double)
-						 (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragment_first_id +
-						  ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragment_number) /
-						 ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragxdb_number) - start_position;
+						 (oper_handle->fragment_first_id + oper_handle->fragment_number) / oper_handle->fragxdb_number) - start_position;
 
-					if (oph_dproc_delete_data
-					    (id_datacube, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number, num_threads)) {
+					if (oph_dproc_delete_data(id_datacube, oper_handle->id_input_container, new_id_string, start_position, row_number, num_threads)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container,
-							OPH_LOG_OPH_DELETE_DB_READ_ERROR);
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 					}
 				}
 			}
@@ -4329,12 +4316,11 @@ int task_destroy(oph_operator_struct * handle)
 
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
-			oph_dproc_clean_odb(&((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->oDB, id_datacube,
-					    ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container);
+			oph_dproc_clean_odb(&(oper_handle->oDB), id_datacube, oper_handle->id_input_container);
 		}
 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
 
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
