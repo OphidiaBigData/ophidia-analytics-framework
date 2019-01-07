@@ -192,8 +192,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "I/O nodes storing datacube aren't available\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_in_container, OPH_LOG_OPH_CONCATNC_DATACUBE_AVAILABILITY_ERROR, datacube_in);
 			id_in_datacube = id_in_container = 0;
-		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_in_container, 1, &folder_id))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
+		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_in_container, &folder_id))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_in_container, OPH_LOG_OPH_CONCATNC_DATACUBE_FOLDER_ERROR, datacube_in);
 			id_in_datacube = id_in_container = 0;
 		} else if ((oph_odb_fs_check_folder_session(folder_id, ((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->sessionid, oDB, &permission)) || !permission) {
