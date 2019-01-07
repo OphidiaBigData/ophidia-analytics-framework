@@ -1403,7 +1403,7 @@ int task_init(oph_operator_struct * handle)
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_NAME_NOT_ALLOWED_ERROR, container_name);
 					goto __OPH_EXIT_1;
 				}
-				//Check if non-hidden container exists in folder
+				//Check if container exists in folder
 				int container_unique = 0;
 				if ((oph_odb_fs_is_unique(folder_id, container_name, oDB, &container_unique))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check output container\n");
@@ -1545,14 +1545,14 @@ int task_init(oph_operator_struct * handle)
 
 		} else if (!container_exists) {
 			//If it doesn't exist then return an error
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container or it is hidden\n");
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
 		}
 		//Else retreive container ID and check for dimension table
 		if (!((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->create_container
 		    && oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, &id_container_out)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container or it is hidden\n");
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
 		}

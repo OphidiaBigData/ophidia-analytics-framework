@@ -64,7 +64,7 @@
 #define OPH_LOG_GENERIC_DIM_INSTANCE_STORE_ERROR					"Error in inserting a new dimension instance\n"
 #define OPH_LOG_GENERIC_PID_ERROR 									"Unable to parse the PID string %s\n"
 #define OPH_LOG_GENERIC_DATACUBE_AVAILABILITY_ERROR					"I/O nodes storing datacube %s aren't available\n"
-#define OPH_LOG_GENERIC_DATACUBE_FOLDER_ERROR						"Unable to retrieve folder of %s datacube or container is hidden\n"
+#define OPH_LOG_GENERIC_DATACUBE_FOLDER_ERROR						"Unable to retrieve folder of %s datacube\n"
 #define OPH_LOG_GENERIC_DATACUBE_PERMISSION_ERROR					"User %s is not allowed to work on this datacube\n"
 #define OPH_LOG_GENERIC_NO_INPUT_DATACUBE_PID 						"Master procedure was unable to find input datacube related to PID %s\n"
 #define OPH_LOG_GENERIC_NO_INPUT_CONTAINER_PID 						"Master procedure was unable to find input container related to PID %s.\n"
@@ -86,7 +86,7 @@
 #define OPH_LOG_GENERIC_DIM_TABLE_RETREIVE_ERROR					"Error while retrieving dimension table %s\n"
 #define OPH_LOG_GENERIC_NO_ROWS_FOUND                               "No rows found by query\n"
 #define OPH_LOG_GENERIC_ADDITIONAL_INFO_ERROR 						"Unable to retrieve creation date and description\n"
-#define OPH_LOG_GENERIC_NO_INPUT_CONTAINER_WITH_CONTAINER 			"[CONTAINER: %s] Unable to find container %s in OphidiaDB or it is hidden\n"
+#define OPH_LOG_GENERIC_NO_INPUT_CONTAINER_WITH_CONTAINER 			"[CONTAINER: %s] Unable to find container %s in OphidiaDB\n"
 #define OPH_LOG_GENERIC_CWD_ERROR_NO_CONTAINER						"Path %s doesn't exists\n"
 #define OPH_LOG_GENERIC_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING		"Number of multidimensional parameters don't correspond\n"
 #define OPH_LOG_GENERIC_INSERT_CONTAINER_ERROR_WITH_CONTAINER 		"[CONTAINER: %s] Unable to insert new container %s in OphidiaDB\n"
@@ -1791,7 +1791,7 @@
 #define OPH_LOG_OPH_METADATA_OPHIDIADB_CONFIGURATION_FILE_NO_CONTAINER     OPH_LOG_GENERIC_OPHIDIADB_CONFIGURATION_FILE_NO_CONTAINER
 #define OPH_LOG_OPH_METADATA_OPHIDIADB_CONNECTION_ERROR_NO_CONTAINER       OPH_LOG_GENERIC_OPHIDIADB_CONNECTION_ERROR_NO_CONTAINER
 #define OPH_LOG_OPH_METADATA_MISSING_INPUT_PARAMETER                       OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER
-#define OPH_LOG_OPH_METADATA_INVALID_INPUT_PARAMETER                       "Invalid input parameter %s: container is hidden or it doesn't exist\n"
+#define OPH_LOG_OPH_METADATA_INVALID_INPUT_PARAMETER                       "Invalid input parameter %s: container doesn't exist\n"
 #define OPH_LOG_OPH_METADATA_MEMORY_ERROR_INPUT                            OPH_LOG_GENERIC_MEMORY_ERROR_INPUT
 #define OPH_LOG_OPH_METADATA_INFO_START                                    "OPH_METADATA start\n"
 #define OPH_LOG_OPH_METADATA_INFO_END                                      "OPH_METADATA end\n"
@@ -1857,13 +1857,8 @@
 #define OPH_LOG_OPH_FOLDER_INVALID_INPUT_STRING                          OPH_LOG_GENERIC_INVALID_INPUT_STRING
 #define OPH_LOG_OPH_FOLDER_UNIQUE_CHECK_ERROR                            "Unable to check uniqueness\n"
 #define OPH_LOG_OPH_FOLDER_NOT_UNIQUE_ERROR                              "There is already a folder or a visible container with the same name\n"
-#define OPH_LOG_OPH_FOLDER_NOT_UNIQUE_HIDDEN_ERROR                       "There is already a hidden container with the same name\n"
-#define OPH_LOG_OPH_FOLDER_LS_EMPTY_FOLDER                               "No subfolders/visible containers found\n"
-#define OPH_LOG_OPH_FOLDER_LS_HIDDEN_EMPTY_FOLDER                        "No subfolders/visible containers/hidden containers found\n"
+#define OPH_LOG_OPH_FOLDER_LS_EMPTY_FOLDER                               "No subfolders/containers found\n"
 #define OPH_LOG_OPH_FOLDER_TYPE_CHECK_ERROR                              "Unable to check object type\n"
-#define OPH_LOG_OPH_FOLDER_CANNOT_MOVE_HIDDEN_ERROR                      "Cannot move hidden container\n"
-#define OPH_LOG_OPH_FOLDER_CANNOT_RESTORE_VISIBLE_ERROR                  "Specified object is not a hidden container\n"
-#define OPH_LOG_OPH_FOLDER_CANNOT_REMOVE_HIDDEN_ERROR                    "Cannot remove hidden container\n"
 #define OPH_LOG_OPH_FOLDER_EMPTY_CHECK_ERROR                             "Unable to check folder emptiness\n"
 #define OPH_LOG_OPH_FOLDER_FOLDER_NOT_EMPTY_ERROR                        "Folder is not empty\n"
 #define OPH_LOG_OPH_FOLDER_PID_URI_ERROR                                 OPH_LOG_GENERIC_PID_URI_ERROR
@@ -1966,7 +1961,7 @@
 #define OPH_LOG_OPH_RESTORECONTAINER_INSERT_CONTAINER_ERROR_NO_CONTAINER 		"[CONTAINER: %s] Unable to update container %s in OphidiaDB\n"
 #define OPH_LOG_OPH_RESTORECONTAINER_DATACUBE_PERMISSION_ERROR					OPH_LOG_GENERIC_DATACUBE_PERMISSION_ERROR_WITH_CONTAINER
 #define OPH_LOG_OPH_RESTORECONTAINER_CWD_ERROR									OPH_LOG_GENERIC_CWD_ERROR
-#define OPH_LOG_OPH_RESTORECONTAINER_OUTPUT_CONTAINER_EXIST_ERROR_NO_CONTAINER	"[CONTAINER: %s] Output container %s doesn't exist or it isn't hidden\n"
+#define OPH_LOG_OPH_RESTORECONTAINER_OUTPUT_CONTAINER_EXIST_ERROR_NO_CONTAINER	"[CONTAINER: %s] Output container %s doesn't exist\n"
 #define OPH_LOG_OPH_RESTORECONTAINER_UPDATE_CONTAINER_ERROR 					"Unable to update container %s\n"
 
 /*OPH_SHOWGRID OPERATOR LOG ERRORS*/

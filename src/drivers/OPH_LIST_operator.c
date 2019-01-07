@@ -3527,7 +3527,7 @@ int task_execute(oph_operator_struct * handle)
 			char **my_row = NULL;
 			switch (level) {
 				case 8:
-					snprintf(container_path, MYSQL_BUFLEN, "%s%s%s", out_path, (row[0] ? row[0] : ""), (!strcmp(row[7], "1") ? "*" : ""));
+					snprintf(container_path, MYSQL_BUFLEN, "%s%s", out_path, (row[0] ? row[0] : ""));
 					if (oph_pid_drop_session_prefix(container_path, ((OPH_LIST_operator_handle *) handle->operator_handle)->sessionid, &new_container_path)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error allocating memory\n");
@@ -3536,13 +3536,13 @@ int task_execute(oph_operator_struct * handle)
 					}
 
 					snprintf(host_str, 1000, "%s (%s)", (row[1] ? row[1] : ""), (row[2] ? row[2] : ""));
-					snprintf(id_dbms_str, 1000, "%s (%s)", (row[3] ? row[3] : ""), (row[4] ? row[4] : ""));
-					if (!strcmp(row[2], OPH_COMMON_DOWN_STATUS) || !strcmp(row[4], OPH_COMMON_DOWN_STATUS)) {
-						snprintf(db_name_str, 1000, "{%s}", (row[5] ? row[5] : ""));
-						snprintf(frag_name_str, 1000, "{%s}", (row[6] ? row[6] : ""));
+					snprintf(id_dbms_str, 1000, "%s", (row[3] ? row[3] : ""));
+					if (!strcmp(row[2], OPH_COMMON_DOWN_STATUS)) {
+						snprintf(db_name_str, 1000, "{%s}", (row[4] ? row[4] : ""));
+						snprintf(frag_name_str, 1000, "{%s}", (row[5] ? row[5] : ""));
 					} else {
-						snprintf(db_name_str, 1000, "%s", (row[5] ? row[5] : ""));
-						snprintf(frag_name_str, 1000, "%s", (row[6] ? row[6] : ""));
+						snprintf(db_name_str, 1000, "%s", (row[4] ? row[4] : ""));
+						snprintf(frag_name_str, 1000, "%s", (row[5] ? row[5] : ""));
 					}
 					//ADD ROW TO JSON
 					num_fields = 6;
@@ -3662,7 +3662,7 @@ int task_execute(oph_operator_struct * handle)
 
 					break;
 				case 7:
-					snprintf(container_path, MYSQL_BUFLEN, "%s%s%s", out_path, (row[0] ? row[0] : ""), (!strcmp(row[6], "1") ? "*" : ""));
+					snprintf(container_path, MYSQL_BUFLEN, "%s%s", out_path, (row[0] ? row[0] : ""));
 					if (oph_pid_drop_session_prefix(container_path, ((OPH_LIST_operator_handle *) handle->operator_handle)->sessionid, &new_container_path)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error allocating memory\n");
@@ -3671,11 +3671,11 @@ int task_execute(oph_operator_struct * handle)
 					}
 
 					snprintf(host_str, 1000, "%s (%s)", (row[1] ? row[1] : ""), (row[2] ? row[2] : ""));
-					snprintf(id_dbms_str, 1000, "%s (%s)", (row[3] ? row[3] : ""), (row[4] ? row[4] : ""));
-					if (!strcmp(row[2], OPH_COMMON_DOWN_STATUS) || !strcmp(row[4], OPH_COMMON_DOWN_STATUS)) {
-						snprintf(db_name_str, 1000, "{%s}", (row[5] ? row[5] : ""));
+					snprintf(id_dbms_str, 1000, "%s", (row[3] ? row[3] : ""));
+					if (!strcmp(row[2], OPH_COMMON_DOWN_STATUS)) {
+						snprintf(db_name_str, 1000, "{%s}", (row[4] ? row[4] : ""));
 					} else {
-						snprintf(db_name_str, 1000, "%s", (row[5] ? row[5] : ""));
+						snprintf(db_name_str, 1000, "%s", (row[4] ? row[4] : ""));
 					}
 					//ADD ROW TO JSON
 					num_fields = 5;
@@ -3781,7 +3781,7 @@ int task_execute(oph_operator_struct * handle)
 					printf("| %-18s | %-40s | %-20s | %-10s | %-30s |\n", new_container_path, datacube_name, host_str, id_dbms_str, db_name_str);
 					break;
 				case 6:
-					snprintf(container_path, MYSQL_BUFLEN, "%s%s%s", out_path, (row[0] ? row[0] : ""), (!strcmp(row[5], "1") ? "*" : ""));
+					snprintf(container_path, MYSQL_BUFLEN, "%s%s", out_path, (row[0] ? row[0] : ""));
 					if (oph_pid_drop_session_prefix(container_path, ((OPH_LIST_operator_handle *) handle->operator_handle)->sessionid, &new_container_path)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error allocating memory\n");
@@ -3790,7 +3790,7 @@ int task_execute(oph_operator_struct * handle)
 					}
 
 					snprintf(host_str, 1000, "%s (%s)", (row[1] ? row[1] : ""), (row[2] ? row[2] : ""));
-					snprintf(id_dbms_str, 1000, "%s (%s)", (row[3] ? row[3] : ""), (row[4] ? row[4] : ""));
+					snprintf(id_dbms_str, 1000, "%s", (row[3] ? row[3] : ""));
 					//ADD ROW TO JSON
 					num_fields = 4;
 					if (oph_json_is_objkey_printable(objkeys, objkeys_num, OPH_JSON_OBJKEY_LIST)) {
@@ -3882,7 +3882,7 @@ int task_execute(oph_operator_struct * handle)
 					printf("| %-18s | %-40s | %-20s | %-10s |\n", new_container_path, datacube_name, host_str, id_dbms_str);
 					break;
 				case 5:
-					snprintf(container_path, MYSQL_BUFLEN, "%s%s%s", out_path, (row[0] ? row[0] : ""), (!strcmp(row[4], "1") ? "*" : ""));
+					snprintf(container_path, MYSQL_BUFLEN, "%s%s", out_path, (row[0] ? row[0] : ""));
 					if (oph_pid_drop_session_prefix(container_path, ((OPH_LIST_operator_handle *) handle->operator_handle)->sessionid, &new_container_path)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error allocating memory\n");
@@ -3969,7 +3969,7 @@ int task_execute(oph_operator_struct * handle)
 					printf("| %-18s | %-40s | %-20s |\n", new_container_path, datacube_name, host_str);
 					break;
 				case 4:
-					snprintf(container_path, MYSQL_BUFLEN, "%s%s%s", out_path, (row[0] ? row[0] : ""), (!strcmp(row[1], "1") ? "*" : ""));
+					snprintf(container_path, MYSQL_BUFLEN, "%s%s", out_path, (row[0] ? row[0] : ""));
 					if (oph_pid_drop_session_prefix(container_path, ((OPH_LIST_operator_handle *) handle->operator_handle)->sessionid, &new_container_path)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error allocating memory\n");

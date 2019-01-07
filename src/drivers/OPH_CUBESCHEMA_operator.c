@@ -185,7 +185,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		free(uri);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_container, &folder_id))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_DATACUBE_FOLDER_ERROR, datacube_name);
 		free(uri);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;

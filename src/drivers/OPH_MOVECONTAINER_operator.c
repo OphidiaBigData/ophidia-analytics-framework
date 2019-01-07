@@ -274,7 +274,7 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	if (oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id1, last_token, &id_container)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container or container is hidden\n");
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_MOVECONTAINER_NO_INPUT_CONTAINER, container_input);
 		oph_movecontainer_free_all(abs_path1, abs_path2, first_part, first_part2, last_token, last_token2);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;

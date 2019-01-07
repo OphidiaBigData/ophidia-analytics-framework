@@ -813,7 +813,7 @@ CREATE TABLE `container` (
   `description` varchar(2048) DEFAULT NULL,
   `idvocabulary` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`idcontainer`),
-  UNIQUE KEY `folder_containername_hidden` (`idfolder`, `containername`, `hidden`),
+  UNIQUE KEY `folder_containername` (`idfolder`, `containername`),
   KEY `idfolder` (`idfolder`),
   CONSTRAINT `idfolder_c` FOREIGN KEY (`idfolder`) REFERENCES `folder` (`idfolder`) ON DELETE CASCADE ON UPDATE CASCADE,
   KEY `idparent` (`idparent`),

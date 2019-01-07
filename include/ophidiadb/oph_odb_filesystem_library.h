@@ -142,7 +142,7 @@ int oph_odb_fs_is_visible_container(int folder_id, char *name, ophidiadb * oDB, 
 int oph_odb_fs_is_unique(int folderid, char *name, ophidiadb * oDB, int *answer);
 
 /**
- * \brief Function used to check if the folder indicated by folder_id is empty (no subfolders and visible/hidden containers)
+ * \brief Function used to check if the folder indicated by folder_id is empty (no subfolders and containers)
  * \param folder_id Id of the folder to check
  * \param oDB Pointer to the OphidiaDB
  * \param answer 1 if empty, 0 otherwise
