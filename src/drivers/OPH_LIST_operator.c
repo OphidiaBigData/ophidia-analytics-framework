@@ -69,7 +69,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_LIST_operator_handle *) handle->operator_handle)->hostname = NULL;
 	((OPH_LIST_operator_handle *) handle->operator_handle)->db_name = NULL;
 	((OPH_LIST_operator_handle *) handle->operator_handle)->id_dbms = 0;
-	((OPH_LIST_operator_handle *) handle->operator_handle)->hidden = 0;
 	((OPH_LIST_operator_handle *) handle->operator_handle)->recursive_search = 0;
 	((OPH_LIST_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_LIST_operator_handle *) handle->operator_handle)->src = NULL;
@@ -212,19 +211,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_HIDDEN);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_HIDDEN);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_HIDDEN);
-
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (!strcmp(value, OPH_COMMON_NO_VALUE)) {
-		((OPH_LIST_operator_handle *) handle->operator_handle)->hidden = 0;
-	} else {
-		((OPH_LIST_operator_handle *) handle->operator_handle)->hidden = 1;
-	}
-
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_RECURSIVE_SEARCH);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_RECURSIVE_SEARCH);
@@ -350,7 +336,7 @@ int task_distribute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, int hidden, char *container_name, char *tmp_uri, char *path, int recursive_search, short int first_time,
+int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, char *container_name, char *tmp_uri, char *path, int recursive_search, short int first_time,
 				     oph_json * oper_json, char **objkeys, int objkeys_num, const char *sessionid)
 {
 	if (!oDB || !folder_id || !path || !oper_json) {
@@ -374,7 +360,7 @@ int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, 
 	MYSQL_RES *tmp_info_list = NULL;
 	if (recursive_search) {
 		//retrieve information list
-		if (oph_odb_fs_find_fs_objects(oDB, 0, folder_id, 1, NULL, &tmp_info_list)) {
+		if (oph_odb_fs_find_fs_objects(oDB, 0, folder_id, NULL, &tmp_info_list)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive information list\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_READ_LIST_INFO_ERROR);
 			if (recursive_search)
@@ -389,7 +375,7 @@ int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, 
 		}
 	}
 	//retrieve information list
-	if (oph_odb_fs_find_fs_objects(oDB, level, folder_id, hidden, container_name, &info_list)) {
+	if (oph_odb_fs_find_fs_objects(oDB, level, folder_id, container_name, &info_list)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive information list\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_READ_LIST_INFO_ERROR);
 		if (recursive_search)
@@ -428,11 +414,6 @@ int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, 
 							snprintf(leaf_folder, OPH_COMMON_BUFFER_LEN, OPH_LIST_CONTAINER_PATH, recursive_path, (row[0] ? row[0] : ""));
 						else
 							snprintf(leaf_folder, OPH_COMMON_BUFFER_LEN, OPH_LIST_CONTAINER_PATH_NAME, (row[0] ? row[0] : ""));
-					} else if (!strcmp(row[1], "3")) {
-						if (recursive_search && !first_time)
-							snprintf(leaf_folder, OPH_COMMON_BUFFER_LEN, OPH_LIST_HIDDEN_CONTAINER_PATH, recursive_path, (row[0] ? row[0] : ""));
-						else
-							snprintf(leaf_folder, OPH_COMMON_BUFFER_LEN, OPH_LIST_HIDDEN_CONTAINER_PATH_NAME, (row[0] ? row[0] : ""));
 					}
 					//ADD ROW TO JSON
 					num_fields = 4;
@@ -556,11 +537,6 @@ int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, 
 							snprintf(leaf_folder, OPH_COMMON_BUFFER_LEN, OPH_LIST_CONTAINER_PATH, recursive_path, (row[0] ? row[0] : ""));
 						else
 							snprintf(leaf_folder, OPH_COMMON_BUFFER_LEN, OPH_LIST_CONTAINER_PATH_NAME, (row[0] ? row[0] : ""));
-					} else if (!strcmp(row[1], "3")) {
-						if (recursive_search && !first_time)
-							snprintf(leaf_folder, OPH_COMMON_BUFFER_LEN, OPH_LIST_HIDDEN_CONTAINER_PATH, recursive_path, (row[0] ? row[0] : ""));
-						else
-							snprintf(leaf_folder, OPH_COMMON_BUFFER_LEN, OPH_LIST_HIDDEN_CONTAINER_PATH_NAME, (row[0] ? row[0] : ""));
 					}
 					//ADD ROW TO JSON
 					num_fields = 2;
@@ -729,7 +705,7 @@ int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, 
 			snprintf(recursive_path_buf, OPH_COMMON_BUFFER_LEN, OPH_LIST_CONTAINER_PATH, recursive_path, tmp_row[0]);
 			snprintf(recursive_path, OPH_COMMON_BUFFER_LEN, "%s", recursive_path_buf);
 		}
-		if (_oph_list_recursive_list_folders(oDB, level, (int) strtol(tmp_row[1], NULL, 10), hidden, container_name, tmp_uri, recursive_path, 1, 0, oper_json, objkeys, objkeys_num, sessionid))
+		if (_oph_list_recursive_list_folders(oDB, level, (int) strtol(tmp_row[1], NULL, 10), container_name, tmp_uri, recursive_path, 1, 0, oper_json, objkeys, objkeys_num, sessionid))
 			break;
 	}
 	if (recursive_search)
@@ -738,7 +714,7 @@ int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, int hidden, char *container_name, char *tmp_uri, char *path, int recursive_search, short int first_time, char *measure,
+int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, char *container_name, char *tmp_uri, char *path, int recursive_search, short int first_time, char *measure,
 					      int oper_level, char *src, oph_json * oper_json, char **objkeys, int objkeys_num, const char *sessionid)
 {
 	if (!oDB || !folder_id || !path || !oper_json) {
@@ -766,7 +742,7 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, in
 	MYSQL_RES *tmp_info_list = NULL;
 	if (recursive_search) {
 		//retrieve information list
-		if (oph_odb_fs_find_fs_objects(oDB, 0, folder_id, 1, NULL, &tmp_info_list)) {
+		if (oph_odb_fs_find_fs_objects(oDB, 0, folder_id, NULL, &tmp_info_list)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive information list\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_READ_LIST_INFO_ERROR);
 			if (recursive_search)
@@ -781,7 +757,7 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, in
 		}
 	}
 	//retrieve information list
-	if (oph_odb_fs_find_fs_filtered_objects(oDB, folder_id, hidden, container_name, measure, oper_level, src, &info_list)) {
+	if (oph_odb_fs_find_fs_filtered_objects(oDB, folder_id, container_name, measure, oper_level, src, &info_list)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive information list\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_READ_LIST_INFO_ERROR);
 		if (recursive_search)
@@ -1448,7 +1424,7 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, in
 			snprintf(recursive_path, OPH_COMMON_BUFFER_LEN, "%s", recursive_path_buf);
 		}
 		if (_oph_list_recursive_filtered_list_folders
-		    (oDB, (int) strtol(tmp_row[1], NULL, 10), hidden, container_name, tmp_uri, recursive_path, 1, 0, measure, oper_level, src, oper_json, objkeys, objkeys_num, sessionid))
+		    (oDB, (int) strtol(tmp_row[1], NULL, 10), container_name, tmp_uri, recursive_path, 1, 0, measure, oper_level, src, oper_json, objkeys, objkeys_num, sessionid))
 			break;
 	}
 	if (recursive_search)
@@ -1471,7 +1447,6 @@ int task_execute(oph_operator_struct * handle)
 
 	ophidiadb *oDB = &((OPH_LIST_operator_handle *) handle->operator_handle)->oDB;
 	int level = ((OPH_LIST_operator_handle *) handle->operator_handle)->level;
-	int hidden = ((OPH_LIST_operator_handle *) handle->operator_handle)->hidden;
 	int recursive_search = ((OPH_LIST_operator_handle *) handle->operator_handle)->recursive_search;
 	char *path = ((OPH_LIST_operator_handle *) handle->operator_handle)->path;
 	char *user = ((OPH_LIST_operator_handle *) handle->operator_handle)->user;
@@ -1553,7 +1528,7 @@ int task_execute(oph_operator_struct * handle)
 			}
 			if (uri)
 				free(uri);
-			if ((oph_odb_fs_retrive_container_folder_id(oDB, id_container, 0, &folder_id))) {
+			if ((oph_odb_fs_retrive_container_folder_id(oDB, id_container, &folder_id))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_DATACUBE_FOLDER_ERROR, datacube_name);
 				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -3478,7 +3453,7 @@ int task_execute(oph_operator_struct * handle)
 
 		if (level < 3) {
 			if (_oph_list_recursive_list_folders
-			    (oDB, level, folder_id, hidden, container_name, tmp_uri, new_path, recursive_search, 1, handle->operator_json, objkeys, objkeys_num,
+			    (oDB, level, folder_id, container_name, tmp_uri, new_path, recursive_search, 1, handle->operator_json, objkeys, objkeys_num,
 			     ((OPH_LIST_operator_handle *) handle->operator_handle)->sessionid)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive information list\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_READ_LIST_INFO_ERROR);
@@ -3490,7 +3465,7 @@ int task_execute(oph_operator_struct * handle)
 			}
 		} else {
 			if (_oph_list_recursive_filtered_list_folders
-			    (oDB, folder_id, hidden, container_name, tmp_uri, new_path, recursive_search, 1, measure, oper_level, src, handle->operator_json, objkeys, objkeys_num,
+			    (oDB, folder_id, container_name, tmp_uri, new_path, recursive_search, 1, measure, oper_level, src, handle->operator_json, objkeys, objkeys_num,
 			     ((OPH_LIST_operator_handle *) handle->operator_handle)->sessionid)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive information list\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_READ_LIST_INFO_ERROR);
@@ -3552,7 +3527,7 @@ int task_execute(oph_operator_struct * handle)
 			char **my_row = NULL;
 			switch (level) {
 				case 8:
-					snprintf(container_path, MYSQL_BUFLEN, "%s%s%s", out_path, (row[0] ? row[0] : ""), (!strcmp(row[7], "1") ? "*" : ""));
+					snprintf(container_path, MYSQL_BUFLEN, "%s%s", out_path, (row[0] ? row[0] : ""));
 					if (oph_pid_drop_session_prefix(container_path, ((OPH_LIST_operator_handle *) handle->operator_handle)->sessionid, &new_container_path)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error allocating memory\n");
@@ -3561,13 +3536,13 @@ int task_execute(oph_operator_struct * handle)
 					}
 
 					snprintf(host_str, 1000, "%s (%s)", (row[1] ? row[1] : ""), (row[2] ? row[2] : ""));
-					snprintf(id_dbms_str, 1000, "%s (%s)", (row[3] ? row[3] : ""), (row[4] ? row[4] : ""));
-					if (!strcmp(row[2], OPH_COMMON_DOWN_STATUS) || !strcmp(row[4], OPH_COMMON_DOWN_STATUS)) {
-						snprintf(db_name_str, 1000, "{%s}", (row[5] ? row[5] : ""));
-						snprintf(frag_name_str, 1000, "{%s}", (row[6] ? row[6] : ""));
+					snprintf(id_dbms_str, 1000, "%s", (row[3] ? row[3] : ""));
+					if (!strcmp(row[2], OPH_COMMON_DOWN_STATUS)) {
+						snprintf(db_name_str, 1000, "{%s}", (row[4] ? row[4] : ""));
+						snprintf(frag_name_str, 1000, "{%s}", (row[5] ? row[5] : ""));
 					} else {
-						snprintf(db_name_str, 1000, "%s", (row[5] ? row[5] : ""));
-						snprintf(frag_name_str, 1000, "%s", (row[6] ? row[6] : ""));
+						snprintf(db_name_str, 1000, "%s", (row[4] ? row[4] : ""));
+						snprintf(frag_name_str, 1000, "%s", (row[5] ? row[5] : ""));
 					}
 					//ADD ROW TO JSON
 					num_fields = 6;
@@ -3687,7 +3662,7 @@ int task_execute(oph_operator_struct * handle)
 
 					break;
 				case 7:
-					snprintf(container_path, MYSQL_BUFLEN, "%s%s%s", out_path, (row[0] ? row[0] : ""), (!strcmp(row[6], "1") ? "*" : ""));
+					snprintf(container_path, MYSQL_BUFLEN, "%s%s", out_path, (row[0] ? row[0] : ""));
 					if (oph_pid_drop_session_prefix(container_path, ((OPH_LIST_operator_handle *) handle->operator_handle)->sessionid, &new_container_path)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error allocating memory\n");
@@ -3696,11 +3671,11 @@ int task_execute(oph_operator_struct * handle)
 					}
 
 					snprintf(host_str, 1000, "%s (%s)", (row[1] ? row[1] : ""), (row[2] ? row[2] : ""));
-					snprintf(id_dbms_str, 1000, "%s (%s)", (row[3] ? row[3] : ""), (row[4] ? row[4] : ""));
-					if (!strcmp(row[2], OPH_COMMON_DOWN_STATUS) || !strcmp(row[4], OPH_COMMON_DOWN_STATUS)) {
-						snprintf(db_name_str, 1000, "{%s}", (row[5] ? row[5] : ""));
+					snprintf(id_dbms_str, 1000, "%s", (row[3] ? row[3] : ""));
+					if (!strcmp(row[2], OPH_COMMON_DOWN_STATUS)) {
+						snprintf(db_name_str, 1000, "{%s}", (row[4] ? row[4] : ""));
 					} else {
-						snprintf(db_name_str, 1000, "%s", (row[5] ? row[5] : ""));
+						snprintf(db_name_str, 1000, "%s", (row[4] ? row[4] : ""));
 					}
 					//ADD ROW TO JSON
 					num_fields = 5;
@@ -3806,7 +3781,7 @@ int task_execute(oph_operator_struct * handle)
 					printf("| %-18s | %-40s | %-20s | %-10s | %-30s |\n", new_container_path, datacube_name, host_str, id_dbms_str, db_name_str);
 					break;
 				case 6:
-					snprintf(container_path, MYSQL_BUFLEN, "%s%s%s", out_path, (row[0] ? row[0] : ""), (!strcmp(row[5], "1") ? "*" : ""));
+					snprintf(container_path, MYSQL_BUFLEN, "%s%s", out_path, (row[0] ? row[0] : ""));
 					if (oph_pid_drop_session_prefix(container_path, ((OPH_LIST_operator_handle *) handle->operator_handle)->sessionid, &new_container_path)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error allocating memory\n");
@@ -3815,7 +3790,7 @@ int task_execute(oph_operator_struct * handle)
 					}
 
 					snprintf(host_str, 1000, "%s (%s)", (row[1] ? row[1] : ""), (row[2] ? row[2] : ""));
-					snprintf(id_dbms_str, 1000, "%s (%s)", (row[3] ? row[3] : ""), (row[4] ? row[4] : ""));
+					snprintf(id_dbms_str, 1000, "%s", (row[3] ? row[3] : ""));
 					//ADD ROW TO JSON
 					num_fields = 4;
 					if (oph_json_is_objkey_printable(objkeys, objkeys_num, OPH_JSON_OBJKEY_LIST)) {
@@ -3907,7 +3882,7 @@ int task_execute(oph_operator_struct * handle)
 					printf("| %-18s | %-40s | %-20s | %-10s |\n", new_container_path, datacube_name, host_str, id_dbms_str);
 					break;
 				case 5:
-					snprintf(container_path, MYSQL_BUFLEN, "%s%s%s", out_path, (row[0] ? row[0] : ""), (!strcmp(row[4], "1") ? "*" : ""));
+					snprintf(container_path, MYSQL_BUFLEN, "%s%s", out_path, (row[0] ? row[0] : ""));
 					if (oph_pid_drop_session_prefix(container_path, ((OPH_LIST_operator_handle *) handle->operator_handle)->sessionid, &new_container_path)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error allocating memory\n");
@@ -3994,7 +3969,7 @@ int task_execute(oph_operator_struct * handle)
 					printf("| %-18s | %-40s | %-20s |\n", new_container_path, datacube_name, host_str);
 					break;
 				case 4:
-					snprintf(container_path, MYSQL_BUFLEN, "%s%s%s", out_path, (row[0] ? row[0] : ""), (!strcmp(row[1], "1") ? "*" : ""));
+					snprintf(container_path, MYSQL_BUFLEN, "%s%s", out_path, (row[0] ? row[0] : ""));
 					if (oph_pid_drop_session_prefix(container_path, ((OPH_LIST_operator_handle *) handle->operator_handle)->sessionid, &new_container_path)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error allocating memory\n");

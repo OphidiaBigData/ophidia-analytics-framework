@@ -332,8 +332,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		uri = NULL;
 
 		if (id_datacube_in[0]) {
-			if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[0], 1, &folder_id))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
+			if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[0], &folder_id))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[0], OPH_LOG_OPH_MERGECUBES_DATACUBE_FOLDER_ERROR, datacube_in[1]);
 				id_datacube_in[0] = 0;
 			} else if ((oph_odb_fs_check_folder_session(folder_id, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->sessionid, oDB, &permission)) || !permission) {
@@ -359,8 +359,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			}
 			if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
 				if (oph_odb_fs_retrieve_container_id_from_container_name
-				    (oDB, folder_id, value, 0, &id_datacube_in[2 * ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->input_datacube_num])) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified container or it is hidden\n");
+				    (oDB, folder_id, value, &id_datacube_in[2 * ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->input_datacube_num])) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified container\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[0], OPH_LOG_GENERIC_DATACUBE_FOLDER_ERROR, value);
 					id_datacube_in[0] = 0;
 				}

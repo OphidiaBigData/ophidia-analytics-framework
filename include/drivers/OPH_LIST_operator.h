@@ -25,10 +25,8 @@
 
 #define OPH_LIST_FOLDER_PATH "%s/%s/"
 #define OPH_LIST_CONTAINER_PATH "%s/%s"
-#define OPH_LIST_HIDDEN_CONTAINER_PATH "%s/%s*"
 #define OPH_LIST_FOLDER_PATH_NAME "%s/"
 #define OPH_LIST_CONTAINER_PATH_NAME "%s"
-#define OPH_LIST_HIDDEN_CONTAINER_PATH_NAME "%s*"
 
 #define OPH_LIST_TASK_MULTIPLE_INPUT OPH_ODB_FS_TASK_MULTIPLE_INPUT
 #define OPH_LIST_TASK_RANDOM_INPUT "RANDOM"
@@ -50,7 +48,6 @@
  * \param measure Measure name to filter on
  * \param src Source name to filter on
  * \param oper_level Level of transformation to filter on
- * \param hidden Used to select the container to show
  * \param recursive_search Type of search
  * \param user User executing the research
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
@@ -60,7 +57,6 @@
 struct _OPH_LIST_operator_handle {
 	ophidiadb oDB;
 	int level;
-	int hidden;
 	int recursive_search;
 	char *path;
 	char *cwd;

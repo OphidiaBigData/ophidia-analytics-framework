@@ -89,7 +89,6 @@ DRIVER+=liboph_searchoperator.la
 DRIVER+=liboph_folderoperator.la
 DRIVER+=liboph_fsoperator.la
 DRIVER+=liboph_hierarchyoperator.la
-DRIVER+=liboph_restorecontaineroperator.la
 DRIVER+=liboph_movecontaineroperator.la
 DRIVER+=liboph_showgridoperator.la
 DRIVER+=liboph_scriptoperator.la
@@ -327,11 +326,6 @@ liboph_reduce2operator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANAL
 liboph_reduce2operator_la_SOURCES = OPH_REDUCE2_operator.c
 liboph_reduce2operator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_reduce2operator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -lpthread -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_driver_proc
-
-liboph_restorecontaineroperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
-liboph_restorecontaineroperator_la_SOURCES = OPH_RESTORECONTAINER_operator.c
-liboph_restorecontaineroperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_restorecontaineroperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_dimension
 
 liboph_rollupoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_rollupoperator_la_SOURCES = OPH_ROLLUP_operator.c

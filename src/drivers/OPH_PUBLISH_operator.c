@@ -204,8 +204,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PUBLISH_DATACUBE_AVAILABILITY_ERROR, datacube_name);
 			id_datacube_in[0] = 0;
 			id_datacube_in[1] = 0;
-		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], 1, &folder_id))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
+		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], &folder_id))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PUBLISH_DATACUBE_FOLDER_ERROR, datacube_name);
 			id_datacube_in[0] = 0;
 			id_datacube_in[1] = 0;
