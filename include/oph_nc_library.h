@@ -261,7 +261,8 @@ int oph_nc_append_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fragm
  * \param measure Structure containing measure data and information to be stored
  * \return 0 if successfull
  */
-int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, char *nc_file_path, int tuplexfrag_number, int compressed, NETCDF_var * measure);
+int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, char *nc_file_path, int tuplexfrag_number, int compressed,
+				    NETCDF_var * measure);
 
 /**
  * \brief Retrieve a dimension coordinated variable data from a NetCDF file
