@@ -2174,30 +2174,27 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 	//Compute number of tuples per insert (regular case)
 	unsigned long long regular_rows = 0, regular_times = 0, remainder_rows = 0, jj = 0, l;
 
-	long long block_size = 512 * 1024;	//Maximum size that could be transfered
-	long long block_rows = 1000;	//Maximum number of lines that could be transfered
-
-	if (sizeof_var >= block_size) {
+	if (sizeof_var >= OPH_NC_BLOCK_SIZE) {
 		//Use the same algorithm
 		regular_rows = 1;
 		regular_times = tuplexfrag_number;
 		remainder_rows = 0;
-	} else if (tuplexfrag_number * sizeof_var <= block_size) {
+	} else if (tuplexfrag_number * sizeof_var <= OPH_NC_BLOCK_SIZE) {
 		//Do single insert
-		if (tuplexfrag_number <= block_rows) {
+		if (tuplexfrag_number <= OPH_NC_BLOCK_ROWS) {
 			regular_rows = tuplexfrag_number;
 			regular_times = 1;
 			remainder_rows = 0;
 		} else {
-			regular_rows = block_rows;
-			regular_times = (int) tuplexfrag_number / regular_rows;
-			remainder_rows = (int) tuplexfrag_number % regular_rows;
+			regular_rows = OPH_NC_BLOCK_ROWS;
+			regular_times = (long long) tuplexfrag_number / regular_rows;
+			remainder_rows = (long long) tuplexfrag_number % regular_rows;
 		}
 	} else {
 		//Compute num rows x insert and remainder
-		regular_rows = ((int) block_size / sizeof_var >= block_rows ? block_rows : (int) block_size / sizeof_var);
-		regular_times = (int) tuplexfrag_number / regular_rows;
-		remainder_rows = (int) tuplexfrag_number % regular_rows;
+		regular_rows = ((long long) OPH_NC_BLOCK_SIZE / sizeof_var >= OPH_NC_BLOCK_ROWS ? OPH_NC_BLOCK_ROWS : (long long) OPH_NC_BLOCK_SIZE / sizeof_var);
+		regular_times = (long long) tuplexfrag_number / regular_rows;
+		remainder_rows = (long long) tuplexfrag_number % regular_rows;
 	}
 
 	//Alloc query String
@@ -4754,7 +4751,6 @@ int oph_nc_append_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fragm
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read fragment in memory. Memory required is: %lld\n", memory_size_mb);
 		return OPH_NC_ERROR;
 	}
-
 	//Flag set to 1 if dimension are not in the order specified
 	short int dimension_ordered = 1;
 	int *index = (int *) malloc((measure->ndims) * sizeof(int));
@@ -4781,7 +4777,6 @@ int oph_nc_append_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fragm
 	if (dimension_ordered) {
 		transpose = 0;
 	}
-
 	//Check if only most external dimension is splitted
 	long long curr_rows = 1;
 	long long relative_rows = 0;
@@ -4815,7 +4810,6 @@ int oph_nc_append_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fragm
 		free(index);
 		return OPH_NC_ERROR;
 	}
-
 	//Compute number of tuples per insert (regular case)
 	unsigned long long regular_rows = 0, regular_times = 0, remainder_rows = 0, jj, l;
 
@@ -5065,7 +5059,6 @@ int oph_nc_append_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fragm
 		free(index);
 		return OPH_NC_ERROR;
 	}
-
 	//Fill binary cache
 	res = -1;
 	if (transpose) {
@@ -5291,7 +5284,8 @@ int oph_nc_append_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fragm
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, char *nc_file_path, int tuplexfrag_number, int compressed, NETCDF_var * measure)
+int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, char *nc_file_path, int tuplexfrag_number, int compressed,
+				    NETCDF_var * measure)
 {
 	if (!old_frag || !new_frag || !nc_file_path || !tuplexfrag_number || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -5364,7 +5358,6 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragm
 		free(index);
 		return OPH_NC_ERROR;
 	}
-
 	//Alloc query String
 	char measure_type[OPH_ODB_CUBE_MEASURE_TYPE_SIZE];
 	if (oph_nc_get_c_type(measure->vartype, measure_type)) {
@@ -5373,7 +5366,7 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragm
 	}
 
 	long long dim_t_size = 0, dim_i_size = 0, dim_s_size = 0, dim_e_size = 0;
-	long long where_size = 0, field_size = 0, from_size = 0, from_alias_size = 0; 
+	long long where_size = 0, field_size = 0, from_size = 0, from_alias_size = 0;
 	for (j = 0; j < measure->ndims; j++) {
 		dim_t_size += snprintf(NULL, 0, "%hd|", measure->dims_type[j]);
 		dim_i_size += snprintf(NULL, 0, "%d|", (int) index[j]);
@@ -5381,7 +5374,7 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragm
 		dim_e_size += snprintf(NULL, 0, "%d|", measure->dims_end_index[j]);
 	}
 
-	where_size = 1 + snprintf(NULL, 0, OPH_NC_CONCAT_WHERE_FILE, "frag1", "frag2"); 
+	where_size = 1 + snprintf(NULL, 0, OPH_NC_CONCAT_WHERE_FILE, "frag1", "frag2");
 	from_size = 1 + snprintf(NULL, 0, "%s.%s|%s", (old_frag->db_instance)->db_name, old_frag->fragment_name, OPH_IOSERVER_SQ_KW_FILE);
 	from_alias_size = 1 + snprintf(NULL, 0, "%s|%s", "frag1", "frag2");
 	field_size = 1 + snprintf(NULL, 0, (compressed ? OPH_NC_CONCAT_FIELD_COMPR : OPH_NC_CONCAT_FIELD), measure_type, measure_type, measure_type, "frag1", "frag2");
@@ -5389,8 +5382,8 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragm
 	long long query_size = 0;
 	char *create_query = OPH_DC_SQ_CREATE_SELECT_FRAG_FILE;
 	query_size =
-	    snprintf(NULL, 0, create_query, new_frag->fragment_name, "frag1", "", "", "", "", nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, old_frag->key_start, "", "", "",
-		     "") + where_size + field_size + from_size + from_alias_size + (dim_t_size + dim_i_size + dim_s_size + dim_e_size - 4) + 1;
+	    snprintf(NULL, 0, create_query, new_frag->fragment_name, "frag1", "", "", "", "", nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, old_frag->key_start, "", "",
+		     "", "") + where_size + field_size + from_size + from_alias_size + (dim_t_size + dim_i_size + dim_s_size + dim_e_size - 4) + 1;
 
 	char *query_string = (char *) malloc(query_size * sizeof(char));
 	if (!(query_string)) {
@@ -5483,7 +5476,6 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragm
 		free(index);
 		return OPH_NC_ERROR;
 	}
-
 	//Set values into strings
 	long long m1 = 0, m2 = 0, m3 = 0, m4 = 0;
 	for (j = 0; j < measure->ndims; j++) {
@@ -5500,7 +5492,7 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragm
 	free(index);
 
 	int n = 0;
-	n = snprintf(from_string, from_size, "%s.%s|%s", (old_frag->db_instance)->db_name, old_frag->fragment_name, OPH_IOSERVER_SQ_KW_FILE); 
+	n = snprintf(from_string, from_size, "%s.%s|%s", (old_frag->db_instance)->db_name, old_frag->fragment_name, OPH_IOSERVER_SQ_KW_FILE);
 	if (n >= from_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		free(dims_type_string);
@@ -5513,7 +5505,7 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragm
 		free(where_string);
 		return OPH_NC_ERROR;
 	}
-	n = snprintf(from_alias_string, from_alias_size, "%s|%s", "frag1", "frag2"); 
+	n = snprintf(from_alias_string, from_alias_size, "%s|%s", "frag1", "frag2");
 	if (n >= from_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		free(dims_type_string);
@@ -5526,7 +5518,7 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragm
 		free(where_string);
 		return OPH_NC_ERROR;
 	}
-	n = snprintf(field_string, field_size, (compressed ? OPH_NC_CONCAT_FIELD_COMPR : OPH_NC_CONCAT_FIELD), measure_type, measure_type, measure_type, "frag1", "frag2"); 
+	n = snprintf(field_string, field_size, (compressed ? OPH_NC_CONCAT_FIELD_COMPR : OPH_NC_CONCAT_FIELD), measure_type, measure_type, measure_type, "frag1", "frag2");
 	if (n >= field_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		free(dims_type_string);
@@ -5539,7 +5531,7 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragm
 		free(where_string);
 		return OPH_NC_ERROR;
 	}
-	n = snprintf(where_string, where_size, OPH_NC_CONCAT_WHERE_FILE, "frag1", "frag2"); 
+	n = snprintf(where_string, where_size, OPH_NC_CONCAT_WHERE_FILE, "frag1", "frag2");
 	if (n >= field_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		free(dims_type_string);
@@ -5553,8 +5545,8 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragm
 		return OPH_NC_ERROR;
 	}
 
-	n = snprintf(query_string, query_size, create_query, new_frag->fragment_name, "frag1", field_string, from_string, from_alias_string, where_string, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, old_frag->key_start,
-		dims_type_string, dims_index_string, dims_start_string, dims_end_string);
+	n = snprintf(query_string, query_size, create_query, new_frag->fragment_name, "frag1", field_string, from_string, from_alias_string, where_string, nc_file_path, measure->varname,
+		     OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, old_frag->key_start, dims_type_string, dims_index_string, dims_start_string, dims_end_string);
 	if (n >= query_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		free(dims_type_string);

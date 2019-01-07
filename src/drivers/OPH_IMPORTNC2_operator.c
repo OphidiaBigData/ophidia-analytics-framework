@@ -2750,8 +2750,8 @@ int task_init(oph_operator_struct * handle)
 			snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_METADATA_TYPE_TEXT);
 			int id_key_type = 0, sid_key_type;
 			if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &id_key_type)) {
-				pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
-				logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
 				free(dimvar_ids);
 				goto __OPH_EXIT_1;
 			}
@@ -2801,7 +2801,7 @@ int task_init(oph_operator_struct * handle)
 
 			//Get global attributes from nc file
 			char key[OPH_COMMON_BUFFER_LEN], value[OPH_COMMON_BUFFER_LEN], svalue[OPH_COMMON_BUFFER_LEN];
-			char *id_key, *keyptr;
+			char *id_key, *keyptr, *keydup;
 			int id_metadatainstance;
 			keyptr = key;
 			int natts = 0;
@@ -2870,8 +2870,8 @@ int task_init(oph_operator_struct * handle)
 							break;
 					}
 					if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type)) {
-						pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
-						logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
 						hashtbl_destroy(key_tbl);
 						hashtbl_destroy(required_tbl);
 						free(dimvar_ids);
@@ -2889,14 +2889,20 @@ int task_init(oph_operator_struct * handle)
 				id_key = hashtbl_get(key_tbl, key_and_variable);
 
 				//Insert key value into OphidiaDB
-				if (nc_get_att(ncid, NC_GLOBAL, (const char *) key, (void *) &value)) {
+				keydup = strdup(key);
+				if (!keydup || nc_get_att(ncid, NC_GLOBAL, (const char *) key, (void *) &value)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
 					hashtbl_destroy(key_tbl);
 					hashtbl_destroy(required_tbl);
 					free(dimvar_ids);
+					if (keydup)
+						free(keydup);
 					goto __OPH_EXIT_1;
 				}
+				strcpy(key, keydup);
+				free(keydup);
+
 				switch (xtype) {
 					case NC_BYTE:
 						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((char *) value));
@@ -3015,8 +3021,8 @@ int task_init(oph_operator_struct * handle)
 								break;
 						}
 						if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type)) {
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
-							logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
 							hashtbl_destroy(key_tbl);
 							hashtbl_destroy(required_tbl);
 							free(dimvar_ids);
@@ -3034,14 +3040,19 @@ int task_init(oph_operator_struct * handle)
 					id_key = hashtbl_get(key_tbl, key_and_variable);
 
 					//Insert key value into OphidiaDB
-					if (nc_get_att(ncid, dimvar_ids[ii], (const char *) key, (void *) &value)) {
+					keydup = strdup(key);
+					if (!keydup || nc_get_att(ncid, dimvar_ids[ii], (const char *) key, (void *) &value)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
 						hashtbl_destroy(key_tbl);
 						hashtbl_destroy(required_tbl);
 						free(dimvar_ids);
+						if (keydup)
+							free(keydup);
 						goto __OPH_EXIT_1;
 					}
+					strcpy(key, keydup);
+					free(keydup);
 
 					switch (xtype) {
 						case NC_BYTE:
@@ -3158,8 +3169,8 @@ int task_init(oph_operator_struct * handle)
 							break;
 					}
 					if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type)) {
-						pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
-						logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
 						hashtbl_destroy(key_tbl);
 						hashtbl_destroy(required_tbl);
 						goto __OPH_EXIT_1;
@@ -3176,13 +3187,18 @@ int task_init(oph_operator_struct * handle)
 				id_key = hashtbl_get(key_tbl, key_and_variable);
 
 				//Insert key value into OphidiaDB
-				if (nc_get_att(ncid, measure->varid, (const char *) key, (void *) &value)) {
+				keydup = strdup(key);
+				if (!keydup || nc_get_att(ncid, measure->varid, (const char *) key, (void *) &value)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
 					hashtbl_destroy(key_tbl);
 					hashtbl_destroy(required_tbl);
+					if (keydup)
+						free(keydup);
 					goto __OPH_EXIT_1;
 				}
+				strcpy(key, keydup);
+				free(keydup);
 
 				switch (xtype) {
 					case NC_BYTE:

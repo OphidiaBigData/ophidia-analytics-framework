@@ -1545,7 +1545,6 @@ int task_init(oph_operator_struct * handle)
 			((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->container_input);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
-
 	//For error checking
 	int id_datacube[6] = { 0, 0, 0, 0, 0, 0 };
 
@@ -3013,8 +3012,8 @@ int task_init(oph_operator_struct * handle)
 								break;
 						}
 						if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type)) {
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
-							logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
 							hashtbl_destroy(key_tbl);
 							hashtbl_destroy(required_tbl);
 							free(dimvar_ids);
@@ -3161,8 +3160,8 @@ int task_init(oph_operator_struct * handle)
 							break;
 					}
 					if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type)) {
-						pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
-						logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
 						hashtbl_destroy(key_tbl);
 						hashtbl_destroy(required_tbl);
 						goto __OPH_EXIT_1;
