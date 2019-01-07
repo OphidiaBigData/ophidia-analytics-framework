@@ -410,20 +410,15 @@ int task_init(oph_operator_struct * handle)
 
 		int tot_frag_num = 0;
 		if (oph_ids_count_number_of_ids(((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->fragment_ids, &tot_frag_num)) {
-			oph_odb_cube_free_datacube(&cube);
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get total number of IDs\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_AGGREGATE_RETREIVE_IDS_ERROR);
-			goto __OPH_EXIT_1;
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to get total number of IDs\n");
+			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_AGGREGATE_RETREIVE_IDS_ERROR);
+		} else {
+			//Check that product of ncores and nthread is at most equal to total number of fragments        
+			if (((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > (unsigned int) tot_frag_num) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_GENERIC_RESOURCE_CHECK_ERROR);
+				logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_RESOURCE_CHECK_ERROR);
+			}
 		}
-		//Check that product of ncores and nthread is at most equal to total number of fragments        
-		if (((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > (unsigned int) tot_frag_num) {
-			oph_odb_cube_free_datacube(&cube);
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of cores per number of threads is bigger than total fragments\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container,
-				"Number of cores per number of threads is bigger than total fragments\n");
-			goto __OPH_EXIT_1;
-		}
-
 		oph_odb_cubehasdim *cubedims = NULL;
 		int number_of_dimensions = 0;
 		int last_insertd_id = 0;
@@ -1016,7 +1011,7 @@ int task_execute(oph_operator_struct * handle)
 
 	int l;
 
-	int num_threads = oper_handle->nthread;
+	int num_threads = (oper_handle->nthread <= (unsigned int) oper_handle->fragment_number ? oper_handle->nthread : (unsigned int) oper_handle->fragment_number);
 	int res[num_threads];
 
 	char _ms[OPH_COMMON_MAX_DOUBLE_LENGHT];
@@ -1313,8 +1308,10 @@ int task_destroy(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
-	short int proc_error = ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->execute_error;
-	int id_datacube = ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_output_datacube;
+	OPH_AGGREGATE_operator_handle *oper_handle = (OPH_AGGREGATE_operator_handle *) handle->operator_handle;
+
+	short int proc_error = oper_handle->execute_error;
+	int id_datacube = oper_handle->id_output_datacube;
 	short int global_error = 0;
 
 	//Reduce results
@@ -1325,25 +1322,22 @@ int task_destroy(oph_operator_struct * handle)
 		char *tmp_uri = NULL;
 		if (oph_pid_get_uri(&tmp_uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve web server URI.\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_AGGREGATE_PID_URI_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_PID_URI_ERROR);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-		if (oph_pid_show_pid
-		    (((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_output_container, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_output_datacube, tmp_uri)) {
+		if (oph_pid_show_pid(oper_handle->id_output_container, oper_handle->id_output_datacube, tmp_uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to print PID string\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_AGGREGATE_PID_SHOW_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_PID_SHOW_ERROR);
 			free(tmp_uri);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 
 		char jsonbuf[OPH_COMMON_BUFFER_LEN];
 		memset(jsonbuf, 0, OPH_COMMON_BUFFER_LEN);
-		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_output_container,
-			 ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_output_datacube);
+		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, oper_handle->id_output_container, oper_handle->id_output_datacube);
 
 		// ADD OUTPUT PID TO JSON AS TEXT
-		if (oph_json_is_objkey_printable
-		    (((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->objkeys, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_AGGREGATE)) {
+		if (oph_json_is_objkey_printable(oper_handle->objkeys, oper_handle->objkeys_num, OPH_JSON_OBJKEY_AGGREGATE)) {
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_AGGREGATE, "Output Cube", jsonbuf)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
@@ -1365,12 +1359,12 @@ int task_destroy(oph_operator_struct * handle)
 
 	if (global_error) {
 		//Delete fragments
-		if (((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
-			if ((oph_dproc_delete_data(id_datacube, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container,
-						   ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0,
-						   ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->nthread))) {
+		int num_threads = (oper_handle->nthread <= (unsigned int) oper_handle->fragment_number ? oper_handle->nthread : (unsigned int) oper_handle->fragment_number);
+
+		if (oper_handle->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
+			if ((oph_dproc_delete_data(id_datacube, oper_handle->id_input_container, oper_handle->fragment_ids, 0, 0, num_threads))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}
 		}
 
@@ -1383,12 +1377,11 @@ int task_destroy(oph_operator_struct * handle)
 
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
-			oph_dproc_clean_odb(&((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->oDB, id_datacube,
-					    ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container);
+			oph_dproc_clean_odb(&oper_handle->oDB, id_datacube, oper_handle->id_input_container);
 		}
 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
 
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}

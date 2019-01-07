@@ -31,6 +31,7 @@
 #define MYSQL_QUERY_FS_RETRIEVE_CONTAINER_FOLDER_ID 	"SELECT idfolder FROM container WHERE idcontainer = %d AND hidden != 1;"
 #define MYSQL_QUERY_FS_RETRIEVE_CONTAINER_FOLDER_ID2 	"SELECT idfolder FROM container WHERE idcontainer = %d;"
 #define MYSQL_QUERY_FS_RETRIEVE_PARENT_FOLDER_ID 	"SELECT idparent FROM folder WHERE idfolder = %d;"
+#define MYSQL_QUERY_FS_RETRIEVE_CONTAINER_NAME		"SELECT containername, idfolder FROM container WHERE idcontainer = %d;"
 
 #define MYSQL_QUERY_FS_RETRIEVE_PARENT_FOLDER 		"SELECT idparent, foldername FROM folder WHERE idfolder = %d;"
 #define MYSQL_QUERY_FS_CONTAINER_STATUS 		"UPDATE container SET container.hidden= %d WHERE idcontainer = %d;"

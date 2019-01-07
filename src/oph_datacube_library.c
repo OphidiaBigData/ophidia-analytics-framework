@@ -845,7 +845,7 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 				} else {
 #ifdef OPH_DEBUG_MYSQL
 					printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_G "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number, MYSQL_FRAG_ID,
-					       MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
+					       operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
 #endif
 					n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_G, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
 						     MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
@@ -1151,7 +1151,7 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_odb_fragment * frag, int tuple_number, int array_length, char *data_type, int compressed, char *algorithm)
+int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_odb_fragment * frag, unsigned long long tuple_number, int array_length, char *data_type, int compressed, char *algorithm)
 {
 	if (!frag || !data_type || !server || !algorithm) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1202,8 +1202,8 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 	//Compute number of tuples per insert (regular case)
 	unsigned long long regular_rows = 0, regular_times = 0, remainder_rows = 0;
 
-	long block_size = 512 * 1024;	//Maximum size that could be transfered
-	long block_rows = 1000;	//Maximum number of lines that could be transfered
+	unsigned long long block_size = 512 * 1024;	//Maximum size that could be transfered
+	unsigned long long block_rows = 1000;	//Maximum number of lines that could be transfered
 
 	if (sizeof_var >= block_size) {
 		//Use the same algorithm
@@ -1243,7 +1243,7 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 		return OPH_DC_DATA_ERROR;
 	}
 
-	int i, j, k;
+	unsigned long long i, j, k;
 	int n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
 	if (compressed == 1) {
 #ifdef OPH_DEBUG_MYSQL
@@ -1499,7 +1499,8 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_populate_fragment_with_rand_data2(oph_ioserver_handler * server, oph_odb_fragment * frag, int tuple_number, int array_length, char *data_type, int compressed, char *algorithm)
+int oph_dc_populate_fragment_with_rand_data2(oph_ioserver_handler * server, oph_odb_fragment * frag, unsigned long long tuple_number, int array_length, char *data_type, int compressed,
+					     char *algorithm)
 {
 	if (!frag || !data_type || !server || !algorithm) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

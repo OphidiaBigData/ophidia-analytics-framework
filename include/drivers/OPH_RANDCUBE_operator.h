@@ -92,7 +92,7 @@ struct _OPH_RANDCUBE_operator_handle {
 	char *sessionid;
 	char *description;
 	int id_job;
-	char *rand_algo; 
+	char *rand_algo;
 	short int execute_error;
 };
 typedef struct _OPH_RANDCUBE_operator_handle OPH_RANDCUBE_operator_handle;

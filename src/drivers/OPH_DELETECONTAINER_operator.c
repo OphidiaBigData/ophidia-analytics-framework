@@ -140,8 +140,24 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!(((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->cwd = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETECONTAINER_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "input path");
-
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_PID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CONTAINER_PID);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETECONTAINER_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CONTAINER_PID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
+		char *value2 = strrchr(value, '/');
+		if (value2)
+			((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->id_input_container = (int) strtol(1 + value2, NULL, 10);
+		if (!value2 || !((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->id_input_container) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error parsing container PID '%s'\n", value);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error parsing container PID '%s'\n", value);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
 	}
 
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
@@ -254,25 +270,43 @@ int task_execute(oph_operator_struct * handle)
 	int permission = 0;
 	int folder_id = 0;
 	int container_exists = 0;
-	//Check if input path exists
-	if ((oph_odb_fs_path_parsing("", cwd, &folder_id, NULL, oDB))) {
-		//Check if user can work on datacube
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Path %s doesn't exists\n", cwd);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETECONTAINER_CWD_ERROR, container_name, cwd);
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+
+	if (!id_container) {
+		//Check if input path exists
+		if ((oph_odb_fs_path_parsing("", cwd, &folder_id, NULL, oDB))) {
+			//Check if user can work on datacube
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Path %s doesn't exists\n", cwd);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETECONTAINER_CWD_ERROR, container_name, cwd);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		if ((oph_odb_fs_check_folder_session(folder_id, oper_handle->sessionid, oDB, &permission)) || !permission) {
+			//Check if user can work on container
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "User %s is not allowed to work in this folder\n", user);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETECONTAINER_DATACUBE_PERMISSION_ERROR, container_name, user);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		if (oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, hidden, &id_container)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input %s container\n", (hidden ? "hidden" : "visible"));
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_DELETECONTAINER_NO_INPUT_CONTAINER, (hidden ? "hidden" : "visible"), container_name);
+			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+		}
+		oper_handle->id_input_container = id_container;
+	} else {
+		if ((oph_odb_fs_check_container_session(id_container, oper_handle->sessionid, oDB, &permission)) || !permission) {
+			//Check if user can work on container
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "User %s is not allowed to work in this container\n", user);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETECONTAINER_DATACUBE_PERMISSION_ERROR, container_name, user);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		if (container_name)
+			free(container_name);
+		if (oph_odb_fs_retrieve_container_name_from_container(oDB, id_container, &container_name, &folder_id)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve container data\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to retrieve container data\n");
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		oper_handle->container_input = container_name;
 	}
-	if ((oph_odb_fs_check_folder_session(folder_id, oper_handle->sessionid, oDB, &permission)) || !permission) {
-		//Check if user can work on datacube
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "User %s is not allowed to work in this folder\n", user);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETECONTAINER_DATACUBE_PERMISSION_ERROR, container_name, user);
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
-	if (oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, hidden, &id_container)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input %s container\n", (hidden ? "hidden" : "visible"));
-		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_DELETECONTAINER_NO_INPUT_CONTAINER, (hidden ? "hidden" : "visible"), container_name);
-		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-	}
-	oper_handle->id_input_container = id_container;
 
 	if (delete_type == OPH_DELETE_PHYSIC_CODE) {
 		if (oph_odb_fs_check_if_container_empty(oDB, id_container)) {
@@ -447,6 +481,7 @@ int env_unset(oph_operator_struct * handle)
 
 	oph_odb_disconnect_from_ophidiadb(&((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->oDB);
 	oph_odb_free_ophidiadb(&((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->oDB);
+
 	if (((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->container_input) {
 		free((char *) ((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->container_input);
 		((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->container_input = NULL;

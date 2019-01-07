@@ -93,7 +93,7 @@ struct _OPH_RANDCUBE2_operator_handle {
 	char *sessionid;
 	char *description;
 	int id_job;
-	char *rand_algo; 
+	char *rand_algo;
 	int nthread;
 	short int execute_error;
 };

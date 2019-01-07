@@ -577,10 +577,8 @@ int task_init(oph_operator_struct * handle)
 
 		//Check that product of ncores and nthread is at most equal to total number of fragments        
 		if (((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->nthread * handle->proc_number > total_frag_number) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of cores per number of threads is bigger than requested fragments\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "[CONTAINER NAME %s] Number of cores per number of threads is bigger than requested fragments\n",
-				container_name);
-			goto __OPH_EXIT_1;
+			pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_GENERIC_RESOURCE_CHECK_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_RESOURCE_CHECK_ERROR);
 		}
 
 		int id_host_partition = 0;
@@ -1293,7 +1291,6 @@ int task_distribute(oph_operator_struct * handle)
 
 	int frag_total_number = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number * ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number;
 
-
 	//All processes compute the fragment number to work on
 	int div_result = (frag_total_number) / (handle->proc_number);
 	int div_remainder = (frag_total_number) % (handle->proc_number);
@@ -1355,7 +1352,7 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	int num_threads = oper_handle->nthread;
+	int num_threads = (oper_handle->nthread <= oper_handle->fragment_number ? oper_handle->nthread : oper_handle->fragment_number);
 	int res[num_threads];
 
 	//In multi-thread code mysql_library_init must be called before starting the threads
@@ -1588,6 +1585,7 @@ int task_execute(oph_operator_struct * handle)
 	oph_odb_free_ophidiadb_thread(&oDB_slave);
 	free(new_frag);
 	mysql_thread_end();
+
 	//In multi-thread code mysql_library_end must be called after executing the threads
 	mysql_library_end();
 
@@ -1621,8 +1619,10 @@ int task_destroy(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
-	short int proc_error = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->execute_error;
-	int id_datacube = ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_output_datacube;
+	OPH_RANDCUBE2_operator_handle *oper_handle = (OPH_RANDCUBE2_operator_handle *) handle->operator_handle;
+
+	short int proc_error = oper_handle->execute_error;
+	int id_datacube = oper_handle->id_output_datacube;
 	short int global_error = 0;
 
 	//Reduce results
@@ -1633,25 +1633,22 @@ int task_destroy(oph_operator_struct * handle)
 		char *tmp_uri = NULL;
 		if (oph_pid_get_uri(&tmp_uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve web server URI.\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_PID_URI_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_RANDCUBE_PID_URI_ERROR);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-		if (oph_pid_show_pid
-		    (((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_output_datacube, tmp_uri)) {
+		if (oph_pid_show_pid(oper_handle->id_input_container, oper_handle->id_output_datacube, tmp_uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to print PID string\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_PID_SHOW_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_RANDCUBE_PID_SHOW_ERROR);
 			free(tmp_uri);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 
 		char jsonbuf[OPH_COMMON_BUFFER_LEN];
 		memset(jsonbuf, 0, OPH_COMMON_BUFFER_LEN);
-		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container,
-			 ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_output_datacube);
+		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, oper_handle->id_input_container, oper_handle->id_output_datacube);
 
 		// ADD OUTPUT PID TO JSON AS TEXT
-		if (oph_json_is_objkey_printable
-		    (((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->objkeys, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_RANDCUBE2)) {
+		if (oph_json_is_objkey_printable(oper_handle->objkeys, oper_handle->objkeys_num, OPH_JSON_OBJKEY_RANDCUBE2)) {
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_RANDCUBE2, "Output Cube", jsonbuf)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
@@ -1677,14 +1674,14 @@ int task_destroy(oph_operator_struct * handle)
 		memset(id_string, 0, sizeof(id_string));
 
 		if (handle->proc_rank == 0) {
-			ophidiadb *oDB = &((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->oDB;
+			ophidiadb *oDB = &oper_handle->oDB;
 			oph_odb_datacube cube;
 			oph_odb_cube_init_datacube(&cube);
 
 			//retrieve input datacube
 			if (oph_odb_cube_retrieve_datacube(oDB, id_datacube, &cube)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_DATACUBE_READ_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_RANDCUBE_DATACUBE_READ_ERROR);
 			} else {
 				//Copy fragment id relative index set 
 				strncpy(id_string, cube.frag_relative_index_set, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
@@ -1697,47 +1694,46 @@ int task_destroy(oph_operator_struct * handle)
 		//Check if sequential part has been completed
 		if (id_string[0] == 0) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_MASTER_TASK_INIT_FAILED);
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_RANDCUBE_MASTER_TASK_INIT_FAILED);
 		} else {
-			if (((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragment_first_id >= 0 || handle->proc_rank == 0) {
+			if (oper_handle->fragment_first_id >= 0 || handle->proc_rank == 0) {
 				//Partition fragment relative index string
 				char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
 				char *new_ptr = new_id_string;
-				if (oph_ids_get_substring_from_string
-				    (id_string, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragment_first_id,
-				     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragment_number, &new_ptr)) {
+				if (oph_ids_get_substring_from_string(id_string, oper_handle->fragment_first_id, oper_handle->fragment_number, &new_ptr)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to split IDs fragment string\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_RANDCUBE_ID_STRING_SPLIT_ERROR);
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_RANDCUBE_ID_STRING_SPLIT_ERROR);
 				} else {
 					//Delete fragments
-					int start_position =
-					    (int) floor((double) ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragment_first_id /
-							((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number);
+					int num_threads = (oper_handle->nthread <= oper_handle->fragment_number ? oper_handle->nthread : oper_handle->fragment_number);
+
+					int start_position = (int) floor((double) oper_handle->fragment_first_id / oper_handle->fragxdb_number);
 					int row_number = (int)
 					    ceil((double)
-						 (((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragment_first_id +
-						  ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragment_number) /
-						 ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->fragxdb_number) - start_position;
+						 (oper_handle->fragment_first_id + oper_handle->fragment_number) / oper_handle->fragxdb_number) - start_position;
 
-					if (oph_dproc_delete_data
-					    (id_datacube, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number,
-					     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->nthread)) {
+					if (oph_dproc_delete_data(id_datacube, oper_handle->id_input_container, new_id_string, start_position, row_number, num_threads)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container,
-							OPH_LOG_OPH_DELETE_DB_READ_ERROR);
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 					}
 				}
 			}
 		}
-		//Before deleting wait for all process to reach this point
-		MPI_Barrier(MPI_COMM_WORLD);
+		if (handle->output_code)
+			proc_error = (short int) handle->output_code;
+		else
+			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
+		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
+		handle->output_code = global_error;
 
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
-			oph_dproc_clean_odb(&((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->oDB, id_datacube,
-					    ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container);
+			oph_dproc_clean_odb(&oper_handle->oDB, id_datacube, oper_handle->id_input_container);
 		}
+
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
+
 	}
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

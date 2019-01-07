@@ -553,8 +553,8 @@ int task_init(oph_operator_struct * handle)
 		//Check if file exists
 		char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' };
 		char *output_name = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name;
-		snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE, path,
-			 output_name ? output_name : ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure);
+		snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE "_%d", path,
+			 output_name ? output_name : ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure, datacube_id);
 		if (stat(file_name, &st)) {
 			if (errno == EACCES) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_PERMISSION_ERROR, file_name);
@@ -676,12 +676,15 @@ int task_init(oph_operator_struct * handle)
 	}
 
 	if (!((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name) {
-		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name = strdup(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure);
+		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name =
+		    (char *) malloc(strlen(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure) + OPH_COMMON_MAX_INT_LENGHT + 2);
 		if (!((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MEMORY_ERROR_INPUT, "output name");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
+		sprintf(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name, "%s_%d", ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure,
+			((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_datacube);
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
