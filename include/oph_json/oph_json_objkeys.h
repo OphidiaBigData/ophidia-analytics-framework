@@ -136,6 +136,7 @@
 #define OPH_JSON_OBJKEY_METADATA_LIST					"metadata_list"
 #define OPH_JSON_OBJKEY_METADATA_SUMMARY				"metadata_summary"
 #define OPH_JSON_OBJKEY_CONCATNC					"concatnc"
+#define OPH_JSON_OBJKEY_CONCATNC2					"concatnc2"
 #define OPH_JSON_OBJKEY_INTERCUBE					"intercube"
 #define OPH_JSON_OBJKEY_MERGECUBES					"mergecubes"
 #define OPH_JSON_OBJKEY_B2DROP						"b2drop"
