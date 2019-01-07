@@ -1659,6 +1659,7 @@ int task_init(oph_operator_struct * handle)
 	if (!measure->dims_length) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_INPUT, "dim_length");
+		((OPH_CONCATNC_operator_handle *) handle->operator_handle)->execute_error = 1;
 		if (measure_stream)
 			free(measure_stream);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
@@ -1667,6 +1668,7 @@ int task_init(oph_operator_struct * handle)
 	if (!measure->dims_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_INPUT, "dims_type");
+		((OPH_CONCATNC_operator_handle *) handle->operator_handle)->execute_error = 1;
 		if (measure_stream)
 			free(measure_stream);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
@@ -1675,6 +1677,7 @@ int task_init(oph_operator_struct * handle)
 	if (!measure->dims_oph_level) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_INPUT, "oph_level");
+		((OPH_CONCATNC_operator_handle *) handle->operator_handle)->execute_error = 1;
 		if (measure_stream)
 			free(measure_stream);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;

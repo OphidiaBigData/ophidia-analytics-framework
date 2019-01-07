@@ -43,6 +43,7 @@ while those considered as implicit dimensions must not overlap with those in the
 - exec_mode : operator execution mode. Possible values are async (default) for
               asynchronous mode, sync for synchronous mode with json-compliant output.
 - ncores : number of parallel processes to be used (min. 1).
+- nthreads : number of parallel threads per process to be used (min. 1).
 - sessionid : session identifier used server-side to manage sessions and jobs.
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
@@ -62,6 +63,7 @@ SUBMISSION STRING: &quot;operator=oph_concatnc2;src_path=/path/of/ncfile.nc;cube
     <args>  
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">nthreads</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="yes" multivalue="yes">src_path</argument>

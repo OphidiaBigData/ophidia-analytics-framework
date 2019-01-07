@@ -60,6 +60,7 @@
  * \param time_filter Flag used in case time filters are expressed as dates
  * \param dim_offset Offset to be added to dimension values of imported data
  * \param dim_continue If enabled the last value of implicit dimension of input cube is used to evaluate the new values of the dimension.
+ * \param nthread Number of pthreads related to each MPI task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
 struct _OPH_CONCATNC2_operator_handle {
@@ -91,6 +92,7 @@ struct _OPH_CONCATNC2_operator_handle {
 	int time_filter;
 	double *dim_offset;
 	char dim_continue;
+	int nthread;
 	short int execute_error;
 };
 typedef struct _OPH_CONCATNC2_operator_handle OPH_CONCATNC2_operator_handle;
