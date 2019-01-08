@@ -56,7 +56,7 @@ OPH_TERM:: oph_concatnc2 src_path=/path/of/ncfile.nc;cube=http://www.example.com
 SUBMISSION STRING: &quot;operator=oph_concatnc2;src_path=/path/of/ncfile.nc;cube=http://www.example.com/1/1;&quot;</abstract>
         <author>CMCC</author>
         <category>Data Import/Export</category>
-        <creationdate>24/01/2017</creationdate>
+        <creationdate>03/01/2019</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <permission>write</permission>
     </info>
