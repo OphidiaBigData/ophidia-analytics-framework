@@ -50,7 +50,7 @@
 #define MYSQL_STGE_FRAGMENT_RELATIVE_INDEX_COND1 		"fragrelativeindex = %d"
 #define MYSQL_STGE_FRAGMENT_RELATIVE_INDEX_COND2 		"fragrelativeindex >= %d AND fragrelativeindex <= %d"
 
-#define MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS      	"SELECT partitionname FROM hostpartition INNER JOIN hashost ON hostpartition.idhostpartition = hashost.idhostpartition INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost=host.idhost WHERE status = 'up' AND ioservertype='%s' GROUP BY hostpartition.idhostpartition HAVING count(host.idhost) >= %d limit 1;"
+#define MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS      	"SELECT idhostpartition, COUNT(host.idhost) AS hosts, SUM(host.importcount) AS importcounts FROM hashost INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE status = 'up' AND ioservertype = '%s' GROUP BY idhostpartition HAVING hosts >= %d ORDER BY importcounts DESC, hosts LIMIT 1;"
 
 #define MYSQL_QUERY_STGE_RETRIEVE_HOST_DBMS_NUMBER		"SELECT count(iddbmsinstance) FROM hashost INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE idhostpartition = %d AND status = 'up' AND ioservertype = '%s' GROUP BY host.idhost;"
 

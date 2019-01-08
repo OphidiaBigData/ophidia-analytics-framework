@@ -943,7 +943,7 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_t
 		mysql_free_result(res);
 		return OPH_ODB_SUCCESS;
 	}
-	if (mysql_field_count(oDB->conn) != 1) {
+	if (mysql_field_count(oDB->conn) != 3) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
