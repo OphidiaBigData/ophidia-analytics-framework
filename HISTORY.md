@@ -19,6 +19,7 @@
 
 ### Changed:
 
+- Default value of argument nhost of OPH_CLUSTER
 - Removed support for hidden containers and drop OPH_RESTORECONTAINER operator [#76](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/76)
 - XML of OPH_CLUSTER with new actions for cluster information [#74](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/74)
 - OphidiaDB to address better scalability for node selection queries and all multi-thread operators in order to limit number of connections to OphidiaDB [#73](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/73)

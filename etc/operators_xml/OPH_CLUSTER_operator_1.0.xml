@@ -43,7 +43,7 @@ SUBMISSION STRING: &quot;operator=oph_cluster;action=deploy;nhost=3;host_partiti
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="all">host_partition</argument>
 		<argument type="string" mandatory="no" default="info" values="info|info_cluster|deploy|undeploy">action</argument>
-		<argument type="int" mandatory="no" minvalue="1" default="1">nhost</argument>
+		<argument type="int" mandatory="no" minvalue="0" default="0">nhost</argument>
 		<argument type="string" mandatory="no" default="all">user_filter</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|cluster_summary|cluster_list|cluster_list_summary|cluster_user|cluster_user_summary">objkey_filter</argument>
     </args>
