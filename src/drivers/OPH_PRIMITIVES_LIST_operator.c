@@ -217,8 +217,6 @@ int task_execute(oph_operator_struct * handle)
 	if (handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	logging(LOG_INFO, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PRIMITIVES_LIST_INFO_START);
-
 	int level = ((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->level;
 	char *func_ret = ((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->func_ret;
 	char *func_type = ((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->func_type;
@@ -652,7 +650,6 @@ int task_execute(oph_operator_struct * handle)
 		}
 	}
 
-	logging(LOG_INFO, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PRIMITIVES_LIST_INFO_END);
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
