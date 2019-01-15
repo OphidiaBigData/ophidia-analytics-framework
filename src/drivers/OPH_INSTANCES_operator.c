@@ -1353,7 +1353,7 @@ int task_execute(oph_operator_struct * handle)
 		case 1:
 		case 3:{
 				if (!partition_name) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_PARTITION_NAME);
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s ('%s' is a reserved word)\n", OPH_IN_PARAM_PARTITION_NAME, OPH_COMMON_ALL_FILTER);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_PARTITION_NAME);
 					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 				}
@@ -1368,13 +1368,14 @@ int task_execute(oph_operator_struct * handle)
 				}
 				char jsonbuf[OPH_COMMON_BUFFER_LEN], warning = 0;
 				if (id_hostpartition) {
-					snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correctly %s", partition_name, action != 1 ? "reserved" : "created");
 					if (!hostname && !nhosts) {
 						if (oph_odb_stge_add_all_hosts_to_partition(oDB, id_hostpartition, action != 1)) {
 							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "Host partition '%s' cannot be %s", partition_name, action != 1 ? "reserved" : "created");
 							oph_odb_stge_delete_hostpartition_by_id(oDB, id_hostpartition);
 							id_hostpartition = 0;
-						}
+						} else
+							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correctly (all available hosts)", partition_name,
+								 action != 1 ? "reserved" : "created");
 					} else if (nhosts) {
 						if (oph_odb_stge_add_some_hosts_to_partition(oDB, id_hostpartition, nhosts, action != 1, &num_rows)) {
 							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "Host partition '%s' cannot be %s", partition_name, action != 1 ? "reserved" : "created");
@@ -1385,7 +1386,9 @@ int task_execute(oph_operator_struct * handle)
 							warning = 1;
 							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "Host partition '%s' will consist only of %d host%s", partition_name, num_rows,
 								 num_rows == 1 ? "" : "s");
-						}
+						} else
+							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correctly (%d host%s)", partition_name,
+								 action != 1 ? "reserved" : "created", num_rows, num_rows == 1 ? "" : "s");
 					} else {
 						int id_host;
 						for (num_rows = 0; num_rows < ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids_num; ++num_rows) {
@@ -1398,7 +1401,9 @@ int task_execute(oph_operator_struct * handle)
 								 ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->host_ids[num_rows], partition_name);
 							oph_odb_stge_delete_hostpartition_by_id(oDB, id_hostpartition);
 							id_hostpartition = 0;
-						}
+						} else
+							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correctly (%d host%s)", partition_name,
+								 action != 1 ? "reserved" : "created", num_rows, num_rows == 1 ? "" : "s");
 					}
 				} else
 					snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "Unable to create host partition '%s', maybe it already exists", partition_name);
@@ -1413,7 +1418,7 @@ int task_execute(oph_operator_struct * handle)
 		case 2:
 		case 4:{
 				if (!partition_name) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_PARTITION_NAME);
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s ('%s' is a reserved word)\n", OPH_IN_PARAM_PARTITION_NAME, OPH_COMMON_ALL_FILTER);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_PARTITION_NAME);
 					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 				}
