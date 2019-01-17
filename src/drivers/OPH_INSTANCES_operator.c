@@ -1374,7 +1374,7 @@ int task_execute(oph_operator_struct * handle)
 							oph_odb_stge_delete_hostpartition_by_id(oDB, id_hostpartition);
 							id_hostpartition = 0;
 						} else
-							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correctly (all available hosts)", partition_name,
+							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correctly %s (all available hosts)", partition_name,
 								 action != 1 ? "reserved" : "created");
 					} else if (nhosts) {
 						if (oph_odb_stge_add_some_hosts_to_partition(oDB, id_hostpartition, nhosts, action != 1, &num_rows)) {
@@ -1387,7 +1387,7 @@ int task_execute(oph_operator_struct * handle)
 							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "Host partition '%s' will consist only of %d host%s", partition_name, num_rows,
 								 num_rows == 1 ? "" : "s");
 						} else
-							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correctly (%d host%s)", partition_name,
+							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correctly %s (%d host%s)", partition_name,
 								 action != 1 ? "reserved" : "created", num_rows, num_rows == 1 ? "" : "s");
 					} else {
 						int id_host;
@@ -1402,7 +1402,7 @@ int task_execute(oph_operator_struct * handle)
 							oph_odb_stge_delete_hostpartition_by_id(oDB, id_hostpartition);
 							id_hostpartition = 0;
 						} else
-							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correctly (%d host%s)", partition_name,
+							snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "User-defined partition '%s' correctly %s (%d host%s)", partition_name,
 								 action != 1 ? "reserved" : "created", num_rows, num_rows == 1 ? "" : "s");
 					}
 				} else
