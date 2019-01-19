@@ -1020,12 +1020,6 @@ int task_execute(oph_operator_struct * handle)
 	else
 		snprintf(_ms, OPH_COMMON_MAX_DOUBLE_LENGHT, "%f", oper_handle->ms);
 
-	//In multi-thread code mysql_library_init must be called before starting the threads
-	if (mysql_library_init(0, NULL, NULL)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "MySQL initialization error\n");
-		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-	}
 	//Each process has to be connected to a slave ophidiadb
 	ophidiadb oDB_slave;
 	oph_odb_init_ophidiadb_thread(&oDB_slave);
@@ -1265,17 +1259,12 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_fragment_list(&frags);
 		oph_odb_free_ophidiadb_thread(&oDB_slave);
 		mysql_thread_end();
-		//In multi-thread code mysql_library_end must be called after executing the threads
-		mysql_library_end();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
 	oph_odb_stge_free_fragment_list(&frags);
 	oph_odb_free_ophidiadb_thread(&oDB_slave);
 	mysql_thread_end();
-
-	//In multi-thread code mysql_library_end must be called after executing the threads
-	mysql_library_end();
 
 	for (l = 0; l < num_threads; l++) {
 		if (res[l] != OPH_ANALYTICS_OPERATOR_SUCCESS) {

@@ -82,7 +82,7 @@ int oph_odb_read_ophidiadb_config_file(ophidiadb * oDB);
 int oph_odb_init_ophidiadb(ophidiadb * oDB);
 
 /**
- * \brief Function to initilize OphidiaDB structure in multi-thread environment.
+ * \brief Function to initilize OphidiaDB structure in multi-thread environment (mysql_library_init must be called before).
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_init_ophidiadb_thread(ophidiadb * oDB);
@@ -94,7 +94,7 @@ int oph_odb_init_ophidiadb_thread(ophidiadb * oDB);
 int oph_odb_free_ophidiadb(ophidiadb * oDB);
 
 /**
- * \brief Function to delete OphidiaDB and to free memory allocated in multi-thread environment.
+ * \brief Function to delete OphidiaDB and free memory in multi-thread environment (mysql_library_end must be called after).
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_free_ophidiadb_thread(ophidiadb * oDB);

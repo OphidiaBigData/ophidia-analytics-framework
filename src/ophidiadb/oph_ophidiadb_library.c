@@ -138,23 +138,12 @@ int oph_odb_read_ophidiadb_config_file(ophidiadb * oDB)
 
 int oph_odb_init_ophidiadb(ophidiadb * oDB)
 {
-	if (!oDB) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return OPH_ODB_NULL_PARAM;
-	}
+	/*if (mysql_library_init(0, NULL, NULL)) {
+	   pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
+	   return OPH_ODB_MYSQL_ERROR;
+	   } */
 
-	oDB->name = NULL;
-	oDB->hostname = NULL;
-	oDB->username = NULL;
-	oDB->pwd = NULL;
-	oDB->conn = NULL;
-
-	if (mysql_library_init(0, NULL, NULL)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
-		return OPH_ODB_MYSQL_ERROR;
-	}
-
-	return OPH_ODB_SUCCESS;
+	return oph_odb_init_ophidiadb_thread(oDB);
 }
 
 int oph_odb_init_ophidiadb_thread(ophidiadb * oDB)
@@ -173,37 +162,11 @@ int oph_odb_init_ophidiadb_thread(ophidiadb * oDB)
 	return OPH_ODB_SUCCESS;
 }
 
-
 int oph_odb_free_ophidiadb(ophidiadb * oDB)
 {
-	if (!oDB) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return OPH_ODB_NULL_PARAM;
-	}
+	//mysql_library_end();
 
-	if (oDB->name) {
-		free(oDB->name);
-		oDB->name = NULL;
-	}
-	if (oDB->hostname) {
-		free(oDB->hostname);
-		oDB->hostname = NULL;
-	}
-	if (oDB->username) {
-		free(oDB->username);
-		oDB->username = NULL;
-	}
-	if (oDB->pwd) {
-		free(oDB->pwd);
-		oDB->pwd = NULL;
-	}
-	if (oDB->conn) {
-		oph_odb_disconnect_from_ophidiadb(oDB);
-		oDB->conn = NULL;
-		mysql_library_end();
-	}
-
-	return OPH_ODB_SUCCESS;
+	return oph_odb_free_ophidiadb_thread(oDB);
 }
 
 int oph_odb_free_ophidiadb_thread(ophidiadb * oDB)

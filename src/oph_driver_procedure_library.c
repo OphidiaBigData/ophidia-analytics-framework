@@ -50,12 +50,6 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 	int res[thread_number];
 	int l = 0;
 
-	//In multi-thread code mysql_library_init must be called before starting the threads
-	if (mysql_library_init(0, NULL, NULL)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_container, "MySQL initialization error\n");
-		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-	}
 	//Each process has to be connected to a slave ophidiadb
 	ophidiadb oDB_slave;
 	oph_odb_init_ophidiadb_thread(&oDB_slave);
@@ -370,8 +364,6 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 	oph_odb_stge_free_fragment_list(&frags);
 	oph_odb_free_ophidiadb_thread(&oDB_slave);
 	mysql_thread_end();
-	//In multi-thread code mysql_library_end must be called after executing the threads
-	mysql_library_end();
 
 	for (l = 0; l < thread_number; l++) {
 		if (res[l] != OPH_ANALYTICS_OPERATOR_SUCCESS) {

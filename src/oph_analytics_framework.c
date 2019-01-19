@@ -342,6 +342,41 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 	}
+	//In multi-thread code mysql_library_init must be called before starting any threads
+	if (mysql_library_init(0, NULL, NULL)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
+		oph_tp_end_xml_parser();
+
+		if (!task_rank) {
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "MySQL initialization error%s\n", "");
+#else
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "MySQL initialization error%s\n", backtrace);
+#endif
+			if (oph_json_add_text(oper_json, OPH_JSON_OBJKEY_STATUS, "ERROR", error_message)) {
+				oph_json_free(oper_json);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+			} else
+				oph_af_write_json(oper_json, &handle->output_json, backtrace, notify_sessionid, marker_id);
+#ifndef OPH_STANDALONE_MODE
+/* gSOAP notification start */
+			if (have_soap) {
+				snprintf(notify_message, OPH_COMMON_BUFFER_LEN, "%s=%d;%s=%s;%s=%s;%s=%s;%s=%s;%s=%s;%s=%s;", OPH_ARG_STATUS, OPH_ODB_JOB_STATUS_RUNNING_ERROR, OPH_ARG_IDJOB,
+					 notify_jobid, OPH_ARG_PARENTID, notify_parent_jobid, OPH_ARG_TASKINDEX, notify_task_index, OPH_ARG_LIGHTTASKINDEX, notify_light_task_index, OPH_ARG_SESSIONID,
+					 notify_sessionid, OPH_ARG_MARKERID, marker_id);
+				if (oph_notify(&soap, &data, notify_message, handle->output_json, &response))
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "SOAP connection refused.\n");
+				else if (response)
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Error %d in sending SOAP notification.\n", response);
+				oph_soap_cleanup(&soap, &data);
+			}
+/* gSOAP notification end */
+#endif
+		}
+		oph_pid_free();
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
 
 	HASHTBL *task_tbl = NULL;
 	if (oph_tp_task_params_parser(task_string, &task_tbl)) {
@@ -376,6 +411,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 /* gSOAP notification end */
 #endif
 		}
+		mysql_library_end();
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -416,6 +452,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 			}
 /* gSOAP notification end */
 		}
+		mysql_library_end();
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -451,6 +488,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 			}
 /* gSOAP notification end */
 		}
+		mysql_library_end();
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -487,6 +525,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 /* gSOAP notification end */
 #endif
 		}
+		mysql_library_end();
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -523,6 +562,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 /* gSOAP notification end */
 #endif
 		}
+		mysql_library_end();
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -557,6 +597,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 				oph_soap_cleanup(&soap, &data);
 			}
 /* gSOAP notification end */
+			mysql_library_end();
 			oph_pid_free();
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
@@ -586,6 +627,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 				oph_soap_cleanup(&soap, &data);
 			}
 /* gSOAP notification end */
+			mysql_library_end();
 			oph_pid_free();
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
@@ -618,6 +660,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 				oph_soap_cleanup(&soap, &data);
 			}
 /* gSOAP notification end */
+			mysql_library_end();
 			oph_pid_free();
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
@@ -649,6 +692,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 				oph_soap_cleanup(&soap, &data);
 			}
 /* gSOAP notification end */
+			mysql_library_end();
 			oph_pid_free();
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
@@ -681,6 +725,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 				oph_soap_cleanup(&soap, &data);
 			}
 /* gSOAP notification end */
+			mysql_library_end();
 			oph_pid_free();
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
@@ -710,6 +755,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 				oph_soap_cleanup(&soap, &data);
 			}
 /* gSOAP notification end */
+			mysql_library_end();
 			oph_pid_free();
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
@@ -748,6 +794,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 			}
 /* gSOAP notification end */
 #endif
+			mysql_library_end();
 			oph_pid_free();
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
@@ -782,6 +829,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 			}
 /* gSOAP notification end */
 #endif
+			mysql_library_end();
 			oph_pid_free();
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
@@ -810,6 +858,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 				oph_odb_free_ophidiadb(&oDB);
 				hashtbl_destroy(task_tbl);
 				snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to create standalone folder.\n");
+				mysql_library_end();
 				oph_pid_free();
 				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
@@ -847,6 +896,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 				}
 /* gSOAP notification end */
 #endif
+				mysql_library_end();
 				oph_pid_free();
 				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
@@ -942,6 +992,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 /* gSOAP notification end */
 #endif
 		}
+		mysql_library_end();
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -1008,6 +1059,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 /* gSOAP notification end */
 #endif
 		}
+		mysql_library_end();
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -1072,6 +1124,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 /* gSOAP notification end */
 #endif
 		}
+		mysql_library_end();
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -1136,6 +1189,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 /* gSOAP notification end */
 #endif
 		}
+		mysql_library_end();
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -1200,6 +1254,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 /* gSOAP notification end */
 #endif
 		}
+		mysql_library_end();
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -1263,6 +1318,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 /* gSOAP notification end */
 #endif
 		}
+		mysql_library_end();
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -1325,6 +1381,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 /* gSOAP notification end */
 #endif
 		}
+		mysql_library_end();
 		oph_pid_free();
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -1420,6 +1477,8 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 /* gSOAP notification end */
 #endif
 
+	//In multi-thread code mysql_library_end must be called after executing all the threads
+	mysql_library_end();
 	oph_pid_free();
 
 	if (return_code)

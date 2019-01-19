@@ -105,16 +105,17 @@ int oph_dc_setup_dbms_thread(oph_ioserver_handler ** server, char *server_type)
 
 int oph_dc_setup_dbms(oph_ioserver_handler ** server, char *server_type)
 {
-	if (!server) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return OPH_DC_NULL_PARAM;
-	}
+	/*if (!server) {
+	   pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+	   return OPH_DC_NULL_PARAM;
+	   }
 
-	if (oph_ioserver_setup(server_type, server, 0)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup server library\n");
-		return OPH_DC_SERVER_ERROR;
-	}
-	return OPH_DC_SUCCESS;
+	   if (oph_ioserver_setup(server_type, server, 0)) {
+	   pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup server library\n");
+	   return OPH_DC_SERVER_ERROR;
+	   } */
+
+	return oph_dc_setup_dbms_thread(server, server_type);
 }
 
 int oph_dc_connect_to_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, unsigned long flag)

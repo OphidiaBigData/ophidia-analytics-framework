@@ -11,6 +11,7 @@
 
 ### Fixed:
 
+- Usage of MySQL client library in operators and libraries in case of multi-thread execution
 - Data operators to return the proper code when global errors occur [#64](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/64)
 - Enforced UNIQUE constraints to several OphidiaDB tables [#61](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/61)
 - Bug [#60](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/60) related to OphidiaDB tables lock
