@@ -301,19 +301,41 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		char *pointer = ((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->nc_file_path;
 		while (pointer && (*pointer == ' '))
 			pointer++;
-		if (pointer && (*pointer != '/')) {
+		if (pointer) {
+			char tmp[OPH_COMMON_BUFFER_LEN];
+			if (*pointer != '/') {
+				value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
+				if (!value) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (*value != '/') {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", value);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", value);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (strlen(value) > 1) {
+					if (strstr(value, "..")) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					}
+					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value + 1, pointer);
+					free(((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->nc_file_path);
+					((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
+					pointer = ((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->nc_file_path;
+				}
+			}
 			if (oph_pid_get_base_src_path(&value)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
-			if (value) {
-				char tmp[OPH_COMMON_BUFFER_LEN];
-				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value, pointer);
-				free(((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->nc_file_path);
-				((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
-				free(value);
-			}
+			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
+			free(((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->nc_file_path);
+			((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
+			free(value);
 		}
 	}
 
