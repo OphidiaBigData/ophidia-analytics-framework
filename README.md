@@ -54,10 +54,4 @@ to see all available options.
 
 If you want to use the program system-wide, remember to add its installation directory to your PATH.
 
-### How to Launch
-
-```
-$ oph_analytics_framework "operator=value;param=value;..."
-```
-
-Further information can be found at [http://ophidia.cmcc.it/documentation/admin/](http://ophidia.cmcc.it/documentation/admin/).
+Further information can be found at [http://ophidia.cmcc.it/documentation/admin/](http://ophidia.cmcc.it/documentation/admin/) and [http://ophidia.cmcc.it/documentation/users/operators/](http://ophidia.cmcc.it/documentation/users/operators/).

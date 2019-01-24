@@ -12,8 +12,9 @@
 ### Fixed:
 
 - Usage of MySQL client library in operators and libraries in case of multi-thread execution
+- Warnings when building on Ubuntu 18
 - Data operators to return the proper code when global errors occur [#64](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/64)
-- Enforced UNIQUE constraints to several OphidiaDB tables [#61](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/61)
+- Enforced UNIQUE constraints in several OphidiaDB tables [#61](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/61)
 - Bug [#60](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/60) related to OphidiaDB tables lock
 - Minor bugs in oph_nc_library 
 - Bug in multi-thread operators using mysql IO server type [#56](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/56)
