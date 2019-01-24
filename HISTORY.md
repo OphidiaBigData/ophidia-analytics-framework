@@ -1,5 +1,5 @@
 
-## Next release
+## v1.5.0 - 2019-01-24
 
 ### Added:
 
@@ -20,6 +20,7 @@
 
 ### Changed:
 
+- Soap interface files with gSOAP version 2.8.76 [#77](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/77)
 - Default value of argument nhost of OPH_CLUSTER
 - Removed support for hidden containers and drop OPH_RESTORECONTAINER operator [#76](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/76)
 - XML of OPH_CLUSTER with new actions for cluster information [#74](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/74)
