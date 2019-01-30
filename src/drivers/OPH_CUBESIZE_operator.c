@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -123,6 +123,22 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (oph_utl_unit_to_value(value, &((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->byte_unit))
 		((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->byte_unit = OPH_UTL_MB_UNIT_VALUE;
 
+
+	int algorithm = 0;
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_ALGORITHM);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_ALGORITHM);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESIZE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_ALGORITHM);
+
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
+	if (strncasecmp(value, OPH_CUBESIZE_COUNT_ALGORITHM, STRLEN_MAX(value, OPH_CUBESIZE_COUNT_ALGORITHM)) == 0)
+		algorithm = OPH_CUBESIZE_COUNT_ALGORITHM_VALUE;
+	else
+		algorithm = OPH_CUBESIZE_EURISTIC_ALGORITHM_VALUE;
+
+
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DATACUBE_INPUT);
 	char *datacube_name = value;
 	if (!value) {
@@ -173,8 +189,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, result[2], OPH_LOG_OPH_CUBESIZE_DATACUBE_AVAILABILITY_ERROR, datacube_name);
 			result[0] = 0;
 			result[2] = 0;
-		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, result[2], 1, &folder_id))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
+		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, result[2], &folder_id))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, result[2], OPH_LOG_OPH_CUBESIZE_DATACUBE_FOLDER_ERROR, datacube_name);
 			result[0] = 0;
 			result[2] = 0;
@@ -197,10 +213,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				result[0] = 0;
 				result[2] = 0;
 			} else {
-				//Find cubesize
+				//Find CUBESIZE
+				double convert_size = 0;;
+				char unit[OPH_UTL_UNIT_SIZE] = { '\0' };
 				if (size) {
-					double convert_size = 0;;
-					char unit[OPH_UTL_UNIT_SIZE] = { '\0' };
 					if (oph_utl_compute_size(size, ((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->byte_unit, &convert_size)
 					    || oph_utl_unit_to_str(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->byte_unit, &unit)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to compute size\n");
@@ -214,7 +230,121 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					printf("+-----------------------+\n");
 					printf("| %-21f |\n", convert_size);
 					printf("+-----------------------+\n");
+					((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->first_time_computation = 0;
+				} else if (algorithm == OPH_CUBESIZE_EURISTIC_ALGORITHM_VALUE) {
+					//ESTIMATE DATACUBE SIZE
+					oph_odb_datacube cube;
+					oph_odb_cube_init_datacube(&cube);
 
+					//retrieve input datacube
+					if (oph_odb_cube_retrieve_datacube(oDB, result[0], &cube)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, result[2], OPH_LOG_OPH_CUBESIZE_DATACUBE_READ_ERROR);
+						oph_odb_cube_free_datacube(&cube);
+						result[0] = result[2] = 0;
+						goto __OPH_EXIT_1;
+					}
+
+					if (cube.compressed == 0) {
+
+						//Read dimension
+						oph_odb_cubehasdim *cubedims = NULL;
+						int number_of_dimensions = 0, l;
+
+						if (oph_odb_cube_retrieve_cubehasdim_list(oDB, result[0], &cubedims, &number_of_dimensions)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive datacube - dimension relations.\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, result[2], OPH_LOG_OPH_CUBESIZE_CUBEHASDIM_READ_ERROR);
+							number_of_dimensions = 0;
+							oph_odb_cube_free_datacube(&cube);
+							result[0] = result[2] = 0;
+							goto __OPH_EXIT_1;
+						}
+
+
+						int total_frag = 0;
+						if (oph_ids_count_number_of_ids(cube.frag_relative_index_set, &total_frag)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get total number of fragments\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, result[2], OPH_LOG_OPH_CUBESIZE_COUNT_FRAG_ERROR);
+							free(cubedims);
+							oph_odb_cube_free_datacube(&cube);
+							result[0] = result[2] = 0;
+							goto __OPH_EXIT_1;
+						}
+
+						long long array_length = 1;
+						for (l = 0; l < number_of_dimensions; l++) {
+							if (!cubedims[l].explicit_dim && cubedims[l].level && cubedims[l].size) {
+								array_length *= cubedims[l].size;
+							}
+						}
+
+						long long array_size = 0;
+
+						if (oph_utl_get_array_size(cube.measure_type, array_length, &array_size)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to compute size\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, result[2], OPH_LOG_OPH_CUBESIZE_SIZE_COMPUTE_ERROR);
+							free(cubedims);
+							oph_odb_cube_free_datacube(&cube);
+							result[0] = result[2] = 0;
+							goto __OPH_EXIT_1;
+						}
+
+						long long total_rows = 1;
+						for (l = 0; l < number_of_dimensions; l++) {
+							if (cubedims[l].explicit_dim && cubedims[l].level && cubedims[l].size) {
+								total_rows *= cubedims[l].size;
+							}
+						}
+						free(cubedims);
+
+						//Get first dbms type
+						oph_odb_dbms_instance_list dbmss;
+
+						//retrieve DBMS connection string
+						if (oph_odb_stge_fetch_dbms_connection_string(oDB, result[0], 0, 1, &dbmss)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS connection strings\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, result[2], OPH_LOG_OPH_CUBESIZE_DBMS_CONNECTION_STRINGS_NOT_FOUND);
+							oph_odb_cube_free_datacube(&cube);
+							result[0] = result[2] = 0;
+							goto __OPH_EXIT_1;
+						}
+
+						if (strncmp((dbmss.value[0]).io_server_type, OPH_IOSERVER_MYSQL_TYPE, strlen(OPH_IOSERVER_MYSQL_TYPE)) == 0) {
+							size = (array_size + 16) * total_rows + 1024 * total_frag;
+						} else {
+							size = (array_size + 16 + 48) * total_rows + 8 * total_frag;
+						}
+						oph_odb_stge_free_dbms_list(&dbmss);
+					}
+
+					oph_odb_cube_free_datacube(&cube);
+
+
+					if (oph_utl_compute_size(size, ((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->byte_unit, &convert_size)
+					    || oph_utl_unit_to_str(((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->byte_unit, &unit)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to compute size\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, result[2], OPH_LOG_OPH_CUBESIZE_SIZE_COMPUTE_ERROR);
+						result[0] = result[2] = 0;
+						goto __OPH_EXIT_1;
+					}
+
+					printf("+-----------------------+\n");
+					printf("| CUBE SIZE [%s%-8s |\n", unit, "]");
+					printf("+-----------------------+\n");
+					printf("| %-21f |\n", convert_size);
+					printf("+-----------------------+\n");
+
+
+					//Set cubesize
+					if ((oph_odb_cube_set_datacube_size(oDB, result[0], size))) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert cubesize\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, result[2], OPH_LOG_OPH_CUBESIZE_SET_DATACUBE_SIZE_ERROR);
+					}
+
+					((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->first_time_computation = 0;
+				}
+
+				if (!((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->first_time_computation) {
 					if (oph_json_is_objkey_printable
 					    (((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->objkeys_num,
 					     OPH_JSON_OBJKEY_CUBESIZE)) {
@@ -384,8 +514,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 						if (jsonvalues)
 							free(jsonvalues);
 					}
-
-					((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->first_time_computation = 0;
 				}
 			}
 			result[1] = ((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->first_time_computation;

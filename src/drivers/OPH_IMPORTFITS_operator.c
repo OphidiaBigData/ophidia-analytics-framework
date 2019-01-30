@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -41,6 +41,7 @@
 
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
+#include "oph_driver_procedure_library.h"
 
 int check_subset_string(char *curfilter, int i, FITS_var * measure, int is_index)
 {
@@ -136,6 +137,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->create_container = 0;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->grid_name = NULL;
+	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->check_grid = 0;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path = NULL;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path_orig = NULL;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_output_datacube = 0;
@@ -159,7 +161,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->run = 1;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->objkeys_num = -1;
-	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fs_type = 0;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->ioserver_type = NULL;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->server = NULL;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->sessionid = NULL;
@@ -173,6 +174,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->leap_month = 2;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->memory_size = 0;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->description = NULL;
+	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->execute_error = 0;
 
 	char *value;
 
@@ -373,24 +375,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number == 0)
 		((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number = -1;	// All the host of the partition
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DBMS_NUMBER);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DBMS_NUMBER);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_DBMS_NUMBER);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbmsxhost_number = (int) strtol(value, NULL, 10);
-	if (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbmsxhost_number == 0)
-		((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbmsxhost_number = -1;	// All the DBMS of the host
-
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DB_NUMBER);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DB_NUMBER);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_DB_NUMBER);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbxdbms_number = (int) strtol(value, NULL, 10);	// 'All by means of special value 0' is not defined in this case
-
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_FRAGMENENT_NUMBER);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_FRAGMENENT_NUMBER);
@@ -402,8 +386,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number = -1;	// The maximum number of fragments
 
 	//Additional check (all distrib arguments must be bigger than 0 or at least -1 if default values are given)
-	if (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number == 0 || ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbmsxhost_number == 0
-	    || ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbxdbms_number == 0 || ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number == 0) {
+	if (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number == 0 || ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number == 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTFITS_FRAG_PARAMS_ERROR, container_name);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_FRAG_PARAMS_ERROR, container_name);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
@@ -982,20 +965,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_FS_TYPE);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_FS_TYPE);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_FS_TYPE);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (strncmp(value, OPH_COMMON_IO_FS_GLOBAL, OPH_TP_TASKLEN) == 0) {
-		((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fs_type = OPH_COMMON_IO_FS_GLOBAL_TYPE;
-	} else if (strncmp(value, OPH_COMMON_IO_FS_LOCAL, OPH_TP_TASKLEN) == 0) {
-		((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fs_type = OPH_COMMON_IO_FS_LOCAL_TYPE;
-	} else {
-		((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fs_type = OPH_COMMON_IO_FS_DEFAULT_TYPE;
-	}
-
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_IOSERVER_TYPE);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IOSERVER_TYPE);
@@ -1041,9 +1010,9 @@ int task_init(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 	//For error checking
-	int id_datacube[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+	int id_datacube[6] = { 0, 0, 0, 0, 0, 0 };
 
-	int i, flush = 1, id_datacube_out = 0, id_container_out = 0;
+	int i, id_datacube_out = 0, id_container_out = 0;
 
 	FITS_var *measure = &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->measure;
 	//****COMPUTE DEFAULT fragxdb AND tuplexfrag NUMBER (START)*********//
@@ -1053,8 +1022,7 @@ int task_init(oph_operator_struct * handle)
 	short int max_lev = 0;
 	short int last_dimid = 0;
 
-	if (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number > 1 || ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbmsxhost_number > 1
-	    || ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbxdbms_number > 1 || ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number > 1) {
+	if (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number > 1 || ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number > 1) {
 		((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 	} else {
 
@@ -1110,19 +1078,25 @@ int task_init(oph_operator_struct * handle)
 		int container_exists = 0;
 		int last_insertd_id = 0;
 		int *host_number = &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number;
-		int *dbmsxhost_number = &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbmsxhost_number;
-		int *dbxdbms_number = &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbxdbms_number;
 		int *fragxdb_number = &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number;
-		int storage_type = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fs_type;
 		char *host_partition = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->partition_input;
 		char *ioserver_type = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->ioserver_type;
 		int run = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->run;
+
+		//Retrieve user id
+		char *username = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->user;
+		int id_user = 0;
+		if (oph_odb_user_retrieve_user_id(oDB, username, &id_user)) {
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive user id\n");
+			logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_USER_ID_ERROR);
+			goto __OPH_EXIT_1;
+		}
 
 	  /********************************
 	   *INPUT PARAMETERS CHECK - BEGIN*
 	   ********************************/
 		int exist_part = 0;
-		int nhost = 0, ndbms = 0;
+		int nhost = 0;
 		int frag_param_error = 0;
 		int final_frag_number = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->total_frag_number;
 
@@ -1130,43 +1104,45 @@ int task_init(oph_operator_struct * handle)
 
 		int admissible_frag_number = 0;
 		int user_arg_prod = 0;
+		int id_host_partition = 0;
+		char hidden = 0;
 
 		//If default values are used: select fylesystem and partition
-		if ((!strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(host_partition))
-		     && !strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT))) || storage_type == OPH_COMMON_IO_FS_DEFAULT_TYPE) {
-			if (oph_odb_stge_get_default_host_partition_fs
-			    (oDB, &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fs_type, ioserver_type, &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->partition_input,
-			     (*host_number > 0 ? *host_number : 1), *dbmsxhost_number, &exist_part) || !exist_part) {
+		if (!strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(host_partition))
+		    && !strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT))) {
+			if (oph_odb_stge_get_default_host_partition_fs(oDB, ioserver_type, &id_host_partition, *host_number > 0 ? *host_number : 1) || !id_host_partition) {
 				if (run) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts or dbms per host is too big or server type and partition are not available!\n");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
-						((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number,
-						((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbmsxhost_number, host_partition);
+						((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number, host_partition);
 					goto __OPH_EXIT_1;
 				} else {
-					//If simulated run then reset values
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts or dbms per host is too big or server type and partition are not available!\n");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
 					frag_param_error = 1;
 				}
 			}
-			//The previous function may change the memory area of the string
-			host_partition = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->partition_input;
-			storage_type = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fs_type;
-
 		} else {
+			if (oph_odb_stge_get_host_partition_by_name(oDB, host_partition, id_user, &id_host_partition, &hidden)) {
+				if (run) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Failed to load partition '%s'!\n", host_partition);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Failed to load partition '%s'!\n", host_partition);
+					goto __OPH_EXIT_1;
+				} else {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Failed to load partition '%s'!\n", host_partition);
+					frag_param_error = 1;
+				}
+			}
 			//Check if are available DBMS and HOST number into specified partition and of server type
-			if (*host_number > 0 || *dbmsxhost_number > 0) {
-				if ((oph_odb_stge_check_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, (*host_number > 0 ? *host_number : 1), *dbmsxhost_number, &exist_part))
-				    || !exist_part) {
+			if (*host_number > 0) {
+				if ((oph_odb_stge_check_number_of_host_dbms(oDB, ioserver_type, id_host_partition, *host_number, &exist_part)) || !exist_part) {
 					if (run) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts or dbms per host is too big or server type and partition are not available!\n");
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
-							((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number,
-							((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbmsxhost_number, host_partition);
+							((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number, host_partition);
 						goto __OPH_EXIT_1;
 					} else {
 						//If simulated run then reset values
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts or dbms per host is too big or server type and partition are not available!\n");
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
 						frag_param_error = 1;
 					}
 				}
@@ -1175,9 +1151,9 @@ int task_init(oph_operator_struct * handle)
 
 		if (*host_number <= 0) {
 			//Check how many DBMS and HOST are available into specified partition and of server type
-			if (oph_odb_stge_count_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, &nhost, &ndbms) || !nhost || !ndbms) {
+			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
 				if (run) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host and dbms or server type and partition are not available!\n");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
 						host_partition);
 					goto __OPH_EXIT_1;
@@ -1189,7 +1165,7 @@ int task_init(oph_operator_struct * handle)
 			}
 
 			if (*fragxdb_number <= 0) {
-				user_arg_prod = (1 * (*dbmsxhost_number) * (*dbxdbms_number) * 1);
+				user_arg_prod = (1 * 1);
 				if (final_frag_number < user_arg_prod) {
 					//If import is executed then return error, else simply return a message
 					if (run) {
@@ -1229,8 +1205,8 @@ int task_init(oph_operator_struct * handle)
 					}
 				}
 			} else {
-				//If user specified at least one between dbmsxhost_number, dbxdbms_number or fragxdb_number then check if frag number is lower than product of parameters                       
-				user_arg_prod = (1 * (*dbmsxhost_number) * (*dbxdbms_number) * (*fragxdb_number));
+				//If user specified fragxdb_number then check if frag number is lower than product of parameters                       
+				user_arg_prod = (1 * (*fragxdb_number));
 				if (final_frag_number < user_arg_prod) {
 					//If import is executed then return error, else simply return a message
 					if (run) {
@@ -1273,7 +1249,7 @@ int task_init(oph_operator_struct * handle)
 			}
 		} else {
 			if (*fragxdb_number <= 0) {
-				user_arg_prod = ((*host_number) * (*dbmsxhost_number) * (*dbxdbms_number) * 1);
+				user_arg_prod = ((*host_number) * 1);
 				if (final_frag_number < user_arg_prod) {
 					//If import is executed then return error, else simply return a message
 					if (run) {
@@ -1302,7 +1278,7 @@ int task_init(oph_operator_struct * handle)
 				}
 			} else {
 				//User has set all parameters - in this case allow further fragmentation
-				user_arg_prod = ((*host_number) * (*dbmsxhost_number) * (*dbxdbms_number) * (*fragxdb_number));
+				user_arg_prod = ((*host_number) * (*fragxdb_number));
 				if (max_frag_number < user_arg_prod) {
 					//If import is executed then return error, else simply return a message
 					if (run) {
@@ -1333,8 +1309,8 @@ int task_init(oph_operator_struct * handle)
 
 		if (frag_param_error) {
 			//Check how many DBMS and HOST are available into specified partition and of server type
-			if (oph_odb_stge_count_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, &nhost, &ndbms) || !nhost || !ndbms) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or dbms or server type and partition are not available!\n");
+			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
 				goto __OPH_EXIT_1;
 			}
@@ -1347,11 +1323,9 @@ int task_init(oph_operator_struct * handle)
 
 			//Simulate simple arguments
 			*host_number = ii;
-			*dbmsxhost_number = 1;
-			*dbxdbms_number = 1;
 			*fragxdb_number = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->total_frag_number / ii;
 		} else {
-			((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*dbmsxhost_number) * (*dbxdbms_number) * (*fragxdb_number));
+			((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*fragxdb_number));
 		}
 
 		if (!((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->run) {
@@ -1363,8 +1337,6 @@ int task_init(oph_operator_struct * handle)
 			else
 				printf("Specified parameters are:\n");
 			printf("\tNumber of hosts: %d\n", *host_number);
-			printf("\tNumber of DBMSs per host: %d\n", *dbmsxhost_number);
-			printf("\tNumber of databases per DBMS: %d\n", *dbxdbms_number);
 			printf("\tNumber of fragments per database: %d\n", *fragxdb_number);
 			printf("\tNumber of tuples per fragment: %d\n", ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->tuplexfrag_number);
 
@@ -1373,8 +1345,6 @@ int task_init(oph_operator_struct * handle)
 			else
 				len += snprintf(message + len, OPH_COMMON_BUFFER_LEN, "Specified parameters are:\n");
 			len += snprintf(message + len, OPH_COMMON_BUFFER_LEN, "\tNumber of hosts: %d\n", *host_number);
-			len += snprintf(message + len, OPH_COMMON_BUFFER_LEN, "\tNumber of DBMSs per host: %d\n", *dbmsxhost_number);
-			len += snprintf(message + len, OPH_COMMON_BUFFER_LEN, "\tNumber of databases per DBMS: %d\n", *dbxdbms_number);
 			len += snprintf(message + len, OPH_COMMON_BUFFER_LEN, "\tNumber of fragments per database: %d\n", ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number);
 			len += snprintf(message + len, OPH_COMMON_BUFFER_LEN, "\tNumber of tuples per fragment: %d\n", ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->tuplexfrag_number);
 
@@ -1389,11 +1359,10 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		//Check if are available DBMS and HOST number into specified partition and of server type
-		if ((oph_odb_stge_check_number_of_host_dbms(oDB, storage_type, ioserver_type, host_partition, *host_number, *dbmsxhost_number, &exist_part)) || !exist_part) {
+		if ((oph_odb_stge_check_number_of_host_dbms(oDB, ioserver_type, id_host_partition, *host_number, &exist_part)) || !exist_part) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts - dbms per host is too big or server type and partition are not available!\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
-				((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbmsxhost_number,
-				host_partition);
+				((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number, host_partition);
 			goto __OPH_EXIT_1;
 		}
 
@@ -1434,7 +1403,7 @@ int task_init(oph_operator_struct * handle)
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_NAME_NOT_ALLOWED_ERROR, container_name);
 					goto __OPH_EXIT_1;
 				}
-				//Check if non-hidden container exists in folder
+				//Check if container exists in folder
 				int container_unique = 0;
 				if ((oph_odb_fs_is_unique(folder_id, container_name, oDB, &container_unique))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check output container\n");
@@ -1576,14 +1545,14 @@ int task_init(oph_operator_struct * handle)
 
 		} else if (!container_exists) {
 			//If it doesn't exist then return an error
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container or it is hidden\n");
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
 		}
 		//Else retreive container ID and check for dimension table
 		if (!((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->create_container
-		    && oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, 0, &id_container_out)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container or it is hidden\n");
+		    && oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, &id_container_out)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
 		}
@@ -1751,9 +1720,11 @@ int task_init(oph_operator_struct * handle)
 							}
 							free(tmp_var.dims_id);
 
-							if (!oph_dim_compare_dimension
-							    (db_dimension, label_dimension_table_name, dims[j].dimension_type, dim_inst[j].size, dim_array, dim_inst[j].fk_id_dimension_label, &match)
-							    && !match) {
+							if (!((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->check_grid || (!oph_dim_compare_dimension
+																	  (db_dimension, label_dimension_table_name,
+																	   dims[j].dimension_type, dim_inst[j].size, dim_array,
+																	   dim_inst[j].fk_id_dimension_label, &match)
+																	  && !match)) {
 								free(dim_array);
 								found_flag = 1;
 								break;
@@ -2031,6 +2002,18 @@ int task_init(oph_operator_struct * handle)
 				dim_inst[i].id_dimensioninst = dimension_array_id;
 			}
 			free(tot_dims);
+
+			if (id_grid && oph_odb_dim_enable_grid(oDB, id_grid)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to enable grid\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to enable grid\n");
+				free(dims);
+				free(dim_inst);
+				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db_dimension);
+				free(dimvar_ids);
+				goto __OPH_EXIT_1;
+			}
+
 		 /****************************
 	      *  END - IMPORT DIMENSION  *
 		  ***************************/
@@ -2072,8 +2055,6 @@ int task_init(oph_operator_struct * handle)
 		}
 		//Set datacube params
 		cube.hostxdatacube = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number;
-		cube.dbmsxhost = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbmsxhost_number;
-		cube.dbxdbms = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbxdbms_number;
 		cube.fragmentxdb = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number;
 		cube.tuplexfragment = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 		cube.id_container = id_container_out;
@@ -2088,7 +2069,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		strncpy(cube.frag_relative_index_set, id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
-		cube.db_number = cube.hostxdatacube * cube.dbmsxhost * cube.dbxdbms;
+		cube.db_number = cube.hostxdatacube;
 		cube.compressed = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->compressed;
 		cube.id_db = NULL;
 		//New fields
@@ -2164,15 +2145,6 @@ int task_init(oph_operator_struct * handle)
 		if (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->import_metadata) {
 			int status = 0;
 			char err_text[48];	//Descriptive text string (30 char max.) corresponding to a CFITSIO error status code
-			//Retrieve user id
-			char *username = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->user;
-			int id_user = 0;
-			if (oph_odb_user_retrieve_user_id(oDB, username, &id_user)) {
-				pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive user id\n");
-				logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_USER_ID_ERROR);
-				free(dimvar_ids);
-				goto __OPH_EXIT_1;
-			}
 			char keyname[80];
 			char keyvalue[80];
 			char keycomment[80];
@@ -2227,16 +2199,17 @@ int task_init(oph_operator_struct * handle)
 	  /********************************
 	   * DB INSTANCE CREATION - BEGIN *
 	   ********************************/
-		int dbmss_length;
-		int *id_dbmss = NULL;
+		int dbmss_length, host_num;
+		dbmss_length = host_num = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number;
+		int *id_dbmss = NULL, *id_hosts = NULL;
 		//Retreive ID dbms list
-		if (oph_odb_stge_retrieve_dbmsinstance_id_list
-		    (oDB, storage_type, ioserver_type, host_partition, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number,
-		     ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbmsxhost_number, &id_dbmss, &dbmss_length)) {
+		if (oph_odb_stge_retrieve_dbmsinstance_id_list(oDB, ioserver_type, id_host_partition, hidden, host_num, id_datacube_out, &id_dbmss, &id_hosts, 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_DBMS_LIST_ERROR);
 			if (id_dbmss)
 				free(id_dbmss);
+			if (id_hosts)
+				free(id_hosts);
 			goto __OPH_EXIT_1;
 		}
 
@@ -2249,9 +2222,10 @@ int task_init(oph_operator_struct * handle)
 			db.id_dbms = id_dbmss[j];
 			//Retreive DBMS params
 			if (oph_odb_stge_retrieve_dbmsinstance(oDB, db.id_dbms, &dbms)) {
-				free(id_dbmss);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive DBMS\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_DBMS_ERROR, db.id_dbms);
+				free(id_dbmss);
+				free(id_hosts);
 				goto __OPH_EXIT_1;
 			}
 			db.dbms_instance = &dbms;
@@ -2261,6 +2235,7 @@ int task_init(oph_operator_struct * handle)
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_IOPLUGIN_SETUP_ERROR, db.id_dbms);
 					free(id_dbmss);
+					free(id_hosts);
 					goto __OPH_EXIT_1;
 				}
 			}
@@ -2270,37 +2245,41 @@ int task_init(oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_DBMS_CONNECTION_ERROR, dbms.id_dbms);
 				oph_dc_disconnect_from_dbms(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->server, &(dbms));
 				free(id_dbmss);
+				free(id_hosts);
 				goto __OPH_EXIT_1;
 			}
 
-			for (i = 0; i < ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbxdbms_number; i++) {
-				if (oph_dc_generate_db_name(oDB->name, id_datacube_out, db.id_dbms, 0, i + 1, &db_name)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of Db instance  name exceed limit.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_STRING_BUFFER_OVERFLOW, "DB instance name", db_name);
-					free(id_dbmss);
-					oph_dc_disconnect_from_dbms(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->server, &(dbms));
-					goto __OPH_EXIT_1;
-				}
-				strcpy(db.db_name, db_name);
-				if (oph_dc_create_db(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->server, &db)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create new db\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_NEW_DB_ERROR, db.db_name);
-					free(id_dbmss);
-					oph_dc_disconnect_from_dbms(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->server, &(dbms));
-					goto __OPH_EXIT_1;
-				}
-				//Insert new database instance and partitions
-				if (oph_odb_stge_insert_into_dbinstance_partitioned_tables(oDB, &db, id_datacube_out)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update dbinstance table\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_DB_INSERT_ERROR, db.db_name);
-					free(id_dbmss);
-					oph_dc_disconnect_from_dbms(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->server, &(dbms));
-					goto __OPH_EXIT_1;
-				}
+			if (oph_dc_generate_db_name(oDB->name, id_datacube_out, db.id_dbms, 0, 1, &db_name)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of Db instance  name exceed limit.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_STRING_BUFFER_OVERFLOW, "DB instance name", db_name);
+				free(id_dbmss);
+				free(id_hosts);
+				oph_dc_disconnect_from_dbms(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->server, &(dbms));
+				goto __OPH_EXIT_1;
+			}
+			strcpy(db.db_name, db_name);
+			if (oph_dc_create_db(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->server, &db)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create new db\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_NEW_DB_ERROR, db.db_name);
+				free(id_dbmss);
+				free(id_hosts);
+				oph_dc_disconnect_from_dbms(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->server, &(dbms));
+				goto __OPH_EXIT_1;
+			}
+			//Insert new database instance and partitions
+			if (oph_odb_stge_insert_into_dbinstance_partitioned_tables(oDB, &db, id_datacube_out)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update dbinstance table\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_DB_INSERT_ERROR, db.db_name);
+				free(id_dbmss);
+				free(id_hosts);
+				oph_dc_disconnect_from_dbms(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->server, &(dbms));
+				goto __OPH_EXIT_1;
 			}
 			oph_dc_disconnect_from_dbms(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->server, &(dbms));
 		}
 		free(id_dbmss);
+		free(id_hosts);
+
 	  /********************************
 	   *  DB INSTANCE CREATION - END  *
 	   ********************************/
@@ -2308,101 +2287,30 @@ int task_init(oph_operator_struct * handle)
 		id_datacube[0] = id_datacube_out;
 		id_datacube[1] = id_container_out;
 		id_datacube[2] = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number;
-		id_datacube[3] = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbmsxhost_number;
-		id_datacube[4] = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbxdbms_number;
-		id_datacube[5] = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number;
-		id_datacube[6] = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->tuplexfrag_number;
-		id_datacube[7] = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->total_frag_number;
-
-		flush = 0;
+		id_datacube[3] = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number;
+		id_datacube[4] = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->tuplexfrag_number;
+		id_datacube[5] = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->total_frag_number;
 	}
       __OPH_EXIT_1:
 	if (!((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->run)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	if (!handle->proc_rank && flush) {
-		while (id_container_out && ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->create_container) {
-			ophidiadb *oDB = &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->oDB;
-
-			//Remove also grid related to container dimensions
-			if (oph_odb_dim_delete_from_grid_table(oDB, id_container_out)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting grid related to container\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTFITS_GRID_DELETE_ERROR);
-				break;
-			}
-			//Delete container and related dimensions/ dimension instances
-			if (oph_odb_fs_delete_from_container_table(oDB, id_container_out)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting input container\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTFITS_CONTAINER_DELETE_ERROR);
-				break;
-			}
-
-			oph_odb_db_instance db_;
-			oph_odb_db_instance *db = &db_;
-			if (oph_dim_load_dim_dbinstance(db)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while loading dimension db paramters\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTFITS_DIM_LOAD);
-				oph_dim_unload_dim_dbinstance(db);
-				break;
-			}
-			if (oph_dim_connect_to_dbms(db->dbms_instance, 0)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while connecting to dimension dbms\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTFITS_DIM_CONNECT);
-				oph_dim_disconnect_from_dbms(db->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db);
-				break;
-			}
-			if (oph_dim_use_db_of_dbms(db->dbms_instance, db)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while opening dimension db\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTFITS_DIM_USE_DB);
-				oph_dim_disconnect_from_dbms(db->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db);
-				break;
-			}
-
-			char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
-			snprintf(index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, id_container_out);
-			snprintf(label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, id_container_out);
-
-			if (oph_dim_delete_table(db, index_dimension_table_name)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting dimension table\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTFITS_DIM_TABLE_DELETE_ERROR);
-				oph_dim_disconnect_from_dbms(db->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db);
-				break;
-			}
-			if (oph_dim_delete_table(db, label_dimension_table_name)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting dimension table\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTFITS_DIM_TABLE_DELETE_ERROR);
-				oph_dim_disconnect_from_dbms(db->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db);
-				break;
-			}
-
-			oph_dim_disconnect_from_dbms(db->dbms_instance);
-			oph_dim_unload_dim_dbinstance(db);
-
-			break;
-		}
-		oph_odb_cube_delete_from_datacube_table(&((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->oDB, id_datacube_out);
-	}
 	//Broadcast to all other processes the result
-	MPI_Bcast(id_datacube, 8, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(id_datacube, 6, MPI_INT, 0, MPI_COMM_WORLD);
 
 	//Check if sequential part has been completed
 	if (!id_datacube[0] || !id_datacube[1]) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube[1], OPH_LOG_OPH_IMPORTFITS_MASTER_TASK_INIT_FAILED_NO_CONTAINER, container_name);
+		((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->execute_error = 1;
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_output_datacube = id_datacube[0];
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container = id_datacube[1];
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number = id_datacube[2];
-	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbmsxhost_number = id_datacube[3];
-	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->dbxdbms_number = id_datacube[4];
-	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number = id_datacube[5];
-	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->tuplexfrag_number = id_datacube[6];
-	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->total_frag_number = id_datacube[7];
+	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number = id_datacube[3];
+	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->tuplexfrag_number = id_datacube[4];
+	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->total_frag_number = id_datacube[5];
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -2466,6 +2374,8 @@ int task_execute(oph_operator_struct * handle)
 
 	if (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragment_first_id < 0 && handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+
+	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->execute_error = 1;
 
 	int i, j, k;
 	int id_datacube_out = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_output_datacube;
@@ -2636,7 +2546,41 @@ int task_execute(oph_operator_struct * handle)
 	oph_odb_stge_free_dbms_list(&dbmss);
 	oph_odb_free_ophidiadb(&oDB_slave);
 
-	if (handle->proc_rank == 0) {
+	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->execute_error = 0;
+
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+}
+
+int task_reduce(oph_operator_struct * handle)
+{
+	if (!handle || !handle->operator_handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTFITS_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+}
+
+int task_destroy(oph_operator_struct * handle)
+{
+	if (!handle || !handle->operator_handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTFITS_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	if (!((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->run)
+		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+
+	short int proc_error = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->execute_error;
+	int id_datacube = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_output_datacube;
+	short int global_error = 0;
+
+	//Reduce results
+	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
+
+	if (handle->proc_rank == 0 && global_error == 0) {
 		//Master process print output datacube PID
 		char *tmp_uri = NULL;
 		if (oph_pid_get_uri(&tmp_uri)) {
@@ -2678,26 +2622,148 @@ int task_execute(oph_operator_struct * handle)
 		free(tmp_uri);
 	}
 
-	return OPH_ANALYTICS_OPERATOR_SUCCESS;
-}
+	if (global_error) {
+		//For error checking
+		char id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
+		memset(id_string, 0, sizeof(id_string));
 
-int task_reduce(oph_operator_struct * handle)
-{
-	if (!handle || !handle->operator_handle) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTFITS_NULL_OPERATOR_HANDLE);
-		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
-	}
+		if (handle->proc_rank == 0) {
+			ophidiadb *oDB = &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->oDB;
+			oph_odb_datacube cube;
+			oph_odb_cube_init_datacube(&cube);
 
-	return OPH_ANALYTICS_OPERATOR_SUCCESS;
-}
+			//retrieve input datacube
+			if (oph_odb_cube_retrieve_datacube(oDB, id_datacube, &cube)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTFITS_DATACUBE_READ_ERROR);
+			} else {
+				//Copy fragment id relative index set 
+				strncpy(id_string, cube.frag_relative_index_set, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
+			}
+			oph_odb_cube_free_datacube(&cube);
+		}
+		//Broadcast to all other processes the fragment relative index        
+		MPI_Bcast(id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
 
-int task_destroy(oph_operator_struct * handle)
-{
-	if (!handle || !handle->operator_handle) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTFITS_NULL_OPERATOR_HANDLE);
-		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+		//Check if sequential part has been completed
+		if (id_string[0] == 0) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTFITS_MASTER_TASK_INIT_FAILED);
+		} else {
+			if (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragment_first_id >= 0 || handle->proc_rank == 0) {
+				//Partition fragment relative index string
+				char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
+				char *new_ptr = new_id_string;
+				if (oph_ids_get_substring_from_string
+				    (id_string, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragment_first_id,
+				     ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragment_number, &new_ptr)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to split IDs fragment string\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_IMPORTFITS_ID_STRING_SPLIT_ERROR);
+				} else {
+					//Delete fragments
+					int start_position =
+					    (int) floor((double) ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragment_first_id /
+							((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number);
+					int row_number = (int)
+					    ceil((double)
+						 (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragment_first_id +
+						  ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragment_number) /
+						 ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number) - start_position;
+
+					if (oph_dproc_delete_data
+					    (id_datacube, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number, 1)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container,
+							OPH_LOG_OPH_DELETE_DB_READ_ERROR);
+					}
+				}
+			}
+		}
+
+		if (handle->output_code)
+			proc_error = (short int) handle->output_code;
+		else
+			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
+		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
+		handle->output_code = global_error;
+
+		if (handle->proc_rank == 0) {
+			int id_container = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container;
+			while (id_container && ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->create_container) {
+				ophidiadb *oDB = &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->oDB;
+
+				//Remove also grid related to container dimensions
+				if (oph_odb_dim_delete_from_grid_table(oDB, id_container)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting grid related to container\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_IMPORTFITS_GRID_DELETE_ERROR);
+					break;
+				}
+				//Delete container and related dimensions/ dimension instances
+				if (oph_odb_fs_delete_from_container_table(oDB, id_container)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting input container\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_IMPORTFITS_CONTAINER_DELETE_ERROR);
+					break;
+				}
+
+				oph_odb_db_instance db_;
+				oph_odb_db_instance *db = &db_;
+				if (oph_dim_load_dim_dbinstance(db)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while loading dimension db paramters\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_IMPORTFITS_DIM_LOAD);
+					oph_dim_unload_dim_dbinstance(db);
+					break;
+				}
+				if (oph_dim_connect_to_dbms(db->dbms_instance, 0)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while connecting to dimension dbms\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_IMPORTFITS_DIM_CONNECT);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					break;
+				}
+				if (oph_dim_use_db_of_dbms(db->dbms_instance, db)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while opening dimension db\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_IMPORTFITS_DIM_USE_DB);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					break;
+				}
+
+				char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
+				snprintf(index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, id_container);
+				snprintf(label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, id_container);
+
+				if (oph_dim_delete_table(db, index_dimension_table_name)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting dimension table\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_IMPORTFITS_DIM_TABLE_DELETE_ERROR);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					break;
+				}
+				if (oph_dim_delete_table(db, label_dimension_table_name)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting dimension table\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_IMPORTFITS_DIM_TABLE_DELETE_ERROR);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					break;
+				}
+
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+
+				break;
+			}
+		}
+		//Delete from OphidiaDB
+		if (handle->proc_rank == 0) {
+			oph_dproc_clean_odb(&((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->oDB, id_datacube,
+					    ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container);
+		}
+
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
+
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;

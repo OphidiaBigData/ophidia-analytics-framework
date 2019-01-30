@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,7 +43,6 @@
  * \param nc_file_path_orig Original value of nc_file_path
  * \param partition_input Name of the host partition used to store data
  * \param grid_name Name of the grid used to specify dimensions
- * \param fs_type Type of file system used
  * \param ioserver_type Type of I/O server used
  * \param id_output_datacube ID of the output datacube created
  * \param id_input_container ID of the output container used/created
@@ -53,8 +52,6 @@
  * \param fragment_number Number of fragments that a process has to manage
  * \param fragment_id_start_position First fragment in the relative index set to work on
  * \param host_number Number of host to work on
- * \param dbmsxhost_number Number of dbms to use fo creation
- * \param dbxdbms_number Number of databases to create for each dbms
  * \param fragxdb_number Number of fragments for each database (upper bound)
  * \param tuplexfrag_number Number of tuples for each fragment (upper bound)
  * \param array_length Number of elements to store into a row
@@ -77,6 +74,7 @@
  * \param description Free description to be associated with output cube
  * \param time_filter Flag used in case time filters are expressed as dates
  * \param id_job ID of the job related to the task
+ * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
 struct _OPH_IMPORTNC_operator_handle {
 	ophidiadb oDB;
@@ -88,7 +86,7 @@ struct _OPH_IMPORTNC_operator_handle {
 	char *nc_file_path_orig;
 	char *partition_input;
 	char *grid_name;
-	int fs_type;
+	char check_grid;
 	char *ioserver_type;
 	int id_output_datacube;
 	int id_input_container;
@@ -98,8 +96,6 @@ struct _OPH_IMPORTNC_operator_handle {
 	int fragment_number;
 	int fragment_first_id;
 	int host_number;
-	int dbmsxhost_number;
-	int dbxdbms_number;
 	int fragxdb_number;
 	int tuplexfrag_number;
 	int array_length;
@@ -124,6 +120,7 @@ struct _OPH_IMPORTNC_operator_handle {
 	char *description;
 	int time_filter;
 	int id_job;
+	short int execute_error;
 };
 typedef struct _OPH_IMPORTNC_operator_handle OPH_IMPORTNC_operator_handle;
 

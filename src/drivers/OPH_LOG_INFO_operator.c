@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -379,7 +379,7 @@ int task_execute(oph_operator_struct * handle)
 	ophidiadb *oDB = &((OPH_LOG_INFO_operator_handle *) handle->operator_handle)->oDB;
 
 	if (((OPH_LOG_INFO_operator_handle *) handle->operator_handle)->container_id != 0) {
-		if ((oph_odb_fs_retrive_container_folder_id(oDB, ((OPH_LOG_INFO_operator_handle *) handle->operator_handle)->container_id, 0, &folder_id))) {
+		if ((oph_odb_fs_retrive_container_folder_id(oDB, ((OPH_LOG_INFO_operator_handle *) handle->operator_handle)->container_id, &folder_id))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Container with this id doesn't exists\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LOG_INFO_CONTAINER_FOLDER_ERROR);
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;

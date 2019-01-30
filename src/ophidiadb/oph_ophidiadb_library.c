@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,6 +26,7 @@
 #include <string.h>
 #include <strings.h>
 
+#include <unistd.h>
 #include <ctype.h>
 #include <mysql.h>
 #include "debug.h"
@@ -137,6 +138,16 @@ int oph_odb_read_ophidiadb_config_file(ophidiadb * oDB)
 
 int oph_odb_init_ophidiadb(ophidiadb * oDB)
 {
+	/*if (mysql_library_init(0, NULL, NULL)) {
+	   pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
+	   return OPH_ODB_MYSQL_ERROR;
+	   } */
+
+	return oph_odb_init_ophidiadb_thread(oDB);
+}
+
+int oph_odb_init_ophidiadb_thread(ophidiadb * oDB)
+{
 	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
@@ -152,6 +163,13 @@ int oph_odb_init_ophidiadb(ophidiadb * oDB)
 }
 
 int oph_odb_free_ophidiadb(ophidiadb * oDB)
+{
+	//mysql_library_end();
+
+	return oph_odb_free_ophidiadb_thread(oDB);
+}
+
+int oph_odb_free_ophidiadb_thread(ophidiadb * oDB)
 {
 	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -178,6 +196,7 @@ int oph_odb_free_ophidiadb(ophidiadb * oDB)
 		oph_odb_disconnect_from_ophidiadb(oDB);
 		oDB->conn = NULL;
 	}
+
 	return OPH_ODB_SUCCESS;
 }
 
@@ -186,11 +205,6 @@ int oph_odb_connect_to_ophidiadb(ophidiadb * oDB)
 	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
-	}
-
-	if (mysql_library_init(0, NULL, NULL)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
-		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	oDB->conn = NULL;
@@ -245,6 +259,33 @@ int oph_odb_disconnect_from_ophidiadb(ophidiadb * oDB)
 		mysql_close(oDB->conn);
 		oDB->conn = NULL;
 	}
-	mysql_library_end();
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_query_ophidiadb(ophidiadb * oDB, char *query)
+{
+	if (!oDB || !query) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	short runs = 1;
+	int ret = 0;
+	do {
+		if ((ret = mysql_query(oDB->conn, query))) {
+			if (((ret == OPH_ODB_LOCK_ERROR) || (ret == OPH_ODB_LOCK_WAIT_ERROR)) && (runs < OPH_ODB_MAX_ATTEMPTS)) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+				sleep(OPH_ODB_WAITING_TIME);
+				runs++;
+			} else {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+				return OPH_ODB_MYSQL_ERROR;
+			}
+		} else
+			break;
+	} while (runs <= OPH_ODB_MAX_ATTEMPTS);	// Useless
+
+
 	return OPH_ODB_SUCCESS;
 }

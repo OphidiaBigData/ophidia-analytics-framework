@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2017 CMCC Foundation
+#    Copyright (C) 2012-2019 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 #
 
 AC_PREREQ([2.60])
-AC_INIT([ophidia-analytics-framework], [1.1.0], [ophidia-info@cmcc.it])
+AC_INIT([ophidia-analytics-framework], [1.5.0], [ophidia-info@cmcc.it])
 
 AC_CONFIG_AUX_DIR([config])
 
@@ -77,6 +77,16 @@ if test -n $HAVE_MYSQL; then
   AC_MSG_NOTICE([MySQL libraries available])
 else
 	AC_MSG_ERROR([MySQL libraries not found! Aborting configure!])
+fi
+
+AC_CHECK_LIB(pthread, pthread_create)
+if test "$ac_cv_lib_pthread_pthread_create" = yes ; then
+   CFLAGS="$CFLAGS -D_REENTRANT"
+else
+   AC_CHECK_LIB(pthreads, pthread_create)
+   if test "$ac_cv_lib_pthreads_pthread_create" = yes ; then
+      CFLAGS="$CFLAGS -D_REENTRANT"
+   fi
 fi
 
 optimization="no"
@@ -143,7 +153,7 @@ if (test "x$debug" = "x1") || (test "x$debug" = "x2"); then
  	AC_SUBST(OPT)
 else
 	debug="0"
-	OPT+=" -O2"
+	OPT+=" -O3"
 	AC_SUBST(OPT)
 fi
 AM_CONDITIONAL(DEBUG_1, test "x$debug" = "x1")
@@ -341,6 +351,37 @@ if test "x${cfitsio}" = "xyes"; then
         AC_SUBST(LIBCFITSIO_LIB)
 fi
 
+#Check if curl is installed
+curl="yes"
+AC_ARG_ENABLE(curl,
+        [  --disable-curl
+            Turn off cURL flags (Enabled by default)],
+        [curl="no"
+            AC_MSG_NOTICE("cURL support disabled. Some operators will not be installed!")],
+        [curl="yes"]
+        )
+AM_CONDITIONAL([HAVE_CURL], [test "x$curl" = "xyes"])
+
+if test "x${curl}" = "xyes"; then
+
+	PKG_CHECK_MODULES(CURL, libcurl >= 7.19)
+	AC_ARG_WITH(libcurl_header_path,
+		   [  --with-libcurl-header-path=PATH 		Location of libcurl includes directory],
+		   [ libcurl_header_path="$withval" ],
+		   [ libcurl_header_path="$CURL_CFLAGS"]
+		  )
+	AC_ARG_WITH(libcurl_lib_path,
+		   [  --with-libcurl-lib-path=PATH 		Location of libcurl.a],
+		   [ libcurl_lib_path="$withval" ],
+		   [ libcurl_lib_path="$CURL_LIBS"]
+		  )
+
+	LIBCURL_INCLUDE="$libcurl_header_path"
+	AC_SUBST(LIBCURL_INCLUDE)
+	LIBCURL_LIB="$libcurl_lib_path"
+	AC_SUBST(LIBCURL_LIB)
+fi
+
 #Enable stand-alone mode
 standalone_mode="no"
 AC_ARG_ENABLE(standalone_mode,
@@ -519,7 +560,7 @@ case "${host}" in
                                     if (test "x$debug" = "x1") || (test "x$debug" = "x2"); then
 										OPT+=" -g3 -Wall -Wextra -O0"
 									else
-										OPT+=" -O2"
+										OPT+=" -O3"
 									fi
 			            if test "x$optimization" = "xyes" ; then
 			                 CFLAGS="-O3 -finline-functions -funswitch-loops -fgcse-after-reload -ftree-loop-linear -ftree-loop-im -ftree-loop-ivcanon -fivopts -ftree-vectorize -ftracer -fgcse-sm -fgcse-las -fgcse-after-reload -funroll-loops -freorder-blocks-and-partition -fweb"

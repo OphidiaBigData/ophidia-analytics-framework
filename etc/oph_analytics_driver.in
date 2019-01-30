@@ -37,6 +37,9 @@ LIB	@MYSQL_LDFLAGS@
 [OPH_RANDCUBE]
 @DRIVER_PATH@/liboph_randcubeoperator.so
 LIB	@MYSQL_LDFLAGS@
+[OPH_RANDCUBE2]
+@DRIVER_PATH@/liboph_randcube2operator.so
+LIB	@MYSQL_LDFLAGS@
 [OPH_DELETE]
 @DRIVER_PATH@/liboph_deleteoperator.so
 LIB	@MYSQL_LDFLAGS@
@@ -45,6 +48,9 @@ LIB	@MYSQL_LDFLAGS@
 LIB	@MYSQL_LDFLAGS@
 [OPH_UNPUBLISH]
 @DRIVER_PATH@/liboph_unpublishoperator.so
+LIB	@MYSQL_LDFLAGS@
+[OPH_CONTAINERSCHEMA]
+@DRIVER_PATH@/liboph_containerschemaoperator.so
 LIB	@MYSQL_LDFLAGS@
 [OPH_CUBEELEMENTS]
 @DRIVER_PATH@/liboph_cubeelementsoperator.so
@@ -75,6 +81,15 @@ LIB	@MYSQL_LDFLAGS@
 LIB	@MYSQL_LDFLAGS@
 [OPH_IMPORTNC]
 @DRIVER_PATH@/liboph_importncoperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_IMPORTNC2]
+@DRIVER_PATH@/liboph_importnc2operator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_CONCATNC]
+@DRIVER_PATH@/liboph_concatncoperator.so
+LIB     @MYSQL_LDFLAGS@
+[OPH_CONCATNC2]
+@DRIVER_PATH@/liboph_concatnc2operator.so
 LIB     @MYSQL_LDFLAGS@
 [OPH_EXPORTNC]
 @DRIVER_PATH@/liboph_exportncoperator.so
@@ -138,4 +153,7 @@ LIB @MYSQL_LDFLAGS@
 LIB @MYSQL_LDFLAGS@
 [OPH_SCRIPT]
 @DRIVER_PATH@/liboph_scriptoperator.so
+LIB @MYSQL_LDFLAGS@
+[OPH_B2DROP]
+@DRIVER_PATH@/liboph_b2dropoperator.so
 LIB @MYSQL_LDFLAGS@

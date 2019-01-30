@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@
 #include "oph_pid_library.h"
 #include "oph_json_library.h"
 #include "oph_datacube_library.h"
+#include "oph_driver_procedure_library.h"
 
 #include "debug.h"
 
@@ -79,6 +80,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_MERGE_operator_handle *) handle->operator_handle)->sessionid = NULL;
 	((OPH_MERGE_operator_handle *) handle->operator_handle)->id_user = 0;
 	((OPH_MERGE_operator_handle *) handle->operator_handle)->description = NULL;
+	((OPH_MERGE_operator_handle *) handle->operator_handle)->execute_error = 0;
 
 	char *datacube_in;
 	char *value;
@@ -166,8 +168,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_MERGE_DATACUBE_AVAILABILITY_ERROR, datacube_in);
 			id_datacube_in[0] = 0;
 			id_datacube_in[1] = 0;
-		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], 1, &folder_id))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
+		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], &folder_id))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_MERGE_DATACUBE_FOLDER_ERROR, datacube_in);
 			id_datacube_in[0] = 0;
 			id_datacube_in[1] = 0;
@@ -197,8 +199,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
 			if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
-				if (oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, value, 0, &id_datacube_in[2])) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified container or it is hidden\n");
+				if (oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, value, &id_datacube_in[2])) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified container\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_GENERIC_DATACUBE_FOLDER_ERROR, value);
 					id_datacube_in[0] = 0;
 					id_datacube_in[1] = 0;
@@ -340,8 +342,6 @@ int task_init(oph_operator_struct * handle)
 
 			//Save old fragmentation params
 			int temp_fragxdb = cube.fragmentxdb;
-			int temp_dbxdbms = cube.dbxdbms;
-			int temp_dbmsxhost = cube.dbmsxhost;
 			int temp_hostxcube = cube.hostxdatacube;
 			int *tmp_db_id = NULL;
 
@@ -350,8 +350,6 @@ int task_init(oph_operator_struct * handle)
 				int db_id = 0;
 				//All fragmentation params are set to one
 				cube.fragmentxdb = 1;
-				cube.dbxdbms = 1;
-				cube.dbmsxhost = 1;
 				cube.hostxdatacube = 1;
 
 				//New fragment will be stored in the first db available
@@ -373,14 +371,13 @@ int task_init(oph_operator_struct * handle)
 				cube.db_number = 1;
 
 			}
-			//If block merge is performed (This section checks the merging number to avoid non-homogeneous fragmentaion, i.e. dbmsxhost and dbxdbms must be the exact values)
+			//If block merge is performed (This section checks the merging number to avoid non-homogeneous fragmentaion)
 			else {
 				//Compute maximum values for fragmentation params
 				cube.fragmentxdb = ceil((double) temp_fragxdb / ((OPH_MERGE_operator_handle *) handle->operator_handle)->merge_number);
 				//malloc space for new set of db used to partition datacube
-				int db_number = temp_dbxdbms * temp_dbmsxhost * temp_hostxcube;
 				int *new_id_db = NULL;
-				if (!(new_id_db = (int *) malloc(db_number * sizeof(int)))) {
+				if (!(new_id_db = (int *) malloc(temp_hostxcube * sizeof(int)))) {
 					oph_odb_cube_free_datacube(&cube);
 					oph_odb_stge_free_fragment_list(&frags);
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -390,7 +387,7 @@ int task_init(oph_operator_struct * handle)
 				}
 				//malloc space for counters of fragment for each db
 				int *out_fragxdb;
-				if (!(out_fragxdb = (int *) malloc(db_number * sizeof(int)))) {
+				if (!(out_fragxdb = (int *) malloc(temp_hostxcube * sizeof(int)))) {
 					oph_odb_cube_free_datacube(&cube);
 					oph_odb_stge_free_fragment_list(&frags);
 					free(new_id_db);
@@ -399,10 +396,10 @@ int task_init(oph_operator_struct * handle)
 						"output fragxdb counter");
 					goto __OPH_EXIT_1;
 				}
-				memset(out_fragxdb, 0, db_number * sizeof(int));
+				memset(out_fragxdb, 0, temp_hostxcube * sizeof(int));
 				//malloc space for counters of db for each dbms
 				int *out_dbxdbms;
-				if (!(out_dbxdbms = (int *) malloc(temp_dbmsxhost * temp_hostxcube * sizeof(int)))) {
+				if (!(out_dbxdbms = (int *) malloc(temp_hostxcube * sizeof(int)))) {
 					oph_odb_cube_free_datacube(&cube);
 					oph_odb_stge_free_fragment_list(&frags);
 					free(new_id_db);
@@ -412,7 +409,7 @@ int task_init(oph_operator_struct * handle)
 						"output dbxdbms counter");
 					goto __OPH_EXIT_1;
 				}
-				memset(out_dbxdbms, 0, temp_dbmsxhost * temp_hostxcube * sizeof(int));
+				memset(out_dbxdbms, 0, temp_hostxcube * sizeof(int));
 				//malloc space for counters of dbms for each host
 				int *out_dbmsxhost;
 				if (!(out_dbmsxhost = (int *) malloc(temp_hostxcube * sizeof(int)))) {
@@ -434,10 +431,10 @@ int task_init(oph_operator_struct * handle)
 				int frag_counter = 0;
 
 				//count number of merged fragment per db        
-				for (i = 0; i < db_number; i++) {
+				for (i = 0; i < temp_hostxcube; i++) {
 					new_frag_counter = 0;
 					j = abs(i * temp_fragxdb - frag_counter);
-					if (i == db_number - 1)
+					if (i == temp_hostxcube - 1)
 						temp_fragxdb = abs(frags.size - frag_counter);
 					for (; j < temp_fragxdb; j += frag_to_merge) {
 						new_frag_counter++;
@@ -446,15 +443,15 @@ int task_init(oph_operator_struct * handle)
 					frag_counter += new_frag_counter * frag_to_merge;
 				}
 				//count number of dbs for dbms
-				for (i = 0; i < db_number; i++) {
+				for (i = 0; i < temp_hostxcube; i++) {
 					if (out_fragxdb[i]) {
-						out_dbxdbms[(int) i / temp_dbxdbms]++;
+						out_dbxdbms[(int) i]++;
 					}
 				}
 				//count number of dbmss for host
-				for (i = 0; i < temp_dbmsxhost * temp_hostxcube; i++) {
+				for (i = 0; i < temp_hostxcube; i++) {
 					if (out_dbxdbms[i]) {
-						out_dbmsxhost[(int) i / temp_dbmsxhost]++;
+						out_dbmsxhost[(int) i]++;
 					}
 				}
 
@@ -474,18 +471,15 @@ int task_init(oph_operator_struct * handle)
 							wrong_partition_flag = 1;
 							break;
 						}
-						//Check into each dbms of this host
-						for (j = 0; j < temp_dbmsxhost; j++) {
-							//Check only non-empty dbms
-							if (out_dbxdbms[j]) {
-								//If number of db x dbms is 0 set as first value
-								if (!num_dbxdbms)
-									num_dbxdbms = out_dbxdbms[j];
-								//If this dbms doesn't match number of db break
-								if (num_dbxdbms != out_dbxdbms[j]) {
-									wrong_partition_flag = 1;
-									break;
-								}
+						//Check only non-empty dbms
+						if (out_dbxdbms[i]) {
+							//If number of db x dbms is 0 set as first value
+							if (!num_dbxdbms)
+								num_dbxdbms = out_dbxdbms[i];
+							//If this dbms doesn't match number of db break
+							if (num_dbxdbms != out_dbxdbms[i]) {
+								wrong_partition_flag = 1;
+								break;
 							}
 						}
 						num_hostxcube++;
@@ -506,13 +500,11 @@ int task_init(oph_operator_struct * handle)
 					goto __OPH_EXIT_1;
 				}
 				//Use computed values
-				cube.dbxdbms = num_dbxdbms;
-				cube.dbmsxhost = num_dbmsxhost;
 				cube.hostxdatacube = num_hostxcube;
 
 				//Set new partitioned set
 				j = 0;
-				for (i = 0; i < db_number; i++) {
+				for (i = 0; i < temp_hostxcube; i++) {
 					if (out_fragxdb[i]) {
 						new_id_db[j] = (cube.id_db)[i];
 						j++;
@@ -836,6 +828,7 @@ int task_init(oph_operator_struct * handle)
 	if (id_string[0][0] == 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_MASTER_TASK_INIT_FAILED);
+		((OPH_MERGE_operator_handle *) handle->operator_handle)->execute_error = 1;
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -843,12 +836,14 @@ int task_init(oph_operator_struct * handle)
 		if (!(((OPH_MERGE_operator_handle *) handle->operator_handle)->input_fragment_ids = (char *) strndup(id_string[0], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_MEMORY_ERROR_INPUT, "input fragment ids");
+			((OPH_MERGE_operator_handle *) handle->operator_handle)->execute_error = 1;
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 		if (!(((OPH_MERGE_operator_handle *) handle->operator_handle)->output_fragment_ids = (char *) strndup(id_string[1], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_MEMORY_ERROR_INPUT,
 				"output fragment ids");
+			((OPH_MERGE_operator_handle *) handle->operator_handle)->execute_error = 1;
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 		((OPH_MERGE_operator_handle *) handle->operator_handle)->id_output_datacube = (int) strtol(id_string[2], NULL, 10);
@@ -859,6 +854,7 @@ int task_init(oph_operator_struct * handle)
 			    (((OPH_MERGE_operator_handle *) handle->operator_handle)->input_fragment_ids, &((OPH_MERGE_operator_handle *) handle->operator_handle)->merge_number)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get total number of IDs\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_RETREIVE_IDS_ERROR);
+				((OPH_MERGE_operator_handle *) handle->operator_handle)->execute_error = 1;
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
 		}
@@ -876,6 +872,8 @@ int task_distribute(oph_operator_struct * handle)
 
 	int out_id_number, in_id_number;
 	char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
+
+	((OPH_MERGE_operator_handle *) handle->operator_handle)->execute_error = 1;
 
 //FIRST DISTRIBUTE OUTPUT FRAGMENTS
 	//Get total number of fragment IDs
@@ -915,9 +913,10 @@ int task_distribute(oph_operator_struct * handle)
 	}
 
 	//If the process is idle then stop
-	if (((OPH_MERGE_operator_handle *) handle->operator_handle)->output_fragment_id_start_position < 0 && handle->proc_rank != 0)
+	if (((OPH_MERGE_operator_handle *) handle->operator_handle)->output_fragment_id_start_position < 0 && handle->proc_rank != 0) {
+		((OPH_MERGE_operator_handle *) handle->operator_handle)->execute_error = 0;
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
-
+	}
 	//Partition fragment relative index string
 	char *new_ptr = new_id_string;
 	if (oph_ids_get_substring_from_string
@@ -1009,9 +1008,10 @@ int task_distribute(oph_operator_struct * handle)
 			((OPH_MERGE_operator_handle *) handle->operator_handle)->input_fragment_id_start_position = -1;
 	}
 
-	if (((OPH_MERGE_operator_handle *) handle->operator_handle)->input_fragment_id_start_position < 0 && handle->proc_rank != 0)
+	if (((OPH_MERGE_operator_handle *) handle->operator_handle)->input_fragment_id_start_position < 0 && handle->proc_rank != 0) {
+		((OPH_MERGE_operator_handle *) handle->operator_handle)->execute_error = 0;
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
-
+	}
 	//Partition fragment relative index string
 	memset(new_id_string, 0, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
 	new_ptr = new_id_string;
@@ -1030,6 +1030,7 @@ int task_distribute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
+	((OPH_MERGE_operator_handle *) handle->operator_handle)->execute_error = 0;
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -1045,6 +1046,8 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 	if (((OPH_MERGE_operator_handle *) handle->operator_handle)->input_fragment_id_start_position < 0 && handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+
+	((OPH_MERGE_operator_handle *) handle->operator_handle)->execute_error = 1;
 
 	int i, j, k, l;
 
@@ -1232,7 +1235,7 @@ int task_execute(oph_operator_struct * handle)
 					strncpy(dbms_out.pwd, dbmss_in.value[i].pwd, OPH_ODB_STGE_PWD_SIZE);
 					dbms_out.pwd[OPH_ODB_STGE_PWD_SIZE] = 0;
 					dbms_out.port = dbmss_in.value[i].port;
-					dbms_out.fs_type = dbmss_in.value[i].fs_type;
+					//dbms_out.fs_type = dbmss_in.value[i].fs_type;
 
 					//Copy dbs_in.value[j] in db_out
 					strncpy(dbms_out.hostname, dbmss_in.value[i].hostname, OPH_ODB_STGE_HOST_NAME_SIZE);
@@ -1458,7 +1461,39 @@ int task_execute(oph_operator_struct * handle)
 	oph_odb_stge_free_dbms_list(&dbmss_in);
 	free(tot_rows);
 
-	if (handle->proc_rank == 0) {
+	((OPH_MERGE_operator_handle *) handle->operator_handle)->execute_error = 0;
+
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+}
+
+int task_reduce(oph_operator_struct * handle)
+{
+	if (!handle || !handle->operator_handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+}
+
+int task_destroy(oph_operator_struct * handle)
+{
+	if (!handle || !handle->operator_handle) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+
+	short int proc_error = ((OPH_MERGE_operator_handle *) handle->operator_handle)->execute_error;
+	int id_datacube = ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_output_datacube;
+	short int global_error = 0;
+
+	//Reduce results
+	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
+
+	if (handle->proc_rank == 0 && global_error == 0) {
 		//Master process print output datacube PID
 		char *tmp_uri = NULL;
 		if (oph_pid_get_uri(&tmp_uri)) {
@@ -1500,26 +1535,32 @@ int task_execute(oph_operator_struct * handle)
 		free(tmp_uri);
 	}
 
-	return OPH_ANALYTICS_OPERATOR_SUCCESS;
-}
+	if (global_error) {
+		//Delete fragments
+		if (((OPH_MERGE_operator_handle *) handle->operator_handle)->output_fragment_id_start_position >= 0 || handle->proc_rank == 0) {
+			if ((oph_dproc_delete_data(id_datacube, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container,
+						   ((OPH_MERGE_operator_handle *) handle->operator_handle)->output_fragment_ids, 0, 0, 1))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
+			}
+		}
 
-int task_reduce(oph_operator_struct * handle)
-{
-	if (!handle || !handle->operator_handle) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_NULL_OPERATOR_HANDLE);
-		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
-	}
+		if (handle->output_code)
+			proc_error = (short int) handle->output_code;
+		else
+			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
+		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
+		handle->output_code = global_error;
 
-	return OPH_ANALYTICS_OPERATOR_SUCCESS;
-}
+		//Delete from OphidiaDB
+		if (handle->proc_rank == 0) {
+			oph_dproc_clean_odb(&((OPH_MERGE_operator_handle *) handle->operator_handle)->oDB, id_datacube, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container);
+		}
 
-int task_destroy(oph_operator_struct * handle)
-{
-	if (!handle || !handle->operator_handle) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_NULL_OPERATOR_HANDLE);
-		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
+
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;

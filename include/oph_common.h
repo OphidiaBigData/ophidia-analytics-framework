@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -44,18 +44,18 @@
 #define OPH_COMMON_BASE_CONCEPT_LEVEL 		'c'
 #define OPH_COMMON_ALL_CONCEPT_LEVEL 		'A'
 #define OPH_COMMON_DEFAULT_EMPTY_VALUE 		"-"
-#define OPH_COMMON_DEFAULT_GRID 		OPH_COMMON_DEFAULT_EMPTY_VALUE
+#define OPH_COMMON_DEFAULT_GRID 			OPH_COMMON_DEFAULT_EMPTY_VALUE
 #define OPH_COMMON_DEFAULT_HIERARCHY 		"oph_base"
 
 #define OPH_COMMON_CONCEPT_LEVEL_UNKNOWN	'-'
 
 #define OPH_COMMON_FULL_REDUCED_DIM		"ALL"
 #define OPH_COMMON_MAX_BYTE_LENGHT		4
-#define OPH_COMMON_MAX_SHORT_LENGHT 		8
+#define OPH_COMMON_MAX_SHORT_LENGHT 	8
 #define OPH_COMMON_MAX_INT_LENGHT 		16
 #define OPH_COMMON_MAX_LONG_LENGHT 		24
-#define OPH_COMMON_MAX_FLOAT_LENGHT 		32
-#define OPH_COMMON_MAX_DOUBLE_LENGHT		32
+#define OPH_COMMON_MAX_FLOAT_LENGHT 	48
+#define OPH_COMMON_MAX_DOUBLE_LENGHT	64
 #define OPH_COMMON_MAX_DATE_LENGHT		20
 
 #define OPH_COMMON_BYTE_TYPE 			"byte"
@@ -65,19 +65,19 @@
 #define OPH_COMMON_FLOAT_TYPE 			"float"
 #define OPH_COMMON_DOUBLE_TYPE 			"double"
 #define OPH_COMMON_STRING_TYPE 			"string"
-#define OPH_COMMON_BIT_TYPE			"bit"
+#define OPH_COMMON_BIT_TYPE				"bit"
 #define OPH_COMMON_TYPE_SIZE			8
 #define OPH_COMMON_DEFAULT_TYPE			OPH_COMMON_DOUBLE_TYPE
 
 #define OPH_COMMON_BYTE_FLAG			'c'
 #define OPH_COMMON_SHORT_FLAG			's'
-#define OPH_COMMON_INT_FLAG			'i'
+#define OPH_COMMON_INT_FLAG				'i'
 #define OPH_COMMON_LONG_FLAG			'l'
 #define OPH_COMMON_FLOAT_FLAG			'f'
 #define OPH_COMMON_DOUBLE_FLAG			'd'
-#define OPH_COMMON_BIT_FLAG			'b'
+#define OPH_COMMON_BIT_FLAG				'b'
 
-#define OPH_COMMON_MB_UNIT			"MB"
+#define OPH_COMMON_MB_UNIT				"MB"
 
 #define OPH_COMMON_NCL_EXTENSION		".ncl"
 #define OPH_COMMON_NC_EXTENSION			".nc"
@@ -103,7 +103,7 @@
 #define OPH_COMMON_NONE_FILTER			"none"
 #define OPH_COMMON_MAX_VALUE			"max"
 #define OPH_COMMON_YES_VALUE			"yes"
-#define OPH_COMMON_NO_VALUE			"no"
+#define OPH_COMMON_NO_VALUE				"no"
 #define OPH_COMMON_NULL_VALUE			"null"
 #define OPH_COMMON_AUTO_VALUE			"auto"
 #define OPH_COMMON_GLOBAL_VALUE			"global"
@@ -115,6 +115,9 @@
 #define OPH_COMMON_ADMIN_USERNAME		"admin"
 
 #define OPH_COMMON_TIME_HIERARCHY		"oph_time"
+
+#define OPH_COMMON_RAND_ALGO_TEMP		"temperatures"
+#define OPH_COMMON_RAND_ALGO_DEFAULT	"default"
 
 // User roles
 #define OPH_ROLE_NULL_STR			"-----"
@@ -132,12 +135,12 @@
 #define OPH_ROLE_OWNER				16
 // Dependening values
 #define OPH_ROLE_WRITER				(OPH_ROLE_READ+OPH_ROLE_WRITE)
-#define OPH_ROLE_ADMINISTRATOR			(OPH_ROLE_ADMIN+OPH_ROLE_EXECUTE+OPH_ROLE_WRITER)
+#define OPH_ROLE_ADMINISTRATOR		(OPH_ROLE_ADMIN+OPH_ROLE_EXECUTE+OPH_ROLE_WRITER)
 #define OPH_ROLE_ALL				(OPH_ROLE_OWNER+OPH_ROLE_ADMINISTRATOR)
 // Role bit positions
 #define OPH_ROLE_READ_POS			0
 #define OPH_ROLE_WRITE_POS			1
-#define OPH_ROLE_EXECUTE_POS			2
+#define OPH_ROLE_EXECUTE_POS		2
 #define OPH_ROLE_ADMIN_POS			3
 #define OPH_ROLE_OWNER_POS			4
 // Check for role presence

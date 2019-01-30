@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -204,8 +204,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PUBLISH_DATACUBE_AVAILABILITY_ERROR, datacube_name);
 			id_datacube_in[0] = 0;
 			id_datacube_in[1] = 0;
-		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], 1, &folder_id))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
+		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], &folder_id))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PUBLISH_DATACUBE_FOLDER_ERROR, datacube_name);
 			id_datacube_in[0] = 0;
 			id_datacube_in[1] = 0;
@@ -1329,7 +1329,7 @@ int task_execute(oph_operator_struct * handle)
 		if (((OPH_PUBLISH_operator_handle *) handle->operator_handle)->publish_metadata) {
 			MYSQL_RES *read_result = NULL;
 			MYSQL_ROW row;
-			if (oph_odb_meta_find_complete_metadata_list(&oDB_slave, datacube_id, NULL, 0, NULL, NULL, NULL, &read_result)) {
+			if (oph_odb_meta_find_complete_metadata_list(&oDB_slave, datacube_id, NULL, 0, NULL, NULL, NULL, NULL, &read_result)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to load metadata.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_READ_METADATA_ERROR);
 				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -1858,7 +1858,7 @@ int task_execute(oph_operator_struct * handle)
 		if (((OPH_PUBLISH_operator_handle *) handle->operator_handle)->publish_metadata) {
 			MYSQL_RES *read_result = NULL;
 			MYSQL_ROW row;
-			if (oph_odb_meta_find_complete_metadata_list(&oDB_slave, datacube_id, NULL, 0, NULL, NULL, NULL, &read_result)) {
+			if (oph_odb_meta_find_complete_metadata_list(&oDB_slave, datacube_id, NULL, 0, NULL, NULL, NULL, NULL, &read_result)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to load metadata.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_READ_METADATA_ERROR);
 				oph_odb_free_ophidiadb(&oDB_slave);

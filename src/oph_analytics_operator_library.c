@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,6 +46,7 @@ int oph_operator_struct_initializer(int size, int myrank, oph_operator_struct * 
 	handle->output_json = NULL;
 	handle->output_path = NULL;
 	handle->output_name = NULL;
+	handle->output_code = 0;
 	handle->proc_number = size;
 	handle->proc_rank = myrank;
 	handle->lib = NULL;

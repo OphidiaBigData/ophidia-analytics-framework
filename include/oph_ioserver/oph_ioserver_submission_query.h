@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -35,12 +35,16 @@
 
 #define OPH_IOSERVER_SQ_OPERATION "operation"
 #define OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT "create_frag_select"
+#define OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT_FILE "create_frag_select_file"
 #define OPH_IOSERVER_SQ_OP_CREATE_FRAG "create_frag"
 #define OPH_IOSERVER_SQ_OP_DROP_FRAG "drop_frag"
 #define OPH_IOSERVER_SQ_OP_CREATE_DB "create_database"
 #define OPH_IOSERVER_SQ_OP_DROP_DB "drop_database"
 #define OPH_IOSERVER_SQ_OP_INSERT "insert"
 #define OPH_IOSERVER_SQ_OP_MULTI_INSERT "multi_insert"
+#define OPH_IOSERVER_SQ_OP_FILE_IMPORT 	"file_import"
+#define OPH_IOSERVER_SQ_OP_INSERT_SELECT "insert_select"
+#define OPH_IOSERVER_SQ_OP_RAND_IMPORT "random_import"
 #define OPH_IOSERVER_SQ_OP_SELECT "select"
 #define OPH_IOSERVER_SQ_OP_FUNCTION "function"
 
@@ -66,6 +70,19 @@
 #define OPH_IOSERVER_SQ_ARG_VALUE "value"
 #define OPH_IOSERVER_SQ_ARG_FUNC "func_name"
 #define OPH_IOSERVER_SQ_ARG_ARG "arg"
+#define OPH_IOSERVER_SQ_ARG_SEQUENTIAL  "sequential_id"
+#define OPH_IOSERVER_SQ_ARG_PATH  	  	"src_path"
+#define OPH_IOSERVER_SQ_ARG_MEASURE  	  "measure"
+#define OPH_IOSERVER_SQ_ARG_COMPRESSED  "compressed"
+#define OPH_IOSERVER_SQ_ARG_NROW  	  	"nrows"
+#define OPH_IOSERVER_SQ_ARG_ROW_START   "row_start"
+#define OPH_IOSERVER_SQ_ARG_DIM_TYPE    "dim_type"
+#define OPH_IOSERVER_SQ_ARG_DIM_INDEX   "dim_index"
+#define OPH_IOSERVER_SQ_ARG_DIM_START   "dim_start"
+#define OPH_IOSERVER_SQ_ARG_DIM_END     "dim_end"
+#define OPH_IOSERVER_SQ_ARG_MEASURE_TYPE    "measure_type"
+#define OPH_IOSERVER_SQ_ARG_ARRAY_LEN 	"array_len"
+#define OPH_IOSERVER_SQ_ARG_ALGORITHM 	"algorithm"
 
 //*****************Query values***************//
 
@@ -79,5 +96,6 @@
 #define OPH_IOSERVER_SQ_KW_INFO_SYSTEM_TABLE "@info_system_table"
 #define OPH_IOSERVER_SQ_KW_FUNCTION_FIELDS "@function_fields"
 #define OPH_IOSERVER_SQ_KW_FUNCTION_TABLE "@function_table"
+#define OPH_IOSERVER_SQ_KW_FILE "@file"
 
 #endif				//__OPH_IOSERVER_SUBMISSION_QUERY_H

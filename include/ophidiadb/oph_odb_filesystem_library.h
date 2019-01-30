@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,6 +36,8 @@
 
 #define OPH_ODB_FS_CHARS_NUM 14
 
+#define OPH_ODB_FS_DESCRIPTION_SIZE 2048
+
 /**
  * \brief Structure that contains a container
  * \param id_folder id of the folder
@@ -49,6 +51,7 @@ typedef struct {
 	char container_name[OPH_ODB_FS_CONTAINER_SIZE + 1];
 	char operation[OPH_ODB_FS_CONTAINER_OPERATOR_SIZE + 1];
 	int id_vocabulary;
+	char description[OPH_ODB_FS_DESCRIPTION_SIZE + 1];
 } oph_odb_container;
 
 /**
@@ -82,14 +85,23 @@ int oph_odb_fs_get_session_home_id(char *sessionid, ophidiadb * oDB, int *folder
 int oph_odb_fs_check_folder_session(int folder_id, char *sessionid, ophidiadb * oDB, int *status);
 
 /**
+ * \brief Function used to check if a folder is within session tree
+ * \param container_id Id of the container to be checked
+ * \param sessionid SessionID of the session to be checked
+ * \param oDB Pointer to the OphidiaDB
+ * \param status If the folder is within session tree it will be set to 1, otherwise it will be 0.
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_fs_check_container_session(int container_id, char *sessionid, ophidiadb * oDB, int *status);
+
+/**
  * \brief Function used to retrieve the folder id of a container
  * \param oDB Pointer to the OphidiaDB
  * \param container_id Id of the container
- * \param non_hidden With 1 it restricts the research only on non-hidden container, with 0 there are no restrictions
  * \param folder_id Id of the folder related to the container
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_fs_retrive_container_folder_id(ophidiadb * oDB, int container_id, int non_hidden, int *folder_id);
+int oph_odb_fs_retrive_container_folder_id(ophidiadb * oDB, int container_id, int *folder_id);
 
 /**
  * \brief Function used to build backward path given the id of the leaf folder
@@ -120,16 +132,6 @@ int oph_odb_fs_str_last_token(const char *input, char **first_part, char **last_
 int oph_odb_fs_is_visible_container(int folder_id, char *name, ophidiadb * oDB, int *answer);
 
 /**
- * \brief Function used to check if name is a hidden container located in the folder related to folder_id
- * \param folder_id Id of the container parent folder
- * \param name Name of the container
- * \param oDB Pointer to the OphidiaDB
- * \param answer 1 if hidden, 0 otherwise
- * \return 0 if successfull, -1 otherwise
- */
-int oph_odb_fs_is_hidden_container(int folder_id, char *name, ophidiadb * oDB, int *answer);
-
-/**
  * \brief Function used to check if name is not used by any of the folders or visible containers located in the folder related to folder_id
  * \param folder_id Id of the parent folder
  * \param name Name to check
@@ -140,32 +142,13 @@ int oph_odb_fs_is_hidden_container(int folder_id, char *name, ophidiadb * oDB, i
 int oph_odb_fs_is_unique(int folderid, char *name, ophidiadb * oDB, int *answer);
 
 /**
- * \brief Function used to check if name is not used by any of the hidden containers located in the folder related to folder_id
- * \param folder_id Id of the parent folder
- * \param name Name to check
- * \param oDB Pointer to the OphidiaDB
- * \param answer 1 if unique, 0 otherwise
- * \return 0 if successfull, -1 otherwise
- */
-int oph_odb_fs_is_unique_hidden(int folderid, char *name, ophidiadb * oDB, int *answer);
-
-/**
- * \brief Function used to check if the folder indicated by folder_id is empty (no subfolders and visible/hidden containers)
+ * \brief Function used to check if the folder indicated by folder_id is empty (no subfolders and containers)
  * \param folder_id Id of the folder to check
  * \param oDB Pointer to the OphidiaDB
  * \param answer 1 if empty, 0 otherwise
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_fs_is_empty_folder(int folderid, ophidiadb * oDB, int *answer);
-
-/**
- * \brief Function used to set hidden status of a container
- * \param container_id Id of the container
- * \param hidden Hidden status of the container (1 = hidden, 0 = visible)
- * \param oDB Pointer to the OphidiaDB
- * \return 0 if successfull, -1 otherwise
- */
-int oph_odb_fs_set_container_hidden_status(int container_id, int hidden, ophidiadb * oDB);
 
 /**
  * \brief Function used to update name and folder of a container
@@ -182,18 +165,16 @@ int oph_odb_fs_update_container_path_name(ophidiadb * oDB, int in_container_id, 
  * \param oDB Pointer to the OphidiaDB
  * \param level 0 - only folders, 1 - folders and containers, 2 - folders, containers and datacubes
  * \param id_folder Id of the current folder
- * \param hidden 0 - show only visible containers, 1 - show visible and hidden containers
  * \param container_name Optional filter on the name of containers. It can be NULL.
  * \param information_list Output result set
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_fs_find_fs_objects(ophidiadb * oDB, int level, int id_folder, int hidden, char *container_name, MYSQL_RES ** information_list);
+int oph_odb_fs_find_fs_objects(ophidiadb * oDB, int level, int id_folder, char *container_name, MYSQL_RES ** information_list);
 
 /**
  * \brief Function used to retrieve filesystem objects and also additional info. Output can be filtered on different arguments
  * \param oDB Pointer to the OphidiaDB 
  * \param id_folder Id of the current folder
- * \param hidden 0 - show only visible containers, 1 - show visible and hidden containers
  * \param container_name Optional filter on the name of containers. It can be NULL.
  * \param measure_filter Optional filter on the name of measure. It can be NULL.
  * \param oper_level Optional filter on operation level. If negative it won't be considered
@@ -201,7 +182,7 @@ int oph_odb_fs_find_fs_objects(ophidiadb * oDB, int level, int id_folder, int hi
  * \param information_list Output result set
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_fs_find_fs_filtered_objects(ophidiadb * oDB, int id_folder, int hidden, char *container_name, char *measure_filter, int oper_level, char *src_filter, MYSQL_RES ** information_list);
+int oph_odb_fs_find_fs_filtered_objects(ophidiadb * oDB, int id_folder, char *container_name, char *measure_filter, int oper_level, char *src_filter, MYSQL_RES ** information_list);
 
 /**
  * \brief Function used to insert a new folder
@@ -261,11 +242,10 @@ int oph_odb_fs_insert_into_container_table(ophidiadb * oDB, oph_odb_container * 
  * \param Pointer to OphidiaDB
  * \param container_name name of the container
  * \param folder_id id of folder where the container should be
- * \param hidden Flag used to specify hidden/not hidden containers
  * \param id_container ID of the container
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_fs_retrieve_container_id_from_container_name(ophidiadb * oDB, int folder_id, char *container_name, int hidden, int *id_container);
+int oph_odb_fs_retrieve_container_id_from_container_name(ophidiadb * oDB, int folder_id, char *container_name, int *id_container);
 
 /**
  * \brief Function to check if a container doesn't exists
@@ -301,5 +281,27 @@ int oph_odb_fs_has_ascendant_equal_to_folder(ophidiadb * oDB, int folderid, int 
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_fs_add_suffix_to_container_name(ophidiadb * oDB, int containerid);
+
+/**
+ * \brief Function used to retrieve container info from container name
+ * \param Pointer to OphidiaDB
+ * \param container_name name of the container
+ * \param folder_id id of folder where the container should be
+ * \param id_container ID of the container
+ * \param description Pointer to an output string containing the description
+ * \param vocabulary Pointer to an output string containing the vocabulary
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_fs_retrieve_container_from_container_name(ophidiadb * oDB, int folder_id, char *container_name, int *id_container, char **description, char **vocabulary);
+
+/**
+ * \brief Function used to retrieve container info from container name
+ * \param Pointer to OphidiaDB
+ * \param container_id Id of the container
+ * \param container_name Pointer to container name
+ * \param folder_id Id of folder where the container should be
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_fs_retrieve_container_name_from_container(ophidiadb * oDB, int container_id, char **container_name, int *folder_id);
 
 #endif				/* __OPH_ODB_FS_H__ */

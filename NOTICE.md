@@ -2,7 +2,7 @@ Ophidia Analytics Framework General
 -----------------------------------
 
 Ophidia Analytics Framework
-Copyright (C) 2012-2017 CMCC Foundation
+Copyright (C) 2012-2019 CMCC Foundation
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -79,6 +79,10 @@ https://creativecommons.org/licenses/by-sa/3.0/#
 - FITS I/O C library</br>
 MIT-like License</br>
 https://heasarc.gsfc.nasa.gov/fitsio/c/f_user/node9.html
+
+- cURL</br>
+MIT License</br>
+http://curl.haxx.se/docs/copyright.html
 
 <b>Note</b>:</br>
 This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit.

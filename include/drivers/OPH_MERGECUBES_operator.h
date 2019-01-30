@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -82,6 +82,7 @@
  * \param description Free description to be associated with output cube
  * \param hold_values Flag used to enable the copy of dimension values
  * \param number Number of replies of the first cube to be considered
+ * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
 struct _OPH_MERGECUBES_operator_handle {
 	ophidiadb oDB;
@@ -106,6 +107,7 @@ struct _OPH_MERGECUBES_operator_handle {
 	char *description;
 	char hold_values;
 	int number;
+	short int execute_error;
 };
 typedef struct _OPH_MERGECUBES_operator_handle OPH_MERGECUBES_operator_handle;
 

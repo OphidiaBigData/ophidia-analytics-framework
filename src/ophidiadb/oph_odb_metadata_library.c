@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -71,45 +71,18 @@ int oph_odb_meta_insert_into_metadatainstance_manage_tables(ophidiadb * oDB, con
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter %d %d %d %d %d %d %d\n", oDB, id_datacube, id_metadatakey, id_metadatatype, id_user, value, last_insertd_id);
 		return OPH_ODB_NULL_PARAM;
 	}
+	if (!new_metadatakey) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Label for new metadata key not present.\n");
+		return OPH_ODB_NULL_PARAM;
+	}
 	*last_insertd_id = 0;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
 		return OPH_ODB_MYSQL_ERROR;
 	}
-
-	char insertQuery[MYSQL_BUFLEN];
-	int n;
-	int new_metadatakey_id = 0;
-
-	//Insert new metadatakey without vocabulary
-	if (id_metadatakey == -1) {
-		if (new_metadatakey) {
-			if (new_metadatakey_variable)
-				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_INSERT_METADATAKEY, new_metadatakey, new_metadatakey_variable);
-			else
-				n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_INSERT_METADATAKEY2, new_metadatakey);
-		} else {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Label for new metadata key not present.\n");
-			return OPH_ODB_NULL_PARAM;
-		}
-		if (n >= MYSQL_BUFLEN) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-			return OPH_ODB_STR_BUFF_OVERFLOW;
-		}
-
-		if (mysql_query(oDB->conn, insertQuery)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-			return OPH_ODB_MYSQL_ERROR;
-		}
-
-		if (!(new_metadatakey_id = mysql_insert_id(oDB->conn))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted metadatakey id\n");
-			return OPH_ODB_MYSQL_ERROR;
-		}
-	}
 	//escape value
-	n = strlen(value);
+	int n = strlen(value);
 	char *escaped_value = (char *) malloc(2 * n + 1);
 	if (!escaped_value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory for escaped value\n");
@@ -118,8 +91,20 @@ int oph_odb_meta_insert_into_metadatainstance_manage_tables(ophidiadb * oDB, con
 	mysql_real_escape_string(oDB->conn, escaped_value, value, n);
 
 	//Update metadatainstance table
-	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE, id_datacube, (new_metadatakey_id) ? new_metadatakey_id : id_metadatakey, id_metadatatype,
-		     escaped_value);
+	char insertQuery[MYSQL_BUFLEN];
+	if (id_metadatakey == -1) {
+		if (new_metadatakey_variable)
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1, id_datacube, id_metadatatype, escaped_value, new_metadatakey,
+				     new_metadatakey_variable);
+		else
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_metadatatype, escaped_value, new_metadatakey);
+	} else {
+		if (new_metadatakey_variable)
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE3, id_datacube, id_metadatakey, id_metadatatype, escaped_value, new_metadatakey,
+				     new_metadatakey_variable);
+		else
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE4, id_datacube, id_metadatakey, id_metadatatype, escaped_value, new_metadatakey);
+	}
 	free(escaped_value);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
@@ -271,7 +256,6 @@ int oph_odb_meta_check_metadatainstance_existance(ophidiadb * oDB, int metadatai
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-
 	if (mysql_query(oDB->conn, selectQuery)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
@@ -298,7 +282,7 @@ int oph_odb_meta_check_metadatainstance_existance(ophidiadb * oDB, int metadatai
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_retrieve_metadatakey_id(ophidiadb * oDB, char *key_label, char *key_variable, int id_container, int add, int *id_metadatakey)
+int oph_odb_meta_retrieve_metadatakey_id(ophidiadb * oDB, char *key_label, char *key_variable, int id_container, int *id_metadatakey)
 {
 	if (!oDB || !key_label || !id_container || !id_metadatakey) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -337,27 +321,6 @@ int oph_odb_meta_retrieve_metadatakey_id(ophidiadb * oDB, char *key_label, char 
 	if (!row_number) {
 		pmesg(LOG_DEBUG, __FILE__, __LINE__, "No row found by query\n");
 		mysql_free_result(res);
-
-		// Add anew metadatakey
-		if (add) {
-			if (key_variable)
-				n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_INSERT_METADATAKEY, key_label, key_variable);
-			else
-				n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_INSERT_METADATAKEY2, key_label);
-			if (n >= MYSQL_BUFLEN) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-				return OPH_ODB_STR_BUFF_OVERFLOW;
-			}
-			if (mysql_query(oDB->conn, query)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-				return OPH_ODB_MYSQL_ERROR;
-			}
-			if (!(*id_metadatakey = mysql_insert_id(oDB->conn))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted metadatakey id\n");
-				return OPH_ODB_MYSQL_ERROR;
-			}
-		}
-
 		return OPH_ODB_SUCCESS;
 	}
 	if (row_number > 1) {
@@ -427,9 +390,14 @@ int oph_odb_meta_retrieve_metadatatype_id(ophidiadb * oDB, char *metadatatype_na
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_datacube, int id_metadatakey, int id_metadatatype, char *metadata_value, int *last_insertd_id)
+int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_datacube, int id_metadatakey, int id_metadatatype, char *metadata_key, char *metadata_variable, char *metadata_value,
+						    int *last_insertd_id)
 {
-	if (!oDB || !id_datacube || !id_metadatakey || !id_metadatatype || !metadata_value || !last_insertd_id) {
+	if (!oDB || !id_datacube || !id_metadatatype || !metadata_value || !last_insertd_id) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	if (!id_metadatakey && !metadata_key) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
@@ -451,7 +419,18 @@ int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_data
 	}
 	mysql_real_escape_string(oDB->conn, escaped_value, metadata_value, n);
 
-	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE, id_datacube, id_metadatakey, id_metadatatype, escaped_value);
+	if (id_metadatakey) {
+		if (metadata_variable)
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE3, id_datacube, id_metadatakey, id_metadatatype, escaped_value, metadata_key,
+				     metadata_variable);
+		else
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE4, id_datacube, id_metadatakey, id_metadatatype, escaped_value, metadata_key);
+	} else {
+		if (metadata_variable)
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1, id_datacube, id_metadatatype, escaped_value, metadata_key, metadata_variable);
+		else
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_metadatatype, escaped_value, metadata_key);
+	}
 	free(escaped_value);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
@@ -500,8 +479,8 @@ int oph_odb_meta_insert_into_manage_table(ophidiadb * oDB, int id_metadatainstan
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, char *id_metadatainstance, char *metadata_type, char *metadata_value,
-					     MYSQL_RES ** metadata_list)
+int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, char *id_metadatainstance, char *metadata_variable,
+					     char *metadata_type, char *metadata_value, MYSQL_RES ** metadata_list)
 {
 	(*metadata_list) = NULL;
 
@@ -518,12 +497,13 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 	char query[MYSQL_BUFLEN];
 	int n = 0;
 
-	if (id_metadatainstance != NULL) {
-		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_READ_INSTANCES, id_datacube, id_metadatainstance, "%", "%", "");
-	} else {
+	if (id_metadatainstance)
+		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_READ_INSTANCES, id_datacube, id_metadatainstance, "", "%", "%", "%", "");
+	else {
 		if (!metadata_keys) {
 			//read all keys
-			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_READ_INSTANCES, id_datacube, "%", (metadata_type ? metadata_type : "%"), (metadata_value ? metadata_value : "%"), "");
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_READ_INSTANCES, id_datacube, "%", metadata_variable ? "" : "metadatainstance.variable IS NULL OR",
+				     metadata_variable ? metadata_variable : "%", metadata_type ? metadata_type : "%", metadata_value ? metadata_value : "%", "");
 		} else {
 			//read a group of keys
 			char key_filter[MYSQL_BUFLEN];
@@ -534,18 +514,14 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 			for (i = 0; i < metadata_keys_num; i++) {
 				ptr += m;
 				len -= m;
-				if (i == 0) {
-					m = snprintf(ptr, len, "metadatakey.label='%s'", metadata_keys[i]);
-				} else {
-					m = snprintf(ptr, len, " OR metadatakey.label='%s'", metadata_keys[i]);
-				}
+				m = snprintf(ptr, len, "%smetadatainstance.label='%s'", i ? " OR " : "", metadata_keys[i]);
 			}
 			ptr += m;
 			len -= m;
 			snprintf(ptr, len, ")");
 
-			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_READ_INSTANCES, id_datacube, "%", (metadata_type ? metadata_type : "%"), (metadata_value ? metadata_value : "%"),
-				     key_filter);
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_READ_INSTANCES, id_datacube, "%", metadata_variable ? "" : "metadatainstance.variable IS NULL OR",
+				     metadata_variable ? metadata_variable : "%", metadata_type ? metadata_type : "%", metadata_value ? metadata_value : "%", key_filter);
 		}
 	}
 
@@ -621,7 +597,8 @@ int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatai
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, int id_metadatainstance, int force)
+int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, int id_metadatainstance, char *metadata_variable,
+						    char *metadata_type, char *metadata_value, int force)
 {
 	if (!oDB || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -640,11 +617,7 @@ int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb * oDB, int id_data
 		for (i = 0; i < metadata_keys_num; i++) {
 			ptr += m;
 			len -= m;
-			if (i == 0) {
-				m = snprintf(ptr, len, "metadatakey.label='%s'", metadata_keys[i]);
-			} else {
-				m = snprintf(ptr, len, " OR metadatakey.label='%s'", metadata_keys[i]);
-			}
+			m = snprintf(ptr, len, "%smetadatainstance.label='%s'", i ? " OR " : "", metadata_keys[i]);
 		}
 		ptr += m;
 		len -= m;
@@ -681,7 +654,8 @@ int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb * oDB, int id_data
 	if (id_metadatainstance)
 		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_DELETE_INSTANCE, id_metadatainstance, id_datacube);
 	else
-		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_DELETE_INSTANCES, id_datacube, key_filter);
+		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_DELETE_INSTANCES, id_datacube, metadata_variable ? "" : "variable IS NULL OR",
+			     metadata_variable ? metadata_variable : "%", metadata_type ? metadata_type : "%", metadata_value ? metadata_value : "%", key_filter);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -726,7 +700,7 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	if (mysql_query(oDB->conn, insertQuery)) {
+	if (oph_odb_query_ophidiadb(oDB, insertQuery)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
@@ -839,7 +813,7 @@ int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, con
 		}
 	} else			// insert a new value for the metadata
 	{
-		int id_key, id_type = 0;
+		int id_type = 0;
 		MYSQL_RES *res;
 		MYSQL_ROW row;
 
@@ -850,22 +824,6 @@ int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, con
 			return OPH_ODB_STR_BUFF_OVERFLOW;
 		}
 		label++;
-		if (variable)
-			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_INSERT_METADATAKEY3, label, template, variable);
-		else
-			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_INSERT_METADATAKEY4, label, template);
-		if (n >= MYSQL_BUFLEN) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-			return OPH_ODB_STR_BUFF_OVERFLOW;
-		}
-		if (mysql_query(oDB->conn, query)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-			return OPH_ODB_MYSQL_ERROR;
-		}
-		if (!(id_key = mysql_insert_id(oDB->conn))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted metadatakey id\n");
-			return OPH_ODB_MYSQL_ERROR;
-		}
 
 		int n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_RETRIEVE_METADATATYPE_ID, "text");
 		if (n >= MYSQL_BUFLEN) {
@@ -891,7 +849,10 @@ int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, con
 			id_type = (int) strtol(row[0], NULL, 10);
 		mysql_free_result(res);
 
-		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE, id_datacube, id_key, id_type, value);
+		if (variable)
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1, id_datacube, id_type, value, label, variable);
+		else
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_type, value, label);
 		if (n >= MYSQL_BUFLEN) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 			return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -997,33 +958,6 @@ int oph_odb_meta_check_for_time_dimension(ophidiadb * oDB, int id_datacube, cons
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_delete_keys_of_cube(ophidiadb * oDB, int id_datacube)
-{
-	if (!oDB || !id_datacube) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return OPH_ODB_NULL_PARAM;
-	}
-
-	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
-		return OPH_ODB_MYSQL_ERROR;
-	}
-
-	char deleteQuery[MYSQL_BUFLEN];
-	int n = snprintf(deleteQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_DELETE_KEYS, id_datacube);
-	if (n >= MYSQL_BUFLEN) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_ODB_STR_BUFF_OVERFLOW;
-	}
-
-	if (mysql_query(oDB->conn, deleteQuery)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		return OPH_ODB_MYSQL_ERROR;
-	}
-
-	return OPH_ODB_SUCCESS;
-}
-
 int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const char *old_variable, const char *new_variable)
 {
 	if (!oDB || !id_datacube || !old_variable || !new_variable) {
@@ -1057,7 +991,7 @@ int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const cha
 		mysql_free_result(res);
 		return OPH_ODB_SUCCESS;
 	}
-	if (mysql_field_count(oDB->conn) != 2) {
+	if (mysql_field_count(oDB->conn) != 1) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
@@ -1069,14 +1003,8 @@ int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const cha
 		mysql_free_result(res);
 		return OPH_ODB_MEMORY_ERROR;
 	}
-	char **label = (char **) calloc(nrows, sizeof(char *));
-	if (!label) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory for metadata key labels\n");
-		mysql_free_result(res);
-		return OPH_ODB_MEMORY_ERROR;
-	}
 
-	int i = 0, j, ret = OPH_ODB_SUCCESS;
+	int i = 0, ret = OPH_ODB_SUCCESS;
 	MYSQL_ROW row;
 	while ((row = mysql_fetch_row(res))) {
 		if (!row[0] || !row[1]) {
@@ -1085,7 +1013,6 @@ int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const cha
 			break;
 		}
 		id_metadata_instance[i] = (int) strtol(row[0], NULL, 10);
-		label[i] = strdup(row[1]);
 		i++;
 	}
 
@@ -1093,49 +1020,22 @@ int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const cha
 
 	if (ret == OPH_ODB_SUCCESS) {
 
-		int id_key;
+		int j;
 		for (j = 0; j < nrows; ++j) {
 
-			// Insert new metadata key
-			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_INSERT_METADATAKEY, label[j], new_variable);
+			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_KEY_OF_INSTANCE, new_variable, id_metadata_instance[j]);
 			if (n >= MYSQL_BUFLEN) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 				ret = OPH_ODB_STR_BUFF_OVERFLOW;
-				break;
-			}
-			if (mysql_query(oDB->conn, selectQuery)) {
+			} else if (mysql_query(oDB->conn, selectQuery)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 				ret = OPH_ODB_MYSQL_ERROR;
-				break;
-			}
-			if (!(id_key = mysql_insert_id(oDB->conn))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted metadatakey id\n");
-				ret = OPH_ODB_MYSQL_ERROR;
-				break;
-			}
-			// Update foreign key of metadata instance
-			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_KEY_OF_INSTANCE, id_key, id_metadata_instance[j]);
-			if (n >= MYSQL_BUFLEN) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-				ret = OPH_ODB_STR_BUFF_OVERFLOW;
-				break;
-			}
-			if (mysql_query(oDB->conn, selectQuery)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-				ret = OPH_ODB_MYSQL_ERROR;
-				break;
 			}
 		}
 	}
 
 	if (id_metadata_instance)
 		free(id_metadata_instance);
-	if (label) {
-		for (j = 0; j < i; ++j)
-			if (label[j])
-				free(label[j]);
-		free(label);
-	}
 
 	return ret;
 }

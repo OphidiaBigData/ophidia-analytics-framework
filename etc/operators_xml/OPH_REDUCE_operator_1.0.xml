@@ -33,6 +33,7 @@ It performs a reduction operation on a datacube with respect to implicit dimensi
 - missingvalue : value to be considered as missing value; by default it is NAN (for float and double).
 - grid : optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
          or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
+- check_grid : optional flag to be enabled in case the values of grid have to be checked (valid only if the grid already exists).
 - container : name of the container to be used to store the output cube; by default it is the input container.
 - description : additional description to be associated with the output cube.
         
@@ -40,6 +41,7 @@ It performs a reduction operation on a datacube with respect to implicit dimensi
 - exec_mode : operator execution mode. Possible values are async (default) for
               asynchronous mode, sync for synchronous mode with json-compliant output.
 - ncores : number of parallel processes to be used (min. 1).
+- nthreads : number of parallel threads per process to be used (min. 1).
 - sessionid : session identifier used server-side to manage sessions and jobs.
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
@@ -59,6 +61,7 @@ SUBMISSION STRING: &quot;operator=oph_reduce;operation=max;group_size=10;cube=ht
     <args>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">nthreads</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
@@ -67,6 +70,7 @@ SUBMISSION STRING: &quot;operator=oph_reduce;operation=max;group_size=10;cube=ht
 		<argument type="real" mandatory="no" default="2" minvalue="0">order</argument>
 		<argument type="real" mandatory="no" default="NAN">missingvalue</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">check_grid</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|reduce">objkey_filter</argument>

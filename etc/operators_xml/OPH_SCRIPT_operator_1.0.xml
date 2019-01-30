@@ -14,6 +14,9 @@ The script can eventually process some environmental variables passed by the ope
 - OPH_SCRIPT_SESSION_CODE : is the &lt;session_code&gt;
 - OPH_SCRIPT_WORKFLOW_ID : is the workflow identifier
 - OPH_SCRIPT_MARKER_ID : is the marker identifier associated with the job
+- OPH_SCRIPT_SERVER_HOST : is the IP address or DNS name of the host where Ophidia Server is running
+- OPH_SCRIPT_SERVER_PORT : is the port number associated with Ophidia Server
+- OPH_SCRIPT_USER : is the submitter identifier
 
 [Parameters]
 - script : name of the script to be executed; by default no operation is performed. The script has to be registered at server side.
@@ -31,8 +34,10 @@ The script can eventually process some environmental variables passed by the ope
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
-                  script : show the full command that was launched.
-        
+                  script : show the output of the command or the list of registered scripts;
+                  script_url : show the URL where the command could save some data;
+                  script_returncode : show the return code of the command.
+
 [Examples]
 Execute the script &quot;./test.sh var1 var2&quot; without redirecting stdout and stderr:
 OPH_TERM: oph_script script=./test.sh;args=var1|var2;
@@ -52,6 +57,6 @@ SUBMISSION STRING: &quot;operator=oph_script;script=./test.sh;args=var1|var2;&qu
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-		<argument type="string" mandatory="no" default="all" values="all|none|script">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|script|script_url|script_returncode">objkey_filter</argument>
     </args>
 </operator>

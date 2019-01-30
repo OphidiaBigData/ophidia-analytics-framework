@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -59,6 +59,13 @@
 int oph_dc_setup_dbms(oph_ioserver_handler ** server, char *server_type);
 
 /**
+ * \brief Function to initialize I/O server in a thread
+ * \param server Address of pointer to I/O server structure
+ * \param server_type Type of I/O server to initialize
+ */
+int oph_dc_setup_dbms_thread(oph_ioserver_handler ** server, char *server_type);
+
+/**
  * \brief Function to finalize I/O server
  * \param server Pointer to I/O server structure
  */
@@ -80,7 +87,7 @@ int oph_dc_connect_to_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance 
  * \param m Pointer to db_instance to switch on (may be null)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dc_use_db_of_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * m1, oph_odb_db_instance * m2);
+int oph_dc_use_db_of_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, oph_odb_db_instance * db);
 
 /**
  * \brief Function to check connect status to the DB. WARNING: Do not call this function (or any other) before calling connect_to_dbms
@@ -90,7 +97,7 @@ int oph_dc_use_db_of_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance *
  * \param flag Value for client_flag of connection in case of reconnection, it may be 0 if not used
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dc_check_connection_to_db(oph_ioserver_handler * server, oph_odb_dbms_instance * m1, oph_odb_db_instance * m2, unsigned long flag);
+int oph_dc_check_connection_to_db(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, oph_odb_db_instance * db, unsigned long flag);
 
 /** 
  * \brief Function to disconnect from dbms_instance
@@ -98,7 +105,7 @@ int oph_dc_check_connection_to_db(oph_ioserver_handler * server, oph_odb_dbms_in
  * \param m Pointer to dbms_instance to disconnect from
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dc_disconnect_from_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * m);
+int oph_dc_disconnect_from_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms);
 
 /** 
  * \brief Function to create an empty phisical database
@@ -266,16 +273,30 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * server, unsigned lon
 				     const char *operation, const char *measure_type);
 
 /** 
- * \brief Function to populate a phisical table with random values [1;100)
+ * \brief Function to populate a phisical table with random values
  * \param server Pointer to I/O server structure
  * \param m Pointer to fragment to populate
  * \param tuple_number Number of tuple to insert
  * \param array_length Number of elements to insert in a single row
  * \param data_type Type of data to be inserted INT, FLOAT, DOUBLE (default DOUBLE)
  * \param compressed If the data to insert is compressed (1) or not (0)
+ * \param algorithm Type of algorithm used for random number generation
  * \return 0 if successfull, N otherwise
  */
-int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_odb_fragment * m, int tuple_number, int array_length, char *data_type, int compressed);
+int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_odb_fragment * m, unsigned long long tuple_number, int array_length, char *data_type, int compressed, char *algorithm);
+
+/** 
+ * \brief Function to run query to build a table with random values
+ * \param server Pointer to I/O server structure
+ * \param m Pointer to fragment to populate
+ * \param tuple_number Number of tuple to insert
+ * \param array_length Number of elements to insert in a single row
+ * \param data_type Type of data to be inserted INT, FLOAT, DOUBLE (default DOUBLE)
+ * \param compressed If the data to insert is compressed (1) or not (0)
+ * \param algorithm Type of algorithm used for random number generation
+ * \return 0 if successfull, N otherwise
+ */
+int oph_dc_populate_fragment_with_rand_data2(oph_ioserver_handler * server, oph_odb_fragment * m, unsigned long long tuple_number, int array_length, char *data_type, int compressed, char *algorithm);
 
 /** 
  * \brief Function to read a physical table with filtering parameters

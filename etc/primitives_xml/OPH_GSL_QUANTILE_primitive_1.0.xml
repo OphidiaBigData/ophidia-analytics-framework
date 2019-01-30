@@ -3,7 +3,7 @@
 <primitive name="oph_gsl_quantile" version="1.0">
     <info>
         <abstract>[Behaviour]
-Computes the quantile(s) specified as q1,q2,... on the elements of the measure array ordered in an ascending way.
+Computes the quantile(s) specified as q1, q2... on the elements of the measure array ordered in an ascending way.
 
 [Parameters]
 - input measure type : Ophidia typing. Supported types are:
@@ -25,7 +25,8 @@ Computes the quantile(s) specified as q1,q2,... on the elements of the measure a
 - q : one or more orders of one or more quantiles.
 - order safe flag :     
       -- with ORDER_SAFE_FLAG_SET (default) the input will be ordered,
-      -- with ORDER_SAFE_FLAG_UNSET the input is considered already ordered in ascending way.
+      -- with ORDER_SAFE_FLAG_UNSET the input is considered already ordered in ascending way,
+      -- with INDEX the indexes of the nearest values to quantiles are returned.
 
 [Return type]
 Binary-array.
@@ -46,6 +47,6 @@ oph_gsl_quantile(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,0.10,0.60
 		<argument type="binary-array" mandatory="yes">measure</argument>
 		<argument type="double" mandatory="yes">q1</argument>
 		<multi-argument type="double" mandatory="no" mintimes="0">q</multi-argument>
-		<argument type="string" mandatory="no" default="'ORDER_SAFE_FLAG_SET'" values="'ORDER_SAFE_FLAG_SET'|'ORDER_SAFE_FLAG_UNSET'">order safe flag</argument>
+		<argument type="string" mandatory="no" default="'ORDER_SAFE_FLAG_SET'" values="'ORDER_SAFE_FLAG_SET'|'ORDER_SAFE_FLAG_UNSET'|'INDEX'">order safe flag</argument>
     </args>
 </primitive>

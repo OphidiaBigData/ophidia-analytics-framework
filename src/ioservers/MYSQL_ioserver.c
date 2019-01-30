@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -921,9 +921,60 @@ int oph_query_parser(oph_ioserver_handler * handle, const char *query_string, ch
 			hashtbl_destroy(hashtbl);
 			return MYSQL_IO_ERROR;
 		}
-	} else if (strncasecmp(query_oper, OPH_IOSERVER_SQ_OP_SELECT, STRLEN_MAX(query_oper, OPH_IOSERVER_SQ_OP_SELECT)) == 0) {
+	} else if (strncasecmp(query_oper, OPH_IOSERVER_SQ_OP_INSERT_SELECT, STRLEN_MAX(query_oper, OPH_IOSERVER_SQ_OP_INSERT_SELECT)) == 0) {
 		//Compose query by selecting fields in the right order 
 
+		//First part of query + new table name
+		if (oph_first_block(handle, hashtbl, MYSQL_IO_QUERY_INSERT_SELECT, OPH_IOSERVER_SQ_ARG_FRAG, &n, &query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "FRAG NAME");
+			logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "FRAG NAME");
+			hashtbl_destroy(hashtbl);
+			return MYSQL_IO_ERROR;
+		}
+		//Select fields + select aliases
+		if (oph_select_fields_block(handle, hashtbl, &n, &query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "SELECT FIELDS");
+			logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "SELECT FIELDS");
+			hashtbl_destroy(hashtbl);
+			return MYSQL_IO_ERROR;
+		}
+		//From table section
+		if (oph_from_block(handle, hashtbl, &n, &query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "FROM");
+			logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "FROM");
+			hashtbl_destroy(hashtbl);
+			return MYSQL_IO_ERROR;
+		}
+		//Left - condition - right part of where clause
+		if (oph_where_block(handle, hashtbl, &n, &query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "WHERE");
+			logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "WHERE");
+			hashtbl_destroy(hashtbl);
+			return MYSQL_IO_ERROR;
+		}
+		//Group by
+		if (oph_group_block(handle, hashtbl, &n, &query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "GROUP");
+			logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "GROUP");
+			hashtbl_destroy(hashtbl);
+			return MYSQL_IO_ERROR;
+		}
+		//Order by section
+		if (oph_order_block(handle, hashtbl, &n, &query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "ORDER");
+			logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "ORDER");
+			hashtbl_destroy(hashtbl);
+			return MYSQL_IO_ERROR;
+		}
+		//Limit clause
+		if (oph_limit_block(handle, hashtbl, &n, &query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "LIMIT");
+			logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_ARG_EVAL_ERROR, "LIMIT");
+			hashtbl_destroy(hashtbl);
+			return MYSQL_IO_ERROR;
+		}
+	} else if (strncasecmp(query_oper, OPH_IOSERVER_SQ_OP_SELECT, STRLEN_MAX(query_oper, OPH_IOSERVER_SQ_OP_SELECT)) == 0) {
+		//Compose query by selecting fields in the right order 
 		//First part of query
 		n += snprintf(query + n, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_SELECT);
 
@@ -1177,10 +1228,15 @@ int oph_to_mysql_type(oph_ioserver_handler * handle, oph_ioserver_arg_types oph_
 //Initialize storage server plugin
 int _mysql_setup(oph_ioserver_handler * handle)
 {
-	if (mysql_library_init(0, NULL, NULL)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_LIB_INIT_ERROR);
-		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_LIB_INIT_ERROR);
-		return MYSQL_IO_ERROR;
+	if (!handle)
+		pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
+
+	if (handle->is_thread == 0) {
+		if (mysql_library_init(0, NULL, NULL)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_LIB_INIT_ERROR);
+			logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_LIB_INIT_ERROR);
+			return MYSQL_IO_ERROR;
+		}
 	}
 
 	return MYSQL_IO_SUCCESS;
@@ -1448,17 +1504,17 @@ int _mysql_free_query(oph_ioserver_handler * handle, oph_ioserver_query * query)
 
 
 //Close connection to storage server
-int _mysql_close(oph_ioserver_handler * handle, void *connection)
+int _mysql_close(oph_ioserver_handler * handle, void **connection)
 {
-	if (!connection) {
+	if (!(*connection)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
 		return MYSQL_IO_NULL_PARAM;
 	}
 
-	if (connection) {
-		mysql_close((MYSQL *) connection);
-		connection = NULL;
+	if (*connection) {
+		mysql_close((MYSQL *) (*connection));
+		*connection = NULL;
 	}
 
 	return MYSQL_IO_SUCCESS;
@@ -1469,7 +1525,10 @@ int _mysql_cleanup(oph_ioserver_handler * handle)
 {
 	if (!handle)
 		pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
-	mysql_library_end();
+
+	if (handle->is_thread == 0)
+		mysql_library_end();
+
 	return MYSQL_IO_SUCCESS;
 }
 

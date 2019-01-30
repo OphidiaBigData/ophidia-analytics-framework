@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,6 +31,7 @@
 //Defines for queries
 
 #define MYSQL_IO_QUERY_CREATE_FRAG_SELECT "CREATE TABLE %s (id_dim integer, measure longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1 AS SELECT"
+#define MYSQL_IO_QUERY_INSERT_SELECT 	  "INSERT INTO %s (id_dim, measure) SELECT"
 #define MYSQL_IO_QUERY_SELECT             "SELECT"
 #define MYSQL_IO_QUERY_INSERT             "INSERT INTO %s"
 #define MYSQL_IO_QUERY_CREATE_FRAG        "CREATE TABLE %s (id_dim integer, measure longblob) ENGINE=MyISAM DEFAULT CHARSET=latin1"
@@ -128,7 +129,7 @@ int _mysql_free_query(oph_ioserver_handler * handle, oph_ioserver_query * query)
  * \param connection    Pointer to server-specific connection structure
  * \return              0 if successfull, non-0 otherwise
  */
-int _mysql_close(oph_ioserver_handler * handle, void *connection);
+int _mysql_close(oph_ioserver_handler * handle, void **connection);
 
 /**
  * \brief               Function to finalize library of data store server and release all dynamic loading resources.

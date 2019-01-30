@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <mysql.h>
 #include "debug.h"
@@ -175,7 +176,7 @@ int oph_odb_stge_retrieve_dbmsinstance(ophidiadb * oDB, int id_dbms, oph_odb_dbm
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 
-	if (mysql_field_count(oDB->conn) != 7) {
+	if (mysql_field_count(oDB->conn) != 6) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
@@ -190,9 +191,8 @@ int oph_odb_stge_retrieve_dbmsinstance(ophidiadb * oDB, int id_dbms, oph_odb_dbm
 		memset(&(dbms->pwd), 0, OPH_ODB_STGE_PWD_SIZE + 1);
 		strncpy(dbms->pwd, row[3], OPH_ODB_STGE_PWD_SIZE);
 		dbms->port = (row[4] ? (int) strtol(row[4], NULL, 10) : 0);
-		dbms->fs_type = (row[5] ? (int) strtol(row[5], NULL, 10) : 0);
 		memset(&(dbms->io_server_type), 0, OPH_ODB_STGE_SERVER_NAME_SIZE + 1);
-		strncpy(dbms->io_server_type, row[6], OPH_ODB_STGE_SERVER_NAME_SIZE);
+		strncpy(dbms->io_server_type, row[5], OPH_ODB_STGE_SERVER_NAME_SIZE);
 	}
 	mysql_free_result(res);
 
@@ -863,9 +863,9 @@ int oph_odb_stge_fetch_fragment_connection_string_for_deletion(ophidiadb * oDB, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int *host_number, int *dbmsxhost_number)
+int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, int id_host_partition, int *host_number)
 {
-	if (!oDB || !host_number || !dbmsxhost_number || !host_partition || fs_type < 0 || fs_type > 2 || !ioserver_type) {
+	if (!oDB || !host_number || !id_host_partition || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
@@ -876,7 +876,7 @@ int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *i
 	}
 
 	char selectQuery[MYSQL_BUFLEN];
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_COUNT_HOST_DBMS, host_partition, fs_type, ioserver_type);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_COUNT_HOST_DBMS, id_host_partition, ioserver_type);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -896,7 +896,7 @@ int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *i
 		mysql_free_result(res);
 		return OPH_ODB_SUCCESS;
 	}
-	if (mysql_field_count(oDB->conn) != 2) {
+	if (mysql_field_count(oDB->conn) != 1) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
@@ -904,32 +904,19 @@ int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *i
 
 	if ((row = mysql_fetch_row(res))) {
 		*host_number = (int) strtol((row[0] ? row[0] : "0"), NULL, 10);
-		*dbmsxhost_number = (int) strtol((row[1] ? row[1] : "0"), NULL, 10);
 	}
 
 	mysql_free_result(res);
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, int *fs_type, char *ioserver_type, char **host_partition, int host_number, int dbmsxhost_number, int *exist)
+int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_type, int *id_host_partition, int host_number)
 {
-	if (!oDB || !host_number || !dbmsxhost_number || !host_partition || !exist || !fs_type || !ioserver_type) {
+	if (!oDB || !host_number || !id_host_partition || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
-
-	*exist = 0;
-
-	//Check if arguments are admissible
-	short int partition_default = (!strncmp(*host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(*host_partition))
-				       && !strncmp(*host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT)) ? 1 : 0);
-	short int fs_default = (*fs_type == OPH_COMMON_IO_FS_DEFAULT_TYPE ? 1 : 0);
-
-	//At least one default value and Fs type should be between -1 and 2
-	if ((!partition_default && !fs_default) || (*fs_type < -1 || *fs_type > 2)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Default arguments not valid.\n");
-		return OPH_ODB_NULL_PARAM;
-	}
+	*id_host_partition = 0;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -938,14 +925,7 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, int *fs_type, ch
 
 	char selectQuery[MYSQL_BUFLEN];
 
-	char tmp_fs_type[2] = { '\0' };
-	if (*fs_type == OPH_COMMON_IO_FS_DEFAULT_TYPE) {
-		snprintf(tmp_fs_type, 2, "%s", "%");
-	} else {
-		snprintf(tmp_fs_type, 2, "%d", *fs_type);
-	}
-
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS, (partition_default ? "%" : *host_partition), tmp_fs_type, ioserver_type, dbmsxhost_number, host_number);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS, ioserver_type, host_number);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -963,30 +943,25 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, int *fs_type, ch
 		mysql_free_result(res);
 		return OPH_ODB_SUCCESS;
 	}
-	if (mysql_field_count(oDB->conn) != 2) {
+	if (mysql_field_count(oDB->conn) != 3) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 
-	*exist = 1;
-
-	row = mysql_fetch_row(res);
-	free(*host_partition);
-	*host_partition = (char *) strndup(row[0], strlen(row[0]));
-	*fs_type = (int) strtol(row[1], NULL, 10);
-
+	if ((row = mysql_fetch_row(res)))
+		*id_host_partition = (int) strtol(row[0], NULL, 10);
 	mysql_free_result(res);
+
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int host_number, int dbmsxhost_number, int *exist)
+int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, int id_host_partition, int host_number, int *exist)
 {
-	if (!oDB || !host_number || !dbmsxhost_number || !host_partition || !exist || fs_type < 0 || fs_type > 2 || !ioserver_type) {
+	if (!oDB || !host_number || !id_host_partition || !exist || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
-
 	*exist = 0;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
@@ -995,7 +970,7 @@ int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *i
 	}
 
 	char selectQuery[MYSQL_BUFLEN];
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_HOST_DBMS_NUMBER, host_partition, fs_type, ioserver_type);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_HOST_DBMS_NUMBER, id_host_partition, ioserver_type);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -1007,7 +982,6 @@ int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *i
 	}
 
 	MYSQL_RES *res;
-	MYSQL_ROW row;
 	res = mysql_store_result(oDB->conn);
 	int num = 0;
 	if ((num = mysql_num_rows(res)) < 1) {
@@ -1019,19 +993,11 @@ int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, int fs_type, char *i
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
+	mysql_free_result(res);
 
-	if (num < host_number)
-		return OPH_ODB_SUCCESS;
-
-	int i = 0;
-	while ((row = mysql_fetch_row(res))) {
-		if ((int) strtol(row[0], NULL, 10) >= dbmsxhost_number)
-			i++;
-	}
-	if (i >= host_number)
+	if (num >= host_number)
 		*exist = 1;
 
-	mysql_free_result(res);
 	return OPH_ODB_SUCCESS;
 }
 
@@ -1274,8 +1240,7 @@ int oph_odb_stge_find_datacube_fragmentation_list(ophidiadb * oDB, int level, in
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *hostname, char *partition_name, int fs_type, char *ioserver_type, char *host_status, char *dbms_status,
-					    MYSQL_RES ** information_list)
+int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *hostname, char *partition_name, char *ioserver_type, char *host_status, MYSQL_RES ** information_list, int id_user)
 {
 	(*information_list) = NULL;
 
@@ -1296,57 +1261,43 @@ int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *ho
 	n = 0;
 	where_clause[0] = 0;
 	char *p1 = hostname;
-	int p2 = fs_type;
 	char *p3 = partition_name;
 	char *p4 = host_status;
-	char *p5 = dbms_status;
 	char *p6 = ioserver_type;
-	if (p2 > 2 || p2 < 0)
-		p2 = 2;
 	//If level is one than only the host status filter can be used
 	if (level == 1) {
-		p1 = p3 = p5 = p6 = NULL;
-		p2 = 2;
+		p1 = p3 = p6 = NULL;
 	}
-	//If level is two than host status, dbms status, hostname and ioservertype filters can be used
+	//If level is two than host status, hostname and ioservertype filters can be used
 	else if (level == 2) {
 		p3 = NULL;
 	}
 	//If level is three than only partition_name and host_status filters can be used
 	else {
-		p1 = p5 = p6 = NULL;
-		p2 = 2;
+		p1 = p6 = NULL;
 	}
 
-	if (p1 || p2 != 2 || p3 || p4 || p5 || p6)
-		n += snprintf(where_clause + n, MYSQL_BUFLEN, "WHERE ");
+	if (p1 || p3 || p4 || p6)
+		n += snprintf(where_clause + n, MYSQL_BUFLEN, "AND ");
 	if (level == 1 && p4)
-		n += snprintf(where_clause + n, MYSQL_BUFLEN, "host.status ='%s' ", p4);
+		n += snprintf(where_clause + n, MYSQL_BUFLEN, "status='%s' ", p4);
 	if (level == 2) {
 		if (p1)
 			n += snprintf(where_clause + n, MYSQL_BUFLEN, "hostname='%s' ", p1);
-		if (p2 != 2 && p1)
-			n += snprintf(where_clause + n, MYSQL_BUFLEN, "AND ");
-		if (p2 != 2)
-			n += snprintf(where_clause + n, MYSQL_BUFLEN, "fstype=%d ", p2);
-		if (p4 && (p1 || p2 != 2))
+		if (p4 && (p1))
 			n += snprintf(where_clause + n, MYSQL_BUFLEN, "AND ");
 		if (p4)
-			n += snprintf(where_clause + n, MYSQL_BUFLEN, "host.status ='%s' ", p4);
-		if (p5 && (p1 || p2 != 2 || p4))
-			n += snprintf(where_clause + n, MYSQL_BUFLEN, "AND ");
-		if (p5)
-			n += snprintf(where_clause + n, MYSQL_BUFLEN, "dbmsinstance.status ='%s' ", p5);
-		if (p6 && (p1 || p2 != 2 || p4 || p5))
+			n += snprintf(where_clause + n, MYSQL_BUFLEN, "status='%s' ", p4);
+		if (p6 && (p1 || p4))
 			n += snprintf(where_clause + n, MYSQL_BUFLEN, "AND ");
 		if (p6)
 			n += snprintf(where_clause + n, MYSQL_BUFLEN, "ioservertype ='%s' ", p6);
 	}
 	if (level == 3 && p3) {
-		n += snprintf(where_clause + n, MYSQL_BUFLEN, "partitionname = '%s' ", p3);
+		n += snprintf(where_clause + n, MYSQL_BUFLEN, "partitionname='%s' ", p3);
 		if (p4)
-			n += snprintf(where_clause + n, MYSQL_BUFLEN, "AND host.status ='%s' ", p4);
-		n += snprintf(where_clause + n, MYSQL_BUFLEN, "AND hidden = 0 ");
+			n += snprintf(where_clause + n, MYSQL_BUFLEN, "AND status='%s' ", p4);
+		n += snprintf(where_clause + n, MYSQL_BUFLEN, "AND NOT hidden ");
 	}
 
 	switch (level) {
@@ -1358,9 +1309,9 @@ int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *ho
 			break;
 		case 3:
 			if (p3)
-				n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_INSTANCES_LIST_3, where_clause);
+				n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_INSTANCES_LIST_3, id_user, where_clause);
 			else
-				n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_INSTANCES_LIST_3_PART);
+				n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_INSTANCES_LIST_3_PART, id_user);
 			break;
 		default:
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Bad filter parameters\n");
@@ -1598,6 +1549,48 @@ int oph_odb_stge_insert_into_fragment_table(ophidiadb * oDB, oph_odb_fragment * 
 	return OPH_ODB_SUCCESS;
 }
 
+int oph_odb_stge_insert_into_fragment_table2(ophidiadb * oDB, oph_odb_fragment * fragment, int frag_num)
+{
+	if (!oDB || !fragment || !frag_num) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char insertQuery[MYSQL_BUFLEN], buffer[MYSQL_BUFLEN];
+	int l = 0, n = 0;
+
+	//Setup full query for multi-insert statement
+	for (l = 0; l < frag_num; l++) {
+		if ((fragment[l]).id_datacube != 0) {
+			n += snprintf(buffer + n, MYSQL_BUFLEN, "(%d, %d, %d, '%s', %d, %d),", (fragment[l]).id_db, (fragment[l]).id_datacube, (fragment[l]).frag_relative_index,
+				      (fragment[l]).fragment_name, (fragment[l]).key_start, (fragment[l]).key_end);
+			if (n >= MYSQL_BUFLEN) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+				return OPH_ODB_STR_BUFF_OVERFLOW;
+			}
+		}
+	}
+	buffer[n - 1] = ';';
+
+	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_UPDATE_OPHIDIADB_FRAG2, buffer);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, insertQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
 int oph_odb_stge_retrieve_container_id_from_fragment_name(ophidiadb * oDB, char *frag_name, int *id_container)
 {
 	if (!oDB || !frag_name || !id_container) {
@@ -1787,113 +1780,213 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, int fs_type, char *ioserver_type, char *host_partition, int host_number, int dbmsxhost_number, int **id_dbmss, int *size)
+int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_type, int id_host_partition, char hidden, int host_number, int id_datacube, int **id_dbmss, int **id_hosts, int policy)
 {
-	if (!oDB || !host_number || !dbmsxhost_number || !id_dbmss || !size || fs_type < 0 || fs_type > 2 || !ioserver_type) {
+	if (!oDB || !host_number || !id_datacube || !id_dbmss || !ioserver_type || !id_host_partition || !id_hosts) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+	*id_dbmss = NULL;
+	*id_hosts = NULL;
+
+
+	if (!(*id_dbmss = (int *) calloc(host_number, sizeof(int)))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_ODB_MEMORY_ERROR;
+	}
+
+	if (!(*id_hosts = (int *) calloc(host_number, sizeof(int)))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(*id_dbmss);
+		*id_dbmss = NULL;
+		return OPH_ODB_MEMORY_ERROR;
+	}
+
+	int i, j;
+	MYSQL_RES *res;
+	MYSQL_ROW row;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		free(*id_dbmss);
+		*id_dbmss = NULL;
+		free(*id_hosts);
+		*id_hosts = NULL;
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	char selectQuery[MYSQL_BUFLEN];
-	//Select all up host that have at least dbmsxhost_number
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST, host_partition, fs_type, ioserver_type, host_partition, fs_type, ioserver_type, dbmsxhost_number);
+	//Select all up host
+	int n;
+	switch (policy) {
+		case 1:
+			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST "" MYSQL_STGE_POLICY_LOOP, id_host_partition, ioserver_type, hidden, host_number);
+			break;
+		default:
+			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST "" MYSQL_STGE_POLICY_RR, id_host_partition, ioserver_type, hidden, host_number);
+	}
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_ODB_STR_BUFF_OVERFLOW;
-	}
-
-	if (mysql_autocommit(oDB->conn, 0)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		return OPH_ODB_MYSQL_ERROR;
-	}
-
-	if (mysql_query(oDB->conn, selectQuery)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		mysql_autocommit(oDB->conn, 1);
-		return OPH_ODB_MYSQL_ERROR;
-	}
-
-	MYSQL_RES *res;
-	MYSQL_ROW row;
-	res = mysql_store_result(oDB->conn);
-	if (mysql_num_rows(res) < 1) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "No rows found by query\n");
-		mysql_free_result(res);
-		mysql_autocommit(oDB->conn, 1);
-		return OPH_ODB_MYSQL_ERROR;
-	}
-	if (mysql_field_count(oDB->conn) != 2) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Too many fields found by query\n");
-		mysql_free_result(res);
-		mysql_autocommit(oDB->conn, 1);
-		return OPH_ODB_TOO_MANY_ROWS;
-	}
-
-	*size = host_number * dbmsxhost_number;
-	if (!(*id_dbmss = (int *) malloc((*size) * sizeof(int)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		mysql_free_result(res);
-		mysql_autocommit(oDB->conn, 1);
-		return OPH_ODB_MEMORY_ERROR;
-	}
-	memset(*id_dbmss, 0, (*size) * sizeof(int));
-
-	int counter = 0;
-	int old_id = 0;
-	int i = 0;
-	char host_list[MYSQL_BUFLEN];
-	*host_list = 0;
-
-	//Get dbmsxhost_number of dbms for host_number times
-	while ((row = mysql_fetch_row(res))) {
-		if ((int) strtol(row[0], NULL, 10) != old_id)
-			counter = 0;
-		old_id = (int) strtol(row[0], NULL, 10);
-		if (counter < dbmsxhost_number) {
-			if (!counter) {
-				snprintf(selectQuery, MYSQL_BUFLEN, "%s%d", i ? "," : "", old_id);
-				strncat(host_list, selectQuery, MYSQL_BUFLEN - strlen(host_list) - 1);
-			}
-			(*id_dbmss)[i] = (int) strtol(row[1], NULL, 10);
-			i++;
-			counter++;
-		}
-		if (i == *size)
-			break;
-	}
-	mysql_free_result(res);
-
-	if (i < *size) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough hosts for the operation\n");
 		free(*id_dbmss);
 		*id_dbmss = NULL;
-		mysql_autocommit(oDB->conn, 1);
-		return OPH_ODB_TOO_MANY_ROWS;
-	}
-
-	n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_UPDATE_HOST_COUNTER, 1, host_list);
-	if (n >= MYSQL_BUFLEN) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		mysql_autocommit(oDB->conn, 1);
+		free(*id_hosts);
+		*id_hosts = NULL;
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
-	if (mysql_query(oDB->conn, selectQuery)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		mysql_autocommit(oDB->conn, 1);
-		return OPH_ODB_MYSQL_ERROR;
+
+	char updateQuery[MYSQL_BUFLEN];
+	//Update host counters
+	n = snprintf(updateQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_UPDATE_IMPORT_COUNT, id_datacube);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		free(*id_dbmss);
+		*id_dbmss = NULL;
+		free(*id_hosts);
+		*id_hosts = NULL;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	mysql_commit(oDB->conn);
+	char insertQuery[MYSQL_BUFLEN];
+	int bsize = host_number * (4 + 2 * OPH_COMMON_MAX_INT_LENGHT);
+	char buffer[bsize];
 
-	if (mysql_autocommit(oDB->conn, 1)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		return OPH_ODB_MYSQL_ERROR;
-	}
+	short runs = 1;
+	int ret = 0;
+	do {
+		//Start transaction
+		if (mysql_autocommit(oDB->conn, 0)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			free(*id_dbmss);
+			*id_dbmss = NULL;
+			free(*id_hosts);
+			*id_hosts = NULL;
+			return OPH_ODB_MYSQL_ERROR;
+		}
+		//Run select query
+		if ((ret = mysql_query(oDB->conn, selectQuery))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			mysql_rollback(oDB->conn);
+			mysql_autocommit(oDB->conn, 1);
+			if (((ret == OPH_ODB_LOCK_ERROR) || (ret == OPH_ODB_LOCK_WAIT_ERROR)) && (runs < OPH_ODB_MAX_ATTEMPTS)) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "Retry the query\n");
+				sleep(OPH_ODB_WAITING_TIME);
+				runs++;
+				continue;
+			} else {
+				free(*id_dbmss);
+				*id_dbmss = NULL;
+				free(*id_hosts);
+				*id_hosts = NULL;
+				return OPH_ODB_MYSQL_ERROR;
+			}
+		}
+		//Get query results
+		res = mysql_store_result(oDB->conn);
+		if (((int) mysql_num_rows(res) < host_number)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough hosts for the operation\n");
+			mysql_rollback(oDB->conn);
+			mysql_autocommit(oDB->conn, 1);
+			free(*id_dbmss);
+			*id_dbmss = NULL;
+			free(*id_hosts);
+			*id_hosts = NULL;
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+		if (mysql_field_count(oDB->conn) != 2 || ((int) mysql_num_rows(res) > host_number)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Results found by query are not correct\n");
+			mysql_free_result(res);
+			mysql_rollback(oDB->conn);
+			mysql_autocommit(oDB->conn, 1);
+			free(*id_dbmss);
+			*id_dbmss = NULL;
+			free(*id_hosts);
+			*id_hosts = NULL;
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		i = 0;
+		//Get dbmss and hosts
+		while ((row = mysql_fetch_row(res))) {
+			(*id_hosts)[i] = (int) strtol(row[0], NULL, 10);
+			(*id_dbmss)[i] = (int) strtol(row[1], NULL, 10);
+			i++;
+		}
+		mysql_free_result(res);
+
+		for (j = n = 0; j < host_number; j++)
+			n += snprintf(buffer + n, bsize - n, "%s(%d,%d)", j ? "," : "", (*id_hosts)[j], id_datacube);
+
+		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_CONNECT_CUBE_TO_HOST, buffer);
+		if (n >= MYSQL_BUFLEN) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+			mysql_rollback(oDB->conn);
+			mysql_autocommit(oDB->conn, 1);
+			free(*id_dbmss);
+			*id_dbmss = NULL;
+			free(*id_hosts);
+			*id_hosts = NULL;
+			return OPH_ODB_STR_BUFF_OVERFLOW;
+		}
+		//Run insert query
+		if ((ret = mysql_query(oDB->conn, insertQuery))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			mysql_rollback(oDB->conn);
+			mysql_autocommit(oDB->conn, 1);
+			if (((ret == OPH_ODB_LOCK_ERROR) || (ret == OPH_ODB_LOCK_WAIT_ERROR)) && (runs < OPH_ODB_MAX_ATTEMPTS)) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "Retry the query\n");
+				sleep(OPH_ODB_WAITING_TIME);
+				runs++;
+				continue;
+			} else {
+				free(*id_dbmss);
+				*id_dbmss = NULL;
+				free(*id_hosts);
+				*id_hosts = NULL;
+				return OPH_ODB_MYSQL_ERROR;
+			}
+		}
+		//Run update query
+		if ((ret = mysql_query(oDB->conn, updateQuery))) {
+			mysql_rollback(oDB->conn);
+			mysql_autocommit(oDB->conn, 1);
+			if (((ret == OPH_ODB_LOCK_ERROR) || (ret == OPH_ODB_LOCK_WAIT_ERROR)) && (runs < OPH_ODB_MAX_ATTEMPTS)) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "MySQL query error ... retrying: %s\n", mysql_error(oDB->conn));
+				sleep(OPH_ODB_WAITING_TIME);
+				runs++;
+				continue;
+			} else {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+				free(*id_dbmss);
+				*id_dbmss = NULL;
+				free(*id_hosts);
+				*id_hosts = NULL;
+				return OPH_ODB_MYSQL_ERROR;
+			}
+		}
+		//End transaction
+		if (mysql_commit(oDB->conn)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			mysql_autocommit(oDB->conn, 1);
+			free(*id_dbmss);
+			*id_dbmss = NULL;
+			free(*id_hosts);
+			*id_hosts = NULL;
+			return OPH_ODB_MYSQL_ERROR;
+		}
+
+		if (mysql_autocommit(oDB->conn, 1)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			free(*id_dbmss);
+			*id_dbmss = NULL;
+			free(*id_hosts);
+			*id_hosts = NULL;
+			return OPH_ODB_MYSQL_ERROR;
+		}
+
+		break;
+
+	} while (runs <= OPH_ODB_MAX_ATTEMPTS);	// Useless
+
 
 	return OPH_ODB_SUCCESS;
 }
@@ -1935,6 +2028,70 @@ int oph_odb_stge_get_number_of_datacube_for_db(ophidiadb * oDB, int id_db, int *
 			*datacubexdb_number = 0;
 	} else
 		*datacubexdb_number = 0;
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_stge_get_number_of_datacube_for_dbs(ophidiadb * oDB, int db_num, int *id_dbs, int *datacubexdb_number)
+{
+	if (!oDB || !id_dbs || !datacubexdb_number) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+	//Build id db string
+	char buffer[MYSQL_BUFLEN];
+	int l = 0, n = 0;
+
+	//Setup full query for multi-insert statement
+	for (l = 0; l < db_num; l++) {
+		if (id_dbs[l] != 0) {
+			n += snprintf(buffer + n, MYSQL_BUFLEN, "%d,", id_dbs[l]);
+			if (n >= MYSQL_BUFLEN) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+				return OPH_ODB_STR_BUFF_OVERFLOW;
+			}
+		}
+	}
+	buffer[n - 1] = '\0';
+
+	char selectQuery[MYSQL_BUFLEN];
+	n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DATACUBEXDBS_NUMBER, buffer);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, selectQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+
+	l = 0;
+	if (((int) mysql_num_rows(res) == db_num)) {
+		if (mysql_field_count(oDB->conn) == 1) {
+			while ((row = mysql_fetch_row(res))) {
+				datacubexdb_number[l++] = (int) strtol(row[0], NULL, 10);
+			}
+			mysql_free_result(res);
+		} else {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+	} else {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
 
 	return OPH_ODB_SUCCESS;
 }
@@ -2000,11 +2157,336 @@ int oph_odb_stge_insert_into_dbinstance_partitioned_tables(ophidiadb * oDB, oph_
 			return OPH_ODB_STR_BUFF_OVERFLOW;
 		}
 
-		if (mysql_query(oDB->conn, insertQuery)) {
+		if (oph_odb_query_ophidiadb(oDB, insertQuery)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 			return OPH_ODB_MYSQL_ERROR;
 		}
 	}
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_user, char reserved, int hosts, int *id_hostpartition)
+{
+	if (!oDB || !name || !id_user || !id_hostpartition) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	*id_hostpartition = 0;
+
+	if (hosts < 0)
+		hosts = 0;
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char insertQuery[MYSQL_BUFLEN];
+	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_CREATE_PARTITION, name, id_user, reserved, hosts);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, insertQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	*id_hostpartition = (int) mysql_insert_id(oDB->conn);
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_stge_add_all_hosts_to_partition(ophidiadb * oDB, int id_hostpartition, char reserved)
+{
+	if (!oDB || !id_hostpartition) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char insertQuery[MYSQL_BUFLEN];
+	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_ADD_ALL_HOSTS_TO_PARTITION, id_hostpartition);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, insertQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	if (reserved) {
+
+		if (mysql_query(oDB->conn, MYSQL_QUERY_STGE_CHECK_ALL_HOSTS)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			return OPH_ODB_MYSQL_ERROR;
+		}
+
+		MYSQL_RES *res;
+		MYSQL_ROW row;
+		res = mysql_store_result(oDB->conn);
+		if (mysql_num_rows(res) != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+		if (mysql_field_count(oDB->conn) != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		row = mysql_fetch_row(res);
+		if (strtol(row[0], NULL, 10) > 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Host is already reserved\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		mysql_free_result(res);
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_stge_add_some_hosts_to_partition(ophidiadb * oDB, int id_hostpartition, int host_number, char reserved, int *num_rows)
+{
+	if (!oDB || !id_hostpartition || !host_number) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	if (num_rows)
+		*num_rows = 0;
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char insertQuery[MYSQL_BUFLEN];
+	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_ADD_SOME_HOSTS_TO_PARTITION, id_hostpartition, host_number);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, insertQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	if (num_rows)
+		*num_rows = (int) mysql_affected_rows(oDB->conn);
+
+	if (reserved) {
+
+		if (mysql_query(oDB->conn, MYSQL_QUERY_STGE_CHECK_ALL_HOSTS)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			return OPH_ODB_MYSQL_ERROR;
+		}
+
+		MYSQL_RES *res;
+		MYSQL_ROW row;
+		res = mysql_store_result(oDB->conn);
+		if (mysql_num_rows(res) != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+		if (mysql_field_count(oDB->conn) != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		row = mysql_fetch_row(res);
+		if (strtol(row[0], NULL, 10) > 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Host is already reserved\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		mysql_free_result(res);
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_stge_add_host_to_partition(ophidiadb * oDB, int id_hostpartition, int id_host, char reserved)
+{
+	if (!oDB || !id_hostpartition || !id_host) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char insertQuery[MYSQL_BUFLEN];
+	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_ADD_HOST_TO_PARTITION, id_hostpartition, id_host);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, insertQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	if (reserved) {
+
+		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_CHECK_HOST, id_host);
+		if (n >= MYSQL_BUFLEN) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+			return OPH_ODB_STR_BUFF_OVERFLOW;
+		}
+
+		if (mysql_query(oDB->conn, insertQuery)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			return OPH_ODB_MYSQL_ERROR;
+		}
+
+		MYSQL_RES *res;
+		MYSQL_ROW row;
+		res = mysql_store_result(oDB->conn);
+		if (mysql_num_rows(res) != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+		if (mysql_field_count(oDB->conn) != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		row = mysql_fetch_row(res);
+		if (strtol(row[0], NULL, 10) > 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Host is already reserved\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		mysql_free_result(res);
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_stge_delete_hostpartition(ophidiadb * oDB, const char *name, int id_user, char reserved, int *num_rows)
+{
+	if (!oDB || !name || !id_user) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	if (num_rows)
+		*num_rows = 0;
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char insertQuery[MYSQL_BUFLEN];
+	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_DELETE_PARTITION, name, id_user, reserved ? "" : "AND NOT reserved");
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, insertQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	if (num_rows)
+		*num_rows = (int) mysql_affected_rows(oDB->conn);
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_stge_delete_hostpartition_by_id(ophidiadb * oDB, int id_hostpartition)
+{
+	if (!oDB || !id_hostpartition) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char insertQuery[MYSQL_BUFLEN];
+	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_DELETE_PARTITION2, id_hostpartition);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, insertQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_stge_get_host_partition_by_name(ophidiadb * oDB, char *host_partition, int id_user, int *id_host_partition, char *hidden)
+{
+	if (!oDB || !host_partition || !id_user || !id_host_partition || !hidden) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	*id_host_partition = 0;
+	*hidden = 0;
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char selectQuery[MYSQL_BUFLEN];
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_GET_IDPARTITION_FROM_NAME, host_partition, id_user);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, selectQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res = mysql_store_result(oDB->conn);
+	if (mysql_num_rows(res) != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+	if (mysql_field_count(oDB->conn) != 2) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	MYSQL_ROW row;
+	if ((row = mysql_fetch_row(res))) {
+		*id_host_partition = (int) strtol(row[0], NULL, 10);
+		*hidden = (char) strtol(row[1], NULL, 10);
+	}
+	mysql_free_result(res);
 
 	return OPH_ODB_SUCCESS;
 }

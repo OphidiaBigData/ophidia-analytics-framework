@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -150,22 +150,22 @@ int _ophidiaio_free_query(oph_ioserver_handler * handle, oph_ioserver_query * qu
 }
 
 //Close connection to storage server
-int _ophidiaio_close(oph_ioserver_handler * handle, void *connection)
+int _ophidiaio_close(oph_ioserver_handler * handle, void **connection)
 {
-	if (!connection) {
+	if (!(*connection)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_OPHIDIAIO_NULL_INPUT_PARAM);
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_OPHIDIAIO_NULL_INPUT_PARAM);
 		return OPHIDIAIO_IO_NULL_PARAM;
 	}
 
-	if (connection) {
-		if (oph_io_client_close((oph_io_client_connection *) connection)) {
+	if (*connection) {
+		if (oph_io_client_close((oph_io_client_connection *) (*connection))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_OPHIDIAIO_NULL_INPUT_PARAM);
 			logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_OPHIDIAIO_NULL_INPUT_PARAM);
 			return OPHIDIAIO_IO_NULL_PARAM;
 		}
 	}
-	connection = NULL;
+	*connection = NULL;
 
 	return OPHIDIAIO_IO_SUCCESS;
 }

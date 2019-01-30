@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -151,6 +151,33 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 				      long long memory_size);
 
 /**
+ * \brief Populate a fragment with nc data (simplified version of previous function)
+ * \param server Pointer to I/O server structure
+ * \param frag Structure with information about fragment to be filled
+ * \param ncid Id of nc file
+ * \param tuplexfrag_number Number of tuple to insert
+ * \param array_length Number of elements to insert in a single row
+ * \param compressed If the data to insert is compressed (1) or not (0)
+ * \param measure Structure containing measure data and information to be stored
+ * \param memory_size Value of maximum memory available
+ * \return 0 if successfull
+ */
+int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragment * frag, int ncid, int tuplexfrag_number, int array_length, int compressed, NETCDF_var * measure,
+				      long long memory_size);
+
+/**
+ * \brief Run read fragment from file on IO server
+ * \param server Pointer to I/O server structure
+ * \param frag Structure with information about fragment to be filled
+ * \param nc_file_path Path to NetCDF file
+ * \param tuplexfrag_number Number of tuple to insert
+ * \param compressed If the data to insert is compressed (1) or not (0)
+ * \param measure Structure containing measure data and information to be stored
+ * \return 0 if successfull
+ */
+int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fragment * frag, char *nc_file_path, int tuplexfrag_number, int compressed, NETCDF_var * measure);
+
+/**
  * \brief Return the C type given the nc_type
  * \param nc_type The nc_type to be converted
  * \param out_c_type String to be filled with the corresponding C type
@@ -196,6 +223,46 @@ int oph_nc_get_next_nc_id(size_t * id, unsigned int *sizemax, int n);
  * \return 0 if successfull
  */
 int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int ncid, int compressed, NETCDF_var * measure);
+
+/**
+ * \brief Append nc data to a fragment (Optimized version with single read per fragment)
+ * \param server Pointer to I/O server structure
+ * \param old_frag Structure with information about the old fragment
+ * \param new_frag Structure with information about the new fragment
+ * \param ncid Id of nc file
+ * \param compressed If the data to insert is compressed (1) or not (0)
+ * \param measure Structure containing measure data and information to be stored
+ * \param memory_size Value of maximum memory available
+ * \return 0 if successfull
+ */
+int oph_nc_append_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int ncid, int compressed, NETCDF_var * measure, long long memory_size);
+
+/**
+ * \brief Append nc data to a fragment (Optimized version with single read and transposition per fragment)
+ * \param server Pointer to I/O server structure
+ * \param old_frag Structure with information about the old fragment
+ * \param new_frag Structure with information about the new fragment
+ * \param ncid Id of nc file
+ * \param compressed If the data to insert is compressed (1) or not (0)
+ * \param measure Structure containing measure data and information to be stored
+ * \param memory_size Value of maximum memory available
+ * \return 0 if successfull
+ */
+int oph_nc_append_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int ncid, int compressed, NETCDF_var * measure, long long memory_size);
+
+/**
+ * \brief Append nc data to a fragment (Optimized version with single read and transposition per fragment)
+ * \param server Pointer to I/O server structure
+ * \param old_frag Structure with information about the old fragment
+ * \param new_frag Structure with information about the new fragment
+ * \param nc_file_path Path to NetCDF file
+ * \param tuplexfrag_number Number of tuple to insert
+ * \param compressed If the data to insert is compressed (1) or not (0)
+ * \param measure Structure containing measure data and information to be stored
+ * \return 0 if successfull
+ */
+int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, char *nc_file_path, int tuplexfrag_number, int compressed,
+				    NETCDF_var * measure);
 
 /**
  * \brief Retrieve a dimension coordinated variable data from a NetCDF file
@@ -269,5 +336,9 @@ int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE
  * \return 0 if successfull
  */
 int oph_nc_get_row_from_nc(int ncid, int array_length, NETCDF_var * measure, unsigned long idDim, char **row);
+
+int update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid);
+
+int check_subset_string(char *curfilter, int i, NETCDF_var * measure, int is_index, int ncid, double offset);
 
 #endif				//__OPH_NC_UTILITY_H

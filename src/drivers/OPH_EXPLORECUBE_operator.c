@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -405,8 +405,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_EXPLORECUBE_DATACUBE_AVAILABILITY_ERROR, datacube_in);
 		id_datacube_in[0] = 0;
 		id_datacube_in[1] = 0;
-	} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], 1, &folder_id))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
+	} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], &folder_id))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_EXPLORECUBE_DATACUBE_FOLDER_ERROR, datacube_in);
 		id_datacube_in[0] = 0;
 		id_datacube_in[1] = 0;
@@ -768,6 +768,24 @@ int task_execute(oph_operator_struct * handle)
 
 			// Pre-parsing for time dimensions
 			if (((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->time_filter && dim[l].calendar && strlen(dim[l].calendar)) {
+				if ((n = oph_dim_parse_season_subset(((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d], &(dim[l]), temp, dim_row, dim_size[d][dim_number[d] - 1]))) {
+					if (n != OPH_DIM_TIME_PARSING_ERROR) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing time values.\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->id_input_container,
+							OPH_LOG_OPH_EXPLORECUBE_PARSE_ERROR, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d]);
+						if (dim_row)
+							free(dim_row);
+						oph_dim_disconnect_from_dbms(db->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db);
+						oph_odb_cube_free_datacube(&cube);
+						free(cubedims);
+						oph_subset_vector_free(subset_struct, ((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->number_of_dim);
+						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					}
+				} else {
+					free(((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d]);
+					((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d] = strndup(temp, OPH_TP_TASKLEN);
+				}
 				if ((n = oph_dim_parse_time_subset(((OPH_EXPLORECUBE_operator_handle *) handle->operator_handle)->task[d], &(dim[l]), temp))) {
 					if (n != OPH_DIM_TIME_PARSING_ERROR) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing time values.\n");

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -80,6 +80,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->month_lengths = NULL;
 	((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->leap_year = 0;
 	((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->leap_month = 2;
+	((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->description = NULL;
 
 	ophidiadb *oDB = &((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->oDB;
 	oph_odb_init_ophidiadb(oDB);
@@ -446,6 +447,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->leap_month = (int) strtol(value, NULL, 10);
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DESCRIPTION);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DESCRIPTION);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DESCRIPTION);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
+		if (!(((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->description = (char *) strndup(value, OPH_TP_TASKLEN))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CREATECONTAINER_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_DESCRIPTION);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -511,7 +526,7 @@ int task_execute(oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_NAME_NOT_ALLOWED_ERROR, container_name);
 		return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 	}
-	//Check if non-hidden container exists in folder
+	//Check if container exists in folder
 	if ((oph_odb_fs_is_unique(folder_id, container_name, oDB, &container_unique))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check output container\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CREATECONTAINER_OUTPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
@@ -556,12 +571,15 @@ int task_execute(oph_operator_struct * handle)
 	}
 	//If it doesn't then create new container and get last id
 	oph_odb_container cont;
-	strncpy(cont.container_name, container_name, OPH_ODB_FS_CONTAINER_SIZE);
-	cont.container_name[OPH_ODB_FS_CONTAINER_SIZE] = 0;
+	snprintf(cont.container_name, OPH_ODB_FS_CONTAINER_SIZE, "%s", container_name);
 	cont.id_parent = 0;
 	cont.id_folder = folder_id;
 	cont.operation[0] = 0;
 	cont.id_vocabulary = id_vocabulary;
+	if (((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->description)
+		snprintf(cont.description, OPH_ODB_FS_DESCRIPTION_SIZE, "%s", ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->description);
+	else
+		*cont.description = 0;
 
 	if (oph_odb_fs_insert_into_container_table(oDB, &cont, &id_container_out)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update container table\n");
@@ -780,6 +798,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->month_lengths) {
 		free((char *) ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->month_lengths);
 		((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->month_lengths = NULL;
+	}
+	if (((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->description) {
+		free((char *) ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->description);
+		((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->description = NULL;
 	}
 
 	free((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle);

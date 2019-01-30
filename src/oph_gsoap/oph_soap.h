@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2017 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@ typedef struct {
 	char *server;
 	char *username;
 	char *password;
+	char *host;
+	char *port;
 	int timeout;
 	int recv_timeout;
 } oph_soap_data;

@@ -17,6 +17,7 @@ It removes a datacube.
 - exec_mode : operator execution mode. Possible values are async (default) for
               asynchronous mode, sync for synchronous mode with json-compliant output.
 - ncores : number of parallel processes to be used (min. 1).
+- nthreads : number of parallel threads per process to be used (min. 1).
 - sessionid : session identifier used server-side to manage sessions and jobs.
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
@@ -28,7 +29,7 @@ Remove datacube identified by the PID &quot;http://www.example.com/1/1&quot; :
 OPH_TERM: oph_delete cube=http://www.example.com/1/1;
 SUBMISSION STRING: &quot;operator=oph_delete;cube=http://www.example.com/1/1;&quot;</abstract>
         <author>CMCC Foundation</author>
-        <category>Virtual File System Management</category>
+        <category>Virtual File System</category>
         <creationdate>27/07/2013</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <permission>write</permission>
@@ -37,6 +38,7 @@ SUBMISSION STRING: &quot;operator=oph_delete;cube=http://www.example.com/1/1;&qu
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">nthreads</argument>
 		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|delete">objkey_filter</argument>
