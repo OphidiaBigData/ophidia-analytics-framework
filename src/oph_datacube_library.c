@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -105,16 +105,17 @@ int oph_dc_setup_dbms_thread(oph_ioserver_handler ** server, char *server_type)
 
 int oph_dc_setup_dbms(oph_ioserver_handler ** server, char *server_type)
 {
-	if (!server) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return OPH_DC_NULL_PARAM;
-	}
+	/*if (!server) {
+	   pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+	   return OPH_DC_NULL_PARAM;
+	   }
 
-	if (oph_ioserver_setup(server_type, server, 0)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup server library\n");
-		return OPH_DC_SERVER_ERROR;
-	}
-	return OPH_DC_SUCCESS;
+	   if (oph_ioserver_setup(server_type, server, 0)) {
+	   pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup server library\n");
+	   return OPH_DC_SERVER_ERROR;
+	   } */
+
+	return oph_dc_setup_dbms_thread(server, server_type);
 }
 
 int oph_dc_connect_to_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, unsigned long flag)
@@ -124,7 +125,6 @@ int oph_dc_connect_to_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance 
 		return OPH_DC_NULL_PARAM;
 	}
 
-	dbms->conn = NULL;
 	oph_ioserver_params conn_params;
 	conn_params.host = dbms->hostname;
 	conn_params.user = dbms->login;
@@ -133,7 +133,7 @@ int oph_dc_connect_to_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance 
 	conn_params.db_name = NULL;
 	conn_params.opt_flag = flag;
 
-	if (oph_ioserver_connect(server, &conn_params, &dbms->conn)) {
+	if (oph_ioserver_connect(server, &conn_params)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Server connection error\n");
 		oph_dc_disconnect_from_dbms(server, dbms);
 		return OPH_DC_SERVER_ERROR;
@@ -153,8 +153,8 @@ int oph_dc_use_db_of_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance *
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (dbms->conn) {
-		if (oph_ioserver_use_db(server, db->db_name, dbms->conn)) {
+	if (server->connection) {
+		if (oph_ioserver_use_db(server, db->db_name)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set default database\n");
 			return OPH_DC_SERVER_ERROR;
 		}
@@ -173,7 +173,7 @@ int oph_dc_check_connection_to_db(oph_ioserver_handler * server, oph_odb_dbms_in
 		return OPH_DC_NULL_PARAM;
 	}
 
-	if (!(dbms->conn)) {
+	if (!(server->connection)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Connection was somehow closed.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
@@ -186,12 +186,13 @@ int oph_dc_check_connection_to_db(oph_ioserver_handler * server, oph_odb_dbms_in
 	conn_params.db_name = (db ? db->db_name : NULL);
 	conn_params.opt_flag = flag;
 
-	if (oph_ioserver_connect(server, &conn_params, &dbms->conn)) {
+	if (oph_ioserver_connect(server, &conn_params)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Server connection error\n");
 		return OPH_DC_SERVER_ERROR;
 	}
 	return OPH_DC_SUCCESS;
 }
+
 
 int oph_dc_disconnect_from_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms)
 {
@@ -200,7 +201,7 @@ int oph_dc_disconnect_from_dbms(oph_ioserver_handler * server, oph_odb_dbms_inst
 		return OPH_DC_NULL_PARAM;
 	}
 
-	oph_ioserver_close(server, dbms->conn);
+	oph_ioserver_close(server);
 	return OPH_DC_SUCCESS;
 }
 
@@ -239,12 +240,12 @@ int oph_dc_create_db(oph_ioserver_handler * server, oph_odb_db_instance * db)
 	}
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, db->dbms_instance->conn, db_creation_query, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, db_creation_query, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, db->dbms_instance->conn, query)) {
+	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
 		oph_ioserver_free_query(server, query);
 		return OPH_DC_SERVER_ERROR;
@@ -278,12 +279,12 @@ int oph_dc_delete_db(oph_ioserver_handler * server, oph_odb_db_instance * db)
 	}
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, db->dbms_instance->conn, delete_query, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, delete_query, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, db->dbms_instance->conn, query)) {
+	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
 		oph_ioserver_free_query(server, query);
 		return OPH_DC_SERVER_ERROR;
@@ -317,12 +318,12 @@ int oph_dc_create_empty_fragment(oph_ioserver_handler * server, oph_odb_fragment
 	}
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, create_query, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, create_query, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
 		oph_ioserver_free_query(server, query);
 		return OPH_DC_SERVER_ERROR;
@@ -353,12 +354,12 @@ int oph_dc_create_empty_fragment_from_name(oph_ioserver_handler * server, const 
 	}
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, db_instance->dbms_instance->conn, create_query, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, create_query, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, db_instance->dbms_instance->conn, query)) {
+	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
 		oph_ioserver_free_query(server, query);
 		return OPH_DC_SERVER_ERROR;
@@ -391,12 +392,12 @@ int oph_dc_delete_fragment(oph_ioserver_handler * server, oph_odb_fragment * fra
 	}
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, delete_query, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, delete_query, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
 		oph_ioserver_free_query(server, query);
 		return OPH_DC_SERVER_ERROR;
@@ -438,12 +439,12 @@ int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fr
 		}
 
 		oph_ioserver_query *query = NULL;
-		if (oph_ioserver_setup_query(server, old_frag->db_instance->dbms_instance->conn, create_query, 1, NULL, &query)) {
+		if (oph_ioserver_setup_query(server, create_query, 1, NULL, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query '%s'\n", create_query);
 			return OPH_DC_SERVER_ERROR;
 		}
 
-		if (oph_ioserver_execute_query(server, old_frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation '%s'\n", create_query);
 			oph_ioserver_free_query(server, query);
 			return OPH_DC_SERVER_ERROR;
@@ -509,12 +510,12 @@ int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fr
 		}
 
 		oph_ioserver_query *query = NULL;
-		if (oph_ioserver_setup_query(server, old_frag->db_instance->dbms_instance->conn, create_query, 1, NULL, &query)) {
+		if (oph_ioserver_setup_query(server, create_query, 1, NULL, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query '%s'\n", create_query);
 			return OPH_DC_SERVER_ERROR;
 		}
 
-		if (oph_ioserver_execute_query(server, old_frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation '%s',\n", create_query);
 			oph_ioserver_free_query(server, query);
 			return OPH_DC_SERVER_ERROR;
@@ -549,7 +550,6 @@ int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server
 						   long long *start_id, long long *block_size, char *param, long long param_size, int num)
 {
 	UNUSED(start_id)
-
 	    if (!old_frag || !operation || (!param && param_size) || (param && !param_size) || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DC_NULL_PARAM;
@@ -602,7 +602,7 @@ int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server
 			args[ii]->arg = param;
 		}
 
-		if (oph_ioserver_setup_query(server, old_frag->db_instance->dbms_instance->conn, create_query, 1, args, &query)) {
+		if (oph_ioserver_setup_query(server, create_query, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 			for (ii = 0; ii < num; ii++)
 				if (args[ii])
@@ -611,7 +611,7 @@ int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server
 			return OPH_DC_SERVER_ERROR;
 		}
 
-		if (oph_ioserver_execute_query(server, old_frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			for (ii = 0; ii < num; ii++)
 				if (args[ii])
@@ -690,7 +690,7 @@ int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server
 			args[ii]->arg = param;
 		}
 
-		if (oph_ioserver_setup_query(server, old_frag->db_instance->dbms_instance->conn, create_query, 1, args, &query)) {
+		if (oph_ioserver_setup_query(server, create_query, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 			for (ii = 0; ii < num; ii++)
 				if (args[ii])
@@ -699,7 +699,7 @@ int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server
 			return OPH_DC_SERVER_ERROR;
 		}
 
-		if (oph_ioserver_execute_query(server, old_frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query '%s'\n", create_query);
 			for (ii = 0; ii < num; ii++)
 				if (args[ii])
@@ -784,7 +784,7 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 		args[1]->arg_is_null = n;
 		args[1]->arg = param;
 
-		if (oph_ioserver_setup_query(server, old_frag->db_instance->dbms_instance->conn, create_query, 1, args, &query)) {
+		if (oph_ioserver_setup_query(server, create_query, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 			for (ii = 0; ii < c_arg - 1; ii++)
 				if (args[ii])
@@ -793,7 +793,7 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 			return OPH_DC_SERVER_ERROR;
 		}
 
-		if (oph_ioserver_execute_query(server, old_frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			for (ii = 0; ii < c_arg - 1; ii++)
 				if (args[ii])
@@ -846,7 +846,7 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 				} else {
 #ifdef OPH_DEBUG_MYSQL
 					printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_G "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number, MYSQL_FRAG_ID,
-					       MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
+					       operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
 #endif
 					n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_G, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
 						     MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
@@ -875,7 +875,7 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 		args[1]->arg_is_null = n;
 		args[1]->arg = param;
 
-		if (oph_ioserver_setup_query(server, old_frag->db_instance->dbms_instance->conn, create_query, 1, args, &query)) {
+		if (oph_ioserver_setup_query(server, create_query, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query '%s'\n", create_query);
 			for (ii = 0; ii < c_arg - 1; ii++)
 				if (args[ii])
@@ -884,7 +884,7 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 			return OPH_DC_SERVER_ERROR;
 		}
 
-		if (oph_ioserver_execute_query(server, old_frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query '%s'\n", query);
 			for (ii = 0; ii < c_arg - 1; ii++)
 				if (args[ii])
@@ -904,7 +904,6 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 
 	return OPH_DC_SUCCESS;
 }
-
 
 int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char rand_alg)
 {
@@ -1153,7 +1152,7 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_odb_fragment * frag, int tuple_number, int array_length, char *data_type, int compressed, char *algorithm)
+int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_odb_fragment * frag, unsigned long long tuple_number, int array_length, char *data_type, int compressed, char *algorithm)
 {
 	if (!frag || !data_type || !server || !algorithm) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1204,8 +1203,8 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 	//Compute number of tuples per insert (regular case)
 	unsigned long long regular_rows = 0, regular_times = 0, remainder_rows = 0;
 
-	long block_size = 512 * 1024;	//Maximum size that could be transfered
-	long block_rows = 1000;	//Maximum number of lines that could be transfered
+	unsigned long long block_size = 512 * 1024;	//Maximum size that could be transfered
+	unsigned long long block_rows = 1000;	//Maximum number of lines that could be transfered
 
 	if (sizeof_var >= block_size) {
 		//Use the same algorithm
@@ -1245,7 +1244,7 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 		return OPH_DC_DATA_ERROR;
 	}
 
-	int i, j, k;
+	unsigned long long i, j, k;
 	int n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
 	if (compressed == 1) {
 #ifdef OPH_DEBUG_MYSQL
@@ -1342,7 +1341,7 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 		idDim[i] = frag->key_start + i;
 	}
 
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, regular_times, args, &query)) {
+	if (oph_ioserver_setup_query(server, query_string, regular_times, args, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 		free(query_string);
 		free(idDim);
@@ -1375,7 +1374,7 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 			}
 		}
 
-		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(idDim);
@@ -1446,7 +1445,7 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 			}
 		}
 
-		if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+		if (oph_ioserver_setup_query(server, query_string, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 			free(query_string);
 			free(idDim);
@@ -1473,7 +1472,7 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 			}
 		}
 
-		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(idDim);
@@ -1501,7 +1500,8 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_populate_fragment_with_rand_data2(oph_ioserver_handler * server, oph_odb_fragment * frag, int tuple_number, int array_length, char *data_type, int compressed, char *algorithm)
+int oph_dc_populate_fragment_with_rand_data2(oph_ioserver_handler * server, oph_odb_fragment * frag, unsigned long long tuple_number, int array_length, char *data_type, int compressed,
+					     char *algorithm)
 {
 	if (!frag || !data_type || !server || !algorithm) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1551,13 +1551,13 @@ int oph_dc_populate_fragment_with_rand_data2(oph_ioserver_handler * server, oph_
 	}
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, query_string, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		free(query_string);
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
 		free(query_string);
 		oph_ioserver_free_query(server, query);
@@ -1604,12 +1604,12 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 	}
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, old_frag->db_instance->dbms_instance->conn, read_query, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, read_query, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, old_frag->db_instance->dbms_instance->conn, query)) {
+	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
 		oph_ioserver_free_query(server, query);
 		return OPH_DC_SERVER_ERROR;
@@ -1619,7 +1619,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 	// Init res 
 	oph_ioserver_result *old_result = NULL;
 
-	if (oph_ioserver_get_result(server, old_frag->db_instance->dbms_instance->conn, &old_result)) {
+	if (oph_ioserver_get_result(server, &old_result)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store result.\n");
 		oph_ioserver_free_result(server, old_result);
 		return OPH_DC_SERVER_ERROR;
@@ -1780,7 +1780,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 		args[1]->arg = (char *) (binary);
 
 
-		if (oph_ioserver_setup_query(server, new_frag->db_instance->dbms_instance->conn, insert_query, tot_rows, args, &query)) {
+		if (oph_ioserver_setup_query(server, insert_query, tot_rows, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 			oph_ioserver_free_result(server, old_result);
 			for (ii = 0; ii < c_arg - 1; ii++) {
@@ -1830,7 +1830,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 		memset(binary, 0, sizeof_var);
 		memcpy(binary, curr_row->row[1], actual_size);
 
-		if (oph_ioserver_execute_query(server, new_frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			oph_ioserver_free_result(server, old_result);
 			oph_ioserver_free_query(server, query);
@@ -1878,8 +1878,6 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * server, unsigned lon
 		return OPH_DC_NULL_PARAM;
 	}
 
-	oph_odb_fragment *new_frag = old_frag1;
-
 	char read_query[QUERY_BUFLEN];
 	unsigned long long sizeof_var = 0;
 	int n;
@@ -1901,19 +1899,19 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * server, unsigned lon
 	}
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, old_frag1->db_instance->dbms_instance->conn, read_query, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, read_query, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, old_frag1->db_instance->dbms_instance->conn, query)) {
+	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
 		oph_ioserver_free_query(server, query);
 		return OPH_DC_SERVER_ERROR;
 	}
 	oph_ioserver_free_query(server, query);
 
-	if (oph_ioserver_get_result(server, old_frag1->db_instance->dbms_instance->conn, &old_result1)) {
+	if (oph_ioserver_get_result(server, &old_result1)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store result.\n");
 		oph_ioserver_free_result(server, old_result1);
 		return OPH_DC_SERVER_ERROR;
@@ -1947,13 +1945,13 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * server, unsigned lon
 	}
 
 	query = NULL;
-	if (oph_ioserver_setup_query(server, old_frag2->db_instance->dbms_instance->conn, read_query, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, read_query, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		oph_ioserver_free_result(server, old_result1);
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, old_frag2->db_instance->dbms_instance->conn, query)) {
+	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
 		oph_ioserver_free_result(server, old_result1);
 		oph_ioserver_free_query(server, query);
@@ -1961,7 +1959,7 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * server, unsigned lon
 	}
 	oph_ioserver_free_query(server, query);
 
-	if (oph_ioserver_get_result(server, old_frag2->db_instance->dbms_instance->conn, &old_result2)) {
+	if (oph_ioserver_get_result(server, &old_result2)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store result.\n");
 		oph_ioserver_free_result(server, old_result1);
 		oph_ioserver_free_result(server, old_result2);
@@ -2065,7 +2063,7 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * server, unsigned lon
 	args[2]->arg_is_null = 0;
 	args[2]->arg = (char *) (binary2);
 
-	if (oph_ioserver_setup_query(server, new_frag->db_instance->dbms_instance->conn, insert_query, tot_rows, args, &query)) {
+	if (oph_ioserver_setup_query(server, insert_query, tot_rows, args, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 		oph_ioserver_free_result(server, old_result1);
 		oph_ioserver_free_result(server, old_result2);
@@ -2125,7 +2123,7 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * server, unsigned lon
 		memset(binary2, 0, sizeof_var);
 		memcpy(binary2, curr_row2->row[1], actual_size);
 
-		if (oph_ioserver_execute_query(server, new_frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			oph_ioserver_free_result(server, old_result1);
 			oph_ioserver_free_result(server, old_result2);
@@ -2368,12 +2366,12 @@ int oph_dc_read_fragment_data(oph_ioserver_handler * server, oph_odb_fragment * 
 	}
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, read_query, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, read_query, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query '%s'\n", read_query);
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation '%s'\n", read_query);
 		oph_ioserver_free_query(server, query);
 		return OPH_DC_SERVER_ERROR;
@@ -2382,7 +2380,7 @@ int oph_dc_read_fragment_data(oph_ioserver_handler * server, oph_odb_fragment * 
 	oph_ioserver_free_query(server, query);
 
 	// Init res 
-	if (oph_ioserver_get_result(server, frag->db_instance->dbms_instance->conn, frag_rows)) {
+	if (oph_ioserver_get_result(server, frag_rows)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store result.\n");
 		oph_ioserver_free_result(server, *frag_rows);
 		return OPH_DC_SERVER_ERROR;
@@ -2443,12 +2441,12 @@ int oph_dc_get_total_number_of_elements_in_fragment(oph_ioserver_handler * serve
 	}
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, select_query, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, select_query, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
 		oph_ioserver_free_query(server, query);
 		return OPH_DC_SERVER_ERROR;
@@ -2459,7 +2457,7 @@ int oph_dc_get_total_number_of_elements_in_fragment(oph_ioserver_handler * serve
 	// Init res 
 	oph_ioserver_result *result = NULL;
 
-	if (oph_ioserver_get_result(server, frag->db_instance->dbms_instance->conn, &result)) {
+	if (oph_ioserver_get_result(server, &result)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store result.\n");
 		oph_ioserver_free_result(server, result);
 		return OPH_DC_SERVER_ERROR;
@@ -2512,12 +2510,12 @@ int oph_dc_get_total_number_of_rows_in_fragment(oph_ioserver_handler * server, o
 	}
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, select_query, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, select_query, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
 		oph_ioserver_free_query(server, query);
 		return OPH_DC_SERVER_ERROR;
@@ -2528,7 +2526,7 @@ int oph_dc_get_total_number_of_rows_in_fragment(oph_ioserver_handler * server, o
 	// Init res 
 	oph_ioserver_result *result = NULL;
 
-	if (oph_ioserver_get_result(server, frag->db_instance->dbms_instance->conn, &result)) {
+	if (oph_ioserver_get_result(server, &result)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store result.\n");
 		oph_ioserver_free_result(server, result);
 		return OPH_DC_SERVER_ERROR;
@@ -2612,12 +2610,12 @@ int oph_dc_get_number_of_elements_in_fragment_row(oph_ioserver_handler * server,
 	}
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, select_query, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, select_query, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
 		oph_ioserver_free_query(server, query);
 		return OPH_DC_SERVER_ERROR;
@@ -2628,7 +2626,7 @@ int oph_dc_get_number_of_elements_in_fragment_row(oph_ioserver_handler * server,
 	// Init res 
 	oph_ioserver_result *result = NULL;
 
-	if (oph_ioserver_get_result(server, frag->db_instance->dbms_instance->conn, &result)) {
+	if (oph_ioserver_get_result(server, &result)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store result.\n");
 		oph_ioserver_free_result(server, result);
 		return OPH_DC_SERVER_ERROR;
@@ -2683,12 +2681,12 @@ int oph_dc_get_fragments_size_in_bytes(oph_ioserver_handler * server, oph_odb_db
 	}
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, dbms->conn, select_query, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, select_query, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, dbms->conn, query)) {
+	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation '%s'\n", select_query);
 		oph_ioserver_free_query(server, query);
 		return OPH_DC_SERVER_ERROR;
@@ -2699,7 +2697,7 @@ int oph_dc_get_fragments_size_in_bytes(oph_ioserver_handler * server, oph_odb_db
 	// Init res 
 	oph_ioserver_result *result = NULL;
 
-	if (oph_ioserver_get_result(server, dbms->conn, &result)) {
+	if (oph_ioserver_get_result(server, &result)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store result.\n");
 		oph_ioserver_free_result(server, result);
 		return OPH_DC_SERVER_ERROR;
@@ -2761,12 +2759,12 @@ int oph_dc_get_primitives(oph_ioserver_handler * server, oph_odb_dbms_instance *
 	}
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, dbms->conn, select_query, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(server, select_query, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, dbms->conn, query)) {
+	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
 		oph_ioserver_free_query(server, query);
 		return OPH_DC_SERVER_ERROR;
@@ -2775,7 +2773,7 @@ int oph_dc_get_primitives(oph_ioserver_handler * server, oph_odb_dbms_instance *
 	oph_ioserver_free_query(server, query);
 
 	// Init res 
-	if (oph_ioserver_get_result(server, dbms->conn, frag_rows)) {
+	if (oph_ioserver_get_result(server, frag_rows)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store result.\n");
 		oph_ioserver_free_result(server, *frag_rows);
 		return OPH_DC_SERVER_ERROR;

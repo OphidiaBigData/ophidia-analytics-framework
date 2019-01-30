@@ -1,17 +1,43 @@
 
-## Next release
-
-### Added:
-
-- UNIQUE constraints to several OphidiaDB tables [#61](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/61)
+## v1.5.0 - 2019-01-24
 
 ### Fixed:
 
-- Bug in multi-thread operators using mysql io server type [#56](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/56)
+- Usage of MySQL client library in operators and libraries in case of multi-thread execution
+- Warnings when building on Ubuntu 18
+- Data operators to return the proper code when global errors occur [#64](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/64)
+- Enforced UNIQUE constraints in several OphidiaDB tables [#61](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/61)
+- Bug [#60](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/60) related to OphidiaDB tables lock
+- Minor bugs in oph_nc_library 
+- Bug in multi-thread operators using mysql IO server type [#56](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/56)
+
+### Added:
+
+- New operators OPH_CONCATNC and OPH_CONCATNC2  [#75](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/75)
+- New operator OPH_RANDCUBE2 [#70](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/70)
+- XML for new primitives: oph_affine [#68](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/68),   oph_arg_max_array and oph_arg_min_array [#66](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/66) 
+- New options 'arg_max' and 'arg_min' to  OPH_INTERCUBE [#66](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/66) 
+- New argument 'container_pid' to OPH_DELETECONTAINER [#63](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/63)
 
 ### Changed:
 
+- Soap interface files with gSOAP version 2.8.76 [#77](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/77)
+- Default value of argument nhost of OPH_CLUSTER
+- XML of OPH_CLUSTER with new actions for cluster information [#74](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/74)
+- OphidiaDB to address better scalability for node selection queries and all multi-thread operators in order to limit number of connections to OphidiaDB [#73](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/73)
+- XML of predicate primitives to consider 'INDEX' value [#72](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/72)
+- Multi-threaded operators to adjust nthreads when bigger than fragments available [#71](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/71)
+- Extended OPH_RANDCUBE with a new algorithm [#70](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/70)
+- XML of OPH_SET with new arguments to specify subsets [#69](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/69) 
+- Exportnc operators to add cube identifier as suffix of file names [#67](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/67) 
+- Extended OPH_CUBESIZE to estimate the size without performing the computation [#65](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/65)
 - Checks in OPH_DELETE operator to support deletion of datacubes even when I/O nodes are not available
+
+### Removed:
+
+- Support for hidden containers and drop OPH_RESTORECONTAINER operator [#76](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/76)
+- 'ndb', 'ndbms' and 'fs_type' arguments from various operators [#73](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/73)
+
 
 ## v1.4.0 - 2018-07-27
 

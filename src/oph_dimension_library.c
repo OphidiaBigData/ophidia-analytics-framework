@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -1120,11 +1120,6 @@ int oph_dim_connect_to_dbms(oph_odb_dbms_instance * dbms, unsigned long flag)
 		return OPH_DIM_NULL_PARAM;
 	}
 
-	if (mysql_library_init(0, NULL, NULL)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
-		return OPH_DIM_MYSQL_ERROR;
-	}
-
 	dbms->conn = NULL;
 	if (!(dbms->conn = mysql_init(NULL))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error: %s\n", mysql_error(dbms->conn));
@@ -1204,7 +1199,6 @@ int oph_dim_disconnect_from_dbms(oph_odb_dbms_instance * dbms)
 		mysql_close(dbms->conn);
 		dbms->conn = NULL;
 	}
-	mysql_library_end();
 	return OPH_DIM_SUCCESS;
 }
 

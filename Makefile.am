@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2018 CMCC Foundation
+#    Copyright (C) 2012-2019 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -55,6 +55,8 @@ if HAVE_NETCDF
 OPERATOR_XML+=etc/operators_xml/OPH_EXPORTNC_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC2_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_CONCATNC_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_CONCATNC2_operator_1.0.xml
 if GSL_SUPPORT
 OPERATOR_XML+=etc/operators_xml/OPH_EXPLORENC_operator_1.0.xml
 endif
@@ -90,7 +92,6 @@ OPERATOR_XML+=etc/operators_xml/OPH_RANDCUBE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_RANDCUBE2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_REDUCE2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_REDUCE_operator_1.0.xml
-OPERATOR_XML+=etc/operators_xml/OPH_RESTORECONTAINER_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_RESUME_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_ROLLUP_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_SCRIPT_operator_1.0.xml

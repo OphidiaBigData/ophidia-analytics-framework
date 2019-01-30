@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ void _print_bson(const bson_t * b)
 {
 	char *str;
 	str = bson_as_json(b, NULL);
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "%s\n", str);
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "%s\n", str);
 	bson_free(str);
 }
 #endif
@@ -742,7 +742,7 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 	if (id_metadatainstance) {
 
 		BSON_APPEND_INT32(doc, "iddatacube", id_datacube);
-		BSON_APPEND_INT32(doc, "idmetadatainstance", id_metadatainstance);
+		BSON_APPEND_UTF8(doc, "idmetadatainstance", id_metadatainstance);
 
 	} else {
 
@@ -891,7 +891,7 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 	if (id_metadatainstance) {
 
 		BSON_APPEND_DOCUMENT_BEGIN(&doc_and, "idmetadatainstance", &doc_item);
-		BSON_APPEND_INT32(&doc_item, "idmetadatainstance", id_datacube);
+		BSON_APPEND_UTF8(&doc_item, "idmetadatainstance", id_metadatainstance);
 		bson_append_document_end(&doc_and, &doc_item);
 
 	} else {
@@ -1037,13 +1037,12 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 	int j = 0, k;
 	char buf[64];
 	const char *key;
-	size_t keylen;
 	MYSQL_RES *res;
 	MYSQL_ROW row;
 	while (!mongoc_cursor_error(cursor, &error) && mongoc_cursor_more(cursor) && mongoc_cursor_next(cursor, &target)) {
 		k = num_fields * j;
 		if (bson_iter_init(&iter, target) && bson_iter_find_descendant(&iter, "_id.idmetadatainstance", &sub_iter) && BSON_ITER_HOLDS_INT32(&sub_iter)) {
-			keylen = bson_uint32_to_string(bson_iter_int32(&sub_iter), &key, buf, sizeof buf);
+			bson_uint32_to_string(bson_iter_int32(&sub_iter), &key, buf, sizeof buf);
 			(*metadata_list)[k] = key ? strdup(key) : NULL;
 		}
 		k++;		// Go to the next field
@@ -1096,7 +1095,7 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 			*buf = 0;
 			if (localtime_r(&timestep, &timeinfo))
 				strftime(buf, 64, "%Y-%m-%d %H:%M:%S", &timeinfo);
-			(*metadata_list)[k] = buf ? strdup(buf) : NULL;
+			(*metadata_list)[k] = *buf ? strdup(buf) : NULL;
 		}
 		k++;		// Go to the next field
 		if (bson_iter_init(&iter, target) && bson_iter_find_descendant(&iter, "_id.iduser", &sub_iter) && BSON_ITER_HOLDS_INT32(&sub_iter)) {

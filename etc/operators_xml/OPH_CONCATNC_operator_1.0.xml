@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_CONCATNC" version="1.0">
+    <info>
+        <abstract>[Type]
+Data Process.
+
+[Behaviour]
+It creates a new datacube concatenating a NetCDF file to an existing datacube (both measure and dimensions).
+WARNING: It imports only mono-dimensional coordinate variables. The dimensions within the NetCDF file that will be
+considered as explicit dimensions must have the same domain of those in the data cube, 
+while those considered as implicit dimensions must not overlap with those in the data cube.
+
+[Parameters]
+- cube : name of the input datacube. The name must be in PID format.
+- check_exp_dim : if set to &quot;yes&quot; (default) explicit dimensions of the two sources (NetCDF file and datacube) 
+                  will be compared to assure they have the same values, if set to &quot;no&quot; the check will not 
+                  be performed.
+- schedule : scheduling algorithm. The only possible value is 0,
+             for a static linear block distribution of resources.
+- src_path : path of the NetCDF file.
+- cdd : absolute path corresponding to the current directory on data repository.
+- grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
+        or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
+- dim_offset : offset to be added to dimension values of imported data; default setting aims to held the difference between consecutive values.
+- dim_continue : if enabled the last value of implicit dimension of input cube is used to evaluate the new values of the dimension.
+- subset_dims : dimension names used for the subsetting.
+                Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
+                Must be the same number of &quot;subset_filter&quot; 
+- subset_filter : enumeration of comma-separated elementary filters (1 series of filters for each dimension). Possible forms are:
+                  -- start_value : single value specifying the start index of the subset
+                  -- start_value:stop_value : select elements from start_index to stop_index
+                  Values should be numbers. Example:
+                     subset_dims=lat|lon;subset_filter=35:45|15:20;
+                  Multiple-value field: list of filters separated by &quot;|&quot; can be provided  
+                  Must be the same number of &quot;subset_dims&quot;
+- subset_type : if set to &quot;index&quot; (default), the subset_filter is considered on dimension index. 
+                With &quot;coord&quot;, filter is considered on dimension values.
+- time_filter : enable filters using dates for time dimensions; enabled by default.
+- offset : it is added to the bounds of subset intervals defined with &quot;subset_filter&quot; in case of &quot;coord&quot; filter type is used.
+- description : additional description to be associated with the output cube.
+
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  concatnc : show operator's output PID as text.
+
+[Examples] 
+Concat a NetCDF file excluding metadata into the datacube &quot;http://www.example.com/1/1&quot; :
+OPH_TERM:: oph_concatnc src_path=/path/of/ncfile.nc;cube=http://www.example.com/1/1;
+SUBMISSION STRING: &quot;operator=oph_concatnc;src_path=/path/of/ncfile.nc;cube=http://www.example.com/1/1;&quot;</abstract>
+        <author>CMCC</author>
+        <category>Data Import/Export</category>
+        <creationdate>24/01/2017</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <permission>write</permission>
+    </info>
+    <args>  
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">src_path</argument>
+		<argument type="string" mandatory="no" default="/">cdd</argument>
+		<argument type="string" mandatory="no" default="-">grid</argument>
+		<argument type="real" mandatory="no" default="-">dim_offset</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">dim_continue</argument>
+		<argument type="string" mandatory="no" default="none" multivalue="yes">subset_dims</argument>
+		<argument type="string" mandatory="no" default="index" values="index|coord">subset_type</argument>
+		<argument type="string" mandatory="no" default="all" multivalue="yes">subset_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">time_filter</argument>
+		<argument type="real" mandatory="no" default="0">offset</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">check_exp_dim</argument>
+		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|concatnc">objkey_filter</argument>
+    </args>
+</operator>

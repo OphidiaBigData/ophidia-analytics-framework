@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -153,31 +153,12 @@ int oph_odb_read_ophidiadb_config_file(ophidiadb * oDB)
 
 int oph_odb_init_ophidiadb(ophidiadb * oDB)
 {
-	if (!oDB) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return OPH_ODB_NULL_PARAM;
-	}
+	/*if (mysql_library_init(0, NULL, NULL)) {
+	   pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
+	   return OPH_ODB_MYSQL_ERROR;
+	   } */
 
-	oDB->name = NULL;
-	oDB->hostname = NULL;
-	oDB->username = NULL;
-	oDB->pwd = NULL;
-	oDB->conn = NULL;
-
-#ifdef OPH_ODB_MNG
-	oDB->mng_name = NULL;
-	oDB->mng_hostname = NULL;
-	oDB->mng_username = NULL;
-	oDB->mng_pwd = NULL;
-	oDB->mng_conn = NULL;
-#endif
-
-	if (mysql_library_init(0, NULL, NULL)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
-		return OPH_ODB_MYSQL_ERROR;
-	}
-
-	return OPH_ODB_SUCCESS;
+	return oph_odb_init_ophidiadb_thread(oDB);
 }
 
 int oph_odb_init_ophidiadb_thread(ophidiadb * oDB)
@@ -204,60 +185,11 @@ int oph_odb_init_ophidiadb_thread(ophidiadb * oDB)
 	return OPH_ODB_SUCCESS;
 }
 
-
 int oph_odb_free_ophidiadb(ophidiadb * oDB)
 {
-	if (!oDB) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return OPH_ODB_NULL_PARAM;
-	}
+	//mysql_library_end();
 
-	if (oDB->name) {
-		free(oDB->name);
-		oDB->name = NULL;
-	}
-	if (oDB->hostname) {
-		free(oDB->hostname);
-		oDB->hostname = NULL;
-	}
-	if (oDB->username) {
-		free(oDB->username);
-		oDB->username = NULL;
-	}
-	if (oDB->pwd) {
-		free(oDB->pwd);
-		oDB->pwd = NULL;
-	}
-	if (oDB->conn) {
-		oph_odb_disconnect_from_ophidiadb(oDB);
-		oDB->conn = NULL;
-		mysql_library_end();
-	}
-#ifdef OPH_ODB_MNG
-	if (oDB->mng_name) {
-		free(oDB->mng_name);
-		oDB->mng_name = NULL;
-	}
-	if (oDB->mng_hostname) {
-		free(oDB->mng_hostname);
-		oDB->mng_hostname = NULL;
-	}
-	if (oDB->mng_username) {
-		free(oDB->mng_username);
-		oDB->mng_username = NULL;
-	}
-	if (oDB->mng_pwd) {
-		free(oDB->mng_pwd);
-		oDB->mng_pwd = NULL;
-	}
-	if (oDB->mng_conn) {
-		oph_odb_disconnect_from_mongodb(oDB);
-		oDB->mng_conn = NULL;
-		mongoc_cleanup();
-	}
-#endif
-
-	return OPH_ODB_SUCCESS;
+	return oph_odb_free_ophidiadb_thread(oDB);
 }
 
 int oph_odb_free_ophidiadb_thread(ophidiadb * oDB)
@@ -320,7 +252,12 @@ int oph_odb_connect_to_ophidiadb(ophidiadb * oDB)
 		return OPH_ODB_NULL_PARAM;
 	}
 
+	if (oDB->conn) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Connection is already established\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
 	oDB->conn = NULL;
+
 	if (!(oDB->conn = mysql_init(NULL))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error: %s\n", mysql_error(oDB->conn));
 		oph_odb_disconnect_from_ophidiadb(oDB);
@@ -406,12 +343,14 @@ int oph_odb_query_ophidiadb(ophidiadb * oDB, char *query)
 #ifdef OPH_ODB_MNG
 int oph_odb_init_mongodb(ophidiadb * oDB)
 {
+	UNUSED(oDB);
 	mongoc_init();
 	return OPH_ODB_SUCCESS;
 }
 
 int oph_odb_free_mongodb(ophidiadb * oDB)
 {
+	UNUSED(oDB);
 	mongoc_cleanup();
 	return OPH_ODB_SUCCESS;
 }
@@ -423,6 +362,10 @@ int oph_odb_connect_to_mongodb(ophidiadb * oDB)
 		return OPH_ODB_NULL_PARAM;
 	}
 
+	if (oDB->mng_conn) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Connection is already established\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
 	oDB->mng_conn = NULL;
 
 	char uri_string[OPH_ODB_BUFFER_LEN];

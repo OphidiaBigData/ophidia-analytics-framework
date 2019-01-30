@@ -1,6 +1,6 @@
 --
 --    Ophidia Analytics Framework
---    Copyright (C) 2012-2018 CMCC Foundation
+--    Copyright (C) 2012-2019 CMCC Foundation
 --
 --    This program is free software: you can redistribute it and/or modify
 --    it under the terms of the GNU General Public License as published by
@@ -303,6 +303,7 @@ CREATE TABLE `user` (
   `registrationdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `accountcertified` tinyint(1) NOT NULL DEFAULT '0',
   `idcountry` smallint(5) unsigned DEFAULT NULL,
+  `maxhosts` int(10) unsigned NULL DEFAULT 0,
   PRIMARY KEY (`iduser`),
   UNIQUE KEY `username` (`username`),
   KEY `idcountry` (`idcountry`)
@@ -809,11 +810,10 @@ CREATE TABLE `container` (
   `idparent` int(10) unsigned DEFAULT NULL,
   `containername` varchar(256) NOT NULL,
   `operator` varchar(256) DEFAULT NULL,
-  `hidden` int(1) NOT NULL DEFAULT 0,
   `description` varchar(2048) DEFAULT NULL,
   `idvocabulary` int(10) unsigned DEFAULT NULL,
   PRIMARY KEY (`idcontainer`),
-  UNIQUE KEY `folder_containername_hidden` (`idfolder`, `containername`, `hidden`),
+  UNIQUE KEY `folder_containername` (`idfolder`, `containername`),
   KEY `idfolder` (`idfolder`),
   CONSTRAINT `idfolder_c` FOREIGN KEY (`idfolder`) REFERENCES `folder` (`idfolder`) ON DELETE CASCADE ON UPDATE CASCADE,
   KEY `idparent` (`idparent`),

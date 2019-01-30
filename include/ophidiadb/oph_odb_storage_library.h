@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -395,6 +395,15 @@ int oph_odb_stge_delete_from_dbinstance_table(ophidiadb * oDB, int id_db);
 int oph_odb_stge_insert_into_fragment_table(ophidiadb * oDB, oph_odb_fragment * fragment);
 
 /**
+ * \brief Function that updates OphidiaDB adding multiple fragments specified
+ * \param oDB Pointer to OphidiaDB
+ * \param fragment Pointer to fragment to be added
+ * \param frag_num Number of fragments to be added
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_stge_insert_into_fragment_table2(ophidiadb * oDB, oph_odb_fragment * fragment, int frag_num);
+
+/**
  * \brief Function to retrieve id of the container of a fragment
  * \param Pointer to OphidiaDB
  * \param frag_name name of the fragment
@@ -453,6 +462,16 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_stge_get_number_of_datacube_for_db(ophidiadb * oDB, int id_db, int *datacubexdb_number);
+
+/**
+ * \brief Function to retrieve the number of datacubes stored in each database instance
+ * \param oDB Pointer to the OphidiaDB
+ * \param db_num Number of database instances
+ * \param id_dbs Array of identifier of the database instances to check
+ * \param datacubexdb_number Array that will contain the datacube number in the database instances
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_stge_get_number_of_datacube_for_dbs(ophidiadb * oDB, int db_num, int *id_dbs, int *datacubexdb_number);
 
 /**
  * \brief Function that updates OphidiaDB adding the new db instances and new partition relations

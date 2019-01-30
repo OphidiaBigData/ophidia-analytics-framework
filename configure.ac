@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2018 CMCC Foundation
+#    Copyright (C) 2012-2019 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 #
 
 AC_PREREQ([2.60])
-AC_INIT([ophidia-analytics-framework], [1.4.0], [ophidia-info@cmcc.it])
+AC_INIT([ophidia-analytics-framework], [1.5.0], [ophidia-info@cmcc.it])
 
 AC_CONFIG_AUX_DIR([config])
 
@@ -153,7 +153,7 @@ if (test "x$debug" = "x1") || (test "x$debug" = "x2"); then
  	AC_SUBST(OPT)
 else
 	debug="0"
-	OPT+=" -O2"
+	OPT+=" -O3"
 	AC_SUBST(OPT)
 fi
 AM_CONDITIONAL(DEBUG_1, test "x$debug" = "x1")

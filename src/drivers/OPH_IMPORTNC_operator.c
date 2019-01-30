@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,368 +42,6 @@
 
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
-
-int update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid)
-{
-
-	MYSQL_RES *key_list = NULL;
-	MYSQL_ROW row = NULL;
-
-	int num_rows = 0;
-	if (oph_odb_meta_find_metadatakey_list(oDB, id_vocabulary, &key_list)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive key list\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_READ_KEY_LIST);
-		if (key_list)
-			mysql_free_result(key_list);
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
-	num_rows = mysql_num_rows(key_list);
-
-	if (num_rows)		// The vocabulary is not empty
-	{
-		int i, varid, num_attr = 0;
-		char *key, *variable, *template;
-		char value[OPH_COMMON_BUFFER_LEN], svalue[OPH_COMMON_BUFFER_LEN];
-		nc_type xtype;
-
-		char **keys = (char **) calloc(num_rows, sizeof(char *));
-		if (!keys) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to allocate key list\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_READ_KEY_LIST);
-			mysql_free_result(key_list);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
-		char **values = (char **) calloc(num_rows, sizeof(char *));
-		if (!values) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to allocate key list\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_READ_KEY_LIST);
-			mysql_free_result(key_list);
-			free(keys);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
-
-		while ((row = mysql_fetch_row(key_list))) {
-			if (row[4])	// If the attribute is required and a template is given
-			{
-				key = row[1];
-				variable = row[2];
-				template = row[4];
-
-				memset(value, 0, OPH_COMMON_BUFFER_LEN);
-				memset(svalue, 0, OPH_COMMON_BUFFER_LEN);
-
-				if (variable) {
-					if (nc_inq_varid(ncid, variable, &varid)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering the identifier of variable '%s' from file\n", variable);
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_NC_ATTRIBUTE_ERROR);
-						break;
-					}
-				} else
-					varid = NC_GLOBAL;
-
-				if (nc_inq_atttype(ncid, varid, key, &xtype)) {
-					continue;
-				}
-				if (nc_get_att(ncid, varid, key, (void *) &value)) {
-					pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to get attribute value from file\n");
-					logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
-					break;
-				}
-				switch (xtype) {
-					case NC_BYTE:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((char *) value));
-						break;
-					case NC_UBYTE:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned char *) value));
-						break;
-					case NC_SHORT:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((short *) value));
-						break;
-					case NC_USHORT:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned short *) value));
-						break;
-					case NC_INT:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((int *) value));
-						break;
-					case NC_UINT:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned int *) value));
-						break;
-					case NC_UINT64:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", *((unsigned long long *) value));
-						break;
-					case NC_INT64:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", *((long long *) value));
-						break;
-					case NC_FLOAT:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", *((float *) value));
-						break;
-					case NC_DOUBLE:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", *((double *) value));
-						break;
-					default:
-						strcpy(svalue, value);
-				}
-
-				keys[num_attr] = strdup(template);
-				values[num_attr++] = strdup(svalue);
-			}
-		}
-		if (row) {
-			mysql_free_result(key_list);
-			for (i = 0; i < num_attr; ++i) {
-				if (keys[i])
-					free(keys[i]);
-				if (values[i])
-					free(values[i]);
-			}
-			free(keys);
-			free(values);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
-
-		if (oph_odb_dim_update_time_dimension(time_dim, keys, values, num_attr)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update dimension metadata\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_UPDATE_TIME_ERROR);
-			mysql_free_result(key_list);
-			for (i = 0; i < num_attr; ++i) {
-				if (keys[i])
-					free(keys[i]);
-				if (values[i])
-					free(values[i]);
-			}
-			free(keys);
-			free(values);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
-
-		for (i = 0; i < num_attr; ++i) {
-			if (keys[i])
-				free(keys[i]);
-			if (values[i])
-				free(values[i]);
-		}
-		free(keys);
-		free(values);
-	}
-
-	mysql_free_result(key_list);
-
-	return OPH_ANALYTICS_OPERATOR_SUCCESS;
-}
-
-int check_subset_string(char *curfilter, int i, NETCDF_var * measure, int is_index, int ncid, double offset)
-{
-
-	NETCDF_var tmp_var;
-	int ii, retval, dims_id[NC_MAX_VAR_DIMS];
-	char *endfilter = strchr(curfilter, OPH_DIM_SUBSET_SEPARATOR2);
-	if (!endfilter && !offset) {
-		//Only single point
-		//Check curfilter
-		if (strlen(curfilter) < 1) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-		}
-		if (is_index) {
-			//Input filter is index
-			for (ii = 0; ii < (int) strlen(curfilter); ii++) {
-				if (!isdigit(curfilter[ii])) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter (only integer values allowed)\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-			}
-			measure->dims_start_index[i] = (int) (strtol(curfilter, (char **) NULL, 10));
-			measure->dims_end_index[i] = measure->dims_start_index[i];
-		} else {
-			//Input filter is value
-			for (ii = 0; ii < (int) strlen(curfilter); ii++) {
-				if (ii == 0) {
-					if (!isdigit(curfilter[ii]) && curfilter[ii] != '-') {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter: %s\n", curfilter);
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-					}
-				} else {
-					if (!isdigit(curfilter[ii]) && curfilter[ii] != '.') {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter: %s\n", curfilter);
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-					}
-				}
-			}
-			//End of checking filter
-
-			//Extract the index of the coord based on the value
-			if ((retval = nc_inq_varid(ncid, measure->dims_name[i], &(tmp_var.varid)))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-			/* Get all the information related to the dimension variable; we don't need name, since we already know it */
-			if ((retval = nc_inq_var(ncid, tmp_var.varid, 0, &(tmp_var.vartype), &(tmp_var.ndims), dims_id, 0))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-
-			if (tmp_var.ndims != 1) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-
-			int coord_index = -1;
-			int want_start = 1;	//Single point, it is the same
-			int order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
-			//Extract index of the point given the dimension value
-			if (oph_nc_index_by_value(OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], curfilter, want_start, 0, &order, &coord_index)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-			//Value not found
-			if (coord_index >= (int) measure->dims_length[i]) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-
-			measure->dims_start_index[i] = coord_index;
-			measure->dims_end_index[i] = measure->dims_start_index[i];
-		}
-	} else {
-		//Start and end point
-		char *startfilter = curfilter;
-		if (endfilter) {
-			*endfilter = '\0';
-			endfilter++;
-		} else
-			endfilter = startfilter;
-
-		if (strlen(startfilter) < 1 || strlen(endfilter) < 1) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-		}
-		if (is_index) {
-			//Input filter is index         
-			for (ii = 0; ii < (int) strlen(startfilter); ii++) {
-				if (!isdigit(startfilter[ii])) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter (only integer value allowed)\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-			}
-
-			for (ii = 0; ii < (int) strlen(endfilter); ii++) {
-				if (!isdigit(endfilter[ii])) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter (only integer value allowed)\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-			}
-			measure->dims_start_index[i] = (int) (strtol(startfilter, (char **) NULL, 10));
-			measure->dims_end_index[i] = (int) (strtol(endfilter, (char **) NULL, 10));
-		} else {
-			//Input filter is a value
-			for (ii = 0; ii < (int) strlen(startfilter); ii++) {
-				if (ii == 0) {
-					if (!isdigit(startfilter[ii]) && startfilter[ii] != '-') {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-					}
-				} else {
-					if (!isdigit(startfilter[ii]) && startfilter[ii] != '.') {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-					}
-				}
-			}
-			for (ii = 0; ii < (int) strlen(endfilter); ii++) {
-				if (ii == 0) {
-					if (!isdigit(endfilter[ii]) && endfilter[ii] != '-') {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-					}
-				} else {
-					if (!isdigit(endfilter[ii]) && endfilter[ii] != '.') {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-					}
-				}
-			}
-			//End of checking filter
-
-			//Extract the index of the coord based on the value
-			if ((retval = nc_inq_varid(ncid, measure->dims_name[i], &(tmp_var.varid)))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-			/* Get all the information related to the dimension variable; we don't need name, since we already know it */
-			if ((retval = nc_inq_var(ncid, tmp_var.varid, 0, &(tmp_var.vartype), &(tmp_var.ndims), dims_id, 0))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-
-			if (tmp_var.ndims != 1) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-
-			int coord_index = -1;
-			int want_start = -1;
-			int order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
-			//Extract index of the point given the dimension value
-			if (oph_nc_index_by_value(OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], startfilter, want_start, offset, &order, &coord_index)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-			//Value too big
-			if (coord_index >= (int) measure->dims_length[i]) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-			measure->dims_start_index[i] = coord_index;
-
-			coord_index = -1;
-			want_start = 0;
-			order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
-			//Extract index of the point given the dimension value
-			if (oph_nc_index_by_value(OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], endfilter, want_start, offset, &order, &coord_index)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-			if (coord_index >= (int) measure->dims_length[i]) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-			//oph_nc_index_by value returns the index I need considering the order of the dimension values (ascending/descending)
-			measure->dims_end_index[i] = coord_index;
-			//Descending order; I need to swap start and end index
-			if (!order) {
-				int temp_ind = measure->dims_start_index[i];
-				measure->dims_start_index[i] = measure->dims_end_index[i];
-				measure->dims_end_index[i] = temp_ind;
-			}
-
-		}
-	}
-
-	return OPH_ANALYTICS_OPERATOR_SUCCESS;
-}
 
 int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
@@ -982,7 +620,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				tmp_concept_levels[i] = OPH_COMMON_BASE_CONCEPT_LEVEL;
 		}
 
-
 		if (ndims != measure->ndims) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong number of dimensions provided in task string\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_WRONG_DIM_NUMBER_NO_CONTAINER, container_name, ndims);
@@ -1548,8 +1185,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				int flag = 1, id_container_out = 0, number_of_dimensions_c = 0;
 				while (flag) {
 
-					if (oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, 0, &id_container_out) && !id_container_out) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container or it is hidden\n");
+					if (oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, &id_container_out) && !id_container_out) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
 						break;
 					}
@@ -1924,9 +1561,9 @@ int task_init(oph_operator_struct * handle)
 
 	int i, retval = 0, flush = 1, id_datacube_out = 0, id_container_out = 0;
 
+	//Access data in the netcdf file
 	NETCDF_var *measure = &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->measure;
 
-	//Compute tuple per fragment as the number of values of last (internal) explicit dimension
 	//Find the last explicit dimension checking oph_value
 	short int max_lev = 0;
 	short int last_dimid = 0;
@@ -2303,7 +1940,7 @@ int task_init(oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_NAME_NOT_ALLOWED_ERROR, container_name);
 				goto __OPH_EXIT_1;
 			}
-			//Check if non-hidden container exists in folder
+			//Check if container exists in folder
 			int container_unique = 0;
 			if ((oph_odb_fs_is_unique(folder_id, container_name, oDB, &container_unique))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check output container\n");
@@ -2451,13 +2088,13 @@ int task_init(oph_operator_struct * handle)
 
 		} else if (!container_exists) {
 			//If it doesn't exist then return an error
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container or it is hidden\n");
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
 		}
 		//Else retreive container ID and check for dimension table
-		if (!create_container && oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, 0, &id_container_out)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container or it is hidden\n");
+		if (!create_container && oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, &id_container_out)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
 		}
@@ -3115,8 +2752,8 @@ int task_init(oph_operator_struct * handle)
 			snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_METADATA_TYPE_TEXT);
 			int id_key_type = 0, sid_key_type;
 			if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &id_key_type)) {
-				pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
-				logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
 				free(dimvar_ids);
 				goto __OPH_EXIT_1;
 			}
@@ -3166,7 +2803,7 @@ int task_init(oph_operator_struct * handle)
 
 			//Get global attributes from nc file
 			char key[OPH_COMMON_BUFFER_LEN], value[OPH_COMMON_BUFFER_LEN], svalue[OPH_COMMON_BUFFER_LEN];
-			char *id_key, *keyptr;
+			char *id_key, *keyptr, *keydup;
 			int id_metadatainstance;
 			keyptr = key;
 			int natts = 0;
@@ -3235,8 +2872,8 @@ int task_init(oph_operator_struct * handle)
 							break;
 					}
 					if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type)) {
-						pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
-						logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
 						hashtbl_destroy(key_tbl);
 						hashtbl_destroy(required_tbl);
 						free(dimvar_ids);
@@ -3254,14 +2891,20 @@ int task_init(oph_operator_struct * handle)
 				id_key = hashtbl_get(key_tbl, key_and_variable);
 
 				//Insert key value into OphidiaDB
-				if (nc_get_att(ncid, NC_GLOBAL, (const char *) key, (void *) &value)) {
+				keydup = strdup(key);
+				if (!keydup || nc_get_att(ncid, NC_GLOBAL, (const char *) key, (void *) &value)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
 					hashtbl_destroy(key_tbl);
 					hashtbl_destroy(required_tbl);
 					free(dimvar_ids);
+					if (keydup)
+						free(keydup);
 					goto __OPH_EXIT_1;
 				}
+				strcpy(key, keydup);
+				free(keydup);
+
 				switch (xtype) {
 					case NC_BYTE:
 						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((char *) value));
@@ -3380,8 +3023,8 @@ int task_init(oph_operator_struct * handle)
 								break;
 						}
 						if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type)) {
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
-							logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
 							hashtbl_destroy(key_tbl);
 							hashtbl_destroy(required_tbl);
 							free(dimvar_ids);
@@ -3399,14 +3042,19 @@ int task_init(oph_operator_struct * handle)
 					id_key = hashtbl_get(key_tbl, key_and_variable);
 
 					//Insert key value into OphidiaDB
-					if (nc_get_att(ncid, dimvar_ids[ii], (const char *) key, (void *) &value)) {
+					keydup = strdup(key);
+					if (!keydup || nc_get_att(ncid, dimvar_ids[ii], (const char *) key, (void *) &value)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
 						hashtbl_destroy(key_tbl);
 						hashtbl_destroy(required_tbl);
 						free(dimvar_ids);
+						if (keydup)
+							free(keydup);
 						goto __OPH_EXIT_1;
 					}
+					strcpy(key, keydup);
+					free(keydup);
 
 					switch (xtype) {
 						case NC_BYTE:
@@ -3523,8 +3171,8 @@ int task_init(oph_operator_struct * handle)
 							break;
 					}
 					if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type)) {
-						pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
-						logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_METADATATYPE_ID_ERROR);
 						hashtbl_destroy(key_tbl);
 						hashtbl_destroy(required_tbl);
 						goto __OPH_EXIT_1;
@@ -3541,13 +3189,18 @@ int task_init(oph_operator_struct * handle)
 				id_key = hashtbl_get(key_tbl, key_and_variable);
 
 				//Insert key value into OphidiaDB
-				if (nc_get_att(ncid, measure->varid, (const char *) key, (void *) &value)) {
+				keydup = strdup(key);
+				if (!keydup || nc_get_att(ncid, measure->varid, (const char *) key, (void *) &value)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
 					hashtbl_destroy(key_tbl);
 					hashtbl_destroy(required_tbl);
+					if (keydup)
+						free(keydup);
 					goto __OPH_EXIT_1;
 				}
+				strcpy(key, keydup);
+				free(keydup);
 
 				switch (xtype) {
 					case NC_BYTE:
@@ -3624,7 +3277,8 @@ int task_init(oph_operator_struct * handle)
 					ii = oph_odb_dim_set_time_dimension(oDB, id_datacube_out, measure->dims_name[i]);
 					if (!ii)
 						break;
-					else if (ii != OPH_ODB_NO_ROW_FOUND) {
+					else if (ii != OPH_ODB_NO_ROW_FOUND)	// Time dimension cannot be set
+					{
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_UPDATE_TIME_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_UPDATE_TIME_ERROR);
 						goto __OPH_EXIT_1;
@@ -3662,7 +3316,6 @@ int task_init(oph_operator_struct * handle)
 		char db_name[OPH_ODB_STGE_DB_NAME_SIZE];
 
 		for (j = 0; j < dbmss_length; j++) {
-
 			db.id_dbms = id_dbmss[j];
 			//Retreive DBMS params
 			if (oph_odb_stge_retrieve_dbmsinstance(oDB, db.id_dbms, &dbms)) {
@@ -4208,15 +3861,26 @@ int task_destroy(oph_operator_struct * handle)
 				}
 			}
 		}
-		//Before deleting wait for all process to reach this point
-		MPI_Barrier(MPI_COMM_WORLD);
+
+		if (handle->output_code)
+			proc_error = (short int) handle->output_code;
+		else
+			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
+		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
+		handle->output_code = global_error;
 
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
 			oph_dproc_clean_odb(&((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB, id_datacube,
 					    ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container);
 		}
+
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
+
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -4272,9 +3936,7 @@ int env_unset(oph_operator_struct * handle)
 	if ((retval = nc_close(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->ncid)))
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", nc_strerror(retval));
 
-
 	NETCDF_var *measure = ((NETCDF_var *) & (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->measure));
-
 	if (measure->dims_name) {
 		for (i = 0; i < measure->ndims; i++) {
 			if (measure->dims_name[i]) {
@@ -4285,42 +3947,34 @@ int env_unset(oph_operator_struct * handle)
 		free(measure->dims_name);
 		measure->dims_name = NULL;
 	}
-
 	if (measure->dims_id) {
 		free((int *) measure->dims_id);
 		measure->dims_id = NULL;
 	}
-
 	if (measure->dims_unlim) {
 		free((char *) measure->dims_unlim);
 		measure->dims_unlim = NULL;
 	}
-
 	if (measure->dims_length) {
 		free((size_t *) measure->dims_length);
 		measure->dims_length = NULL;
 	}
-
 	if (measure->dims_type) {
 		free((short int *) measure->dims_type);
 		measure->dims_type = NULL;
 	}
-
 	if (measure->dims_oph_level) {
 		free((short int *) measure->dims_oph_level);
 		measure->dims_oph_level = NULL;
 	}
-
 	if (measure->dims_start_index) {
 		free((int *) measure->dims_start_index);
 		measure->dims_start_index = NULL;
 	}
-
 	if (measure->dims_end_index) {
 		free((int *) measure->dims_end_index);
 		measure->dims_end_index = NULL;
 	}
-
 	if (measure->dims_concept_level) {
 		free((char *) measure->dims_concept_level);
 		measure->dims_concept_level = NULL;

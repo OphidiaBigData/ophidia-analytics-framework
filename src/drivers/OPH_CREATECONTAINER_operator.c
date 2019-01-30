@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -526,7 +526,7 @@ int task_execute(oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_NAME_NOT_ALLOWED_ERROR, container_name);
 		return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 	}
-	//Check if non-hidden container exists in folder
+	//Check if container exists in folder
 	if ((oph_odb_fs_is_unique(folder_id, container_name, oDB, &container_unique))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check output container\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CREATECONTAINER_OUTPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);

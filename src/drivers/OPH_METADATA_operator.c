@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -382,8 +382,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (uri)
 			free(uri);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	} else if ((oph_odb_fs_retrive_container_folder_id(oDB, ((OPH_METADATA_operator_handle *) handle->operator_handle)->id_container_input, 1, &folder_id))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
+	} else if ((oph_odb_fs_retrive_container_folder_id(oDB, ((OPH_METADATA_operator_handle *) handle->operator_handle)->id_container_input, &folder_id))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_METADATA_operator_handle *) handle->operator_handle)->id_container_input, OPH_LOG_OPH_METADATA_DATACUBE_FOLDER_ERROR, value);
 		if (uri)
 			free(uri);

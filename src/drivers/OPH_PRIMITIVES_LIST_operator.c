@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -216,8 +216,6 @@ int task_execute(oph_operator_struct * handle)
 	//Only master process has to continue
 	if (handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
-
-	logging(LOG_INFO, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PRIMITIVES_LIST_INFO_START);
 
 	int level = ((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->level;
 	char *func_ret = ((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->func_ret;
@@ -652,7 +650,6 @@ int task_execute(oph_operator_struct * handle)
 		}
 	}
 
-	logging(LOG_INFO, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PRIMITIVES_LIST_INFO_END);
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 

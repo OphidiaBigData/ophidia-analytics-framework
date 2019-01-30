@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -93,7 +93,7 @@ struct _OPH_RANDCUBE2_operator_handle {
 	char *sessionid;
 	char *description;
 	int id_job;
-	char *rand_algo; 
+	char *rand_algo;
 	int nthread;
 	short int execute_error;
 };

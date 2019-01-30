@@ -12,9 +12,8 @@ Support is provided only for images fits files.
 [Parameters]
 - container : name of the input container; by default it will be automatically set to file name.
 - cwd : absolute path corresponding to the current working directory,
-        used to select the folder where the container is located
-- host_partition : name of I/O host partition used to store data. 
-                   If default value &quot;auto&quot; is specified, the first host partition available will be used.
+        used to select the folder where the container is located.
+- host_partition : name of I/O host partition used to store data. By default the first available host partition will be used.
 - ioserver : type of I/O server used to store data.
 			Possible values are: &quot;ophidiaio_memory&quot; or &quot;mysql_table&quot; (default)
 - import_metadata: imports also metadata with &quot;yes&quot; (default)

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2019 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -246,7 +246,7 @@ int _oph_task_recursive_task_search(ophidiadb * oDB, int folder_id, int datacube
 	//If container name is not set, then search recursively
 	if (!container) {
 		//Find all child folders
-		if (oph_odb_fs_find_fs_objects(oDB, 0, folder_id, 1, NULL, &tmp_task_list)) {
+		if (oph_odb_fs_find_fs_objects(oDB, 0, folder_id, NULL, &tmp_task_list)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive information list\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_TASKS_READ_LIST_INFO_ERROR);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
