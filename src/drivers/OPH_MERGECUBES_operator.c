@@ -986,7 +986,8 @@ int task_init(oph_operator_struct * handle)
 				if (dim[l].calendar && strlen(dim[l].calendar))	// Time dimension (the check can be improved by checking hierarchy name)
 				{
 					if (oph_odb_meta_put
-					    (oDB, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_output_datacube, NULL, OPH_ODB_TIME_FREQUENCY, 0, OPH_COMMON_FULL_REDUCED_DIM)) {
+					    (oDB, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_output_datacube, NULL, OPH_ODB_TIME_FREQUENCY, 0, OPH_COMMON_FULL_REDUCED_DIM,
+					     ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_user)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_METADATA_UPDATE_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
 							OPH_LOG_GENERIC_METADATA_UPDATE_ERROR);
@@ -1013,7 +1014,8 @@ int task_init(oph_operator_struct * handle)
 
 			dim_inst[l].id_grid = 0;
 			if (oph_odb_dim_insert_into_dimensioninstance_table
-			    (oDB, &(dim_inst[l]), &(cubedims[l].id_dimensioninst), ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_output_datacube, NULL, NULL)) {
+			    (oDB, &(dim_inst[l]), &(cubedims[l].id_dimensioninst), ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_output_datacube, NULL, NULL,
+			     ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_user)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in inserting a new dimension instance\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
 					OPH_LOG_OPH_MERGECUBES_DIM_INSTANCE_STORE_ERROR);
@@ -1030,12 +1032,10 @@ int task_init(oph_operator_struct * handle)
 		oph_dim_disconnect_from_dbms(db->dbms_instance);
 		oph_dim_unload_dim_dbinstance(db);
 #endif
-
 		//Write new cube - dimension relation rows
 		for (l = 0; l < number_of_dimensions; l++) {
 			//Change iddatacube in cubehasdim
 			cubedims[l].id_datacube = ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_output_datacube;
-
 			if (oph_odb_cube_insert_into_cubehasdim_table(oDB, &(cubedims[l]), &last_insertd_id)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new datacube - dimension relations.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
@@ -1045,7 +1045,6 @@ int task_init(oph_operator_struct * handle)
 			}
 		}
 		free(cubedims);
-
 		last_insertd_id = 0;
 		oph_odb_task new_task;
 		new_task.id_outputcube = ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_output_datacube;
@@ -1079,7 +1078,6 @@ int task_init(oph_operator_struct * handle)
 		for (cc = 0; cc < input_datacube_num; cc++)
 			free(input_frag[cc]);
 		free(input_frag);
-
 		new_task.input_cube_number = input_datacube_num;
 		if (!(new_task.id_inputcube = (int *) malloc(new_task.input_cube_number * sizeof(int)))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -1094,17 +1092,15 @@ int task_init(oph_operator_struct * handle)
 
 		if (oph_odb_cube_insert_into_task_table(oDB, &new_task, &last_insertd_id)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new task.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_TASK_INSERT_ERROR,
-				new_task.operator);
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
+				OPH_LOG_OPH_MERGECUBES_TASK_INSERT_ERROR, new_task.operator);
 			free(new_task.id_inputcube);
 			goto __OPH_EXIT_1;
 		}
 		free(new_task.id_inputcube);
-
 		strncpy(id_string[0], ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->fragment_ids, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
 		memcpy(id_string[1], &((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_output_datacube, sizeof(int));
 		memcpy(id_string[2], &((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->compressed, sizeof(int));
-
 		for (cc = 0; cc < input_datacube_num; cc++) {
 			strncpy(data_type[cc], ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[cc], OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
 		}
@@ -1123,23 +1119,23 @@ int task_init(oph_operator_struct * handle)
 	if (handle->proc_rank != 0) {
 		if (!(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->fragment_ids = (char *) strndup(id_string[0], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_MEMORY_ERROR_INPUT,
-				"fragment ids");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
+				OPH_LOG_OPH_MERGECUBES_MEMORY_ERROR_INPUT, "fragment ids");
 			((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->execute_error = 1;
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 		if (!(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type = (char **) malloc(input_datacube_num * sizeof(char *)))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_MEMORY_ERROR_INPUT,
-				"measure type array");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
+				OPH_LOG_OPH_MERGECUBES_MEMORY_ERROR_INPUT, "measure type array");
 			((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->execute_error = 1;
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 		for (cc = 0; cc < input_datacube_num; cc++) {
 			if (!(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[cc] = (char *) strndup(data_type[cc], OPH_ODB_CUBE_MEASURE_TYPE_SIZE))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_MEMORY_ERROR_INPUT,
-					"measure type");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
+					OPH_LOG_OPH_MERGECUBES_MEMORY_ERROR_INPUT, "measure type");
 				((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->execute_error = 1;
 				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 			}
@@ -1160,9 +1156,7 @@ int task_distribute(oph_operator_struct * handle)
 
 	int id_number;
 	char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
-
 	((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->execute_error = 1;
-
 	//Get total number of fragment IDs
 	if (oph_ids_count_number_of_ids(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->fragment_ids, &id_number)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get total number of IDs\n");
@@ -1172,10 +1166,8 @@ int task_distribute(oph_operator_struct * handle)
 	//All processes compute the fragment number to work on
 	int div_result = (id_number) / (handle->proc_number);
 	int div_remainder = (id_number) % (handle->proc_number);
-
 	//Every process must process at least divResult
 	((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->fragment_number = div_result;
-
 	if (div_remainder != 0) {
 		//Only some certain processes must process an additional part
 		if (handle->proc_rank / div_remainder == 0)
@@ -1206,8 +1198,8 @@ int task_distribute(oph_operator_struct * handle)
 	//Partition fragment relative index string
 	char *new_ptr = new_id_string;
 	if (oph_ids_get_substring_from_string
-	    (((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->fragment_ids, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->fragment_id_start_position,
-	     ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->fragment_number, &new_ptr)) {
+	    (((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->fragment_ids,
+	     ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->fragment_id_start_position, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->fragment_number, &new_ptr)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to split IDs fragment string\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_ID_STRING_SPLIT_ERROR);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -1234,24 +1226,18 @@ int task_execute(oph_operator_struct * handle)
 
 	if (((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
-
 	((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->execute_error = 1;
-
 	int i = 0, j, k;
-
 	int id_datacube_out = ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_output_datacube;
 	int *id_datacube_in = ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_datacube;
 	int compressed = ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->compressed;
 	int datacube_num = ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->input_datacube_num + ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->number;
-
 	oph_odb_fragment_list *frags = (oph_odb_fragment_list *) calloc(datacube_num, sizeof(oph_odb_fragment_list));
 	oph_odb_db_instance_list *dbs = (oph_odb_db_instance_list *) calloc(datacube_num, sizeof(oph_odb_db_instance_list));
 	oph_odb_dbms_instance_list *dbmss = (oph_odb_dbms_instance_list *) calloc(datacube_num, sizeof(oph_odb_dbms_instance_list));
-
 	//Each process has to be connected to a slave ophidiadb
 	ophidiadb oDB_slave;
 	oph_odb_init_ophidiadb(&oDB_slave);
-
 	if (oph_odb_read_ophidiadb_config_file(&oDB_slave)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_OPHIDIADB_CONFIGURATION_FILE);
@@ -1276,8 +1262,8 @@ int task_execute(oph_operator_struct * handle)
 		if (oph_odb_stge_fetch_fragment_connection_string
 		    (&oDB_slave, id_datacube_in[ccc], ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->fragment_ids, &(frags[cc]), &(dbs[cc]), &(dbmss[cc]))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_CONNECTION_STRINGS_NOT_FOUND,
-				cc);
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
+				OPH_LOG_OPH_MERGECUBES_CONNECTION_STRINGS_NOT_FOUND, cc);
 			oph_odb_free_ophidiadb(&oDB_slave);
 			for (cc = 0; cc < datacube_num; cc++) {
 				oph_odb_stge_free_fragment_list(&(frags[cc]));
@@ -1311,15 +1297,13 @@ int task_execute(oph_operator_struct * handle)
 
 	char frag_name_out[OPH_ODB_STGE_FRAG_NAME_SIZE];
 	int result = OPH_ANALYTICS_OPERATOR_SUCCESS, frag_count = 0;
-
 	char **input_frag = (char **) malloc(datacube_num * sizeof(char *));
 	char **input_db = (char **) malloc(datacube_num * sizeof(char *));
 	char *query = NULL;
-
 	if (oph_dc_setup_dbms(&(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server), (dbmss[0].value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_IOPLUGIN_SETUP_ERROR,
-			(dbmss[0].value[i]).id_dbms);
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
+			OPH_LOG_OPH_MERGECUBES_IOPLUGIN_SETUP_ERROR, (dbmss[0].value[i]).id_dbms);
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 	// This implementation assumes a perfect correspondence between datacube structures
@@ -1341,8 +1325,8 @@ int task_execute(oph_operator_struct * handle)
 
 		if (oph_dc_connect_to_dbms(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server, &(dbmss[0].value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_DBMS_CONNECTION_ERROR,
-				(dbmss[0].value[i]).id_dbms);
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
+				OPH_LOG_OPH_MERGECUBES_DBMS_CONNECTION_ERROR, (dbmss[0].value[i]).id_dbms);
 			result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 		//For each DB
@@ -1350,11 +1334,10 @@ int task_execute(oph_operator_struct * handle)
 			//Check DB - DBMS Association
 			if (dbs[0].value[j].dbms_instance != &(dbmss[0].value[i]))
 				continue;
-
 			if (oph_dc_use_db_of_dbms(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server, &(dbmss[0].value[i]), &(dbs[0].value[j]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_DB_SELECTION_ERROR,
-					(dbs[0].value[j]).db_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
+					OPH_LOG_OPH_MERGECUBES_DB_SELECTION_ERROR, (dbs[0].value[j]).db_name);
 				result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				break;
 			}
@@ -1375,7 +1358,6 @@ int task_execute(oph_operator_struct * handle)
 				//Check Fragment - DB Association
 				if (frags[0].value[k].db_instance != &(dbs[0].value[j]))
 					continue;
-
 				for (cc = 1 + ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->number; cc < datacube_num; cc++) {
 					if (frags[cc].value[k].db_instance != &(dbs[cc].value[j]))	// continue;
 					{
@@ -1396,7 +1378,6 @@ int task_execute(oph_operator_struct * handle)
 				}
 
 				query = NULL;
-
 				for (cc = 0; cc < datacube_num; cc++) {
 					input_frag[cc] = frags[cc].value[k].fragment_name;
 					input_db[cc] = frags[cc].value[k].db_instance->db_name;
@@ -1424,8 +1405,8 @@ int task_execute(oph_operator_struct * handle)
 					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[0],
 					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[1], frags[0].value[k].fragment_name, MYSQL_FRAG_MEASURE,
 					       frags[1].value[k].fragment_name, MYSQL_FRAG_MEASURE, MYSQL_FRAG_MEASURE, frags[0].value[k].db_instance->db_name, frags[0].value[k].fragment_name,
-					       frags[1].value[k].db_instance->db_name, frags[1].value[k].fragment_name, frags[0].value[k].fragment_name, MYSQL_FRAG_ID, frags[1].value[k].fragment_name,
-					       MYSQL_FRAG_ID);
+					       frags[1].value[k].db_instance->db_name, frags[1].value[k].fragment_name, frags[0].value[k].fragment_name, MYSQL_FRAG_ID,
+					       frags[1].value[k].fragment_name, MYSQL_FRAG_ID);
 				else
 					printf("ORIGINAL QUERY: " OPH_MERGECUBES_QUERY2_MYSQL "\n", frag_name_out, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags[0].value[k].fragment_name,
 					       MYSQL_FRAG_ID, MYSQL_FRAG_ID, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode ? OPH_MERGECUBES_APPEND : OPH_MERGECUBES_INTERLACE,
@@ -1434,10 +1415,9 @@ int task_execute(oph_operator_struct * handle)
 					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[0],
 					       ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->measure_type[1], frags[0].value[k].fragment_name, MYSQL_FRAG_MEASURE,
 					       frags[1].value[k].fragment_name, MYSQL_FRAG_MEASURE, MYSQL_FRAG_MEASURE, frags[0].value[k].db_instance->db_name, frags[0].value[k].fragment_name,
-					       frags[1].value[k].db_instance->db_name, frags[1].value[k].fragment_name, frags[0].value[k].fragment_name, MYSQL_FRAG_ID, frags[1].value[k].fragment_name,
-					       MYSQL_FRAG_ID);
+					       frags[1].value[k].db_instance->db_name, frags[1].value[k].fragment_name, frags[0].value[k].fragment_name, MYSQL_FRAG_ID,
+					       frags[1].value[k].fragment_name, MYSQL_FRAG_ID);
 #endif
-
 				//MERGECUBES fragment
 				if (oph_dc_create_fragment_from_query(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server, &(frags[0].value[k]), NULL, query, 0, 0, 0)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
@@ -1451,12 +1431,10 @@ int task_execute(oph_operator_struct * handle)
 
 				free(query);
 				query = NULL;
-
 				//Change fragment fields
 				frags[0].value[k].id_datacube = id_datacube_out;
 				strncpy(frags[0].value[k].fragment_name, 1 + strchr(frag_name_out, '.'), OPH_ODB_STGE_FRAG_NAME_SIZE);
 				frags[0].value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
-
 				//Insert new fragment
 				if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &(frags[0].value[k]))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update fragment table.\n");
@@ -1473,8 +1451,8 @@ int task_execute(oph_operator_struct * handle)
 
 	if (oph_dc_cleanup_dbms(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->server)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_IOPLUGIN_CLEANUP_ERROR,
-			(dbmss[0].value[0]).id_dbms);
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
+			OPH_LOG_OPH_MERGECUBES_IOPLUGIN_CLEANUP_ERROR, (dbmss[0].value[0]).id_dbms);
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 
@@ -1489,10 +1467,8 @@ int task_execute(oph_operator_struct * handle)
 	free(dbmss);
 	free(input_db);
 	free(input_frag);
-
 	if (result == OPH_ANALYTICS_OPERATOR_SUCCESS)
 		((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->execute_error = 0;
-
 	return result;
 }
 
@@ -1518,10 +1494,8 @@ int task_destroy(oph_operator_struct * handle)
 	short int proc_error = ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->execute_error;
 	int id_datacube = ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_output_datacube;
 	short int global_error = 0;
-
 	//Reduce results
 	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
-
 	if (handle->proc_rank == 0 && global_error == 0) {
 		//Master process print output datacube PID
 		char *tmp_uri = NULL;
@@ -1542,7 +1516,6 @@ int task_destroy(oph_operator_struct * handle)
 		memset(jsonbuf, 0, OPH_COMMON_BUFFER_LEN);
 		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_output_container,
 			 ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_output_datacube);
-
 		// ADD OUTPUT PID TO JSON AS TEXT
 		if (oph_json_is_objkey_printable
 		    (((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->objkeys, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_MERGECUBES)) {
@@ -1561,7 +1534,6 @@ int task_destroy(oph_operator_struct * handle)
 			free(handle->output_string);
 		}
 		handle->output_string = strdup(tmp_string);
-
 		free(tmp_uri);
 	}
 
@@ -1581,7 +1553,6 @@ int task_destroy(oph_operator_struct * handle)
 			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
 		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
 		handle->output_code = global_error;
-
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
 			oph_dproc_clean_odb(&((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->oDB, id_datacube,
@@ -1590,7 +1561,6 @@ int task_destroy(oph_operator_struct * handle)
 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_GENERIC_PROCESS_ERROR);
-
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -1602,7 +1572,6 @@ int env_unset(oph_operator_struct * handle)
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
-
 	//Only master process has to close and release connection to management OphidiaDB
 	if (handle->proc_rank == 0) {
 		oph_odb_free_ophidiadb(&((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->oDB);
@@ -1648,6 +1617,5 @@ int env_unset(oph_operator_struct * handle)
 	}
 	free((OPH_MERGECUBES_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
-
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

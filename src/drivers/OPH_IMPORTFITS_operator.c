@@ -1489,7 +1489,7 @@ int task_init(oph_operator_struct * handle)
 					while (j < OPH_ODB_DIM_MONTH_NUMBER)
 						dim.month_lengths[j++] = OPH_ODB_DIM_DAY_NUMBER;
 				}
-				if (oph_odb_dim_insert_into_dimension_table(oDB, &(dim), &last_insertd_id, 0)) {
+				if (oph_odb_dim_insert_into_dimension_table(oDB, &(dim), &last_insertd_id, 0, id_user)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert dimension.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_INSERT_DIMENSION_ERROR);
 					goto __OPH_EXIT_1;
@@ -1995,7 +1995,7 @@ int task_init(oph_operator_struct * handle)
 				free(index_array);
 				dim_inst[i].fk_id_dimension_index = dimension_array_id;	// Indexes
 
-				if (oph_odb_dim_insert_into_dimensioninstance_table(oDB, &(dim_inst[i]), &dimension_array_id, 0, NULL, NULL)) {
+				if (oph_odb_dim_insert_into_dimensioninstance_table(oDB, &(dim_inst[i]), &dimension_array_id, 0, NULL, NULL, id_user)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension instance row\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_DIMINST_INSERT_ERROR, tot_dims[j].dimension_name);
 					free(tot_dims);

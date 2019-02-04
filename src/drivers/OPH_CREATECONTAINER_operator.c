@@ -621,7 +621,18 @@ int task_execute(oph_operator_struct * handle)
 			while (j < OPH_ODB_DIM_MONTH_NUMBER)
 				dim.month_lengths[j++] = OPH_ODB_DIM_DAY_NUMBER;
 		}
-		if (oph_odb_dim_insert_into_dimension_table(oDB, &(dim), &last_insertd_id, 0)) {
+
+		int id_user = 0;
+		if (oph_odb_user_retrieve_user_id(oDB, user, &id_user)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to extract userid.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_GENERIC_USER_ID_ERROR);
+			oph_odb_fs_delete_from_container_table(oDB, id_container_out);
+			oph_dim_disconnect_from_dbms(db->dbms_instance);
+			oph_dim_unload_dim_dbinstance(db);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+
+		if (oph_odb_dim_insert_into_dimension_table(oDB, &(dim), &last_insertd_id, 0, id_user)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert dimension.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_CREATECONTAINER_INSERT_DIMENSION_ERROR);
 			oph_odb_fs_delete_from_container_table(oDB, id_container_out);
@@ -653,7 +664,6 @@ int task_execute(oph_operator_struct * handle)
 
 	oph_dim_disconnect_from_dbms(db->dbms_instance);
 	oph_dim_unload_dim_dbinstance(db);
-
 	//Master process print output container PID
 	char *tmp_uri = NULL;
 	if (oph_pid_get_uri(&tmp_uri)) {
@@ -673,7 +683,6 @@ int task_execute(oph_operator_struct * handle)
 	char jsonbuf[OPH_COMMON_BUFFER_LEN];
 	memset(jsonbuf, 0, OPH_COMMON_BUFFER_LEN);
 	snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT2, tmp_uri, ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->id_output_container);
-
 	// ADD OUTPUT PID TO JSON AS TEXT
 	if (oph_json_is_objkey_printable
 	    (((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->objkeys_num,
@@ -694,9 +703,7 @@ int task_execute(oph_operator_struct * handle)
 		free(handle->output_string);
 	}
 	handle->output_string = strdup(tmp_string);
-
 	free(tmp_uri);
-
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -727,7 +734,6 @@ int env_unset(oph_operator_struct * handle)
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
-
 	oph_odb_free_ophidiadb(&((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->oDB);
 	if (((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->container_output) {
 		free((char *) ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->container_output);
@@ -745,7 +751,6 @@ int env_unset(oph_operator_struct * handle)
 	}
 
 	int i, dim_num = ((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->number_of_dimensions;
-
 	if (((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->dimension_name) {
 		for (i = 0; i < dim_num; i++) {
 			if (((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle)->dimension_name[i]) {
@@ -806,6 +811,5 @@ int env_unset(oph_operator_struct * handle)
 
 	free((OPH_CREATECONTAINER_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
-
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

@@ -1137,7 +1137,7 @@ int oph_odb_dim_enable_grid(ophidiadb * oDB, int id_grid)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension * dim, int *last_insertd_id, int id_datacube)
+int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension * dim, int *last_insertd_id, int id_datacube, int id_user)
 {
 	if (!oDB || !dim || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1185,21 +1185,21 @@ int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension *
 		if (ll) {
 			char value[OPH_ODB_DIM_TIME_SIZE];
 			snprintf(value, OPH_ODB_DIM_TIME_SIZE, "%s %s %s", dim->units, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, dim->base_time);
-			if (oph_odb_meta_put(oDB, id_datacube, dim->dimension_name, OPH_ODB_TIME_UNITS, 0, value)) {
+			if (oph_odb_meta_put(oDB, id_datacube, dim->dimension_name, OPH_ODB_TIME_UNITS, 0, value, id_user)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 				return OPH_ODB_MYSQL_ERROR;
 			}
-			if (oph_odb_meta_put(oDB, id_datacube, dim->dimension_name, OPH_ODB_TIME_CALENDAR, 0, dim->calendar)) {
+			if (oph_odb_meta_put(oDB, id_datacube, dim->dimension_name, OPH_ODB_TIME_CALENDAR, 0, dim->calendar, id_user)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 				return OPH_ODB_MYSQL_ERROR;
 			}
 			snprintf(value, OPH_ODB_DIM_TIME_SIZE, "%d", dim->leap_year);
-			if (oph_odb_meta_put(oDB, id_datacube, dim->dimension_name, OPH_ODB_TIME_LEAP_YEAR, 0, value)) {
+			if (oph_odb_meta_put(oDB, id_datacube, dim->dimension_name, OPH_ODB_TIME_LEAP_YEAR, 0, value, id_user)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 				return OPH_ODB_MYSQL_ERROR;
 			}
 			snprintf(value, OPH_ODB_DIM_TIME_SIZE, "%d", dim->leap_month);
-			if (oph_odb_meta_put(oDB, id_datacube, dim->dimension_name, OPH_ODB_TIME_LEAP_MONTH, 0, value)) {
+			if (oph_odb_meta_put(oDB, id_datacube, dim->dimension_name, OPH_ODB_TIME_LEAP_MONTH, 0, value, id_user)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 				return OPH_ODB_MYSQL_ERROR;
 			}
@@ -1209,7 +1209,8 @@ int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension *
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb * oDB, oph_odb_dimension_instance * dim_inst, int *last_insertd_id, int id_datacube, const char *dimension_name, const char *frequency)
+int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb * oDB, oph_odb_dimension_instance * dim_inst, int *last_insertd_id, int id_datacube, const char *dimension_name, const char *frequency,
+						    int id_user)
 {
 	if (!oDB || !dim_inst || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1250,7 +1251,7 @@ int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb * oDB, oph_odb_dim
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 			return OPH_ODB_MYSQL_ERROR;
 		}
-		if (ll && oph_odb_meta_put(oDB, id_datacube, NULL, OPH_ODB_TIME_FREQUENCY, 0, frequency)) {
+		if (ll && oph_odb_meta_put(oDB, id_datacube, NULL, OPH_ODB_TIME_FREQUENCY, 0, frequency, id_user)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 			return OPH_ODB_MYSQL_ERROR;
 		}
@@ -1360,7 +1361,8 @@ int oph_odb_dim_retrieve_hierarchy_id(ophidiadb * oDB, char *hierarchy_name, int
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb * oDB, int datacube_id, const char *dimension_name, oph_odb_hierarchy * hier, char *concept_level, int *dimension_instance_id)
+int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb * oDB, int datacube_id, const char *dimension_name, oph_odb_hierarchy * hier, char *concept_level, int *dimension_instance_id,
+							      int id_user)
 {
 	if (!oDB || !dimension_name || !hier) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1461,27 +1463,27 @@ int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb * oDB, i
 				if (!concept_level_) {
 					if (concept_level && row[1])
 						*concept_level = (char) row[1][0];
-					if (oph_odb_meta_put(oDB, datacube_id, NULL, OPH_ODB_TIME_FREQUENCY, 0, row[1])) {
+					if (oph_odb_meta_put(oDB, datacube_id, NULL, OPH_ODB_TIME_FREQUENCY, 0, row[1], id_user)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Metadata write error for key %s\n", OPH_ODB_TIME_FREQUENCY);
 						return OPH_ODB_MYSQL_ERROR;
 					}
 					if (!units_ && row[2] && row[3]) {
 						char value[OPH_ODB_DIM_TIME_SIZE];
 						snprintf(value, OPH_ODB_DIM_TIME_SIZE, "%s %s %s", row[2], OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, row[3]);
-						if (oph_odb_meta_put(oDB, datacube_id, dimension_name, OPH_ODB_TIME_UNITS, 0, value)) {
+						if (oph_odb_meta_put(oDB, datacube_id, dimension_name, OPH_ODB_TIME_UNITS, 0, value, id_user)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 							return OPH_ODB_MYSQL_ERROR;
 						}
 					}
-					if (!calendar_ && row[4] && oph_odb_meta_put(oDB, datacube_id, dimension_name, OPH_ODB_TIME_CALENDAR, 0, row[4])) {
+					if (!calendar_ && row[4] && oph_odb_meta_put(oDB, datacube_id, dimension_name, OPH_ODB_TIME_CALENDAR, 0, row[4], id_user)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 						return OPH_ODB_MYSQL_ERROR;
 					}
-					if (!leap_year_ && row[5] && oph_odb_meta_put(oDB, datacube_id, dimension_name, OPH_ODB_TIME_LEAP_YEAR, 0, row[5])) {
+					if (!leap_year_ && row[5] && oph_odb_meta_put(oDB, datacube_id, dimension_name, OPH_ODB_TIME_LEAP_YEAR, 0, row[5], id_user)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 						return OPH_ODB_MYSQL_ERROR;
 					}
-					if (!leap_month_ && row[6] && oph_odb_meta_put(oDB, datacube_id, dimension_name, OPH_ODB_TIME_LEAP_MONTH, 0, row[6])) {
+					if (!leap_month_ && row[6] && oph_odb_meta_put(oDB, datacube_id, dimension_name, OPH_ODB_TIME_LEAP_MONTH, 0, row[6], id_user)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 						return OPH_ODB_MYSQL_ERROR;
 					}

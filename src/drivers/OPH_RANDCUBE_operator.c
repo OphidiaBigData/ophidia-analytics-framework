@@ -1049,7 +1049,7 @@ int task_init(oph_operator_struct * handle)
 				free(index_array);
 				dim_inst[i].fk_id_dimension_index = dimension_array_id;	// Indexes
 
-				if (oph_odb_dim_insert_into_dimensioninstance_table(oDB, &(dim_inst[i]), &dimension_array_id, id_datacube_out, NULL, NULL)) {
+				if (oph_odb_dim_insert_into_dimensioninstance_table(oDB, &(dim_inst[i]), &dimension_array_id, id_datacube_out, NULL, NULL, id_user)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension instance row\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DIMINST_INSERT_ERROR, dims[j].dimension_name);
 					free(tot_dims);

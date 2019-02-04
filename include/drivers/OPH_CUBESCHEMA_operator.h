@@ -62,6 +62,7 @@ struct _OPH_CUBESCHEMA_operator_handle {
 	char concept_level;
 	int dim_level;
 	char dim_array;
+	int id_user;
 };
 typedef struct _OPH_CUBESCHEMA_operator_handle OPH_CUBESCHEMA_operator_handle;
 

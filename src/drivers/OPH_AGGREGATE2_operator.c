@@ -481,7 +481,8 @@ int task_init(oph_operator_struct * handle)
 		char concept_level_in;
 		int target_dimension_instance;
 		if (oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube
-		    (oDB, datacube_id, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->dimension_name, &hier, &concept_level_in, &target_dimension_instance)) {
+		    (oDB, datacube_id, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->dimension_name, &hier, &concept_level_in, &target_dimension_instance,
+		     ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_user)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find hierarchy information associated to '%s'\n", ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->dimension_name);
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_AGGREGATE2_BAD_PARAMETER,
 				((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->dimension_name);
@@ -492,7 +493,6 @@ int task_init(oph_operator_struct * handle)
 
 		char filename[2 * OPH_TP_BUFLEN];
 		snprintf(filename, 2 * OPH_TP_BUFLEN, OPH_FRAMEWORK_HIERARCHY_XML_FILE_PATH_DESC, OPH_ANALYTICS_LOCATION, hier.filename);
-
 		unsigned int ll;
 		char concept_level_out;
 		concept_level_out = *(((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->dimension_level);
@@ -580,9 +580,7 @@ int task_init(oph_operator_struct * handle)
 		for (l = 0; l < number_of_dimensions; l++)
 			if (cubedims[l].explicit_dim && cubedims[l].size)
 				cubedims[l].level = found++;
-
 		// Begin - Dimension table management
-
 		// Dimension instances
 		oph_odb_dimension dim[number_of_dimensions];
 		oph_odb_dimension_instance dim_inst[number_of_dimensions];
@@ -610,7 +608,6 @@ int task_init(oph_operator_struct * handle)
 		int id_grid = 0, new_grid = 0, stored_dim_num = 0, grid_exist = 0;
 		oph_odb_dimension *stored_dims = NULL;
 		oph_odb_dimension_instance *stored_dim_insts = NULL;
-
 		if (((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->grid_name) {
 			if (oph_odb_dim_retrieve_grid_id
 			    (oDB, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->grid_name, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_input_container,
@@ -726,7 +723,6 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		int tuplexfragment = cube.tuplexfragment /= old_size;
-
 		//New fields
 		cube.id_source = 0;
 		cube.level++;
@@ -734,7 +730,6 @@ int task_init(oph_operator_struct * handle)
 			snprintf(cube.description, OPH_ODB_CUBE_DESCRIPTION_SIZE, "%s", ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->description);
 		else
 			*cube.description = 0;
-
 		//Insert new datacube
 		if (oph_odb_cube_insert_into_datacube_partitioned_tables(oDB, &cube, &(((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_output_datacube))) {
 			oph_dim_disconnect_from_dbms(db->dbms_instance);
@@ -750,7 +745,6 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		oph_odb_cube_free_datacube(&cube);
-
 		if (oph_odb_meta_copy_from_cube_to_cube
 		    (oDB, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_input_datacube, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_output_datacube,
 		     ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_user)) {
@@ -773,7 +767,6 @@ int task_init(oph_operator_struct * handle)
 		char o_index_dimension_table_name[OPH_COMMON_BUFFER_LEN], o_label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
 		snprintf(o_index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_output_container);
 		snprintf(o_label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_output_container);
-
 		int kk, residual_dim_number = 0, d, new_size = 0, prev_kk;
 		char *dim_row, *sizes_, *cl_value;
 		int compressed = 0;
@@ -793,7 +786,6 @@ int task_init(oph_operator_struct * handle)
 				// svalue indicates the index of group which the current value belongs to
 				prev_value = -1;
 				sizes[new_size = 0] = 0;
-
 				if (dim[l].calendar && strlen(dim[l].calendar) && OPH_DIM_TIME_CL_IS_TIME(concept_level_in)) {
 					// Begin: determination of dim_inst[l].size = cubedims[l].size;
 					if (oph_dim_read_dimension_data(db, index_dimension_table_name, dim_inst[l].fk_id_dimension_index, MYSQL_DIMENSION, compressed, &dim_row) || !dim_row) {
@@ -851,7 +843,6 @@ int task_init(oph_operator_struct * handle)
 						goto __OPH_EXIT_1;
 					}
 					char *dim_row2 = (char *) malloc(cubedims[l].size * size);
-
 					struct tm tm_prev;
 					memset(&tm_prev, 0, sizeof(struct tm));
 					tm_prev.tm_year = -1;
@@ -922,12 +913,10 @@ int task_init(oph_operator_struct * handle)
 						goto __OPH_EXIT_1;
 					}
 					memcpy(dim_row2 + new_size * size, dim_row + prev_kk * size, size);
-
 					dim_inst[l].size = cubedims[l].size = ++new_size;
 					if (dim_row)
 						free(dim_row);
 					// End: determination of ...
-
 					// A new dimension (both the rows of labels and indexes) has to be created
 					if (oph_dim_insert_into_dimension_table_from_query
 					    (db, o_label_dimension_table_name, dim[l].dimension_type, dim_inst[l].size, MYSQL_DIMENSION, dim_row2, &(dim_inst[l].fk_id_dimension_label))) {
@@ -980,7 +969,6 @@ int task_init(oph_operator_struct * handle)
 					if (dim_row)
 						free(dim_row);
 					// End: determination of ...
-
 					dim_inst[l].fk_id_dimension_label = 0;	// A normal dimension will be transformed into a vectors of indexes
 				}
 
@@ -1015,7 +1003,8 @@ int task_init(oph_operator_struct * handle)
 				dim_inst[l].fk_id_dimension_label = 0;
 				if (dim[l].calendar && strlen(dim[l].calendar)) {
 					if (oph_odb_meta_put
-					    (oDB, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_output_datacube, NULL, OPH_ODB_TIME_FREQUENCY, 0, OPH_COMMON_FULL_REDUCED_DIM)) {
+					    (oDB, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_output_datacube, NULL, OPH_ODB_TIME_FREQUENCY, 0, OPH_COMMON_FULL_REDUCED_DIM,
+					     ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_user)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_METADATA_UPDATE_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_GENERIC_METADATA_UPDATE_ERROR);
@@ -1073,7 +1062,7 @@ int task_init(oph_operator_struct * handle)
 				}
 				if (oph_odb_dim_insert_into_dimensioninstance_table
 				    (oDB, &(dim_inst[l]), &(cubedims[l].id_dimensioninst), ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_output_datacube, dim[l].dimension_name,
-				     cl_value)) {
+				     cl_value, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_user)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in inserting a new dimension instance\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_input_container,
 						OPH_LOG_OPH_AGGREGATE2_DIM_INSTANCE_STORE_ERROR);
@@ -1130,7 +1119,6 @@ int task_init(oph_operator_struct * handle)
 			free(stored_dims);
 		if (stored_dim_insts)
 			free(stored_dim_insts);
-
 		if (!new_grid && ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->grid_name && (residual_dim_number != stored_dim_num)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "This grid cannot be used in this context or error in checking dimension data or metadata\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_AGGREGATE2_DIM_CHECK_ERROR);
@@ -1157,7 +1145,6 @@ int task_init(oph_operator_struct * handle)
 		for (l = 0; l < number_of_dimensions; l++) {
 			//Change iddatacube in cubehasdim
 			cubedims[l].id_datacube = ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_output_datacube;
-
 			if (oph_odb_cube_insert_into_cubehasdim_table(oDB, &(cubedims[l]), &last_insertd_id)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert datacube - dimension relations.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_input_container,
@@ -1167,7 +1154,6 @@ int task_init(oph_operator_struct * handle)
 			}
 		}
 		free(cubedims);
-
 		last_insertd_id = 0;
 		oph_odb_task new_task;
 		new_task.id_outputcube = ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_output_datacube;
@@ -1199,7 +1185,6 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		new_task.id_inputcube[0] = ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_input_datacube;
-
 		if (oph_odb_cube_insert_into_task_table(oDB, &new_task, &last_insertd_id)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new task.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_AGGREGATE2_TASK_INSERT_ERROR,
@@ -1208,20 +1193,14 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		free(new_task.id_inputcube);
-
 		strncpy(id_string[0], ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->fragment_ids, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
 		memcpy(id_string[1], &((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_output_datacube, sizeof(int));
 		memcpy(id_string[2], &((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->compressed, sizeof(int));
-
 		strncpy(data_type, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->measure_type, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
-
 		memcpy(sizep, &((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->size, sizeof(int));
-
 		((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->size_num = new_size;
 		memcpy(sizen, &((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->size_num, sizeof(int));
-
 		memcpy(bsizep, &((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->block_size, sizeof(long long));
-
 	}
       __OPH_EXIT_1:
 	//Broadcast to all other processes the fragment relative index        
@@ -1253,7 +1232,6 @@ int task_init(oph_operator_struct * handle)
 		((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->size = *((int *) sizep);
 		((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->size_num = *((int *) sizen);
 		((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->block_size = *((long long *) bsizep);
-
 		if (((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->size_num) {
 			sizep = ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->sizes =
 			    (char *) malloc(((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->size_num * sizeof(long long));
@@ -1267,10 +1245,8 @@ int task_init(oph_operator_struct * handle)
 		}
 	} else
 		sizep = ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->sizes;
-
 	if (((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->size_num)
 		MPI_Bcast(sizep, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->size_num * sizeof(long long), MPI_CHAR, 0, MPI_COMM_WORLD);
-
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -1284,9 +1260,7 @@ int task_distribute(oph_operator_struct * handle)
 
 	int id_number;
 	char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
-
 	((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->execute_error = 1;
-
 	//Get total number of fragment IDs
 	if (oph_ids_count_number_of_ids(((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->fragment_ids, &id_number)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get total number of IDs\n");
@@ -1296,10 +1270,8 @@ int task_distribute(oph_operator_struct * handle)
 	//All processes compute the fragment number to work on
 	int div_result = (id_number) / (handle->proc_number);
 	int div_remainder = (id_number) % (handle->proc_number);
-
 	//Every process must process at least divResult
 	((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->fragment_number = div_result;
-
 	if (div_remainder != 0) {
 		//Only some certain processes must process an additional part
 		if (handle->proc_rank / div_remainder == 0)
@@ -1357,24 +1329,18 @@ int task_execute(oph_operator_struct * handle)
 	}
 
 	OPH_AGGREGATE2_operator_handle *oper_handle = (OPH_AGGREGATE2_operator_handle *) handle->operator_handle;
-
 	if (oper_handle->fragment_id_start_position < 0 && handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
-
 	oper_handle->execute_error = 1;
-
 	int l, i;
-
 	int num_threads = (oper_handle->nthread <= (unsigned int) oper_handle->fragment_number ? oper_handle->nthread : (unsigned int) oper_handle->fragment_number);
 	int res[num_threads];
-
 	int set_to_zero = 0, counters = (oper_handle->sizes ? 1 : 0);
 	char _ms[OPH_COMMON_MAX_DOUBLE_LENGHT];
 	if (isnan(oper_handle->ms))
 		snprintf(_ms, OPH_COMMON_MAX_DOUBLE_LENGHT, "NULL");
 	else
 		snprintf(_ms, OPH_COMMON_MAX_DOUBLE_LENGHT, "%f", oper_handle->ms);
-
 	long long yyy = oper_handle->size, total_sizes = 0;
 	if (!counters) {
 		oper_handle->sizes = (char *) (&yyy);
@@ -1383,14 +1349,11 @@ int task_execute(oph_operator_struct * handle)
 	} else
 		for (i = 0; i < oper_handle->size_num; ++i)
 			total_sizes += ((long long *) oper_handle->sizes)[i];
-
 	ophidiadb oDB_slave;
 	oph_odb_init_ophidiadb_thread(&oDB_slave);
 	oph_odb_fragment_list frags;
 	oph_odb_db_instance_list dbs;
 	oph_odb_dbms_instance_list dbmss;
-
-
 	if (oph_odb_read_ophidiadb_config_file(&oDB_slave)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE2_OPHIDIADB_CONFIGURATION_FILE);
@@ -1425,8 +1388,6 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_dbms_instance_list *dbmss;
 	};
 	typedef struct _thread_struct thread_struct;
-
-
 	void *exec_thread(void *ts) {
 
 		OPH_AGGREGATE2_operator_handle *oper_handle = ((thread_struct *) ts)->oper_handle;
@@ -1434,32 +1395,24 @@ int task_execute(oph_operator_struct * handle)
 		int num_threads = ((thread_struct *) ts)->total_threads;
 		int proc_rank = ((thread_struct *) ts)->proc_rank;
 		int counters = ((thread_struct *) ts)->counters;
-
 		int i = 0, k;
-
 		int id_datacube_out = oper_handle->id_output_datacube;
 		int compressed = oper_handle->compressed;
-
 		oph_odb_fragment_list *frags = ((thread_struct *) ts)->frags;
 		oph_odb_db_instance_list *dbs = ((thread_struct *) ts)->dbs;
 		oph_odb_dbms_instance_list *dbmss = ((thread_struct *) ts)->dbmss;
-
 		int res = OPH_ANALYTICS_OPERATOR_SUCCESS;
-
 		int fragxthread = (int) floor((double) (frags->size / num_threads));
 		int remainder = (int) frags->size % num_threads;
 		//Compute starting number of fragments inserted by other threads
 		unsigned int current_frag_count = l * fragxthread + (l < remainder ? l : remainder);
-
 		//Update number of fragments to be inserted
 		if (l < remainder)
 			fragxthread += 1;
-
 		char operation[OPH_COMMON_BUFFER_LEN];
 		char frag_name_out[OPH_ODB_STGE_FRAG_NAME_SIZE];
 		int n, frag_count = 0, tuplexfragment, size;
 		long long size_;
-
 		oph_ioserver_handler *server = NULL;
 		if (oph_dc_setup_dbms_thread(&(server), (dbmss->value[0]).io_server_type)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
@@ -1468,7 +1421,6 @@ int task_execute(oph_operator_struct * handle)
 			res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 		int first_dbms, first_db, first_frag = current_frag_count;
-
 		for (first_db = 0; first_db < dbs->size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_db++) {
 			//Find db associated to fragment
 			if (frags->value[current_frag_count].id_db == dbs->value[first_db].id_db)
@@ -1505,9 +1457,7 @@ int task_execute(oph_operator_struct * handle)
 				//Check Fragment - DB Association
 				if (frags->value[k].db_instance != &(dbs->value[i]))
 					continue;
-
 				tuplexfragment = frags->value[k].key_end - frags->value[k].key_start + 1;	// Under the assumption that IDs are consecutive without any holes
-
 				size = oper_handle->size * oper_handle->block_size;
 				if (frags->value[k].key_end && !counters) {
 					if (tuplexfragment < size) {
@@ -1523,7 +1473,6 @@ int task_execute(oph_operator_struct * handle)
 					}
 				}
 				size = oper_handle->size;
-
 				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, proc_rank, (current_frag_count + frag_count + 1), &frag_name_out)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag name exceed limit.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE2_STRING_BUFFER_OVERFLOW, "fragment name", frag_name_out);
@@ -1532,8 +1481,8 @@ int task_execute(oph_operator_struct * handle)
 				}
 				//AGGREGATE2 mysql plugin
 				if (compressed)
-					n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_AGGREGATE2_PLUGIN_COMPR, oper_handle->measure_type,
-						     oper_handle->measure_type, MYSQL_FRAG_MEASURE, oper_handle->operation, _ms);
+					n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_AGGREGATE2_PLUGIN_COMPR, oper_handle->measure_type, oper_handle->measure_type, MYSQL_FRAG_MEASURE,
+						     oper_handle->operation, _ms);
 				else
 					n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_AGGREGATE2_PLUGIN, oper_handle->measure_type,
 						     oper_handle->measure_type, MYSQL_FRAG_MEASURE, oper_handle->operation, _ms);
@@ -1564,7 +1513,6 @@ int task_execute(oph_operator_struct * handle)
 			}
 
 			oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
-
 			if (res != OPH_ANALYTICS_OPERATOR_SUCCESS) {
 				oph_dc_cleanup_dbms(server);
 				mysql_thread_end();
@@ -1587,9 +1535,7 @@ int task_execute(oph_operator_struct * handle)
 	pthread_attr_t attr;
 	pthread_attr_init(&attr);
 	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-
 	thread_struct ts[num_threads];
-
 	int rc;
 	for (l = 0; l < num_threads; l++) {
 		ts[l].oper_handle = oper_handle;
@@ -1600,7 +1546,6 @@ int task_execute(oph_operator_struct * handle)
 		ts[l].frags = &frags;
 		ts[l].dbs = &dbs;
 		ts[l].dbmss = &dbmss;
-
 		rc = pthread_create(&threads[l], &attr, exec_thread, (void *) &(ts[l]));
 		if (rc) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create thread %d: %d.\n", l, rc);
@@ -1622,7 +1567,6 @@ int task_execute(oph_operator_struct * handle)
 
 	oph_odb_stge_free_db_list(&dbs);
 	oph_odb_stge_free_dbms_list(&dbmss);
-
 	//Insert new fragment
 	if (oph_odb_stge_insert_into_fragment_table2(&oDB_slave, frags.value, frags.size)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update fragment table.\n");
@@ -1637,7 +1581,6 @@ int task_execute(oph_operator_struct * handle)
 	oph_odb_stge_free_fragment_list(&frags);
 	oph_odb_free_ophidiadb_thread(&oDB_slave);
 	mysql_thread_end();
-
 	for (l = 0; l < num_threads; l++) {
 		if (res[l] != OPH_ANALYTICS_OPERATOR_SUCCESS) {
 			oper_handle->execute_error = 1;
@@ -1647,7 +1590,6 @@ int task_execute(oph_operator_struct * handle)
 
 	if (set_to_zero)
 		oper_handle->sizes = NULL;
-
 	oper_handle->execute_error = 0;
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -1672,14 +1614,11 @@ int task_destroy(oph_operator_struct * handle)
 	}
 
 	OPH_AGGREGATE2_operator_handle *oper_handle = (OPH_AGGREGATE2_operator_handle *) handle->operator_handle;
-
 	short int proc_error = oper_handle->execute_error;
 	int id_datacube = oper_handle->id_output_datacube;
 	short int global_error = 0;
-
 	//Reduce results
 	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
-
 	if (handle->proc_rank == 0 && global_error == 0) {
 		//Master process prints output datacube PID
 		char *tmp_uri = NULL;
@@ -1698,7 +1637,6 @@ int task_destroy(oph_operator_struct * handle)
 		char jsonbuf[OPH_COMMON_BUFFER_LEN];
 		memset(jsonbuf, 0, OPH_COMMON_BUFFER_LEN);
 		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, oper_handle->id_output_container, oper_handle->id_output_datacube);
-
 		// ADD OUTPUT PID TO JSON AS TEXT
 		if (oph_json_is_objkey_printable(oper_handle->objkeys, oper_handle->objkeys_num, OPH_JSON_OBJKEY_AGGREGATE2)) {
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_AGGREGATE2, "Output Cube", jsonbuf)) {
@@ -1716,14 +1654,12 @@ int task_destroy(oph_operator_struct * handle)
 			free(handle->output_string);
 		}
 		handle->output_string = strdup(tmp_string);
-
 		free(tmp_uri);
 	}
 
 	if (global_error) {
 		//Delete fragments
 		int num_threads = (oper_handle->nthread <= (unsigned int) oper_handle->fragment_number ? oper_handle->nthread : (unsigned int) oper_handle->fragment_number);
-
 		if (oper_handle->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
 			if ((oph_dproc_delete_data(id_datacube, oper_handle->id_input_container, oper_handle->fragment_ids, 0, 0, num_threads))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
@@ -1737,7 +1673,6 @@ int task_destroy(oph_operator_struct * handle)
 			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
 		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
 		handle->output_code = global_error;
-
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
 			oph_dproc_clean_odb(&oper_handle->oDB, id_datacube, oper_handle->id_input_container);
@@ -1745,7 +1680,6 @@ int task_destroy(oph_operator_struct * handle)
 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
 		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
-
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -1757,7 +1691,6 @@ int env_unset(oph_operator_struct * handle)
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
-
 	//Only master process has to close and release connection to management OphidiaDB
 	if (handle->proc_rank == 0) {
 		oph_odb_free_ophidiadb(&((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->oDB);
@@ -1807,6 +1740,5 @@ int env_unset(oph_operator_struct * handle)
 	}
 	free((OPH_AGGREGATE2_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
-
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
