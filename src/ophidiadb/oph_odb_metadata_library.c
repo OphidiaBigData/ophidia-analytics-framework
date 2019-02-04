@@ -1002,9 +1002,9 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatainstance, int id_datacube, char *metadata_value, int force)
+int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatainstance, int id_datacube, char *metadata_value, int force, const int id_user)
 {
-	if (!oDB || !id_metadatainstance || !id_datacube || !metadata_value) {
+	if (!oDB || !id_metadatainstance || !id_datacube || !metadata_value || !id_user) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
@@ -1117,6 +1117,7 @@ int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatai
 
 	BSON_APPEND_DOCUMENT_BEGIN(update, "$set", &doc_item);
 	BSON_APPEND_UTF8(&doc_item, "value", metadata_value);
+	BSON_APPEND_INT32(doc, "iduser", id_user);
 	BSON_APPEND_DATE_TIME(&doc_item, "lastupdate", millisecondsSinceEpoch);
 	bson_append_document_end(update, &doc_item);
 
@@ -1176,7 +1177,7 @@ int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatai
 	mysql_real_escape_string(oDB->conn, escaped_value, metadata_value, n);
 
 	//update metadata
-	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_INSTANCE, escaped_value, id_metadatainstance, id_datacube);
+	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_INSTANCE, escaped_value, id_user, id_metadatainstance, id_datacube);
 	free(escaped_value);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
@@ -1506,7 +1507,7 @@ int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb * oDB, int id_data
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, int id_datacube_output, int id_user)
+int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, int id_datacube_output, const int id_user)
 {
 	if (!oDB || !id_user || !id_datacube_input || !id_datacube_output) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1629,7 +1630,7 @@ int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, con
 	int n = 0;
 	if (id_metadata_instance)	// update the metadata
 	{
-		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_INSTANCE, value, id_metadata_instance, id_datacube);
+		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_INSTANCE, value, id_user, id_metadata_instance, id_datacube);
 		if (n >= MYSQL_BUFLEN) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 			return OPH_ODB_STR_BUFF_OVERFLOW;

@@ -143,9 +143,10 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
  * \param id_datacube Id of the container of metadata instance to update
  * \param metadata_value Metadata instance value to insert
  * \param force Force update of functional metadata associated to vocabulary
+ * \param id_user Id of the user that copies
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatainstance, int id_datacube, char *metadata_value, int force);
+int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatainstance, int id_datacube, char *metadata_value, int force, const int id_user);
 
 /**
  * \brief Function to delete a list of metadata instance
@@ -171,7 +172,7 @@ int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb * oDB, int id_data
  * \param id_user Id of the user that copies
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, int id_datacube_output, int id_user);
+int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, int id_datacube_output, const int id_user);
 
 /**
  * \brief Function to get time metadata identified by template

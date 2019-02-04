@@ -153,25 +153,18 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, char ***read_result
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_METADATAINSTANCE_ID_ERROR, handle->metadata_id);
 					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 				}
-				//update medatainstance table
-				if (oph_odb_meta_update_metadatainstance_table(oDB, handle->metadata_id, handle->id_datacube_input, handle->metadata_value, handle->force)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
 				//Retrieve user id
 				if (oph_odb_user_retrieve_user_id(oDB, handle->user, &iduser)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_RETRIEVE_USER_ID_ERROR, handle->user);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_USER_ID_ERROR, handle->user);
 					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 				}
-				//insert into manage table
-				if (oph_odb_meta_insert_into_manage_table(oDB, handle->metadata_id, iduser)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
+				//update medatainstance table
+				if (oph_odb_meta_update_metadatainstance_table(oDB, handle->metadata_id, handle->id_datacube_input, handle->metadata_value, handle->force, iduser)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
 					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 				}
-
 				break;
 			}
 		case OPH_METADATA_MODE_DELETE_VALUE:
