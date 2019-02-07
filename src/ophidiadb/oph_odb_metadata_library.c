@@ -36,7 +36,7 @@ void _print_bson(const bson_t * b)
 {
 	char *str;
 	str = bson_as_json(b, NULL);
-	pmesg(LOG_DEBUG, __FILE__, __LINE__, "%s\n", str);
+	pmesg(LOG_INFO, __FILE__, __LINE__, "%s\n", str);
 	bson_free(str);
 }
 #endif
@@ -130,6 +130,7 @@ int oph_odb_meta_insert_into_metadatainstance_manage_tables(ophidiadb * oDB, con
 	mongoc_collection_t *collection = mongoc_client_get_collection(oDB->mng_conn, oDB->mng_name, OPH_ODB_MNGDB_COLL_METADATAINSTANCE);
 	if (!collection) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		bson_destroy(doc);
 		return OPH_ODB_MONGODB_ERROR;
 	}
 	if (!mongoc_collection_insert(collection, MONGOC_INSERT_NONE, doc, NULL, &error)) {
@@ -323,6 +324,7 @@ int oph_odb_meta_check_metadatainstance_existance(ophidiadb * oDB, int metadatai
 	mongoc_collection_t *collection = mongoc_client_get_collection(oDB->mng_conn, oDB->mng_name, OPH_ODB_MNGDB_COLL_METADATAINSTANCE);
 	if (!collection) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		bson_destroy(doc);
 		return OPH_ODB_MONGODB_ERROR;
 	}
 
@@ -554,6 +556,7 @@ int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_data
 	mongoc_collection_t *collection = mongoc_client_get_collection(oDB->mng_conn, oDB->mng_name, OPH_ODB_MNGDB_COLL_METADATAINSTANCE);
 	if (!collection) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		bson_destroy(doc);
 		return OPH_ODB_MONGODB_ERROR;
 	}
 	if (!mongoc_collection_insert(collection, MONGOC_INSERT_NONE, doc, NULL, &error)) {
@@ -1131,7 +1134,7 @@ int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatai
 
 	bson_error_t error;
 	if (!mongoc_collection_update(collection, MONGOC_UPDATE_NONE, doc, update, NULL, &error)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to remove a document: %s.\n", error.message);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update a document: %s.\n", error.message);
 		bson_destroy(doc);
 		bson_destroy(update);
 		mongoc_collection_destroy(collection);
@@ -1513,6 +1516,102 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+#ifdef OPH_ODB_MNG
+
+	if (oph_odb_check_connection_to_mongodb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	bson_t *doc = bson_new();
+	if (!doc) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	BSON_APPEND_INT32(doc, "iddatacube", id_datacube_input);
+
+	mongoc_collection_t *collection = mongoc_client_get_collection(oDB->mng_conn, oDB->mng_name, OPH_ODB_MNGDB_COLL_METADATAINSTANCE);
+	if (!collection) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		bson_destroy(doc);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	mongoc_cursor_t *cursor = mongoc_collection_find(collection, MONGOC_QUERY_NONE, 0, 0, 0, doc, NULL, NULL);
+	if (!cursor) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find any document.\n");
+		bson_destroy(doc);
+		mongoc_collection_destroy(collection);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+	bson_destroy(doc);
+
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	unsigned long long millisecondsSinceEpoch = (unsigned long long) (tv.tv_sec) * 1000 + (unsigned long long) (tv.tv_usec) / 1000;
+
+	char error_flag = 0;
+	bson_oid_t oid;
+	bson_iter_t iter;
+	int id_metadatainstance;
+
+	bson_error_t error;
+	const bson_t *target;
+	while (!mongoc_cursor_error(cursor, &error) && mongoc_cursor_more(cursor) && mongoc_cursor_next(cursor, &target)) {
+
+		bson_oid_init(&oid, NULL);
+		id_metadatainstance = bson_oid_hash(&oid);
+		if (!id_metadatainstance) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get anew identifier.\n");
+			error_flag = 1;
+			break;
+		} else if (id_metadatainstance < 0)
+			id_metadatainstance = -id_metadatainstance;
+
+		doc = bson_new();
+		if (!doc) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
+			error_flag = 1;
+			break;
+		}
+		BSON_APPEND_OID(doc, "_id", &oid);
+		BSON_APPEND_INT32(doc, "idmetadatainstance", id_metadatainstance);
+		BSON_APPEND_INT32(doc, "iddatacube", id_datacube_output);
+		BSON_APPEND_INT32(doc, "iduser", id_user);
+		BSON_APPEND_DATE_TIME(doc, "lastupdate", millisecondsSinceEpoch);
+		if (bson_iter_init(&iter, target) && bson_iter_find(&iter, "idtype") && BSON_ITER_HOLDS_INT32(&iter))
+			BSON_APPEND_INT32(doc, "idtype", bson_iter_int32(&iter));
+		if (bson_iter_init(&iter, target) && bson_iter_find(&iter, "label") && BSON_ITER_HOLDS_UTF8(&iter))
+			BSON_APPEND_UTF8(doc, "label", bson_iter_utf8(&iter, NULL));
+		if (bson_iter_init(&iter, target) && bson_iter_find(&iter, "value") && BSON_ITER_HOLDS_UTF8(&iter))
+			BSON_APPEND_UTF8(doc, "value", bson_iter_utf8(&iter, NULL));
+		if (bson_iter_init(&iter, target) && bson_iter_find(&iter, "idkey") && BSON_ITER_HOLDS_INT32(&iter))
+			BSON_APPEND_INT32(doc, "idkey", bson_iter_int32(&iter));
+		if (bson_iter_init(&iter, target) && bson_iter_find(&iter, "variable") && BSON_ITER_HOLDS_UTF8(&iter))
+			BSON_APPEND_UTF8(doc, "variable", bson_iter_utf8(&iter, NULL));
+
+		if (!mongoc_collection_insert(collection, MONGOC_INSERT_NONE, doc, NULL, &error)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new document into MongoDB: %s\n", error.message);
+			bson_destroy(doc);
+			break;
+		}
+		bson_destroy(doc);
+	}
+
+	mongoc_collection_destroy(collection);
+
+	if (mongoc_cursor_error(cursor, &error)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve the instance: %s.\n", error.message);
+		mongoc_cursor_destroy(cursor);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+	mongoc_cursor_destroy(cursor);
+
+	if (error_flag)
+		return OPH_ODB_MONGODB_ERROR;
+
+#else
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -1543,6 +1642,7 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
+#endif
 
 	return OPH_ODB_SUCCESS;
 }
@@ -1565,6 +1665,107 @@ int oph_odb_meta_get(ophidiadb * oDB, int id_datacube, const char *variable, con
 
 	char selectQuery[MYSQL_BUFLEN];
 	int n;
+
+#ifdef OPH_ODB_MNG
+
+	int id_metadatakey;
+
+	if (variable)
+		n = snprintf(selectQuery, MYSQL_BUFLEN, MONGODB_QUERY_META_GET1, template, variable);
+	else
+		n = snprintf(selectQuery, MYSQL_BUFLEN, MONGODB_QUERY_META_GET2, template);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+	if (mysql_query(oDB->conn, selectQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+	if (!mysql_num_rows(res)) {
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "No row found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_SUCCESS;
+	}
+	if (mysql_num_rows(res) != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "More than one row found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+	if (mysql_field_count(oDB->conn) != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if ((row = mysql_fetch_row(res))) {
+		if (row[0])
+			id_metadatakey = (int) strtol(row[0], NULL, 10);
+	}
+
+	mysql_free_result(res);
+
+	if (!id_metadatakey) {
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "No row found by query\n");
+		return OPH_ODB_SUCCESS;
+	}
+
+	if (oph_odb_check_connection_to_mongodb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	bson_t *doc = bson_new();
+	if (!doc) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	BSON_APPEND_INT32(doc, "iddatacube", id_datacube);
+	BSON_APPEND_INT32(doc, "idkey", id_metadatakey);
+
+	mongoc_collection_t *collection = mongoc_client_get_collection(oDB->mng_conn, oDB->mng_name, OPH_ODB_MNGDB_COLL_METADATAINSTANCE);
+	if (!collection) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		bson_destroy(doc);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	bson_iter_t iter;
+	mongoc_cursor_t *cursor = mongoc_collection_find(collection, MONGOC_QUERY_NONE, 0, 0, 0, doc, NULL, NULL);
+	if (!cursor) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find any document.\n");
+		bson_destroy(doc);
+		mongoc_collection_destroy(collection);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+	bson_destroy(doc);
+
+	bson_error_t error;
+	const bson_t *target;
+	while (!mongoc_cursor_error(cursor, &error) && mongoc_cursor_more(cursor) && mongoc_cursor_next(cursor, &target)) {
+
+		if (id_metadata_instance && bson_iter_init(&iter, target) && bson_iter_find(&iter, "idmetadatainstance") && BSON_ITER_HOLDS_INT32(&iter))
+			*id_metadata_instance = bson_iter_int32(&iter);
+		if (value && bson_iter_init(&iter, target) && bson_iter_find(&iter, "value") && BSON_ITER_HOLDS_UTF8(&iter))
+			*value = bson_iter_utf8(&iter, NULL) ? strdup(bson_iter_utf8(&iter, NULL)) : NULL;
+	}
+
+	mongoc_collection_destroy(collection);
+
+	if (mongoc_cursor_error(cursor, &error)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve the instance: %s.\n", error.message);
+		mongoc_cursor_destroy(cursor);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+	mongoc_cursor_destroy(cursor);
+
+#else
+
 	if (variable)
 		n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_GET1, id_datacube, template, variable);
 	else
@@ -1605,6 +1806,8 @@ int oph_odb_meta_get(ophidiadb * oDB, int id_datacube, const char *variable, con
 	}
 
 	mysql_free_result(res);
+
+#endif
 	return OPH_ODB_SUCCESS;
 }
 
@@ -1620,17 +1823,76 @@ int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, con
 		if ((error = oph_odb_meta_get(oDB, id_datacube, variable, template, &id_metadata_instance, NULL)))
 			return error;
 	}
+#ifdef OPH_ODB_MNG
+
+	if (oph_odb_check_connection_to_mongodb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	unsigned long long millisecondsSinceEpoch = (unsigned long long) (tv.tv_sec) * 1000 + (unsigned long long) (tv.tv_usec) / 1000;
+
+#else
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
 		return OPH_ODB_MYSQL_ERROR;
 	}
+#endif
 
-	char query[MYSQL_BUFLEN];
-	int n = 0;
 	if (id_metadata_instance)	// update the metadata
 	{
-		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_INSTANCE, value, id_user, id_metadata_instance, id_datacube);
+
+#ifdef OPH_ODB_MNG
+
+		bson_t *doc = bson_new();
+		if (!doc) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
+			return OPH_ODB_MONGODB_ERROR;
+		}
+		BSON_APPEND_INT32(doc, "iddatacube", id_datacube);
+		BSON_APPEND_INT32(doc, "idmetadatainstance", id_metadata_instance);
+
+		bson_t *update = bson_new(), doc_item;
+		if (!update) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
+			bson_destroy(doc);
+			return OPH_ODB_MONGODB_ERROR;
+		}
+
+		BSON_APPEND_DOCUMENT_BEGIN(update, "$set", &doc_item);
+		BSON_APPEND_UTF8(&doc_item, "value", value);
+		BSON_APPEND_INT32(doc, "iduser", id_user);
+		BSON_APPEND_DATE_TIME(&doc_item, "lastupdate", millisecondsSinceEpoch);
+		bson_append_document_end(update, &doc_item);
+
+		mongoc_collection_t *collection = mongoc_client_get_collection(oDB->mng_conn, oDB->mng_name, OPH_ODB_MNGDB_COLL_METADATAINSTANCE);
+		if (!collection) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+			bson_destroy(doc);
+			bson_destroy(update);
+			return OPH_ODB_MONGODB_ERROR;
+		}
+
+		bson_error_t error;
+		if (!mongoc_collection_update(collection, MONGOC_UPDATE_NONE, doc, update, NULL, &error)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update a document: %s.\n", error.message);
+			bson_destroy(doc);
+			bson_destroy(update);
+			mongoc_collection_destroy(collection);
+			return OPH_ODB_MONGODB_ERROR;
+		}
+
+		bson_destroy(doc);
+		bson_destroy(update);
+		mongoc_collection_destroy(collection);
+
+#else
+
+		char query[MYSQL_BUFLEN];
+		int n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_INSTANCE, value, id_user, id_metadata_instance, id_datacube);
 		if (n >= MYSQL_BUFLEN) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 			return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -1639,20 +1901,32 @@ int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, con
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s in \n%s\n", mysql_error(oDB->conn), query);
 			return OPH_ODB_MYSQL_ERROR;
 		}
+#endif
+
 	} else			// insert a new value for the metadata
 	{
-		int id_type = 0;
+
+#ifdef OPH_ODB_MNG
+
+		if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+			return OPH_ODB_MYSQL_ERROR;
+		}
+#endif
+
+		int id_metadatatype = 0;
 		MYSQL_RES *res;
 		MYSQL_ROW row;
 
-		char *label;
-		if (!(label = strchr(template, OPH_ODB_META_TEMPLATE_SEPARATOR)))	// Template format is standardVariableName:standardKeyName, so it will extract the standardKeyName
+		char *metadatakey = NULL;
+		if (!(metadatakey = strchr(template, OPH_ODB_META_TEMPLATE_SEPARATOR)))	// Template format is standardVariableName:standardKeyName, so it will extract the standardKeyName
 		{
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Template '%s' is not correct.\n", template);
 			return OPH_ODB_STR_BUFF_OVERFLOW;
 		}
-		label++;
+		metadatakey++;
 
+		char query[MYSQL_BUFLEN];
 		int n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_RETRIEVE_METADATATYPE_ID, "text");
 		if (n >= MYSQL_BUFLEN) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
@@ -1674,13 +1948,60 @@ int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, con
 			return OPH_ODB_TOO_MANY_ROWS;
 		}
 		if ((row = mysql_fetch_row(res)))
-			id_type = (int) strtol(row[0], NULL, 10);
+			id_metadatatype = (int) strtol(row[0], NULL, 10);
 		mysql_free_result(res);
 
+#ifdef OPH_ODB_MNG
+
+		bson_oid_t oid;
+		bson_oid_init(&oid, NULL);
+		int id_metadatainstance = bson_oid_hash(&oid);
+		if (!id_metadatainstance) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get anew identifier.\n");
+			return OPH_ODB_MONGODB_ERROR;
+		} else if (id_metadatainstance < 0)
+			id_metadatainstance = -id_metadatainstance;
+
+		bson_t *doc = bson_new();
+		if (!doc) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
+			return OPH_ODB_MONGODB_ERROR;
+		}
+
+		BSON_APPEND_OID(doc, "_id", &oid);
+		BSON_APPEND_INT32(doc, "idmetadatainstance", id_metadatainstance);
+		BSON_APPEND_INT32(doc, "iddatacube", id_datacube);
+		BSON_APPEND_INT32(doc, "idtype", id_metadatatype);
+		BSON_APPEND_UTF8(doc, "value", value);
+		BSON_APPEND_UTF8(doc, "label", metadatakey);
+		BSON_APPEND_INT32(doc, "iduser", id_user);
+		BSON_APPEND_DATE_TIME(doc, "lastupdate", millisecondsSinceEpoch);
 		if (variable)
-			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1, id_datacube, id_type, value, label, variable, id_user);
+			BSON_APPEND_UTF8(doc, "variable", variable);
+
+		bson_error_t error;
+		mongoc_collection_t *collection = mongoc_client_get_collection(oDB->mng_conn, oDB->mng_name, OPH_ODB_MNGDB_COLL_METADATAINSTANCE);
+		if (!collection) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+			bson_destroy(doc);
+			return OPH_ODB_MONGODB_ERROR;
+		}
+		if (!mongoc_collection_insert(collection, MONGOC_INSERT_NONE, doc, NULL, &error)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new document into MongoDB: %s\n", error.message);
+			bson_destroy(doc);
+			mongoc_collection_destroy(collection);
+			return OPH_ODB_MONGODB_ERROR;
+		}
+
+		bson_destroy(doc);
+		mongoc_collection_destroy(collection);
+
+#else
+
+		if (variable)
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1, id_datacube, id_metadatatype, value, metadatakey, variable, id_user);
 		else
-			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_type, value, label, id_user);
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_metadatatype, value, metadatakey, id_user);
 		if (n >= MYSQL_BUFLEN) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 			return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -1689,6 +2010,8 @@ int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, con
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 			return OPH_ODB_MYSQL_ERROR;
 		}
+#endif
+
 	}
 
 	return OPH_ODB_SUCCESS;
@@ -1708,24 +2031,116 @@ int oph_odb_meta_check_for_time_dimension(ophidiadb * oDB, int id_datacube, cons
 	}
 
 	char selectQuery[MYSQL_BUFLEN];
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_TIME_DIMENSION_CHECK, id_datacube, dimension_name);
+	int n;
+
+#ifdef OPH_ODB_MNG
+
+	n = snprintf(selectQuery, MYSQL_BUFLEN, MONGODB_QUERY_META_TIME_DIMENSION_CHECK, dimension_name);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
+#else
+
+	n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_TIME_DIMENSION_CHECK, id_datacube, dimension_name);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+#endif
+
 	if (mysql_query(oDB->conn, selectQuery)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
+	int _count = 0, id_vocabulary = 0;
+
 	MYSQL_RES *res;
 	MYSQL_ROW row;
 	res = mysql_store_result(oDB->conn);
-	if (!mysql_num_rows(res)) {
+	if (!(n = mysql_num_rows(res))) {
 		pmesg(LOG_DEBUG, __FILE__, __LINE__, "No row found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_SUCCESS;
 	}
+#ifdef OPH_ODB_MNG
+
+	if (mysql_field_count(oDB->conn) != 2) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	int i = 0, id_metadatakey, _id_metadatakey[n], _id_vocabulary[n];
+
+	while ((row = mysql_fetch_row(res))) {
+		_id_metadatakey[i] = row[0] ? (int) strtol(row[0], NULL, 10) : 0;
+		_id_vocabulary[i] = row[1] ? (int) strtol(row[1], NULL, 10) : 0;
+		i++;
+	}
+	mysql_free_result(res);
+
+	if (oph_odb_check_connection_to_mongodb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	bson_t *doc = bson_new();
+	if (!doc) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	BSON_APPEND_INT32(doc, "iddatacube", id_datacube);
+
+	mongoc_collection_t *collection = mongoc_client_get_collection(oDB->mng_conn, oDB->mng_name, OPH_ODB_MNGDB_COLL_METADATAINSTANCE);
+	if (!collection) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		bson_destroy(doc);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	bson_iter_t iter;
+	mongoc_cursor_t *cursor = mongoc_collection_find(collection, MONGOC_QUERY_NONE, 0, 0, 0, doc, NULL, NULL);
+	if (!cursor) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find any document.\n");
+		bson_destroy(doc);
+		mongoc_collection_destroy(collection);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+	bson_destroy(doc);
+
+	bson_error_t error;
+	const bson_t *target;
+	while (!mongoc_cursor_error(cursor, &error) && mongoc_cursor_more(cursor) && mongoc_cursor_next(cursor, &target)) {
+
+		if (bson_iter_init(&iter, target) && bson_iter_find(&iter, "idkey") && BSON_ITER_HOLDS_INT32(&iter)) {
+			id_metadatakey = bson_iter_int32(&iter);
+			if (id_metadatakey)
+				for (i = 0; i < n; ++i)
+					if (id_metadatakey == _id_metadatakey[i]) {
+						if (!id_vocabulary) {
+							id_vocabulary = _id_vocabulary[i];
+							_count = 1;
+						} else if (id_vocabulary == _id_vocabulary[i])	// Let us assume that a metadatakey is related to only one vocabulary
+							_count++;
+						break;
+					}
+		}
+	}
+
+	mongoc_collection_destroy(collection);
+
+	if (mongoc_cursor_error(cursor, &error)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve the instance: %s.\n", error.message);
+		mongoc_cursor_destroy(cursor);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+	mongoc_cursor_destroy(cursor);
+
+#else
+
 	if (mysql_num_rows(res) != 1) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "More than one row found by query\n");
 		mysql_free_result(res);
@@ -1737,7 +2152,6 @@ int oph_odb_meta_check_for_time_dimension(ophidiadb * oDB, int id_datacube, cons
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 
-	int _count = 0, id_vocabulary = 0;
 	if ((row = mysql_fetch_row(res))) {
 		if (row[0])
 			_count = (int) strtol(row[0], NULL, 10);
@@ -1745,6 +2159,8 @@ int oph_odb_meta_check_for_time_dimension(ophidiadb * oDB, int id_datacube, cons
 			id_vocabulary = (int) strtol(row[1], NULL, 10);
 	}
 	mysql_free_result(res);
+
+#endif
 
 	if (!id_vocabulary) {
 		pmesg(LOG_DEBUG, __FILE__, __LINE__, "Vocabulary not found\n");
@@ -1793,14 +2209,135 @@ int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const cha
 		return OPH_ODB_NULL_PARAM;
 	}
 
+	int *id_metadata_instance = NULL, nrows = 0, i = 0;
+	int ret = OPH_ODB_SUCCESS;
+
+#ifdef OPH_ODB_MNG
+
+	if (oph_odb_check_connection_to_mongodb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	bson_t *doc = bson_new();
+	if (!doc) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	BSON_APPEND_INT32(doc, "iddatacube", id_datacube);
+	BSON_APPEND_UTF8(doc, "variable", old_variable);
+
+	mongoc_collection_t *collection = mongoc_client_get_collection(oDB->mng_conn, oDB->mng_name, OPH_ODB_MNGDB_COLL_METADATAINSTANCE);
+	if (!collection) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		bson_destroy(doc);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	bson_error_t error;
+	nrows = (int) mongoc_collection_count(collection, MONGOC_QUERY_NONE, doc, 0, 0, NULL, &error);
+	if (nrows < 0) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find any document: %s.\n", error.message);
+		bson_destroy(doc);
+		mongoc_collection_destroy(collection);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+
+	if (!nrows) {
+		bson_destroy(doc);
+		mongoc_collection_destroy(collection);
+		return OPH_ODB_SUCCESS;
+	}
+
+	id_metadata_instance = (int *) calloc(nrows, sizeof(int));
+	if (!id_metadata_instance) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory for metadata instance ids\n");
+		bson_destroy(doc);
+		mongoc_collection_destroy(collection);
+		return OPH_ODB_MEMORY_ERROR;
+	}
+
+	bson_iter_t iter;
+	mongoc_cursor_t *cursor = mongoc_collection_find(collection, MONGOC_QUERY_NONE, 0, 0, 0, doc, NULL, NULL);
+	if (!cursor) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find any document.\n");
+		bson_destroy(doc);
+		mongoc_collection_destroy(collection);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+	bson_destroy(doc);
+
+	const bson_t *target;
+	while (!mongoc_cursor_error(cursor, &error) && mongoc_cursor_more(cursor) && mongoc_cursor_next(cursor, &target)) {
+
+		if (bson_iter_init(&iter, target) && bson_iter_find(&iter, "idmetadatainstance") && BSON_ITER_HOLDS_INT32(&iter))
+			id_metadata_instance[i++] = bson_iter_int32(&iter);
+	}
+
+	if (mongoc_cursor_error(cursor, &error)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve the instance: %s.\n", error.message);
+		mongoc_collection_destroy(collection);
+		mongoc_cursor_destroy(cursor);
+		if (id_metadata_instance)
+			free(id_metadata_instance);
+		return OPH_ODB_MONGODB_ERROR;
+	}
+	mongoc_cursor_destroy(cursor);
+
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	unsigned long long millisecondsSinceEpoch = (unsigned long long) (tv.tv_sec) * 1000 + (unsigned long long) (tv.tv_usec) / 1000;
+
+	bson_t *update = NULL, doc_item;
+
+	for (i = 0; i < nrows; ++i) {
+
+		doc = bson_new();
+		if (!doc) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
+			break;
+		}
+
+		BSON_APPEND_INT32(doc, "idmetadatainstance", id_metadata_instance[i]);
+
+		update = bson_new();
+		if (!update) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
+			bson_destroy(doc);
+			break;
+		}
+
+		BSON_APPEND_DOCUMENT_BEGIN(update, "$set", &doc_item);
+		BSON_APPEND_UTF8(&doc_item, "variable", new_variable);
+		BSON_APPEND_DATE_TIME(&doc_item, "lastupdate", millisecondsSinceEpoch);
+		bson_append_document_end(update, &doc_item);
+
+		if (!mongoc_collection_update(collection, MONGOC_UPDATE_NONE, doc, update, NULL, &error)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update a document: %s.\n", error.message);
+			bson_destroy(doc);
+			bson_destroy(update);
+			break;
+		}
+
+		bson_destroy(doc);
+		bson_destroy(update);
+	}
+
+	mongoc_collection_destroy(collection);
+
+	if (i < nrows)
+		ret = OPH_ODB_MONGODB_ERROR;
+
+#else
+
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
 	char selectQuery[MYSQL_BUFLEN];
-	int n;
-	n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_RETRIEVE_KEY_OF_INSTANCE, id_datacube, old_variable);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_RETRIEVE_KEY_OF_INSTANCE, id_datacube, old_variable);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -1813,7 +2350,7 @@ int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const cha
 
 	MYSQL_RES *res = mysql_store_result(oDB->conn);
 
-	int nrows = mysql_num_rows(res);
+	nrows = mysql_num_rows(res);
 	if (!nrows) {
 		pmesg(LOG_DEBUG, __FILE__, __LINE__, "No row found by query\n");
 		mysql_free_result(res);
@@ -1825,33 +2362,30 @@ int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const cha
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 
-	int *id_metadata_instance = (int *) calloc(nrows, sizeof(int));
+	id_metadata_instance = (int *) calloc(nrows, sizeof(int));
 	if (!id_metadata_instance) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory for metadata instance ids\n");
 		mysql_free_result(res);
 		return OPH_ODB_MEMORY_ERROR;
 	}
 
-	int i = 0, ret = OPH_ODB_SUCCESS;
 	MYSQL_ROW row;
 	while ((row = mysql_fetch_row(res))) {
-		if (!row[0] || !row[1]) {
+		if (!row[0]) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Found an empty row\n");
 			ret = OPH_ODB_MYSQL_ERROR;
 			break;
 		}
-		id_metadata_instance[i] = (int) strtol(row[0], NULL, 10);
-		i++;
+		id_metadata_instance[i++] = (int) strtol(row[0], NULL, 10);
 	}
 
 	mysql_free_result(res);
 
 	if (ret == OPH_ODB_SUCCESS) {
 
-		int j;
-		for (j = 0; j < nrows; ++j) {
+		for (i = 0; i < nrows; ++i) {
 
-			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_KEY_OF_INSTANCE, new_variable, id_metadata_instance[j]);
+			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_KEY_OF_INSTANCE, new_variable, id_metadata_instance[i]);
 			if (n >= MYSQL_BUFLEN) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 				ret = OPH_ODB_STR_BUFF_OVERFLOW;
@@ -1864,6 +2398,7 @@ int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const cha
 			}
 		}
 	}
+#endif
 
 	if (id_metadata_instance)
 		free(id_metadata_instance);

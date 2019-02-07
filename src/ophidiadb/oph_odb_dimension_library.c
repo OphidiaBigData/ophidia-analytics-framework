@@ -298,7 +298,7 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 
 	// Metadata support to get correct values of time metadata
 	if (id_datacube) {
-		if (strcmp(hierarchy_name, OPH_COMMON_TIME_HIERARCHY))	// Override hierarchy name!!! This should be done even in ophidiaDB, cretaing a new dimension with the same dimensioninstance
+		if (strcmp(hierarchy_name, OPH_COMMON_TIME_HIERARCHY))	// Override hierarchy name!!! This should be done even in ophidiaDB, creating a new dimension with the same dimensioninstance
 		{
 			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Override hierarchy name\n");
 			if (oph_odb_dim_retrieve_hierarchy_id(oDB, OPH_COMMON_TIME_HIERARCHY, &dim->id_hierarchy)) {

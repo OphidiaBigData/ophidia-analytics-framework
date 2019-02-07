@@ -172,6 +172,7 @@ int oph_odb_free_mongodb(ophidiadb * oDB);
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_connect_to_mongodb(ophidiadb * oDB);
+
 /**
  * \brief Function to check connect status to the OphidiaDB. WARNING: Do not call this function (or any other) before calling connect_to_ophidiaDB or the client will crash
  * \param structure containing OphidiaDB parameters

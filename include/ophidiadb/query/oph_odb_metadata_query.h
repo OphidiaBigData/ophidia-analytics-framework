@@ -51,6 +51,9 @@
 #define MONGODB_QUERY_META_GET_TYPE_BY_ID			"SELECT name FROM metadatatype WHERE idtype = %d;"
 #define MONGODB_QUERY_META_GET_USER_BY_ID			"SELECT username FROM user WHERE iduser = %d;"
 #define MONGODB_QUERY_META_GET_VOCABULARY_BY_IDKEY	"SELECT name FROM metadatakey LEFT JOIN vocabulary ON metadatakey.idvocabulary=vocabulary.idvocabulary WHERE idkey = %d;"
+#define MONGODB_QUERY_META_GET1 					"SELECT idkey FROM metadatakey WHERE template = '%s' AND variable = '%s';"
+#define MONGODB_QUERY_META_GET2 					"SELECT idkey FROM metadatakey WHERE template = '%s'"
+#define MONGODB_QUERY_META_TIME_DIMENSION_CHECK		"SELECT idkey, idvocabulary FROM metadatakey WHERE template LIKE 'time:%%' AND (variable IS NULL OR variable = '%s') AND required"
 #endif
 
 #endif				/* __OPH_ODB_META_QUERY_H__ */
