@@ -9,10 +9,6 @@ Metadata Access.
 It provides enhanced searching on metadata.
  
 [Parameters]
-- container_filter : zero, one or more filters on containers' names.
-                     Filters could be any type of search string accepted by SQL,
-                     with wildcards, OR-ed with pipes (filter1|filter2|...).
-                     Mute this filter with the default value &quot;all&quot;.                  
 - metadata_key_filter : zero, one or more filters on metadata keys.
                         Filters could be any type of search string accepted by SQL,
                         with wildcards, OR-ed with pipes (filter1|filter2|...).
@@ -47,7 +43,6 @@ It provides enhanced searching on metadata.
         <permission>read</permission>
     </info>
     <args>
-		<argument type="string" mandatory="no" default="all" multivalue="yes">container_filter</argument>
 		<argument type="string" mandatory="no" default="all" multivalue="yes">metadata_key_filter</argument>
 		<argument type="string" mandatory="no" default="all" multivalue="yes">metadata_value_filter</argument>
 		<argument type="string" mandatory="no" default="-">path</argument>

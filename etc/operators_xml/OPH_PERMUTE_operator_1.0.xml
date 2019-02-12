@@ -17,7 +17,6 @@ This version operates only on implicit dimensions.
 		Number of elements in the list must be equal to the number of implicit dimensions 
 		of input datacube. Each element indicates the new level of the 
 		implicit dimension, from the outermost to the innermost, in the output datacube.
-- container : name of the container to be used to store the output cube; by default it is the input container.
 - description : additional description to be associated with the output cube.
         
 [System parameters]    
@@ -49,7 +48,6 @@ SUBMISSION STRING: &quot;operator=oph_permute;cube=http://www.example.com/1/1;di
 		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="yes">dim_pos</argument>
-		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|permute">objkey_filter</argument>
     </args>

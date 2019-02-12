@@ -30,7 +30,6 @@ returns a new datacube as result of the specified operation applied element by e
 - measure : name of the new measure resulting from the specified operation
 - schedule : scheduling algorithm. The only possible value is 0,
 		     for a static linear block distribution of resources.
-- container : name of the container to be used to store the output cube; by default it is the container of the first cube.
 - description : additional description to be associated with the output cube.
         
 [System parameters]    
@@ -63,7 +62,6 @@ SUBMISSION STRING: &quot;operator=oph_intercube;cube=http://www.example.com/1/1;
 		<argument type="real" mandatory="no" default="NAN">missingvalue</argument>
 		<argument type="string" mandatory="no" default="null">measure</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
-		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|intercube">objkey_filter</argument>
     </args>

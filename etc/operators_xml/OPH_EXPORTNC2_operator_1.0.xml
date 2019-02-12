@@ -15,7 +15,7 @@ It exports data of a datacube into a sinlge NetCDF files.
 - misc : if &quot;yes&quot; data are saved in session folder called &quot;export/misc&quot;;
          if &quot;no&quot; data are saved within &quot;export/nc&quot; in a subfolder associated with the PID of the cube (default).
 - output_path : absolute path of the NetCDF output file. In case of default value, the file will be saved in the appropriate
-                directory corresponding to the related container and cube in the nc folder at the framework installation directory.
+                directory corresponding to the related cube in the nc folder at the framework installation directory.
                 In case it is set to &quot;local&quot;, the file will be saved in current directory on data repository (see &quot;cdd&quot;).
 - output_name : filename of the NetCDF output files. The default value is the measure name of input datacube.
 - cdd : absolute path corresponding to the current directory on data repository.

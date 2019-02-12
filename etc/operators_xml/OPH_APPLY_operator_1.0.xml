@@ -36,7 +36,6 @@ In case of inequalities, it is necessary to call the primitive &quot;oph_cast&qu
                if &quot;no&quot; data will be inserted without compression.
 - schedule : scheduling algorithm. The only possible value is 0,
 		   for a static linear block distribution of resources.
-- container : name of the container to be used to store the output cube; by default it is the input container.
 - description : additional description to be associated with the output cube.
         
 [System parameters]      
@@ -75,7 +74,6 @@ SUBMISSION STRING: &quot;operator=oph_apply;cube=http://www.example.com/1/1;quer
 		<argument type="string" mandatory="no" default="skip" values="update|skip">on_reduce</argument>
 		<argument type="string" mandatory="no" default="auto" values="yes|no|auto">compressed</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
-		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|apply">objkey_filter</argument>
     </args>

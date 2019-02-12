@@ -19,7 +19,7 @@ It provides CRUD operations (Create, Read, Update and Delete) on OphidiaDB metad
                It can be used always but not in update mode, where it is necessary the id of the
                to-be-updated metadata (retrievable by a previous read).
                In read or delete mode, default value (&quot;all&quot;) can be used to specify all keys
-               related to the specified container, as well as a group of keys (key1|key2|key3|...).
+               as well as a group of keys (key1|key2|key3|...).
                Note that the name of a key can be related to multiple instances or values, so specifying
                the name of only 1 key can result in multiple rows returned by the operator.
                If it is necessary to interact with only 1 particular instance, use the parameter metadata_id instead.
@@ -70,7 +70,7 @@ It provides CRUD operations (Create, Read, Update and Delete) on OphidiaDB metad
 		  metadata_summary : show the number of metadata.
 
 [Examples]       
-Insert new metadata in &apos;container1&apos; located into the &apos;session1&apos; folder with &apos;key1&apos;, of type &apos;text&apos; and value &apos;test_text&apos; :
+Append new metadata to cube &apos;http://www.example.com/1/1&apos; with &apos;key1&apos;, of type &apos;text&apos; and value &apos;test_text&apos; :
 OPH_TERM: oph_metadata mode=insert;cube=http://www.example.com/1/1;metadata_key=key1;metadata_type=text;metadata_value=test_text;
 SUBMISSION STRING: &quot;operator=oph_metadata;mode=insert;cube=http://www.example.com/1/1;metadata_key=key1;metadata_type=text;metadata_value=test_text;&quot;</abstract>
         <author>CMCC Foundation</author>

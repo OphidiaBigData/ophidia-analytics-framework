@@ -16,7 +16,6 @@ in the same origin database.
 - nsplit : number of output fragments per input fragment.
 			     If the number of tuples in input fragment is not a multiple of
 			     nsplit, output fragments will have a different number of tuples.
-- container : name of the container to be used to store the output cube; by default it is the input container.
 - description : additional description to be associated with the output cube.
 
 [System parameters]    
@@ -48,7 +47,6 @@ SUBMISSION STRING: &quot;operator=oph_split;cube=http://www.example.com/1/1;nspl
 		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="int" mandatory="yes" minvalue="2">nsplit</argument>
-		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|split">objkey_filter</argument>
     </args>

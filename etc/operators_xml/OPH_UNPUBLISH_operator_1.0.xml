@@ -7,7 +7,6 @@ Data Access.
 
 [Behaviour]
 It removes the HTML pages created by the PUBLISH2 operator.
-NOTE: it doesn't remove the container folder.
 
 [Parameters]
 - cube : name of the datacube previously published in HTML format.  

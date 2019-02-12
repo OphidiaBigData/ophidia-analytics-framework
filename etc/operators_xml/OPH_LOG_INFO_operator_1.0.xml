@@ -6,15 +6,13 @@
 Metadata Access.
 
 [Behaviour]
-It reads the last lines from the server log or from a specific container log.
+It reads the last lines from the server log or ioserver log.
 This operator requires administrator privileges.
 
 [Parameters]
 - log_type : type of log to be read.
-             Possible values are &quot;server&quot;, &quot;container&quot; and &quot;ioserver&quot;.
+             Possible values are &quot;server&quot; and &quot;ioserver&quot;.
              If not specified it will be used its default value &quot;server&quot;
-- container_id : id of the container related to the requested log,
-                 valid only when requested log type is &quot;container&quot;.
 - ioserver : type of the ioserver related to the requested log,
                  valid only when requested log type is &quot;ioserver&quot;.
 - nlines : maximum number of lines to be displayed,
@@ -33,9 +31,9 @@ This operator requires administrator privileges.
                   log_info : show log data as text.
         
 [Examples]
-Read the last 10 lines of the log file related to the container with id 3 :
-OPH_TERM: oph_log_info log_type=container;container_id=3;nlines=10;
-SUBMISSION STRING: &quot;operator=oph_log_info;log_type=container;container_id=3;nlines=10;&quot;</abstract>
+Read the last 10 lines of the log file related to the server:
+OPH_TERM: oph_log_info log_type=server;nlines=10;
+SUBMISSION STRING: &quot;operator=oph_log_info;log_type=server;nlines=10;&quot;</abstract>
         <author>CMCC Foundation</author>
         <category>Administration</category>
         <creationdate>27/07/2013</creationdate>
@@ -43,8 +41,7 @@ SUBMISSION STRING: &quot;operator=oph_log_info;log_type=container;container_id=3
         <permission>read</permission>
     </info>
     <args>
-		<argument type="string" mandatory="no" default="server" values="server|container|ioserver">log_type</argument>
-		<argument type="int" mandatory="no" minvalue="0" default="0">container_id</argument>
+		<argument type="string" mandatory="no" default="server" values="server|ioserver">log_type</argument>
 		<argument type="string" mandatory="no" default="mysql" values="mysql">ioserver</argument>
 		<argument type="int" mandatory="no" default="10" minvalue="1" maxvalue="10000">nlines</argument>
 		<argument type="string" mandatory="no" default="sync" values="async|sync">exec_mode</argument>
