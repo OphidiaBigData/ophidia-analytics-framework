@@ -141,22 +141,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CONTAINER_INPUT);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_TASKS_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_CONTAINER_INPUT);
-
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (strcmp(value, OPH_COMMON_ALL_FILTER) != 0) {
-		if (!(((OPH_TASKS_operator_handle *) handle->operator_handle)->container_name = (char *) strndup(value, OPH_TP_TASKLEN))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_TASKS_MEMORY_ERROR_INPUT, "container name");
-
-			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-		}
-	}
-
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_PATH);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_PATH);

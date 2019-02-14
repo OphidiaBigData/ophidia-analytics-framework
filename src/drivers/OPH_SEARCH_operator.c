@@ -441,7 +441,7 @@ int get_filters_string(char **container_filter, int container_filter_num, char *
 	char query[MYSQL_BUFLEN], tmp[MYSQL_BUFLEN], *_tmp, *pch, *sp;
 	*query = 0;
 
-	if (strcasecmp(container_filter[0], OPH_COMMON_ALL_FILTER)) {
+	if (container_filter_num && strcasecmp(container_filter[0], OPH_COMMON_ALL_FILTER)) {
 		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "AND (");
 		m += snprintf(query + m, MYSQL_BUFLEN - m, m ? "AND (" : "(");
 		for (i = 0; i < container_filter_num; i++) {
@@ -452,7 +452,7 @@ int get_filters_string(char **container_filter, int container_filter_num, char *
 		m += snprintf(query + m, MYSQL_BUFLEN - m, ") ");
 	}
 
-	if (strcasecmp(metadata_key_filter[0], OPH_COMMON_ALL_FILTER)) {
+	if (metadata_key_filter_num && strcasecmp(metadata_key_filter[0], OPH_COMMON_ALL_FILTER)) {
 		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "AND (");
 		m += snprintf(query + m, MYSQL_BUFLEN - m, m ? "AND (" : "(");
 		for (i = k = t = 0; i < metadata_key_filter_num; i++, t = 0) {
@@ -474,7 +474,7 @@ int get_filters_string(char **container_filter, int container_filter_num, char *
 		m += snprintf(query + m, MYSQL_BUFLEN - m, ") ");
 	}
 
-	if (strcasecmp(metadata_value_filter[0], OPH_COMMON_ALL_FILTER) && (j < metadata_value_filter_num)) {
+	if (metadata_value_filter_num && strcasecmp(metadata_value_filter[0], OPH_COMMON_ALL_FILTER) && (j < metadata_value_filter_num)) {
 		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "AND (");
 		m += snprintf(query + m, MYSQL_BUFLEN - m, m ? "AND (" : "(");
 		for (i = j, k = 0; i < metadata_value_filter_num; i++, k++) {
@@ -603,21 +603,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, OPH_IN_PARAM_CWD);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
-
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_NAME_FILTER);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CONTAINER_NAME_FILTER);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CONTAINER_NAME_FILTER);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (oph_tp_parse_multiple_value_param
-	    (value, &((OPH_SEARCH_operator_handle *) handle->operator_handle)->container_filter, &((OPH_SEARCH_operator_handle *) handle->operator_handle)->container_filter_num)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_INVALID_INPUT_STRING);
-		oph_tp_free_multiple_value_param_list(((OPH_SEARCH_operator_handle *) handle->operator_handle)->container_filter,
-						      ((OPH_SEARCH_operator_handle *) handle->operator_handle)->container_filter_num);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_METADATA_KEY_FILTER);

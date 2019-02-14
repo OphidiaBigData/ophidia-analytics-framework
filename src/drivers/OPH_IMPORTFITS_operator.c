@@ -205,7 +205,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	char *container_name = (!hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT) ? "NO-CONTAINER" : hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT));
+	char empty = 0, *container_name = &empty;
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DESCRIPTION);
 	if (!value) {
@@ -255,22 +255,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->hdu = (int) strtol(value, NULL, 10);
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CONTAINER_INPUT);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CONTAINER_INPUT);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->create_container = 1;
+	char *pointer = strrchr(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path, '/');
+	while (pointer && !strlen(pointer)) {
+		*pointer = 0;
+		pointer = strrchr(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path, '/');
 	}
-	if (!strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
-		((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->create_container = 1;
-		char *pointer = strrchr(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path, '/');
-		while (pointer && !strlen(pointer)) {
-			*pointer = 0;
-			pointer = strrchr(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path, '/');
-		}
-		container_name = pointer ? pointer + 1 : ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path;
-	} else
-		container_name = value;
+	container_name = pointer ? pointer + 1 : ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path;
 	if (!(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->container_input = (char *) strndup(container_name, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "container output name");

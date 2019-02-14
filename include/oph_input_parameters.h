@@ -20,8 +20,6 @@
 #define __OPH_INPUT_PARAMETERS_H
 
 #define OPH_IN_PARAM_OPERATOR_NAME				"operator"
-#define OPH_IN_PARAM_CONTAINER_INPUT				"container"
-#define OPH_IN_PARAM_CONTAINER_PID				"container_pid"
 #define OPH_IN_PARAM_DATACUBE_INPUT				"cube"
 #define OPH_IN_PARAM_DATACUBE_INPUT_2				"cube2"
 #define OPH_IN_PARAM_DATACUBE_MULTI_INPUT			"cubes"
@@ -58,7 +56,6 @@
 #define OPH_IN_PARAM_MERGE_ON_FRAGMENTS				"nmerge"
 #define OPH_IN_PARAM_FRAGMENT_INPUT				"frag"
 #define OPH_IN_PARAM_VISUALIZZATION_LEVEL			"level"
-#define OPH_IN_PARAM_CONTAINER_NAME_FILTER			"container_filter"
 #define OPH_IN_PARAM_DATACUBE_NAME_FILTER			"cube_filter"
 #define OPH_IN_PARAM_OPERATOR_NAME_FILTER			"operator_filter"
 #define OPH_IN_PARAM_HOSTNAME_FILTER				"host_filter"
@@ -84,7 +81,6 @@
 #define OPH_IN_PARAM_PRIMITIVE_RETURN_TYPE_FILTER		"return_type"
 #define OPH_IN_PARAM_PRIMITIVE_TYPE_FILTER			"primitive_type"
 #define OPH_IN_PARAM_LOGGING_TYPE				"log_type"
-#define OPH_IN_PARAM_CONTAINER_ID_FILTER			"container_id"
 #define OPH_IN_PARAM_LOG_LINES_NUMBER				"nlines"
 #define OPH_IN_PARAM_SHOW_ID					"show_id"
 #define OPH_IN_PARAM_SHOW_INDEX					"show_index"

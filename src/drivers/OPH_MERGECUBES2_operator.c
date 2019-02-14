@@ -348,22 +348,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 
 		id_datacube_in[2 * ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num] = id_datacube_in[0];
-		if (id_datacube_in[0]) {
-			value = hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT);
-			if (!value) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CONTAINER_INPUT);
-				logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[0], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CONTAINER_INPUT);
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-			if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
-				if (oph_odb_fs_retrieve_container_id_from_container_name
-				    (oDB, folder_id, value, &id_datacube_in[2 * ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num])) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified container\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[0], OPH_LOG_GENERIC_DATACUBE_FOLDER_ERROR, value);
-					id_datacube_in[0] = 0;
-				}
-			}
-		}
 	}
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(id_datacube_in, 2 * ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num + 1, MPI_INT, 0, MPI_COMM_WORLD);

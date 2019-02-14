@@ -66,7 +66,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	//1 - Set up struct to empty values
 	((OPH_LOG_INFO_operator_handle *) handle->operator_handle)->log_type = 0;
-	((OPH_LOG_INFO_operator_handle *) handle->operator_handle)->container_id = -1;
+	((OPH_LOG_INFO_operator_handle *) handle->operator_handle)->container_id = 0;
 	((OPH_LOG_INFO_operator_handle *) handle->operator_handle)->server_type = NULL;
 	((OPH_LOG_INFO_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_LOG_INFO_operator_handle *) handle->operator_handle)->nlines = OPH_LOG_INFO_DEFAULT_NLINES;
@@ -152,19 +152,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!(((OPH_LOG_INFO_operator_handle *) handle->operator_handle)->server_type = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LOG_INFO_MEMORY_ERROR_INPUT, "server_type");
-	}
-
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_ID_FILTER);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CONTAINER_ID_FILTER);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LOG_INFO_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_CONTAINER_ID_FILTER);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	((OPH_LOG_INFO_operator_handle *) handle->operator_handle)->container_id = (int) strtol(value, NULL, 10);
-	if (((OPH_LOG_INFO_operator_handle *) handle->operator_handle)->container_id < 0) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Container_id must be >=0\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LOG_INFO_BAD_CONTAINER_ID, OPH_IN_PARAM_CONTAINER_ID_FILTER);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_LOG_LINES_NUMBER);
@@ -422,7 +409,7 @@ int task_execute(oph_operator_struct * handle)
 		case OPH_LOG_INFO_CONTAINER_LOG_REQUEST:
 			if (container_id < 0) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "container_id must be >=0\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LOG_INFO_BAD_CONTAINER_ID, OPH_IN_PARAM_CONTAINER_ID_FILTER);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LOG_INFO_BAD_CONTAINER_ID, "container_id");
 				free(lines);
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}

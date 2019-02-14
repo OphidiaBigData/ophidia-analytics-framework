@@ -93,7 +93,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->rand_algo = NULL;
 
 	//3 - Fill struct with the correct data
-	char *container_name, *value;
+	char empty = 0, *container_name = &empty, *value;
 
 	// retrieve objkeys
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OBJKEY_FILTER);
@@ -121,19 +121,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	container_name = (!hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT) ? "NO-CONTAINER" : hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT));
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CONTAINER_INPUT);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CONTAINER_INPUT);
-
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (!(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->container_input = (char *) strndup(value, OPH_TP_TASKLEN))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "container output name");
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
+	((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->container_input = strdup("");
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CWD);
 	if (!value) {
