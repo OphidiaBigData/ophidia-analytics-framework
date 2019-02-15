@@ -64,12 +64,14 @@ int main(int argc, char **argv)
 	int id_input_container;
 	int id_input_datacube;
 	int id_output_datacube;
+	int id_output_folder;
 	char *fragment_ids;
 	oph_ioserver_handler *server;
 
 	id_input_datacube = 1;
-	id_output_datacube = 0;
 	id_input_container = 1;
+	id_output_datacube = 0;
+	id_output_folder = 0;
 	fragment_ids = NULL;
 	server = NULL;
 
@@ -114,6 +116,7 @@ int main(int argc, char **argv)
 	}
 	// Change the container id
 	cube.id_container = id_input_container;
+	cube.id_folder = id_output_folder;
 	cube.id_source = 0;
 	cube.level++;
 

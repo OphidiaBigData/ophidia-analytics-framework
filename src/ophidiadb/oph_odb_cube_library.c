@@ -376,6 +376,7 @@ int _oph_odb_cube_retrieve_datacube(ophidiadb * oDB, int id_datacube, oph_odb_da
 		cube->compressed = (row[8] ? (int) strtol(row[8], NULL, 10) : 0);
 		cube->level = (row[9] ? (int) strtol(row[9], NULL, 10) : 0);
 		cube->id_source = (row[10] ? (int) strtol(row[10], NULL, 10) : 0);
+		cube->id_folder = (row[11] ? (int) strtol(row[11], NULL, 10) : 0);
 	}
 	mysql_free_result(res);
 
@@ -832,17 +833,17 @@ int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb * oDB, oph_od
 	int n;
 	if (cube->id_source) {
 		if (strlen(cube->description))
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_2, cube->id_container, cube->hostxdatacube, cube->fragmentxdb,
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_2, cube->id_folder, cube->id_container, cube->hostxdatacube, cube->fragmentxdb,
 				     cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level, cube->id_source, cube->description);
 		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE, cube->id_container, cube->hostxdatacube, cube->fragmentxdb,
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE, cube->id_folder, cube->id_container, cube->hostxdatacube, cube->fragmentxdb,
 				     cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level, cube->id_source);
 	} else {
 		if (strlen(cube->description))
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_3, cube->id_container, cube->hostxdatacube, cube->fragmentxdb,
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_3, cube->id_folder, cube->id_container, cube->hostxdatacube, cube->fragmentxdb,
 				     cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level, cube->description);
 		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_1, cube->id_container, cube->hostxdatacube, cube->fragmentxdb,
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_1, cube->id_folder, cube->id_container, cube->hostxdatacube, cube->fragmentxdb,
 				     cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level);
 	}
 	if (n >= MYSQL_BUFLEN) {

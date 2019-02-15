@@ -717,6 +717,7 @@ int task_init(oph_operator_struct * handle)
 		//New fields
 		cube.id_source = 0;
 		cube.level = 0;
+		cube.id_folder = folder_id;
 		if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->description)
 			snprintf(cube.description, OPH_ODB_CUBE_DESCRIPTION_SIZE, "%s", ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->description);
 		else

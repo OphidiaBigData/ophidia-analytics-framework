@@ -69,6 +69,7 @@ typedef struct {
  * \param compressed Whether the data is stored in a compressed (1) or uncompressed (0) form
  * \param level It rappresents the level of transformation.
  * \param id_source id of the source file. It may be NULL (0).
+ * \param id_folder id of the folder of the datacube
  */
 typedef struct {
 	int id_datacube;
@@ -85,6 +86,7 @@ typedef struct {
 	int level;
 	int id_source;
 	char description[OPH_ODB_CUBE_DESCRIPTION_SIZE + 1];
+	int id_folder;
 } oph_odb_datacube;
 
 

@@ -354,7 +354,7 @@ DROP TABLE IF EXISTS `datacube`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `datacube` (
   `iddatacube` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `idfolder` int(10) unsigned NOT NULL,
+  `idcontainer` int(10) unsigned NOT NULL,
   `creationdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `description` varchar(2048) DEFAULT NULL,
   `hostxdatacube` int(10) DEFAULT NULL,
@@ -368,13 +368,11 @@ CREATE TABLE `datacube` (
   `compress` int(10) DEFAULT 0,
   `level` int(10) NOT NULL,
   `idsource` int(10) unsigned DEFAULT NULL,
-  `idvocabulary` int(10) unsigned DEFAULT NULL,
+  `idfolder` int(10) unsigned NOT NULL,
   PRIMARY KEY (`iddatacube`),
   CONSTRAINT `idsource_d` FOREIGN KEY (`idsource`) REFERENCES `source` (`idsource`) ON DELETE SET NULL ON UPDATE CASCADE,
-  KEY `idfolder` (`idfolder`),
-  CONSTRAINT `idfolder_d` FOREIGN KEY (`idfolder`) REFERENCES `folder` (`idfolder`) ON DELETE CASCADE ON UPDATE CASCADE,
-  KEY `idvocabulary` (`idvocabulary`),
-  CONSTRAINT `idvocabulary_c` FOREIGN KEY (`idvocabulary`) REFERENCES `vocabulary` (`idvocabulary`) ON DELETE SET NULL ON UPDATE CASCADE
+  KEY `idcontainer` (`idcontainer`),
+  CONSTRAINT `idcontainer` FOREIGN KEY (`idcontainer`) REFERENCES `container` (`idcontainer`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -660,7 +658,7 @@ DROP TABLE IF EXISTS `dimension`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `dimension` (
   `iddimension` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `idfolder` int(10) unsigned NOT NULL,
+  `idcontainer` int(10) unsigned NOT NULL,
   `dimensionname` varchar(256) NOT NULL,
   `dimensiontype` varchar(64) NOT NULL,
   `idhierarchy` int(10) unsigned NOT NULL,
@@ -671,9 +669,9 @@ CREATE TABLE `dimension` (
   `leapyear` int(10) NULL DEFAULT NULL,
   `leapmonth` int(10) unsigned NULL DEFAULT NULL,
   PRIMARY KEY (`iddimension`),
-  UNIQUE KEY `folder_dimensionname` (`idfolder`, `dimensionname`), 
-  KEY `idfolder` (`idfolder`),
-  CONSTRAINT `idfolder_d` FOREIGN KEY (`idfolder`) REFERENCES `folder` (`idfolder`) ON DELETE CASCADE ON UPDATE CASCADE,
+  UNIQUE KEY `container_dimensionname` (`idcontainer`, `dimensionname`), 
+  KEY `idcontainer` (`idcontainer`),
+  CONSTRAINT `idcontainer_d` FOREIGN KEY (`idcontainer`) REFERENCES `container` (`idcontainer`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `idhierarchy_d` FOREIGN KEY (`idhierarchy`) REFERENCES `hierarchy` (`idhierarchy`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -801,6 +799,41 @@ INSERT INTO `vocabulary` (`idvocabulary`, `name`, `description`) VALUES (1, 'CF'
 UNLOCK TABLES;
 
 --
+-- Table structure for table `container`
+--
+
+DROP TABLE IF EXISTS `container`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `container` (
+  `idcontainer` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `idfolder` int(10) unsigned NOT NULL,
+  `idparent` int(10) unsigned DEFAULT NULL,
+  `containername` varchar(256) NOT NULL,
+  `operator` varchar(256) DEFAULT NULL,
+  `description` varchar(2048) DEFAULT NULL,
+  `idvocabulary` int(10) unsigned DEFAULT NULL,
+  PRIMARY KEY (`idcontainer`),
+  UNIQUE KEY `folder_containername` (`idfolder`, `containername`),
+  KEY `idfolder` (`idfolder`),
+  CONSTRAINT `idfolder_c` FOREIGN KEY (`idfolder`) REFERENCES `folder` (`idfolder`) ON DELETE CASCADE ON UPDATE CASCADE,
+  KEY `idparent` (`idparent`),
+  CONSTRAINT `idparent_c` FOREIGN KEY (`idparent`) REFERENCES `container` (`idcontainer`) ON DELETE CASCADE ON UPDATE CASCADE,
+  KEY `idvocabulary` (`idvocabulary`),
+  CONSTRAINT `idvocabulary_c` FOREIGN KEY (`idvocabulary`) REFERENCES `vocabulary` (`idvocabulary`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `container`
+--
+
+LOCK TABLES `container` WRITE;
+/*!40000 ALTER TABLE `container` DISABLE KEYS */;
+/*!40000 ALTER TABLE `container` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `metadatakey`
 --
 
@@ -925,3 +958,4 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2014-13-08 22:09:07
+

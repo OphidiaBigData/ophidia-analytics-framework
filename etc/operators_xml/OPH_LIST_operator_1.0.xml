@@ -6,24 +6,23 @@
 Metadata Access.
 
 [Behaviour]
-It shows information about folders, datacubes and their fragmentation (file system). 
-TO BE CHANGED			Levels from 0 to 2 show information about the folder tree. If the cwd is empty the current path is shown.
-TO BE CHANGED			Level 3 is similar to level 2 but it also shows additional information about the data cubes.
-TO BE CHANGED			Level 4 shows the location of the specified datacube.
-TO BE CHANGED			Levels from 5 to 8 show information about fragmentation of the input datacube.
+It shows information about folders, datacubes and their fragmentation (file system).
+Levels 0 and 1 show information about the folder tree. If the cwd is empty the current path is shown.
+Level 2 is similar to level 2 but it also shows additional information about the data cubes.
+Level 3 shows the location of the specified datacube.
+Levels from 4 to 7 show information about fragmentation of the input datacube.
 Any filter can use SQL wildcards (%, _, etc.)
 
 [Parameters]
 - level : level of verbosity.
 		  -- 0 : show folders
-          -- 1 : TO BE CHANGED
-		  -- 2 : show folders and datacubes (default)
-		  -- 3 : show datacubes pid, measure, source and transformation level
-		  -- 4 : show datacubes
-		  -- 5 : show datacubes and hosts
-		  -- 6 : show datacubes, hosts and dbmss
-		  -- 7 : show datacubes, hosts, dbmss and dbs
-		  -- 8 : show datacubes, hosts, dbmss, dbs and fragments
+		  -- 1 : show folders and datacubes (default)
+		  -- 2 : show datacubes pid, measure, source and transformation level
+		  -- 3 : show datacubes
+		  -- 4 : show datacubes and hosts
+		  -- 5 : show datacubes, hosts and dbmss
+		  -- 6 : show datacubes, hosts, dbmss and dbs
+		  -- 7 : show datacubes, hosts, dbmss, dbs and fragments
 - path : optional filter on absolute/relative path. Path is expanded so it can also contain 
 		 &apos;.&apos; and &apos;..&apos;  
 - cwd : absolute path corresponding to the current working directory,
@@ -71,7 +70,7 @@ SUBMISSION STRING: &quot;operator=oph_list;level=2;cwd=/session-code;&quot;</abs
         <permission>read</permission>
     </info>
     <args>
-		<argument type="int" mandatory="no" default="1" minvalue="0" maxvalue="8" values="0|1|2|3|4|5|6|7|8">level</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="0" maxvalue="7" values="0|1|2|3|4|5|6|7">level</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>

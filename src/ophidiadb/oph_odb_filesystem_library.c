@@ -744,6 +744,8 @@ int oph_odb_fs_update_container_path_name(ophidiadb * oDB, int in_container_id, 
 
 int oph_odb_fs_find_fs_objects(ophidiadb * oDB, int level, int id_folder, char *container_name, MYSQL_RES ** information_list)
 {
+	UNUSED(container_name);
+
 	if (!oDB || !id_folder || !information_list) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
@@ -755,7 +757,7 @@ int oph_odb_fs_find_fs_objects(ophidiadb * oDB, int level, int id_folder, char *
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
-	if (level > 3) {
+	if (level > 2) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Level not allowed\n");
 		return OPH_ODB_NULL_PARAM;
 	}
@@ -770,16 +772,7 @@ int oph_odb_fs_find_fs_objects(ophidiadb * oDB, int level, int id_folder, char *
 			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_LIST_0, id_folder);
 			break;
 		case 1:
-			if (container_name)
-				n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_LIST_1_WC, id_folder, container_name);
-			else
-				n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_LIST_1, id_folder, id_folder);
-			break;
-		case 2:
-			if (container_name)
-				n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_LIST_2_WC, id_folder, container_name);
-			else
-				n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_LIST_2, id_folder, id_folder);
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_LIST_2, id_folder, id_folder);
 			break;
 		default:
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Bad filter parameters\n");
@@ -802,6 +795,8 @@ int oph_odb_fs_find_fs_objects(ophidiadb * oDB, int level, int id_folder, char *
 
 int oph_odb_fs_find_fs_filtered_objects(ophidiadb * oDB, int id_folder, char *container_name, char *measure, int oper_level, char *src, MYSQL_RES ** information_list)
 {
+	UNUSED(container_name);
+
 	if (!oDB || !id_folder || !information_list) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
@@ -825,10 +820,7 @@ int oph_odb_fs_find_fs_filtered_objects(ophidiadb * oDB, int id_folder, char *co
 	if (src)
 		n = snprintf(where_clause + n, MYSQL_BUFLEN, "AND uri LIKE '%s'", src);
 
-	if (container_name)
-		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_LIST_2_WC_FILTER, OPH_ODB_FS_TASK_MULTIPLE_INPUT, id_folder, container_name, where_clause);
-	else
-		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_LIST_2_FILTER, id_folder, OPH_ODB_FS_TASK_MULTIPLE_INPUT, id_folder, where_clause);
+	n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_LIST_2_FILTER, id_folder, OPH_ODB_FS_TASK_MULTIPLE_INPUT, id_folder, where_clause);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
