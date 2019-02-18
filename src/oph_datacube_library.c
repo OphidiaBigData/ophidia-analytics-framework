@@ -1570,19 +1570,19 @@ int oph_dc_populate_fragment_with_rand_data2(oph_ioserver_handler * server, oph_
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned long long tot_rows, short int exec_flag, oph_odb_fragment * new_frag, oph_odb_fragment * old_frag, long long *first_id,
-				       long long *last_id, oph_ioserver_query ** exec_query, oph_ioserver_query_arg *** exec_args)
+int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_ioserver_handler * output_server, unsigned long long tot_rows, short int exec_flag, oph_odb_fragment * new_frag,
+				       oph_odb_fragment * old_frag, long long *first_id, long long *last_id, oph_ioserver_query ** exec_query, oph_ioserver_query_arg *** exec_args)
 {
-	if (!new_frag || !old_frag || !first_id || !last_id || !server) {
+	if (!new_frag || !old_frag || !first_id || !last_id || !input_server || !output_server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DC_NULL_PARAM;
 	}
 	//Check if connection to input and output fragment are set
-	if (oph_dc_check_connection_to_db(server, new_frag->db_instance->dbms_instance, new_frag->db_instance, 0)) {
+	if (oph_dc_check_connection_to_db(output_server, new_frag->db_instance->dbms_instance, new_frag->db_instance, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
-	if (oph_dc_check_connection_to_db(server, old_frag->db_instance->dbms_instance, old_frag->db_instance, 0)) {
+	if (oph_dc_check_connection_to_db(input_server, old_frag->db_instance->dbms_instance, old_frag->db_instance, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
@@ -1604,29 +1604,30 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 	}
 
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(server, read_query, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(input_server, read_query, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	if (oph_ioserver_execute_query(server, query)) {
+	if (oph_ioserver_execute_query(input_server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
-		oph_ioserver_free_query(server, query);
+		oph_ioserver_free_query(input_server, query);
 		return OPH_DC_SERVER_ERROR;
 	}
-	oph_ioserver_free_query(server, query);
+	oph_ioserver_free_query(input_server, query);
+	query = NULL;
 
 	// Init res 
 	oph_ioserver_result *old_result = NULL;
 
-	if (oph_ioserver_get_result(server, &old_result)) {
+	if (oph_ioserver_get_result(input_server, &old_result)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store result.\n");
-		oph_ioserver_free_result(server, old_result);
+		oph_ioserver_free_result(input_server, old_result);
 		return OPH_DC_SERVER_ERROR;
 	}
 	if (old_result->num_fields != 2) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
-		oph_ioserver_free_result(server, old_result);
+		oph_ioserver_free_result(input_server, old_result);
 		return OPH_DC_SERVER_ERROR;
 	}
 
@@ -1635,7 +1636,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 	//Get max row length of input table
 	if (!sizeof_var) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Fragment is empty\n");
-		oph_ioserver_free_result(server, old_result);
+		oph_ioserver_free_result(input_server, old_result);
 		return OPH_DC_SERVER_ERROR;
 	}
 
@@ -1650,9 +1651,9 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 		//Last or middle
 		if (!*exec_args) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute query\n");
-			oph_ioserver_free_result(server, old_result);
+			oph_ioserver_free_result(input_server, old_result);
 			if (*exec_query)
-				oph_ioserver_free_query(server, *exec_query);
+				oph_ioserver_free_query(output_server, *exec_query);
 			*exec_args = NULL;
 			*exec_query = NULL;
 			return OPH_DC_SERVER_ERROR;
@@ -1679,8 +1680,8 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 
 		if (!args[0]->arg || !args[1]->arg) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute query\n");
-			oph_ioserver_free_result(server, old_result);
-			oph_ioserver_free_query(server, query);
+			oph_ioserver_free_result(input_server, old_result);
+			oph_ioserver_free_query(output_server, query);
 			for (ii = 0; ii < c_arg - 1; ii++) {
 				if (args[ii]) {
 					if (args[ii]->arg)
@@ -1699,7 +1700,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 
 		if (sizeof_var > args[1]->arg_length) {
 			if (*exec_query)
-				oph_ioserver_free_query(server, *exec_query);
+				oph_ioserver_free_query(output_server, *exec_query);
 			for (ii = 0; ii < c_arg - 1; ii++) {
 				if (args[ii]) {
 					if (args[ii]->arg)
@@ -1723,14 +1724,14 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 		n = snprintf(insert_query, QUERY_BUFLEN, OPH_DC_SQ_INSERT_FRAG, new_frag->fragment_name);
 		if (n >= QUERY_BUFLEN) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-			oph_ioserver_free_result(server, old_result);
+			oph_ioserver_free_result(input_server, old_result);
 			return OPH_DC_SERVER_ERROR;
 		}
 
 		binary = (char *) calloc(sizeof_var, sizeof(char));
 		if (!binary) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate data buffers\n");
-			oph_ioserver_free_result(server, old_result);
+			oph_ioserver_free_result(input_server, old_result);
 			return OPH_DC_DATA_ERROR;
 		}
 
@@ -1738,7 +1739,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 		if (!id_dim) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate data buffers\n");
 			free(binary);
-			oph_ioserver_free_result(server, old_result);
+			oph_ioserver_free_result(input_server, old_result);
 			return OPH_DC_DATA_ERROR;
 		}
 
@@ -1747,7 +1748,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 		if (!(args)) {
 			free(binary);
 			free(id_dim);
-			oph_ioserver_free_result(server, old_result);
+			oph_ioserver_free_result(input_server, old_result);
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			return OPH_DC_DATA_ERROR;
 		}
@@ -1758,7 +1759,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate input arguments\n");
 				free(binary);
 				free(id_dim);
-				oph_ioserver_free_result(server, old_result);
+				oph_ioserver_free_result(input_server, old_result);
 				for (ii = 0; ii < c_arg - 1; ii++)
 					if (args[ii])
 						free(args[ii]);
@@ -1780,9 +1781,9 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 		args[1]->arg = (char *) (binary);
 
 
-		if (oph_ioserver_setup_query(server, insert_query, tot_rows, args, &query)) {
+		if (oph_ioserver_setup_query(output_server, insert_query, tot_rows, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
-			oph_ioserver_free_result(server, old_result);
+			oph_ioserver_free_result(input_server, old_result);
 			for (ii = 0; ii < c_arg - 1; ii++) {
 				if (args[ii]) {
 					if (args[ii]->arg)
@@ -1804,10 +1805,10 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 	long long tmp_first_id = 0, tmp_last_id = 0;
 	for (l = 0; l < rows; l++) {
 		//Read data     
-		if (oph_ioserver_fetch_row(server, old_result, &curr_row)) {
+		if (oph_ioserver_fetch_row(input_server, old_result, &curr_row)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
-			oph_ioserver_free_result(server, old_result);
-			oph_ioserver_free_query(server, query);
+			oph_ioserver_free_result(input_server, old_result);
+			oph_ioserver_free_query(output_server, query);
 			for (ii = 0; ii < c_arg - 1; ii++) {
 				if (args[ii]) {
 					if (args[ii]->arg)
@@ -1830,10 +1831,10 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 		memset(binary, 0, sizeof_var);
 		memcpy(binary, curr_row->row[1], actual_size);
 
-		if (oph_ioserver_execute_query(server, query)) {
+		if (oph_ioserver_execute_query(output_server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
-			oph_ioserver_free_result(server, old_result);
-			oph_ioserver_free_query(server, query);
+			oph_ioserver_free_result(input_server, old_result);
+			oph_ioserver_free_query(output_server, query);
 			for (ii = 0; ii < c_arg - 1; ii++) {
 				if (args[ii]) {
 					if (args[ii]->arg)
@@ -1848,7 +1849,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 		}
 	}
 
-	oph_ioserver_free_result(server, old_result);
+	oph_ioserver_free_result(input_server, old_result);
 	if ((exec_flag == 2) || (exec_flag == 3)) {
 		//If last or only one - clean 
 		for (ii = 0; ii < c_arg - 1; ii++) {
@@ -1859,7 +1860,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * server, unsigned l
 			}
 		}
 		free(args);
-		oph_ioserver_free_query(server, query);
+		oph_ioserver_free_query(output_server, query);
 		*exec_args = NULL;
 		*exec_query = NULL;
 	}

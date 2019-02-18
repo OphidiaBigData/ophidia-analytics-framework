@@ -174,7 +174,7 @@ int _ophidiaio_close(oph_ioserver_handler * handle, void **connection)
 int _ophidiaio_cleanup(oph_ioserver_handler * handle)
 {
 	UNUSED(handle)
-	    return (oph_io_client_cleanup() == OPH_IO_CLIENT_INTERFACE_OK) ? OPHIDIAIO_IO_SUCCESS : OPHIDIAIO_IO_ERROR;
+	return (oph_io_client_cleanup() == OPH_IO_CLIENT_INTERFACE_OK) ? OPHIDIAIO_IO_SUCCESS : OPHIDIAIO_IO_ERROR;
 }
 
 //Get the result set
