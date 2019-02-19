@@ -1113,7 +1113,15 @@ int task_execute(oph_operator_struct * handle)
 	else
 		snprintf(_ms, OPH_COMMON_MAX_DOUBLE_LENGHT, "%f", oper_handle->ms);
 
-	if (oph_dc_setup_dbms(&(oper_handle->server), (dbmss.value[0]).io_server_type)) {
+	oph_ioserver_handler *second_server = NULL;
+	oph_ioserver_handler *first_server = oper_handle->server;
+
+	if (oph_dc_setup_dbms(&(first_server), (dbmss.value[0]).io_server_type)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);
+		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+	if ((result == OPH_ANALYTICS_OPERATOR_SUCCESS) && multi_host && oph_dc_setup_dbms(&(second_server), (dbmss.value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -1138,12 +1146,12 @@ int task_execute(oph_operator_struct * handle)
 		} else
 			i2 = i;
 
-		if (oph_dc_connect_to_dbms(oper_handle->server, &(dbmss.value[i]), 0)) {
+		if (oph_dc_connect_to_dbms(first_server, &(dbmss.value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DBMS_CONNECTION_ERROR, (dbmss.value[i]).id_dbms);
 			result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
-		if (multi_host && oph_dc_connect_to_dbms(oper_handle->server, &(dbmss2.value[i2]), 0)) {
+		if (multi_host && oph_dc_connect_to_dbms(second_server, &(dbmss2.value[i2]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DBMS_CONNECTION_ERROR, (dbmss.value[i]).id_dbms);
 			result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -1153,7 +1161,7 @@ int task_execute(oph_operator_struct * handle)
 			//Check DB - DBMS Association
 			if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
 				continue;
-			if (oph_dc_use_db_of_dbms(oper_handle->server, &(dbmss.value[i]), &(dbs.value[j]))) {
+			if (oph_dc_use_db_of_dbms(first_server, &(dbmss.value[i]), &(dbs.value[j]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DB_SELECTION_ERROR, (dbs.value[j]).db_name);
 				result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -1179,7 +1187,7 @@ int task_execute(oph_operator_struct * handle)
 					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					break;
 				}
-				if (oph_dc_use_db_of_dbms(oper_handle->server, &(dbmss2.value[i2]), &(dbs2.value[j2]))) {
+				if (oph_dc_use_db_of_dbms(second_server, &(dbmss2.value[i2]), &(dbs2.value[j2]))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DB_SELECTION_ERROR, (dbs2.value[j]).db_name);
 					result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -1265,7 +1273,7 @@ int task_execute(oph_operator_struct * handle)
 					tot_rows = frags.value[k].key_end - frags.value[k].key_start + 1;
 
 					// Create an empty fragment
-					if (oph_dc_create_empty_fragment_from_name(oper_handle->server, frag_name_out, frags.value[k].db_instance)) {
+					if (oph_dc_create_empty_fragment_from_name(first_server, frag_name_out, frags.value[k].db_instance)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_NEW_FRAG_ERROR, frag_name_out);
 						result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -1273,7 +1281,7 @@ int task_execute(oph_operator_struct * handle)
 					}
 
 					if (oph_dc_copy_and_process_fragment
-					    (oper_handle->server, tot_rows, &(frags.value[k]), &(frags2.value[k2]), frag_name_out, compressed, operation, oper_handle->measure_type)) {
+					    (first_server, second_server, tot_rows, &(frags.value[k]), &(frags2.value[k2]), frag_name_out, compressed, operation, oper_handle->measure_type)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_NEW_FRAG_ERROR, frag_name_out);
 						result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -1703,7 +1711,7 @@ int task_execute(oph_operator_struct * handle)
 						break;
 					}
 					//INTERCUBE fragment
-					if (oph_dc_create_fragment_from_query(oper_handle->server, &(frags.value[k]), NULL, operation, 0, 0, 0)) {
+					if (oph_dc_create_fragment_from_query(first_server, &(frags.value[k]), NULL, operation, 0, 0, 0)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_NEW_FRAG_ERROR, frag_name_out);
 						result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -1730,13 +1738,18 @@ int task_execute(oph_operator_struct * handle)
 				j2++;
 		}
 
-		oph_dc_disconnect_from_dbms(oper_handle->server, &(dbmss.value[i]));
+		oph_dc_disconnect_from_dbms(first_server, &(dbmss.value[i]));
 
 		if (multi_host)
-			oph_dc_disconnect_from_dbms(oper_handle->server, &(dbmss2.value[i2]));
+			oph_dc_disconnect_from_dbms(second_server, &(dbmss2.value[i2]));
 	}
 
-	if (oph_dc_cleanup_dbms(oper_handle->server)) {
+	if (oph_dc_cleanup_dbms(first_server)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_IOPLUGIN_CLEANUP_ERROR, (dbmss.value[0]).id_dbms);
+		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+	if (multi_host && oph_dc_cleanup_dbms(second_server)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_IOPLUGIN_CLEANUP_ERROR, (dbmss.value[0]).id_dbms);
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;

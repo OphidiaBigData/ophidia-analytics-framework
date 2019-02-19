@@ -260,7 +260,8 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 
 /** 
  * \brief Function to copy new_frag to old_frag and apply a binary primitive on the result
- * \param server Pointer to I/O server structure
+ * \param first_server Pointer to input I/O server structure
+ * \param second_server Pointer to output I/O server structure
  * \param tot_rows Number of rows that will be inserted into the fragment
  * \param old_frag1 Pointer to first input fragment to be extended
  * \param old_frag2 Pointer to second input fragment to be added
@@ -270,8 +271,8 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
  * \param measure_type Data type of input cubes
  * \return 0 if successfull, N otherwise
  */
-int oph_dc_copy_and_process_fragment(oph_ioserver_handler * server, unsigned long long tot_rows, oph_odb_fragment * old_frag1, oph_odb_fragment * old_frag2, const char *frag_name, int compressed,
-				     const char *operation, const char *measure_type);
+int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_ioserver_handler * second_server, unsigned long long tot_rows, oph_odb_fragment * old_frag1, oph_odb_fragment * old_frag2,
+				     const char *frag_name, int compressed, const char *operation, const char *measure_type);
 
 /** 
  * \brief Function to populate a phisical table with random values
