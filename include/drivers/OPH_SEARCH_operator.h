@@ -27,8 +27,6 @@
 /**
  * \brief Structure of parameters needed by the operator OPH_SEARCH. It provides enhanced search on OphidiaDB metadata.
  * \param oDB : Contains the parameters and the connection to OphidiaDB
- * \param container_filter : one or more filters on containers' names.
- * \param container_filter_num : number of filters on containers' names.
  * \param metadata_key_filter : one or more filters on metadata keys.
  * \param metadata_key_filter_num : number of filters on metadata keys.
  * \param metadata_value_filter : one or more filters on metadata values.
@@ -42,8 +40,6 @@
  */
 typedef struct _OPH_SEARCH_operator_handle {
 	ophidiadb oDB;
-	char **container_filter;
-	int container_filter_num;
 	char **metadata_key_filter;
 	int metadata_key_filter_num;
 	char **metadata_value_filter;
@@ -58,6 +54,6 @@ typedef struct _OPH_SEARCH_operator_handle {
 
 /* OPERATOR MYSQL QUERIES */
 #define MYSQL_QUERY_OPH_SEARCH_READ_SUBFOLDERS "SELECT idfolder,foldername FROM folder WHERE idparent=%d"
-#define MYSQL_QUERY_OPH_SEARCH_READ_INSTANCES "SELECT container.idcontainer AS Container,datacube.iddatacube AS Datacube,metadatainstance.label AS 'Key',metadatainstance.value AS Value FROM metadatainstance,datacube,container WHERE container.idcontainer=datacube.idcontainer AND datacube.iddatacube=metadatainstance.iddatacube AND container.idfolder=%d %s ORDER BY Container,Datacube,'Key',Value"
+#define MYSQL_QUERY_OPH_SEARCH_READ_INSTANCES "SELECT datacube.iddatacube AS Datacube,metadatainstance.label AS 'Key',metadatainstance.value AS Value FROM metadatainstance,datacube WHERE datacube.iddatacube=metadatainstance.iddatacube AND idfolder=%d %s ORDER BY Datacube,'Key',Value"
 
 #endif				//__OPH_SEARCH_OPERATOR_H

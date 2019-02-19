@@ -344,7 +344,7 @@ int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, 
 	MYSQL_RES *tmp_info_list = NULL;
 	if (recursive_search) {
 		//retrieve information list
-		if (oph_odb_fs_find_fs_objects(oDB, 0, folder_id, NULL, &tmp_info_list)) {
+		if (oph_odb_fs_find_fs_objects(oDB, 0, folder_id, &tmp_info_list)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive information list\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_READ_LIST_INFO_ERROR);
 			if (recursive_search)
@@ -359,7 +359,7 @@ int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, 
 		}
 	}
 	//retrieve information list
-	if (oph_odb_fs_find_fs_objects(oDB, level, folder_id, container_name, &info_list)) {
+	if (oph_odb_fs_find_fs_objects(oDB, level, folder_id, &info_list)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive information list\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_READ_LIST_INFO_ERROR);
 		if (recursive_search)
@@ -648,7 +648,7 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, ch
 	MYSQL_RES *tmp_info_list = NULL;
 	if (recursive_search) {
 		//retrieve information list
-		if (oph_odb_fs_find_fs_objects(oDB, 0, folder_id, NULL, &tmp_info_list)) {
+		if (oph_odb_fs_find_fs_objects(oDB, 0, folder_id, &tmp_info_list)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive information list\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_READ_LIST_INFO_ERROR);
 			if (recursive_search)
@@ -663,7 +663,7 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, ch
 		}
 	}
 	//retrieve information list
-	if (oph_odb_fs_find_fs_filtered_objects(oDB, folder_id, container_name, measure, oper_level, src, &info_list)) {
+	if (oph_odb_fs_find_fs_filtered_objects(oDB, folder_id, measure, oper_level, src, &info_list)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive information list\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_READ_LIST_INFO_ERROR);
 		if (recursive_search)

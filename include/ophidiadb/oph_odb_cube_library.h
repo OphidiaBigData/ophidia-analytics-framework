@@ -232,12 +232,11 @@ int oph_odb_cube_find_datacube_hierarchy(ophidiadb * oDB, int direction, int id_
  * \param oDB Pointer to the OphidiaDB
  * \param folder_id ID of the home folder
  * \param id_datacube ID of the datacube to filter on
- * \param container_name Name of the container to filter on
  * \param opertor Operator name to filer on
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_cube_find_task_list(ophidiadb * oDB, int folder_id, int datacube_id, char *operator, char *container_name, MYSQL_RES ** information_list);
+int oph_odb_cube_find_task_list(ophidiadb * oDB, int folder_id, int datacube_id, char *operator, MYSQL_RES ** information_list);
 
 /**
  * \brief Function to delete datacube informations from OphidiaDB
@@ -322,18 +321,6 @@ int oph_odb_cube_insert_into_cubehasdim_table(ophidiadb * oDB, oph_odb_cubehasdi
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb * oDB, oph_odb_datacube * cube, int *last_insertd_id);
-
-/**
- * \brief Function to find datacubes and/or containers from OphidiaDB given optionally a datacube name and/or the container name
- * \param oDB Pointer to the OphidiaDB
- * \param folder_id Id of the home of the session
- * \param container_name Name of the container to be found (may be null)
- * \param id_datacube Id of datacube to be found (may be 0)
- * \param search_on Search only on containers (1), datacubes (2) or both (0)
- * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
- * \return 0 if successfull, -1 otherwise
- */
-int oph_odb_cube_find_containers_datacubes(ophidiadb * oDB, int folder_id, int search_on, char *container_name, int id_datacube, MYSQL_RES ** information_list);
 
 /**
  * \brief Function to retrieve cubehasdim rows from OphidiaDB given the datacube id

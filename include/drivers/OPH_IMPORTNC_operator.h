@@ -36,7 +36,6 @@
  *
  * \param oDB Contains the parameters and the connection to OphidiaDB
  * \param container_input Name of the input container used
- * \param create_container Flag indicating if the container has to be created
  * \param cwd Absolute path where the container is
  * \param run Simulate the run of operator to compute distribution parameters
  * \param nc_file_path Path of the nc file to import
@@ -79,7 +78,6 @@
 struct _OPH_IMPORTNC_operator_handle {
 	ophidiadb oDB;
 	char *container_input;
-	int create_container;
 	char *cwd;
 	int run;
 	char *nc_file_path;

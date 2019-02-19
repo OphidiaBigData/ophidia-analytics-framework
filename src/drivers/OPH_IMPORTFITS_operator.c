@@ -134,7 +134,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	//1 - Set up struct to empty values
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->container_input = NULL;
-	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->create_container = 0;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->grid_name = NULL;
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->check_grid = 0;
@@ -255,7 +254,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->hdu = (int) strtol(value, NULL, 10);
 
-	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->create_container = 1;
 	char *pointer = strrchr(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path, '/');
 	while (pointer && !strlen(pointer)) {
 		*pointer = 0;
@@ -1058,6 +1056,8 @@ int task_init(oph_operator_struct * handle)
 		}
 	}
 
+	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->create_container = 1;
+	int container_exists = 0;
 	char *container_name = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->container_input;
 
 	if (handle->proc_rank == 0) {
@@ -1065,8 +1065,6 @@ int task_init(oph_operator_struct * handle)
 
 		int i, j;
 		char id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
-
-		int container_exists = 0;
 		int last_insertd_id = 0;
 		int *host_number = &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->host_number;
 		int *fragxdb_number = &((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fragxdb_number;
@@ -1383,31 +1381,29 @@ int task_init(oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_INPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
 		}
+
+		if (container_exists)
+			((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->create_container = 0;
+
 		if (((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->create_container) {
-			if (container_exists) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Input container already exist\n");
+
+			if (!oph_odb_fs_is_allowed_name(container_name)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "%s not allowed for new folders/containers\n", container_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_NAME_NOT_ALLOWED_ERROR, container_name);
+				goto __OPH_EXIT_1;
+			}
+			//Check if container exists in folder
+			int container_unique = 0;
+			if ((oph_odb_fs_is_unique(folder_id, container_name, oDB, &container_unique))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check output container\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_OUTPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
+				goto __OPH_EXIT_1;
+			}
+			if (!container_unique) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Container '%s' already exists in this path or a folder has the same name\n", container_name);
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_OUTPUT_CONTAINER_EXIST_ERROR, container_name, container_name);
 				goto __OPH_EXIT_1;
-			} else {
-				if (!oph_odb_fs_is_allowed_name(container_name)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "%s not allowed for new folders/containers\n", container_name);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_NAME_NOT_ALLOWED_ERROR, container_name);
-					goto __OPH_EXIT_1;
-				}
-				//Check if container exists in folder
-				int container_unique = 0;
-				if ((oph_odb_fs_is_unique(folder_id, container_name, oDB, &container_unique))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check output container\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_OUTPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
-					goto __OPH_EXIT_1;
-				}
-				if (!container_unique) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Container '%s' already exists in this path or a folder has the same name\n", container_name);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_OUTPUT_CONTAINER_EXIST_ERROR, container_name, container_name);
-					goto __OPH_EXIT_1;
-				}
 			}
-
 			//If it doesn't then create new container and get last id
 			oph_odb_container cont;
 			strncpy(cont.container_name, container_name, OPH_ODB_FS_CONTAINER_SIZE);

@@ -64,7 +64,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_TASKS_operator_handle *) handle->operator_handle)->operator = NULL;
 	((OPH_TASKS_operator_handle *) handle->operator_handle)->path = NULL;
 	((OPH_TASKS_operator_handle *) handle->operator_handle)->cwd = NULL;
-	((OPH_TASKS_operator_handle *) handle->operator_handle)->container_name = NULL;
 	((OPH_TASKS_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_TASKS_operator_handle *) handle->operator_handle)->objkeys_num = -1;
 	((OPH_TASKS_operator_handle *) handle->operator_handle)->sessionid = NULL;
@@ -212,7 +211,7 @@ int task_distribute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int _oph_task_recursive_task_search(ophidiadb * oDB, int folder_id, int datacube_id, char *operator, char *container, char *tmp_uri, oph_json * oper_json, int is_objkey_printable)
+int _oph_task_recursive_task_search(ophidiadb * oDB, int folder_id, int datacube_id, char *operator, char *tmp_uri, oph_json * oper_json, int is_objkey_printable)
 {
 	if (!oDB || !folder_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null parameter\n");
@@ -227,22 +226,19 @@ int _oph_task_recursive_task_search(ophidiadb * oDB, int folder_id, int datacube
 	char *pid2 = NULL;
 	MYSQL_RES *tmp_task_list = NULL;
 
-	//If container name is not set, then search recursively
-	if (!container) {
-		//Find all child folders
-		if (oph_odb_fs_find_fs_objects(oDB, 0, folder_id, NULL, &tmp_task_list)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive information list\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_TASKS_READ_LIST_INFO_ERROR);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
-		//Empty set
-		if (!(num_rows = mysql_num_rows(tmp_task_list))) {
-			mysql_free_result(tmp_task_list);
-			tmp_task_list = NULL;
-		}
+	//Find all child folders
+	if (oph_odb_fs_find_fs_objects(oDB, 0, folder_id, &tmp_task_list)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive information list\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_TASKS_READ_LIST_INFO_ERROR);
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+	//Empty set
+	if (!(num_rows = mysql_num_rows(tmp_task_list))) {
+		mysql_free_result(tmp_task_list);
+		tmp_task_list = NULL;
 	}
 	//retrieve TASK information
-	if (oph_odb_cube_find_task_list(oDB, folder_id, datacube_id, operator, container, &task_list)) {
+	if (oph_odb_cube_find_task_list(oDB, folder_id, datacube_id, operator, &task_list)) {
 		pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive task list\n");
 		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_TASKS_READ_TASK_LIST);
 		if (tmp_task_list)
@@ -416,7 +412,7 @@ int _oph_task_recursive_task_search(ophidiadb * oDB, int folder_id, int datacube
 		MYSQL_ROW tmp_row;
 		//For each ROW
 		while ((tmp_row = mysql_fetch_row(tmp_task_list))) {
-			if (_oph_task_recursive_task_search(oDB, (int) strtol(tmp_row[1], NULL, 10), datacube_id, operator, container, tmp_uri, oper_json, is_objkey_printable))
+			if (_oph_task_recursive_task_search(oDB, (int) strtol(tmp_row[1], NULL, 10), datacube_id, operator, tmp_uri, oper_json, is_objkey_printable))
 				break;
 		}
 		mysql_free_result(tmp_task_list);
@@ -439,7 +435,6 @@ int task_execute(oph_operator_struct * handle)
 	char *datacube_name = ((OPH_TASKS_operator_handle *) handle->operator_handle)->datacube_name;
 	char *operator =((OPH_TASKS_operator_handle *) handle->operator_handle)->operator;
 	char *user = ((OPH_TASKS_operator_handle *) handle->operator_handle)->user;
-	char *container_name = ((OPH_TASKS_operator_handle *) handle->operator_handle)->container_name;
 	char *cwd = ((OPH_TASKS_operator_handle *) handle->operator_handle)->cwd;
 	char *path = ((OPH_TASKS_operator_handle *) handle->operator_handle)->path;
 
@@ -638,7 +633,7 @@ int task_execute(oph_operator_struct * handle)
 		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_TASKS_PID_URI_ERROR);
 	}
 	//retrieve TASK information
-	if (_oph_task_recursive_task_search(oDB, folder_id, id_datacube, operator, container_name, tmp_uri, handle->operator_json, is_objkey_printable)) {
+	if (_oph_task_recursive_task_search(oDB, folder_id, id_datacube, operator, tmp_uri, handle->operator_json, is_objkey_printable)) {
 		pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive task list\n");
 		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_TASKS_READ_TASK_LIST);
 		if (tmp_uri)
@@ -683,10 +678,6 @@ int env_unset(oph_operator_struct * handle)
 
 	oph_odb_disconnect_from_ophidiadb(&((OPH_TASKS_operator_handle *) handle->operator_handle)->oDB);
 	oph_odb_free_ophidiadb(&((OPH_TASKS_operator_handle *) handle->operator_handle)->oDB);
-	if (((OPH_TASKS_operator_handle *) handle->operator_handle)->container_name) {
-		free((char *) ((OPH_TASKS_operator_handle *) handle->operator_handle)->container_name);
-		((OPH_TASKS_operator_handle *) handle->operator_handle)->container_name = NULL;
-	}
 	if (((OPH_TASKS_operator_handle *) handle->operator_handle)->cwd) {
 		free((char *) ((OPH_TASKS_operator_handle *) handle->operator_handle)->cwd);
 		((OPH_TASKS_operator_handle *) handle->operator_handle)->cwd = NULL;

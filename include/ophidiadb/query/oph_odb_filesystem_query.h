@@ -21,21 +21,18 @@
 
 #define MYSQL_QUERY_FS_RETRIEVE_ROOT_ID 		"SELECT idfolder FROM folder WHERE idparent IS NULL"
 #define MYSQL_QUERY_FS_PATH_PARSING_ID 			"SELECT idfolder FROM folder WHERE idparent=%d AND foldername='%s'"
-#define MYSQL_QUERY_FS_IS_VISIBLE_CONTAINER 		"SELECT idcontainer FROM container WHERE idfolder=%d AND containername='%s'"
-#define MYSQL_QUERY_FS_UNIQUENESS 			"SELECT folder.foldername FROM folder WHERE folder.idparent=%d AND folder.foldername='%s' UNION SELECT container.containername FROM container WHERE container.idfolder=%d AND container.containername='%s'"
-#define MYSQL_QUERY_FS_EMPTINESS 			"SELECT folder.foldername FROM folder WHERE folder.idparent=%d UNION SELECT container.containername FROM container WHERE container.idfolder=%d"
+#define MYSQL_QUERY_FS_UNIQUENESS 			"SELECT idfolder FROM folder WHERE folder.idparent=%d AND folder.foldername='%s'"
+#define MYSQL_QUERY_FS_EMPTINESS 			"SELECT idfolder FROM folder WHERE folder.idparent=%d UNION SELECT iddatacube FROM datacube WHERE datacube.idfolder=%d"
 
 #define MYSQL_QUERY_FS_RETRIEVE_SESSION_FOLDER_ID 	"SELECT idfolder FROM session WHERE sessionid = '%s';"
 #define MYSQL_QUERY_FS_RETRIEVE_CONTAINER_FOLDER_ID 	"SELECT idfolder FROM container WHERE idcontainer = %d;"
 #define MYSQL_QUERY_FS_RETRIEVE_PARENT_FOLDER_ID 	"SELECT idparent FROM folder WHERE idfolder = %d;"
-#define MYSQL_QUERY_FS_RETRIEVE_CONTAINER_NAME		"SELECT containername, idfolder FROM container WHERE idcontainer = %d;"
-
 #define MYSQL_QUERY_FS_RETRIEVE_PARENT_FOLDER 		"SELECT idparent, foldername FROM folder WHERE idfolder = %d;"
+
 #define MYSQL_QUERY_FS_MV 				"UPDATE container SET container.idfolder=%d, container.containername = '%s' WHERE container.idcontainer=%d;"
 #define MYSQL_QUERY_FS_LIST_0 				"SELECT foldername, idfolder FROM folder WHERE folder.idparent=%d ORDER BY foldername;"
-#define MYSQL_QUERY_FS_LIST_2  				"SELECT foldername AS name, 1 AS type, NULL AS idcontainer, NULL AS iddatacube, NULL AS description FROM folder WHERE folder.idparent=%d UNION SELECT (CASE WHEN idparent > 1 THEN CONCAT(foldername, '/') ELSE '.' END) AS name, 2 AS type, datacube.idcontainer, iddatacube, datacube.description FROM folder INNER JOIN datacube ON datacube.idfolder=folder.idfolder WHERE folder.idfolder=%d ORDER BY name, iddatacube ASC;"
-
-#define MYSQL_QUERY_FS_LIST_2_FILTER  			"SELECT foldername AS name, 1 AS type, NULL AS idcontainer, NULL AS iddatacube, NULL AS description, NULL AS level, NULL AS measure, NULL AS uri, NULL AS idinput FROM folder WHERE folder.idparent=%d UNION SELECT DISTINCT containername AS name, 2 AS type, datacube.idcontainer, datacube.iddatacube, datacube.description, level, measure, uri, CASE WHEN task.inputnumber > 1 THEN '%s' ELSE hasinput.iddatacube END AS idinput FROM container LEFT OUTER JOIN datacube ON datacube.idcontainer=container.idcontainer LEFT OUTER JOIN source ON datacube.idsource = source.idsource LEFT OUTER JOIN task ON task.idoutputcube = datacube.iddatacube LEFT OUTER JOIN hasinput ON hasinput.idtask= task.idtask WHERE container.idfolder=%d %s ORDER BY idcontainer, iddatacube ASC;"
+#define MYSQL_QUERY_FS_LIST_2  				"SELECT foldername AS name, 1 AS type, NULL AS idcontainer, NULL AS iddatacube, NULL AS description FROM folder WHERE folder.idparent=%d UNION SELECT '.' AS name, 2 AS type, datacube.idcontainer, iddatacube, datacube.description FROM folder INNER JOIN datacube ON datacube.idfolder=folder.idfolder WHERE folder.idfolder=%d ORDER BY name, iddatacube ASC;"
+#define MYSQL_QUERY_FS_LIST_2_FILTER  			"SELECT foldername AS name, 1 AS type, NULL AS idcontainer, NULL AS iddatacube, NULL AS description, NULL AS level, NULL AS measure, NULL AS uri, NULL AS idinput FROM folder WHERE folder.idparent=%d UNION SELECT '.' AS name, 2 AS type, datacube.idcontainer, datacube.iddatacube, datacube.description, level, measure, uri, CASE WHEN task.inputnumber > 1 THEN '%s' ELSE hasinput.iddatacube END AS idinput FROM folder INNER JOIN datacube ON datacube.idfolder=folder.idfolder LEFT OUTER JOIN source ON datacube.idsource = source.idsource LEFT OUTER JOIN task ON task.idoutputcube = datacube.iddatacube LEFT OUTER JOIN hasinput ON hasinput.idtask = task.idtask WHERE folder.idfolder=%d %s ORDER BY name, iddatacube ASC;"
 
 #define MYSQL_QUERY_FS_MKDIR				"INSERT INTO folder (idfolder,idparent,foldername) VALUES (null,%d,'%s')"
 #define MYSQL_QUERY_FS_RMDIR				"DELETE FROM folder WHERE folder.idfolder=%d"

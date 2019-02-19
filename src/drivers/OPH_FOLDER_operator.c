@@ -511,40 +511,6 @@ int task_execute(oph_operator_struct * handle)
 					}
 					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 				}
-				if (oph_odb_fs_is_visible_container(folderid1, last_token, &((OPH_FOLDER_operator_handle *) handle->operator_handle)->oDB, &answer)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check object type\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FOLDER_TYPE_CHECK_ERROR);
-					if (first_part) {
-						free(first_part);
-						first_part = NULL;
-					}
-					if (last_token) {
-						free(last_token);
-						last_token = NULL;
-					}
-					if (abs_path1) {
-						free(abs_path1);
-						abs_path1 = NULL;
-					}
-					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-				}
-				if (answer) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "%s is not a folder\n", last_token);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FOLDER_NO_FOLDER_ERROR, last_token);
-					if (first_part) {
-						free(first_part);
-						first_part = NULL;
-					}
-					if (last_token) {
-						free(last_token);
-						last_token = NULL;
-					}
-					if (abs_path1) {
-						free(abs_path1);
-						abs_path1 = NULL;
-					}
-					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-				}
 				if (abs_path1) {
 					free(abs_path1);
 					abs_path1 = NULL;

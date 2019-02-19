@@ -83,6 +83,7 @@ struct _OPH_RANDCUBE_operator_handle {
 	char *measure;
 	char *measure_type;
 	char **dimension_name;
+	char **dimension_type;
 	long long *dimension_size;
 	char *dimension_level;
 	int compressed;
@@ -90,6 +91,14 @@ struct _OPH_RANDCUBE_operator_handle {
 	int objkeys_num;
 	oph_ioserver_handler *server;
 	char *sessionid;
+	int id_vocabulary;
+	int *id_dimension_hierarchy;
+	char *base_time;
+	char *units;
+	char *calendar;
+	char *month_lengths;
+	int leap_year;
+	int leap_month;
 	char *description;
 	int id_job;
 	char *rand_algo;

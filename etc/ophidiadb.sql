@@ -816,7 +816,7 @@ CREATE TABLE `container` (
   PRIMARY KEY (`idcontainer`),
   UNIQUE KEY `folder_containername` (`idfolder`, `containername`),
   KEY `idfolder` (`idfolder`),
-  CONSTRAINT `idfolder_c` FOREIGN KEY (`idfolder`) REFERENCES `folder` (`idfolder`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `idfolder_c` FOREIGN KEY (`idfolder`) REFERENCES `folder` (`idfolder`) ON DELETE SET NULL ON UPDATE CASCADE,
   KEY `idparent` (`idparent`),
   CONSTRAINT `idparent_c` FOREIGN KEY (`idparent`) REFERENCES `container` (`idcontainer`) ON DELETE CASCADE ON UPDATE CASCADE,
   KEY `idvocabulary` (`idvocabulary`),

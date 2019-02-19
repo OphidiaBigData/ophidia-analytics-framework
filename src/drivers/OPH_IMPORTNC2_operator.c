@@ -74,7 +74,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	//1 - Set up struct to empty values
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nthread = 0;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->container_input = NULL;
-	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->create_container = 0;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->grid_name = NULL;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->check_grid = 0;
@@ -253,7 +252,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->create_container = 1;
 	char *pointer = strrchr(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, '/');
 	while (pointer && !strlen(pointer)) {
 		*pointer = 0;
@@ -1090,11 +1088,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			}
 		}
 
-		int create_container = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->create_container;
-		if (container_exists)
-			create_container = 0;
-
-		if (create_container) {
+		if (!container_exists) {
 			if (!((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->import_metadata || !handle->proc_rank) {
 				strncpy(dim.base_time, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->base_time, OPH_ODB_DIM_TIME_SIZE);
 				dim.base_time[OPH_ODB_DIM_TIME_SIZE] = 0;
@@ -1603,9 +1597,8 @@ int task_init(oph_operator_struct * handle)
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->number_unven_frag = 0;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->int_dim_product = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 
-	int container_exists = 0;
+	int container_exists = 0, create_container = 1;
 	char *container_name = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->container_input;
-	int create_container = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->create_container;
 
 	if (handle->proc_rank == 0) {
 		ophidiadb *oDB = &((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->oDB;
@@ -1920,8 +1913,10 @@ int task_init(oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
 		}
+
 		if (container_exists)
 			create_container = 0;
+
 		if (create_container) {
 
 			if (!oph_odb_fs_is_allowed_name(container_name)) {

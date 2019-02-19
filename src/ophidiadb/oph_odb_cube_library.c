@@ -355,7 +355,7 @@ int _oph_odb_cube_retrieve_datacube(ophidiadb * oDB, int id_datacube, oph_odb_da
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 
-	if (mysql_field_count(oDB->conn) != 11) {
+	if (mysql_field_count(oDB->conn) != 12) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
@@ -551,120 +551,6 @@ int oph_odb_cube_retrieve_cubehasdim_list(ophidiadb * oDB, int id_datacube, oph_
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_find_containers_datacubes(ophidiadb * oDB, int folder_id, int search_on, char *container_name, int id_datacube, MYSQL_RES ** information_list)
-{
-	(*information_list) = NULL;
-
-	if (!oDB || !information_list || !folder_id) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return OPH_ODB_NULL_PARAM;
-	}
-
-	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
-		return OPH_ODB_MYSQL_ERROR;
-	}
-
-	char query[MYSQL_BUFLEN];
-	int n;
-	n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_FIND_USER_SUBFOLDERS, folder_id, folder_id);
-
-	if (n >= MYSQL_BUFLEN) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_ODB_STR_BUFF_OVERFLOW;
-	}
-	//Execute query
-	if (mysql_query(oDB->conn, query)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		return OPH_ODB_MYSQL_ERROR;
-	}
-	// Init res
-	MYSQL_RES *res;
-	MYSQL_ROW row;
-	int num_rows;
-	res = mysql_store_result(oDB->conn);
-
-	if ((num_rows = mysql_num_rows(res)) < 1) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "No rows found by query\n");
-		mysql_free_result(res);
-		return OPH_ODB_TOO_MANY_ROWS;
-	}
-
-	if (mysql_field_count(oDB->conn) != 1) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Too many fields found by query\n");
-		mysql_free_result(res);
-		return OPH_ODB_TOO_MANY_ROWS;
-	}
-
-	MYSQL_FIELD *fields = mysql_fetch_fields(res);
-	char *buffer = (char *) malloc(((fields[0].max_length + 2) * num_rows) * sizeof(char));
-	memset(buffer, 0, ((fields[0].max_length + 2) * num_rows) * sizeof(char));
-
-	//Fill connection strings structures
-	n = 0;
-	while ((row = mysql_fetch_row(res)))
-		n += snprintf(buffer + n, ((fields[0].max_length + 2) * num_rows) - n, "%s, ", row[0]);
-
-	buffer[n - 2] = 0;
-	mysql_free_result(res);
-
-	char *p1;
-	int p2;
-
-	char where_clause[MYSQL_BUFLEN];
-
-	n = 0;
-	where_clause[0] = 0;
-	//Set values of filters
-	if (container_name)
-		p1 = container_name;
-	else {
-		if (search_on == 0)
-			p1 = NULL;
-		else
-			p1 = "";
-	}
-	if (id_datacube) {
-		p2 = id_datacube;
-	} else {
-		p2 = 0;
-	}
-	if (p1 || p2)
-		n += snprintf(where_clause + n, MYSQL_BUFLEN, "AND ");
-	if (p1)
-		n += snprintf(where_clause + n, MYSQL_BUFLEN, "containername LIKE '%%%s%%' ", p1);
-	if (p2 && p1)
-		n += snprintf(where_clause + n, MYSQL_BUFLEN, "AND ");
-	if (p2)
-		n += snprintf(where_clause + n, MYSQL_BUFLEN, "iddatacube = %d ", p2);
-
-	if (search_on == 1)
-		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_FIND_DATACUBE_CONTAINER_1, p1, buffer);
-	else if (search_on == 2) {
-		if (p2)
-			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_FIND_DATACUBE_CONTAINER_2, p2, buffer);
-		else
-			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_FIND_DATACUBE_CONTAINER_2_1, buffer);
-	} else
-		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_FIND_DATACUBE_CONTAINER_0, buffer, where_clause);
-
-	if (n >= MYSQL_BUFLEN) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		free(buffer);
-		return OPH_ODB_STR_BUFF_OVERFLOW;
-	}
-	//Execute query
-	if (mysql_query(oDB->conn, query)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		free(buffer);
-		return OPH_ODB_MYSQL_ERROR;
-	}
-	// Init res
-	*information_list = mysql_store_result(oDB->conn);
-	free(buffer);
-	return OPH_ODB_SUCCESS;
-}
-
 int oph_odb_cube_find_datacube_hierarchy(ophidiadb * oDB, int direction, int id_datacube, MYSQL_RES ** information_list)
 {
 	(*information_list) = NULL;
@@ -702,7 +588,7 @@ int oph_odb_cube_find_datacube_hierarchy(ophidiadb * oDB, int direction, int id_
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_find_task_list(ophidiadb * oDB, int folder_id, int datacube_id, char *operator, char *container_name, MYSQL_RES ** information_list)
+int oph_odb_cube_find_task_list(ophidiadb * oDB, int folder_id, int datacube_id, char *operator, MYSQL_RES ** information_list)
 {
 	(*information_list) = NULL;
 
@@ -723,7 +609,6 @@ int oph_odb_cube_find_task_list(ophidiadb * oDB, int folder_id, int datacube_id,
 	//Set values to correct number
 	int p1 = datacube_id;
 	char *p2 = operator;
-	char *p3 = container_name;
 
 	n = 0;
 	where_clause[0] = 0;
@@ -737,10 +622,7 @@ int oph_odb_cube_find_task_list(ophidiadb * oDB, int folder_id, int datacube_id,
 	if (p2)
 		n += snprintf(where_clause + n, MYSQL_BUFLEN, "operation LIKE '%s' ", p2);
 
-	if (p3)
-		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_RETRIEVE_TASK_LIST_WC, folder_id, p3, where_clause);
-	else
-		n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_RETRIEVE_TASK_LIST, folder_id, where_clause);
+	n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_RETRIEVE_TASK_LIST, folder_id, where_clause);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		//free(buffer);

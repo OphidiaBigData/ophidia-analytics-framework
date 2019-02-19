@@ -77,6 +77,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->measure_type = NULL;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_level = NULL;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_name = NULL;
+	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_type = NULL;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_size = NULL;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->cwd = NULL;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->user = NULL;
@@ -86,6 +87,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type = NULL;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server = NULL;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->sessionid = NULL;
+	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_dimension_hierarchy = NULL;
+	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_vocabulary = 0;
+	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->base_time = NULL;
+	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->units = NULL;
+	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->calendar = NULL;
+	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->month_lengths = NULL;
+	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->leap_year = 0;
+	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->leap_month = 2;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->rand_algo = NULL;
@@ -227,9 +236,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->number_of_exp_dimensions = (int) strtol(value, NULL, 10);
 
 	char **dim_names;
+	char **dim_types;
 	char **dim_levels;
 	char **dim_sizes;
 	int number_of_dimensions_names = 0;
+	int number_of_dimensions_types = 0;
 	int number_of_dimensions_levels = 0;
 	int number_of_dimensions_sizes = 0;
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DIMENSION_NAME);
@@ -245,6 +256,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DIMENSION_TYPE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DIMENSION_TYPE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_DIMENSION_TYPE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (oph_tp_parse_multiple_value_param(value, &dim_types, &number_of_dimensions_types)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_INVALID_INPUT_STRING);
+		oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+		oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DIMENSION_SIZE);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DIMENSION_SIZE);
@@ -255,6 +280,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_INVALID_INPUT_STRING);
 		oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+		oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
 		oph_tp_free_multiple_value_param_list(dim_sizes, number_of_dimensions_sizes);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
@@ -263,6 +289,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
 		oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+		oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
 		oph_tp_free_multiple_value_param_list(dim_sizes, number_of_dimensions_sizes);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
@@ -274,6 +301,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_BAD_PARAMETER, OPH_IN_PARAM_EXPLICIT_DIMENSION_NUMBER,
 			((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->number_of_exp_dimensions);
 		oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+		oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
 		oph_tp_free_multiple_value_param_list(dim_sizes, number_of_dimensions_sizes);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
@@ -283,6 +311,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DIMENSION_LEVEL);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_DIMENSION_LEVEL);
 		oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+		oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
 		oph_tp_free_multiple_value_param_list(dim_sizes, number_of_dimensions_sizes);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
@@ -292,6 +321,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_INVALID_INPUT_STRING);
 			oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+			oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
 			oph_tp_free_multiple_value_param_list(dim_levels, number_of_dimensions_levels);
 			oph_tp_free_multiple_value_param_list(dim_sizes, number_of_dimensions_sizes);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
@@ -301,6 +331,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
 			oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+			oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
 			oph_tp_free_multiple_value_param_list(dim_levels, number_of_dimensions_levels);
 			oph_tp_free_multiple_value_param_list(dim_sizes, number_of_dimensions_sizes);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
@@ -310,6 +341,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "dimension levels");
 			oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+			oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
 			oph_tp_free_multiple_value_param_list(dim_levels, number_of_dimensions_levels);
 			oph_tp_free_multiple_value_param_list(dim_sizes, number_of_dimensions_sizes);
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
@@ -323,6 +355,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_BAD2_PARAMETER, "dimension level",
 					((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_level[i]);
 				oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+				oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
 				oph_tp_free_multiple_value_param_list(dim_levels, number_of_dimensions_levels);
 				oph_tp_free_multiple_value_param_list(dim_sizes, number_of_dimensions_sizes);
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
@@ -336,6 +369,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "dimension levels");
 			oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+			oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
 			oph_tp_free_multiple_value_param_list(dim_sizes, number_of_dimensions_sizes);
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
@@ -350,25 +384,46 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "dimension_name");
 		oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+		oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
 		oph_tp_free_multiple_value_param_list(dim_sizes, number_of_dimensions_sizes);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
-	memset(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_name, 0, number_of_dimensions_names * sizeof(char *));
+	memset(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_name, 0, number_of_dimensions_types * sizeof(char *));
 
-	if (!(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_size = (long long *) malloc(number_of_dimensions_names * sizeof(long long)))) {
+	if (!(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_type = (char **) malloc(number_of_dimensions_types * sizeof(char *)))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "dimension_type");
+		oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+		oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
+		oph_tp_free_multiple_value_param_list(dim_sizes, number_of_dimensions_sizes);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+	memset(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_type, 0, number_of_dimensions_sizes * sizeof(char *));
+
+	if (!(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_size = (long long *) malloc(number_of_dimensions_sizes * sizeof(long long)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "dimension_size");
 		oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+		oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
 		oph_tp_free_multiple_value_param_list(dim_sizes, number_of_dimensions_sizes);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
-	memset(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_size, 0, number_of_dimensions_names * sizeof(long long));
+	memset(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_size, 0, number_of_dimensions_sizes * sizeof(long long));
 
 	for (i = 0; i < number_of_dimensions_names; i++) {
 		if (!(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_name[i] = (char *) strndup(dim_names[i], OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, dim_names[i]);
 			oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+			oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
+			oph_tp_free_multiple_value_param_list(dim_sizes, number_of_dimensions_sizes);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		if (!(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_type[i] = (char *) strndup(dim_types[i], OPH_TP_TASKLEN))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, dim_names[i]);
+			oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+			oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
 			oph_tp_free_multiple_value_param_list(dim_sizes, number_of_dimensions_sizes);
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
@@ -379,11 +434,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_BAD_PARAMETER, OPH_IN_PARAM_DIMENSION_SIZE,
 				((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_size[i]);
 			oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+			oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
 			oph_tp_free_multiple_value_param_list(dim_sizes, number_of_dimensions_sizes);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 	}
 	oph_tp_free_multiple_value_param_list(dim_names, number_of_dimensions_names);
+	oph_tp_free_multiple_value_param_list(dim_types, number_of_dimensions_types);
 	oph_tp_free_multiple_value_param_list(dim_sizes, number_of_dimensions_sizes);
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_COMPRESSION);
@@ -516,19 +573,18 @@ int task_init(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 	//For error checking
-	int id_datacube[4] = { 0, 0, 0, 0 }, flush = 1, id_datacube_out = 0;
+	int id_datacube[4] = { 0, 0, 0, 0 }, flush = 1, id_datacube_out = 0, id_container_out = 0;
 	char *container_name = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->container_input;
 	ophidiadb *oDB = &((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->oDB;
+
+	int container_exists = 0, create_container = 1;
 
 	if (handle->proc_rank == 0) {
 
 		int i, j;
 		char id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
-
 		long long kk;
 		long long *index_array = NULL;
-		int container_exists = 0;
-		int id_container_out = 0;
 		int last_insertd_id = 0;
 		int num_of_input_dim =
 		    ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->number_of_exp_dimensions + ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->number_of_imp_dimensions;
@@ -674,14 +730,151 @@ int task_init(oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_INPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
 		}
-		if (!container_exists) {
+		if (container_exists)
+			create_container = 0;
+
+		if (create_container) {
+
+			if (!oph_odb_fs_is_allowed_name(container_name)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "%s not allowed for new folders/containers\n", container_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_NAME_NOT_ALLOWED_ERROR, container_name);
+				goto __OPH_EXIT_1;
+			}
+			//Check if container exists in folder
+			int container_unique = 0;
+			if ((oph_odb_fs_is_unique(folder_id, container_name, oDB, &container_unique))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check output container\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_OUTPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
+				goto __OPH_EXIT_1;
+			}
+			if (!container_unique) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Container '%s' already exists in this path or a folder has the same name\n", container_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_OUTPUT_CONTAINER_EXIST_ERROR, container_name, container_name);
+				goto __OPH_EXIT_1;
+			}
+			//If it doesn't then create new container and get last id
+			oph_odb_container cont;
+			strncpy(cont.container_name, container_name, OPH_ODB_FS_CONTAINER_SIZE);
+			cont.container_name[OPH_ODB_FS_CONTAINER_SIZE] = 0;
+			cont.id_parent = 0;
+			cont.id_folder = folder_id;
+			cont.operation[0] = 0;
+			cont.id_vocabulary = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_vocabulary;
+
+			if (oph_odb_fs_insert_into_container_table(oDB, &cont, &id_container_out)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update container table\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_INSERT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
+				goto __OPH_EXIT_1;
+			}
+			((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container = id_container_out;
+
+			if (container_exists && oph_odb_fs_add_suffix_to_container_name(oDB, id_container_out)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update container table\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_INSERT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
+				goto __OPH_EXIT_1;
+			}
+			//Create new dimensions
+			oph_odb_dimension dim;
+			dim.id_container = id_container_out;
+			strncpy(dim.base_time, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->base_time, OPH_ODB_DIM_TIME_SIZE);
+			dim.base_time[OPH_ODB_DIM_TIME_SIZE] = 0;
+			dim.leap_year = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->leap_year;
+			dim.leap_month = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->leap_month;
+
+			for (i = 0; i < num_of_input_dim; i++) {
+
+				// Load dimension names and types
+				strncpy(dim.dimension_name, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_name[i], OPH_ODB_DIM_DIMENSION_SIZE);
+				dim.dimension_name[OPH_ODB_DIM_DIMENSION_SIZE] = 0;
+				strncpy(dim.dimension_type, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->dimension_type[i], OPH_ODB_DIM_DIMENSION_SIZE);
+				dim.dimension_type[OPH_ODB_DIM_DIMENSION_SIZE] = 0;
+				dim.id_hierarchy = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_dimension_hierarchy[i];
+				if (dim.id_hierarchy >= 0)
+					dim.units[0] = dim.calendar[0] = 0;
+				else {
+					int j = 0;
+					dim.id_hierarchy *= -1;
+					strncpy(dim.units, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->units, OPH_ODB_DIM_TIME_SIZE);
+					dim.units[OPH_ODB_DIM_TIME_SIZE] = 0;
+					strncpy(dim.calendar, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->calendar, OPH_ODB_DIM_TIME_SIZE);
+					dim.calendar[OPH_ODB_DIM_TIME_SIZE] = 0;
+					char *tmp = NULL, *save_pointer = NULL, month_lengths[1 + OPH_ODB_DIM_TIME_SIZE];
+					strncpy(month_lengths, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->month_lengths, OPH_ODB_DIM_TIME_SIZE);
+					month_lengths[OPH_ODB_DIM_TIME_SIZE] = 0;
+					while ((tmp = strtok_r(tmp ? NULL : month_lengths, ",", &save_pointer)) && (j < OPH_ODB_DIM_MONTH_NUMBER))
+						dim.month_lengths[j++] = (int) strtol(tmp, NULL, 10);
+					while (j < OPH_ODB_DIM_MONTH_NUMBER)
+						dim.month_lengths[j++] = OPH_ODB_DIM_DAY_NUMBER;
+				}
+				if (oph_odb_dim_insert_into_dimension_table(oDB, &(dim), &last_insertd_id, 0)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert dimension.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_INSERT_DIMENSION_ERROR);
+					goto __OPH_EXIT_1;
+				}
+			}
+
+			oph_odb_db_instance db_;
+			oph_odb_db_instance *db = &db_;
+			if (oph_dim_load_dim_dbinstance(db)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while loading dimension db paramters\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_DIM_LOAD);
+				oph_dim_unload_dim_dbinstance(db);
+				goto __OPH_EXIT_1;
+			}
+			if (oph_dim_connect_to_dbms(db->dbms_instance, 0)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while connecting to dimension dbms\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_DIM_CONNECT);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				goto __OPH_EXIT_1;
+			}
+
+			if (oph_dim_create_db(db)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating dimension db\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_DB_CREATION);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				goto __OPH_EXIT_1;
+			}
+
+			if (oph_dim_use_db_of_dbms(db->dbms_instance, db)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while opening dimension db\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_DIM_USE_DB);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				goto __OPH_EXIT_1;
+			}
+
+			char dimension_table_name[OPH_COMMON_BUFFER_LEN];
+			snprintf(dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, id_container_out);
+			if (oph_dim_create_empty_table(db, dimension_table_name)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating dimension table\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DIM_TABLE_CREATION_ERROR);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				goto __OPH_EXIT_1;
+			}
+
+			snprintf(dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, id_container_out);
+			if (oph_dim_create_empty_table(db, dimension_table_name)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating dimension table\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DIM_TABLE_CREATION_ERROR);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				goto __OPH_EXIT_1;
+			}
+
+			oph_dim_disconnect_from_dbms(db->dbms_instance);
+			oph_dim_unload_dim_dbinstance(db);
+
+		} else if (!container_exists) {
 			//If it doesn't exists then return an error
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
 		}
 		//Else retreive container ID and check for dimension table 
-		if ((oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, &id_container_out))) {
+		if ((!create_container && oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, &id_container_out))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
@@ -1224,9 +1417,72 @@ int task_init(oph_operator_struct * handle)
 	if (!((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->run)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	if (!handle->proc_rank && flush)
-		oph_odb_cube_delete_from_datacube_table(&((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->oDB, id_datacube_out);
+	if (!handle->proc_rank && flush) {
+		while (id_container_out && create_container) {
+			ophidiadb *oDB = &((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->oDB;
 
+			//Remove also grid related to container dimensions
+			if (oph_odb_dim_delete_from_grid_table(oDB, id_container_out)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting grid related to container\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_GRID_DELETE_ERROR);
+				break;
+			}
+			//Delete container and related dimensions/ dimension instances
+			if (oph_odb_fs_delete_from_container_table(oDB, id_container_out)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting input container\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_CONTAINER_DELETE_ERROR);
+				break;
+			}
+
+			oph_odb_db_instance db_;
+			oph_odb_db_instance *db = &db_;
+			if (oph_dim_load_dim_dbinstance(db)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while loading dimension db paramters\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_DIM_LOAD);
+				oph_dim_unload_dim_dbinstance(db);
+				break;
+			}
+			if (oph_dim_connect_to_dbms(db->dbms_instance, 0)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while connecting to dimension dbms\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_DIM_CONNECT);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				break;
+			}
+			if (oph_dim_use_db_of_dbms(db->dbms_instance, db)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while opening dimension db\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_DIM_USE_DB);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				break;
+			}
+
+			char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
+			snprintf(index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, id_container_out);
+			snprintf(label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, id_container_out);
+
+			if (oph_dim_delete_table(db, index_dimension_table_name)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting dimension table\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_DIM_TABLE_DELETE_ERROR);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				break;
+			}
+			if (oph_dim_delete_table(db, label_dimension_table_name)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting dimension table\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_DIM_TABLE_DELETE_ERROR);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				break;
+			}
+
+			oph_dim_disconnect_from_dbms(db->dbms_instance);
+			oph_dim_unload_dim_dbinstance(db);
+
+			break;
+		}
+		oph_odb_cube_delete_from_datacube_table(&((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->oDB, id_datacube_out);
+	}
 	//Broadcast to all other processes the result         
 	MPI_Bcast(id_datacube, 4, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -1386,7 +1642,8 @@ int task_execute(oph_operator_struct * handle)
 			}
 			//Compute number of fragments to insert in DB
 			frag_to_insert =
-			    ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragxdb_number - (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id + frag_count -
+			    ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragxdb_number - (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id +
+													  frag_count -
 													  start_position * ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragxdb_number);
 
 			//For each fragment
@@ -1397,10 +1654,12 @@ int task_execute(oph_operator_struct * handle)
 				new_frag.id_db = dbs.value[j].id_db;
 				new_frag.frag_relative_index = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id + frag_count + 1;
 				new_frag.key_start =
-				    ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id * ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number +
+				    ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id *
+				    ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number +
 				    frag_count * ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number + 1;
 				new_frag.key_end =
-				    ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id * ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number +
+				    ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->fragment_first_id *
+				    ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number +
 				    frag_count * ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number +
 				    ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 				new_frag.db_instance = &(dbs.value[j]);
@@ -1426,8 +1685,9 @@ int task_execute(oph_operator_struct * handle)
 				if (compr_flag) {
 					if (oph_dc_populate_fragment_with_rand_data
 					    (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &new_frag,
-					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->array_length,
-					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->measure_type, 1, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->rand_algo)) {
+					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number,
+					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->array_length, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->measure_type,
+					     1, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->rand_algo)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment with compressed data.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_RANDCUBE_FRAG_POPULATE_ERROR, new_frag.fragment_name, "compressed");
@@ -1437,8 +1697,9 @@ int task_execute(oph_operator_struct * handle)
 				} else {
 					if (oph_dc_populate_fragment_with_rand_data
 					    (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->server, &new_frag,
-					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->array_length,
-					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->measure_type, 0, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->rand_algo)) {
+					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->tuplexfrag_number,
+					     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->array_length, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->measure_type,
+					     0, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->rand_algo)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment with uncompressed data.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_RANDCUBE_FRAG_POPULATE_ERROR, new_frag.fragment_name, "uncompressed");
@@ -1708,9 +1969,29 @@ int env_unset(oph_operator_struct * handle)
 		oph_tp_free_multiple_value_param_list(((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->objkeys, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->objkeys_num);
 		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	}
+	if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_dimension_hierarchy) {
+		free((int *) ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_dimension_hierarchy);
+		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_dimension_hierarchy = NULL;
+	}
 	if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->sessionid) {
 		free((char *) ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->sessionid);
 		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->sessionid = NULL;
+	}
+	if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->base_time) {
+		free((char *) ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->base_time);
+		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->base_time = NULL;
+	}
+	if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->units) {
+		free((char *) ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->units);
+		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->units = NULL;
+	}
+	if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->calendar) {
+		free((char *) ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->calendar);
+		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->calendar = NULL;
+	}
+	if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->month_lengths) {
+		free((char *) ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->month_lengths);
+		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->month_lengths = NULL;
 	}
 	if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->description);

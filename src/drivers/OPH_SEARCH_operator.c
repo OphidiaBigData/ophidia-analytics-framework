@@ -203,20 +203,8 @@ int recursive_search(const char *folder_abs_path, int folderid, const char *filt
 	//print each ROW
 	while ((row = mysql_fetch_row(res))) {
 		printf("|");
-		for (i = 0; i < max_lengths_size; i++) {
-			printf(" ");
-			if (!strcasecmp(fields[i].name, "Container")) {
-				if (folder_abs_path[strlen(folder_abs_path) - 1] == '/') {
-					snprintf(buffer2, MYSQL_BUFLEN, "%s%s", folder_abs_path, row[i]);
-				} else {
-					snprintf(buffer2, MYSQL_BUFLEN, "%s/%s", folder_abs_path, row[i]);
-				}
-				printf("%-*s", max_lengths[i], buffer2);
-			} else {
-				printf("%-*s", max_lengths[i], row[i]);
-			}
-			printf(" |");
-		}
+		for (i = 0; i < max_lengths_size; i++)
+			printf(" %-*s |", max_lengths[i], row[i]);
 		printf("\n");
 
 		if (is_objkey_printable) {
@@ -390,11 +378,7 @@ int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char 
 		}
 	}
 	for (i = 0; i < *max_lengths_size; i++) {
-		if (!strcasecmp(fields[i].name, "Container")) {
-			tmp = ((*max_lengths)[i] > (int) (fields[i].max_length + folder_abs_path_len)) ? (*max_lengths)[i] : (int) (fields[i].max_length + folder_abs_path_len);
-		} else {
-			tmp = ((*max_lengths)[i] > (int) fields[i].max_length) ? (*max_lengths)[i] : (int) fields[i].max_length;
-		}
+		tmp = ((*max_lengths)[i] > (int) fields[i].max_length) ? (*max_lengths)[i] : (int) fields[i].max_length;
 		(*max_lengths)[i] = (tmp > (int) fields[i].name_length) ? tmp : (int) fields[i].name_length;
 	}
 	mysql_free_result(res);
@@ -425,8 +409,7 @@ int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int get_filters_string(char **container_filter, int container_filter_num, char **metadata_key_filter, int metadata_key_filter_num, char **metadata_value_filter, int metadata_value_filter_num,
-		       char **filters_string)
+int get_filters_string(char **metadata_key_filter, int metadata_key_filter_num, char **metadata_value_filter, int metadata_value_filter_num, char **filters_string)
 {
 	int n = 0, m = 0;
 	int i, j = 0, k, t;
@@ -440,17 +423,6 @@ int get_filters_string(char **container_filter, int container_filter_num, char *
 
 	char query[MYSQL_BUFLEN], tmp[MYSQL_BUFLEN], *_tmp, *pch, *sp;
 	*query = 0;
-
-	if (container_filter_num && strcasecmp(container_filter[0], OPH_COMMON_ALL_FILTER)) {
-		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "AND (");
-		m += snprintf(query + m, MYSQL_BUFLEN - m, m ? "AND (" : "(");
-		for (i = 0; i < container_filter_num; i++) {
-			n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "%scontainername LIKE '%s'", i ? " OR " : "", container_filter[i]);
-			m += snprintf(query + m, MYSQL_BUFLEN - m, "%scontainer=%s", i ? " OR " : "", container_filter[i]);
-		}
-		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, ") ");
-		m += snprintf(query + m, MYSQL_BUFLEN - m, ") ");
-	}
 
 	if (metadata_key_filter_num && strcasecmp(metadata_key_filter[0], OPH_COMMON_ALL_FILTER)) {
 		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "AND (");
@@ -519,8 +491,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	//1 - Set up struct to empty values
-	((OPH_SEARCH_operator_handle *) handle->operator_handle)->container_filter = NULL;
-	((OPH_SEARCH_operator_handle *) handle->operator_handle)->container_filter_num = 0;
 	((OPH_SEARCH_operator_handle *) handle->operator_handle)->cwd = NULL;
 	((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_key_filter = NULL;
 	((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_key_filter_num = 0;
@@ -740,8 +710,7 @@ int task_execute(oph_operator_struct * handle)
 	}
 
 	if (get_filters_string
-	    (((OPH_SEARCH_operator_handle *) handle->operator_handle)->container_filter, ((OPH_SEARCH_operator_handle *) handle->operator_handle)->container_filter_num,
-	     ((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_key_filter, ((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_key_filter_num,
+	    (((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_key_filter, ((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_key_filter_num,
 	     ((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_value_filter, ((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_value_filter_num, &filters)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse filters\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_FILTERS_PARSING_ERROR);
@@ -841,11 +810,6 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_SEARCH_operator_handle *) handle->operator_handle)->user) {
 		free((char *) ((OPH_SEARCH_operator_handle *) handle->operator_handle)->user);
 		((OPH_SEARCH_operator_handle *) handle->operator_handle)->user = NULL;
-	}
-	if (((OPH_SEARCH_operator_handle *) handle->operator_handle)->container_filter) {
-		oph_tp_free_multiple_value_param_list(((OPH_SEARCH_operator_handle *) handle->operator_handle)->container_filter,
-						      ((OPH_SEARCH_operator_handle *) handle->operator_handle)->container_filter_num);
-		((OPH_SEARCH_operator_handle *) handle->operator_handle)->container_filter = NULL;
 	}
 	if (((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_key_filter) {
 		oph_tp_free_multiple_value_param_list(((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_key_filter,

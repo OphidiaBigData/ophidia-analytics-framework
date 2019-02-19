@@ -43,18 +43,9 @@
 
 #define MYSQL_QUERY_CUBE_RETRIEVE_DATACUBE_CHILDREN		"SELECT datacube.idcontainer, operation, datacube.iddatacube, uri FROM datacube INNER JOIN task ON task.idoutputcube = datacube.iddatacube  INNER JOIN hasinput ON task.idtask = hasinput.idtask LEFT JOIN source ON source.idsource = datacube.idsource WHERE hasinput.iddatacube = %d ORDER BY  datacube.iddatacube ASC;"
 
-#define MYSQL_QUERY_CUBE_RETRIEVE_TASK_LIST			"SELECT operation, i.idcontainer, i.iddatacube, o.idcontainer, o.iddatacube, query FROM task INNER JOIN hasinput ON task.idtask = hasinput.idtask  INNER JOIN datacube AS i ON i.iddatacube = hasinput.iddatacube INNER JOIN datacube AS o ON o.iddatacube = task.idoutputcube WHERE i.idcontainer IN (SELECT idcontainer FROM container WHERE idfolder=%d) %s  ORDER BY task.idtask ASC;"
-#define MYSQL_QUERY_CUBE_RETRIEVE_TASK_LIST_WC			"SELECT operation, i.idcontainer, i.iddatacube, o.idcontainer, o.iddatacube, query FROM task INNER JOIN hasinput ON task.idtask = hasinput.idtask  INNER JOIN datacube AS i ON i.iddatacube = hasinput.iddatacube INNER JOIN datacube AS o ON o.iddatacube = task.idoutputcube WHERE i.idcontainer IN (SELECT idcontainer FROM container WHERE idfolder=%d AND containername = '%s') %s  ORDER BY task.idtask ASC;"
+#define MYSQL_QUERY_CUBE_RETRIEVE_TASK_LIST			"SELECT operation, i.idcontainer, i.iddatacube, o.idcontainer, o.iddatacube, query FROM task INNER JOIN hasinput ON task.idtask = hasinput.idtask  INNER JOIN datacube AS i ON i.iddatacube = hasinput.iddatacube INNER JOIN datacube AS o ON o.iddatacube = task.idoutputcube WHERE i.idfolder=%d %s ORDER BY task.idtask ASC;"
 
 #define MYSQL_QUERY_CUBE_FIND_USER_SUBFOLDERS			"SELECT @pv:=idfolder AS id FROM folder JOIN (select @pv:=%d)tmp WHERE idparent=@pv UNION SELECT %d AS id;"
-
-#define MYSQL_QUERY_CUBE_FIND_DATACUBE_CONTAINER_0		"SELECT datacube.idcontainer, datacube.iddatacube, containername FROM container LEFT JOIN datacube ON container.idcontainer = datacube.idcontainer WHERE idfolder IN (%s) %s;"
-
-#define MYSQL_QUERY_CUBE_FIND_DATACUBE_CONTAINER_1		"SELECT containername FROM container WHERE containername LIKE '%%%s%%' AND idfolder IN (%s);"
-
-#define MYSQL_QUERY_CUBE_FIND_DATACUBE_CONTAINER_2		"SELECT datacube.idcontainer, iddatacube FROM container LEFT JOIN datacube ON container.idcontainer = datacube.idcontainer  WHERE iddatacube = %d AND idfolder IN (%s);"
-
-#define MYSQL_QUERY_CUBE_FIND_DATACUBE_CONTAINER_2_1		"SELECT datacube.idcontainer, iddatacube FROM container LEFT JOIN datacube ON container.idcontainer = datacube.idcontainer  WHERE idfolder IN (%s);"
 
 #define MYSQL_QUERY_CUBE_CHECK_DATACUBE_STORAGE_STATUS		"SELECT count(*) FROM partitioned INNER JOIN dbinstance ON dbinstance.iddbinstance=partitioned.iddbinstance INNER JOIN dbmsinstance ON dbinstance.iddbmsinstance=dbmsinstance.iddbmsinstance INNER JOIN host ON dbmsinstance.idhost=host.idhost  WHERE iddatacube = %d AND host.status = 'down';"
 

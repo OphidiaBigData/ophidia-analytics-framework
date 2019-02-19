@@ -614,49 +614,14 @@ int oph_odb_fs_str_last_token(const char *input, char **first_part, char **last_
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_is_visible_container(int folder_id, char *name, ophidiadb * oDB, int *answer)
-{
-	if (!oDB || !name || !folder_id || !answer) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return OPH_ODB_NULL_PARAM;
-	}
-	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
-		return OPH_ODB_MYSQL_ERROR;
-	}
-
-	char query[MYSQL_BUFLEN];
-	MYSQL_RES *res;
-	int num_rows;
-
-	snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_IS_VISIBLE_CONTAINER, folder_id, name);
-	if (mysql_query(oDB->conn, query)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		return OPH_ODB_MYSQL_ERROR;
-	}
-	res = mysql_store_result(oDB->conn);
-	num_rows = mysql_num_rows(res);
-	if (num_rows == 0) {
-		*answer = 0;
-		mysql_free_result(res);
-	} else if (num_rows == 1) {
-		*answer = 1;
-		mysql_free_result(res);
-	} else {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Too much rows found\n");
-		mysql_free_result(res);
-		return OPH_ODB_ERROR;
-	}
-
-	return OPH_ODB_SUCCESS;
-}
-
 int oph_odb_fs_is_unique(int folder_id, char *name, ophidiadb * oDB, int *answer)
 {
 	if (!oDB || !name || !folder_id || !answer) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+	*answer = 0;
+
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
 		return OPH_ODB_MYSQL_ERROR;
@@ -666,20 +631,16 @@ int oph_odb_fs_is_unique(int folder_id, char *name, ophidiadb * oDB, int *answer
 	MYSQL_RES *res;
 	int num_rows;
 
-	snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_UNIQUENESS, folder_id, name, folder_id, name);
+	snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_UNIQUENESS, folder_id, name);
 	if (mysql_query(oDB->conn, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
 	res = mysql_store_result(oDB->conn);
 	num_rows = mysql_num_rows(res);
-	if (num_rows == 0) {
-		*answer = 1;
-		mysql_free_result(res);
-	} else {
-		*answer = 0;
-		mysql_free_result(res);
-	}
+	mysql_free_result(res);
+
+	*answer = num_rows == 0;
 
 	return OPH_ODB_SUCCESS;
 }
@@ -694,25 +655,22 @@ int oph_odb_fs_is_empty_folder(int folder_id, ophidiadb * oDB, int *answer)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
 		return OPH_ODB_MYSQL_ERROR;
 	}
+	*answer = 0;
 
 	char query[MYSQL_BUFLEN];
 	MYSQL_RES *res;
 	int num_rows;
 
-	snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_EMPTINESS, folder_id, folder_id);
+	snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_EMPTINESS, folder_id);
 	if (mysql_query(oDB->conn, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
 	res = mysql_store_result(oDB->conn);
 	num_rows = mysql_num_rows(res);
-	if (num_rows == 0) {
-		*answer = 1;
-		mysql_free_result(res);
-	} else {
-		*answer = 0;
-		mysql_free_result(res);
-	}
+	mysql_free_result(res);
+
+	*answer = num_rows == 0;
 
 	return OPH_ODB_SUCCESS;
 }
@@ -742,10 +700,8 @@ int oph_odb_fs_update_container_path_name(ophidiadb * oDB, int in_container_id, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_find_fs_objects(ophidiadb * oDB, int level, int id_folder, char *container_name, MYSQL_RES ** information_list)
+int oph_odb_fs_find_fs_objects(ophidiadb * oDB, int level, int id_folder, MYSQL_RES ** information_list)
 {
-	UNUSED(container_name);
-
 	if (!oDB || !id_folder || !information_list) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
@@ -764,8 +720,6 @@ int oph_odb_fs_find_fs_objects(ophidiadb * oDB, int level, int id_folder, char *
 
 	char query[MYSQL_BUFLEN];
 	int n;
-	if (level < 1)
-		container_name = NULL;
 
 	switch (level) {
 		case 0:
@@ -793,10 +747,8 @@ int oph_odb_fs_find_fs_objects(ophidiadb * oDB, int level, int id_folder, char *
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_find_fs_filtered_objects(ophidiadb * oDB, int id_folder, char *container_name, char *measure, int oper_level, char *src, MYSQL_RES ** information_list)
+int oph_odb_fs_find_fs_filtered_objects(ophidiadb * oDB, int id_folder, char *measure, int oper_level, char *src, MYSQL_RES ** information_list)
 {
-	UNUSED(container_name);
-
 	if (!oDB || !id_folder || !information_list) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
@@ -1164,61 +1116,6 @@ int oph_odb_fs_retrieve_container_from_container_name(ophidiadb * oDB, int folde
 		*description = strdup(row[1]);
 	if (vocabulary && row[2])
 		*vocabulary = strdup(row[2]);
-
-	mysql_free_result(res);
-
-	return OPH_ODB_SUCCESS;
-}
-
-int oph_odb_fs_retrieve_container_name_from_container(ophidiadb * oDB, int id_container, char **container_name, int *folder_id)
-{
-	if (!oDB || !id_container || !container_name || !folder_id) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return OPH_ODB_NULL_PARAM;
-	}
-	*container_name = 0;
-	*folder_id = 0;
-
-	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
-		return OPH_ODB_MYSQL_ERROR;
-	}
-
-	char selectQuery[MYSQL_BUFLEN];
-	int n;
-	n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_RETRIEVE_CONTAINER_NAME, id_container);
-	if (n >= MYSQL_BUFLEN) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_ODB_STR_BUFF_OVERFLOW;
-	}
-
-	if (mysql_query(oDB->conn, selectQuery)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		return OPH_ODB_MYSQL_ERROR;
-	}
-
-	MYSQL_RES *res;
-	MYSQL_ROW row;
-	res = mysql_store_result(oDB->conn);
-	int num_rows = mysql_num_rows(res);
-	if (num_rows != 1) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
-		mysql_free_result(res);
-		return OPH_ODB_TOO_MANY_ROWS;
-	}
-
-	if (mysql_field_count(oDB->conn) != 2) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
-		mysql_free_result(res);
-		return OPH_ODB_TOO_MANY_ROWS;
-	}
-
-	if ((row = mysql_fetch_row(res))) {
-		if (row[0])
-			*container_name = strdup(row[0]);
-		if (row[1])
-			*folder_id = (int) strtol(row[1], NULL, 10);
-	}
 
 	mysql_free_result(res);
 

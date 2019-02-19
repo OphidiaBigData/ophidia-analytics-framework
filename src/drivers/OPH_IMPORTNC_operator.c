@@ -67,7 +67,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	//1 - Set up struct to empty values
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->container_input = NULL;
-	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container = 0;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->grid_name = NULL;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->check_grid = 0;
@@ -246,7 +245,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container = 1;
 	char *pointer = strrchr(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, '/');
 	while (pointer && !strlen(pointer)) {
 		*pointer = 0;
@@ -1074,11 +1072,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			}
 		}
 
-		int create_container = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container;
-		if (container_exists)
-			create_container = 0;
-
-		if (create_container) {
+		if (!container_exists) {
 			if (!((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->import_metadata || !handle->proc_rank) {
 				strncpy(dim.base_time, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->base_time, OPH_ODB_DIM_TIME_SIZE);
 				dim.base_time[OPH_ODB_DIM_TIME_SIZE] = 0;
@@ -1583,9 +1577,8 @@ int task_init(oph_operator_struct * handle)
 		}
 	}
 
-	int container_exists = 0;
+	int container_exists = 0, create_container = 1;
 	char *container_name = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->container_input;
-	int create_container = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container;
 
 	if (handle->proc_rank == 0) {
 		ophidiadb *oDB = &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB;
@@ -1913,6 +1906,7 @@ int task_init(oph_operator_struct * handle)
 		}
 		if (container_exists)
 			create_container = 0;
+
 		if (create_container) {
 
 			if (!oph_odb_fs_is_allowed_name(container_name)) {
