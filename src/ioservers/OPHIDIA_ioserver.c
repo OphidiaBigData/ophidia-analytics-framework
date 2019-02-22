@@ -173,7 +173,8 @@ int _ophidiaio_close(oph_ioserver_handler * handle, void **connection)
 //Finalize storage server plugin
 int _ophidiaio_cleanup(oph_ioserver_handler * handle)
 {
-	UNUSED(handle)
+	UNUSED(handle);
+
 	return (oph_io_client_cleanup() == OPH_IO_CLIENT_INTERFACE_OK) ? OPHIDIAIO_IO_SUCCESS : OPHIDIAIO_IO_ERROR;
 }
 
