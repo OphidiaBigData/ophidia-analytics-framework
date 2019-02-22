@@ -712,7 +712,9 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, ch
 						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
 				}
-			} else if (!row[8] && tmp_level > 0 && !row[7])
+			} else if (row[1] && !strcmp(row[1], "1"))
+				pid2 = strdup("");
+			else if (!row[8] && tmp_level > 0 && !row[7])
 				pid2 = (char *) strndup(OPH_LIST_TASK_MISSING_INPUT, strlen(OPH_LIST_TASK_MISSING_INPUT));
 			else if (!row[8] && tmp_level == 0 && !row[7])
 				pid2 = (char *) strndup(OPH_LIST_TASK_RANDOM_INPUT, strlen(OPH_LIST_TASK_RANDOM_INPUT));

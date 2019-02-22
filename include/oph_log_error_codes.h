@@ -1081,6 +1081,8 @@
 #define OPH_LOG_OPH_RANDCUBE_DIM_TABLE_DELETE_ERROR						"Error while deleting dimension table"
 #define OPH_LOG_OPH_RANDCUBE_DB_CREATION							"[CONTAINER: %s] Unable to create dimension database.\n"
 #define OPH_LOG_OPH_RANDCUBE_DIM_TABLE_CREATION_ERROR	 			"Error while creating dimension table\n"
+#define OPH_LOG_OPH_RANDCUBE_NO_VOCABULARY_NO_CONTAINER 				OPH_LOG_GENERIC_NO_VOCABULARY_NO_CONTAINER
+#define OPH_LOG_OPH_RANDCUBE_INPUT_HIERARCHY_ERROR_NO_CONTAINER  		"[CONTAINER: %s] Unable to check input hierarchy %s, or it doesn't exists\n"
 
 /*OPH_REDUCE OPERATOR LOG ERRORS*/
 #define OPH_LOG_OPH_REDUCE_MEMORY_ERROR_HANDLE					OPH_LOG_GENERIC_MEMORY_ERROR_HANDLE
