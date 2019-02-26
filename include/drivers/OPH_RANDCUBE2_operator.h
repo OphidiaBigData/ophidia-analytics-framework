@@ -28,6 +28,7 @@
  * \brief Structure of parameters needed by the operator OPH_RANDCUBE2. It creates a new datacube filling it with random data
  * \param oDB Contains the parameters and the connection to OphidiaDB
  * \param container_input Name of the input container used
+ * \param create_container Flag indicating if the container has to be created
  * \param cwd Absolute path where the container is 
  * \param user Name of the user that wants to create the datacube
  * \param run Simulate the run of operator to compute distribution parameters
@@ -64,6 +65,7 @@
 struct _OPH_RANDCUBE2_operator_handle {
 	ophidiadb oDB;
 	char *container_input;
+	int create_container;
 	char *cwd;
 	char *user;
 	int run;

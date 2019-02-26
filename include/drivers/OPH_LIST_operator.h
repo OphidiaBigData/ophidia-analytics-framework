@@ -33,6 +33,8 @@
 #define OPH_LIST_TASK_MISSING_INPUT "MISSING (DELETED)"
 #define OPH_LIST_TASK_FILE_INPUT "FILE"
 #define OPH_LIST_TASK_DATACUBE_INPUT "CUBE"
+#define OPH_LIST_TASK_EMPTY_FOLDER "EMPTY"
+#define OPH_LIST_TASK_FULL_FOLDER "%d CUBE%s"
 
 /**
  * \brief Structure of parameters needed by the operator OPH_LIST. It shows information about the datacubes fragmentation (file system)

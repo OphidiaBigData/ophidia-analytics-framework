@@ -368,7 +368,8 @@ int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, 
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	char **my_row = NULL;
-	int num_fields = 0;
+	int num_fields = 0, count;
+	char folder_description[OPH_COMMON_BUFFER_LEN];
 	//Empty set
 	if ((num_rows = mysql_num_rows(info_list))) {
 		MYSQL_ROW row;
@@ -376,6 +377,14 @@ int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, 
 		while ((row = mysql_fetch_row(info_list))) {
 			switch (level) {
 				case 1:
+
+					if (row[5]) {
+						count = (int) strtol(row[5], NULL, 10);
+						snprintf(folder_description, OPH_COMMON_BUFFER_LEN, count ? OPH_LIST_TASK_FULL_FOLDER : OPH_LIST_TASK_EMPTY_FOLDER, count, count == 1 ? "" : "S");
+						if (recursive_search && count)
+							break;
+					}
+
 					if (row[2] && row[3]) {
 						if (oph_pid_create_pid(tmp_uri, (int) strtol(row[2], NULL, 10), (int) strtol(row[3], NULL, 10), &pid)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create PID string\n");
@@ -397,7 +406,7 @@ int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, 
 						if (recursive_search && !first_time)
 							snprintf(leaf_folder, OPH_COMMON_BUFFER_LEN, OPH_LIST_CONTAINER_PATH, recursive_path, (row[0] ? row[0] : ""));
 						else
-							snprintf(leaf_folder, OPH_COMMON_BUFFER_LEN, OPH_LIST_CONTAINER_PATH_NAME, (row[0] ? row[0] : ""));
+							snprintf(leaf_folder, OPH_COMMON_BUFFER_LEN, OPH_LIST_CONTAINER_PATH_NAME, (row[0] ? row[0] : "."));
 					}
 					//ADD ROW TO JSON
 					num_fields = 4;
@@ -465,7 +474,7 @@ int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, 
 							return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 						}
 						jjj++;
-						my_row[jjj] = strdup(row[4] ? row[4] : "");
+						my_row[jjj] = strdup(row[4] ? row[4] : (row[5] ? folder_description : ""));
 						if (!my_row[jjj]) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "row value");
@@ -600,6 +609,7 @@ int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, 
 
 	if (!recursive_search)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
+
 	MYSQL_ROW tmp_row;
 	//For each ROW
 	while ((tmp_row = mysql_fetch_row(tmp_info_list))) {
@@ -672,12 +682,21 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, ch
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	char **my_row = NULL;
-	int num_fields = 7;
+	int num_fields = 7, count;
+	char folder_description[OPH_COMMON_BUFFER_LEN];
 	//Empty set
 	if ((num_rows = mysql_num_rows(info_list))) {
 		MYSQL_ROW row;
 		//For each ROW
 		while ((row = mysql_fetch_row(info_list))) {
+
+			if (row[9]) {
+				count = (int) strtol(row[9], NULL, 10);
+				snprintf(folder_description, OPH_COMMON_BUFFER_LEN, count ? OPH_LIST_TASK_FULL_FOLDER : OPH_LIST_TASK_EMPTY_FOLDER, count, count == 1 ? "" : "S");
+				if (recursive_search && count)
+					continue;
+			}
+
 			if (row[5])
 				tmp_level = (int) strtol(row[5], NULL, 10);
 
@@ -722,7 +741,7 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, ch
 			if (recursive_search && !first_time)
 				snprintf(leaf_folder, OPH_COMMON_BUFFER_LEN, "%s/%s%s", recursive_path, (row[0] ? row[0] : ""), (!strcmp(row[1], "1") ? "/" : (!strcmp(row[1], "2") ? "" : "*")));
 			else
-				snprintf(leaf_folder, OPH_COMMON_BUFFER_LEN, "%s%s", (row[0] ? row[0] : ""), (!strcmp(row[1], "1") ? "/" : (!strcmp(row[1], "2") ? "" : "*")));
+				snprintf(leaf_folder, OPH_COMMON_BUFFER_LEN, "%s%s", (row[0] ? row[0] : "."), (!strcmp(row[1], "1") ? "/" : (!strcmp(row[1], "2") ? "" : "*")));
 			char old_leaf_folder[OPH_COMMON_BUFFER_LEN];
 			snprintf(old_leaf_folder, OPH_COMMON_BUFFER_LEN, "%s", leaf_folder);
 			if (oph_utl_short_folder(18, 0, leaf_folder)) {
@@ -812,7 +831,7 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, ch
 						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 					}
 					jjj++;
-					my_row[jjj] = strdup(row[4] ? row[4] : "");
+					my_row[jjj] = strdup(row[4] ? row[4] : (row[9] ? folder_description : ""));
 					if (!my_row[jjj]) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "row value");
@@ -1023,7 +1042,7 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, ch
 							return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 						}
 						jjj++;
-						my_row[jjj] = strdup(row[4] ? row[4] : "");
+						my_row[jjj] = strdup(row[4] ? row[4] : (row[9] ? folder_description : ""));
 						if (!my_row[jjj]) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "row value");
@@ -1200,7 +1219,7 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, ch
 							return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 						}
 						jjj++;
-						my_row[jjj] = strdup(row[4] ? row[4] : "");
+						my_row[jjj] = strdup(row[4] ? row[4] : (row[9] ? folder_description : ""));
 						if (!my_row[jjj]) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "row value");
@@ -1310,7 +1329,6 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, ch
 			if (pid2)
 				free(pid2);
 			pid2 = NULL;
-
 		}
 	}
 	mysql_free_result(info_list);

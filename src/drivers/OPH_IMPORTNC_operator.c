@@ -1577,8 +1577,10 @@ int task_init(oph_operator_struct * handle)
 		}
 	}
 
-	int container_exists = 0, create_container = 1;
+	int container_exists = 0;
 	char *container_name = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->container_input;
+
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container = 1;
 
 	if (handle->proc_rank == 0) {
 		ophidiadb *oDB = &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB;
@@ -1905,9 +1907,9 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		if (container_exists)
-			create_container = 0;
+			((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container = 0;
 
-		if (create_container) {
+		if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container) {
 
 			if (!oph_odb_fs_is_allowed_name(container_name)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "%s not allowed for new folders/containers\n", container_name);
@@ -2068,7 +2070,8 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 		//Else retreive container ID and check for dimension table
-		if (!create_container && oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, &id_container_out)) {
+		if (!((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container
+		    && oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, &id_container_out)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
@@ -2463,7 +2466,7 @@ int task_init(oph_operator_struct * handle)
 				tmp_var.dims_length = NULL;
 
 				if ((retval = oph_nc_get_nc_var(id_container_out, measure->dims_name[i], ncid, 1, &tmp_var))) {
-					if (create_container) {
+					if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read information of dimension '%s': %s\n", measure->dims_name[i], nc_strerror(retval));
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, nc_strerror(retval));
 						free(tot_dims);
@@ -3247,7 +3250,7 @@ int task_init(oph_operator_struct * handle)
 			hashtbl_destroy(key_tbl);
 			hashtbl_destroy(required_tbl);
 
-			if (create_container)	// Check for time dimensions
+			if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container)	// Check for time dimensions
 			{
 				for (i = 0; i < measure->ndims; i++) {
 					ii = oph_odb_dim_set_time_dimension(oDB, id_datacube_out, measure->dims_name[i]);
@@ -3389,72 +3392,9 @@ int task_init(oph_operator_struct * handle)
 	if (!((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->run)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	if (!handle->proc_rank && flush) {
-		while (id_container_out && create_container) {
-			ophidiadb *oDB = &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB;
+	if (!handle->proc_rank && flush)
+		((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->execute_error = 1;
 
-			//Remove also grid related to container dimensions
-			if (oph_odb_dim_delete_from_grid_table(oDB, id_container_out)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting grid related to container\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_GRID_DELETE_ERROR);
-				break;
-			}
-			//Delete container and related dimensions/ dimension instances
-			if (oph_odb_fs_delete_from_container_table(oDB, id_container_out)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting input container\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_CONTAINER_DELETE_ERROR);
-				break;
-			}
-
-			oph_odb_db_instance db_;
-			oph_odb_db_instance *db = &db_;
-			if (oph_dim_load_dim_dbinstance(db)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while loading dimension db paramters\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_DIM_LOAD);
-				oph_dim_unload_dim_dbinstance(db);
-				break;
-			}
-			if (oph_dim_connect_to_dbms(db->dbms_instance, 0)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while connecting to dimension dbms\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_DIM_CONNECT);
-				oph_dim_disconnect_from_dbms(db->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db);
-				break;
-			}
-			if (oph_dim_use_db_of_dbms(db->dbms_instance, db)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while opening dimension db\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_DIM_USE_DB);
-				oph_dim_disconnect_from_dbms(db->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db);
-				break;
-			}
-
-			char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
-			snprintf(index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, id_container_out);
-			snprintf(label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, id_container_out);
-
-			if (oph_dim_delete_table(db, index_dimension_table_name)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting dimension table\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_DIM_TABLE_DELETE_ERROR);
-				oph_dim_disconnect_from_dbms(db->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db);
-				break;
-			}
-			if (oph_dim_delete_table(db, label_dimension_table_name)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting dimension table\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_DIM_TABLE_DELETE_ERROR);
-				oph_dim_disconnect_from_dbms(db->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db);
-				break;
-			}
-
-			oph_dim_disconnect_from_dbms(db->dbms_instance);
-			oph_dim_unload_dim_dbinstance(db);
-
-			break;
-		}
-		oph_odb_cube_delete_from_datacube_table(&((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB, id_datacube_out);
-	}
 	//Broadcast to all other processes the result
 	MPI_Bcast(id_datacube, 6, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -3799,6 +3739,73 @@ int task_destroy(oph_operator_struct * handle)
 				strncpy(id_string, cube.frag_relative_index_set, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
 			}
 			oph_odb_cube_free_datacube(&cube);
+
+			int id_container_out = cube.id_container;
+			while (id_container_out && ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container) {
+
+				//Remove also grid related to container dimensions
+				if (oph_odb_dim_delete_from_grid_table(oDB, id_container_out)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting grid related to container\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_GRID_DELETE_ERROR);
+					break;
+				}
+				//Delete container and related dimensions/ dimension instances
+				if (oph_odb_fs_delete_from_container_table(oDB, id_container_out)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting input container\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_IMPORTNC_CONTAINER_DELETE_ERROR);
+					break;
+				}
+
+				oph_odb_db_instance db_;
+				oph_odb_db_instance *db = &db_;
+				if (oph_dim_load_dim_dbinstance(db)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while loading dimension db paramters\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_DIM_LOAD);
+					oph_dim_unload_dim_dbinstance(db);
+					break;
+				}
+				if (oph_dim_connect_to_dbms(db->dbms_instance, 0)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while connecting to dimension dbms\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_DIM_CONNECT);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					break;
+				}
+				if (oph_dim_use_db_of_dbms(db->dbms_instance, db)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while opening dimension db\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_DIM_USE_DB);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					break;
+				}
+
+				char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
+				snprintf(index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, id_container_out);
+				snprintf(label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, id_container_out);
+
+				if (oph_dim_delete_table(db, index_dimension_table_name)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting dimension table\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_IMPORTNC_DIM_TABLE_DELETE_ERROR);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					break;
+				}
+				if (oph_dim_delete_table(db, label_dimension_table_name)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting dimension table\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_IMPORTNC_DIM_TABLE_DELETE_ERROR);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					break;
+				}
+
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+
+				break;
+			}
 		}
 		//Broadcast to all other processes the fragment relative index        
 		MPI_Bcast(id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
