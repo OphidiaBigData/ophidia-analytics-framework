@@ -905,12 +905,13 @@ int oph_odb_fs_delete_from_container_table(ophidiadb * oDB, int id_container)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_check_if_container_empty(ophidiadb * oDB, int id_container)
+int oph_odb_fs_check_if_container_empty(ophidiadb * oDB, int id_container, int *flag)
 {
-	if (!oDB || !id_container) {
+	if (!oDB || !id_container || !flag) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+	*flag = 0;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -945,11 +946,14 @@ int oph_odb_fs_check_if_container_empty(ophidiadb * oDB, int id_container)
 	}
 
 	row = mysql_fetch_row(res);
-	if (strtol(row[0], NULL, 10) > 0) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Found too many rows in query\n");
+	if (!row || !row[0]) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
+
+	*flag = !strtol(row[0], NULL, 10);
+
 	mysql_free_result(res);
 
 	return OPH_ODB_SUCCESS;

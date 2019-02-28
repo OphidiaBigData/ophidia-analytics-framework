@@ -80,6 +80,7 @@ OPERATOR_XML+=etc/operators_xml/OPH_MERGECUBES_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_MERGECUBES2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_MERGE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_METADATA_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_MOVECUBE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_OPERATORS_LIST_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_PERMUTE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_PRIMITIVES_LIST_operator_1.0.xml

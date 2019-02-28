@@ -86,6 +86,7 @@ DRIVER+=liboph_searchoperator.la
 DRIVER+=liboph_folderoperator.la
 DRIVER+=liboph_fsoperator.la
 DRIVER+=liboph_hierarchyoperator.la
+DRIVER+=liboph_movecube.la
 DRIVER+=liboph_scriptoperator.la
 if HAVE_CURL
 DRIVER+=liboph_b2dropoperator.la
@@ -141,7 +142,7 @@ liboph_cubesizeoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_data
 liboph_deleteoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_deleteoperator_la_SOURCES = OPH_DELETE_operator.c
 liboph_deleteoperator_la_LDFLAGS = -module -avoid-version -no-undefined 
-liboph_deleteoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} -loph_driver_proc $(BASIC_LIB) -loph_datacube -loph_ioserver 
+liboph_deleteoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} -loph_driver_proc $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension
 
 liboph_drilldownoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_drilldownoperator_la_SOURCES = OPH_DRILLDOWN_operator.c
@@ -261,6 +262,11 @@ liboph_metadataoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANA
 liboph_metadataoperator_la_SOURCES = OPH_METADATA_operator.c
 liboph_metadataoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_metadataoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
+
+liboph_movecube_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
+liboph_movecube_la_SOURCES = OPH_MOVECUBE_operator.c
+liboph_movecube_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_movecube_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_dimension
 
 liboph_operators_listoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"
 liboph_operators_listoperator_la_SOURCES = OPH_OPERATORS_LIST_operator.c

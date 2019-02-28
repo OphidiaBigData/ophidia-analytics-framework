@@ -32,6 +32,7 @@
 #include "oph_pid_library.h"
 #include "oph_json_library.h"
 #include "oph_driver_procedure_library.h"
+#include "oph_dimension_library.h"
 
 #include "debug.h"
 
@@ -406,8 +407,64 @@ int task_destroy(oph_operator_struct * handle)
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	if (handle->proc_rank == 0) {
+
+		ophidiadb *oDB = &((OPH_DELETE_operator_handle *) handle->operator_handle)->oDB;
 		int id_datacube = ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_datacube;
-		result = oph_dproc_clean_odb(&((OPH_DELETE_operator_handle *) handle->operator_handle)->oDB, id_datacube, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container);
+		int id_container = ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container;
+		int flag = 0;
+
+		result = oph_dproc_clean_odb(oDB, id_datacube, id_container) || oph_odb_fs_check_if_container_empty(oDB, id_container, &flag);
+
+		while (!result && flag) {
+
+			result = 1;
+
+			//Remove also grid related to container dimensions
+			if (oph_odb_dim_delete_from_grid_table(oDB, id_container))
+				break;
+
+			//Delete container and related dimensions/ dimension instances
+			if (oph_odb_fs_delete_from_container_table(oDB, id_container))
+				break;
+
+			oph_odb_db_instance db_;
+			oph_odb_db_instance *db = &db_;
+			if (oph_dim_load_dim_dbinstance(db)) {
+				oph_dim_unload_dim_dbinstance(db);
+				break;
+			}
+			if (oph_dim_connect_to_dbms(db->dbms_instance, 0)) {
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				break;
+			}
+			if (oph_dim_use_db_of_dbms(db->dbms_instance, db)) {
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				break;
+			}
+
+			char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
+			snprintf(index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, id_container);
+			snprintf(label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, id_container);
+
+			if (oph_dim_delete_table(db, index_dimension_table_name)) {
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				break;
+			}
+			if (oph_dim_delete_table(db, label_dimension_table_name)) {
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				break;
+			}
+
+			oph_dim_disconnect_from_dbms(db->dbms_instance);
+			oph_dim_unload_dim_dbinstance(db);
+
+			result = 0;
+			break;
+		}
 	}
 	//Broadcast to all other processes the operation result       
 	MPI_Bcast(&result, 1, MPI_INT, 0, MPI_COMM_WORLD);

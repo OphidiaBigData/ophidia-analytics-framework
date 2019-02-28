@@ -222,9 +222,10 @@ int oph_odb_fs_delete_from_container_table(ophidiadb * oDB, int id_container);
  * \brief Function to check if a container is empty
  * \param oDB Pointer to the OphidiaDB
  * \param id_container Id of the container to check
+ * \param flag Set to 1 in case the container is empty
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_fs_check_if_container_empty(ophidiadb * oDB, int id_container);
+int oph_odb_fs_check_if_container_empty(ophidiadb * oDB, int id_container, int *flag);
 
 /**
  * \brief Function that updates OphidiaDB adding the new container

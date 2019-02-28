@@ -1636,9 +1636,77 @@ int task_init(oph_operator_struct * handle)
 	if (!((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->run)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	if (!handle->proc_rank && flush)
-		((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->execute_error = 1;
+	if (!handle->proc_rank && flush) {
 
+		oph_odb_cube_delete_from_datacube_table(&((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->oDB, id_datacube_out);
+
+		while (id_container_out && ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->create_container) {
+
+			ophidiadb *oDB = &((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->oDB;
+
+			//Remove also grid related to container dimensions
+			if (oph_odb_dim_delete_from_grid_table(oDB, id_container_out)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting grid related to container\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_GRID_DELETE_ERROR);
+				break;
+			}
+			//Delete container and related dimensions/ dimension instances
+			if (oph_odb_fs_delete_from_container_table(oDB, id_container_out)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting input container\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_CONTAINER_DELETE_ERROR);
+				break;
+			}
+
+			oph_odb_db_instance db_;
+			oph_odb_db_instance *db = &db_;
+			if (oph_dim_load_dim_dbinstance(db)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while loading dimension db paramters\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_DIM_LOAD);
+				oph_dim_unload_dim_dbinstance(db);
+				break;
+			}
+			if (oph_dim_connect_to_dbms(db->dbms_instance, 0)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while connecting to dimension dbms\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_DIM_CONNECT);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				break;
+			}
+			if (oph_dim_use_db_of_dbms(db->dbms_instance, db)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while opening dimension db\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_DIM_USE_DB);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				break;
+			}
+
+			char index_dimension_table_name[OPH_COMMON_BUFFER_LEN], label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
+			snprintf(index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, id_container_out);
+			snprintf(label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, id_container_out);
+
+			if (oph_dim_delete_table(db, index_dimension_table_name)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting dimension table\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_DIM_TABLE_DELETE_ERROR);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				break;
+			}
+			if (oph_dim_delete_table(db, label_dimension_table_name)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting dimension table\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_RANDCUBE_DIM_TABLE_DELETE_ERROR);
+				oph_dim_disconnect_from_dbms(db->dbms_instance);
+				oph_dim_unload_dim_dbinstance(db);
+				break;
+			}
+
+			oph_dim_disconnect_from_dbms(db->dbms_instance);
+			oph_dim_unload_dim_dbinstance(db);
+
+			break;
+		}
+
+		((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->execute_error = 1;
+	}
 	//Broadcast to all other processes the result         
 	MPI_Bcast(id_datacube, 4, MPI_INT, 0, MPI_COMM_WORLD);
 
