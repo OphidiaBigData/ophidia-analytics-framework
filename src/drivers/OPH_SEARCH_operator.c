@@ -337,7 +337,7 @@ int _oph_search_recursive_search(const char *folder_abs_path, int folderid, cons
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char *filters, ophidiadb * oDB, int **max_lengths, int *max_lengths_size, char *query, int is_start)
+int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char *filters, ophidiadb * oDB, int **max_lengths, int *max_lengths_size, char *query, int is_start, int recursive_search)
 {
 	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -402,8 +402,8 @@ int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char 
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 	res = mysql_store_result(oDB->conn);
-	while ((row = mysql_fetch_row(res))) {
-		if (recursive_get_max_lengths(folder_abs_path_len + strlen(row[1]) + 1, (int) strtol(row[0], NULL, 10), filters, oDB, max_lengths, max_lengths_size, buffer, 0)) {
+	while (recursive_search && (row = mysql_fetch_row(res))) {
+		if (recursive_get_max_lengths(folder_abs_path_len + strlen(row[1]) + 1, (int) strtol(row[0], NULL, 10), filters, oDB, max_lengths, max_lengths_size, buffer, 0, 1)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Recursive step error\n");
 			free(buffer);
 			mysql_free_result(res);
@@ -772,7 +772,7 @@ int task_execute(oph_operator_struct * handle)
 		}
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-	if (recursive_get_max_lengths(strlen(abs_path), folderid, filters, oDB, &max_lengths, &max_lengths_size, NULL, 1)) {
+	if (recursive_get_max_lengths(strlen(abs_path), folderid, filters, oDB, &max_lengths, &max_lengths_size, NULL, 1, ((OPH_SEARCH_operator_handle *) handle->operator_handle)->recursive_search)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Search error\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_SEARCH_ERROR);
 		if (abs_path) {
