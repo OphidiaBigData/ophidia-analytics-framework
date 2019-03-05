@@ -40,6 +40,16 @@
 
 #define OPH_SEARCH_AND_SEPARATOR	","
 
+#ifdef OPH_ODB_MNG
+void _print_bson(const bson_t * b)
+{
+	char *str;
+	str = bson_as_json(b, NULL);
+	pmesg(LOG_INFO, __FILE__, __LINE__, "%s\n", str);
+	bson_free(str);
+}
+#endif
+
 int _oph_search_recursive_search(const char *folder_abs_path, int folderid, const char *filters, ophidiadb * oDB, int *max_lengths, int max_lengths_size, char *query, char *path, int is_start,
 				 oph_json * oper_json, int is_objkey_printable, int recursive_search)
 {
@@ -343,6 +353,7 @@ int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
 		return OPH_ODB_MYSQL_ERROR;
@@ -351,6 +362,7 @@ int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char 
 	MYSQL_RES *res;
 	MYSQL_FIELD *fields;
 	MYSQL_ROW row;
+
 	int i, tmp;
 	char *buffer;
 
@@ -363,6 +375,10 @@ int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char 
 	} else {
 		buffer = query;
 	}
+
+#ifdef OPH_ODB_MNG
+
+#else
 
 	snprintf(buffer, MYSQL_BUFLEN, MYSQL_QUERY_OPH_SEARCH_READ_INSTANCES, folderid, filters);
 	if (mysql_query(oDB->conn, buffer)) {
@@ -394,6 +410,8 @@ int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char 
 		(*max_lengths)[i] = (tmp > (int) fields[i].name_length) ? tmp : (int) fields[i].name_length;
 	}
 	mysql_free_result(res);
+
+#endif
 
 	snprintf(buffer, MYSQL_BUFLEN, MYSQL_QUERY_OPH_SEARCH_READ_SUBFOLDERS, folderid);
 	if (mysql_query(oDB->conn, buffer)) {
@@ -434,7 +452,36 @@ int get_filters_string(char **container_filter, int container_filter_num, char *
 	}
 	(*filters_string)[n] = 0;
 
-	char query[MYSQL_BUFLEN], tmp[MYSQL_BUFLEN], *_tmp, *pch, *sp;
+	char tmp[MYSQL_BUFLEN], *_tmp, *pch, *sp;
+
+#ifdef OPH_ODB_MNG
+
+	// Filter on containers is not provided
+
+	if (strcasecmp(metadata_key_filter[0], OPH_COMMON_ALL_FILTER)) {
+		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "{ $or : [");
+		for (i = k = t = 0; i < metadata_key_filter_num; i++, t = 0) {
+			strcpy(tmp, metadata_key_filter[i]);
+			for (_tmp = tmp, sp = NULL; (pch = strtok_r(_tmp, OPH_SEARCH_AND_SEPARATOR, &sp)); _tmp = NULL, k++, t++) {
+				n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "%s{ label : \"/%s/\" }", k ? ", " : "", pch);
+				if (strcasecmp(metadata_value_filter[0], OPH_COMMON_ALL_FILTER) && (j < metadata_value_filter_num)) {
+					n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, ", { value : \"/%s/\" }", metadata_value_filter[j]);
+					j++;
+				}
+			}
+		}
+		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "] }");
+	}
+
+	if (strcasecmp(metadata_value_filter[0], OPH_COMMON_ALL_FILTER) && (j < metadata_value_filter_num)) {
+		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "{ $or : [");
+		for (i = j, k = 0; i < metadata_value_filter_num; i++, k++)
+			n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "%s{ value : \"/%s/\" }", k ? ", " : "", metadata_value_filter[i]);
+		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "] }");
+	}
+#else
+
+	char query[MYSQL_BUFLEN];
 	*query = 0;
 
 	if (strcasecmp(container_filter[0], OPH_COMMON_ALL_FILTER)) {
@@ -481,10 +528,12 @@ int get_filters_string(char **container_filter, int container_filter_num, char *
 		m += snprintf(query + m, MYSQL_BUFLEN - m, ") ");
 	}
 
-	(*filters_string)[n] = 0;
 	query[m] = 0;
-
 	pmesg(LOG_INFO, __FILE__, __LINE__, "Search query: %s\n", query);
+
+#endif
+
+	(*filters_string)[n] = 0;
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

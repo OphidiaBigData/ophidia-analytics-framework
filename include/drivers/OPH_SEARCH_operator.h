@@ -61,5 +61,6 @@ typedef struct _OPH_SEARCH_operator_handle OPH_SEARCH_operator_handle;
 /* OPERATOR MYSQL QUERIES */
 #define MYSQL_QUERY_OPH_SEARCH_READ_SUBFOLDERS "SELECT idfolder,foldername FROM folder WHERE idparent=%d"
 #define MYSQL_QUERY_OPH_SEARCH_READ_INSTANCES "SELECT container.idcontainer AS Container,datacube.iddatacube AS Datacube,metadatainstance.label AS 'Key',metadatainstance.value AS Value FROM metadatainstance,datacube,container WHERE container.idcontainer=datacube.idcontainer AND datacube.iddatacube=metadatainstance.iddatacube AND container.idfolder=%d %s ORDER BY Container,Datacube,'Key',Value"
+#define MONGO_QUERY_OPH_SEARCH_READ_INSTANCES "SELECT container.idcontainer AS Container,datacube.iddatacube AS Datacube FROM datacube,container WHERE container.idcontainer=datacube.idcontainer AND container.idfolder=%d ORDER BY Container,Datacube"
 
 #endif				//__OPH_SEARCH_OPERATOR_H
