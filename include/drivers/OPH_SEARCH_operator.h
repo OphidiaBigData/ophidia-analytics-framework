@@ -40,7 +40,7 @@
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
  */
-typedef struct _OPH_SEARCH_operator_handle {
+struct _OPH_SEARCH_operator_handle {
 	ophidiadb oDB;
 	char **container_filter;
 	int container_filter_num;
@@ -54,7 +54,9 @@ typedef struct _OPH_SEARCH_operator_handle {
 	char **objkeys;
 	int objkeys_num;
 	char *sessionid;
-} OPH_SEARCH_operator_handle;
+	int recursive_search;
+};
+typedef struct _OPH_SEARCH_operator_handle OPH_SEARCH_operator_handle;
 
 /* OPERATOR MYSQL QUERIES */
 #define MYSQL_QUERY_OPH_SEARCH_READ_SUBFOLDERS "SELECT idfolder,foldername FROM folder WHERE idparent=%d"

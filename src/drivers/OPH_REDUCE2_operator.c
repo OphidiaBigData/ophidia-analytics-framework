@@ -1459,7 +1459,7 @@ int task_execute(oph_operator_struct * handle)
 				mysql_thread_end();
 			}
 			//Update fragment counter
-			first_frag += frag_count;
+			first_frag = current_frag_count + frag_count;
 		}
 
 		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
