@@ -739,7 +739,7 @@ int task_execute(oph_operator_struct * handle)
 		}
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-	if (_oph_recursive_search
+	if (_oph_search_recursive_search
 	    (abs_path, folderid, filters, oDB, max_lengths, max_lengths_size, NULL, NULL, 1, handle->operator_json,
 	     oph_json_is_objkey_printable(((OPH_SEARCH_operator_handle *) handle->operator_handle)->objkeys, ((OPH_SEARCH_operator_handle *) handle->operator_handle)->objkeys_num,
 					  OPH_JSON_OBJKEY_SEARCH), ((OPH_SEARCH_operator_handle *) handle->operator_handle)->recursive_search)) {
