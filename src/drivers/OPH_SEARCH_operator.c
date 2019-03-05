@@ -270,36 +270,39 @@ int _oph_search_recursive_search(const char *folder_abs_path, int folderid, cons
 	}
 	mysql_free_result(res);
 
-	//recursive step
-	snprintf(buffer, MYSQL_BUFLEN, MYSQL_QUERY_OPH_SEARCH_READ_SUBFOLDERS, folderid);
-	if (mysql_query(oDB->conn, buffer)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		free(buffer);
-		free(buffer2);
-		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-	}
-	res = mysql_store_result(oDB->conn);
-	while (recursive_search && (row = mysql_fetch_row(res))) {
-		snprintf(buffer2, MYSQL_BUFLEN, "%s%s%s/", folder_abs_path, folder_abs_path[strlen(folder_abs_path) - 1] == '/' ? "" : "/", row[1]);
-		char *subfolder_path = strdup(buffer2);
-		if (!subfolder_path) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory for subfolder path\n");
+	if (recursive_search) {	//recursive step
+
+		snprintf(buffer, MYSQL_BUFLEN, MYSQL_QUERY_OPH_SEARCH_READ_SUBFOLDERS, folderid);
+		if (mysql_query(oDB->conn, buffer)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 			free(buffer);
 			free(buffer2);
-			mysql_free_result(res);
-			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
-		if (_oph_search_recursive_search(subfolder_path, (int) strtol(row[0], NULL, 10), filters, oDB, max_lengths, max_lengths_size, buffer, buffer2, 0, oper_json, is_objkey_printable, 1)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Recursive step error\n");
-			free(buffer);
-			free(buffer2);
+		res = mysql_store_result(oDB->conn);
+		while ((row = mysql_fetch_row(res))) {
+			snprintf(buffer2, MYSQL_BUFLEN, "%s%s%s/", folder_abs_path, folder_abs_path[strlen(folder_abs_path) - 1] == '/' ? "" : "/", row[1]);
+			char *subfolder_path = strdup(buffer2);
+			if (!subfolder_path) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory for subfolder path\n");
+				free(buffer);
+				free(buffer2);
+				mysql_free_result(res);
+				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+			}
+			if (_oph_search_recursive_search
+			    (subfolder_path, (int) strtol(row[0], NULL, 10), filters, oDB, max_lengths, max_lengths_size, buffer, buffer2, 0, oper_json, is_objkey_printable, 1)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Recursive step error\n");
+				free(buffer);
+				free(buffer2);
+				free(subfolder_path);
+				mysql_free_result(res);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
 			free(subfolder_path);
-			mysql_free_result(res);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-		free(subfolder_path);
+		mysql_free_result(res);
 	}
-	mysql_free_result(res);
 
 	if (is_start) {
 		//print footer
@@ -379,22 +382,25 @@ int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char 
 	}
 	mysql_free_result(res);
 
-	snprintf(buffer, MYSQL_BUFLEN, MYSQL_QUERY_OPH_SEARCH_READ_SUBFOLDERS, folderid);
-	if (mysql_query(oDB->conn, buffer)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-		free(buffer);
-		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-	}
-	res = mysql_store_result(oDB->conn);
-	while (recursive_search && (row = mysql_fetch_row(res))) {
-		if (recursive_get_max_lengths(folder_abs_path_len + strlen(row[1]) + 1, (int) strtol(row[0], NULL, 10), filters, oDB, max_lengths, max_lengths_size, buffer, 0, 1)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Recursive step error\n");
+	if (recursive_search) {	//recursive step
+
+		snprintf(buffer, MYSQL_BUFLEN, MYSQL_QUERY_OPH_SEARCH_READ_SUBFOLDERS, folderid);
+		if (mysql_query(oDB->conn, buffer)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 			free(buffer);
-			mysql_free_result(res);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
+		res = mysql_store_result(oDB->conn);
+		while ((row = mysql_fetch_row(res))) {
+			if (recursive_get_max_lengths(folder_abs_path_len + strlen(row[1]) + 1, (int) strtol(row[0], NULL, 10), filters, oDB, max_lengths, max_lengths_size, buffer, 0, 1)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Recursive step error\n");
+				free(buffer);
+				mysql_free_result(res);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+		}
+		mysql_free_result(res);
 	}
-	mysql_free_result(res);
 
 	if (is_start) {
 		if (buffer) {
