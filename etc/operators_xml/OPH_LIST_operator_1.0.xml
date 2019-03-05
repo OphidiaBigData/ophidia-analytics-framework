@@ -46,7 +46,7 @@ Any filter can use SQL wildcards (%, _, etc.)
 - recursive : specifies if the search is done recursively or not. 
               The argument is considered only for the first three levels and may have the following values:
               -- no : research only in current path (default)
-              -- yes : research recursively starting from current path
+              -- yes : research recursively starting from current path.
       
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
