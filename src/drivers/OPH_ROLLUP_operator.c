@@ -161,7 +161,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (oph_odb_connect_to_mongodb(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_ROLLUP_OPHIDIADB_CONNECTION_ERROR);
-			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			return OPH_ANALYTICS_OPERATOR_MONGODB_ERROR;
 		}
 #endif
 		//Check if datacube exists (by ID container and datacube)

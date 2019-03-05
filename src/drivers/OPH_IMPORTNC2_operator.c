@@ -1039,7 +1039,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)
 				free(offset);
-			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			return OPH_ANALYTICS_OPERATOR_MONGODB_ERROR;
 		}
 #endif
 		value = hashtbl_get(task_tbl, OPH_IN_PARAM_VOCABULARY);

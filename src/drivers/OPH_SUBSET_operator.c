@@ -262,7 +262,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SUBSET_OPHIDIADB_CONNECTION_ERROR);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			return OPH_ANALYTICS_OPERATOR_MONGODB_ERROR;
 		}
 #endif
 		//Check if datacube exists (by ID container and datacube)
