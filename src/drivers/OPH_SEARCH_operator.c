@@ -40,8 +40,8 @@
 
 #define OPH_SEARCH_AND_SEPARATOR	","
 
-int recursive_search(const char *folder_abs_path, int folderid, const char *filters, ophidiadb * oDB, int *max_lengths, int max_lengths_size, char *query, char *path, int is_start,
-		     oph_json * oper_json, int is_objkey_printable)
+int _oph_search_recursive_search(const char *folder_abs_path, int folderid, const char *filters, ophidiadb * oDB, int *max_lengths, int max_lengths_size, char *query, char *path, int is_start,
+				 oph_json * oper_json, int is_objkey_printable, int recursive_search)
 {
 	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -291,12 +291,8 @@ int recursive_search(const char *folder_abs_path, int folderid, const char *filt
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 	res = mysql_store_result(oDB->conn);
-	while ((row = mysql_fetch_row(res))) {
-		if (folder_abs_path[strlen(folder_abs_path) - 1] == '/') {
-			snprintf(buffer2, MYSQL_BUFLEN, "%s%s/", folder_abs_path, row[1]);
-		} else {
-			snprintf(buffer2, MYSQL_BUFLEN, "%s/%s/", folder_abs_path, row[1]);
-		}
+	while (recursive_search && (row = mysql_fetch_row(res))) {
+		snprintf(buffer2, MYSQL_BUFLEN, "%s%s%s/", folder_abs_path, folder_abs_path[strlen(folder_abs_path) - 1] == '/' ? "" : "/", row[1]);
 		char *subfolder_path = strdup(buffer2);
 		if (!subfolder_path) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory for subfolder path\n");
@@ -305,7 +301,7 @@ int recursive_search(const char *folder_abs_path, int folderid, const char *filt
 			mysql_free_result(res);
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
-		if (recursive_search(subfolder_path, (int) strtol(row[0], NULL, 10), filters, oDB, max_lengths, max_lengths_size, buffer, buffer2, 0, oper_json, is_objkey_printable)) {
+		if (_oph_search_recursive_search(subfolder_path, (int) strtol(row[0], NULL, 10), filters, oDB, max_lengths, max_lengths_size, buffer, buffer2, 0, oper_json, is_objkey_printable, 1)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Recursive step error\n");
 			free(buffer);
 			free(buffer2);
@@ -531,6 +527,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_SEARCH_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_SEARCH_operator_handle *) handle->operator_handle)->objkeys_num = -1;
 	((OPH_SEARCH_operator_handle *) handle->operator_handle)->sessionid = NULL;
+	((OPH_SEARCH_operator_handle *) handle->operator_handle)->recursive_search = 0;
 
 	ophidiadb *oDB = &((OPH_SEARCH_operator_handle *) handle->operator_handle)->oDB;
 
@@ -670,6 +667,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_RECURSIVE_SEARCH);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_RECURSIVE_SEARCH);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_RECURSIVE_SEARCH);
+
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_SEARCH_operator_handle *) handle->operator_handle)->recursive_search = strcmp(value, OPH_COMMON_NO_VALUE);
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -779,10 +785,10 @@ int task_execute(oph_operator_struct * handle)
 		}
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-	if (recursive_search
+	if (_oph_recursive_search
 	    (abs_path, folderid, filters, oDB, max_lengths, max_lengths_size, NULL, NULL, 1, handle->operator_json,
 	     oph_json_is_objkey_printable(((OPH_SEARCH_operator_handle *) handle->operator_handle)->objkeys, ((OPH_SEARCH_operator_handle *) handle->operator_handle)->objkeys_num,
-					  OPH_JSON_OBJKEY_SEARCH))) {
+					  OPH_JSON_OBJKEY_SEARCH), ((OPH_SEARCH_operator_handle *) handle->operator_handle)->recursive_search)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Search error\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_SEARCH_ERROR);
 		if (abs_path) {

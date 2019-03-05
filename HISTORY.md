@@ -1,4 +1,11 @@
 
+## New features
+
+### Added:
+
+- Parameter 'recursive' to OPH_TASKS and OPH_SEARCH
+
+
 ## v1.5.0 - 2019-01-24
 
 ### Fixed:

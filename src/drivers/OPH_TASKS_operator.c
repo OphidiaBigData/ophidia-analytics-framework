@@ -68,6 +68,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_TASKS_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_TASKS_operator_handle *) handle->operator_handle)->objkeys_num = -1;
 	((OPH_TASKS_operator_handle *) handle->operator_handle)->sessionid = NULL;
+	((OPH_TASKS_operator_handle *) handle->operator_handle)->recursive_search = 0;
 
 	ophidiadb *oDB = &((OPH_TASKS_operator_handle *) handle->operator_handle)->oDB;
 
@@ -197,6 +198,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_RECURSIVE_SEARCH);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_RECURSIVE_SEARCH);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_TASKS_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_RECURSIVE_SEARCH);
+
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_TASKS_operator_handle *) handle->operator_handle)->recursive_search = strcmp(value, OPH_COMMON_NO_VALUE);
+
 	if (oph_odb_connect_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_TASKS_OPHIDIADB_CONNECTION_ERROR_NO_CONTAINER);
@@ -228,7 +238,8 @@ int task_distribute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int _oph_task_recursive_task_search(ophidiadb * oDB, int folder_id, int datacube_id, char *operator, char *container, char *tmp_uri, oph_json * oper_json, int is_objkey_printable)
+int _oph_task_recursive_task_search(ophidiadb * oDB, int folder_id, int datacube_id, char *operator, char *container, char *tmp_uri, oph_json * oper_json, int is_objkey_printable,
+				    int recursive_search)
 {
 	if (!oDB || !folder_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null parameter\n");
@@ -431,8 +442,8 @@ int _oph_task_recursive_task_search(ophidiadb * oDB, int folder_id, int datacube
 	if (tmp_task_list) {
 		MYSQL_ROW tmp_row;
 		//For each ROW
-		while ((tmp_row = mysql_fetch_row(tmp_task_list))) {
-			if (_oph_task_recursive_task_search(oDB, (int) strtol(tmp_row[1], NULL, 10), datacube_id, operator, container, tmp_uri, oper_json, is_objkey_printable))
+		while (recursive_search && (tmp_row = mysql_fetch_row(tmp_task_list))) {
+			if (_oph_task_recursive_task_search(oDB, (int) strtol(tmp_row[1], NULL, 10), datacube_id, operator, container, tmp_uri, oper_json, is_objkey_printable, 1))
 				break;
 		}
 		mysql_free_result(tmp_task_list);
@@ -458,7 +469,6 @@ int task_execute(oph_operator_struct * handle)
 	char *container_name = ((OPH_TASKS_operator_handle *) handle->operator_handle)->container_name;
 	char *cwd = ((OPH_TASKS_operator_handle *) handle->operator_handle)->cwd;
 	char *path = ((OPH_TASKS_operator_handle *) handle->operator_handle)->path;
-
 
 	int permission = 0;
 	int folder_id = 0;
@@ -654,7 +664,8 @@ int task_execute(oph_operator_struct * handle)
 		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_TASKS_PID_URI_ERROR);
 	}
 	//retrieve TASK information
-	if (_oph_task_recursive_task_search(oDB, folder_id, id_datacube, operator, container_name, tmp_uri, handle->operator_json, is_objkey_printable)) {
+	if (_oph_task_recursive_task_search
+	    (oDB, folder_id, id_datacube, operator, container_name, tmp_uri, handle->operator_json, is_objkey_printable, ((OPH_TASKS_operator_handle *) handle->operator_handle)->recursive_search)) {
 		pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive task list\n");
 		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_TASKS_READ_TASK_LIST);
 		if (tmp_uri)
