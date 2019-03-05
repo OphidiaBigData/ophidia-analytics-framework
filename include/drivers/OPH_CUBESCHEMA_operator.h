@@ -43,6 +43,14 @@
  * \param concept_level Concept level of a new dimension
  * \param dim_level Level of a new dimension in dimension list
  * \param dim_array Kind of a new dimension (implicit or explicit)
+ * \param dimension_type Data type of the new dimension
+ * \param hierarchy_name Name of the hierarchy to be associated with the new dimension
+ * \param base_time Base time in case of time dimension
+ * \param units Units of dimension time
+ * \param calendar Calendar associated to time dimension
+ * \param month_lengths Month lengths of each year
+ * \param leap_year Value of the first leap year
+ * \param leap_month Value of the leap month
  */
 struct _OPH_CUBESCHEMA_operator_handle {
 	ophidiadb oDB;
@@ -62,6 +70,14 @@ struct _OPH_CUBESCHEMA_operator_handle {
 	char concept_level;
 	int dim_level;
 	char dim_array;
+	char *dimension_type;
+	char *hierarchy_name;
+	char *base_time;
+	char *units;
+	char *calendar;
+	char *month_lengths;
+	int leap_year;
+	int leap_month;
 };
 typedef struct _OPH_CUBESCHEMA_operator_handle OPH_CUBESCHEMA_operator_handle;
 

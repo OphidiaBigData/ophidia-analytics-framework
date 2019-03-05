@@ -81,6 +81,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->concept_level = 'c';
 	((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->dim_level = 1;
 	((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->dim_array = 1;
+	((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->dimension_type = NULL;
+	((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->hierarchy_name = NULL;
+	((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->base_time = NULL;
+	((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->units = NULL;
+	((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->calendar = NULL;
+	((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->month_lengths = NULL;
+	((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->leap_year = 0;
+	((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->leap_month = 2;
 
 	ophidiadb *oDB = &((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->oDB;
 
@@ -302,6 +310,87 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (strcmp(value, OPH_COMMON_YES_VALUE))
 		((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->dim_array = 0;
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DIMENSION_TYPE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DIMENSION_TYPE);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DIMENSION_TYPE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!(((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->dimension_type = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, OPH_IN_PARAM_DIMENSION_TYPE);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_HIERARCHY_NAME);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_HIERARCHY_NAME);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_HIERARCHY_NAME);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!(((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->hierarchy_name = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, OPH_IN_PARAM_HIERARCHY_NAME);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_BASE_TIME);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_BASE_TIME);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_BASE_TIME);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!(((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->base_time = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, OPH_IN_PARAM_BASE_TIME);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_UNITS);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_UNITS);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_UNITS);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!(((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->units = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, OPH_IN_PARAM_UNITS);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CALENDAR);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CALENDAR);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CALENDAR);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!(((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->calendar = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, OPH_IN_PARAM_CALENDAR);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_MONTH_LENGTHS);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_MONTH_LENGTHS);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_MONTH_LENGTHS);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!(((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->month_lengths = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, OPH_IN_PARAM_MONTH_LENGTHS);
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_LEAP_YEAR);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_LEAP_YEAR);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_LEAP_YEAR);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->leap_year = (int) strtol(value, NULL, 10);
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_LEAP_MONTH);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_LEAP_MONTH);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_LEAP_MONTH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->leap_month = (int) strtol(value, NULL, 10);
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -453,15 +542,81 @@ int task_execute(oph_operator_struct * handle)
 		for (j = 0; j < number_of_dimensions_c; j++)
 			if (!strncmp(tot_dims[j].dimension_name, dimension_name[0], OPH_ODB_DIM_DIMENSION_SIZE))
 				break;
-		if (j == number_of_dimensions_c) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension %s not found in the container\n", dimension_name[0]);
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Dimension %s not found in the container\n", dimension_name[0]);
+
+		if (j == number_of_dimensions_c) {	// New dimension (not in the container)
+
+			char is_time_hierarchy_provided = 0;
+			int id_hierarchy = 0;
+			if (oph_odb_dim_retrieve_hierarchy_id(oDB, ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->hierarchy_name, &id_hierarchy)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving hierarchy\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Error retrieving hierarchy\n");
+				free(tot_dims);
+				free(cubedims_ext);
+				snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to retrieve concept hierachy '%s'",
+					 ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->hierarchy_name);
+				break;
+			}
+			// If the user wants to add a time dimension...
+			if (!strcasecmp(((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->hierarchy_name, OPH_COMMON_TIME_HIERARCHY)) {
+				is_time_hierarchy_provided = 1;
+				for (j = 0; j < number_of_dimensions_c; j++)
+					if (tot_dims[j].id_hierarchy == id_hierarchy)
+						break;
+				if (j < number_of_dimensions_c) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Too many dimensions with time hierarchy\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Too many dimensions with time hierarchy\n");
+					free(tot_dims);
+					free(cubedims_ext);
+					snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Too many dimensions with time hierarchy");
+					break;
+				}
+			}
+
 			free(tot_dims);
-			free(cubedims_ext);
-			snprintf(error_message, OPH_COMMON_BUFFER_LEN, "There is no dimension '%s' in the container", dimension_name[0]);
-			break;
+			tot_dims = (oph_odb_dimension *) malloc(sizeof(oph_odb_dimension));
+			if (!tot_dims) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Memory error\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Memory error\n");
+				free(cubedims_ext);
+				snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Memory error");
+				break;
+			}
+
+			tot_dims->id_container = id_container;
+			snprintf(tot_dims->dimension_name, OPH_ODB_DIM_DIMENSION_SIZE, "%s", dimension_name[0]);
+			snprintf(tot_dims->dimension_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE, "%s", ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->dimension_type);
+			tot_dims->id_hierarchy = id_hierarchy;
+
+			if (is_time_hierarchy_provided) {
+				snprintf(tot_dims->base_time, OPH_ODB_DIM_TIME_SIZE, "%s", ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->base_time);
+				snprintf(tot_dims->units, OPH_ODB_DIM_TIME_SIZE, "%s", ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->units);
+				snprintf(tot_dims->calendar, OPH_ODB_DIM_TIME_SIZE, "%s", ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->calendar);
+				char *tmp = NULL, *save_pointer = NULL, month_lengths[1 + OPH_ODB_DIM_TIME_SIZE];
+				strncpy(month_lengths, ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->month_lengths, OPH_ODB_DIM_TIME_SIZE);
+				month_lengths[OPH_ODB_DIM_TIME_SIZE] = 0;
+				j = 0;
+				while ((tmp = strtok_r(tmp ? NULL : month_lengths, ",", &save_pointer)) && (j < OPH_ODB_DIM_MONTH_NUMBER))
+					tot_dims->month_lengths[j++] = (int) strtol(tmp, NULL, 10);
+				while (j < OPH_ODB_DIM_MONTH_NUMBER)
+					tot_dims->month_lengths[j++] = OPH_ODB_DIM_DAY_NUMBER;
+				tot_dims->leap_year = ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->leap_year;
+				tot_dims->leap_month = ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->leap_month;
+			}
+			// Insert new dimension
+			int last_insertd_id = 0;
+			if (oph_odb_dim_insert_into_dimension_table(oDB, tot_dims, &last_insertd_id, id_datacube)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store dimension '%s'\n", dimension_name[0]);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Unable to store dimension '%s'\n", dimension_name[0]);
+				free(tot_dims);
+				free(cubedims_ext);
+				snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to store dimension '%s'\n", dimension_name[0]);
+				break;
+			}
+			tot_dims->id_dimension = last_insertd_id;
+
+			j = 0;
 		}
-		//Find dimension level into hierarchy file
+		//Retrieve hierarchy ID
 		oph_odb_hierarchy hier;
 		if (oph_odb_dim_retrieve_hierarchy(oDB, tot_dims[j].id_hierarchy, &hier)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving hierarchy\n");
@@ -822,7 +977,7 @@ int task_execute(oph_operator_struct * handle)
 		if (cube.id_source) {
 			if (oph_odb_cube_retrieve_source(oDB, cube.id_source, &src)) {
 				pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to find source URI\n");
-				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_RETRIEVE_SOURCE_URI_ERROR);
+				logging(LOG_WARNING, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_RETRIEVE_SOURCE_URI_ERROR);
 				src.uri[0] = 0;
 			}
 		}
@@ -916,14 +1071,14 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
 			if (!jsonkeys) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "keys");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "keys");
 				free(cubedims);
 				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 			}
 			jsonkeys[jjj] = strdup("PID");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -943,7 +1098,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("CREATION DATE");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -963,7 +1118,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("MEASURE");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -983,7 +1138,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("MEASURE TYPE");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1003,7 +1158,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("LEVEL");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1023,7 +1178,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("NUMBER OF FRAGMENTS");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1043,7 +1198,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("SOURCE FILE");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1063,7 +1218,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
 			if (!fieldtypes) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtypes");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtypes");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1082,32 +1237,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
-				for (iii = 0; iii < num_fields; iii++)
-					if (jsonkeys[iii])
-						free(jsonkeys[iii]);
-				if (jsonkeys)
-					free(jsonkeys);
-				for (iii = 0; iii < jjj; iii++)
-					if (fieldtypes[iii])
-						free(fieldtypes[iii]);
-				if (fieldtypes)
-					free(fieldtypes);
-				oph_odb_cube_free_datacube(&cube);
-				if (creationdate)
-					free(creationdate);
-				if (description)
-					free(description);
-				if (pid)
-					free(pid);
-				free(cubedims);
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			jjj++;
-			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
-			if (!fieldtypes[jjj]) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1132,7 +1262,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1157,7 +1287,32 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				for (iii = 0; iii < jjj; iii++)
+					if (fieldtypes[iii])
+						free(fieldtypes[iii]);
+				if (fieldtypes)
+					free(fieldtypes);
+				oph_odb_cube_free_datacube(&cube);
+				if (creationdate)
+					free(creationdate);
+				if (description)
+					free(description);
+				if (pid)
+					free(pid);
+				free(cubedims);
+				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+			}
+			jjj++;
+			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+			if (!fieldtypes[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1182,7 +1337,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_INT);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1207,7 +1362,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_INT);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1232,7 +1387,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1256,7 +1411,7 @@ int task_execute(oph_operator_struct * handle)
 
 			if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_CUBESCHEMA_CUBEINFO, "Datacube Information", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
-				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
+				logging(LOG_WARNING, __FILE__, __LINE__, id_container, "ADD GRID error\n");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1293,7 +1448,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues = (char **) calloc(num_fields, sizeof(char *));
 			if (!jsonvalues) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "values");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "values");
 				oph_odb_cube_free_datacube(&cube);
 				if (creationdate)
 					free(creationdate);
@@ -1308,7 +1463,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues[jjj] = strdup(pid ? pid : "");
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -1328,7 +1483,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues[jjj] = strdup(creationdate ? creationdate : "");
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -1348,7 +1503,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues[jjj] = strdup(cube.measure ? cube.measure : "");
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -1368,7 +1523,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues[jjj] = strdup(cube.measure_type ? cube.measure_type : "");
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -1389,7 +1544,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues[jjj] = strdup(jsontmp);
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -1409,7 +1564,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues[jjj] = strdup(strcmp(number_buf, "-") ? number_buf : "");
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -1428,7 +1583,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues[jjj] = strdup((!src.uri || src.uri[0] == 0) ? "" : src.uri);
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -1447,7 +1602,7 @@ int task_execute(oph_operator_struct * handle)
 
 			if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_CUBESCHEMA_CUBEINFO, jsonvalues)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
-				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+				logging(LOG_WARNING, __FILE__, __LINE__, id_container, "ADD GRID ROW error\n");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -1481,7 +1636,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
 			if (!jsonkeys) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "keys");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "keys");
 				free(cubedims);
 				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 			}
@@ -1489,7 +1644,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("DESCRIPTION");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1509,7 +1664,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("HOST x CUBE");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1529,7 +1684,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("FRAGMENTS x DATABASE");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1549,7 +1704,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("ROWS x FRAGMENT");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1569,7 +1724,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("ELEMENTS x ROW");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1589,7 +1744,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("COMPRESSED");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1609,7 +1764,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("CUBE SIZE");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1629,7 +1784,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("UNIT");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1649,7 +1804,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("NUMBER OF ELEMENTS");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1669,7 +1824,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
 			if (!fieldtypes) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtypes");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtypes");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1688,7 +1843,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1713,7 +1868,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_INT);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1738,7 +1893,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_INT);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1763,7 +1918,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_INT);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1788,7 +1943,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_INT);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1813,7 +1968,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1838,7 +1993,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_DOUBLE);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1863,7 +2018,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1888,7 +2043,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_LONG);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1912,7 +2067,7 @@ int task_execute(oph_operator_struct * handle)
 
 			if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_CUBESCHEMA_MORECUBEINFO, "Datacube Additional Information", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
-				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
+				logging(LOG_WARNING, __FILE__, __LINE__, id_container, "ADD GRID error\n");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -1949,7 +2104,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues = (char **) calloc(num_fields, sizeof(char *));
 			if (!jsonvalues) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "values");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "values");
 				oph_odb_cube_free_datacube(&cube);
 				if (creationdate)
 					free(creationdate);
@@ -1964,7 +2119,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues[jjj] = strdup(description ? description : "");
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -1985,7 +2140,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues[jjj] = strdup(jsontmp);
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -2006,7 +2161,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues[jjj] = strdup(jsontmp);
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -2027,7 +2182,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues[jjj] = strdup(jsontmp);
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -2047,7 +2202,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues[jjj] = strdup(strcmp(array_buf, "-") ? array_buf : "");
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -2067,7 +2222,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues[jjj] = strdup(cube.compressed == 1 ? OPH_COMMON_YES_VALUE : OPH_COMMON_NO_VALUE);
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -2087,7 +2242,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues[jjj] = strdup(strcmp(size_buf, "-") ? size_buf : "");
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -2107,7 +2262,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues[jjj] = strdup((unit[0]) ? unit : "");
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -2127,7 +2282,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonvalues[jjj] = strdup(strcmp(elements_buf, "-") ? elements_buf : "");
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -2146,7 +2301,7 @@ int task_execute(oph_operator_struct * handle)
 
 			if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_CUBESCHEMA_MORECUBEINFO, jsonvalues)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
-				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+				logging(LOG_WARNING, __FILE__, __LINE__, id_container, "ADD GRID ROW error\n");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonvalues[iii])
 						free(jsonvalues[iii]);
@@ -2202,14 +2357,14 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
 			if (!jsonkeys) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "keys");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "keys");
 				free(cubedims);
 				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 			}
 			jsonkeys[jjj] = strdup("NAME");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2222,7 +2377,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("TYPE");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2235,7 +2390,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("SIZE");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2248,7 +2403,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("HIERARCHY");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2261,7 +2416,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("CONCEPT LEVEL");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2274,7 +2429,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("ARRAY");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2287,7 +2442,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("LEVEL");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2300,7 +2455,7 @@ int task_execute(oph_operator_struct * handle)
 			jsonkeys[jjj] = strdup("LATTICE NAME");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2313,7 +2468,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
 			if (!fieldtypes) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtypes");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtypes");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2325,25 +2480,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
-				for (iii = 0; iii < num_fields; iii++)
-					if (jsonkeys[iii])
-						free(jsonkeys[iii]);
-				if (jsonkeys)
-					free(jsonkeys);
-				for (iii = 0; iii < jjj; iii++)
-					if (fieldtypes[iii])
-						free(fieldtypes[iii]);
-				if (fieldtypes)
-					free(fieldtypes);
-				free(cubedims);
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			jjj++;
-			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
-			if (!fieldtypes[jjj]) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2361,7 +2498,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2379,7 +2516,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2397,7 +2534,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2415,7 +2552,25 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				for (iii = 0; iii < jjj; iii++)
+					if (fieldtypes[iii])
+						free(fieldtypes[iii]);
+				if (fieldtypes)
+					free(fieldtypes);
+				free(cubedims);
+				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+			}
+			jjj++;
+			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+			if (!fieldtypes[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2433,7 +2588,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_INT);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2451,7 +2606,7 @@ int task_execute(oph_operator_struct * handle)
 			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2467,7 +2622,7 @@ int task_execute(oph_operator_struct * handle)
 			}
 			if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_CUBESCHEMA_DIMINFO, "Dimension Information", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
-				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
+				logging(LOG_WARNING, __FILE__, __LINE__, id_container, "ADD GRID error\n");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
@@ -2537,7 +2692,7 @@ int task_execute(oph_operator_struct * handle)
 				jsonvalues = (char **) calloc(num_fields, sizeof(char *));
 				if (!jsonvalues) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "values");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "values");
 					if (concept_level)
 						free(concept_level);
 					free(cubedims);
@@ -2547,7 +2702,7 @@ int task_execute(oph_operator_struct * handle)
 				jsonvalues[jjj] = strdup(dim.dimension_name ? dim.dimension_name : "");
 				if (!jsonvalues[jjj]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 					for (iii = 0; iii < jjj; iii++)
 						if (jsonvalues[iii])
 							free(jsonvalues[iii]);
@@ -2562,7 +2717,7 @@ int task_execute(oph_operator_struct * handle)
 				jsonvalues[jjj] = strdup(dim.dimension_type ? dim.dimension_type : "");
 				if (!jsonvalues[jjj]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 					for (iii = 0; iii < jjj; iii++)
 						if (jsonvalues[iii])
 							free(jsonvalues[iii]);
@@ -2581,7 +2736,7 @@ int task_execute(oph_operator_struct * handle)
 					jsonvalues[jjj] = strdup(OPH_COMMON_FULL_REDUCED_DIM);
 				if (!jsonvalues[jjj]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 					for (iii = 0; iii < jjj; iii++)
 						if (jsonvalues[iii])
 							free(jsonvalues[iii]);
@@ -2596,7 +2751,7 @@ int task_execute(oph_operator_struct * handle)
 				jsonvalues[jjj] = strdup(hier.hierarchy_name ? hier.hierarchy_name : "");
 				if (!jsonvalues[jjj]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 					for (iii = 0; iii < jjj; iii++)
 						if (jsonvalues[iii])
 							free(jsonvalues[iii]);
@@ -2611,7 +2766,7 @@ int task_execute(oph_operator_struct * handle)
 				jsonvalues[jjj] = strdup(concept_level ? concept_level : "");
 				if (!jsonvalues[jjj]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 					for (iii = 0; iii < jjj; iii++)
 						if (jsonvalues[iii])
 							free(jsonvalues[iii]);
@@ -2626,7 +2781,7 @@ int task_execute(oph_operator_struct * handle)
 				jsonvalues[jjj] = strdup(cubedims[l].explicit_dim == 1 ? OPH_COMMON_NO_VALUE : OPH_COMMON_YES_VALUE);
 				if (!jsonvalues[jjj]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 					for (iii = 0; iii < jjj; iii++)
 						if (jsonvalues[iii])
 							free(jsonvalues[iii]);
@@ -2642,7 +2797,7 @@ int task_execute(oph_operator_struct * handle)
 				jsonvalues[jjj] = strdup(jsontmp);
 				if (!jsonvalues[jjj]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 					for (iii = 0; iii < jjj; iii++)
 						if (jsonvalues[iii])
 							free(jsonvalues[iii]);
@@ -2657,7 +2812,7 @@ int task_execute(oph_operator_struct * handle)
 				jsonvalues[jjj] = strdup(dim_grid.grid_name ? dim_grid.grid_name : "");
 				if (!jsonvalues[jjj]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 					for (iii = 0; iii < jjj; iii++)
 						if (jsonvalues[iii])
 							free(jsonvalues[iii]);
@@ -2671,7 +2826,7 @@ int task_execute(oph_operator_struct * handle)
 				jjj++;
 				if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_CUBESCHEMA_DIMINFO, jsonvalues)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
-					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, id_container, "ADD GRID ROW error\n");
 					for (iii = 0; iii < num_fields; iii++)
 						if (jsonvalues[iii])
 							free(jsonvalues[iii]);
@@ -2914,7 +3069,7 @@ int task_execute(oph_operator_struct * handle)
 				jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
 				if (!jsonkeys) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "keys");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "keys");
 					free(dim_row);
 					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 					oph_dim_unload_dim_dbinstance(db_dimension);
@@ -2926,7 +3081,7 @@ int task_execute(oph_operator_struct * handle)
 					jsonkeys[jjj] = strdup("INDEX");
 					if (!jsonkeys[jjj]) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 						for (iii = 0; iii < jjj; iii++)
 							if (jsonkeys[iii])
 								free(jsonkeys[iii]);
@@ -2944,7 +3099,7 @@ int task_execute(oph_operator_struct * handle)
 				jsonkeys[jjj] = strdup("VALUE");
 				if (!jsonkeys[jjj]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
 					for (iii = 0; iii < jjj; iii++)
 						if (jsonkeys[iii])
 							free(jsonkeys[iii]);
@@ -2961,7 +3116,7 @@ int task_execute(oph_operator_struct * handle)
 				fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
 				if (!fieldtypes) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtypes");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtypes");
 					for (iii = 0; iii < num_fields; iii++)
 						if (jsonkeys[iii])
 							free(jsonkeys[iii]);
@@ -2978,7 +3133,7 @@ int task_execute(oph_operator_struct * handle)
 					fieldtypes[jjj] = strdup(OPH_JSON_LONG);
 					if (!fieldtypes[jjj]) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 						for (iii = 0; iii < num_fields; iii++)
 							if (jsonkeys[iii])
 								free(jsonkeys[iii]);
@@ -3001,7 +3156,7 @@ int task_execute(oph_operator_struct * handle)
 				fieldtypes[jjj] = strdup(tmp_type);
 				if (!fieldtypes[jjj]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
 					for (iii = 0; iii < num_fields; iii++)
 						if (jsonkeys[iii])
 							free(jsonkeys[iii]);
@@ -3021,7 +3176,7 @@ int task_execute(oph_operator_struct * handle)
 				}
 				if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_CUBESCHEMA_DIMVALUES, dim.dimension_name, NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
-					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, id_container, "ADD GRID error\n");
 					for (iii = 0; iii < num_fields; iii++)
 						if (jsonkeys[iii])
 							free(jsonkeys[iii]);
@@ -3216,7 +3371,7 @@ int task_execute(oph_operator_struct * handle)
 					jsonvalues = (char **) calloc(num_fields, sizeof(char *));
 					if (!jsonvalues) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "values");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "values");
 						free(tmp_row);
 						free(dim_row);
 						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -3231,7 +3386,7 @@ int task_execute(oph_operator_struct * handle)
 						jsonvalues[jjj] = strdup(tmp_index);
 						if (!jsonvalues[jjj]) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 							for (iii = 0; iii < jjj; iii++)
 								if (jsonvalues[iii])
 									free(jsonvalues[iii]);
@@ -3250,7 +3405,7 @@ int task_execute(oph_operator_struct * handle)
 					jsonvalues[jjj] = strdup(tmp_value);
 					if (!jsonvalues[jjj]) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
 						for (iii = 0; iii < jjj; iii++)
 							if (jsonvalues[iii])
 								free(jsonvalues[iii]);
@@ -3266,7 +3421,7 @@ int task_execute(oph_operator_struct * handle)
 					}
 					if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_CUBESCHEMA_DIMVALUES, jsonvalues)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
-						logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+						logging(LOG_WARNING, __FILE__, __LINE__, id_container, "ADD GRID ROW error\n");
 						for (iii = 0; iii < num_fields; iii++)
 							if (jsonvalues[iii])
 								free(jsonvalues[iii]);
@@ -3354,6 +3509,30 @@ int env_unset(oph_operator_struct * handle)
 		oph_tp_free_multiple_value_param_list(((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->dimension_name,
 						      ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->dimension_name_number);
 		((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->dimension_name = NULL;
+	}
+	if (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->dimension_type) {
+		free((char *) ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->dimension_type);
+		((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->dimension_type = NULL;
+	}
+	if (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->hierarchy_name) {
+		free((char *) ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->hierarchy_name);
+		((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->hierarchy_name = NULL;
+	}
+	if (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->base_time) {
+		free((char *) ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->base_time);
+		((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->base_time = NULL;
+	}
+	if (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->units) {
+		free((char *) ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->units);
+		((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->units = NULL;
+	}
+	if (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->calendar) {
+		free((char *) ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->calendar);
+		((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->calendar = NULL;
+	}
+	if (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->month_lengths) {
+		free((char *) ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->month_lengths);
+		((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->month_lengths = NULL;
 	}
 	if (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->objkeys) {
 		oph_tp_free_multiple_value_param_list(((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->objkeys_num);

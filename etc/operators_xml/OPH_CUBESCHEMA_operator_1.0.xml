@@ -30,6 +30,23 @@ It shows metadata information about a datacube and the dimensions related to it.
 - concept_level : concept level short name (must be a single char) of the new dimension. Default value is &quot;c&quot;.
 - dim_level : level of the new dimension to be added in dimension table.
 - dim_array : use &quot;yes&quot; to add an implicit dimension (default), use &quot;no&quot; to add an explicit dimension.
+- dim_type: types of the new dimension. Default value is &quot;double&quot;.
+- hierarchy: concept hierarchy name of the new dimension. Default value is &quot;oph_base&quot;.
+- base_time: in case of time hierarchy, it indicates the base time of the dimension. Default value is 1900-01-01.
+- units: in case of time hierarchy, it indicates the units of the dimension. Possible values are: s, m, h, 3, 6, d.
+- calendar: in case of time hierarchy, it indicates the calendar type. Possible values are:
+            -- standard (default)
+            -- gregorian
+            -- proleptic_gregorian
+            -- julian
+            -- 360_day
+            -- no_leap
+            -- all_leap
+            -- user_defined
+- month_lengths: in case of time dimension and user-defined calendar, it indicates the sizes of each month in days.
+                 There must be 12 positive integers separated by commas. Default is &apos;31,28,31,30,31,30,31,31,30,31,30,31&apos;.
+- leap_year: in case of time dimension and user-defined calendar, it indicates the first leap year. By default it is set to 0.
+- leap_month: in case of time dimension and user-defined calendar, it indicates the leap month. By default it is set to 2 (i.e. February).
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -66,6 +83,14 @@ SUBMISSION STRING: &quot;operator=oph_cubeschema;cube=http://www.example.com/1/1
 		<argument type="string" mandatory="no" default="c">concept_level</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">dim_level</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">dim_array</argument>
+		<argument type="string" mandatory="no" default="double" values="double|float|int|long|short|byte">dim_type</argument>
+		<argument type="string" mandatory="no" default="oph_base">hierarchy</argument>
+		<argument type="string" mandatory="no" default="1900-01-01 00:00:00">base_time</argument>
+		<argument type="string" mandatory="no" default="d" values="s|m|h|3|6|d">units</argument>
+		<argument type="string" mandatory="no" default="standard" values="standard|gregorian|proleptic_gregorian|julian|360_day|no_leap|all_leap|user_defined">calendar</argument>
+		<argument type="string" mandatory="no" default="31,28,31,30,31,30,31,31,30,31,30,31">month_lengths</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0">leap_year</argument>
+		<argument type="int" mandatory="no" default="2" minvalue="1" maxvalue="12">leap_month</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
