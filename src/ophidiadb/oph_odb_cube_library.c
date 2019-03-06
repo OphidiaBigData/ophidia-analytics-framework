@@ -269,6 +269,33 @@ int oph_odb_cube_set_datacube_size(ophidiadb * oDB, int id_datacube, long long i
 	return OPH_ODB_SUCCESS;
 }
 
+int oph_odb_cube_set_folder(ophidiadb * oDB, int id_datacube, int id_folder)
+{
+	if (!oDB || !id_datacube || !id_folder) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char insertQuery[MYSQL_BUFLEN];
+	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_DATACUBE_FOLDER, id_folder, id_datacube);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, insertQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
 int oph_odb_cube_retrieve_source(ophidiadb * oDB, int id_src, oph_odb_source * src)
 {
 	if (!oDB || !src || !id_src) {

@@ -37,6 +37,8 @@
 
 #define MYSQL_QUERY_CUBE_UPDATE_DATACUBE_SIZE			"UPDATE datacube SET csize=%lld WHERE iddatacube=%d;"
 
+#define MYSQL_QUERY_CUBE_UPDATE_DATACUBE_FOLDER			"UPDATE datacube SET idfolder=%d WHERE iddatacube=%d;"
+
 #define MYSQL_QUERY_CUBE_RETRIEVE_DATACUBE_DBMS_NUMBER		"SELECT count(distinct iddbmsinstance) FROM partitioned INNER JOIN dbinstance ON dbinstance.iddbinstance = partitioned.iddbinstance WHERE iddatacube = %d;"
 
 #define MYSQL_QUERY_CUBE_RETRIEVE_DATACUBE_PARENTS		"SELECT datacube.idcontainer, operation, datacube.iddatacube, uri FROM datacube INNER JOIN hasinput ON hasinput.iddatacube = datacube.iddatacube INNER JOIN task ON task.idtask = hasinput.idtask LEFT JOIN source ON source.idsource = datacube.idsource WHERE task.idoutputcube = %d ORDER BY  datacube.iddatacube ASC;"

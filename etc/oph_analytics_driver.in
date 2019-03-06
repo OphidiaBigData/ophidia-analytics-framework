@@ -52,17 +52,11 @@ LIB	@MYSQL_LDFLAGS@
 [OPH_UNPUBLISH]
 @DRIVER_PATH@/liboph_unpublishoperator.so
 LIB	@MYSQL_LDFLAGS@
-[OPH_CONTAINERSCHEMA]
-@DRIVER_PATH@/liboph_containerschemaoperator.so
-LIB	@MYSQL_LDFLAGS@
 [OPH_CUBEELEMENTS]
 @DRIVER_PATH@/liboph_cubeelementsoperator.so
 LIB	@MYSQL_LDFLAGS@
 [OPH_CUBESIZE]
 @DRIVER_PATH@/liboph_cubesizeoperator.so
-LIB	@MYSQL_LDFLAGS@
-[OPH_DELETECONTAINER]
-@DRIVER_PATH@/liboph_deletecontaineroperator.so
 LIB	@MYSQL_LDFLAGS@
 [OPH_SPLIT]
 @DRIVER_PATH@/liboph_splitoperator.so
@@ -118,9 +112,6 @@ LIB     @MYSQL_LDFLAGS@
 [OPH_MAN]
 @DRIVER_PATH@/liboph_manoperator.so
 LIB     @MYSQL_LDFLAGS@
-[OPH_CREATECONTAINER]
-@DRIVER_PATH@/liboph_createcontaineroperator.so
-LIB     @MYSQL_LDFLAGS@
 [OPH_HIERARCHY]
 @DRIVER_PATH@/liboph_hierarchyoperator.so
 LIB     @MYSQL_LDFLAGS@
@@ -133,14 +124,8 @@ LIB     @MYSQL_LDFLAGS@
 [OPH_SEARCH]
 @DRIVER_PATH@/liboph_searchoperator.so
 LIB     @MYSQL_LDFLAGS@
-[OPH_RESTORECONTAINER]
-@DRIVER_PATH@/liboph_restorecontaineroperator.so
-LIB     @MYSQL_LDFLAGS@
-[OPH_MOVECONTAINER]
-@DRIVER_PATH@/liboph_movecontaineroperator.so
-LIB     @MYSQL_LDFLAGS@
-[OPH_SHOWGRID]
-@DRIVER_PATH@/liboph_showgridoperator.so
+[OPH_MOVECUBE]
+@DRIVER_PATH@/liboph_movecubeoperator.so
 LIB     @MYSQL_LDFLAGS@
 [OPH_METADATA]
 @DRIVER_PATH@/liboph_metadataoperator.so

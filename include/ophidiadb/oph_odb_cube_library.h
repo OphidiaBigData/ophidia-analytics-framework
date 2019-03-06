@@ -181,6 +181,15 @@ int oph_odb_cube_set_datacube_num_elements(ophidiadb * oDB, int id_datacube, lon
 int oph_odb_cube_set_datacube_size(ophidiadb * oDB, int id_datacube, long long int size);
 
 /**
+ * \brief Function to insert datacube size in ophidiadb
+ * \param oDB Pointer to the OphidiaDB
+ * \param id_datacube Id of the datacube to be found
+ * \param id_folder Id of  new folder of the datacube
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_cube_set_folder(ophidiadb * oDB, int id_datacube, int id_folder);
+
+/**
  * \brief Function to retrieve datacube informations from OphidiaDB given the datacube name and container name
  * \param oDB Pointer to the OphidiaDB
  * \param id_datacube ID of the datacube to be found

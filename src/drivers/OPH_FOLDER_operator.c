@@ -319,7 +319,7 @@ int task_execute(oph_operator_struct * handle)
 			// COMMAND: MKDIR
 		case OPH_FOLDER_MODE_MKDIR:
 			if (!IS_OPH_ROLE_PRESENT(((OPH_FOLDER_operator_handle *) handle->operator_handle)->userrole, OPH_ROLE_WRITE_POS)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "At least \"%s\" permission is needed for this particular operation\n", OPH_ROLE_WRITE_STR);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "At least '%s' permission is needed for this particular operation\n", OPH_ROLE_WRITE_STR);
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_INVALID_USERROLE_ERROR, OPH_ROLE_WRITE_STR);
 				return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 			}
@@ -443,7 +443,7 @@ int task_execute(oph_operator_struct * handle)
 			// COMMAND: MV
 		case OPH_FOLDER_MODE_MV:
 			if (!IS_OPH_ROLE_PRESENT(((OPH_FOLDER_operator_handle *) handle->operator_handle)->userrole, OPH_ROLE_WRITE_POS)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "At least \"%s\" permission is needed for this particular operation\n", OPH_ROLE_WRITE_STR);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "At least '%s' permission is needed for this particular operation\n", OPH_ROLE_WRITE_STR);
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_INVALID_USERROLE_ERROR, OPH_ROLE_WRITE_STR);
 				return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 			}
@@ -816,7 +816,7 @@ int task_execute(oph_operator_struct * handle)
 			// COMMAND: RM
 		case OPH_FOLDER_MODE_RM:
 			if (!IS_OPH_ROLE_PRESENT(((OPH_FOLDER_operator_handle *) handle->operator_handle)->userrole, OPH_ROLE_WRITE_POS)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "At least \"%s\" permission is needed for this particular operation\n", OPH_ROLE_WRITE_STR);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "At least '%s' permission is needed for this particular operation\n", OPH_ROLE_WRITE_STR);
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_INVALID_USERROLE_ERROR, OPH_ROLE_WRITE_STR);
 				return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 			}

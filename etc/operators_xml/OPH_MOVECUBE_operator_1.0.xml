@@ -10,8 +10,7 @@ It moves a cube to another folder.
 
 [Parameters]
 - cube : target cube.
-- path : destination path and, optionally, source path (separated by |).
-         Paths can be relative to the cwd or absolute.
+- path : destination path, which can be relative to the cwd or absolute.
 - cwd : absolute path corresponding to the current working directory.
         The user can operate only within his folders/containers.
 

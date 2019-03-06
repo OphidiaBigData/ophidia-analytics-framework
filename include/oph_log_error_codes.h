@@ -1926,16 +1926,18 @@
 #define OPH_LOG_OPH_MOVECUBE_NO_INPUT_CONTAINER 				"Unknown input visible container %s.\n"
 #define OPH_LOG_OPH_MOVECUBE_DATACUBE_PERMISSION_ERROR			"User %s is not allowed to work on %s folder\n"
 #define OPH_LOG_OPH_MOVECUBE_CWD_ERROR							OPH_LOG_GENERIC_CWD_ERROR_NO_CONTAINER
-#define OPH_LOG_OPH_MOVECUBE_PATH_PARSING_ERROR				"%s container path isn't correct\n"
-#define OPH_LOG_OPH_MOVECUBE_NAME_NOT_ALLOWED_ERROR			"%s not allowed for new containers\n"
-#define OPH_LOG_OPH_MOVECUBE_UNIQUE_CHECK_ERROR				"Unable to check uniqueness of %s\n"
+#define OPH_LOG_OPH_MOVECUBE_PATH_PARSING_ERROR					"Path is not correct\n"
+#define OPH_LOG_OPH_MOVECUBE_NAME_NOT_ALLOWED_ERROR				"%s not allowed for new containers\n"
+#define OPH_LOG_OPH_MOVECUBE_UNIQUE_CHECK_ERROR					"Unable to check uniqueness of %s\n"
 #define OPH_LOG_OPH_MOVECUBE_NOT_UNIQUE_ERROR					"There is already a folder or a visible container with the same name of %s\n"
-#define OPH_LOG_OPH_MOVECUBE_UPDATE_CONTAINER_ERROR			"Unable to update  container %s\n"
+#define OPH_LOG_OPH_MOVECUBE_UPDATE_CONTAINER_ERROR				"Unable to update  container %s\n"
 #define OPH_LOG_OPH_MOVECUBE_CONTAINERS_ERROR					"There must be exactly 2 container names\n"
 #define OPH_LOG_OPH_MOVECUBE_NO_INPUT_DATACUBE 						OPH_LOG_GENERIC_NO_INPUT_DATACUBE_PID
 #define OPH_LOG_OPH_MOVECUBE_PID_ERROR								OPH_LOG_GENERIC_PID_ERROR
 #define OPH_LOG_OPH_MOVECUBE_DATACUBE_AVAILABILITY_ERROR			OPH_LOG_GENERIC_DATACUBE_AVAILABILITY_ERROR
 #define OPH_LOG_OPH_MOVECUBE_DATACUBE_FOLDER_ERROR					OPH_LOG_GENERIC_DATACUBE_FOLDER_ERROR
+#define OPH_LOG_OPH_MOVECUBE_PATH_NOT_ALLOWED_ERROR 			OPH_LOG_GENERIC_PATH_NOT_ALLOWED_ERROR
+#define OPH_LOG_OPH_MOVECUBE_MOVING_ERROR						"Unable to move the datacube\n"
 
 // ANALITICS
 #define OPH_LOG_ANALITICS_OPERATOR_UNABLE_TO_PROCESS_INPUT			"Unable to process input parameters%s"

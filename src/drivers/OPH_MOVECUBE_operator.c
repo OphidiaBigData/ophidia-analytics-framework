@@ -59,13 +59,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	//1 - Set up struct to empty values
 	((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->id_input_datacube = 0;
-	((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->path_input = NULL;
+	((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->id_input_container = 0;
 	((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->path_output = NULL;
 	((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->cwd = NULL;
-	((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->objkeys_num = -1;
 	((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->sessionid = NULL;
+	((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->userrole = OPH_ROLE_NONE;
 
 	ophidiadb *oDB = &((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->oDB;
 	oph_odb_init_ophidiadb(oDB);
@@ -84,87 +84,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	char *datacube_in = value;
-
-	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	char *username = value;
-	if (!(((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->user = (char *) strndup(value, OPH_TP_TASKLEN))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_MEMORY_ERROR_INPUT_NO_CONTAINER, OPH_ARG_USERNAME);
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
-
-	if (oph_odb_read_ophidiadb_config_file(oDB)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_OPHIDIADB_CONFIGURATION_FILE);
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
-
-	if (oph_odb_connect_to_ophidiadb(oDB)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_OPHIDIADB_CONNECTION_ERROR);
-		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-	}
-	//For error checking
-	int id_datacube_in[3] = { 0, 0, 0 };
-
-	//Check if datacube exists (by ID path and datacube)
-	int exists = 0;
-	int status = 0;
-	char *uri = NULL;
-	int folder_id = 0;
-	int permission = 0;
-	if (oph_pid_parse_pid(datacube_in, &id_datacube_in[1], &id_datacube_in[0], &uri)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse the PID string\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_MOVECUBE_PID_ERROR, datacube_in);
-		id_datacube_in[0] = 0;
-		id_datacube_in[1] = 0;
-	} else if ((oph_odb_cube_check_if_datacube_not_present_by_pid(oDB, uri, id_datacube_in[1], id_datacube_in[0], &exists)) || !exists) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container - datacube combination\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_MOVECUBE_NO_INPUT_DATACUBE, datacube_in);
-		id_datacube_in[0] = 0;
-		id_datacube_in[1] = 0;
-	} else if ((oph_odb_cube_check_datacube_availability(oDB, id_datacube_in[0], 0, &status)) || !status) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "I/O nodes storing datacube aren't available\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_MOVECUBE_DATACUBE_AVAILABILITY_ERROR, datacube_in);
-		id_datacube_in[0] = 0;
-		id_datacube_in[1] = 0;
-	} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], &folder_id))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_MOVECUBE_DATACUBE_FOLDER_ERROR, datacube_in);
-		id_datacube_in[0] = 0;
-		id_datacube_in[1] = 0;
-	} else if ((oph_odb_fs_check_folder_session(folder_id, ((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->sessionid, oDB, &permission)) || !permission) {
-		//Check if user can work on datacube
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "User %s is not allowed to work on this datacube\n", username);
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_MOVECUBE_DATACUBE_PERMISSION_ERROR, username);
-		id_datacube_in[0] = 0;
-		id_datacube_in[1] = 0;
-	}
-	if (uri)
-		free(uri);
-	uri = NULL;
-
-	id_datacube_in[2] = id_datacube_in[1];
-
-	//Check if sequential part has been completed
-	if (id_datacube_in[0] == 0) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_MOVECUBE_NO_INPUT_DATACUBE, datacube_in);
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
-	((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->id_input_datacube = id_datacube_in[0];
-
-	if (id_datacube_in[1] == 0) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_MOVECUBE_NO_INPUT_CONTAINER, datacube_in);
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
-	((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->id_input_container = id_datacube_in[1];
 
 	// retrieve objkeys
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OBJKEY_FILTER);
@@ -192,39 +111,93 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	char **paths = NULL;
-	int paths_num = 0;
+	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	char *username = value;
+
+	if (oph_odb_read_ophidiadb_config_file(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_OPHIDIADB_CONFIGURATION_FILE);
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+
+	if (oph_odb_connect_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_OPHIDIADB_CONNECTION_ERROR);
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+	//For error checking
+	int id_datacube_in[3] = { 0, 0, 0 };
+
+	//Check if datacube exists (by ID path and datacube)
+	int exists = 0;
+	int status = 0;
+	char *uri = NULL;
+	int folder_id = 0;
+	int permission = 0;
+	if (oph_pid_parse_pid(datacube_in, &id_datacube_in[1], &id_datacube_in[0], &uri)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse the PID string\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_PID_ERROR, datacube_in);
+		id_datacube_in[0] = 0;
+		id_datacube_in[1] = 0;
+	} else if ((oph_odb_cube_check_if_datacube_not_present_by_pid(oDB, uri, id_datacube_in[1], id_datacube_in[0], &exists)) || !exists) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container - datacube combination\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_NO_INPUT_DATACUBE, datacube_in);
+		id_datacube_in[0] = 0;
+		id_datacube_in[1] = 0;
+	} else if ((oph_odb_cube_check_datacube_availability(oDB, id_datacube_in[0], 0, &status)) || !status) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "I/O nodes storing datacube aren't available\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_DATACUBE_AVAILABILITY_ERROR, datacube_in);
+		id_datacube_in[0] = 0;
+		id_datacube_in[1] = 0;
+	} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], &folder_id))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_DATACUBE_FOLDER_ERROR, datacube_in);
+		id_datacube_in[0] = 0;
+		id_datacube_in[1] = 0;
+	} else if ((oph_odb_fs_check_folder_session(folder_id, ((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->sessionid, oDB, &permission)) || !permission) {
+		//Check if user can work on datacube
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "User %s is not allowed to work on this datacube\n", username);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_DATACUBE_PERMISSION_ERROR, username);
+		id_datacube_in[0] = 0;
+		id_datacube_in[1] = 0;
+	}
+	if (uri)
+		free(uri);
+	uri = NULL;
+
+	id_datacube_in[2] = id_datacube_in[1];
+
+	//Check if sequential part has been completed
+	if (id_datacube_in[0] == 0) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_NO_INPUT_DATACUBE, datacube_in);
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+	((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->id_input_datacube = id_datacube_in[0];
+
+	if (id_datacube_in[1] == 0) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_NO_INPUT_CONTAINER, datacube_in);
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+	((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->id_input_container = id_datacube_in[1];
+
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_PATH);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_PATH);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_PATH);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (oph_tp_parse_multiple_value_param(value, &paths, &paths_num)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "There must be 1 or 2 paths\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_CONTAINERS_ERROR);
-		oph_tp_free_multiple_value_param_list(paths, paths_num);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if ((paths_num < 1) || (paths_num > 2)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "There must be 1 or 2 paths\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_CONTAINERS_ERROR);
-		oph_tp_free_multiple_value_param_list(paths, paths_num);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (!(((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->path_input = (char *) strndup(paths[0], OPH_TP_TASKLEN))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_MEMORY_ERROR_INPUT_NO_CONTAINER, "path input name");
-		oph_tp_free_multiple_value_param_list(paths, paths_num);
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
-	if (!(((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->path_output = (char *) strndup(paths[1], OPH_TP_TASKLEN))) {
+	if (!(((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->path_output = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_MEMORY_ERROR_INPUT_NO_CONTAINER, "path output name");
-		oph_tp_free_multiple_value_param_list(paths, paths_num);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
-	oph_tp_free_multiple_value_param_list(paths, paths_num);
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CWD);
 	if (!value) {
@@ -237,6 +210,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_MEMORY_ERROR_INPUT_NO_CONTAINER, "input path");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
+
+	value = hashtbl_get(task_tbl, OPH_ARG_USERROLE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERROLE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_MISSING_INPUT_PARAMETER, OPH_ARG_USERROLE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->userrole = (int) strtol(value, NULL, 10);
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -275,12 +256,61 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	ophidiadb *oDB = &((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->oDB;
-	char *path_input = ((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->path_input;
-	char *path_output = ((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->path_output;
+	char *sessionid = ((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->sessionid;
+	char *path = ((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->path_output;
 	char *cwd = ((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->cwd;
-	char *user = ((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->user;
 
-	// TODO
+	int target_folder_id = 0;
+	char *abs_path = NULL;
+	int permission = 0;
+
+	if (!IS_OPH_ROLE_PRESENT(((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->userrole, OPH_ROLE_WRITE_POS)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "At least '%s' permission is needed for this particular operation\n", OPH_ROLE_WRITE_STR);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_INVALID_USERROLE_ERROR, OPH_ROLE_WRITE_STR);
+		return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+	}
+
+	if (!strcasecmp(path, OPH_FRAMEWORK_FS_DEFAULT_PATH)) {
+
+		if (oph_odb_fs_get_session_home_id(sessionid, oDB, &target_folder_id)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse path\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_PATH_PARSING_ERROR);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+
+	} else {
+
+		if (oph_odb_fs_path_parsing(path, cwd, &target_folder_id, &abs_path, oDB)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse path\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_PATH_PARSING_ERROR);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		if ((oph_odb_fs_check_folder_session(target_folder_id, sessionid, oDB, &permission)) || !permission) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Path '%s' is not allowed\n", path);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_PATH_NOT_ALLOWED_ERROR, path);
+			if (abs_path) {
+				free(abs_path);
+				abs_path = NULL;
+			}
+			return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+		}
+		if (abs_path) {
+			free(abs_path);
+			abs_path = NULL;
+		}
+	}
+
+	if (!target_folder_id) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Path '%s' is not allowed\n", path);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_PATH_NOT_ALLOWED_ERROR, path);
+		return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+	}
+
+	if (oph_odb_cube_set_folder(oDB, ((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->id_input_datacube, target_folder_id)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_MOVECUBE_MOVING_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MOVECUBE_MOVING_ERROR);
+		return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -316,10 +346,6 @@ int env_unset(oph_operator_struct * handle)
 	oph_odb_disconnect_from_ophidiadb(&((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->oDB);
 	oph_odb_free_ophidiadb(&((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->oDB);
 
-	if (((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->path_input) {
-		free((char *) ((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->path_input);
-		((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->path_input = NULL;
-	}
 	if (((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->path_output) {
 		free((char *) ((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->path_output);
 		((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->path_output = NULL;
@@ -328,11 +354,6 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->cwd) {
 		free((char *) ((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->cwd);
 		((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->cwd = NULL;
-	}
-
-	if (((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->user) {
-		free((char *) ((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->user);
-		((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->user = NULL;
 	}
 
 	if (((OPH_MOVECUBE_operator_handle *) handle->operator_handle)->objkeys) {

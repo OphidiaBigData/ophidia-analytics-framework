@@ -28,25 +28,23 @@
  * \param oDB Contains the parameters and the connection to OphidiaDB
  * \param id_input_datacube ID of the input datacube to operate on
  * \param id_input_datacube ID of the input container to operate on
- * \param path_input Path of the input path to be moved
  * \param path_output Path of the output path to be moved
- * \param user Name of the user that wants to move the cube
  * \param cwd Absolute path of working directory 
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
+ * \param userrole User role
  */
 struct _OPH_MOVECUBE_operator_handle {
 	ophidiadb oDB;
 	int id_input_datacube;
 	int id_input_container;
 	char *cwd;
-	char *user;
-	char *path_input;
 	char *path_output;
 	char **objkeys;
 	int objkeys_num;
 	char *sessionid;
+	int userrole;
 };
 typedef struct _OPH_MOVECUBE_operator_handle OPH_MOVECUBE_operator_handle;
 
