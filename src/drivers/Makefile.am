@@ -29,7 +29,14 @@ endif
 endif
 
 #define set of libraries commonly called together
-BASIC_LIB = -L.. -lophidiadb -loph_task_parser -loph_idstring -loph_json -ldebug -lhashtbl -loph_pid
+BASIC_LIB = -L..
+
+if HAVE_MONGO
+driver_CFLAGS += ${MONGOC_CFLAGS} -DOPH_ODB_MNG
+BASIC_LIB += ${MONGOC_LIBS}
+endif
+
+BASIC_LIB += -lophidiadb -loph_task_parser -loph_idstring -loph_json -ldebug -lhashtbl -loph_pid
 
 driverdir=${DRIVER_PATH}
 DRIVER=

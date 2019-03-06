@@ -171,18 +171,26 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		//Only master process has to initialize and open connection to management OphidiaDB
 		ophidiadb *oDB = &((OPH_PUBLISH_operator_handle *) handle->operator_handle)->oDB;
 		oph_odb_init_ophidiadb(oDB);
-
+#ifdef OPH_ODB_MNG
+		oph_odb_init_mongodb(oDB);
+#endif
 		if (oph_odb_read_ophidiadb_config_file(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PUBLISH_OPHIDIADB_CONFIGURATION_FILE);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-
 		if (oph_odb_connect_to_ophidiadb(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PUBLISH_OPHIDIADB_CONNECTION_ERROR);
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
+#ifdef OPH_ODB_MNG
+		if (oph_odb_connect_to_mongodb(oDB)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PUBLISH_OPHIDIADB_CONNECTION_ERROR);
+			return OPH_ANALYTICS_OPERATOR_MONGODB_ERROR;
+		}
+#endif
 		//Check if datacube exists (by ID container and datacube)
 		int exists = 0;
 		int status = 0;
@@ -991,20 +999,32 @@ int task_execute(oph_operator_struct * handle)
 		//Each process has to be connected to a slave ophidiadb
 		ophidiadb oDB_slave;
 		oph_odb_init_ophidiadb(&oDB_slave);
-
+#ifdef OPH_ODB_MNG
+		oph_odb_init_mongodb(&oDB_slave);
+#endif
 		if (oph_odb_read_ophidiadb_config_file(&oDB_slave)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_OPHIDIADB_CONFIGURATION_FILE);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-
 		if (oph_odb_connect_to_ophidiadb(&oDB_slave)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_OPHIDIADB_CONNECTION_ERROR);
 			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
-
+#ifdef OPH_ODB_MNG
+		if (oph_odb_connect_to_mongodb(&oDB_slave)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_OPHIDIADB_CONNECTION_ERROR);
+			oph_odb_free_ophidiadb(&oDB_slave);
+			oph_odb_free_mongodb(&oDB_slave);
+			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+		}
+#endif
 		int dim_num = ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->dim_num;
 		int *dim_sizes = ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->dim_sizes;
 		int *dim_oph_types = ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->dim_oph_types;
@@ -1019,6 +1039,9 @@ int task_execute(oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_DIMENSION_READ_ERROR);
 				free(dims);
 				oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+				oph_odb_free_mongodb(&oDB_slave);
+#endif
 				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
 		}
@@ -1048,6 +1071,9 @@ int task_execute(oph_operator_struct * handle)
 				free(type_codes);
 				free(dims);
 				oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+				oph_odb_free_mongodb(&oDB_slave);
+#endif
 				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
 		}
@@ -1090,6 +1116,9 @@ int task_execute(oph_operator_struct * handle)
 			free(dims);
 			free(type_codes);
 			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 		if (oph_dim_connect_to_dbms(db_dimension->dbms_instance, 0)) {
@@ -1100,6 +1129,9 @@ int task_execute(oph_operator_struct * handle)
 			free(dims);
 			free(type_codes);
 			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 		if (oph_dim_use_db_of_dbms(db_dimension->dbms_instance, db_dimension)) {
@@ -1110,6 +1142,9 @@ int task_execute(oph_operator_struct * handle)
 			free(dims);
 			free(type_codes);
 			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 
@@ -1127,6 +1162,9 @@ int task_execute(oph_operator_struct * handle)
 			free(dims);
 			free(type_codes);
 			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 		if (!exist_flag) {
@@ -1137,6 +1175,9 @@ int task_execute(oph_operator_struct * handle)
 			free(dims);
 			free(type_codes);
 			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 
@@ -1149,6 +1190,9 @@ int task_execute(oph_operator_struct * handle)
 			free(dims);
 			free(type_codes);
 			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 		if (!exist_flag) {
@@ -1159,6 +1203,9 @@ int task_execute(oph_operator_struct * handle)
 			free(dims);
 			free(type_codes);
 			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 		//retrieve connection string
@@ -1173,6 +1220,9 @@ int task_execute(oph_operator_struct * handle)
 			free(dims);
 			free(type_codes);
 			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 
@@ -1207,6 +1257,9 @@ int task_execute(oph_operator_struct * handle)
 				free(dim_rows);
 				free(type_codes);
 				oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+				oph_odb_free_mongodb(&oDB_slave);
+#endif
 				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 			}
 			if (oph_dim_read_dimension_data(db_dimension, index_dimension_table_name, dim_fk_ids[m], operation, 0, &(dim_rows[m])) || !dim_rows[m]) {
@@ -1227,6 +1280,9 @@ int task_execute(oph_operator_struct * handle)
 				free(dim_rows);
 				free(type_codes);
 				oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+				oph_odb_free_mongodb(&oDB_slave);
+#endif
 				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
 			if (dim_fk_labels[m]) {
@@ -1272,6 +1328,9 @@ int task_execute(oph_operator_struct * handle)
 						free(dim_rows);
 						free(type_codes);
 						oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+						oph_odb_free_mongodb(&oDB_slave);
+#endif
 						return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				}
 				dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
@@ -1294,6 +1353,9 @@ int task_execute(oph_operator_struct * handle)
 					free(dim_rows);
 					free(type_codes);
 					oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+					oph_odb_free_mongodb(&oDB_slave);
+#endif
 					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				}
 			} else
@@ -1321,15 +1383,20 @@ int task_execute(oph_operator_struct * handle)
 			free(dim_rows);
 			free(type_codes);
 			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 		//LOAD METADATA
-		int ii = 0, nn = 0;
+		int ii, nn = 0;
 		char **mvariable = NULL, **mkey = NULL, **mvalue = NULL;
 		if (((OPH_PUBLISH_operator_handle *) handle->operator_handle)->publish_metadata) {
-			MYSQL_RES *read_result = NULL;
-			MYSQL_ROW row;
-			if (oph_odb_meta_find_complete_metadata_list(&oDB_slave, datacube_id, NULL, 0, NULL, NULL, NULL, NULL, &read_result)) {
+
+			char **read_result = NULL;
+			int num_fields = 8, i, j, k;
+
+			if (oph_odb_meta_find_complete_metadata_list(&oDB_slave, datacube_id, NULL, 0, NULL, NULL, NULL, NULL, &read_result, &nn)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to load metadata.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_READ_METADATA_ERROR);
 				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -1347,24 +1414,35 @@ int task_execute(oph_operator_struct * handle)
 				free(dim_rows);
 				free(type_codes);
 				oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+				oph_odb_free_mongodb(&oDB_slave);
+#endif
 				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
-			nn = mysql_num_rows(read_result);
 			if (nn) {
 				mvariable = (char **) malloc(nn * sizeof(char *));
 				mkey = (char **) malloc(nn * sizeof(char *));
 				mvalue = (char **) malloc(nn * sizeof(char *));
-				while ((row = mysql_fetch_row(read_result))) {
-					mvariable[ii] = row[1] ? strdup(row[1]) : NULL;
-					mkey[ii] = row[2] ? strdup(row[2]) : NULL;
-					mvalue[ii] = row[4] ? strdup(row[4]) : NULL;
-					ii++;
+				for (j = 0; j < nn; ++j) {
+					mvariable[j] = read_result[j * num_fields + 1] ? strdup(read_result[j * num_fields + 1]) : NULL;
+					mkey[j] = read_result[j * num_fields + 2] ? strdup(read_result[j * num_fields + 2]) : NULL;
+					mvalue[j] = read_result[j * num_fields + 4] ? strdup(read_result[j * num_fields + 4]) : NULL;
 				}
 			}
-			mysql_free_result(read_result);
+			if (read_result) {
+				for (i = 0; i < num_fields; i++)
+					for (j = 0; j < nn; ++j) {
+						k = j * num_fields + i;
+						if (read_result[k])
+							free(read_result[k]);
+					}
+				free(read_result);
+			}
 		}
 		oph_odb_free_ophidiadb(&oDB_slave);
-
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&oDB_slave);
+#endif
 		//For each DBMS
 		for (i = 0; i < dbmss.size; i++) {
 
@@ -1839,46 +1917,73 @@ int task_execute(oph_operator_struct * handle)
 		//Each process has to be connected to a slave ophidiadb
 		ophidiadb oDB_slave;
 		oph_odb_init_ophidiadb(&oDB_slave);
-
+#ifdef OPH_ODB_MNG
+		oph_odb_init_mongodb(&oDB_slave);
+#endif
 		if (oph_odb_read_ophidiadb_config_file(&oDB_slave)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_OPHIDIADB_CONFIGURATION_FILE);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-
 		if (oph_odb_connect_to_ophidiadb(&oDB_slave)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_OPHIDIADB_CONNECTION_ERROR);
 			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
+#ifdef OPH_ODB_MNG
+		if (oph_odb_connect_to_mongodb(&oDB_slave)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_OPHIDIADB_CONNECTION_ERROR);
+			oph_odb_free_ophidiadb(&oDB_slave);
+			oph_odb_free_mongodb(&oDB_slave);
+			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+		}
+#endif
 		//LOAD METADATA
-		int ii = 0, nn = 0;
+		int ii, nn = 0;
 		char **mvariable = NULL, **mkey = NULL, **mvalue = NULL;
 		if (((OPH_PUBLISH_operator_handle *) handle->operator_handle)->publish_metadata) {
-			MYSQL_RES *read_result = NULL;
-			MYSQL_ROW row;
-			if (oph_odb_meta_find_complete_metadata_list(&oDB_slave, datacube_id, NULL, 0, NULL, NULL, NULL, NULL, &read_result)) {
+
+			char **read_result = NULL;
+			int num_fields = 8, i, j, k;
+
+			if (oph_odb_meta_find_complete_metadata_list(&oDB_slave, datacube_id, NULL, 0, NULL, NULL, NULL, NULL, &read_result, &nn)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to load metadata.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_PUBLISH_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_PUBLISH_READ_METADATA_ERROR);
 				oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+				oph_odb_free_mongodb(&oDB_slave);
+#endif
 				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
-			nn = mysql_num_rows(read_result);
 			if (nn) {
 				mvariable = (char **) malloc(nn * sizeof(char *));
 				mkey = (char **) malloc(nn * sizeof(char *));
 				mvalue = (char **) malloc(nn * sizeof(char *));
-				while ((row = mysql_fetch_row(read_result))) {
-					mvariable[ii] = row[1] ? strdup(row[1]) : NULL;
-					mkey[ii] = row[2] ? strdup(row[2]) : NULL;
-					mvalue[ii] = row[4] ? strdup(row[4]) : NULL;
-					ii++;
+				for (j = 0; j < nn; ++j) {
+					mvariable[j] = read_result[j * num_fields + 1] ? strdup(read_result[j * num_fields + 1]) : NULL;
+					mkey[j] = read_result[j * num_fields + 2] ? strdup(read_result[j * num_fields + 2]) : NULL;
+					mvalue[j] = read_result[j * num_fields + 4] ? strdup(read_result[j * num_fields + 4]) : NULL;
 				}
 			}
-			mysql_free_result(read_result);
+			if (read_result) {
+				for (i = 0; i < num_fields; i++)
+					for (j = 0; j < nn; ++j) {
+						k = j * num_fields + i;
+						if (read_result[k])
+							free(read_result[k]);
+					}
+				free(read_result);
+			}
 		}
 		oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&oDB_slave);
+#endif
 
 		n = snprintf(file_name, sizeof(file_name), OPH_PUBLISH_FILE, output_path, 0);
 		if (n >= (int) sizeof(file_name)) {
@@ -2064,7 +2169,13 @@ int env_unset(oph_operator_struct * handle)
 	//Only master process has to close and release connection to management OphidiaDB
 	if (handle->proc_rank == 0) {
 		oph_odb_disconnect_from_ophidiadb(&((OPH_PUBLISH_operator_handle *) handle->operator_handle)->oDB);
+#ifdef OPH_ODB_MNG
+		oph_odb_disconnect_from_mongodb(&((OPH_PUBLISH_operator_handle *) handle->operator_handle)->oDB);
+#endif
 		oph_odb_free_ophidiadb(&((OPH_PUBLISH_operator_handle *) handle->operator_handle)->oDB);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&((OPH_PUBLISH_operator_handle *) handle->operator_handle)->oDB);
+#endif
 	}
 	if (((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server)
 		oph_dc_cleanup_dbms(((OPH_PUBLISH_operator_handle *) handle->operator_handle)->server);

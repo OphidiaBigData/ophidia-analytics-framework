@@ -956,6 +956,12 @@ int oph_odb_cube_delete_from_datacube_table(ophidiadb * oDB, int id_datacube)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
+#ifdef OPH_ODB_MNG
+	if (oph_odb_meta_delete_from_metadatainstance_table(oDB, id_datacube, NULL, 0, 0, NULL, NULL, NULL, 1)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MONGODB_ERROR;
+	}
+#endif
 
 	return OPH_ODB_SUCCESS;
 }

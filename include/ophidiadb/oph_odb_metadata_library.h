@@ -113,21 +113,12 @@ int oph_odb_meta_retrieve_metadatatype_id(ophidiadb * oDB, char *metadatatype_na
  * \param metadata_key Key of the instance
  * \param metadata_variable Variable associated with of the instance
  * \param metadata_value Value of the instance
+ * \param id_user ID of the user managing the metadata
  * \param last_insertd_id Id of the insterted instance
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_datacube, int id_metadatakey, int id_metadatatype, char *metadata_key, char *metadata_variable, char *metadata_value,
-						    int *last_insertd_id);
-
-/**
- * \brief Function to insert a new row in manage table
- * \param oDB Pointer to OphidiaDB
- * \param id_metadatainstance Id of the instance related
- * \param id_user Id of the user related
- * \param last_insertd_id Id of the insterted manage row
- * \return 0 if successfull, -1 otherwise
- */
-int oph_odb_meta_insert_into_manage_table(ophidiadb * oDB, int id_metadatainstance, int id_user);
+						    const int id_user, int *last_insertd_id);
 
 /**
  * \brief Function to retrieve list of all metadata information
@@ -143,7 +134,7 @@ int oph_odb_meta_insert_into_manage_table(ophidiadb * oDB, int id_metadatainstan
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, char *id_metadatainstance, char *metadata_variable,
-					     char *metadata_type, char *metadata_value, MYSQL_RES ** metadata_list);
+					     char *metadata_type, char *metadata_value, char ***metadata_list, int *num_rows);
 
 /**
  * \brief Function to update the metadatainstance table
@@ -152,9 +143,10 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
  * \param id_datacube Id of the container of metadata instance to update
  * \param metadata_value Metadata instance value to insert
  * \param force Force update of functional metadata associated to vocabulary
+ * \param id_user Id of the user that copies
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatainstance, int id_datacube, char *metadata_value, int force);
+int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatainstance, int id_datacube, char *metadata_value, int force, const int id_user);
 
 /**
  * \brief Function to delete a list of metadata instance
@@ -180,7 +172,7 @@ int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb * oDB, int id_data
  * \param id_user Id of the user that copies
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, int id_datacube_output, int id_user);
+int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, int id_datacube_output, const int id_user);
 
 /**
  * \brief Function to get time metadata identified by template
@@ -201,10 +193,11 @@ int oph_odb_meta_get(ophidiadb * oDB, int id_datacube, const char *variable, con
  * \param variable Name of the variable to be used in case of the metadata has to be created
  * \param template Name of the template
  * \param id_metadata_instance Index of the metadata to be override
+ * \param id_user ID of the user managing the metadata
  * \param value Value of the metadata
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, const char *template, int id_metadata_instance, const char *value);
+int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, const char *template, int id_metadata_instance, const char *value, const int id_user);
 
 /**
  * \brief Count the number of time metadata associated to a given dimension

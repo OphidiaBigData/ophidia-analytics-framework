@@ -40,6 +40,16 @@
 
 #define OPH_SEARCH_AND_SEPARATOR	","
 
+#ifdef OPH_ODB_MNG
+void _print_bson(const bson_t * b)
+{
+	char *str;
+	str = bson_as_json(b, NULL);
+	pmesg(LOG_INFO, __FILE__, __LINE__, "%s\n", str);
+	bson_free(str);
+}
+#endif
+
 int _oph_search_recursive_search(const char *folder_abs_path, int folderid, const char *filters, ophidiadb * oDB, int *max_lengths, int max_lengths_size, char *query, char *path, int is_start,
 				 oph_json * oper_json, int is_objkey_printable, int recursive_search)
 {
@@ -55,7 +65,7 @@ int _oph_search_recursive_search(const char *folder_abs_path, int folderid, cons
 	MYSQL_RES *res;
 	MYSQL_FIELD *fields;
 	MYSQL_ROW row;
-	int i, j, num_fields;
+	int num_fields;
 	char *buffer;
 	char *buffer2;
 
@@ -76,7 +86,16 @@ int _oph_search_recursive_search(const char *folder_abs_path, int folderid, cons
 		buffer2 = path;
 	}
 
+#ifdef OPH_ODB_MNG
+
+	snprintf(buffer, MYSQL_BUFLEN, MONGODB_QUERY_OPH_SEARCH_READ_INSTANCES, folderid);
+
+#else
+
 	snprintf(buffer, MYSQL_BUFLEN, MYSQL_QUERY_OPH_SEARCH_READ_INSTANCES, folderid, filters);
+
+#endif
+
 	if (mysql_query(oDB->conn, buffer)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		free(buffer);
@@ -87,65 +106,25 @@ int _oph_search_recursive_search(const char *folder_abs_path, int folderid, cons
 	fields = mysql_fetch_fields(res);
 	num_fields = mysql_num_fields(res) - 1;
 
-	if (is_start) {
-		//print header
-		printf("+");
-		for (i = 0; i < max_lengths_size; i++) {
-			printf("-");
-			for (j = 0; j < max_lengths[i]; j++) {
-				printf("-");
-			}
-			printf("-+");
-		}
-		printf("\n");
-		printf("|");
-		for (i = 0; i < max_lengths_size; i++) {
-			printf(" ");
-			printf("%-*s", max_lengths[i], fields[i].name);
-			printf(" |");
-		}
-		printf("\n");
-		printf("+");
-		for (i = 0; i < max_lengths_size; i++) {
-			printf("-");
-			for (j = 0; j < max_lengths[i]; j++) {
-				printf("-");
-			}
-			printf("-+");
-		}
-		printf("\n");
+	char **jsonkeys = NULL;
+	char **fieldtypes = NULL;
+	int iii, jjj;
 
-		if (is_objkey_printable) {
-			char **jsonkeys = NULL;
-			char **fieldtypes = NULL;
-			int iii, jjj;
+	if (is_start && is_objkey_printable) {
 
-			jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
-			if (!jsonkeys) {
+		jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
+		if (!jsonkeys) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "keys");
+			mysql_free_result(res);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		for (jjj = 0; jjj < num_fields; ++jjj) {
+			jsonkeys[jjj] = strdup(fields[jjj + 1].name ? fields[jjj + 1].name : "");
+			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "keys");
-				mysql_free_result(res);
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			for (jjj = 0; jjj < num_fields; ++jjj) {
-				jsonkeys[jjj] = strdup(fields[jjj + 1].name ? fields[jjj + 1].name : "");
-				if (!jsonkeys[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "key");
-					for (iii = 0; iii < jjj; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					mysql_free_result(res);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-			}
-			fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
-			if (!fieldtypes) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "fieldtypes");
-				for (iii = 0; iii < num_fields; iii++)
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "key");
+				for (iii = 0; iii < jjj; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
 				if (jsonkeys)
@@ -153,41 +132,41 @@ int _oph_search_recursive_search(const char *folder_abs_path, int folderid, cons
 				mysql_free_result(res);
 				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 			}
-			for (jjj = 0; jjj < num_fields; ++jjj) {
-				fieldtypes[jjj] = strdup(OPH_JSON_STRING);
-				if (!fieldtypes[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "fieldtype");
-					for (iii = 0; iii < num_fields; iii++)
-						if (jsonkeys[iii])
-							free(jsonkeys[iii]);
-					if (jsonkeys)
-						free(jsonkeys);
-					for (iii = 0; iii < jjj; iii++)
-						if (fieldtypes[iii])
-							free(fieldtypes[iii]);
-					if (fieldtypes)
-						free(fieldtypes);
-					mysql_free_result(res);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-			}
-			if (oph_json_add_grid(oper_json, OPH_JSON_OBJKEY_SEARCH, "Searching results", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
-				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
+		}
+		fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
+		if (!fieldtypes) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "fieldtypes");
+			for (iii = 0; iii < num_fields; iii++)
+				if (jsonkeys[iii])
+					free(jsonkeys[iii]);
+			if (jsonkeys)
+				free(jsonkeys);
+			mysql_free_result(res);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		for (jjj = 0; jjj < num_fields; ++jjj) {
+			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+			if (!fieldtypes[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "fieldtype");
 				for (iii = 0; iii < num_fields; iii++)
 					if (jsonkeys[iii])
 						free(jsonkeys[iii]);
 				if (jsonkeys)
 					free(jsonkeys);
-				for (iii = 0; iii < num_fields; iii++)
+				for (iii = 0; iii < jjj; iii++)
 					if (fieldtypes[iii])
 						free(fieldtypes[iii]);
 				if (fieldtypes)
 					free(fieldtypes);
 				mysql_free_result(res);
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 			}
+		}
+		if (oph_json_add_grid(oper_json, OPH_JSON_OBJKEY_SEARCH, "Searching results", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
+			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
 			for (iii = 0; iii < num_fields; iii++)
 				if (jsonkeys[iii])
 					free(jsonkeys[iii]);
@@ -198,68 +177,155 @@ int _oph_search_recursive_search(const char *folder_abs_path, int folderid, cons
 					free(fieldtypes[iii]);
 			if (fieldtypes)
 				free(fieldtypes);
+			mysql_free_result(res);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
+		for (iii = 0; iii < num_fields; iii++)
+			if (jsonkeys[iii])
+				free(jsonkeys[iii]);
+		if (jsonkeys)
+			free(jsonkeys);
+		for (iii = 0; iii < num_fields; iii++)
+			if (fieldtypes[iii])
+				free(fieldtypes[iii]);
+		if (fieldtypes)
+			free(fieldtypes);
 	}
-	//print each ROW
-	while ((row = mysql_fetch_row(res))) {
-		printf("|");
-		for (i = 0; i < max_lengths_size; i++)
-			printf(" %-*s |", max_lengths[i], row[i]);
-		printf("\n");
+#ifdef OPH_ODB_MNG
 
-		if (is_objkey_printable) {
-			char **jsonvalues = NULL;
-			int iii, jjj;
-			jsonvalues = (char **) calloc(num_fields, sizeof(char *));
-			if (!jsonvalues) {
+	if (oph_odb_check_connection_to_mongodb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		free(buffer);
+		free(buffer2);
+		return OPH_ANALYTICS_OPERATOR_MONGODB_ERROR;
+	}
+
+	bson_t *doc, doc_and, doc_item;
+	bson_error_t error;
+
+	mongoc_collection_t *collection = mongoc_client_get_collection(oDB->mng_conn, oDB->mng_name, OPH_ODB_MNGDB_COLL_METADATAINSTANCE);
+	if (!collection) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to MongoDB.\n");
+		free(buffer);
+		free(buffer2);
+		return OPH_ANALYTICS_OPERATOR_MONGODB_ERROR;
+	}
+
+	int id_datacube = 0;
+	bson_iter_t iter;
+	const bson_t *target;
+
+#endif
+
+	char *tmp_uri = NULL, *pid = NULL;
+	char **jsonvalues = NULL;
+
+	//print each ROW
+	while (is_objkey_printable && (row = mysql_fetch_row(res))) {
+
+		jsonvalues = (char **) calloc(num_fields, sizeof(char *));
+		if (!jsonvalues) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "values");
+			mysql_free_result(res);
+#ifdef OPH_ODB_MNG
+			mongoc_collection_destroy(collection);
+#endif
+			free(buffer);
+			free(buffer2);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+#ifdef OPH_ODB_MNG
+
+		id_datacube = (int) strtol(row[1], NULL, 10);
+
+		doc = bson_new();
+		if (!doc) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a query for MongoDB.\n");
+			mysql_free_result(res);
+			mongoc_collection_destroy(collection);
+			free(buffer);
+			free(buffer2);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+
+		if (filters && strlen(filters)) {
+
+			BSON_APPEND_ARRAY_BEGIN(doc, "$and", &doc_and);
+
+			BSON_APPEND_DOCUMENT_BEGIN(&doc_and, "iddatacube", &doc_item);
+			BSON_APPEND_INT32(&doc_item, "iddatacube", id_datacube);
+			bson_append_document_end(&doc_and, &doc_item);
+
+			bson_init_from_json(&doc_item, filters, -1, &error);
+			BSON_APPEND_DOCUMENT(&doc_and, "filters", &doc_item);
+
+			char *next = NULL;
+			if ((next = strchr(filters, '|'))) {
+				bson_init_from_json(&doc_item, 1 + next, -1, &error);
+				BSON_APPEND_DOCUMENT(&doc_and, "filters", &doc_item);
+			}
+
+			bson_append_array_end(doc, &doc_and);
+
+		} else
+
+			BSON_APPEND_INT32(doc, "iddatacube", id_datacube);
+
+		// Actual query to retrieve metadata
+		mongoc_cursor_t *cursor = mongoc_collection_find(collection, MONGOC_QUERY_NONE, 0, 0, 0, doc, NULL, NULL);
+		if (!cursor) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find any document.\n");
+			mysql_free_result(res);
+			bson_destroy(doc);
+			mongoc_collection_destroy(collection);
+			free(buffer);
+			free(buffer2);
+			return OPH_ANALYTICS_OPERATOR_MONGODB_ERROR;
+		}
+		bson_destroy(doc);
+
+		while (!mongoc_cursor_error(cursor, &error) && mongoc_cursor_more(cursor) && mongoc_cursor_next(cursor, &target)) {
+
+			jjj = 0;
+
+			tmp_uri = NULL;
+			if (oph_pid_get_uri(&tmp_uri)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "values");
-				mysql_free_result(res);
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "PID");
+				if (tmp_uri)
+					free(tmp_uri);
+				break;
 			}
-			for (jjj = 0; jjj < num_fields; ++jjj) {
-				if (jjj)
-					jsonvalues[jjj] = strdup(row[1 + jjj] ? row[1 + jjj] : "");
-				else {
-					char *tmp_uri = NULL, *pid = NULL;
-					if (oph_pid_get_uri(&tmp_uri)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "PID");
-						mysql_free_result(res);
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					if (oph_pid_create_pid(tmp_uri, (int) strtol(row[0], NULL, 10), (int) strtol(row[1], NULL, 10), &pid)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create PID string\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "PID");
-						mysql_free_result(res);
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					if (tmp_uri)
-						free(tmp_uri);
-					jsonvalues[jjj] = strdup(pid ? pid : "");
-				}
-				if (!jsonvalues[jjj]) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "value");
-					for (iii = 0; iii < jjj; iii++)
-						if (jsonvalues[iii])
-							free(jsonvalues[iii]);
-					if (jsonvalues)
-						free(jsonvalues);
-					mysql_free_result(res);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
+			if (oph_pid_create_pid(tmp_uri, (int) strtol(row[0], NULL, 10), (int) strtol(row[1], NULL, 10), &pid)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create PID string\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "PID");
+				if (tmp_uri)
+					free(tmp_uri);
+				break;
 			}
+			if (tmp_uri)
+				free(tmp_uri);
+			tmp_uri = NULL;
+			jsonvalues[jjj] = pid;
+			jjj++;
+
+			if (bson_iter_init(&iter, target) && bson_iter_find(&iter, "label") && BSON_ITER_HOLDS_UTF8(&iter))
+				jsonvalues[jjj] = strdup(bson_iter_utf8(&iter, NULL) ? bson_iter_utf8(&iter, NULL) : "");
+			else
+				jsonvalues[jjj] = strdup("");
+			jjj++;
+
+			if (bson_iter_init(&iter, target) && bson_iter_find(&iter, "value") && BSON_ITER_HOLDS_UTF8(&iter))
+				jsonvalues[jjj] = strdup(bson_iter_utf8(&iter, NULL) ? bson_iter_utf8(&iter, NULL) : "");
+			else
+				jsonvalues[jjj] = strdup("");
+			jjj++;
+
 			if (oph_json_add_grid_row(oper_json, OPH_JSON_OBJKEY_SEARCH, jsonvalues)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
-				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
-				for (iii = 0; iii < num_fields; iii++)
-					if (jsonvalues[iii])
-						free(jsonvalues[iii]);
-				if (jsonvalues)
-					free(jsonvalues);
-				mysql_free_result(res);
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+				break;
 			}
 			for (iii = 0; iii < num_fields; iii++)
 				if (jsonvalues[iii])
@@ -267,8 +333,88 @@ int _oph_search_recursive_search(const char *folder_abs_path, int folderid, cons
 			if (jsonvalues)
 				free(jsonvalues);
 		}
+
+		if (mongoc_cursor_error(cursor, &error))
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find elements in management table: %s.\n", error.message);
+		mongoc_cursor_destroy(cursor);
+
+		if (jjj < num_fields) {
+			for (iii = 0; iii < jjj; iii++)
+				if (jsonvalues[iii])
+					free(jsonvalues[iii]);
+			if (jsonvalues)
+				free(jsonvalues);
+			mysql_free_result(res);
+			mongoc_collection_destroy(collection);
+			free(buffer);
+			free(buffer2);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+#else
+
+		for (jjj = 0; jjj < num_fields; ++jjj) {
+			if (jjj)
+				jsonvalues[jjj] = strdup(row[1 + jjj] ? row[1 + jjj] : "");
+			else {
+				if (oph_pid_get_uri(&tmp_uri)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "PID");
+					if (tmp_uri)
+						free(tmp_uri);
+					break;
+				}
+				if (oph_pid_create_pid(tmp_uri, (int) strtol(row[0], NULL, 10), (int) strtol(row[1], NULL, 10), &pid)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create PID string\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "PID");
+					if (tmp_uri)
+						free(tmp_uri);
+					break;
+				}
+				if (tmp_uri)
+					free(tmp_uri);
+				jsonvalues[jjj] = pid;
+			}
+			if (!jsonvalues[jjj]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, "value");
+				break;
+			}
+		}
+		if (jjj < num_fields) {
+			for (iii = 0; iii < jjj; iii++)
+				if (jsonvalues[iii])
+					free(jsonvalues[iii]);
+			if (jsonvalues)
+				free(jsonvalues);
+			mysql_free_result(res);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+
+		if (oph_json_add_grid_row(oper_json, OPH_JSON_OBJKEY_SEARCH, jsonvalues)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+			for (iii = 0; iii < num_fields; iii++)
+				if (jsonvalues[iii])
+					free(jsonvalues[iii]);
+			if (jsonvalues)
+				free(jsonvalues);
+			mysql_free_result(res);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		for (iii = 0; iii < num_fields; iii++)
+			if (jsonvalues[iii])
+				free(jsonvalues[iii]);
+		if (jsonvalues)
+			free(jsonvalues);
+
+#endif
+
 	}
+
 	mysql_free_result(res);
+#ifdef OPH_ODB_MNG
+	mongoc_collection_destroy(collection);
+#endif
 
 	if (recursive_search) {	//recursive step
 
@@ -305,17 +451,6 @@ int _oph_search_recursive_search(const char *folder_abs_path, int folderid, cons
 	}
 
 	if (is_start) {
-		//print footer
-		printf("+");
-		for (i = 0; i < max_lengths_size; i++) {
-			printf("-");
-			for (j = 0; j < max_lengths[i]; j++) {
-				printf("-");
-			}
-			printf("-+");
-		}
-		printf("\n");
-
 		if (buffer) {
 			free(buffer);
 			buffer = NULL;
@@ -334,6 +469,7 @@ int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
 		return OPH_ODB_MYSQL_ERROR;
@@ -342,6 +478,7 @@ int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char 
 	MYSQL_RES *res;
 	MYSQL_FIELD *fields;
 	MYSQL_ROW row;
+
 	int i, tmp;
 	char *buffer;
 
@@ -355,7 +492,16 @@ int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char 
 		buffer = query;
 	}
 
+#ifdef OPH_ODB_MNG
+
+	snprintf(buffer, MYSQL_BUFLEN, MONGODB_QUERY_OPH_SEARCH_READ_INSTANCES, folderid);
+
+#else
+
 	snprintf(buffer, MYSQL_BUFLEN, MYSQL_QUERY_OPH_SEARCH_READ_INSTANCES, folderid, filters);
+
+#endif
+
 	if (mysql_query(oDB->conn, buffer)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		free(buffer);
@@ -408,12 +554,13 @@ int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char 
 			buffer = NULL;
 		}
 	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
 int get_filters_string(char **metadata_key_filter, int metadata_key_filter_num, char **metadata_value_filter, int metadata_value_filter_num, char **filters_string)
 {
-	int n = 0, m = 0;
+	int n = 0;
 	int i, j = 0, k, t;
 
 	*filters_string = (char *) malloc(MYSQL_BUFLEN);
@@ -423,7 +570,35 @@ int get_filters_string(char **metadata_key_filter, int metadata_key_filter_num, 
 	}
 	(*filters_string)[n] = 0;
 
-	char query[MYSQL_BUFLEN], tmp[MYSQL_BUFLEN], *_tmp, *pch, *sp;
+	char tmp[MYSQL_BUFLEN], *_tmp, *pch, *sp;
+
+#ifdef OPH_ODB_MNG
+
+	if (strcasecmp(metadata_key_filter[0], OPH_COMMON_ALL_FILTER)) {
+		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "{ \"$or\" : [");
+		for (i = k = t = 0; i < metadata_key_filter_num; i++, t = 0) {
+			strcpy(tmp, metadata_key_filter[i]);
+			for (_tmp = tmp, sp = NULL; (pch = strtok_r(_tmp, OPH_SEARCH_AND_SEPARATOR, &sp)); _tmp = NULL, k++, t++) {
+				n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "%s{ \"label\" : \"/%s/\" }", k ? ", " : "", pch);
+				if (strcasecmp(metadata_value_filter[0], OPH_COMMON_ALL_FILTER) && (j < metadata_value_filter_num)) {
+					n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, ", { \"value\" : \"/%s/\" }", metadata_value_filter[j]);
+					j++;
+				}
+			}
+		}
+		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "] }");
+	}
+
+	if (strcasecmp(metadata_value_filter[0], OPH_COMMON_ALL_FILTER) && (j < metadata_value_filter_num)) {
+		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "%s{ \"$or\" : [", j ? "|" : "");	// Separator
+		for (i = j, k = 0; i < metadata_value_filter_num; i++, k++)
+			n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "%s{ \"value\" : \"/%s/\" }", k ? ", " : "", metadata_value_filter[i]);
+		n += snprintf((*filters_string) + n, MYSQL_BUFLEN - n, "] }");
+	}
+#else
+
+	int m = 0;
+	char query[MYSQL_BUFLEN];
 	*query = 0;
 
 	if (metadata_key_filter_num && strcasecmp(metadata_key_filter[0], OPH_COMMON_ALL_FILTER)) {
@@ -459,10 +634,12 @@ int get_filters_string(char **metadata_key_filter, int metadata_key_filter_num, 
 		m += snprintf(query + m, MYSQL_BUFLEN - m, ") ");
 	}
 
-	(*filters_string)[n] = 0;
 	query[m] = 0;
-
 	pmesg(LOG_INFO, __FILE__, __LINE__, "Search query: %s\n", query);
+
+#endif
+
+	(*filters_string)[n] = 0;
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -512,18 +689,27 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	oph_odb_init_ophidiadb(oDB);
+#ifdef OPH_ODB_MNG
+	oph_odb_init_mongodb(oDB);
+#endif
 
 	if (oph_odb_read_ophidiadb_config_file(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_OPHIDIADB_CONFIGURATION_FILE_NO_CONTAINER);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-
 	if (oph_odb_connect_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_OPHIDIADB_CONNECTION_ERROR_NO_CONTAINER);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
+#ifdef OPH_ODB_MNG
+	if (oph_odb_connect_to_mongodb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_OPHIDIADB_CONNECTION_ERROR_NO_CONTAINER);
+		return OPH_ANALYTICS_OPERATOR_MONGODB_ERROR;
+	}
+#endif
 	//3 - Fill struct with the correct data
 
 	char *value;
@@ -811,6 +997,9 @@ int env_unset(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	oph_odb_free_ophidiadb(&((OPH_SEARCH_operator_handle *) handle->operator_handle)->oDB);
+#ifdef OPH_ODB_MNG
+	oph_odb_free_mongodb(&((OPH_SEARCH_operator_handle *) handle->operator_handle)->oDB);
+#endif
 	if (((OPH_SEARCH_operator_handle *) handle->operator_handle)->cwd) {
 		free((char *) ((OPH_SEARCH_operator_handle *) handle->operator_handle)->cwd);
 		((OPH_SEARCH_operator_handle *) handle->operator_handle)->cwd = NULL;

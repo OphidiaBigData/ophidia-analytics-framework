@@ -999,7 +999,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		ophidiadb *oDB = &((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->oDB;
 
 		oph_odb_init_ophidiadb(oDB);
-
+#ifdef OPH_ODB_MNG
+		oph_odb_init_mongodb(oDB);
+#endif
 		if (oph_odb_read_ophidiadb_config_file(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONFIGURATION_FILE, container_name);
@@ -1009,7 +1011,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				free(offset);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-
 		if (oph_odb_connect_to_ophidiadb(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONNECTION_ERROR, container_name);
@@ -1019,7 +1020,17 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				free(offset);
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
-
+#ifdef OPH_ODB_MNG
+		if (oph_odb_connect_to_mongodb(oDB)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONNECTION_ERROR, container_name);
+			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+			if (offset)
+				free(offset);
+			return OPH_ANALYTICS_OPERATOR_MONGODB_ERROR;
+		}
+#endif
 		value = hashtbl_get(task_tbl, OPH_IN_PARAM_VOCABULARY);
 		if (!value) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_VOCABULARY);
@@ -2012,7 +2023,7 @@ int task_init(oph_operator_struct * handle)
 					while (j < OPH_ODB_DIM_MONTH_NUMBER)
 						dim.month_lengths[j++] = OPH_ODB_DIM_DAY_NUMBER;
 				}
-				if (oph_odb_dim_insert_into_dimension_table(oDB, &(dim), &last_insertd_id, 0)) {
+				if (oph_odb_dim_insert_into_dimension_table(oDB, &(dim), &last_insertd_id, 0, id_user)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert dimension.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_DIMENSION_ERROR);
 					goto __OPH_EXIT_1;
@@ -2576,7 +2587,7 @@ int task_init(oph_operator_struct * handle)
 				free(index_array);
 				dim_inst[i].fk_id_dimension_index = dimension_array_id;	// Indexes
 
-				if (oph_odb_dim_insert_into_dimensioninstance_table(oDB, &(dim_inst[i]), &dimension_array_id, 0, NULL, NULL)) {
+				if (oph_odb_dim_insert_into_dimensioninstance_table(oDB, &(dim_inst[i]), &dimension_array_id, 0, NULL, NULL, id_user)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension instance row\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIMINST_INSERT_ERROR, tot_dims[j].dimension_name);
 					free(tot_dims);
@@ -4042,6 +4053,9 @@ int env_unset(oph_operator_struct * handle)
 	//Only master process has to close and release connection to management OphidiaDB
 	if (handle->proc_rank == 0) {
 		oph_odb_free_ophidiadb(&((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->oDB);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->oDB);
+#endif
 	}
 	if (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->container_input) {
 		free((char *) ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->container_input);

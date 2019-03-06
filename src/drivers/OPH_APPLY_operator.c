@@ -909,18 +909,26 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		//Only master process has to initialize and open connection to management OphidiaDB
 		ophidiadb *oDB = &((OPH_APPLY_operator_handle *) handle->operator_handle)->oDB;
 		oph_odb_init_ophidiadb(oDB);
-
+#ifdef OPH_ODB_MNG
+		oph_odb_init_mongodb(oDB);
+#endif
 		if (oph_odb_read_ophidiadb_config_file(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_APPLY_OPHIDIADB_CONFIGURATION_FILE);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-
 		if (oph_odb_connect_to_ophidiadb(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_APPLY_OPHIDIADB_CONNECTION_ERROR);
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
+#ifdef OPH_ODB_MNG
+		if (oph_odb_connect_to_mongodb(oDB)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_APPLY_OPHIDIADB_CONNECTION_ERROR);
+			return OPH_ANALYTICS_OPERATOR_MONGODB_ERROR;
+		}
+#endif
 		//Check if datacube exists (by ID container and datacube)
 		int exists = 0;
 		int status = 0;
@@ -2149,7 +2157,8 @@ int task_reduce(oph_operator_struct * handle)
 				if (dim[l].calendar && strlen(dim[l].calendar))	// Time dimension (the check can be improved by checking hierarchy name)
 				{
 					if (oph_odb_meta_put
-					    (oDB, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_output_datacube, NULL, OPH_ODB_TIME_FREQUENCY, 0, OPH_COMMON_FULL_REDUCED_DIM)) {
+					    (oDB, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_output_datacube, NULL, OPH_ODB_TIME_FREQUENCY, 0, OPH_COMMON_FULL_REDUCED_DIM,
+					     ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_user)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_METADATA_UPDATE_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_GENERIC_METADATA_UPDATE_ERROR);
@@ -2178,7 +2187,8 @@ int task_reduce(oph_operator_struct * handle)
 
 			dim_inst[l].id_grid = 0;
 			if (oph_odb_dim_insert_into_dimensioninstance_table
-			    (oDB, &(dim_inst[l]), &(cubedims[l].id_dimensioninst), ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_output_datacube, NULL, NULL)) {
+			    (oDB, &(dim_inst[l]), &(cubedims[l].id_dimensioninst), ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_output_datacube, NULL, NULL,
+			     ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_user)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in inserting a new dimension instance\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_DIM_INSTANCE_STORE_ERROR);
 				if (dim_row)
@@ -2193,7 +2203,6 @@ int task_reduce(oph_operator_struct * handle)
 		}
 		oph_dim_disconnect_from_dbms(db->dbms_instance);
 		oph_dim_unload_dim_dbinstance(db);
-
 		for (l = 0; l < number_of_dimensions; l++) {
 			//Change iddatacube in cubehasdim
 			cubedims[l].id_datacube = ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_output_datacube;
@@ -2205,7 +2214,6 @@ int task_reduce(oph_operator_struct * handle)
 			}
 		}
 		free(cubedims);
-
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->execute_error = 0;
 	}
 
@@ -2221,14 +2229,11 @@ int task_destroy(oph_operator_struct * handle)
 	}
 
 	OPH_APPLY_operator_handle *oper_handle = (OPH_APPLY_operator_handle *) handle->operator_handle;
-
 	short int proc_error = oper_handle->execute_error;
 	int id_datacube = oper_handle->id_output_datacube;
 	short int global_error = 0;
-
 	//Reduce results
 	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
-
 	if (handle->proc_rank == 0 && global_error == 0) {
 		//Master process print output datacube PID
 		char *tmp_uri = NULL;
@@ -2247,7 +2252,6 @@ int task_destroy(oph_operator_struct * handle)
 		char jsonbuf[OPH_COMMON_BUFFER_LEN];
 		memset(jsonbuf, 0, OPH_COMMON_BUFFER_LEN);
 		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, oper_handle->id_output_container, oper_handle->id_output_datacube);
-
 		// ADD OUTPUT PID TO JSON AS TEXT
 		if (oph_json_is_objkey_printable(oper_handle->objkeys, oper_handle->objkeys_num, OPH_JSON_OBJKEY_APPLY)) {
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_APPLY, "Output Cube", jsonbuf)) {
@@ -2265,14 +2269,12 @@ int task_destroy(oph_operator_struct * handle)
 			free(handle->output_string);
 		}
 		handle->output_string = strdup(tmp_string);
-
 		free(tmp_uri);
 	}
 
 	if (global_error) {
 		//Delete fragments
 		int num_threads = (oper_handle->nthread <= (unsigned int) oper_handle->fragment_number ? oper_handle->nthread : (unsigned int) oper_handle->fragment_number);
-
 		if (oper_handle->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
 			if ((oph_dproc_delete_data(id_datacube, oper_handle->id_input_container, oper_handle->fragment_ids, 0, 0, num_threads))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
@@ -2286,7 +2288,6 @@ int task_destroy(oph_operator_struct * handle)
 			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
 		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
 		handle->output_code = global_error;
-
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
 			oph_dproc_clean_odb(&oper_handle->oDB, id_datacube, oper_handle->id_input_container);
@@ -2294,7 +2295,6 @@ int task_destroy(oph_operator_struct * handle)
 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
 		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
-
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -2306,10 +2306,12 @@ int env_unset(oph_operator_struct * handle)
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
-
 	//Only master process has to close and release connection to management OphidiaDB
 	if (handle->proc_rank == 0) {
 		oph_odb_free_ophidiadb(&((OPH_APPLY_operator_handle *) handle->operator_handle)->oDB);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&((OPH_APPLY_operator_handle *) handle->operator_handle)->oDB);
+#endif
 	}
 	if (((OPH_APPLY_operator_handle *) handle->operator_handle)->fragment_ids) {
 		free((char *) ((OPH_APPLY_operator_handle *) handle->operator_handle)->fragment_ids);
@@ -2353,6 +2355,5 @@ int env_unset(oph_operator_struct * handle)
 	}
 	free((OPH_APPLY_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
-
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

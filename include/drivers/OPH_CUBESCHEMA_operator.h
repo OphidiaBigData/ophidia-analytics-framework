@@ -78,6 +78,7 @@ struct _OPH_CUBESCHEMA_operator_handle {
 	char *month_lengths;
 	int leap_year;
 	int leap_month;
+	int id_user;
 };
 typedef struct _OPH_CUBESCHEMA_operator_handle OPH_CUBESCHEMA_operator_handle;
 

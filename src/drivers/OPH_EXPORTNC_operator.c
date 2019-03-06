@@ -160,20 +160,26 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		//Only master process has to initialize and open connection to management OphidiaDB
 		ophidiadb *oDB = &((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->oDB;
 		oph_odb_init_ophidiadb(oDB);
-
+#ifdef OPH_ODB_MNG
+		oph_odb_init_mongodb(oDB);
+#endif
 		if (oph_odb_read_ophidiadb_config_file(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_OPHIDIADB_CONFIGURATION_FILE);
-
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-
 		if (oph_odb_connect_to_ophidiadb(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_OPHIDIADB_CONNECTION_ERROR);
-
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
+#ifdef OPH_ODB_MNG
+		if (oph_odb_connect_to_mongodb(oDB)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_OPHIDIADB_CONNECTION_ERROR);
+			return OPH_ANALYTICS_OPERATOR_MONGODB_ERROR;
+		}
+#endif
 		//Check if datacube exists (by ID container and datacube)
 		int exists = 0;
 		int status = 0;
@@ -740,20 +746,36 @@ int task_execute(oph_operator_struct * handle)
 	//Each process has to be connected to a slave ophidiadb
 	ophidiadb oDB_slave;
 	oph_odb_init_ophidiadb(&oDB_slave);
-
+#ifdef OPH_ODB_MNG
+	oph_odb_init_mongodb(&oDB_slave);
+#endif
 	if (oph_odb_read_ophidiadb_config_file(&oDB_slave)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_OPHIDIADB_CONFIGURATION_FILE);
-
+		oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&oDB_slave);
+#endif
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-
 	if (oph_odb_connect_to_ophidiadb(&oDB_slave)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_OPHIDIADB_CONNECTION_ERROR);
 		oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&oDB_slave);
+#endif
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
+#ifdef OPH_ODB_MNG
+	if (oph_odb_connect_to_mongodb(&oDB_slave)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_OPHIDIADB_CONNECTION_ERROR);
+		oph_odb_free_ophidiadb(&oDB_slave);
+		oph_odb_free_mongodb(&oDB_slave);
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+#endif
 	//retrieve connection string
 	if (oph_odb_stge_fetch_fragment_connection_string(&oDB_slave, datacube_id, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->fragment_ids, &frags, &dbs, &dbmss)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve connection strings\n");
@@ -762,6 +784,9 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
 		oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&oDB_slave);
+#endif
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -784,6 +809,9 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
 		oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&oDB_slave);
+#endif
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 	if (oph_dim_connect_to_dbms(db_dimension->dbms_instance, 0)) {
@@ -795,6 +823,9 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
 		oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&oDB_slave);
+#endif
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 
@@ -807,6 +838,9 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
 		oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&oDB_slave);
+#endif
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 
@@ -825,6 +859,9 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
 		oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&oDB_slave);
+#endif
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 	if (!exist_flag) {
@@ -836,6 +873,9 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
 		oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&oDB_slave);
+#endif
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -849,6 +889,9 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
 		oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&oDB_slave);
+#endif
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 	if (!exist_flag) {
@@ -860,6 +903,9 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
 		oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&oDB_slave);
+#endif
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -868,8 +914,6 @@ int task_execute(oph_operator_struct * handle)
 	char operation[OPH_COMMON_BUFFER_LEN];
 	int m, l;
 
-	MYSQL_RES *read_result = NULL;
-	MYSQL_ROW row;
 	char *mvariable, *mkey, *mtype, *mvalue;
 	int varidp;
 
@@ -885,6 +929,9 @@ int task_execute(oph_operator_struct * handle)
 			oph_odb_stge_free_db_list(&dbs);
 			oph_odb_stge_free_dbms_list(&dbmss);
 			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			free(dim_rows);
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
@@ -897,6 +944,9 @@ int task_execute(oph_operator_struct * handle)
 			oph_odb_stge_free_db_list(&dbs);
 			oph_odb_stge_free_dbms_list(&dbmss);
 			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			for (l = 0; l < num_of_dims; l++) {
 				if (dim_rows[l]) {
 					free(dim_rows[l]);
@@ -937,6 +987,9 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+					oph_odb_free_mongodb(&oDB_slave);
+#endif
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
 							free(dim_rows[l]);
@@ -956,6 +1009,9 @@ int task_execute(oph_operator_struct * handle)
 				oph_odb_stge_free_db_list(&dbs);
 				oph_odb_stge_free_dbms_list(&dbmss);
 				oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+				oph_odb_free_mongodb(&oDB_slave);
+#endif
 				for (l = 0; l < num_of_dims; l++) {
 					if (dim_rows[l]) {
 						free(dim_rows[l]);
@@ -999,6 +1055,9 @@ int task_execute(oph_operator_struct * handle)
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
 		oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&oDB_slave);
+#endif
 		for (l = 0; l < num_of_dims; l++) {
 			if (dim_rows[l]) {
 				free(dim_rows[l]);
@@ -1021,6 +1080,9 @@ int task_execute(oph_operator_struct * handle)
 			oph_odb_stge_free_db_list(&dbs);
 			oph_odb_stge_free_dbms_list(&dbmss);
 			oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+			oph_odb_free_mongodb(&oDB_slave);
+#endif
 			for (l = 0; l < num_of_dims; l++) {
 				if (dim_rows[l]) {
 					free(dim_rows[l]);
@@ -1046,6 +1108,9 @@ int task_execute(oph_operator_struct * handle)
 				oph_odb_stge_free_db_list(&dbs);
 				oph_odb_stge_free_dbms_list(&dbmss);
 				oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+				oph_odb_free_mongodb(&oDB_slave);
+#endif
 				for (l = 0; l < num_of_dims; l++) {
 					if (dim_rows[l]) {
 						free(dim_rows[l]);
@@ -1082,6 +1147,9 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+					oph_odb_free_mongodb(&oDB_slave);
+#endif
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
 							free(dim_rows[l]);
@@ -1102,6 +1170,9 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+					oph_odb_free_mongodb(&oDB_slave);
+#endif
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
 							free(dim_rows[l]);
@@ -1183,6 +1254,9 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+						oph_odb_free_mongodb(&oDB_slave);
+#endif
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
 								free(dim_rows[l]);
@@ -1204,6 +1278,9 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+						oph_odb_free_mongodb(&oDB_slave);
+#endif
 						nc_close(ncid);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
@@ -1228,6 +1305,9 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+					oph_odb_free_mongodb(&oDB_slave);
+#endif
 					nc_close(ncid);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
@@ -1248,6 +1328,9 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+					oph_odb_free_mongodb(&oDB_slave);
+#endif
 					nc_close(ncid);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
@@ -1261,8 +1344,11 @@ int task_execute(oph_operator_struct * handle)
 
 				if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->export_metadata)	// Add metadata
 				{
+					char **read_result = NULL;
+					int num_rows, num_fields = 8, i, j, k;
+
 					if (oph_odb_meta_find_complete_metadata_list
-					    (&oDB_slave, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0, NULL, NULL, NULL, NULL, &read_result)) {
+					    (&oDB_slave, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0, NULL, NULL, NULL, NULL, &read_result, &num_rows)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 						oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
@@ -1271,6 +1357,9 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+						oph_odb_free_mongodb(&oDB_slave);
+#endif
 						nc_close(ncid);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
@@ -1281,11 +1370,11 @@ int task_execute(oph_operator_struct * handle)
 						free(dim_rows);
 						return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 					}
-					while ((row = mysql_fetch_row(read_result))) {
-						mvariable = row[1];
-						mkey = row[2];
-						mtype = row[3];
-						mvalue = row[4];
+					for (j = 0; j < num_rows; ++j) {
+						mvariable = read_result[j * num_fields + 1];
+						mkey = read_result[j * num_fields + 2];
+						mtype = read_result[j * num_fields + 3];
+						mvalue = read_result[j * num_fields + 4];
 						retval = NC_EBADTYPE;
 						if (mvariable && ((retval = nc_inq_varid(ncid, mvariable, &varidp)))) {
 							if (retval == NC_ENOTVAR)
@@ -1315,13 +1404,24 @@ int task_execute(oph_operator_struct * handle)
 							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable ? mvariable : "", mkey, nc_strerror(retval));
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable ? mvariable : "", mkey,
 								nc_strerror(retval));
-							mysql_free_result(read_result);
+							if (read_result) {
+								for (i = 0; i < num_fields; i++)
+									for (j = 0; j < num_rows; ++j) {
+										k = j * num_fields + i;
+										if (read_result[k])
+											free(read_result[k]);
+									}
+								free(read_result);
+							}
 							oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
 							oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
 							oph_odb_stge_free_fragment_list(&frags);
 							oph_odb_stge_free_db_list(&dbs);
 							oph_odb_stge_free_dbms_list(&dbmss);
 							oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+							oph_odb_free_mongodb(&oDB_slave);
+#endif
 							nc_close(ncid);
 							for (l = 0; l < num_of_dims; l++) {
 								if (dim_rows[l]) {
@@ -1333,7 +1433,15 @@ int task_execute(oph_operator_struct * handle)
 							return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 						}
 					}
-					mysql_free_result(read_result);
+					if (read_result) {
+						for (i = 0; i < num_fields; i++)
+							for (j = 0; j < num_rows; ++j) {
+								k = j * num_fields + i;
+								if (read_result[k])
+									free(read_result[k]);
+							}
+						free(read_result);
+					}
 				}
 
 				for (m = 0; m < num_of_dims; m++) {
@@ -1347,6 +1455,9 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+						oph_odb_free_mongodb(&oDB_slave);
+#endif
 						nc_close(ncid);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
@@ -1391,6 +1502,9 @@ int task_execute(oph_operator_struct * handle)
 							oph_odb_stge_free_db_list(&dbs);
 							oph_odb_stge_free_dbms_list(&dbmss);
 							oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+							oph_odb_free_mongodb(&oDB_slave);
+#endif
 							nc_close(ncid);
 							for (l = 0; l < num_of_dims; l++) {
 								if (dim_rows[l]) {
@@ -1411,6 +1525,9 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+						oph_odb_free_mongodb(&oDB_slave);
+#endif
 						nc_close(ncid);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
@@ -1435,6 +1552,9 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+					oph_odb_free_mongodb(&oDB_slave);
+#endif
 					nc_close(ncid);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
@@ -1463,6 +1583,9 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+					oph_odb_free_mongodb(&oDB_slave);
+#endif
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
 							free(dim_rows[l]);
@@ -1490,6 +1613,9 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+					oph_odb_free_mongodb(&oDB_slave);
+#endif
 					nc_close(ncid);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
@@ -1534,6 +1660,9 @@ int task_execute(oph_operator_struct * handle)
 							oph_odb_stge_free_db_list(&dbs);
 							oph_odb_stge_free_dbms_list(&dbmss);
 							oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+							oph_odb_free_mongodb(&oDB_slave);
+#endif
 							nc_close(ncid);
 							for (l = 0; l < num_of_dims; l++) {
 								if (dim_rows[l]) {
@@ -1555,6 +1684,9 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+						oph_odb_free_mongodb(&oDB_slave);
+#endif
 						nc_close(ncid);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
@@ -1575,6 +1707,9 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+						oph_odb_free_mongodb(&oDB_slave);
+#endif
 						nc_close(ncid);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
@@ -1604,6 +1739,9 @@ int task_execute(oph_operator_struct * handle)
 	oph_odb_stge_free_db_list(&dbs);
 	oph_odb_stge_free_dbms_list(&dbmss);
 	oph_odb_free_ophidiadb(&oDB_slave);
+#ifdef OPH_ODB_MNG
+	oph_odb_free_mongodb(&oDB_slave);
+#endif
 	for (l = 0; l < num_of_dims; l++) {
 		if (dim_rows[l]) {
 			free(dim_rows[l]);
@@ -1709,7 +1847,13 @@ int env_unset(oph_operator_struct * handle)
 	//Only master process has to close and release connection to management OphidiaDB
 	if (handle->proc_rank == 0) {
 		oph_odb_disconnect_from_ophidiadb(&((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->oDB);
+#ifdef OPH_ODB_MNG
+		oph_odb_disconnect_from_mongodb(&((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->oDB);
+#endif
 		oph_odb_free_ophidiadb(&((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->oDB);
+#ifdef OPH_ODB_MNG
+		oph_odb_free_mongodb(&((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->oDB);
+#endif
 	}
 	if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path) {
 		free((char *) ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path);

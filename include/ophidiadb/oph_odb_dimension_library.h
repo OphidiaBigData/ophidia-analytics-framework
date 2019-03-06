@@ -306,7 +306,7 @@ int oph_odb_dim_enable_grid(ophidiadb * oDB, int id_grid);
  * \param datacube_id Id of the datacube, used to access time 
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension * dim, int *last_insertd_id, int id_datacube);
+int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension * dim, int *last_insertd_id, int id_datacube, int id_user);
 
 /**
  * \brief Function that updates OphidiaDB adding the new dimension instance
@@ -318,7 +318,8 @@ int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension *
  * \param frequency New value of frequency in case of time dimension
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb * oDB, oph_odb_dimension_instance * dim_inst, int *last_insertd_id, int id_datacube, const char *dimension_name, const char *frequency);
+int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb * oDB, oph_odb_dimension_instance * dim_inst, int *last_insertd_id, int id_datacube, const char *dimension_name, const char *frequency,
+						    int id_user);
 
 /**
  * \brief Function to retrieve id of a hieararchy from its name (that is unique)
@@ -339,7 +340,8 @@ int oph_odb_dim_retrieve_hierarchy_id(ophidiadb * oDB, char *hierarchy_name, int
  * \param dimension_instance_id Return the dimension instance id associated with the dimension
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb * oDB, int datacube_id, const char *dimension_name, oph_odb_hierarchy * hier, char *concept_level, int *dimension_instance_id);
+int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb * oDB, int datacube_id, const char *dimension_name, oph_odb_hierarchy * hier, char *concept_level, int *dimension_instance_id,
+							      int id_user);
 
 /**
  * \brief Function to assign time hierarchy to a given dimension of a datacube

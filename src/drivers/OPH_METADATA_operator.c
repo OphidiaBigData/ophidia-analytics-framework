@@ -37,9 +37,13 @@
 #include "oph_log_error_codes.h"
 #include "oph_pid_library.h"
 
-int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_result)
+int oph_metadata_crud(OPH_METADATA_operator_handle * handle, char ***read_result, int *num_rows)
 {
+	if (!read_result || !num_rows)
+		return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 	*read_result = NULL;
+	*num_rows = 0;
+
 	ophidiadb *oDB = &((OPH_METADATA_operator_handle *) handle)->oDB;
 
 	//Fill and execute the appropriate query
@@ -100,17 +104,9 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 					//insert into medatainstance table
 					if (oph_odb_meta_insert_into_metadatainstance_table
 					    (oDB, handle->id_datacube_input, idkey, idtype, handle->metadata_keys[i], handle->variable,
-					     handle->metadata_keys_num > 1 ? metadata_values[i] : handle->metadata_value, &idmetadatainstance)) {
+					     handle->metadata_keys_num > 1 ? metadata_values[i] : handle->metadata_value, iduser, &idmetadatainstance)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
-						if (handle->metadata_keys_num > 1)
-							oph_tp_free_multiple_value_param_list(metadata_values, metadata_values_num);
-						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-					}
-					//insert into manage table
-					if (oph_odb_meta_insert_into_manage_table(oDB, idmetadatainstance, iduser)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
 						if (handle->metadata_keys_num > 1)
 							oph_tp_free_multiple_value_param_list(metadata_values, metadata_values_num);
 						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
@@ -129,7 +125,7 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 					id_metadatainstance = handle->metadata_id_str;
 				if (oph_odb_meta_find_complete_metadata_list
 				    (oDB, handle->id_datacube_input, (const char **) handle->metadata_keys, handle->metadata_keys_num, id_metadatainstance, handle->variable_filter,
-				     handle->metadata_type_filter, handle->metadata_value_filter, read_result)) {
+				     handle->metadata_type_filter, handle->metadata_value_filter, read_result, num_rows)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_READ_METADATA_ERROR);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_READ_METADATA_ERROR);
 					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -153,8 +149,8 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 				}
 				//Check metadata instance id
 				if (oph_odb_meta_check_metadatainstance_existance(oDB, handle->metadata_id, handle->id_datacube_input, &exists) || !exists) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_RETRIEVE_METADATAINSTANCE_FORCE_ERROR, handle->metadata_id);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_METADATAINSTANCE_FORCE_ERROR, handle->metadata_id);
+					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_RETRIEVE_METADATAINSTANCE_ID_ERROR, handle->metadata_id);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_METADATAINSTANCE_ID_ERROR, handle->metadata_id);
 					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 				}
 				//Retrieve user id
@@ -164,18 +160,11 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 				}
 				//update medatainstance table
-				if (oph_odb_meta_update_metadatainstance_table(oDB, handle->metadata_id, handle->id_datacube_input, handle->metadata_value, handle->force)) {
+				if (oph_odb_meta_update_metadatainstance_table(oDB, handle->metadata_id, handle->id_datacube_input, handle->metadata_value, handle->force, iduser)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
 					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 				}
-				//insert into manage table
-				if (oph_odb_meta_insert_into_manage_table(oDB, handle->metadata_id, iduser)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-
 				break;
 			}
 		case OPH_METADATA_MODE_DELETE_VALUE:
@@ -259,6 +248,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	oph_odb_init_ophidiadb(oDB);
+#ifdef OPH_ODB_MNG
+	oph_odb_init_mongodb(oDB);
+#endif
 
 	if (oph_odb_read_ophidiadb_config_file(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
@@ -271,6 +263,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_OPHIDIADB_CONNECTION_ERROR_NO_CONTAINER);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
+#ifdef OPH_ODB_MNG
+	if (oph_odb_connect_to_mongodb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_OPHIDIADB_CONNECTION_ERROR_NO_CONTAINER);
+		return OPH_ANALYTICS_OPERATOR_MONGODB_ERROR;
+	}
+#endif
 	//3 - Fill struct with the correct data
 
 	char *value;
@@ -570,30 +569,35 @@ int task_execute(oph_operator_struct * handle)
 	if (handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	MYSQL_RES *read_result = NULL;
-	MYSQL_FIELD *fields;
-	MYSQL_ROW row;
-	int num_fields;
-	int num_rows;
-	int i, j, len;
+	char **read_result = NULL;
+	int num_rows, num_fields = 8, i, j, k;
 
 	//execute requested crud operation
-	if (oph_metadata_crud(((OPH_METADATA_operator_handle *) handle->operator_handle), &read_result)) {
+	if (oph_metadata_crud(((OPH_METADATA_operator_handle *) handle->operator_handle), &read_result, &num_rows)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to manage metadata\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_CRUD_ERROR);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
 	if (((OPH_METADATA_operator_handle *) handle->operator_handle)->mode == OPH_METADATA_MODE_READ_VALUE) {
-		num_rows = mysql_num_rows(read_result);
+
 		char message[OPH_COMMON_BUFFER_LEN];
-		snprintf(message, OPH_COMMON_BUFFER_LEN, "Found %d items", num_rows);
-		printf("%s\n", message);
+		snprintf(message, OPH_COMMON_BUFFER_LEN, "Found %d item%s", num_rows, num_rows == 1 ? "" : "s");
+
 		if (oph_json_is_objkey_printable
 		    (((OPH_METADATA_operator_handle *) handle->operator_handle)->objkeys, ((OPH_METADATA_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_METADATA_SUMMARY)) {
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_METADATA_SUMMARY, "Summary", message)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+				if (read_result) {
+					for (i = 0; i < num_fields; i++)
+						for (j = 0; j < num_rows; ++j) {
+							k = j * num_fields + i;
+							if (read_result[k])
+								free(read_result[k]);
+						}
+					free(read_result);
+				}
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
 		}
@@ -601,32 +605,12 @@ int task_execute(oph_operator_struct * handle)
 		if (!num_rows) {
 			pmesg(LOG_WARNING, __FILE__, __LINE__, "No rows found by query\n");
 			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_NO_ROWS_FOUND);
-			mysql_free_result(read_result);
+			if (read_result)
+				free(read_result);
 			return OPH_ANALYTICS_OPERATOR_SUCCESS;
 		}
 
-		fields = mysql_fetch_fields(read_result);
-		num_fields = mysql_num_fields(read_result);
-
-		printf("+");
-		for (i = 0; i < num_fields; i++) {
-			printf("-");
-			len = (fields[i].max_length > fields[i].name_length) ? fields[i].max_length : fields[i].name_length;
-			for (j = 0; j < len; j++) {
-				printf("-");
-			}
-			printf("-+");
-		}
-		printf("\n");
-
-		printf("|");
-		for (i = 0; i < num_fields; i++) {
-			printf(" ");
-			len = (fields[i].max_length > fields[i].name_length) ? fields[i].max_length : fields[i].name_length;
-			printf("%-*s", len, fields[i].name);
-			printf(" |");
-		}
-		printf("\n");
+		char fields[8][16] = { "Id", "Variable", "Key", "Type", "Value", "Last_Modified", "User", "Vocabulary" };
 
 		int objkey_printable =
 		    oph_json_is_objkey_printable(((OPH_METADATA_operator_handle *) handle->operator_handle)->objkeys, ((OPH_METADATA_operator_handle *) handle->operator_handle)->objkeys_num,
@@ -638,11 +622,19 @@ int task_execute(oph_operator_struct * handle)
 			if (!jsonkeys) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_MEMORY_ERROR_INPUT, "keys");
-				mysql_free_result(read_result);
+				if (read_result) {
+					for (i = 0; i < num_fields; i++)
+						for (j = 0; j < num_rows; ++j) {
+							k = j * num_fields + i;
+							if (read_result[k])
+								free(read_result[k]);
+						}
+					free(read_result);
+				}
 				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 			}
 			for (jjj = 0; jjj < num_fields; ++jjj) {
-				jsonkeys[jjj] = strdup(fields[jjj].name ? fields[jjj].name : "");
+				jsonkeys[jjj] = strdup(fields[jjj] ? fields[jjj] : "");
 				if (!jsonkeys[jjj]) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_MEMORY_ERROR_INPUT, "key");
@@ -651,7 +643,15 @@ int task_execute(oph_operator_struct * handle)
 							free(jsonkeys[iii]);
 					if (jsonkeys)
 						free(jsonkeys);
-					mysql_free_result(read_result);
+					if (read_result) {
+						for (i = 0; i < num_fields; i++)
+							for (j = 0; j < num_rows; ++j) {
+								k = j * num_fields + i;
+								if (read_result[k])
+									free(read_result[k]);
+							}
+						free(read_result);
+					}
 					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 				}
 			}
@@ -664,7 +664,15 @@ int task_execute(oph_operator_struct * handle)
 						free(jsonkeys[iii]);
 				if (jsonkeys)
 					free(jsonkeys);
-				mysql_free_result(read_result);
+				if (read_result) {
+					for (i = 0; i < num_fields; i++)
+						for (j = 0; j < num_rows; ++j) {
+							k = j * num_fields + i;
+							if (read_result[k])
+								free(read_result[k]);
+						}
+					free(read_result);
+				}
 				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 			}
 			for (jjj = 0; jjj < num_fields; ++jjj) {
@@ -682,7 +690,15 @@ int task_execute(oph_operator_struct * handle)
 							free(fieldtypes[iii]);
 					if (fieldtypes)
 						free(fieldtypes);
-					mysql_free_result(read_result);
+					if (read_result) {
+						for (i = 0; i < num_fields; i++)
+							for (j = 0; j < num_rows; ++j) {
+								k = j * num_fields + i;
+								if (read_result[k])
+									free(read_result[k]);
+							}
+						free(read_result);
+					}
 					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 				}
 			}
@@ -699,7 +715,15 @@ int task_execute(oph_operator_struct * handle)
 						free(fieldtypes[iii]);
 				if (fieldtypes)
 					free(fieldtypes);
-				mysql_free_result(read_result);
+				if (read_result) {
+					for (i = 0; i < num_fields; i++)
+						for (j = 0; j < num_rows; ++j) {
+							k = j * num_fields + i;
+							if (read_result[k])
+								free(read_result[k]);
+						}
+					free(read_result);
+				}
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
 			for (iii = 0; iii < num_fields; iii++)
@@ -713,40 +737,28 @@ int task_execute(oph_operator_struct * handle)
 			if (fieldtypes)
 				free(fieldtypes);
 		}
-
-		printf("+");
-		for (i = 0; i < num_fields; i++) {
-			printf("-");
-			len = (fields[i].max_length > fields[i].name_length) ? fields[i].max_length : fields[i].name_length;
-			for (j = 0; j < len; j++) {
-				printf("-");
-			}
-			printf("-+");
-		}
-		printf("\n");
-
 		//For each ROW
-		while ((row = mysql_fetch_row(read_result))) {
-			printf("|");
-			for (i = 0; i < num_fields; i++) {
-				printf(" ");
-				len = (fields[i].max_length > fields[i].name_length) ? fields[i].max_length : fields[i].name_length;
-				printf("%-*s", len, row[i] ? row[i] : "");
-				printf(" |");
-			}
-			printf("\n");
-
-			if (objkey_printable) {
+		if (objkey_printable) {
+			for (j = 0; j < num_rows; ++j) {
 				char **jsonvalues = NULL;
 				jsonvalues = (char **) calloc(num_fields, sizeof(char *));
 				if (!jsonvalues) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_MEMORY_ERROR_INPUT, "values");
-					mysql_free_result(read_result);
+					if (read_result) {
+						for (i = 0; i < num_fields; i++)
+							for (j = 0; j < num_rows; ++j) {
+								k = j * num_fields + i;
+								if (read_result[k])
+									free(read_result[k]);
+							}
+						free(read_result);
+					}
 					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 				}
 				for (jjj = 0; jjj < num_fields; ++jjj) {
-					jsonvalues[jjj] = strdup(row[jjj] ? row[jjj] : "");
+					k = j * num_fields + jjj;
+					jsonvalues[jjj] = strdup(read_result[k] ? read_result[k] : "");
 					if (!jsonvalues[jjj]) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_MEMORY_ERROR_INPUT, "value");
@@ -755,7 +767,15 @@ int task_execute(oph_operator_struct * handle)
 								free(jsonvalues[iii]);
 						if (jsonvalues)
 							free(jsonvalues);
-						mysql_free_result(read_result);
+						if (read_result) {
+							for (i = 0; i < num_fields; i++)
+								for (j = 0; j < num_rows; ++j) {
+									k = j * num_fields + i;
+									if (read_result[k])
+										free(read_result[k]);
+								}
+							free(read_result);
+						}
 						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 					}
 				}
@@ -767,7 +787,15 @@ int task_execute(oph_operator_struct * handle)
 							free(jsonvalues[iii]);
 					if (jsonvalues)
 						free(jsonvalues);
-					mysql_free_result(read_result);
+					if (read_result) {
+						for (i = 0; i < num_fields; i++)
+							for (j = 0; j < num_rows; ++j) {
+								k = j * num_fields + i;
+								if (read_result[k])
+									free(read_result[k]);
+							}
+						free(read_result);
+					}
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 				for (iii = 0; iii < num_fields; iii++)
@@ -778,19 +806,8 @@ int task_execute(oph_operator_struct * handle)
 			}
 		}
 
-		printf("+");
-		for (i = 0; i < num_fields; i++) {
-			printf("-");
-			len = (fields[i].max_length > fields[i].name_length) ? fields[i].max_length : fields[i].name_length;
-			for (j = 0; j < len; j++) {
-				printf("-");
-			}
-			printf("-+");
-		}
-		printf("\n");
-
-		mysql_free_result(read_result);
 	} else {
+
 		char message[OPH_COMMON_BUFFER_LEN];
 		snprintf(message, OPH_COMMON_BUFFER_LEN, "Operation successfully completed!");
 		printf("%s\n", message);
@@ -802,6 +819,16 @@ int task_execute(oph_operator_struct * handle)
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
 		}
+	}
+
+	if (read_result) {
+		for (i = 0; i < num_fields; i++)
+			for (j = 0; j < num_rows; ++j) {
+				k = j * num_fields + i;
+				if (read_result[k])
+					free(read_result[k]);
+			}
+		free(read_result);
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -836,7 +863,14 @@ int env_unset(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	oph_odb_disconnect_from_ophidiadb(&((OPH_METADATA_operator_handle *) handle->operator_handle)->oDB);
+#ifdef OPH_ODB_MNG
+	oph_odb_disconnect_from_mongodb(&((OPH_METADATA_operator_handle *) handle->operator_handle)->oDB);
+#endif
+
 	oph_odb_free_ophidiadb(&((OPH_METADATA_operator_handle *) handle->operator_handle)->oDB);
+#ifdef OPH_ODB_MNG
+	oph_odb_free_mongodb(&((OPH_METADATA_operator_handle *) handle->operator_handle)->oDB);
+#endif
 
 	if (((OPH_METADATA_operator_handle *) handle->operator_handle)->metadata_id_str) {
 		free((char *) ((OPH_METADATA_operator_handle *) handle->operator_handle)->metadata_id_str);
