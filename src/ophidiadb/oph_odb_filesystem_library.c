@@ -675,6 +675,65 @@ int oph_odb_fs_is_empty_folder(int folder_id, ophidiadb * oDB, int *answer)
 	return OPH_ODB_SUCCESS;
 }
 
+int oph_odb_fs_does_folder_contain_cubes(int folder_id, ophidiadb * oDB, int *answer)
+{
+	if (!oDB || !folder_id || !answer) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+	*answer = 0;
+
+	char query[MYSQL_BUFLEN];
+	MYSQL_RES *res;
+	int num_rows;
+
+	snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_EMPTINESS_FROM_CUBES, folder_id);
+	if (mysql_query(oDB->conn, query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+	res = mysql_store_result(oDB->conn);
+	num_rows = mysql_num_rows(res);
+	mysql_free_result(res);
+
+	*answer = num_rows == 0;
+
+	if (*answer) {		// Check in subfolders
+
+		snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_RETRIEVE_SUBFOLDERS, folder_id);
+		if (mysql_query(oDB->conn, query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			return OPH_ODB_MYSQL_ERROR;
+		}
+		if (mysql_field_count(oDB->conn) != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+		res = mysql_store_result(oDB->conn);
+
+		MYSQL_ROW row;
+		int subfolder_id = 0;
+		while ((row = mysql_fetch_row(res))) {
+			subfolder_id = (int) strtol(row[0], NULL, 10);
+			if (oph_odb_fs_does_folder_contain_cubes(subfolder_id, oDB, answer)) {
+				mysql_free_result(res);
+				return OPH_ODB_MYSQL_ERROR;
+			}
+			if (!*answer)
+				break;
+		}
+
+		mysql_free_result(res);
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
 int oph_odb_fs_update_container_path_name(ophidiadb * oDB, int in_container_id, int out_folder_id, char *out_container_name)
 {
 	if (!oDB || !in_container_id || !out_folder_id || !out_container_name) {

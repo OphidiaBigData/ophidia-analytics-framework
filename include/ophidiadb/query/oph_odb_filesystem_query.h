@@ -20,9 +20,11 @@
 #define __OPH_ODB_FS_QUERY_H__
 
 #define MYSQL_QUERY_FS_RETRIEVE_ROOT_ID 		"SELECT idfolder FROM folder WHERE idparent IS NULL"
+#define MYSQL_QUERY_FS_RETRIEVE_SUBFOLDERS 		"SELECT idfolder FROM folder WHERE idparent=%d"
 #define MYSQL_QUERY_FS_PATH_PARSING_ID 			"SELECT idfolder FROM folder WHERE idparent=%d AND foldername='%s'"
-#define MYSQL_QUERY_FS_UNIQUENESS 			"SELECT idfolder FROM folder WHERE folder.idparent=%d AND folder.foldername='%s'"
-#define MYSQL_QUERY_FS_EMPTINESS 			"SELECT idfolder FROM folder WHERE folder.idparent=%d UNION SELECT iddatacube FROM datacube WHERE datacube.idfolder=%d"
+#define MYSQL_QUERY_FS_UNIQUENESS 				"SELECT idfolder FROM folder WHERE folder.idparent=%d AND folder.foldername='%s'"
+#define MYSQL_QUERY_FS_EMPTINESS 				"SELECT idfolder FROM folder WHERE folder.idparent=%d UNION SELECT iddatacube FROM datacube WHERE datacube.idfolder=%d"
+#define MYSQL_QUERY_FS_EMPTINESS_FROM_CUBES 	"SELECT iddatacube FROM datacube WHERE datacube.idfolder=%d"
 
 #define MYSQL_QUERY_FS_RETRIEVE_SESSION_FOLDER_ID 	"SELECT idfolder FROM session WHERE sessionid = '%s';"
 #define MYSQL_QUERY_FS_RETRIEVE_CONTAINER_FOLDER_ID 	"SELECT idfolder FROM container WHERE idcontainer = %d;"

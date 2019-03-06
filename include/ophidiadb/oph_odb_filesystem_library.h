@@ -151,6 +151,15 @@ int oph_odb_fs_is_unique(int folderid, char *name, ophidiadb * oDB, int *answer)
 int oph_odb_fs_is_empty_folder(int folderid, ophidiadb * oDB, int *answer);
 
 /**
+ * \brief Function used to check if the folder indicated by folder_id is empty (no subfolders and containers)
+ * \param folder_id Id of the folder to check
+ * \param oDB Pointer to the OphidiaDB
+ * \param answer 1 if empty, 0 otherwise
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_fs_does_folder_contain_cubes(int folderid, ophidiadb * oDB, int *answer);
+
+/**
  * \brief Function used to update name and folder of a container
  * \param container_id Id of the container to be updated
  * \param out_folder_id Id of the output folder used
