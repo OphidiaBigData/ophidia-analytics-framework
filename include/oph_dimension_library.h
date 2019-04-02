@@ -330,4 +330,14 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
  */
 int oph_dim_get_time_string_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, char *output_string);
 
+/**
+ * \brief Function that updates a dimension table adding new dimensions (if it not exists)
+ * \param db Pointer to db_instance used for dimension table
+ * \param from_dimension_table_name Name of input dimension table
+ * \param to_dimension_table_name Name of output dimension table
+ * \param dimension_id Id of dimension to be copied; it will contain the id of dimension in new table at the end of the function
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_dim_copy_into_dimension_table(oph_odb_db_instance * db, char *from_dimension_table_name, char *to_dimension_table_name, int *dimension_id);
+
 #endif

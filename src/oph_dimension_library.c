@@ -2081,7 +2081,7 @@ int oph_dim_read_dimension_filtered_data(oph_odb_db_instance * db, char *dimensi
 
 int oph_dim_delete_table(oph_odb_db_instance * db, char *dimension_table_name)
 {
-	if (!dimension_table_name) {
+	if (!db || !dimension_table_name) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DIM_NULL_PARAM;
 	}
@@ -2113,5 +2113,37 @@ int oph_dim_unload_dim_dbinstance(oph_odb_db_instance * db)
 		return OPH_DIM_NULL_PARAM;
 	}
 	free(db->dbms_instance);
+	return OPH_DIM_SUCCESS;
+}
+
+int oph_dim_copy_into_dimension_table(oph_odb_db_instance * db, char *from_dimension_table_name, char *to_dimension_table_name, int *dimension_id)
+{
+	if (!db || !from_dimension_table_name || !to_dimension_table_name || !dimension_id) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_DIM_NULL_PARAM;
+	}
+
+	if (oph_dim_check_connection_to_db(db->dbms_instance, db, 0)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	char copy_query[MYSQL_BUFLEN];
+	int n = snprintf(copy_query, MYSQL_BUFLEN, MYSQL_DIM_COPY_FRAG, to_dimension_table_name, from_dimension_table_name, *dimension_id);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	if (mysql_query(db->dbms_instance->conn, copy_query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL error: %s\n", mysql_error(db->dbms_instance->conn));
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	if (!(*dimension_id = mysql_insert_id(db->dbms_instance->conn))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted datacube id\n");
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
 	return OPH_DIM_SUCCESS;
 }

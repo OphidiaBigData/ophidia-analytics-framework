@@ -767,6 +767,8 @@ int task_init(oph_operator_struct * handle)
 		char o_index_dimension_table_name[OPH_COMMON_BUFFER_LEN], o_label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
 		snprintf(o_index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_output_container);
 		snprintf(o_label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_output_container);
+		char new_container =
+		    ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_output_container != ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_input_container;
 
 		int kk, residual_dim_number = 0, d, new_size = 0, prev_kk;
 		char *dim_row, *sizes_, *cl_value;
@@ -774,6 +776,7 @@ int task_init(oph_operator_struct * handle)
 		long long prev_value, svalue;
 		char buffer1[OPH_COMMON_BUFFER_LEN], buffer2[OPH_COMMON_BUFFER_LEN];
 		buffer1[0] = 0;
+
 		for (l = 0; l < number_of_dimensions; ++l) {
 			if (!dim_inst[l].fk_id_dimension_index) {
 				pmesg(LOG_WARNING, __FILE__, __LINE__, "Dimension FK not set in cubehasdim.\n");
@@ -1027,11 +1030,25 @@ int task_init(oph_operator_struct * handle)
 				}
 			}
 
-			if (new_grid || !((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->grid_name
-			    || (((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_output_container !=
-				((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_input_container)) {
+			if (new_grid || !((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->grid_name || new_container) {
 				if (oph_dim_insert_into_dimension_table(db, o_index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, dim_inst[l].size, dim_row, &(dim_inst[l].fk_id_dimension_index))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in inserting a new row in dimension table.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_AGGREGATE2_DIM_ROW_ERROR);
+					if (dim_row)
+						free(dim_row);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					free(cubedims);
+					if (stored_dims)
+						free(stored_dims);
+					if (stored_dim_insts)
+						free(stored_dim_insts);
+					goto __OPH_EXIT_1;
+				}
+				// Copy the labels in new container
+				if (dim_inst[l].fk_id_dimension_label && new_container && (l != reduced_dim)
+				    && oph_dim_copy_into_dimension_table(db, label_dimension_table_name, o_label_dimension_table_name, &(dim_inst[l].fk_id_dimension_label))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in copying a row in dimension table.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_AGGREGATE2_DIM_ROW_ERROR);
 					if (dim_row)
 						free(dim_row);
