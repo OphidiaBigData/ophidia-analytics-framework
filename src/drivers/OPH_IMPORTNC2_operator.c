@@ -115,6 +115,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->time_filter = 1;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->execute_error = 0;
+	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->output_path = NULL;
 
 	char *value;
 
@@ -1540,6 +1541,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_job = 0;
 	else
 		((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_job = (int) strtol(value, NULL, 10);
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
+		if (!(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->output_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, OPH_IN_PARAM_OUTPUT_PATH);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -4170,7 +4185,10 @@ int env_unset(oph_operator_struct * handle)
 		free((char *) ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->description);
 		((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->description = NULL;
 	}
-
+	if (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->output_path) {
+		free((char *) ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->output_path);
+		((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->output_path = NULL;
+	}
 	free((OPH_IMPORTNC2_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
 

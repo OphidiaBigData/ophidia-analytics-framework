@@ -184,6 +184,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_type = NULL;
 	((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->number = 0;
 	((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->execute_error = 0;
+	((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->output_path = NULL;
 
 	char **datacube_in;
 	char *value;
@@ -447,6 +448,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_MERGECUBES_DATACUBE_NUMBER_ERROR);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MERGECUBES_DATACUBE_NUMBER_ERROR);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
+		if (!(((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->output_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
+			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_MERGECUBES_MEMORY_ERROR_INPUT, OPH_IN_PARAM_OUTPUT_PATH);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -1633,6 +1648,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_type) {
 		free((char *) ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_type);
 		((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_type = NULL;
+	}
+	if (((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->output_path) {
+		free((char *) ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->output_path);
+		((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->output_path = NULL;
 	}
 	free((OPH_MERGECUBES2_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;

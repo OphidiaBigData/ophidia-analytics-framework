@@ -84,6 +84,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->ms = NAN;
 	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->execute_error = 0;
+	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->output_path = NULL;
 
 	char *datacube_in[2];
 	char *value;
@@ -313,6 +314,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
 		if (!(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->description = (char *) strndup(value, OPH_TP_TASKLEN))) {
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[2], OPH_LOG_OPH_INTERCUBE_MEMORY_ERROR_INPUT, "description");
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
+		if (!(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->output_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
+			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_INTERCUBE_MEMORY_ERROR_INPUT, OPH_IN_PARAM_OUTPUT_PATH);
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
@@ -1890,6 +1905,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->description);
 		((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->description = NULL;
+	}
+	if (((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->output_path) {
+		free((char *) ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->output_path);
+		((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->output_path = NULL;
 	}
 	free((OPH_INTERCUBE_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;

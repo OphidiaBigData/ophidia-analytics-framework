@@ -79,6 +79,7 @@
  * \param id_job ID of the job related to the task
  * \param nthread Number of pthreads related to each MPI task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
+ * \param output_path Folder where output cube has to be saved
  */
 struct _OPH_IMPORTNC2_operator_handle {
 	ophidiadb oDB;
@@ -128,6 +129,7 @@ struct _OPH_IMPORTNC2_operator_handle {
 	int id_job;
 	int nthread;
 	short int execute_error;
+	char *output_path;
 };
 typedef struct _OPH_IMPORTNC2_operator_handle OPH_IMPORTNC2_operator_handle;
 

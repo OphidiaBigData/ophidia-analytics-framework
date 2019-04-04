@@ -118,6 +118,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_PERMUTE_operator_handle *) handle->operator_handle)->id_user = 0;
 	((OPH_PERMUTE_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_PERMUTE_operator_handle *) handle->operator_handle)->execute_error = 0;
+	((OPH_PERMUTE_operator_handle *) handle->operator_handle)->output_path = NULL;
 
 	char *datacube_in;
 	char *value;
@@ -312,6 +313,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (!(((OPH_PERMUTE_operator_handle *) handle->operator_handle)->description = (char *) strndup(value, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_MEMORY_ERROR_INPUT, "description");
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
+		if (!(((OPH_PERMUTE_operator_handle *) handle->operator_handle)->output_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
+			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_PERMUTE_MEMORY_ERROR_INPUT, OPH_IN_PARAM_OUTPUT_PATH);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 	}
@@ -1199,6 +1214,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_PERMUTE_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_PERMUTE_operator_handle *) handle->operator_handle)->description);
 		((OPH_PERMUTE_operator_handle *) handle->operator_handle)->description = NULL;
+	}
+	if (((OPH_PERMUTE_operator_handle *) handle->operator_handle)->output_path) {
+		free((char *) ((OPH_PERMUTE_operator_handle *) handle->operator_handle)->output_path);
+		((OPH_PERMUTE_operator_handle *) handle->operator_handle)->output_path = NULL;
 	}
 	free((OPH_PERMUTE_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;

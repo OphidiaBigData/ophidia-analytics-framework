@@ -62,6 +62,7 @@
  * \param nthread Number of posix threads related to each MPI task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  * \param on_reduce Flag set to 1 in case the values of implicit dimension has to updated due to a reduction primitive
+ * \param output_path Folder where output cube has to be saved
  */
 struct _OPH_APPLY_operator_handle {
 	ophidiadb oDB;
@@ -100,6 +101,7 @@ struct _OPH_APPLY_operator_handle {
 	unsigned int nthread;
 	short int execute_error;
 	char on_reduce;
+	char *output_path;
 };
 typedef struct _OPH_APPLY_operator_handle OPH_APPLY_operator_handle;
 

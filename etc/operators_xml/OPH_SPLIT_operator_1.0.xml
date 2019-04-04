@@ -17,6 +17,7 @@ in the same origin database.
 			     If the number of tuples in input fragment is not a multiple of
 			     nsplit, output fragments will have a different number of tuples.
 - description : additional description to be associated with the output cube.
+- output_path : optional folder where the output cube will be stored; by default the cube is saved in current working directory.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -48,6 +49,7 @@ SUBMISSION STRING: &quot;operator=oph_split;cube=http://www.example.com/1/1;nspl
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="int" mandatory="yes" minvalue="2">nsplit</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="-">output_path</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|split">objkey_filter</argument>
     </args>
 </operator>

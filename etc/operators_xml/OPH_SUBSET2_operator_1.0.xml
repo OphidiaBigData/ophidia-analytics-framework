@@ -37,6 +37,7 @@ This operator is DEPRECATED. Use OPH_SUBSET instead.
              or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
 - check_grid : optional flag to be enabled in case the values of grid have to be checked (valid only if the grid already exists).
 - description : additional description to be associated with the output cube.
+- output_path : optional folder where the output cube will be stored; by default the cube is saved in current working directory.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -71,6 +72,7 @@ SUBMISSION STRING: &quot;operator=oph_subset2;cube=http://www.example.com/1/1;su
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">check_grid</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="-">output_path</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|subset2">objkey_filter</argument>
     </args>
 </operator>

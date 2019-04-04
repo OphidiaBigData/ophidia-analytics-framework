@@ -31,6 +31,7 @@ returns a new datacube as result of the specified operation applied element by e
 - schedule : scheduling algorithm. The only possible value is 0,
 		     for a static linear block distribution of resources.
 - description : additional description to be associated with the output cube.
+- output_path : optional folder where the output cube will be stored; by default the cube is saved in current working directory.
         
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -63,6 +64,7 @@ SUBMISSION STRING: &quot;operator=oph_intercube;cube=http://www.example.com/1/1;
 		<argument type="string" mandatory="no" default="null">measure</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="-">output_path</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|intercube">objkey_filter</argument>
     </args>
 </operator>

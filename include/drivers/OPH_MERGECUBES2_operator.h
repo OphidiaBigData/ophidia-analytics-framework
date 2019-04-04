@@ -80,6 +80,7 @@
  * \param dim_type Type of new dimension to be created
  * \param number Number of replies of the first cube to be considered
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
+ * \param output_path Folder where output cube has to be saved
  */
 struct _OPH_MERGECUBES2_operator_handle {
 	ophidiadb oDB;
@@ -105,6 +106,7 @@ struct _OPH_MERGECUBES2_operator_handle {
 	char *dim_type;
 	int number;
 	short int execute_error;
+	char *output_path;
 };
 typedef struct _OPH_MERGECUBES2_operator_handle OPH_MERGECUBES2_operator_handle;
 

@@ -18,6 +18,7 @@ data cubes can be merged. A new implicit dimension will be created.
 - dim_type: data type associated with the new dimension. Default value is &quot;long&quot;.
 - number : number of replies of the first cube; by default the first cube is considered only once.
 - description : additional description to be associated with the output cube.
+- output_path : optional folder where the output cube will be stored; by default the cube is saved in current working directory.
         
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -49,6 +50,7 @@ SUBMISSION STRING: &quot;operator=oph_mergecubes2;cubes=http://www.example.com/1
 		<argument type="string" mandatory="no" default="long" values="double|float|int|long|short|byte">dim_type</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">number</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="-">output_path</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|mergecubes">objkey_filter</argument>
     </args>
 </operator>

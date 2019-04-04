@@ -796,6 +796,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->on_reduce = 0;
+	((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path = NULL;
 
 	//3 - Fill struct with the correct data
 	char *datacube_in;
@@ -1053,6 +1054,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Bad value '%s'\n", value);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Bad value '%s'\n", value);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
+		if (!(((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
+			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_MEMORY_ERROR_INPUT, OPH_IN_PARAM_OUTPUT_PATH);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -2350,6 +2365,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_APPLY_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_APPLY_operator_handle *) handle->operator_handle)->description);
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->description = NULL;
+	}
+	if (((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path) {
+		free((char *) ((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path);
+		((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path = NULL;
 	}
 	free((OPH_APPLY_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;

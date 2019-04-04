@@ -62,6 +62,7 @@ WARNING: It imports only mono-dimensional coordinate variables.
         or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
 - check_grid : optional flag to be enabled in case the values of grid have to be checked (valid only if the grid already exists).
 - description : additional description to be associated with the output cube.
+- output_path : optional folder where the output cube will be stored; by default the cube is saved in current working directory.
 - hierarchy: concept hierarchy name of the dimensions. Default value is &quot;oph_base&quot;
              Multiple-value field: list of concept hierarchies separated by &quot;|&quot; can be provided, the explicit dimensions first.
 - vocabulary: optional argument used to indicate a vocabulary (name of set of keys) to be associated with metadata.
@@ -138,6 +139,7 @@ SUBMISSION STRING: &quot;operator=oph_importnc;cwd=/session-code1;measure=pressu
 		<argument type="int" mandatory="no" default="0" minvalue="0">leap_year</argument>
 		<argument type="int" mandatory="no" default="2" minvalue="1" maxvalue="12">leap_month</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="-">output_path</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|importnc">objkey_filter</argument>
     </args>
 </operator>

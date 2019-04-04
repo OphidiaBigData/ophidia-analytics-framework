@@ -68,6 +68,7 @@
  * \param offset List of offsets used to enlarge subset intervals
  * \param offset_num Number of offsets
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
+ * \param output_path Folder where output cube has to be saved
  */
 struct _OPH_SUBSET2_operator_handle {
 	ophidiadb oDB;
@@ -103,6 +104,7 @@ struct _OPH_SUBSET2_operator_handle {
 	double *offset;
 	int offset_num;
 	short int execute_error;
+	char *output_path;
 };
 typedef struct _OPH_SUBSET2_operator_handle OPH_SUBSET2_operator_handle;
 

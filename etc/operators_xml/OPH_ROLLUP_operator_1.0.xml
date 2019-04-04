@@ -15,6 +15,7 @@ It performs a roll-up operation on a datacube, i.e. it transforms dimensions fro
 - ndim : number of explicit dimensions that will be transformed in implicit dimensions.
 		 Default value is &apos;1&apos;.
 - description : additional description to be associated with the output cube.
+- output_path : optional folder where the output cube will be stored; by default the cube is saved in current working directory.
         
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -46,6 +47,7 @@ SUBMISSION STRING: &quot;operator=oph_rollup;cube=http://www.example.com/1/1;&qu
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ndim</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="-">output_path</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|rollup">objkey_filter</argument>
     </args>
 </operator>
