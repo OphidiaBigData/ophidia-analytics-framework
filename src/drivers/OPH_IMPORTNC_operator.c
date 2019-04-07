@@ -830,7 +830,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (tmp_concept_levels)
 		free(tmp_concept_levels);
 
-//ADDED TO MANAGE SUBSETTED IMPORT
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
+		if (!(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->output_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, OPH_IN_PARAM_OUTPUT_PATH);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+	}
+	//ADDED TO MANAGE SUBSETTED IMPORT
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OFFSET);
 	if (!value) {
@@ -1039,9 +1052,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 			char *cwd = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->cwd;
 			char *user = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->user;
+			char *output_path = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->output_path;
 
 			//Check if input path exists
-			if ((oph_odb_fs_path_parsing("", cwd, &folder_id, NULL, oDB))) {
+			if ((oph_odb_fs_path_parsing(output_path ? output_path : "", cwd, &folder_id, NULL, oDB))) {
 				//Check if user can work on datacube
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Path %s doesn't exists\n", cwd);
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_CWD_ERROR, container_name, cwd);
@@ -1520,20 +1534,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	else
 		((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_job = (int) strtol(value, NULL, 10);
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
-		if (!(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->output_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, OPH_IN_PARAM_OUTPUT_PATH);
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-		}
-	}
-
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -1898,12 +1898,13 @@ int task_init(oph_operator_struct * handle)
 		int ncid = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->ncid;
 		char *cwd = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->cwd;
 		char *user = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->user;
+		char *output_path = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->output_path;
 		NETCDF_var tmp_var;
 
 		int permission = 0;
 		int folder_id = 0;
 		//Check if input path exists
-		if ((oph_odb_fs_path_parsing("", cwd, &folder_id, NULL, oDB))) {
+		if ((oph_odb_fs_path_parsing(output_path ? output_path : "", cwd, &folder_id, NULL, oDB))) {
 			//Check if user can work on datacube
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Path %s doesn't exists\n", cwd);
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_CWD_ERROR, container_name, cwd);

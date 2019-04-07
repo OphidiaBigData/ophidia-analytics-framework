@@ -920,12 +920,13 @@ int task_init(oph_operator_struct * handle)
 			}
 		}
 
-
 		char *cwd = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->cwd;
+		char *output_path = ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->output_path;
+
 		int permission = 0;
 		int folder_id = 0;
 		//Check if input path exists
-		if ((oph_odb_fs_path_parsing("", cwd, &folder_id, NULL, oDB))) {
+		if ((oph_odb_fs_path_parsing(output_path ? output_path : "", cwd, &folder_id, NULL, oDB))) {
 			//Check if user can work on datacube
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Path %s doesn't exists\n", cwd);
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_CWD_ERROR, container_name, cwd);

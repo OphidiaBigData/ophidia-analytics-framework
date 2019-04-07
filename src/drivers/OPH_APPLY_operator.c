@@ -797,6 +797,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->on_reduce = 0;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path = NULL;
+	((OPH_APPLY_operator_handle *) handle->operator_handle)->cwd = NULL;
+	((OPH_APPLY_operator_handle *) handle->operator_handle)->folder_id = 0;
 
 	//3 - Fill struct with the correct data
 	char *datacube_in;
@@ -966,6 +968,26 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 
 		id_datacube_in[2] = id_datacube_in[1];
+
+		if (strcasecmp(((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path, OPH_FRAMEWORK_FS_DEFAULT_PATH)) {
+			char *sessionid = ((OPH_APPLY_operator_handle *) handle->operator_handle)->sessionid;
+			char *path = ((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path;
+			char *cwd = ((OPH_APPLY_operator_handle *) handle->operator_handle)->cwd;
+			char *abs_path = NULL;
+			if (oph_odb_fs_path_parsing(path, cwd, &folder_id, &abs_path, oDB) || !folder_id) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse path\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to parse path\n");
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			if (abs_path)
+				free(abs_path);
+			if ((oph_odb_fs_check_folder_session(folder_id, sessionid, oDB, &permission)) || !permission) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Path '%s' is not allowed\n", path);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Path '%s' is not allowed\n", path);
+				return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+			}
+		}
+		((OPH_APPLY_operator_handle *) handle->operator_handle)->folder_id = folder_id;
 	}
 	//Broadcast to all other processes the fragment relative index
 	MPI_Bcast(id_datacube_in, 3, MPI_INT, 0, MPI_COMM_WORLD);
@@ -1068,6 +1090,18 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CWD);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CWD);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CWD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!(((OPH_APPLY_operator_handle *) handle->operator_handle)->cwd = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_MEMORY_ERROR_INPUT, OPH_IN_PARAM_CWD);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -1186,6 +1220,7 @@ int task_init(oph_operator_struct * handle)
 		//New fields
 		cube.id_source = 0;
 		cube.level++;
+		cube.id_folder = ((OPH_APPLY_operator_handle *) handle->operator_handle)->folder_id;
 		if (((OPH_APPLY_operator_handle *) handle->operator_handle)->description)
 			snprintf(cube.description, OPH_ODB_CUBE_DESCRIPTION_SIZE, "%s", ((OPH_APPLY_operator_handle *) handle->operator_handle)->description);
 		else
@@ -2369,6 +2404,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path) {
 		free((char *) ((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path);
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path = NULL;
+	}
+	if (((OPH_APPLY_operator_handle *) handle->operator_handle)->cwd) {
+		free((char *) ((OPH_APPLY_operator_handle *) handle->operator_handle)->cwd);
+		((OPH_APPLY_operator_handle *) handle->operator_handle)->cwd = NULL;
 	}
 	free((OPH_APPLY_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;

@@ -185,6 +185,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->number = 0;
 	((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->output_path = NULL;
+	((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->cwd = NULL;
+	((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->folder_id = 0;
 
 	char **datacube_in;
 	char *value;
@@ -349,6 +351,26 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 
 		id_datacube_in[2 * ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num] = id_datacube_in[0];
+
+		if (strcasecmp(((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->output_path, OPH_FRAMEWORK_FS_DEFAULT_PATH)) {
+			char *sessionid = ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->sessionid;
+			char *path = ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->output_path;
+			char *cwd = ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->cwd;
+			char *abs_path = NULL;
+			if (oph_odb_fs_path_parsing(path, cwd, &folder_id, &abs_path, oDB) || !folder_id) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse path\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to parse path\n");
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			if (abs_path)
+				free(abs_path);
+			if ((oph_odb_fs_check_folder_session(folder_id, sessionid, oDB, &permission)) || !permission) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Path '%s' is not allowed\n", path);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Path '%s' is not allowed\n", path);
+				return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+			}
+		}
+		((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->folder_id = folder_id;
 	}
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(id_datacube_in, 2 * ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num + 1, MPI_INT, 0, MPI_COMM_WORLD);
@@ -462,6 +484,18 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CWD);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CWD);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CWD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!(((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->cwd = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_MERGECUBES_MEMORY_ERROR_INPUT, OPH_IN_PARAM_CWD);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -659,7 +693,12 @@ int task_init(oph_operator_struct * handle)
 
 		//New fields
 		cube[0].id_source = 0;
-		cube[0].level++;
+		int max_level = cube[0].level;
+		for (cc = 1; cc < input_datacube_num; cc++)
+			if (max_level < cube[cc].level)
+				max_level = cube[cc].level;
+		cube[0].level = 1 + max_level;
+		cube[0].id_folder = ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->folder_id;
 		if (((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->description)
 			snprintf(cube[0].description, OPH_ODB_CUBE_DESCRIPTION_SIZE, "%s", ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->description);
 		else
@@ -737,7 +776,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 
-		int max_level = 0;
+		max_level = 0;
 		for (l = 0; l < number_of_dimensions; l++) {
 			cubedims_new[l].id_datacube = cubedims[l].id_datacube;
 			cubedims_new[l].id_dimensioninst = cubedims[l].id_dimensioninst;
@@ -1652,6 +1691,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->output_path) {
 		free((char *) ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->output_path);
 		((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->output_path = NULL;
+	}
+	if (((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->cwd) {
+		free((char *) ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->cwd);
+		((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->cwd = NULL;
 	}
 	free((OPH_MERGECUBES2_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;

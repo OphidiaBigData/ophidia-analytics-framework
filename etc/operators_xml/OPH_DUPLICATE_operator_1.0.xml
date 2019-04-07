@@ -14,6 +14,7 @@ It duplicates a datacube creating an exact copy of the input one.
 		   for a static linear block distribution of resources.
 - description : additional description to be associated with the output cube.
 - output_path : optional folder where the output cube will be stored; by default the cube is saved in current working directory.
+- cwd : absolute path corresponding to the current working directory.
 
 [System parameters]
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -41,6 +42,7 @@ SUBMISSION STRING: &quot;operator=oph_duplicate;cube=http://www.example.com/1/1;
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">nthreads</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>

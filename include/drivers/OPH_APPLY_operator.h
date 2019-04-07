@@ -63,6 +63,8 @@
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  * \param on_reduce Flag set to 1 in case the values of implicit dimension has to updated due to a reduction primitive
  * \param output_path Folder where output cube has to be saved
+ * \param cwd Absolute path where the container is
+ * \param folder_id Id of output folder
  */
 struct _OPH_APPLY_operator_handle {
 	ophidiadb oDB;
@@ -102,6 +104,8 @@ struct _OPH_APPLY_operator_handle {
 	short int execute_error;
 	char on_reduce;
 	char *output_path;
+	char *cwd;
+	int folder_id;
 };
 typedef struct _OPH_APPLY_operator_handle OPH_APPLY_operator_handle;
 
