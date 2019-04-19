@@ -2805,6 +2805,7 @@ int task_init(oph_operator_struct * handle)
 			int id_metadatainstance;
 			keyptr = key;
 			int natts = 0;
+			size_t att_len = 0;
 			if (nc_inq_varnatts(ncid, NC_GLOBAL, &natts)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering number of global attributes\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_NC_NATTS_ERROR);
@@ -2890,15 +2891,76 @@ int task_init(oph_operator_struct * handle)
 
 				//Insert key value into OphidiaDB
 				keydup = strdup(key);
-				if (!keydup || nc_get_att(ncid, NC_GLOBAL, (const char *) key, (void *) &value)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
-					hashtbl_destroy(key_tbl);
-					hashtbl_destroy(required_tbl);
-					free(dimvar_ids);
-					if (keydup)
-						free(keydup);
-					goto __OPH_EXIT_1;
+
+				if (xtype == NC_CHAR || xtype == NC_STRING) {
+					//Check attribute length
+					if (nc_inq_attlen(ncid, NC_GLOBAL, (const char *) key, &att_len)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute length from file\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute length from file\n");
+						hashtbl_destroy(key_tbl);
+						hashtbl_destroy(required_tbl);
+						free(dimvar_ids);
+						if (keydup)
+							free(keydup);
+						goto __OPH_EXIT_1;
+					}
+
+					if (att_len >= OPH_COMMON_BUFFER_LEN) {
+						char *big_value = 0;
+						if (!(big_value = (char *) malloc((att_len + 1) * sizeof(char)))) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name,
+								"Tmp big attribute buffer");
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							free(dimvar_ids);
+							if (keydup)
+								free(keydup);
+							goto __OPH_EXIT_1;
+						}
+
+						if (!keydup || nc_get_att(ncid, NC_GLOBAL, (const char *) key, (void *) big_value)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							free(dimvar_ids);
+							free(big_value);
+							if (keydup)
+								free(keydup);
+							goto __OPH_EXIT_1;
+						}
+
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "Attribute %s is longer than maximum size %d and it will be hence truncated\n", key, OPH_COMMON_BUFFER_LEN);
+						logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, "Attribute %s is longer than maximum size %d and it will be hence truncated\n", key,
+							OPH_COMMON_BUFFER_LEN);
+						big_value[OPH_COMMON_BUFFER_LEN - 1] = 0;
+						strcpy(value, big_value);
+						free(big_value);
+					} else {
+						if (!keydup || nc_get_att(ncid, NC_GLOBAL, (const char *) key, (void *) &value)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							free(dimvar_ids);
+							if (keydup)
+								free(keydup);
+							goto __OPH_EXIT_1;
+						}
+						value[att_len] = 0;
+					}
+				} else {
+					if (!keydup || nc_get_att(ncid, NC_GLOBAL, (const char *) key, (void *) &value)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+						hashtbl_destroy(key_tbl);
+						hashtbl_destroy(required_tbl);
+						free(dimvar_ids);
+						if (keydup)
+							free(keydup);
+						goto __OPH_EXIT_1;
+					}
 				}
 				strcpy(key, keydup);
 				free(keydup);
@@ -3041,15 +3103,76 @@ int task_init(oph_operator_struct * handle)
 
 					//Insert key value into OphidiaDB
 					keydup = strdup(key);
-					if (!keydup || nc_get_att(ncid, dimvar_ids[ii], (const char *) key, (void *) &value)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
-						hashtbl_destroy(key_tbl);
-						hashtbl_destroy(required_tbl);
-						free(dimvar_ids);
-						if (keydup)
-							free(keydup);
-						goto __OPH_EXIT_1;
+					if (xtype == NC_CHAR || xtype == NC_STRING) {
+						//Check attribute length
+						if (nc_inq_attlen(ncid, dimvar_ids[ii], (const char *) key, &att_len)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute length from file\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute length from file\n");
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							free(dimvar_ids);
+							if (keydup)
+								free(keydup);
+							goto __OPH_EXIT_1;
+						}
+
+						if (att_len >= OPH_COMMON_BUFFER_LEN) {
+							char *big_value = 0;
+							if (!(big_value = (char *) malloc((att_len + 1) * sizeof(char)))) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name,
+									"Tmp big attribute buffer");
+								hashtbl_destroy(key_tbl);
+								hashtbl_destroy(required_tbl);
+								free(dimvar_ids);
+								if (keydup)
+									free(keydup);
+								goto __OPH_EXIT_1;
+							}
+
+							if (!keydup || nc_get_att(ncid, dimvar_ids[ii], (const char *) key, (void *) big_value)) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+								hashtbl_destroy(key_tbl);
+								hashtbl_destroy(required_tbl);
+								free(dimvar_ids);
+								free(big_value);
+								if (keydup)
+									free(keydup);
+								goto __OPH_EXIT_1;
+							}
+
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Attribute %s is longer than maximum size %d and it will be hence truncated\n", key,
+							      OPH_COMMON_BUFFER_LEN);
+							logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, "Attribute %s is longer than maximum size %d and it will be hence truncated\n", key,
+								OPH_COMMON_BUFFER_LEN);
+							big_value[OPH_COMMON_BUFFER_LEN - 1] = 0;
+							strcpy(value, big_value);
+							free(big_value);
+						} else {
+							if (!keydup || nc_get_att(ncid, dimvar_ids[ii], (const char *) key, (void *) &value)) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+								hashtbl_destroy(key_tbl);
+								hashtbl_destroy(required_tbl);
+								free(dimvar_ids);
+								if (keydup)
+									free(keydup);
+								goto __OPH_EXIT_1;
+							}
+							value[att_len] = 0;
+						}
+					} else {
+						if (!keydup || nc_get_att(ncid, dimvar_ids[ii], (const char *) key, (void *) &value)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							free(dimvar_ids);
+							if (keydup)
+								free(keydup);
+							goto __OPH_EXIT_1;
+						}
 					}
 					strcpy(key, keydup);
 					free(keydup);
@@ -3188,14 +3311,70 @@ int task_init(oph_operator_struct * handle)
 
 				//Insert key value into OphidiaDB
 				keydup = strdup(key);
-				if (!keydup || nc_get_att(ncid, measure->varid, (const char *) key, (void *) &value)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
-					hashtbl_destroy(key_tbl);
-					hashtbl_destroy(required_tbl);
-					if (keydup)
-						free(keydup);
-					goto __OPH_EXIT_1;
+				if (xtype == NC_CHAR || xtype == NC_STRING) {
+					//Check attribute length
+					if (nc_inq_attlen(ncid, measure->varid, (const char *) key, &att_len)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute length from file\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute length from file\n");
+						hashtbl_destroy(key_tbl);
+						hashtbl_destroy(required_tbl);
+						if (keydup)
+							free(keydup);
+						goto __OPH_EXIT_1;
+					}
+
+					if (att_len >= OPH_COMMON_BUFFER_LEN) {
+						char *big_value = 0;
+						if (!(big_value = (char *) malloc((att_len + 1) * sizeof(char)))) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name,
+								"Tmp big attribute buffer");
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							if (keydup)
+								free(keydup);
+							goto __OPH_EXIT_1;
+						}
+
+						if (!keydup || nc_get_att(ncid, measure->varid, (const char *) key, (void *) big_value)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							free(big_value);
+							if (keydup)
+								free(keydup);
+							goto __OPH_EXIT_1;
+						}
+
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "Attribute %s is longer than maximum size %d and it will be hence truncated\n", key, OPH_COMMON_BUFFER_LEN);
+						logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, "Attribute %s is longer than maximum size %d and it will be hence truncated\n", key,
+							OPH_COMMON_BUFFER_LEN);
+						big_value[OPH_COMMON_BUFFER_LEN - 1] = 0;
+						strcpy(value, big_value);
+						free(big_value);
+					} else {
+						if (!keydup || nc_get_att(ncid, measure->varid, (const char *) key, (void *) &value)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							if (keydup)
+								free(keydup);
+							goto __OPH_EXIT_1;
+						}
+						value[att_len] = 0;
+					}
+				} else {
+					if (!keydup || nc_get_att(ncid, measure->varid, (const char *) key, (void *) &value)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+						hashtbl_destroy(key_tbl);
+						hashtbl_destroy(required_tbl);
+						if (keydup)
+							free(keydup);
+						goto __OPH_EXIT_1;
+					}
 				}
 				strcpy(key, keydup);
 				free(keydup);
