@@ -463,9 +463,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_MERGECUBES_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_HOLD_VALUES);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN) == 0) {
+	if (strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN) == 0)
 		((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->hold_values = 1;
-	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_NUMBER);
 	if (!value) {
@@ -780,7 +779,7 @@ int task_init(oph_operator_struct * handle)
 		}
 #ifndef STRUCT_DATA_TYPE
 		// Change the size of the first implicit dimension of the cube
-		int cubedims_size = cubedims[reduced_impl_dim].size;
+		int kk, cubedims_size = cubedims[reduced_impl_dim].size;
 		if (((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->mode)
 			cubedims[reduced_impl_dim].size += append_size;
 		else
@@ -790,13 +789,13 @@ int task_init(oph_operator_struct * handle)
 		oph_odb_dimension_instance dim_inst[number_of_dimensions];
 		for (l = 0; l < number_of_dimensions; ++l) {
 			if (oph_odb_dim_retrieve_dimension_instance
-			    (oDB, cubedims[l].id_dimensioninst, &(dim_inst[l]), ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_datacube[0])) {
+			    (oDB, cubedims[l].id_dimensioninst, dim_inst + l, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_datacube[0])) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading dimension information.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_DIM_READ_ERROR);
 				free(cubedims);
 				goto __OPH_EXIT_1;
 			}
-			if (oph_odb_dim_retrieve_dimension(oDB, dim_inst[l].id_dimension, &(dim[l]), ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_datacube[0])) {
+			if (oph_odb_dim_retrieve_dimension(oDB, dim_inst[l].id_dimension, dim + l, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_datacube[0])) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading dimension information.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_DIM_READ_ERROR);
 				free(cubedims);
@@ -928,9 +927,11 @@ int task_init(oph_operator_struct * handle)
 						free(cubedims);
 						goto __OPH_EXIT_1;
 					}
+					// 1. append the main copy of input cube dimension
 					memcpy(buffer, current_dim_row, sizeof_dim_row);
 					char *_buffer = buffer + sizeof_dim_row;
 
+					// 2. append the other copies of input cube dimension
 					for (cc = 0; cc < ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->number; cc++) {
 						memcpy(_buffer, current_dim_row, sizeof_dim_row);
 						_buffer += sizeof_dim_row;
@@ -969,6 +970,52 @@ int task_init(oph_operator_struct * handle)
 							free(buffer);
 							goto __OPH_EXIT_1;
 						}
+						// Translate time values in case of different basetime
+						if (dim[l].calendar && strlen(dim[l].calendar)) {
+
+							// Load dimension of input cube
+							oph_odb_dimension dim_tmp;
+							if (oph_odb_dim_retrieve_dimension
+							    (oDB, dim_inst_tmp.id_dimension, &dim_tmp, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_datacube[cc])) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading dimension information.\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
+									OPH_LOG_OPH_MERGECUBES_DIM_READ_ERROR);
+								if (dim_row)
+									free(dim_row);
+								if (current_dim_row)
+									free(current_dim_row);
+								oph_dim_disconnect_from_dbms(db->dbms_instance);
+								oph_dim_unload_dim_dbinstance(db);
+								free(cubedims);
+								free(buffer);
+								goto __OPH_EXIT_1;
+							}
+
+							struct tm tm_base;
+							long long raw_value;
+							for (kk = 0; kk < cubedims_size; ++kk) {
+								if (oph_dim_get_time_value_of(current_dim_row, kk, &dim_tmp, &tm_base, NULL, &raw_value))
+									break;
+								if (oph_dim_set_time_value_of(current_dim_row, kk, dim + l, raw_value))
+									break;
+							}
+							if (kk < cubedims_size) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading a row from dimension table.\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_input_container[0],
+									OPH_LOG_OPH_MERGECUBES_DIM_READ_ERROR);
+								if (dim_row)
+									free(dim_row);
+								if (current_dim_row)
+									free(current_dim_row);
+								oph_dim_disconnect_from_dbms(db->dbms_instance);
+								oph_dim_unload_dim_dbinstance(db);
+								free(cubedims);
+								free(buffer);
+								goto __OPH_EXIT_1;
+							}
+
+						}
+						// 3. append the copies of dimension of the other input cubes
 						memcpy(_buffer, current_dim_row, sizeof_dim_row);
 						_buffer += sizeof_dim_row;
 						free(current_dim_row);
