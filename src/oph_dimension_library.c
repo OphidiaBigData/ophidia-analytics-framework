@@ -371,7 +371,7 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 
 	// Add the base
 	if (dim->base_time && strlen(dim->base_time)) {
-		if (dim->base_time[10] == 'T')
+		if (strchr(dim->base_time, 'T'))
 			strptime(dim->base_time, "%Y-%m-%dT%H:%M:%S", tm_base);
 		else
 			strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", tm_base);
@@ -416,7 +416,7 @@ int oph_dim_set_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 	if (dim->base_time && strlen(dim->base_time)) {
 		struct tm tm_base;
 		memset(&tm_base, 0, sizeof(struct tm));
-		if (dim->base_time[10] == 'T')
+		if (strchr(dim->base_time, 'T'))
 			strptime(dim->base_time, "%Y-%m-%dT%H:%M:%S", &tm_base);
 		else
 			strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", &tm_base);
@@ -796,7 +796,7 @@ int _oph_dim_get_base_time(oph_odb_dimension * dim, long long *base_time)
 	struct tm tm_value;
 	memset(&tm_value, 0, sizeof(struct tm));
 	if (dim->base_time && strlen(dim->base_time)) {
-		if (dim->base_time[10] == 'T')
+		if (strchr(dim->base_time, 'T'))
 			strptime(dim->base_time, "%Y-%m-%dT%H:%M:%S", &tm_value);
 		else
 			strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", &tm_value);
@@ -977,7 +977,7 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 		memset(&tm_value, 0, sizeof(struct tm));
 
 		tm_value.tm_year = -1;
-		if (pch[10] == 'T')
+		if (strchr(pch, 'T'))
 			strptime(pch, "%Y-%m-%dT%H:%M:%S", &tm_value);
 		else
 			strptime(pch, "%Y-%m-%d %H:%M:%S", &tm_value);
