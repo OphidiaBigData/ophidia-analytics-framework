@@ -586,7 +586,7 @@ int task_init(oph_operator_struct * handle)
 			dim_inst[l].size = cubedims[l].size;
 			if (cubedims[l].id_dimensioninst == target_dimension_instance)
 				dim_inst[l].concept_level = concept_level_out;
-			if (oph_odb_dim_retrieve_dimension(oDB, dim_inst[l].id_dimension, &(dim[l]), datacube_id)) {
+			if (oph_odb_dim_retrieve_dimension(oDB, dim_inst[l].id_dimension, dim + l, datacube_id)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading dimension information.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_REDUCE2_DIM_READ_ERROR);
 				oph_odb_cube_free_datacube(&cube);
@@ -816,7 +816,7 @@ int task_init(oph_operator_struct * handle)
 					tm_prev.tm_year = -1;
 					for (prev_kk = kk = 0; kk < cubedims[l].size; ++kk) {
 						if (oph_dim_is_in_time_group_of
-						    (dim_row, kk, &(dim[l]), concept_level_out, &tm_prev, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->midnight, 0, &flag)) {
+						    (dim_row, kk, dim + l, concept_level_out, &tm_prev, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->midnight, 0, &flag)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in evaluating reduction groups.\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
 								OPH_LOG_OPH_REDUCE2_DIM_CHECK_ERROR);
@@ -835,8 +835,8 @@ int task_init(oph_operator_struct * handle)
 						}
 						if (!flag) {
 							if (kk) {
-								// Evaluate the centroid
-								if (oph_dim_update_value(dim_row, dim->dimension_type, prev_kk, kk - 1)) {
+								// Evaluate the centroid of current group
+								if (oph_dim_update_value(dim_row, dim[l].dimension_type, prev_kk, kk - 1)) {
 									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in evaluating reduction groups.\n");
 									logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
 										OPH_LOG_OPH_REDUCE2_DIM_CHECK_ERROR);
@@ -863,7 +863,8 @@ int task_init(oph_operator_struct * handle)
 							sizes[new_size]++;
 						value[new_size] = new_size;
 					}
-					if (oph_dim_update_value(dim_row, dim->dimension_type, prev_kk, kk - 1)) {
+					// Evaluate the centroid of the last group
+					if (oph_dim_update_value(dim_row, dim[l].dimension_type, prev_kk, kk - 1)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in evaluating reduction groups.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_REDUCE2_DIM_CHECK_ERROR);

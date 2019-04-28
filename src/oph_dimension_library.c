@@ -714,6 +714,10 @@ int oph_dim_update_value(char *dim_row, const char *dimension_type, unsigned int
 	}
 	if (first == last)
 		return OPH_DIM_SUCCESS;
+	if (first >= last) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Bad indexes: the first index is greater than the last one\n");
+		return OPH_DIM_DATA_ERROR;
+	}
 
 	double first_value, last_value;
 	if (oph_dim_get_double_value_of(dim_row, first, dimension_type, &first_value))
