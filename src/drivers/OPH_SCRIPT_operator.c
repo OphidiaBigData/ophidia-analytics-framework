@@ -412,7 +412,7 @@ int task_execute(oph_operator_struct * handle)
 	}
 	//Create dir if not exist
 	struct stat st;
-	char user_space;
+	char user_space = 0, enable_unregistered_script = 0;
 	if (oph_pid_get_user_space(&user_space)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read user_space\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read user_space\n");
@@ -432,6 +432,11 @@ int task_execute(oph_operator_struct * handle)
 			free(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url);
 			((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url = NULL;
 		}
+	}
+	if (oph_pid_is_script_enabled(&enable_unregistered_script)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read user_space\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read user_space\n");
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
 	if (strcmp(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->script, OPH_SCRIPT_NOP)) {
@@ -483,7 +488,7 @@ int task_execute(oph_operator_struct * handle)
 		}
 		fclose(file);
 
-		if (!found) {
+		if (!found && !enable_unregistered_script) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "%s: no such script\n", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->script);
 			logging(LOG_ERROR, __FILE__, __LINE__, 0, "%s: no such script\n", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->script);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
