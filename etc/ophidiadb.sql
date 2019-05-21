@@ -187,6 +187,7 @@ CREATE TABLE `hostpartition` (
   `partitionname` varchar(64) NOT NULL,
   `hidden` tinyint(1) NOT NULL DEFAULT 0,
   `reserved` tinyint(1) NOT NULL DEFAULT 0,
+  `partitiontype` tinyint(1) NOT NULL DEFAULT 0,
   `hosts` int(10) unsigned NULL DEFAULT 0,
   `iduser` int(10) unsigned NULL DEFAULT NULL,
   `idjob` int(10) unsigned DEFAULT NULL,
