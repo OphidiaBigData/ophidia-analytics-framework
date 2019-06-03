@@ -588,7 +588,7 @@ int task_init(oph_operator_struct * handle)
 		if (!strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(host_partition))
 		    && !strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT))) {
 			if (oph_odb_stge_get_default_host_partition_fs
-			    (oDB, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->ioserver_type, &id_host_partition,
+			    (oDB, ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->ioserver_type, id_user, &id_host_partition,
 			     ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number > 0 ? ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->host_number : 1)
 			    || !id_host_partition) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");

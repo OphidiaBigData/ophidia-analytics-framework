@@ -275,19 +275,20 @@ int oph_odb_stge_get_host_partition_by_name(ophidiadb * oDB, char *host_partitio
  * \brief Function to get default values for host partition and/or file system
  * \param oDB Pointer to the OphidiaDB
  * \param ioserver_type Server type to be used. 
- * \param id_hots_partition Pointer to id of the host partition. If set to 'auto' the first available will be used
- * \param hots_number Variable that contains the requested I/O hosts
+ * \param id_user User identifier
+ * \param id_host_partition Pointer to id of the host partition. If set to 'auto' the first available will be used
+ * \param host_number Variable that contains the requested I/O hosts
  * \param exists Variable that contains 0 if the host partition of file system doesn't exists and 1 otherwise
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_type, int *id_host_partition, int host_number);
+int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_type, int id_user, int *id_host_partition, int host_number);
 
 /**
  * \brief Function to check if number of host and DBMS in OphidiaDB are available
  * \param oDB Pointer to the OphidiaDB
  * \param ioserver_type Server type to be used. 
- * \param id_hots_partition Id of the host partition to be used
- * \param hots_number Variable that contains the requested I/O hosts
+ * \param id_host_partition Id of the host partition to be used
+ * \param host_number Variable that contains the requested I/O hosts
  * \param exists Variable that contains 0 if the container.datacube doesn't exists and 1 otherwise
  * \return 0 if successfull, -1 otherwise
  */

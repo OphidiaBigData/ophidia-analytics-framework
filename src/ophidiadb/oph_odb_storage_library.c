@@ -910,7 +910,7 @@ int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type,
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_type, int *id_host_partition, int host_number)
+int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_type, int id_user, int *id_host_partition, int host_number)
 {
 	if (!oDB || !host_number || !id_host_partition || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -925,7 +925,7 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_t
 
 	char selectQuery[MYSQL_BUFLEN];
 
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS, ioserver_type, host_number);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS, ioserver_type, id_user, host_number);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
