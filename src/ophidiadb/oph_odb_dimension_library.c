@@ -1172,8 +1172,38 @@ int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension *
 	}
 
 	if (!(*last_insertd_id = mysql_insert_id(oDB->conn))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted dimension id\n");
-		return OPH_ODB_TOO_MANY_ROWS;
+
+		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_DIM_RETRIEVE_OPHIDIADB_DIMENSION, dim->id_container, dim->dimension_name);
+		if (n >= MYSQL_BUFLEN) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+			return OPH_ODB_STR_BUFF_OVERFLOW;
+		}
+
+		if (mysql_query(oDB->conn, insertQuery)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			return OPH_ODB_MYSQL_ERROR;
+		}
+
+		MYSQL_RES *res = mysql_store_result(oDB->conn);
+
+		if (!mysql_num_rows(res)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "No rows found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		if (mysql_field_count(oDB->conn) != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Too many fields found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		MYSQL_ROW row;
+
+		if ((row = mysql_fetch_row(res)))
+			*last_insertd_id = (int) strtol(row[0], NULL, 10);
+
+		mysql_free_result(res);
 	}
 	// Metadata support to put correct values of time metadata
 	if (id_datacube) {
