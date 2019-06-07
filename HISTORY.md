@@ -1,4 +1,8 @@
 
+## Next release
+
+- Bug [#84](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/84) when querying OphidiaDB
+
 ## v1.5.1 - 2019-04-16
 
 ### Fixed:
