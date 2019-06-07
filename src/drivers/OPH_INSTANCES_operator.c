@@ -171,10 +171,19 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_PARTITION_NAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	char random_value[OPH_TP_TASKLEN];
 	if (new_partition && !strcmp(value, OPH_COMMON_HOSTPARTITION_DEFAULT)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set parameter %s to reserved word\n", OPH_IN_PARAM_PARTITION_NAME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_PARTITION_NAME);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		value = hashtbl_get(task_tbl, OPH_ARG_IDJOB);
+		if (!value) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set parameter %s to reserved word\n", OPH_IN_PARAM_PARTITION_NAME);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to set parameter %s to reserved word", "NO-CONTAINER", OPH_IN_PARAM_PARTITION_NAME);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		snprintf(random_value, OPH_COMMON_BUFFER_LEN, "_%s", value);
+		value = random_value;
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to set parameter %s to reserved word: the value '%s' will be adopted\n", OPH_IN_PARAM_PARTITION_NAME, value);
+		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to set parameter %s to reserved word: the value '%s' will be adopted", "NO-CONTAINER",
+			OPH_IN_PARAM_PARTITION_NAME, value);
 	}
 	if (strcmp(value, OPH_COMMON_ALL_FILTER)) {
 		if (!(((OPH_INSTANCES_operator_handle *) handle->operator_handle)->partition_name = (char *) strndup(value, OPH_TP_TASKLEN))) {
