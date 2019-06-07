@@ -517,7 +517,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_POLICY);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (!strcmp(value, OPH_COMMON_POLICY_ID))
+	if (!strcmp(value, OPH_COMMON_POLICY_PORT))
 		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->policy = 1;
 	else if (strcmp(value, OPH_COMMON_POLICY_RR)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong input parameter %s\n", OPH_IN_PARAM_POLICY);
