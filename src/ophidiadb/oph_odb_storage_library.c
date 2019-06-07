@@ -1820,7 +1820,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 	int n;
 	switch (policy) {
 		case 1:
-			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST "" MYSQL_STGE_POLICY_PORT, id_host_partition, ioserver_type, hidden, host_number);
+			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST "" MYSQL_STGE_POLICY_PORT, id_host_partition, ioserver_type, host_number);
 			break;
 		default:
 			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST "" MYSQL_STGE_POLICY_RR, id_host_partition, ioserver_type, hidden, host_number);

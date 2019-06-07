@@ -67,7 +67,7 @@
 
 #define MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST 		"SELECT host.idhost, iddbmsinstance FROM hashost INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE idhostpartition = %d AND status = 'up' AND ioservertype = '%s' "
 #define MYSQL_STGE_POLICY_RR						"ORDER BY CASE %d WHEN 0 THEN host.importcount ELSE hashost.importcount END, port LIMIT %d FOR UPDATE;"
-#define MYSQL_STGE_POLICY_PORT						"AND NOT CASE %d WHEN 0 THEN host.importcount ELSE hashost.importcount END ORDER BY port LIMIT %d FOR UPDATE;"
+#define MYSQL_STGE_POLICY_PORT						"ORDER BY port LIMIT %d FOR UPDATE;"
 
 #define MYSQL_QUERY_STGE_UPDATE_IMPORT_COUNT 		"UPDATE host SET importcount = importcount + 1 WHERE idhost IN (SELECT imported.idhost AS idhost FROM imported WHERE imported.iddatacube = %d);"
 
