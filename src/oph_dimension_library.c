@@ -537,7 +537,7 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 	int msize, prev_week, base_week;
 
 	// Check for group
-	int first_element = tm_prev->tm_year < 0;
+	int first_element = tm_prev->tm_year < 0, semi_prev, semi_base;
 	struct tm tm_centroid;
 	memcpy(&tm_centroid, &tm_base, sizeof(struct tm));
 	switch (concept_level_out) {
@@ -580,8 +580,10 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 				}
 				centroid = 0;
 			}
-			if (first_element || (midnight && (tm_prev->tm_hour / 3 == tm_base.tm_hour / 3) && !tm_prev->tm_sec && !tm_prev->tm_min)
-			    || ((tm_prev->tm_hour / 3 != tm_base.tm_hour / 3) && (!midnight || ((tm_prev->tm_hour / 3 + 1) % 8 != tm_base.tm_hour / 3) || tm_base.tm_sec || tm_base.tm_min)))
+			semi_prev = tm_prev->tm_hour / 3;
+			semi_base = tm_base.tm_hour / 3;
+			if (first_element || (midnight && (semi_prev == semi_base) && !(tm_prev->tm_hour % 3) && !tm_prev->tm_sec && !tm_prev->tm_min)
+			    || ((semi_prev != semi_base) && (!midnight || ((semi_prev + 1) % 8 != semi_base) || tm_base.tm_sec || tm_base.tm_min || (tm_base.tm_hour % 3))))
 				break;
 		case '6':
 			if (centroid) {
@@ -594,8 +596,10 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 				}
 				centroid = 0;
 			}
-			if (first_element || (midnight && (tm_prev->tm_hour / 6 == tm_base.tm_hour / 6) && !tm_prev->tm_sec && !tm_prev->tm_min)
-			    || ((tm_prev->tm_hour / 6 != tm_base.tm_hour / 6) && (!midnight || ((tm_prev->tm_hour / 6 + 1) % 4 != tm_base.tm_hour / 6) || tm_base.tm_sec || tm_base.tm_min)))
+			semi_prev = tm_prev->tm_hour / 6;
+			semi_base = tm_base.tm_hour / 6;
+			if (first_element || (midnight && (semi_prev == semi_base) && !(tm_prev->tm_hour % 6) && !tm_prev->tm_sec && !tm_prev->tm_min)
+			    || ((semi_prev != semi_base) && (!midnight || ((semi_prev + 1) % 4 != semi_base) || tm_base.tm_sec || tm_base.tm_min || (tm_base.tm_hour % 6))))
 				break;
 		case 'd':
 			if (centroid) {
@@ -670,9 +674,12 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 					}
 					centroid = 0;
 				}
-				if (first_element || (midnight && (tm_prev->tm_mon / 3 == tm_base.tm_mon / 3) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1))
-				    || ((tm_prev->tm_mon / 3 != tm_base.tm_mon / 3)
-					&& (!midnight || ((tm_prev->tm_mon / 3 + 1) % 4 != tm_base.tm_mon / 3) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1))))
+				semi_prev = tm_prev->tm_mon / 3;
+				semi_base = tm_base.tm_mon / 3;
+				if (first_element
+				    || (midnight && (semi_prev == semi_base) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1) && !(tm_prev->tm_mon % 3))
+				    || ((semi_prev != semi_base)
+					&& (!midnight || ((semi_prev + 1) % 4 != semi_base) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1) || (tm_base.tm_mon % 3))))
 					break;
 			}
 		case 'y':

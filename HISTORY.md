@@ -7,6 +7,7 @@
 
 ### Fixed:
 
+- Bug in assign elements to groups to be reduced by OPH_REDUCE2 in case new concept level is '3 hour', '6 hour' or 'quarter'
 - Bug [#81](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/81) related to the use of a new container for the output datacube 
 - Bug [#80](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/80) in OPH_INTERCUBE operator 
 - Bug [#79](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/79) in OPH_MERGE operator 
