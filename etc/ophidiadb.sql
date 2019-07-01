@@ -188,6 +188,7 @@ CREATE TABLE `hostpartition` (
   `hidden` tinyint(1) NOT NULL DEFAULT 0,
   `reserved` tinyint(1) NOT NULL DEFAULT 0,
   `partitiontype` tinyint(1) NOT NULL DEFAULT 0,
+  `creationdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `hosts` int(10) unsigned NULL DEFAULT 0,
   `iduser` int(10) unsigned NULL DEFAULT NULL,
   `idjob` int(10) unsigned DEFAULT NULL,
