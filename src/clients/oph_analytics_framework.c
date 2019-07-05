@@ -79,14 +79,10 @@ int main(int argc, char *argv[])
 		if (!myrank)
 			gettimeofday(&start_time, NULL);
 
-		char task_string[OPH_COMMON_BUFFER_LEN] = { 0 };
-		int n = snprintf(task_string, OPH_COMMON_BUFFER_LEN, "%s", argv[1]);
 		if (!myrank)
-			pmesg(LOG_INFO, __FILE__, __LINE__, "Task string:\n%s\n", task_string);
+			pmesg(LOG_INFO, __FILE__, __LINE__, "Task string:\n%s\n", argv[1]);
 
-		if (n >= OPH_COMMON_BUFFER_LEN)
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Submission string is too long! ERROR: %d\n", res);
-		else if ((res = oph_af_execute_framework(task_string, size, myrank)))
+		if ((res = oph_af_execute_framework(argv[1], size, myrank)))
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Framework execution failed! ERROR: %d\n", res);
 
 		MPI_Barrier(MPI_COMM_WORLD);

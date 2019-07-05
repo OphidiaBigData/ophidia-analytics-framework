@@ -50,8 +50,10 @@ int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db,
 	}
 	*query = NULL;
 
-	char tmp_buffer_small[3][datacube_num * OPH_MERGECUBES2_ARG_BUFFER];
-	char tmp_buffer[4][(datacube_num + 1) * OPH_MERGECUBES2_ARG_BUFFER];
+	size_t max_size = (datacube_num + 1) * OPH_MERGECUBES2_ARG_BUFFER;
+
+	char tmp_buffer_small[3][max_size];
+	char tmp_buffer[4][max_size];
 
 	int cc = 0;
 
@@ -59,14 +61,14 @@ int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db,
 	int tmp_len = 0;
 	for (cc = 0; cc < datacube_num; cc++) {
 		if (cc != 0)
-			tmp_len += snprintf(tmp_buffer_small[1] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_INTYPE_SEPARATOR);
-		tmp_len += snprintf(tmp_buffer_small[1] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_TYPE, input_type[cc]);
+			tmp_len += snprintf(tmp_buffer_small[1] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_SELECT_INTYPE_SEPARATOR);
+		tmp_len += snprintf(tmp_buffer_small[1] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_SELECT_TYPE, input_type[cc]);
 	}
 	tmp_len = 0;
 	for (cc = 0; cc < datacube_num; cc++) {
 		if (cc != 0)
-			tmp_len += snprintf(tmp_buffer_small[2] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_OUTTYPE_SEPARATOR);
-		tmp_len += snprintf(tmp_buffer_small[2] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_TYPE, input_type[cc]);
+			tmp_len += snprintf(tmp_buffer_small[2] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_SELECT_OUTTYPE_SEPARATOR);
+		tmp_len += snprintf(tmp_buffer_small[2] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_SELECT_TYPE, input_type[cc]);
 	}
 
 	int buf_len = snprintf(NULL, 0, OPH_MERGECUBES2_QUERY_OPERATION, output_cube);
@@ -74,17 +76,17 @@ int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db,
 	if (compressed) {
 		for (cc = 0; cc < datacube_num; cc++) {
 			if (cc != 0)
-				tmp_len += snprintf(tmp_buffer_small[0] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_SEPARATOR);
-			tmp_len += snprintf(tmp_buffer_small[0] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_PART_CMPR, cc, MYSQL_FRAG_MEASURE);	// input_type[cc]
+				tmp_len += snprintf(tmp_buffer_small[0] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_SELECT_SEPARATOR);
+			tmp_len += snprintf(tmp_buffer_small[0] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_SELECT_PART_CMPR, cc, MYSQL_FRAG_MEASURE);	// input_type[cc]
 		}
-		tmp_len = snprintf(tmp_buffer[0], OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_CMPR, 0, MYSQL_FRAG_ID, tmp_buffer_small[1], tmp_buffer_small[2], tmp_buffer_small[0]);
+		tmp_len = snprintf(tmp_buffer[0], max_size, OPH_MERGECUBES2_ARG_SELECT_CMPR, 0, MYSQL_FRAG_ID, tmp_buffer_small[1], tmp_buffer_small[2], tmp_buffer_small[0]);
 	} else {
 		for (cc = 0; cc < datacube_num; cc++) {
 			if (cc != 0)
-				tmp_len += snprintf(tmp_buffer_small[0] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_SEPARATOR);
-			tmp_len += snprintf(tmp_buffer_small[0] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_PART, cc, MYSQL_FRAG_MEASURE);	// input_type[cc]
+				tmp_len += snprintf(tmp_buffer_small[0] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_SELECT_SEPARATOR);
+			tmp_len += snprintf(tmp_buffer_small[0] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_SELECT_PART, cc, MYSQL_FRAG_MEASURE);	// input_type[cc]
 		}
-		tmp_len = snprintf(tmp_buffer[0], OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT, 0, MYSQL_FRAG_ID, tmp_buffer_small[1], tmp_buffer_small[2], tmp_buffer_small[0]);
+		tmp_len = snprintf(tmp_buffer[0], max_size, OPH_MERGECUBES2_ARG_SELECT, 0, MYSQL_FRAG_ID, tmp_buffer_small[1], tmp_buffer_small[2], tmp_buffer_small[0]);
 	}
 
 	buf_len += snprintf(NULL, 0, OPH_MERGECUBES2_QUERY_SELECT, tmp_buffer[0]);
@@ -93,24 +95,24 @@ int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db,
 	tmp_len = 0;
 	for (cc = 0; cc < datacube_num; cc++) {
 		if (cc != 0)
-			tmp_len += snprintf(tmp_buffer[1] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_FROM_SEPARATOR);
-		tmp_len += snprintf(tmp_buffer[1] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_FROM_PART, input_db[cc], input_frag[cc]);
+			tmp_len += snprintf(tmp_buffer[1] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_FROM_SEPARATOR);
+		tmp_len += snprintf(tmp_buffer[1] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_FROM_PART, input_db[cc], input_frag[cc]);
 	}
 	buf_len += snprintf(NULL, 0, OPH_MERGECUBES2_QUERY_FROM, tmp_buffer[1]);
 
 	tmp_len = 0;
 	for (cc = 0; cc < datacube_num; cc++) {
 		if (cc != 0)
-			tmp_len += snprintf(tmp_buffer[2] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_FROM_SEPARATOR);
-		tmp_len += snprintf(tmp_buffer[2] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_FROM_ALIAS_PART, cc);
+			tmp_len += snprintf(tmp_buffer[2] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_FROM_SEPARATOR);
+		tmp_len += snprintf(tmp_buffer[2] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_FROM_ALIAS_PART, cc);
 	}
 	buf_len += snprintf(NULL, 0, OPH_MERGECUBES2_QUERY_FROM_ALIAS, tmp_buffer[2]);
 
 	tmp_len = 0;
 	for (cc = 1; cc < datacube_num; cc++) {
 		if (cc > 1)
-			tmp_len += snprintf(tmp_buffer[3] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_WHERE_SEPARATOR);
-		tmp_len += snprintf(tmp_buffer[3] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_WHERE_PART, 0, MYSQL_FRAG_ID, cc, MYSQL_FRAG_ID);
+			tmp_len += snprintf(tmp_buffer[3] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_WHERE_SEPARATOR);
+		tmp_len += snprintf(tmp_buffer[3] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_WHERE_PART, 0, MYSQL_FRAG_ID, cc, MYSQL_FRAG_ID);
 	}
 	if (tmp_len)
 		buf_len += snprintf(NULL, 0, OPH_MERGECUBES2_QUERY_WHERE, tmp_buffer[3]);
@@ -1434,6 +1436,8 @@ int task_execute(oph_operator_struct * handle)
 					       frags[0].value[k].db_instance->db_name, frags[0].value[k].fragment_name, frags[1].value[k].db_instance->db_name, frags[1].value[k].fragment_name,
 					       frags[0].value[k].fragment_name, MYSQL_FRAG_ID, frags[1].value[k].fragment_name, MYSQL_FRAG_ID);
 #endif
+
+				fprintf(stderr, "Query: %s§\n", query);
 
 				//MERGECUBES2 fragment
 				if (oph_dc_create_fragment_from_query(((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->server, &(frags[0].value[k]), NULL, query, 0, 0, 0)) {
