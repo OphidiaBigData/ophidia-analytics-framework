@@ -293,26 +293,26 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 
 	char marker_id[OPH_TP_TASKLEN];
 	// Pre-parsing for SessionCode and Markerid
-	if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_MARKERID, &marker_id))
+	if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_MARKERID, marker_id))
 		*marker_id = 0;
 
 	if (!task_rank) {
 #ifndef OPH_STANDALONE_MODE
-		if (!oph_tp_find_param_in_task_string(task_string, OPH_ARG_IDJOB, &notify_jobid))
+		if (!oph_tp_find_param_in_task_string(task_string, OPH_ARG_IDJOB, notify_jobid))
 			idjob = (int) strtol(notify_jobid, NULL, 10);
 		else
 			strcpy(notify_jobid, "0");
-		if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_PARENTID, &notify_parent_jobid))
+		if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_PARENTID, notify_parent_jobid))
 			strcpy(notify_parent_jobid, "0");
-		if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_TASKINDEX, &notify_task_index))
+		if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_TASKINDEX, notify_task_index))
 			strcpy(notify_task_index, "-1");
-		if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_LIGHTTASKINDEX, &notify_light_task_index))
+		if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_LIGHTTASKINDEX, notify_light_task_index))
 			strcpy(notify_light_task_index, "-1");
-		if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_SESSIONID, &notify_sessionid))
+		if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_SESSIONID, notify_sessionid))
 			*notify_sessionid = 0;
-		if (oph_tp_find_param_in_task_string(task_string, OPH_IN_PARAM_DATACUBE_INPUT, &notify_cube))
+		if (oph_tp_find_param_in_task_string(task_string, OPH_IN_PARAM_DATACUBE_INPUT, notify_cube))
 			*notify_cube = 0;
-		if (oph_tp_find_param_in_task_string(task_string, OPH_IN_PARAM_CWD, &notify_cwd))
+		if (oph_tp_find_param_in_task_string(task_string, OPH_IN_PARAM_CWD, notify_cwd))
 			*notify_cwd = 0;
 
 		if (oph_soap_init(&soap, &data))
@@ -423,7 +423,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	*tmp_value = 0;
 #ifndef OPH_STANDALONE_MODE
 	//Find params in task string
-	if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_WORKFLOWID, &tmp_value)) {
+	if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_WORKFLOWID, tmp_value)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing %s input parameter\n", OPH_ARG_WORKFLOWID);
 		oph_tp_end_xml_parser();
 		hashtbl_destroy(task_tbl);
@@ -459,7 +459,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	hashtbl_insert(task_tbl, OPH_ARG_WORKFLOWID, tmp_value);
 
 
-	if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_MARKERID, &tmp_value)) {
+	if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_MARKERID, tmp_value)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing %s input parameter\n", OPH_ARG_MARKERID);
 		oph_tp_end_xml_parser();
 		hashtbl_destroy(task_tbl);
@@ -494,7 +494,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	}
 	hashtbl_insert(task_tbl, OPH_ARG_MARKERID, tmp_value);
 #endif
-	if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_USERNAME, &tmp_value)) {
+	if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_USERNAME, tmp_value)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing %s input parameter\n", OPH_ARG_USERNAME);
 		hashtbl_destroy(task_tbl);
 		oph_tp_end_xml_parser();
@@ -531,7 +531,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	}
 	hashtbl_insert(task_tbl, OPH_ARG_USERNAME, tmp_value);
 
-	if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_USERROLE, &tmp_value)) {
+	if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_USERROLE, tmp_value)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing %s input parameter\n", OPH_ARG_USERROLE);
 		hashtbl_destroy(task_tbl);
 		oph_tp_end_xml_parser();
