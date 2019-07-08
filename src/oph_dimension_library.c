@@ -31,6 +31,7 @@
 
 #include "oph_framework_paths.h"
 #include "oph-lib-binary-io.h"
+#include "oph_pid_library.h"
 
 #include "query/oph_datacube_query.h"
 

@@ -472,7 +472,7 @@ int oph_apply_parse_query(oph_operator_struct * handle, char *data_type, const c
 
 	int i = 0;
 	if ((is_measure && ((OPH_APPLY_operator_handle *) handle->operator_handle)->set_measure_type) || (!is_measure && ((OPH_APPLY_operator_handle *) handle->operator_handle)->set_dimension_type)) {
-		size_t max_size = 1 + strlen(array_operation);
+		int max_size = 1 + strlen(array_operation);
 		char tmp[max_size], *pch = array_operation, special_char = 0, write_char;
 		while (pch && *pch && (i < max_size)) {
 			write_char = 1;
@@ -1164,8 +1164,7 @@ int task_init(oph_operator_struct * handle)
 
 		// Add 'oph_uncompress'
 		if (cube.compressed) {
-			int offset = 0;
-			size_t max_size = 1 + strlen(array_operation) + OPH_APPLY_UNCOMPRESS_MEASURE_SIZE;
+			int offset = 0, max_size = 1 + strlen(array_operation) + OPH_APPLY_UNCOMPRESS_MEASURE_SIZE;
 			char tmp[max_size], *pch, *residual = array_operation;
 			while ((pch = strcasestr(residual, MYSQL_FRAG_MEASURE))) {
 				snprintf(tmp + offset, pch - residual + 1, "%s", residual);
@@ -1179,8 +1178,7 @@ int task_init(oph_operator_struct * handle)
 		}
 		// Change keyword MYSQL_DIMENSION with '?'
 		if (use_dim) {
-			int offset = 0;
-			size_t max_size = 1 + strlen(array_operation);
+			int offset = 0, max_size = 1 + strlen(array_operation);
 			char tmp[max_size], *pch, *residual = array_operation;
 			while ((pch = strcasestr(residual, MYSQL_DIMENSION))) {
 				snprintf(tmp + offset, pch - residual + 1, "%s", residual);
@@ -1200,7 +1198,7 @@ int task_init(oph_operator_struct * handle)
 
 		// Add 'oph_compress'
 		if (cube.compressed) {
-			size_t max_size = 1 + strlen(array_operation) + OPH_APPLY_COMPRESS_MEASURE_SIZE;
+			int max_size = 1 + strlen(array_operation) + OPH_APPLY_COMPRESS_MEASURE_SIZE;
 			char tmp[max_size];
 			snprintf(tmp, max_size, OPH_APPLY_COMPRESS_MEASURE, array_operation);
 			free(array_operation);

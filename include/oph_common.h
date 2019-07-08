@@ -24,7 +24,7 @@
 //Macro used for strncmp and strncasecmp
 #define STRLEN_MAX(a,b)				(strlen(a) > strlen(b) ? strlen(a) : strlen(b))
 
-#define QUERY_BUFLEN				65536
+#define QUERY_BUFLEN				1048576
 
 //MYSQL DEFINES
 #define MYSQL_BUFLEN				65536
