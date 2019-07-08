@@ -2633,7 +2633,6 @@ int task_init(oph_operator_struct * handle)
 		int id_src = 0;
 		strncpy(src.uri, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path_orig, OPH_ODB_CUBE_SOURCE_URI_SIZE);
 		src.uri[OPH_ODB_CUBE_SOURCE_URI_SIZE] = 0;
-
 		if (oph_odb_cube_insert_into_source_table(oDB, &src, &id_src)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert source URI\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_SOURCE_URI_ERROR, src.uri);

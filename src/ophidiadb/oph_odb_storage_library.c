@@ -2176,6 +2176,13 @@ int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_use
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+
+	size_t length = strlen(name);
+	if (!length || (length > OPH_ODB_STGE_PARTITION_NAME_SIZE)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong partition name: its size exceeds limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
 	*id_hostpartition = 0;
 
 	if (hosts < 0)

@@ -329,7 +329,7 @@ DROP TABLE IF EXISTS `source`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `source` (
   `idsource` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `uri` varchar(512) NOT NULL,  
+  `uri` varchar(2048) NOT NULL,  
   PRIMARY KEY (`idsource`),
   UNIQUE KEY `uri` (`uri`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;

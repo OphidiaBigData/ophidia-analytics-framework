@@ -369,6 +369,7 @@ int oph_tp_find_param_in_task_string(const char *task_string, const char *param,
 		return OPH_TP_TASK_PARSER_ERROR;
 
 	const char *ptr_begin, *ptr_equal, *ptr_end, *start_char, *stop_char;
+
 	ptr_begin = task_string;
 	ptr_equal = strchr(task_string, OPH_TP_PARAM_VALUE_SEPARATOR);
 	ptr_end = strchr(task_string, OPH_TP_PARAM_PARAM_SEPARATOR);
@@ -456,7 +457,10 @@ int oph_tp_validate_task_string_param(const char *task_string, xmlNodePtr xml_no
 
 	xmlChar *attribute_type, *attribute_mandatory, *attribute_minvalue, *attribute_maxvalue, *attribute_default, *attribute_values;
 	char *tmp_value = strdup(task_string);
-
+	if (!tmp_value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Memory error\n");
+		return OPH_TP_TASK_PARSER_ERROR;
+	}
 	//Find param in task string
 	if (oph_tp_find_param_in_task_string(task_string, param, tmp_value)) {
 
@@ -627,6 +631,8 @@ int oph_tp_validate_task_string_param(const char *task_string, xmlNodePtr xml_no
 		}
 	}
 
+	free(tmp_value);
+
 	return OPH_TP_TASK_PARSER_SUCCESS;
 }
 
@@ -722,10 +728,16 @@ int oph_tp_task_params_parser(char *task_string, HASHTBL ** hashtbl)
 					content = xmlNodeGetContent(subnode->xmlChildrenNode);
 					if (content) {
 						value1 = strdup(task_string);
+						if (!value1) {
+							xmlFree(content);
+							xmlFreeDoc(document);
+							return OPH_TP_TASK_PARSER_ERROR;
+						}
 						//Get and check value for parameter
 						if (oph_tp_validate_task_string_param(task_string, subnode, (char *) content, value1)) {
 							xmlFree(content);
 							xmlFreeDoc(document);
+							free(value1);
 							return OPH_TP_TASK_PARSER_ERROR;
 						}
 						hashtbl_insert(*hashtbl, (char *) content, value1);
