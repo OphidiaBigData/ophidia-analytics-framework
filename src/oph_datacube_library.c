@@ -236,7 +236,7 @@ int oph_dc_create_db(oph_ioserver_handler * server, oph_odb_db_instance * db)
 	oph_pid_get_buffer_size(&max_size);
 	if (query_buflen >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 #ifdef OPH_DEBUG_MYSQL
 	printf("ORIGINAL QUERY: " MYSQL_DC_CREATE_DB "\n", db->db_name);
@@ -246,7 +246,7 @@ int oph_dc_create_db(oph_ioserver_handler * server, oph_odb_db_instance * db)
 	int n = snprintf(db_creation_query, query_buflen, OPH_DC_SQ_CREATE_DB, db->db_name);
 	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -282,7 +282,7 @@ int oph_dc_delete_db(oph_ioserver_handler * server, oph_odb_db_instance * db)
 	oph_pid_get_buffer_size(&max_size);
 	if (query_buflen >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 #ifdef OPH_DEBUG_MYSQL
 	printf("ORIGINAL QUERY: " MYSQL_DC_DELETE_DB "\n", db->db_name);
@@ -293,7 +293,7 @@ int oph_dc_delete_db(oph_ioserver_handler * server, oph_odb_db_instance * db)
 	int n = snprintf(delete_query, query_buflen, OPH_DC_SQ_DROP_DB, db->db_name);
 	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -329,7 +329,7 @@ int oph_dc_create_empty_fragment(oph_ioserver_handler * server, oph_odb_fragment
 	oph_pid_get_buffer_size(&max_size);
 	if (query_buflen >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 #ifdef OPH_DEBUG_MYSQL
 	printf("ORIGINAL QUERY: " MYSQL_DC_CREATE_FRAG "\n", frag->fragment_name);
@@ -339,7 +339,7 @@ int oph_dc_create_empty_fragment(oph_ioserver_handler * server, oph_odb_fragment
 	int n = snprintf(create_query, query_buflen, OPH_DC_SQ_CREATE_FRAG, frag->fragment_name);
 	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -375,14 +375,14 @@ int oph_dc_create_empty_fragment_from_name(oph_ioserver_handler * server, const 
 	oph_pid_get_buffer_size(&max_size);
 	if (query_buflen >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	char create_query[query_buflen];
 	int n = snprintf(create_query, query_buflen, OPH_DC_SQ_CREATE_FRAG, frag_name);
 	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -418,7 +418,7 @@ int oph_dc_delete_fragment(oph_ioserver_handler * server, oph_odb_fragment * fra
 	oph_pid_get_buffer_size(&max_size);
 	if (query_buflen >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 #ifdef OPH_DEBUG_MYSQL
 	printf("ORIGINAL QUERY: " MYSQL_DC_DELETE_FRAG "\n", frag->fragment_name);
@@ -428,7 +428,7 @@ int oph_dc_delete_fragment(oph_ioserver_handler * server, oph_odb_fragment * fra
 	int n = snprintf(delete_query, query_buflen, OPH_DC_SQ_DELETE_FRAG, frag->fragment_name);
 	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -1767,7 +1767,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 	oph_pid_get_buffer_size(&max_size);
 	if (query_buflen >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 	//Read input fragment
 #ifdef OPH_DEBUG_MYSQL
@@ -1778,7 +1778,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 	int n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_RAW_FRAG, old_frag->fragment_name);
 	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -2082,14 +2082,14 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 	oph_pid_get_buffer_size(&max_size);
 	if (query_buflen >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 	//Read input fragment
 	char read_query[query_buflen];
 	int n = snprintf(read_query, query_buflen, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag1->fragment_name);
 	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -2134,7 +2134,7 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 	query_buflen = 1 + snprintf(NULL, 0, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag2->fragment_name);
 	if (query_buflen >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 	//Read input fragment
 	char read_query2[query_buflen];
@@ -2186,7 +2186,7 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 	query_buflen = 1 + snprintf(NULL, 0, compressed ? OPH_DC_SQ_INSERT_COMPRESSED_FRAG2 : OPH_DC_SQ_INSERT_FRAG2, frag_name, operation, measure_type, measure_type, measure_type);
 	if (query_buflen >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 	//If first or only execution
 	char insert_query[query_buflen];
@@ -2666,7 +2666,7 @@ int oph_dc_read_fragment_data(oph_ioserver_handler * server, oph_odb_fragment * 
 
 	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -2730,7 +2730,7 @@ int oph_dc_get_total_number_of_elements_in_fragment(oph_ioserver_handler * serve
 	oph_pid_get_buffer_size(&max_size);
 	if (query_buflen >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	char select_query[query_buflen];
@@ -2762,7 +2762,7 @@ int oph_dc_get_total_number_of_elements_in_fragment(oph_ioserver_handler * serve
 	}
 	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -2830,14 +2830,14 @@ int oph_dc_get_total_number_of_rows_in_fragment(oph_ioserver_handler * server, o
 	oph_pid_get_buffer_size(&max_size);
 	if (query_buflen >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	char select_query[query_buflen];
 	int n = snprintf(select_query, query_buflen, OPH_DC_SQ_COUNT_ROWS_FRAG, frag->fragment_name);
 	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -2925,7 +2925,7 @@ int oph_dc_get_number_of_elements_in_fragment_row(oph_ioserver_handler * server,
 	oph_pid_get_buffer_size(&max_size);
 	if (query_buflen >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	char select_query[query_buflen];
@@ -2958,7 +2958,7 @@ int oph_dc_get_number_of_elements_in_fragment_row(oph_ioserver_handler * server,
 
 	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -3029,14 +3029,14 @@ int oph_dc_get_fragments_size_in_bytes(oph_ioserver_handler * server, oph_odb_db
 	oph_pid_get_buffer_size(&max_size);
 	if (query_buflen >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	char select_query[query_buflen];
 	int n = snprintf(select_query, query_buflen, OPH_DC_SQ_SIZE_ELEMENTS_FRAG, frag_name);
 	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -3111,7 +3111,7 @@ int oph_dc_get_primitives(oph_ioserver_handler * server, oph_odb_dbms_instance *
 	oph_pid_get_buffer_size(&max_size);
 	if (query_buflen >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	char select_query[query_buflen];
@@ -3129,7 +3129,7 @@ int oph_dc_get_primitives(oph_ioserver_handler * server, oph_odb_dbms_instance *
 	}
 	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
