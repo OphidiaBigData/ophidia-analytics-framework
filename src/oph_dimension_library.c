@@ -801,7 +801,9 @@ int oph_dim_parse_season_subset(const char *subset_string, oph_odb_dimension * d
 		return OPH_DIM_TIME_PARSING_ERROR;
 	*output_string = 0;
 
-	int max_size = 1 + strlen(subset_string);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+
 	char *pch = NULL, *save_pointer = NULL, temp[max_size];
 	strcpy(temp, subset_string);
 
@@ -896,7 +898,10 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 		return OPH_DIM_TIME_PARSING_ERROR;
 	*output_string = 0;
 
-	int n, nn, nnn, max_size = 1 + strlen(subset_string);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+
+	int n, nn, nnn;
 	char *pch = NULL, *save_pointer = NULL, temp[max_size];
 	strcpy(temp, subset_string);
 
