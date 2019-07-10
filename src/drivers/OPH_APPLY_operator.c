@@ -472,7 +472,8 @@ int oph_apply_parse_query(oph_operator_struct * handle, char *data_type, const c
 
 	int i = 0;
 	if ((is_measure && ((OPH_APPLY_operator_handle *) handle->operator_handle)->set_measure_type) || (!is_measure && ((OPH_APPLY_operator_handle *) handle->operator_handle)->set_dimension_type)) {
-		int max_size = 1 + strlen(array_operation);
+		long long max_size = QUERY_BUFLEN;
+		oph_pid_get_buffer_size(&max_size);
 		char tmp[max_size], *pch = array_operation, special_char = 0, write_char;
 		while (pch && *pch && (i < max_size)) {
 			write_char = 1;
