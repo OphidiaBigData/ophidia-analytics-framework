@@ -2662,10 +2662,9 @@ int oph_dc_read_fragment_data(oph_ioserver_handler * server, oph_odb_fragment * 
 		}
 	}
 
-	free(read_query);
-
 	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		free(read_query);
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
@@ -2674,6 +2673,7 @@ int oph_dc_read_fragment_data(oph_ioserver_handler * server, oph_odb_fragment * 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query '%s'\n", read_query);
 		return OPH_DC_SERVER_ERROR;
 	}
+	free(read_query);
 
 	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation '%s'\n", read_query);
