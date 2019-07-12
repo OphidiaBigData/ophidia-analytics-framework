@@ -15,6 +15,7 @@
 
 ### Added:
 
+- New parameter 'cubes' to OPH_INTERCUBE
 - New parameter 'recursive' to OPH_TASKS and OPH_SEARCH
 
 ### Changed:
