@@ -1,7 +1,14 @@
 
 ## Next release
 
+### Fixed:
+
 - Bug [#84](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/84) when querying OphidiaDB
+
+### Added:
+
+- New parameter 'cubes' to OPH_INTERCUBE
+
 
 ## v1.5.1 - 2019-04-16
 
@@ -15,7 +22,6 @@
 
 ### Added:
 
-- New parameter 'cubes' to OPH_INTERCUBE
 - New parameter 'recursive' to OPH_TASKS and OPH_SEARCH
 
 ### Changed:
