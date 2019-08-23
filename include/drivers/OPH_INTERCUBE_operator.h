@@ -188,6 +188,8 @@
  * \param output_path Folder where output cube has to be saved
  * \param cwd Absolute path where the container is
  * \param folder_id Id of output folder
+ * \param cube1 Pointer to the first cube
+ * \param cube2 Pointer to the second cube
  */
 struct _OPH_INTERCUBE_operator_handle {
 	ophidiadb oDB;
@@ -215,6 +217,8 @@ struct _OPH_INTERCUBE_operator_handle {
 	char *output_path;
 	char *cwd;
 	int folder_id;
+	char *cube1;
+	char *cube2;
 };
 typedef struct _OPH_INTERCUBE_operator_handle OPH_INTERCUBE_operator_handle;
 

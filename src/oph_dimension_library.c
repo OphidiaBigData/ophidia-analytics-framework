@@ -537,7 +537,7 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 	int msize, prev_week, base_week;
 
 	// Check for group
-	int first_element = tm_prev->tm_year < 0;
+	int first_element = tm_prev->tm_year < 0, semi_prev, semi_base;
 	struct tm tm_centroid;
 	memcpy(&tm_centroid, &tm_base, sizeof(struct tm));
 	switch (concept_level_out) {
@@ -580,8 +580,10 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 				}
 				centroid = 0;
 			}
-			if (first_element || (midnight && (tm_prev->tm_hour / 3 == tm_base.tm_hour / 3) && !tm_prev->tm_sec && !tm_prev->tm_min)
-			    || ((tm_prev->tm_hour / 3 != tm_base.tm_hour / 3) && (!midnight || ((tm_prev->tm_hour / 3 + 1) % 8 != tm_base.tm_hour / 3) || tm_base.tm_sec || tm_base.tm_min)))
+			semi_prev = tm_prev->tm_hour / 3;
+			semi_base = tm_base.tm_hour / 3;
+			if (first_element || (midnight && (semi_prev == semi_base) && !(tm_prev->tm_hour % 3) && !tm_prev->tm_sec && !tm_prev->tm_min)
+			    || ((semi_prev != semi_base) && (!midnight || ((semi_prev + 1) % 8 != semi_base) || tm_base.tm_sec || tm_base.tm_min || (tm_base.tm_hour % 3))))
 				break;
 		case '6':
 			if (centroid) {
@@ -594,8 +596,10 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 				}
 				centroid = 0;
 			}
-			if (first_element || (midnight && (tm_prev->tm_hour / 6 == tm_base.tm_hour / 6) && !tm_prev->tm_sec && !tm_prev->tm_min)
-			    || ((tm_prev->tm_hour / 6 != tm_base.tm_hour / 6) && (!midnight || ((tm_prev->tm_hour / 6 + 1) % 4 != tm_base.tm_hour / 6) || tm_base.tm_sec || tm_base.tm_min)))
+			semi_prev = tm_prev->tm_hour / 6;
+			semi_base = tm_base.tm_hour / 6;
+			if (first_element || (midnight && (semi_prev == semi_base) && !(tm_prev->tm_hour % 6) && !tm_prev->tm_sec && !tm_prev->tm_min)
+			    || ((semi_prev != semi_base) && (!midnight || ((semi_prev + 1) % 4 != semi_base) || tm_base.tm_sec || tm_base.tm_min || (tm_base.tm_hour % 6))))
 				break;
 		case 'd':
 			if (centroid) {
@@ -670,9 +674,12 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 					}
 					centroid = 0;
 				}
-				if (first_element || (midnight && (tm_prev->tm_mon / 3 == tm_base.tm_mon / 3) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1))
-				    || ((tm_prev->tm_mon / 3 != tm_base.tm_mon / 3)
-					&& (!midnight || ((tm_prev->tm_mon / 3 + 1) % 4 != tm_base.tm_mon / 3) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1))))
+				semi_prev = tm_prev->tm_mon / 3;
+				semi_base = tm_base.tm_mon / 3;
+				if (first_element
+				    || (midnight && (semi_prev == semi_base) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && (tm_prev->tm_mday == 1) && !(tm_prev->tm_mon % 3))
+				    || ((semi_prev != semi_base)
+					&& (!midnight || ((semi_prev + 1) % 4 != semi_base) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || (tm_base.tm_mday != 1) || (tm_base.tm_mon % 3))))
 					break;
 			}
 		case 'y':
@@ -714,6 +721,10 @@ int oph_dim_update_value(char *dim_row, const char *dimension_type, unsigned int
 	}
 	if (first == last)
 		return OPH_DIM_SUCCESS;
+	if (first >= last) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Bad indexes: the first index is greater than the last one\n");
+		return OPH_DIM_DATA_ERROR;
+	}
 
 	double first_value, last_value;
 	if (oph_dim_get_double_value_of(dim_row, first, dimension_type, &first_value))
@@ -2081,7 +2092,7 @@ int oph_dim_read_dimension_filtered_data(oph_odb_db_instance * db, char *dimensi
 
 int oph_dim_delete_table(oph_odb_db_instance * db, char *dimension_table_name)
 {
-	if (!dimension_table_name) {
+	if (!db || !dimension_table_name) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DIM_NULL_PARAM;
 	}
@@ -2113,5 +2124,37 @@ int oph_dim_unload_dim_dbinstance(oph_odb_db_instance * db)
 		return OPH_DIM_NULL_PARAM;
 	}
 	free(db->dbms_instance);
+	return OPH_DIM_SUCCESS;
+}
+
+int oph_dim_copy_into_dimension_table(oph_odb_db_instance * db, char *from_dimension_table_name, char *to_dimension_table_name, int *dimension_id)
+{
+	if (!db || !from_dimension_table_name || !to_dimension_table_name || !dimension_id) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_DIM_NULL_PARAM;
+	}
+
+	if (oph_dim_check_connection_to_db(db->dbms_instance, db, 0)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	char copy_query[MYSQL_BUFLEN];
+	int n = snprintf(copy_query, MYSQL_BUFLEN, MYSQL_DIM_COPY_FRAG, to_dimension_table_name, from_dimension_table_name, *dimension_id);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	if (mysql_query(db->dbms_instance->conn, copy_query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL error: %s\n", mysql_error(db->dbms_instance->conn));
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	if (!(*dimension_id = mysql_insert_id(db->dbms_instance->conn))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted datacube id\n");
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
 	return OPH_DIM_SUCCESS;
 }

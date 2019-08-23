@@ -1,9 +1,32 @@
 
-## New features
+## Next release
+
+### Fixed:
+
+- Bug [#84](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/84) when querying OphidiaDB
 
 ### Added:
 
-- Parameter 'recursive' to OPH_TASKS and OPH_SEARCH
+- New parameter 'cubes' to OPH_INTERCUBE
+
+
+## v1.5.1 - 2019-04-16
+
+### Fixed:
+
+- Bug in assign elements to groups to be reduced by OPH_REDUCE2 in case new concept level is '3 hour', '6 hour' or 'quarter'
+- Bug [#81](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/81) related to the use of a new container for the output datacube 
+- Bug [#80](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/80) in OPH_INTERCUBE operator 
+- Bug [#79](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/79) in OPH_MERGE operator 
+- Bug [#78](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/78) when thread number is smaller than host number
+
+### Added:
+
+- New parameter 'recursive' to OPH_TASKS and OPH_SEARCH
+
+### Changed:
+
+- Default value of parameter 'action' in OPH_MANAGE_SESSION
 
 
 ## v1.5.0 - 2019-01-24

@@ -19,7 +19,7 @@ Only session owner and administrators can submit the command.
                         &quot;write&quot;   : the user can submit commands to create new datasets;
                         &quot;execute&quot; : the user can execute scripts;
                         &quot;admin&quot;   : the user can grant/revoke access privileges.
-            list      : list the session which the user can access to
+            list      : list the session which the user can access to (default)
             listusers : list session users with their roles
             new       : create a new session
             remove    : remove a session
@@ -53,7 +53,7 @@ SUBMISSION STRING: &quot;operator=oph_manage_session;action=listusers;&quot;</ab
         <permission>read</permission>
     </info>
     <args>
-		<argument type="string" mandatory="yes" values="disable|enable|env|grant|list|listusers|new|remove|revoke|setenv">action</argument>
+		<argument type="string" mandatory="no" values="disable|enable|env|grant|list|listusers|new|remove|revoke|setenv" default="list">action</argument>
 		<argument type="string" mandatory="no" default="this">session</argument>
 		<argument type="string" mandatory="no" default="user" values="active|autoremove|label|user">key</argument>
 		<argument type="string" mandatory="no" default="null">value</argument>

@@ -664,6 +664,7 @@ int task_init(oph_operator_struct * handle)
 		snprintf(dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_REDUCE_operator_handle *) handle->operator_handle)->id_input_container);
 		char o_dimension_table_name[OPH_COMMON_BUFFER_LEN];
 		snprintf(o_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_REDUCE_operator_handle *) handle->operator_handle)->id_output_container);
+		char new_container = ((OPH_REDUCE_operator_handle *) handle->operator_handle)->id_output_container != ((OPH_REDUCE_operator_handle *) handle->operator_handle)->id_input_container;
 
 		int n, residual_dim_number = 0, d;
 		char *dim_row, *cl_value;
@@ -736,8 +737,7 @@ int task_init(oph_operator_struct * handle)
 				}
 			}
 
-			if (new_grid || !((OPH_REDUCE_operator_handle *) handle->operator_handle)->grid_name
-			    || (((OPH_REDUCE_operator_handle *) handle->operator_handle)->id_output_container != ((OPH_REDUCE_operator_handle *) handle->operator_handle)->id_input_container)) {
+			if (new_grid || !((OPH_REDUCE_operator_handle *) handle->operator_handle)->grid_name || new_container) {
 				if (oph_dim_insert_into_dimension_table(db, o_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, dim_inst[l].size, dim_row, &(dim_inst[l].fk_id_dimension_index))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in inserting a new row in dimension table.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_REDUCE_DIM_ROW_ERROR);
