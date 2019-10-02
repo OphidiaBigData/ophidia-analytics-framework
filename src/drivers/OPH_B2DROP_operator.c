@@ -132,7 +132,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		oph_tp_free_multiple_value_param_list(((OPH_B2DROP_operator_handle *) handle->operator_handle)->objkeys, ((OPH_B2DROP_operator_handle *) handle->operator_handle)->objkeys_num);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-
 	// Get input and output path
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SRC_FILE_PATH);
 	if (!value) {
@@ -195,9 +194,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	while (pointer && (*pointer == ' '))
 		pointer++;
 	if (pointer) {
-		if(((OPH_B2DROP_operator_handle *) handle->operator_handle)->action == OPH_B2DROP_ACTION_PUT_N){
+		if (((OPH_B2DROP_operator_handle *) handle->operator_handle)->action == OPH_B2DROP_ACTION_PUT_N) {
 			if (*pointer != '/') {
-				if(_preprend_cdd(task_tbl, &pointer, &(((OPH_B2DROP_operator_handle *) handle->operator_handle)->src_file_path))) {
+				if (_preprend_cdd(task_tbl, &pointer, &(((OPH_B2DROP_operator_handle *) handle->operator_handle)->src_file_path))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup path\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to setup path\n");
 					free(webdav_url);
@@ -214,7 +213,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			free(((OPH_B2DROP_operator_handle *) handle->operator_handle)->src_file_path);
 			((OPH_B2DROP_operator_handle *) handle->operator_handle)->src_file_path = strdup(tmp);
 			free(value);
-		} else { //Get
+		} else {	//Get
 			//Build B2DROP full URL
 			snprintf(tmp, OPH_TP_TASKLEN, "%s%s%s", webdav_url ? webdav_url : "", *pointer != '/' ? "/" : "", pointer);
 			free(((OPH_B2DROP_operator_handle *) handle->operator_handle)->src_file_path);
@@ -243,8 +242,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 		val = pointer ? pointer + 1 : ((OPH_B2DROP_operator_handle *) handle->operator_handle)->src_file_path;
 		//No other action required in case of PUT action
-		if(((OPH_B2DROP_operator_handle *) handle->operator_handle)->action == OPH_B2DROP_ACTION_GET_N){
-			if(_preprend_cdd(task_tbl, &val, &(((OPH_B2DROP_operator_handle *) handle->operator_handle)->dst_file_path))) {
+		if (((OPH_B2DROP_operator_handle *) handle->operator_handle)->action == OPH_B2DROP_ACTION_GET_N) {
+			if (_preprend_cdd(task_tbl, &val, &(((OPH_B2DROP_operator_handle *) handle->operator_handle)->dst_file_path))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup path\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to setup path\n");
 				free(webdav_url);
@@ -256,9 +255,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		while (val && (*val == ' '))
 			val++;
 		//No other action required in case of PUT action
-		if(((OPH_B2DROP_operator_handle *) handle->operator_handle)->action == OPH_B2DROP_ACTION_GET_N){
+		if (((OPH_B2DROP_operator_handle *) handle->operator_handle)->action == OPH_B2DROP_ACTION_GET_N) {
 			if (val && *val != '/') {
-				if(_preprend_cdd(task_tbl, &val, &(((OPH_B2DROP_operator_handle *) handle->operator_handle)->dst_file_path))) {
+				if (_preprend_cdd(task_tbl, &val, &(((OPH_B2DROP_operator_handle *) handle->operator_handle)->dst_file_path))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup path\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to setup path\n");
 					free(webdav_url);
@@ -268,10 +267,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 	}
 
-	if(((OPH_B2DROP_operator_handle *) handle->operator_handle)->action == OPH_B2DROP_ACTION_PUT_N){
+	if (((OPH_B2DROP_operator_handle *) handle->operator_handle)->action == OPH_B2DROP_ACTION_PUT_N) {
 		//Build B2DROP full URL
 		snprintf(tmp, OPH_TP_TASKLEN, "%s%s%s", webdav_url ? webdav_url : "", *val != '/' ? "/" : "", val);
-	} else { //Get
+	} else {		//Get
 		//Prepend base src path
 		if (oph_pid_get_base_src_path(&value)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
@@ -392,7 +391,7 @@ int task_execute(oph_operator_struct * handle)
 	//curl_easy_setopt(hnd, CURLOPT_FTP_CREATE_MISSING_DIRS, 0);
 
 	char message[OPH_COMMON_BUFFER_LEN];
-	if(((OPH_B2DROP_operator_handle *) handle->operator_handle)->action == OPH_B2DROP_ACTION_PUT_N){
+	if (((OPH_B2DROP_operator_handle *) handle->operator_handle)->action == OPH_B2DROP_ACTION_PUT_N) {
 		//UPLOAD FILE
 		FILE *in_file;
 		struct stat in_file_info;
@@ -458,7 +457,7 @@ int task_execute(oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_B2DROP_HTTP_ERROR, http_code, p1 ? p1 : "Generic Error");
 
 			if (oph_json_is_objkey_printable
-				(((OPH_B2DROP_operator_handle *) handle->operator_handle)->objkeys, ((OPH_B2DROP_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_B2DROP)) {
+			    (((OPH_B2DROP_operator_handle *) handle->operator_handle)->objkeys, ((OPH_B2DROP_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_B2DROP)) {
 				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_B2DROP, "Error", p1 ? p1 : "Generic Error")) {
 					pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
 					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
@@ -475,7 +474,7 @@ int task_execute(oph_operator_struct * handle)
 		if (res_buf.buffer)
 			free(res_buf.buffer);
 
-	} else { //Get
+	} else {		//Get
 		//Download file
 		FILE *out_file;
 		//Open output file
@@ -486,7 +485,6 @@ int task_execute(oph_operator_struct * handle)
 			curl_easy_cleanup(hnd);
 			return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 		}
-
 		//GET-specific CURL options
 		curl_easy_setopt(hnd, CURLOPT_URL, ((OPH_B2DROP_operator_handle *) handle->operator_handle)->src_file_path);
 		curl_easy_setopt(hnd, CURLOPT_WRITEDATA, out_file);
@@ -514,7 +512,8 @@ int task_execute(oph_operator_struct * handle)
 			out_file = fopen(((OPH_B2DROP_operator_handle *) handle->operator_handle)->dst_file_path, "rb");
 			if (!out_file) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_B2DROP_FILE_OPEN_ERROR, ((OPH_B2DROP_operator_handle *) handle->operator_handle)->dst_file_path);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_B2DROP_FILE_OPEN_ERROR, ((OPH_B2DROP_operator_handle *) handle->operator_handle)->dst_file_path);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_B2DROP_FILE_OPEN_ERROR,
+					((OPH_B2DROP_operator_handle *) handle->operator_handle)->dst_file_path);
 				remove(((OPH_B2DROP_operator_handle *) handle->operator_handle)->dst_file_path);
 				return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 			}
@@ -522,14 +521,15 @@ int task_execute(oph_operator_struct * handle)
 			//Read file size
 			if (fstat(fileno(out_file), &out_file_info)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_B2DROP_STAT_FILE_ERROR, ((OPH_B2DROP_operator_handle *) handle->operator_handle)->dst_file_path);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_B2DROP_STAT_FILE_ERROR, ((OPH_B2DROP_operator_handle *) handle->operator_handle)->dst_file_path);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_B2DROP_STAT_FILE_ERROR,
+					((OPH_B2DROP_operator_handle *) handle->operator_handle)->dst_file_path);
 				fclose(out_file);
 				remove(((OPH_B2DROP_operator_handle *) handle->operator_handle)->dst_file_path);
 				return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 			}
 
 			char *buffer = NULL;
-			if (!(buffer = (char *)malloc(out_file_info.st_size + 1))) {
+			if (!(buffer = (char *) malloc(out_file_info.st_size + 1))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_B2DROP_MEMORY_ERROR_HANDLE);
 				fclose(out_file);
@@ -538,7 +538,7 @@ int task_execute(oph_operator_struct * handle)
 			}
 
 			size_t read_bytes = fread(buffer, 1, out_file_info.st_size, out_file);
-			if(read_bytes <  out_file_info.st_size) {
+			if (read_bytes < out_file_info.st_size) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_B2DROP_READ_FILE_ERROR, out_file_info.st_size);
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_B2DROP_READ_FILE_ERROR, out_file_info.st_size);
 				if (buffer)
@@ -548,7 +548,7 @@ int task_execute(oph_operator_struct * handle)
 				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 			}
 			fclose(out_file);
-			
+
 			//Delete error file
 			remove(((OPH_B2DROP_operator_handle *) handle->operator_handle)->dst_file_path);
 
@@ -561,7 +561,7 @@ int task_execute(oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_B2DROP_HTTP_ERROR, http_code, p1 ? p1 : "Generic Error");
 
 			if (oph_json_is_objkey_printable
-				(((OPH_B2DROP_operator_handle *) handle->operator_handle)->objkeys, ((OPH_B2DROP_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_B2DROP)) {
+			    (((OPH_B2DROP_operator_handle *) handle->operator_handle)->objkeys, ((OPH_B2DROP_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_B2DROP)) {
 				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_B2DROP, "Error", p1 ? p1 : "Generic Error")) {
 					pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
 					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
