@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <mpi.h>
+#include <sys/stat.h>
 
 #include <math.h>
 #include <ctype.h>
@@ -295,6 +296,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nthread = (int) strtol(value, NULL, 10);
 
+	int retval, j = 0;
 	if (strstr(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, "..")) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
@@ -340,6 +342,32 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			free(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path);
 			((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
 			free(value);
+			oph_pid_free();
+		}
+		//Open netcdf file
+		struct stat st;
+		if (stat(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, &st) == 0) {
+			size_t size = (size_t) 2 * st.st_blksize;
+			if ((retval =
+			     nc__open(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, NC_NOWRITE, &size,
+				      &(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->ncid)))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path,
+				      nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_OPEN_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+		} else {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, strerror(errno));
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_OPEN_ERROR_NO_CONTAINER, container_name, strerror(errno));
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+
+	} else {
+		//Open netcdf file from URL
+		if ((retval = nc_open(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, NC_NOWRITE, &(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->ncid)))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_OPEN_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 	}
 
@@ -417,14 +445,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	int imp_number_of_dim_names = 0;
 	int imp_number_of_dim_clevels = 0;
 	int number_of_dim_clevels = 0;
-
-	//Open netcdf file
-	int retval, j = 0;
-	if ((retval = nc_open(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, NC_NOWRITE, &(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->ncid)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_OPEN_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
 
 	int ncid = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->ncid;
 	//Extract measured variable information
@@ -1958,6 +1978,7 @@ int task_init(oph_operator_struct * handle)
 			cont.id_folder = folder_id;
 			cont.operation[0] = 0;
 			cont.id_vocabulary = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_vocabulary;
+			cont.description[0] = 0;
 
 			if (oph_odb_fs_insert_into_container_table(oDB, &cont, &id_container_out)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update container table\n");
