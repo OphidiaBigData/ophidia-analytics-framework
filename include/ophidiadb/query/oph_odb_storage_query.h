@@ -50,7 +50,7 @@
 #define MYSQL_STGE_FRAGMENT_RELATIVE_INDEX_COND1 		"fragrelativeindex = %d"
 #define MYSQL_STGE_FRAGMENT_RELATIVE_INDEX_COND2 		"fragrelativeindex >= %d AND fragrelativeindex <= %d"
 
-#define MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS      	"SELECT idhostpartition, COUNT(host.idhost) AS hosts, SUM(host.importcount) AS importcounts FROM hashost INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE status = 'up' AND ioservertype = '%s' GROUP BY idhostpartition HAVING hosts >= %d ORDER BY importcounts DESC, hosts LIMIT 1;"
+#define MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS      	"SELECT idhostpartition, COUNT(host.idhost) AS hosts, SUM(host.importcount) AS importcounts FROM hashost INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE status = 'up' AND ioservertype = '%s' AND (NOT reserved OR iduser = %d) GROUP BY idhostpartition HAVING hosts >= %d ORDER BY importcounts DESC, hosts LIMIT 1;"
 
 #define MYSQL_QUERY_STGE_RETRIEVE_HOST_DBMS_NUMBER		"SELECT count(iddbmsinstance) FROM hashost INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE idhostpartition = %d AND status = 'up' AND ioservertype = '%s' GROUP BY host.idhost;"
 
@@ -66,8 +66,8 @@
 #define MYSQL_QUERY_STGE_RETRIEVE_DATACUBEXDBS_NUMBER 		"SELECT COUNT(*) FROM partitioned WHERE iddbinstance IN (%s) GROUP BY iddbinstance;"
 
 #define MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST 		"SELECT host.idhost, iddbmsinstance FROM hashost INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE idhostpartition = %d AND status = 'up' AND ioservertype = '%s' "
-#define MYSQL_STGE_POLICY_RR						"ORDER BY CASE %d WHEN 0 THEN host.importcount ELSE hashost.importcount END, port LIMIT %d FOR UPDATE;"
-#define MYSQL_STGE_POLICY_LOOP						"AND NOT CASE %d WHEN 0 THEN host.importcount ELSE hashost.importcount END ORDER BY port LIMIT %d FOR UPDATE;"
+#define MYSQL_STGE_POLICY_RR						"ORDER BY CASE %d WHEN 0 THEN host.importcount ELSE hashost.importcount END, hostname, port LIMIT %d FOR UPDATE;"
+#define MYSQL_STGE_POLICY_PORT						"ORDER BY hostname, port LIMIT %d FOR UPDATE;"
 
 #define MYSQL_QUERY_STGE_UPDATE_IMPORT_COUNT 		"UPDATE host SET importcount = importcount + 1 WHERE idhost IN (SELECT imported.idhost AS idhost FROM imported WHERE imported.iddatacube = %d);"
 

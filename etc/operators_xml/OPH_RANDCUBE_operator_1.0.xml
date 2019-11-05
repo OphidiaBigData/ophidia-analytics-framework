@@ -38,7 +38,10 @@ It creates a new datacube with random data and dimensions.
          or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
 - description : additional description to be associated with the output cube.
 - algorithm : it can be used to specify the type of emulation schema used to generate data. By default values are sampled indipendently from a uniform distribution in the range [0, 1000]. If &quot;temperatures&quot; is used, then values are generated with a first order auto-regressive model to be consistent with temperature values (in Celsius).
-        
+- policy : rule to select how data are distribuited over hosts:
+           -- &apos;rr&apos; hosts are ordered on the basis of the number of cubes stored by it (default);
+           -- &apos;port&apos; hosts are ordered on the basis of port number.
+
 [System parameters]
 - exec_mode : operator execution mode. Possible values are async (default) for
               asynchronous mode, sync for synchronous mode with json-compliant output.
@@ -83,6 +86,7 @@ SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;nhost=1;nfra
 		<argument type="string" mandatory="no" default="no" values="yes|no">compressed</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="rr" values="rr|port">policy</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|randcube">objkey_filter</argument>
 		<argument type="string" mandatory="no" default="default" values="default|temperatures">algorithm</argument>
     </args>

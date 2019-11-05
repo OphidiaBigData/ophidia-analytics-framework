@@ -44,6 +44,7 @@ char *oph_base_src_path = NULL;
 char *oph_base_user_path = NULL;
 char oph_user_space = -1;
 char *oph_b2drop_webdav_url = NULL;
+char oph_enable_unregistered_script = 0;
 
 int oph_pid_create_pid(const char *url, int id_container, int id_datacube, char **pid)
 {
@@ -133,6 +134,10 @@ int _oph_pid_load_data()
 			} else if (!strncmp(buffer, OPH_PID_USER_SPACE, strlen(OPH_PID_USER_SPACE)) && !strncmp(buffer, OPH_PID_USER_SPACE, strlen(buffer))) {
 				if (!strcasecmp(position, "yes"))
 					oph_user_space = 1;
+			} else if (!strncmp(buffer, OPH_PID_ENABLE_UNREGISTERED_SCRIPT, strlen(OPH_PID_ENABLE_UNREGISTERED_SCRIPT))
+				   && !strncmp(buffer, OPH_PID_ENABLE_UNREGISTERED_SCRIPT, strlen(buffer))) {
+				if (!strcasecmp(position, "yes"))
+					oph_enable_unregistered_script = 1;
 			} else if (!oph_b2drop_webdav_url && !strncmp(buffer, OPH_PID_B2DROP_WEBDAV, strlen(OPH_PID_B2DROP_WEBDAV))) {
 				if (!(oph_b2drop_webdav_url = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -290,6 +295,25 @@ int oph_pid_get_user_space(char *user_space)
 	}
 
 	*user_space = oph_user_space;
+
+	return OPH_PID_SUCCESS;
+}
+
+int oph_pid_is_script_enabled(char *enabled)
+{
+	if (!enabled) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_PID_NULL_PARAM;
+	}
+	*enabled = -1;
+
+	if (oph_enable_unregistered_script < 0) {
+		int res;
+		if ((res = _oph_pid_load_data()))
+			return res;
+	}
+
+	*enabled = oph_enable_unregistered_script;
 
 	return OPH_PID_SUCCESS;
 }

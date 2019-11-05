@@ -119,6 +119,9 @@
 #define OPH_COMMON_RAND_ALGO_TEMP		"temperatures"
 #define OPH_COMMON_RAND_ALGO_DEFAULT	"default"
 
+#define OPH_COMMON_POLICY_RR			"rr"
+#define OPH_COMMON_POLICY_PORT			"port"
+
 // User roles
 #define OPH_ROLE_NULL_STR			"-----"
 #define OPH_ROLE_READ_STR			"read"

@@ -17,6 +17,9 @@ Start, stop and get information about clusters of I/O servers.
 - nhost : number of hosts to be reserved as well as number of I/O servers to be started over them.
 - host_partition : name of user-defined partition to be used to group hosts.
                    It needs to be set in case of &quot;deploy&quot; or &quot;undeploy&quot;.
+- host_type : type of partition to be deployed; valid only in case of deployment:
+              io : partition with I/O nodes (default);
+              compute : partition with I/O nodes.
 - user_filter : filter on username in case action &quot;info_cluster&quot; is selected (reserved to administrators).
 
 [System parameters]
@@ -25,7 +28,7 @@ Start, stop and get information about clusters of I/O servers.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output):
                   cluster_summary : show cluster status, reserved hosts and available resources;
                   cluster_list : show cluster list;
-                  cluster_list_summary : show cluster list summary.
+                  cluster_list_summary : show cluster list summary;
                   cluster_user : show cluster user list (reserved to administrators);
                   cluster_user_summary : show cluster user list summary (reserved to administrators).
 
@@ -45,6 +48,7 @@ SUBMISSION STRING: &quot;operator=oph_cluster;action=deploy;nhost=3;host_partiti
 		<argument type="string" mandatory="no" default="info" values="info|info_cluster|deploy|undeploy">action</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="0">nhost</argument>
 		<argument type="string" mandatory="no" default="all">user_filter</argument>
+		<argument type="string" mandatory="no" default="io" values="io/compute">host_type</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|cluster_summary|cluster_list|cluster_list_summary|cluster_user|cluster_user_summary">objkey_filter</argument>
     </args>
 </operator>

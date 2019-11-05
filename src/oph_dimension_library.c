@@ -334,7 +334,7 @@ int oph_day_to_date(long long g, int *yy, int *mm, int *dd, int *wd, int *yd, op
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, struct tm *tm_base, long long *base_time)
+int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, struct tm *tm_base, long long *base_time, long long *raw_value)
 {
 	if (!dim_row || !dim || !tm_base) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -372,7 +372,10 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 
 	// Add the base
 	if (dim->base_time && strlen(dim->base_time)) {
-		strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", tm_base);
+		if (strchr(dim->base_time, 'T'))
+			strptime(dim->base_time, "%Y-%m-%dT%H:%M:%S", tm_base);
+		else
+			strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", tm_base);
 		tm_base->tm_year += 1900;
 		tm_base->tm_mon++;
 		if (oph_date_to_day(tm_base->tm_year, tm_base->tm_mon, tm_base->tm_mday, base_time_, dim)) {
@@ -384,6 +387,8 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 	// Convert to "date"
 	memset(tm_base, 0, sizeof(struct tm));
 	long long value = (long long) _value + (*base_time_);
+	if (raw_value)
+		*raw_value = value;
 	tm_base->tm_sec = value % OPH_ODB_DIM_SECOND_NUMBER;
 	value /= OPH_ODB_DIM_SECOND_NUMBER;	// minutes
 	tm_base->tm_min = value % OPH_ODB_DIM_MINUTE_NUMBER;
@@ -394,6 +399,59 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
 		return OPH_DIM_DATA_ERROR;
 	}
+
+	return OPH_DIM_SUCCESS;
+}
+
+int oph_dim_set_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, long long raw_value)
+{
+	if (!dim_row || !dim) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_DIM_NULL_PARAM;
+	}
+	if (!dim->calendar || !strlen(dim->calendar))
+		return OPH_DIM_TIME_PARSING_ERROR;
+
+	// Remove the base
+	long long base_time = 0;
+	if (dim->base_time && strlen(dim->base_time)) {
+		struct tm tm_base;
+		memset(&tm_base, 0, sizeof(struct tm));
+		if (strchr(dim->base_time, 'T'))
+			strptime(dim->base_time, "%Y-%m-%dT%H:%M:%S", &tm_base);
+		else
+			strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", &tm_base);
+		tm_base.tm_year += 1900;
+		tm_base.tm_mon++;
+		if (oph_date_to_day(tm_base.tm_year, tm_base.tm_mon, tm_base.tm_mday, &base_time, dim)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
+			return OPH_DIM_DATA_ERROR;
+		}
+		base_time = tm_base.tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base.tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base.tm_hour + OPH_ODB_DIM_HOUR_NUMBER * base_time));
+	}
+	double _value = raw_value - base_time;
+
+	// Convert to "seconds"
+	switch (dim->units[0]) {
+		case 'd':
+			_value /= 4.0;
+		case '6':
+			_value /= 2.0;
+		case '3':
+			_value /= 3.0;
+		case 'h':
+			_value /= 60.0;
+		case 'm':
+			_value /= 60.0;
+		case 's':
+			break;
+		default:
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unrecognized or unsupported units\n");
+	}
+
+	// Write the offset
+	if (oph_dim_set_double_value_of(dim_row, kk, dim->dimension_type, _value))
+		return OPH_DIM_DATA_ERROR;
 
 	return OPH_DIM_SUCCESS;
 }
@@ -410,7 +468,7 @@ int oph_dim_get_time_string_of(char *dim_row, unsigned int kk, oph_odb_dimension
 	struct tm tm_base;
 	memset(&tm_base, 0, sizeof(struct tm));
 
-	if (oph_dim_get_time_value_of(dim_row, kk, dim, &tm_base, NULL))
+	if (oph_dim_get_time_value_of(dim_row, kk, dim, &tm_base, NULL, NULL))
 		return OPH_DIM_DATA_ERROR;
 
 	snprintf(output_string, MYSQL_BUFLEN, "%04d-%02d-%02d %02d:%02d:%02d", tm_base.tm_year, tm_base.tm_mon, tm_base.tm_mday, tm_base.tm_hour, tm_base.tm_min, tm_base.tm_sec);
@@ -533,7 +591,7 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 
 	struct tm tm_base;
 	long long base_time;
-	if (oph_dim_get_time_value_of(dim_row, kk, dim, &tm_base, &base_time))
+	if (oph_dim_get_time_value_of(dim_row, kk, dim, &tm_base, &base_time, NULL))
 		return OPH_DIM_DATA_ERROR;
 	int msize, prev_week, base_week;
 
@@ -750,7 +808,10 @@ int _oph_dim_get_base_time(oph_odb_dimension * dim, long long *base_time)
 	struct tm tm_value;
 	memset(&tm_value, 0, sizeof(struct tm));
 	if (dim->base_time && strlen(dim->base_time)) {
-		strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", &tm_value);
+		if (strchr(dim->base_time, 'T'))
+			strptime(dim->base_time, "%Y-%m-%dT%H:%M:%S", &tm_value);
+		else
+			strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", &tm_value);
 		tm_value.tm_year += 1900;
 		tm_value.tm_mon++;
 		if (oph_date_to_day(tm_value.tm_year, tm_value.tm_mon, tm_value.tm_mday, base_time, dim)) {
@@ -934,7 +995,10 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 		memset(&tm_value, 0, sizeof(struct tm));
 
 		tm_value.tm_year = -1;
-		strptime(pch, "%Y-%m-%d %H:%M:%S", &tm_value);
+		if (strchr(pch, 'T'))
+			strptime(pch, "%Y-%m-%dT%H:%M:%S", &tm_value);
+		else
+			strptime(pch, "%Y-%m-%d %H:%M:%S", &tm_value);
 		if (tm_value.tm_year < 0)
 			return OPH_DIM_TIME_PARSING_ERROR;
 

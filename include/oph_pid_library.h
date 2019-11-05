@@ -31,8 +31,9 @@
 #define OPH_PID_BUFFER				"IO_BUFFER"
 #define OPH_PID_BASE_SRC_PATH		"BASE_SRC_PATH"
 #define OPH_PID_BASE_USER_PATH		"BASE_USER_PATH"
-#define OPH_PID_USER_SPACE			"USER_SPACE"
-#define OPH_PID_B2DROP_WEBDAV		"B2DROP_WEBDAV"
+#define OPH_PID_USER_SPACE		"USER_SPACE"
+#define OPH_PID_B2DROP_WEBDAV	"B2DROP_WEBDAV"
+#define OPH_PID_ENABLE_UNREGISTERED_SCRIPT "ENABLE_UNREGISTERED_SCRIPT"
 
 #define OPH_PID_SLASH				"/"
 
@@ -87,6 +88,13 @@ int oph_pid_get_base_user_path(char *username, char **base_user_path);
  * \return 0 if successfull, N otherwise
  */
 int oph_pid_get_user_space(char *user_space);
+
+/** 
+ * \brief Function to load configuration data
+ * \brief enabled Pointer to the space to store the flag
+ * \return 0 if successfull, N otherwise
+ */
+int oph_pid_is_script_enabled(char *enabled);
 
 /** 
  * \brief Function to create a new pid given container and datacube id
