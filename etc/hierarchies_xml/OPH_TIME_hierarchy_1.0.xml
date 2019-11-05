@@ -10,7 +10,8 @@
 	<attribute long_name="6_hour"	short_name="6" aggregate_field="3" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min" aggregate_set="2" />
 	<attribute long_name="3_hour"   short_name="3" aggregate_field="h" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min" aggregate_set="3" />
 	<attribute long_name="hour"    	short_name="h" aggregate_field="m" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min" aggregate_set="60" />
-	<attribute long_name="minute"  	short_name="m" aggregate_field="s" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min" aggregate_set="60" />
+	<attribute long_name="minute"  	short_name="m" aggregate_field="sc" aggregate_op="count|max|avg|min|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min" aggregate_set="60" />
 	<attribute long_name="second"  	short_name="s" aggregate_field="s" aggregate_op="none" aggregate_set="1" />
+	<attribute long_name="second"  	short_name="c" aggregate_field="c" aggregate_op="none" aggregate_set="1" />
 </hierarchy>
 

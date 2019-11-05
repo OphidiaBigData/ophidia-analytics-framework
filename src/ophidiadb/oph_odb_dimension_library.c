@@ -1567,6 +1567,7 @@ int oph_odb_dim_set_time_dimension(ophidiadb * oDB, int id_datacube, char *dimen
 		return OPH_ODB_MYSQL_ERROR;
 	}
 	if (!ll) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Time dimension check failed\n");
 		return OPH_ODB_NO_ROW_FOUND;
 	}
 
