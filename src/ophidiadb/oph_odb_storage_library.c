@@ -1780,7 +1780,7 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_type, int id_host_partition, char hidden, int host_number, int id_datacube, int **id_dbmss, int **id_hosts, int policy)
+int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_type, int id_host_partition, char hidden, int host_number, int id_datacube, int **id_dbmss, int **id_hosts, char policy)
 {
 	if (!oDB || !host_number || !id_datacube || !id_dbmss || !ioserver_type || !id_host_partition || !id_hosts) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1820,7 +1820,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 	int n;
 	switch (policy) {
 		case 1:
-			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST "" MYSQL_STGE_POLICY_LOOP, id_host_partition, ioserver_type, hidden, host_number);
+			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST "" MYSQL_STGE_POLICY_PORT, id_host_partition, ioserver_type, host_number);
 			break;
 		default:
 			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST "" MYSQL_STGE_POLICY_RR, id_host_partition, ioserver_type, hidden, host_number);

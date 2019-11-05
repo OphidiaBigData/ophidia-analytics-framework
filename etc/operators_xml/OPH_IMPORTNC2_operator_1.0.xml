@@ -64,6 +64,9 @@ WARNING: It imports only mono-dimensional coordinate variables.
         or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
 - check_grid : optional flag to be enabled in case the values of grid have to be checked (valid only if the grid already exists).
 - description : additional description to be associated with the output cube.
+- policy : rule to select how data are distribuited over hosts:
+           -- &apos;rr&apos; hosts are ordered on the basis of the number of cubes stored by it (default);
+           -- &apos;port&apos; hosts are ordered on the basis of port number.
 
 The following parameters are considered only in case the container has to be created.
 - hierarchy: concept hierarchy name of the dimensions. Default value is &quot;oph_base&quot;
@@ -145,6 +148,7 @@ SUBMISSION STRING: &quot;operator=oph_importnc2;cwd=/session-code1;container=con
 		<argument type="int" mandatory="no" default="0" minvalue="0">leap_year</argument>
 		<argument type="int" mandatory="no" default="2" minvalue="1" maxvalue="12">leap_month</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="rr" values="rr|port">policy</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|importnc2">objkey_filter</argument>
     </args>
 </operator>
