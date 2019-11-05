@@ -1246,7 +1246,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			}
 		}
 
-		char temp[OPH_COMMON_BUFFER_LEN];
+		long long max_size = QUERY_BUFLEN;
+		oph_pid_get_buffer_size(&max_size);
+		char temp[max_size];
 		if (oph_dim_parse_time_subset(sub_filters[tf], time_dim, temp)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing time values '%s'\n", sub_filters[tf]);
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
@@ -2648,7 +2650,6 @@ int task_init(oph_operator_struct * handle)
 		int id_src = 0;
 		strncpy(src.uri, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path_orig, OPH_ODB_CUBE_SOURCE_URI_SIZE);
 		src.uri[OPH_ODB_CUBE_SOURCE_URI_SIZE] = 0;
-
 		if (oph_odb_cube_insert_into_source_table(oDB, &src, &id_src)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert source URI\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_SOURCE_URI_ERROR, src.uri);
@@ -2806,7 +2807,7 @@ int task_init(oph_operator_struct * handle)
 			mysql_free_result(key_list);
 
 			//Get global attributes from nc file
-			char key[OPH_COMMON_BUFFER_LEN], value[OPH_COMMON_BUFFER_LEN], svalue[OPH_COMMON_BUFFER_LEN];
+			char key[OPH_COMMON_BUFFER_LEN], value[OPH_COMMON_BUFFER_LEN], svalue[OPH_COMMON_BUFFER_LEN], *big_value = NULL;
 			char *id_key, *keyptr, *keydup;
 			int id_metadatainstance;
 			keyptr = key;
@@ -2825,6 +2826,7 @@ int task_init(oph_operator_struct * handle)
 
 			//For each global attribute find the corresponding key
 			for (i = 0; i < natts; i++) {
+
 				memset(key, 0, OPH_COMMON_BUFFER_LEN);
 				if (nc_inq_attname(ncid, NC_GLOBAL, i, keyptr)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering a global attribute\n");
@@ -2911,7 +2913,7 @@ int task_init(oph_operator_struct * handle)
 					}
 
 					if (att_len >= OPH_COMMON_BUFFER_LEN) {
-						char *big_value = 0;
+
 						if (!(big_value = (char *) malloc((att_len + 1) * sizeof(char)))) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name,
@@ -2921,6 +2923,8 @@ int task_init(oph_operator_struct * handle)
 							free(dimvar_ids);
 							if (keydup)
 								free(keydup);
+							if (big_value)
+								free(big_value);
 							goto __OPH_EXIT_1;
 						}
 
@@ -2936,13 +2940,8 @@ int task_init(oph_operator_struct * handle)
 							goto __OPH_EXIT_1;
 						}
 
-						pmesg(LOG_WARNING, __FILE__, __LINE__, "Attribute %s is longer than maximum size %d and it will be hence truncated\n", key, OPH_COMMON_BUFFER_LEN);
-						logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, "Attribute %s is longer than maximum size %d and it will be hence truncated\n", key,
-							OPH_COMMON_BUFFER_LEN);
-						big_value[OPH_COMMON_BUFFER_LEN - 1] = 0;
-						strcpy(value, big_value);
-						free(big_value);
 					} else {
+
 						if (!keydup || nc_get_att(ncid, NC_GLOBAL, (const char *) key, (void *) &value)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
@@ -3007,14 +3006,21 @@ int task_init(oph_operator_struct * handle)
 
 				//Insert metadata instance (also manage relation)
 				if (oph_odb_meta_insert_into_metadatainstance_manage_tables
-				    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, NULL, sid_key_type, id_user, svalue, &id_metadatainstance)) {
+				    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, NULL, sid_key_type, id_user, big_value ? big_value : svalue, &id_metadatainstance)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_METADATAINSTANCE_ERROR, key, svalue);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_METADATAINSTANCE_ERROR, key, big_value ? big_value : svalue);
 					hashtbl_destroy(key_tbl);
 					hashtbl_destroy(required_tbl);
 					free(dimvar_ids);
+					if (big_value)
+						free(big_value);
 					goto __OPH_EXIT_1;
 				}
+
+				if (big_value)
+					free(big_value);
+				big_value = NULL;
+
 				// Drop the metadata out of the hashtable
 				if (id_key)
 					hashtbl_remove(key_tbl, key_and_variable);
@@ -3036,6 +3042,7 @@ int task_init(oph_operator_struct * handle)
 				}
 				//For each local attribute find the corresponding key
 				for (i = 0; i < natts; i++) {
+
 					memset(key, 0, OPH_COMMON_BUFFER_LEN);
 					if (nc_inq_attname(ncid, dimvar_ids[ii], i, keyptr)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering a local attribute\n");
@@ -3122,7 +3129,7 @@ int task_init(oph_operator_struct * handle)
 						}
 
 						if (att_len >= OPH_COMMON_BUFFER_LEN) {
-							char *big_value = 0;
+
 							if (!(big_value = (char *) malloc((att_len + 1) * sizeof(char)))) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name,
@@ -3132,6 +3139,8 @@ int task_init(oph_operator_struct * handle)
 								free(dimvar_ids);
 								if (keydup)
 									free(keydup);
+								if (big_value)
+									free(big_value);
 								goto __OPH_EXIT_1;
 							}
 
@@ -3147,14 +3156,8 @@ int task_init(oph_operator_struct * handle)
 								goto __OPH_EXIT_1;
 							}
 
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Attribute %s is longer than maximum size %d and it will be hence truncated\n", key,
-							      OPH_COMMON_BUFFER_LEN);
-							logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, "Attribute %s is longer than maximum size %d and it will be hence truncated\n", key,
-								OPH_COMMON_BUFFER_LEN);
-							big_value[OPH_COMMON_BUFFER_LEN - 1] = 0;
-							strcpy(value, big_value);
-							free(big_value);
 						} else {
+
 							if (!keydup || nc_get_att(ncid, dimvar_ids[ii], (const char *) key, (void *) &value)) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
 								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
@@ -3219,14 +3222,22 @@ int task_init(oph_operator_struct * handle)
 
 					//Insert metadata instance (also manage relation)
 					if (oph_odb_meta_insert_into_metadatainstance_manage_tables
-					    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->dims_name[ii], sid_key_type, id_user, svalue, &id_metadatainstance)) {
+					    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->dims_name[ii], sid_key_type, id_user, big_value ? big_value : svalue,
+					     &id_metadatainstance)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_METADATAINSTANCE_ERROR, key, value);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_METADATAINSTANCE_ERROR, key, big_value ? big_value : svalue);
 						hashtbl_destroy(key_tbl);
 						hashtbl_destroy(required_tbl);
 						free(dimvar_ids);
+						if (big_value)
+							free(big_value);
 						goto __OPH_EXIT_1;
 					}
+
+					if (big_value)
+						free(big_value);
+					big_value = NULL;
+
 					// Drop the metadata out of the hashtable
 					if (id_key)
 						hashtbl_remove(key_tbl, key_and_variable);
@@ -3247,6 +3258,7 @@ int task_init(oph_operator_struct * handle)
 			}
 			//For each local attribute find the corresponding key
 			for (i = 0; i < natts; i++) {
+
 				memset(key, 0, OPH_COMMON_BUFFER_LEN);
 				if (nc_inq_attname(ncid, measure->varid, i, keyptr)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering a local attribute\n");
@@ -3317,6 +3329,7 @@ int task_init(oph_operator_struct * handle)
 				//Insert key value into OphidiaDB
 				keydup = strdup(key);
 				if (xtype == NC_CHAR || xtype == NC_STRING) {
+
 					//Check attribute length
 					if (nc_inq_attlen(ncid, measure->varid, (const char *) key, &att_len)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute length from file\n");
@@ -3329,7 +3342,7 @@ int task_init(oph_operator_struct * handle)
 					}
 
 					if (att_len >= OPH_COMMON_BUFFER_LEN) {
-						char *big_value = 0;
+
 						if (!(big_value = (char *) malloc((att_len + 1) * sizeof(char)))) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name,
@@ -3338,6 +3351,8 @@ int task_init(oph_operator_struct * handle)
 							hashtbl_destroy(required_tbl);
 							if (keydup)
 								free(keydup);
+							if (big_value)
+								free(big_value);
 							goto __OPH_EXIT_1;
 						}
 
@@ -3352,13 +3367,8 @@ int task_init(oph_operator_struct * handle)
 							goto __OPH_EXIT_1;
 						}
 
-						pmesg(LOG_WARNING, __FILE__, __LINE__, "Attribute %s is longer than maximum size %d and it will be hence truncated\n", key, OPH_COMMON_BUFFER_LEN);
-						logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, "Attribute %s is longer than maximum size %d and it will be hence truncated\n", key,
-							OPH_COMMON_BUFFER_LEN);
-						big_value[OPH_COMMON_BUFFER_LEN - 1] = 0;
-						strcpy(value, big_value);
-						free(big_value);
 					} else {
+
 						if (!keydup || nc_get_att(ncid, measure->varid, (const char *) key, (void *) &value)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
@@ -3371,6 +3381,7 @@ int task_init(oph_operator_struct * handle)
 						value[att_len] = 0;
 					}
 				} else {
+
 					if (!keydup || nc_get_att(ncid, measure->varid, (const char *) key, (void *) &value)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
@@ -3421,13 +3432,21 @@ int task_init(oph_operator_struct * handle)
 
 				//Insert metadata instance (also manage relation)
 				if (oph_odb_meta_insert_into_metadatainstance_manage_tables
-				    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->varname, sid_key_type, id_user, svalue, &id_metadatainstance)) {
+				    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->varname, sid_key_type, id_user, big_value ? big_value : svalue,
+				     &id_metadatainstance)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_METADATAINSTANCE_ERROR, key, value);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_METADATAINSTANCE_ERROR, key, big_value ? big_value : svalue);
 					hashtbl_destroy(key_tbl);
 					hashtbl_destroy(required_tbl);
+					if (big_value)
+						free(big_value);
 					goto __OPH_EXIT_1;
 				}
+
+				if (big_value)
+					free(big_value);
+				big_value = NULL;
+
 				// Drop the metadata out of the hashtable
 				if (id_key)
 					hashtbl_remove(key_tbl, key_and_variable);

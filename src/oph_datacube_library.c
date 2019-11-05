@@ -32,6 +32,7 @@
 #include <sys/time.h>
 
 #include "oph-lib-binary-io.h"
+#include "oph_pid_library.h"
 #include "debug.h"
 
 #define OPH_DC_MAX_SIZE 100
@@ -105,7 +106,8 @@ int oph_dc_setup_dbms_thread(oph_ioserver_handler ** server, char *server_type)
 
 int oph_dc_setup_dbms(oph_ioserver_handler ** server, char *server_type)
 {
-	/*if (!server) {
+	/*
+	   if (!server) {
 	   pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 	   return OPH_DC_NULL_PARAM;
 	   }
@@ -113,7 +115,8 @@ int oph_dc_setup_dbms(oph_ioserver_handler ** server, char *server_type)
 	   if (oph_ioserver_setup(server_type, server, 0)) {
 	   pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup server library\n");
 	   return OPH_DC_SERVER_ERROR;
-	   } */
+	   }
+	 */
 
 	return oph_dc_setup_dbms_thread(server, server_type);
 }
@@ -228,15 +231,22 @@ int oph_dc_create_db(oph_ioserver_handler * server, oph_odb_db_instance * db)
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	char db_creation_query[QUERY_BUFLEN];
-
+	int query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_CREATE_DB, db->db_name);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
 #ifdef OPH_DEBUG_MYSQL
 	printf("ORIGINAL QUERY: " MYSQL_DC_CREATE_DB "\n", db->db_name);
 #endif
-	int n = snprintf(db_creation_query, QUERY_BUFLEN, OPH_DC_SQ_CREATE_DB, db->db_name);
-	if (n >= QUERY_BUFLEN) {
+
+	char db_creation_query[query_buflen];
+	int n = snprintf(db_creation_query, query_buflen, OPH_DC_SQ_CREATE_DB, db->db_name);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -266,16 +276,24 @@ int oph_dc_delete_db(oph_ioserver_handler * server, oph_odb_db_instance * db)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
-	//Check if Database is empty and DELETE
-	char delete_query[QUERY_BUFLEN];
-	int n;
+
+	int query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_DROP_DB, db->db_name);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
 #ifdef OPH_DEBUG_MYSQL
 	printf("ORIGINAL QUERY: " MYSQL_DC_DELETE_DB "\n", db->db_name);
 #endif
-	n = snprintf(delete_query, QUERY_BUFLEN, OPH_DC_SQ_DROP_DB, db->db_name);
-	if (n >= QUERY_BUFLEN) {
+
+	//Check if Database is empty and DELETE
+	char delete_query[query_buflen];
+	int n = snprintf(delete_query, query_buflen, OPH_DC_SQ_DROP_DB, db->db_name);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -306,15 +324,22 @@ int oph_dc_create_empty_fragment(oph_ioserver_handler * server, oph_odb_fragment
 		return OPH_DC_SERVER_ERROR;
 	}
 
-
-	char create_query[QUERY_BUFLEN];
+	int query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_CREATE_FRAG, frag->fragment_name);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
 #ifdef OPH_DEBUG_MYSQL
 	printf("ORIGINAL QUERY: " MYSQL_DC_CREATE_FRAG "\n", frag->fragment_name);
 #endif
-	int n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_CREATE_FRAG, frag->fragment_name);
-	if (n >= QUERY_BUFLEN) {
+
+	char create_query[query_buflen];
+	int n = snprintf(create_query, query_buflen, OPH_DC_SQ_CREATE_FRAG, frag->fragment_name);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -345,12 +370,19 @@ int oph_dc_create_empty_fragment_from_name(oph_ioserver_handler * server, const 
 		return OPH_DC_SERVER_ERROR;
 	}
 
+	int query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_CREATE_FRAG, frag_name);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
 
-	char create_query[QUERY_BUFLEN];
-	int n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_CREATE_FRAG, frag_name);
-	if (n >= QUERY_BUFLEN) {
+	char create_query[query_buflen];
+	int n = snprintf(create_query, query_buflen, OPH_DC_SQ_CREATE_FRAG, frag_name);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -381,14 +413,22 @@ int oph_dc_delete_fragment(oph_ioserver_handler * server, oph_odb_fragment * fra
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	char delete_query[QUERY_BUFLEN];
+	int query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_DELETE_FRAG, frag->fragment_name);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
 #ifdef OPH_DEBUG_MYSQL
 	printf("ORIGINAL QUERY: " MYSQL_DC_DELETE_FRAG "\n", frag->fragment_name);
 #endif
-	int n = snprintf(delete_query, QUERY_BUFLEN, OPH_DC_SQ_DELETE_FRAG, frag->fragment_name);
-	if (n >= QUERY_BUFLEN) {
+
+	char delete_query[query_buflen];
+	int n = snprintf(delete_query, query_buflen, OPH_DC_SQ_DELETE_FRAG, frag->fragment_name);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -417,9 +457,9 @@ int oph_dc_create_fragment_from_query(oph_ioserver_handler * server, oph_odb_fra
 int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id,
 				       long long *block_size)
 {
-	UNUSED(start_id)
+	UNUSED(start_id);
 
-	    if (!old_frag || !operation || !server) {
+	if (!old_frag || !operation || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DC_NULL_PARAM;
 	}
@@ -428,12 +468,21 @@ int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fr
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	char create_query[QUERY_BUFLEN];
-	int n;
+	int n, query_buflen = QUERY_BUFLEN;
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
 
 	if (new_frag_name == NULL) {
-		n = snprintf(create_query, QUERY_BUFLEN, operation);
-		if (n >= QUERY_BUFLEN) {
+
+		query_buflen = 1 + snprintf(NULL, 0, operation);
+		if (query_buflen >= max_size) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+			return OPH_DC_SERVER_ERROR;
+		}
+
+		char create_query[query_buflen];
+		n = snprintf(create_query, query_buflen, operation);
+		if (n >= query_buflen) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 			return OPH_DC_SERVER_ERROR;
 		}
@@ -451,7 +500,41 @@ int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fr
 		}
 
 		oph_ioserver_free_query(server, query);
+
 	} else {
+
+		if (where) {
+			if (aggregate_number) {
+				if (block_size) {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN_WGB, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, *block_size, operation, MYSQL_FRAG_ID,
+								    MYSQL_FRAG_MEASURE, old_frag->fragment_name, where, MYSQL_FRAG_ID, *aggregate_number, *block_size);
+				} else {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN_WG, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
+								    MYSQL_FRAG_MEASURE, old_frag->fragment_name, where, MYSQL_FRAG_ID, *aggregate_number);
+				}
+			} else {
+				query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN_W, new_frag_name, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where);
+			}
+		} else {
+			if (aggregate_number) {
+				if (block_size) {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN_GB, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, *block_size, operation, MYSQL_FRAG_ID,
+								    MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number, *block_size);
+				} else {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN_G, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
+								    MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
+				}
+			} else {
+				query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN, new_frag_name, MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name);
+			}
+		}
+
+		if (query_buflen >= max_size) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+			return OPH_DC_SERVER_ERROR;
+		}
+
+		char create_query[query_buflen];
 
 		if (where) {
 			if (aggregate_number) {
@@ -460,14 +543,14 @@ int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fr
 					printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_WGB "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number, *block_size,
 					       MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where, MYSQL_FRAG_ID, *aggregate_number, *block_size);
 #endif
-					n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_WGB, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, *block_size, operation, MYSQL_FRAG_ID,
+					n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN_WGB, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, *block_size, operation, MYSQL_FRAG_ID,
 						     MYSQL_FRAG_MEASURE, old_frag->fragment_name, where, MYSQL_FRAG_ID, *aggregate_number, *block_size);
 				} else {
 #ifdef OPH_DEBUG_MYSQL
 					printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_WG "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number, MYSQL_FRAG_ID,
 					       operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where, MYSQL_FRAG_ID, *aggregate_number);
 #endif
-					n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_WG, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
+					n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN_WG, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
 						     MYSQL_FRAG_MEASURE, old_frag->fragment_name, where, MYSQL_FRAG_ID, *aggregate_number);
 				}
 			} else {
@@ -475,7 +558,7 @@ int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fr
 				printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_W "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE,
 				       old_frag->fragment_name, where);
 #endif
-				n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_W, new_frag_name, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where);
+				n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN_W, new_frag_name, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where);
 			}
 		} else {
 			if (aggregate_number) {
@@ -484,14 +567,14 @@ int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fr
 					printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_GB "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number, *block_size,
 					       MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number, *block_size);
 #endif
-					n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_GB, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, *block_size, operation, MYSQL_FRAG_ID,
+					n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN_GB, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, *block_size, operation, MYSQL_FRAG_ID,
 						     MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number, *block_size);
 				} else {
 #ifdef OPH_DEBUG_MYSQL
 					printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_G "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number, MYSQL_FRAG_ID,
 					       operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
 #endif
-					n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_G, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
+					n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN_G, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
 						     MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
 				}
 			} else {
@@ -499,12 +582,12 @@ int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fr
 				printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE,
 				       old_frag->fragment_name);
 #endif
-				n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN, new_frag_name, MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name);
+				n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN, new_frag_name, MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name);
 			}
 
 		}
 
-		if (n >= QUERY_BUFLEN) {
+		if (n >= query_buflen) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 			return OPH_DC_SERVER_ERROR;
 		}
@@ -585,12 +668,22 @@ int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server
 	args[num] = NULL;
 
 
-	int n, nn = !param;
+	int n, nn = !param, query_buflen = QUERY_BUFLEN;
 
-	char create_query[QUERY_BUFLEN];
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+
 	if (new_frag_name == NULL) {
-		n = snprintf(create_query, QUERY_BUFLEN, operation);
-		if (n >= QUERY_BUFLEN) {
+
+		query_buflen = 1 + snprintf(NULL, 0, operation);
+		if (query_buflen >= max_size) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+			return OPH_DC_SERVER_ERROR;
+		}
+
+		char create_query[query_buflen];
+		n = snprintf(create_query, query_buflen, operation);
+		if (n >= query_buflen) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 			return OPH_DC_SERVER_ERROR;
 		}
@@ -626,8 +719,41 @@ int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server
 				free(args[ii]);
 		free(args);
 		oph_ioserver_free_query(server, query);
+
 	} else {
 
+		if (where) {
+			if (aggregate_number) {
+				if (block_size) {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN_WGB, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, *block_size, operation, MYSQL_FRAG_ID,
+								    MYSQL_FRAG_MEASURE, old_frag->fragment_name, where, MYSQL_FRAG_ID, *aggregate_number, *block_size);
+				} else {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN_WG, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
+								    MYSQL_FRAG_MEASURE, old_frag->fragment_name, where, MYSQL_FRAG_ID, *aggregate_number);
+				}
+			} else {
+				query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN_W, new_frag_name, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where);
+			}
+		} else {
+			if (aggregate_number) {
+				if (block_size) {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN_GB, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, *block_size, operation, MYSQL_FRAG_ID,
+								    MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number, *block_size);
+				} else {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN_G, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
+								    MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
+				}
+			} else {
+				query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN, new_frag_name, MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name);
+			}
+		}
+
+		if (query_buflen >= max_size) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+			return OPH_DC_SERVER_ERROR;
+		}
+
+		char create_query[query_buflen];
 		if (where) {
 			if (aggregate_number) {
 				if (block_size) {
@@ -635,14 +761,14 @@ int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server
 					printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_WGB "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number, *block_size,
 					       MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where, MYSQL_FRAG_ID, *aggregate_number, *block_size);
 #endif
-					n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_WGB, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, *block_size, operation, MYSQL_FRAG_ID,
+					n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN_WGB, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, *block_size, operation, MYSQL_FRAG_ID,
 						     MYSQL_FRAG_MEASURE, old_frag->fragment_name, where, MYSQL_FRAG_ID, *aggregate_number, *block_size);
 				} else {
 #ifdef OPH_DEBUG_MYSQL
 					printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_WG "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number, MYSQL_FRAG_ID,
 					       operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where, MYSQL_FRAG_ID, *aggregate_number);
 #endif
-					n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_WG, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
+					n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN_WG, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
 						     MYSQL_FRAG_MEASURE, old_frag->fragment_name, where, MYSQL_FRAG_ID, *aggregate_number);
 				}
 			} else {
@@ -650,7 +776,7 @@ int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server
 				printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_W "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE,
 				       old_frag->fragment_name, where);
 #endif
-				n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_W, new_frag_name, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where);
+				n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN_W, new_frag_name, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where);
 			}
 		} else {
 			if (aggregate_number) {
@@ -659,14 +785,14 @@ int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server
 					printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_GB "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number, *block_size,
 					       MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number, *block_size);
 #endif
-					n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_GB, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, *block_size, operation, MYSQL_FRAG_ID,
+					n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN_GB, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, *block_size, operation, MYSQL_FRAG_ID,
 						     MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number, *block_size);
 				} else {
 #ifdef OPH_DEBUG_MYSQL
 					printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_G "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number, MYSQL_FRAG_ID,
 					       operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
 #endif
-					n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_G, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
+					n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN_G, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
 						     MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
 				}
 			} else {
@@ -674,11 +800,11 @@ int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server
 				printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE,
 				       old_frag->fragment_name);
 #endif
-				n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN, new_frag_name, MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name);
+				n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN, new_frag_name, MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name);
 			}
 		}
 
-		if (n >= QUERY_BUFLEN) {
+		if (n >= query_buflen) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 			return OPH_DC_SERVER_ERROR;
 		}
@@ -762,14 +888,25 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 	}
 	args[c_arg - 1] = NULL;
 
-	int n;
+	int n, query_buflen = QUERY_BUFLEN;
 	if (!param)
 		n = 1;
 
-	char create_query[QUERY_BUFLEN];
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+
 	if (new_frag_name == NULL) {
-		n = snprintf(create_query, QUERY_BUFLEN, operation);
-		if (n >= QUERY_BUFLEN) {
+
+		query_buflen = 1 + snprintf(NULL, 0, operation);
+		if (query_buflen >= max_size) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+			return OPH_DC_SERVER_ERROR;
+		}
+
+		char create_query[query_buflen];
+
+		n = snprintf(create_query, query_buflen, operation);
+		if (n >= query_buflen) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 			return OPH_DC_SERVER_ERROR;
 		}
@@ -808,7 +945,41 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 				free(args[ii]);
 		free(args);
 		oph_ioserver_free_query(server, query);
+
 	} else {
+
+		if (where) {
+			if (aggregate_number) {
+				if (block_size) {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN_WGB2, new_frag_name, MYSQL_FRAG_ID, *block_size, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
+								    old_frag->fragment_name, where, MYSQL_FRAG_ID, *block_size);
+				} else {
+					query_buflen = 1 + snprintf(NULL, 0, MYSQL_DC_APPLY_PLUGIN_WG, new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number,
+								    operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where, MYSQL_FRAG_ID, *aggregate_number);
+				}
+			} else {
+				query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN_W, new_frag_name, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where);
+			}
+		} else {
+			if (aggregate_number) {
+				if (block_size) {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN_GB2, new_frag_name, MYSQL_FRAG_ID, *block_size, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
+								    old_frag->fragment_name, MYSQL_FRAG_ID, *block_size);
+				} else {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN_G, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
+								    MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
+				}
+			} else {
+				query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN, new_frag_name, MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name);
+			}
+		}
+
+		if (query_buflen >= max_size) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+			return OPH_DC_SERVER_ERROR;
+		}
+
+		char create_query[query_buflen];
 
 		if (where) {
 			if (aggregate_number) {
@@ -817,14 +988,14 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 					printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_WGB2 "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *block_size, MYSQL_FRAG_ID,
 					       operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where, MYSQL_FRAG_ID, *block_size);
 #endif
-					n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_WGB2, new_frag_name, MYSQL_FRAG_ID, *block_size, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
+					n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN_WGB2, new_frag_name, MYSQL_FRAG_ID, *block_size, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
 						     old_frag->fragment_name, where, MYSQL_FRAG_ID, *block_size);
 				} else {
 #ifdef OPH_DEBUG_MYSQL
 					printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_WG "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number, MYSQL_FRAG_ID,
 					       operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where, MYSQL_FRAG_ID, *aggregate_number);
 #endif
-					n = snprintf(create_query, QUERY_BUFLEN, MYSQL_DC_APPLY_PLUGIN_WG, new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number,
+					n = snprintf(create_query, query_buflen, MYSQL_DC_APPLY_PLUGIN_WG, new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number,
 						     operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where, MYSQL_FRAG_ID, *aggregate_number);
 				}
 			} else {
@@ -832,7 +1003,7 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 				printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_W "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE,
 				       old_frag->fragment_name, where);
 #endif
-				n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_W, new_frag_name, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where);
+				n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN_W, new_frag_name, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, old_frag->fragment_name, where);
 			}
 		} else {
 			if (aggregate_number) {
@@ -841,14 +1012,14 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 					printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_GB2 "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *block_size, MYSQL_FRAG_ID,
 					       operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *block_size);
 #endif
-					n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_GB2, new_frag_name, MYSQL_FRAG_ID, *block_size, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
+					n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN_GB2, new_frag_name, MYSQL_FRAG_ID, *block_size, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
 						     old_frag->fragment_name, MYSQL_FRAG_ID, *block_size);
 				} else {
 #ifdef OPH_DEBUG_MYSQL
 					printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN_G "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, *aggregate_number, MYSQL_FRAG_ID,
 					       operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
 #endif
-					n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN_G, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
+					n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN_G, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, operation, MYSQL_FRAG_ID,
 						     MYSQL_FRAG_MEASURE, old_frag->fragment_name, MYSQL_FRAG_ID, *aggregate_number);
 				}
 			} else {
@@ -856,11 +1027,11 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 				printf("ORIGINAL QUERY: " MYSQL_DC_APPLY_PLUGIN "\n", new_frag_name, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE,
 				       old_frag->fragment_name);
 #endif
-				n = snprintf(create_query, QUERY_BUFLEN, OPH_DC_SQ_APPLY_PLUGIN, new_frag_name, MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name);
+				n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN, new_frag_name, MYSQL_FRAG_ID, operation, MYSQL_FRAG_MEASURE, old_frag->fragment_name);
 			}
 		}
 
-		if (n >= QUERY_BUFLEN) {
+		if (n >= query_buflen) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 			return OPH_DC_SERVER_ERROR;
 		}
@@ -1587,20 +1758,27 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	char read_query[QUERY_BUFLEN];
 	unsigned long long sizeof_var = 0;
 	*first_id = 0;
 	*last_id = 0;
 
-	int n;
+	int query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_READ_RAW_FRAG, old_frag->fragment_name);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
 	//Read input fragment
 #ifdef OPH_DEBUG_MYSQL
 	printf("ORIGINAL QUERY: " MYSQL_DC_READ_RAW_FRAG "\n", old_frag->fragment_name);
 #endif
-	n = snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_FRAG, old_frag->fragment_name);
-	if (n >= QUERY_BUFLEN) {
+
+	char read_query[query_buflen];
+	int n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_RAW_FRAG, old_frag->fragment_name);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -1640,7 +1818,6 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	char insert_query[QUERY_BUFLEN];
 	unsigned long long actual_size = 0;
 	unsigned long long *id_dim = NULL;
 	char *binary = NULL;
@@ -1721,8 +1898,17 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 #ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_DC_INSERT_FRAG "\n", new_frag->fragment_name);
 #endif
-		n = snprintf(insert_query, QUERY_BUFLEN, OPH_DC_SQ_INSERT_FRAG, new_frag->fragment_name);
-		if (n >= QUERY_BUFLEN) {
+
+		query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_INSERT_FRAG, new_frag->fragment_name);
+		if (query_buflen >= max_size) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+			oph_ioserver_free_result(input_server, old_result);
+			return OPH_DC_SERVER_ERROR;
+		}
+
+		char insert_query[query_buflen];
+		n = snprintf(insert_query, query_buflen, OPH_DC_SQ_INSERT_FRAG, new_frag->fragment_name);
+		if (n >= query_buflen) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 			oph_ioserver_free_result(input_server, old_result);
 			return OPH_DC_SERVER_ERROR;
@@ -1879,9 +2065,7 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 		return OPH_DC_NULL_PARAM;
 	}
 
-	char read_query[QUERY_BUFLEN];
 	unsigned long long sizeof_var = 0;
-	int n;
 
 	// Init res 
 	oph_ioserver_result *old_result1 = NULL;
@@ -1892,11 +2076,20 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
+
+	int query_buflen = 1 + snprintf(NULL, 0, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag1->fragment_name);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
 	//Read input fragment
-	n = snprintf(read_query, QUERY_BUFLEN, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag1->fragment_name);
-	if (n >= QUERY_BUFLEN) {
+	char read_query[query_buflen];
+	int n = snprintf(read_query, query_buflen, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag1->fragment_name);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -1937,16 +2130,23 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 		oph_ioserver_free_result(first_server, old_result1);
 		return OPH_DC_SERVER_ERROR;
 	}
+
+	query_buflen = 1 + snprintf(NULL, 0, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag2->fragment_name);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
 	//Read input fragment
-	n = snprintf(read_query, QUERY_BUFLEN, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag2->fragment_name);
-	if (n >= QUERY_BUFLEN) {
+	char read_query2[query_buflen];
+	n = snprintf(read_query2, query_buflen, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag2->fragment_name);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		oph_ioserver_free_result(first_server, old_result1);
 		return OPH_DC_SERVER_ERROR;
 	}
 
 	query = NULL;
-	if (oph_ioserver_setup_query(second_server, read_query, 1, NULL, &query)) {
+	if (oph_ioserver_setup_query(second_server, read_query2, 1, NULL, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
 		oph_ioserver_free_result(first_server, old_result1);
 		return OPH_DC_SERVER_ERROR;
@@ -1980,13 +2180,18 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	char insert_query[QUERY_BUFLEN];
 	unsigned long long actual_size = 0;
 	int c_arg = 4, ii;
 
+	query_buflen = 1 + snprintf(NULL, 0, compressed ? OPH_DC_SQ_INSERT_COMPRESSED_FRAG2 : OPH_DC_SQ_INSERT_FRAG2, frag_name, operation, measure_type, measure_type, measure_type);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
 	//If first or only execution
-	n = snprintf(insert_query, QUERY_BUFLEN, compressed ? OPH_DC_SQ_INSERT_COMPRESSED_FRAG2 : OPH_DC_SQ_INSERT_FRAG2, frag_name, operation, measure_type, measure_type, measure_type);
-	if (n >= QUERY_BUFLEN) {
+	char insert_query[query_buflen];
+	n = snprintf(insert_query, query_buflen, compressed ? OPH_DC_SQ_INSERT_COMPRESSED_FRAG2 : OPH_DC_SQ_INSERT_FRAG2, frag_name, operation, measure_type, measure_type, measure_type);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		oph_ioserver_free_result(first_server, old_result1);
 		oph_ioserver_free_result(second_server, old_result2);
@@ -2174,10 +2379,12 @@ int oph_dc_read_fragment_data(oph_ioserver_handler * server, oph_odb_fragment * 
 	}
 
 	char type_flag = '\0';
-	int n;
+	int n, query_buflen = QUERY_BUFLEN;
 
-	char read_query[QUERY_BUFLEN];
-	char *array_part = NULL;
+	char *array_part = NULL, *read_query = NULL;
+
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
 
 	if (!raw_format) {
 		//Select right data type
@@ -2240,6 +2447,42 @@ int oph_dc_read_fragment_data(oph_ioserver_handler * server, oph_odb_fragment * 
 
 		if (type_flag == OPH_DC_BIT_FLAG) {
 			if (array_clause)
+				snprintf(array_part, strlen(array_clause) + OPH_DC_MAX_SIZE, "(oph_bit_subarray2('','',%s,'%s'))", (compressed ? "oph_uncompress('','',measure)" : "measure"),
+					 array_clause);
+			else
+				snprintf(array_part, OPH_DC_MIN_SIZE, "%s", (compressed ? "oph_uncompress('','',measure)" : "measure"));
+			if (id_clause) {
+				query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_READ_FRAG_SPECIAL3, MYSQL_FRAG_ID, id_clause, array_part, frag->fragment_name, where_part, MYSQL_FRAG_ID, limit_part);
+			} else {
+				query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_READ_FRAG_SPECIAL4, MYSQL_FRAG_ID, array_part, frag->fragment_name, where_part, MYSQL_FRAG_ID, limit_part);
+			}
+		} else {
+			if (array_clause) {
+				char ttype[QUERY_BUFLEN];
+				snprintf(ttype, QUERY_BUFLEN, "%s", oph_dc_stringof(type_flag));
+				snprintf(array_part, strlen(array_clause) + OPH_DC_MAX_SIZE, "(oph_get_subarray2('OPH_%s','OPH_%s',%s,'%s'))", ttype, ttype,
+					 (compressed ? "oph_uncompress('','',measure)" : "measure"), array_clause);
+			} else
+				snprintf(array_part, OPH_DC_MIN_SIZE, "%s", (compressed ? "oph_uncompress('','',measure)" : "measure"));
+			if (id_clause) {
+				query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_READ_FRAG_SPECIAL1, MYSQL_FRAG_ID, id_clause, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), array_part,
+							    frag->fragment_name, where_part, MYSQL_FRAG_ID, limit_part);
+			} else {
+				query_buflen =
+				    1 + snprintf(NULL, 0, OPH_DC_SQ_READ_FRAG_SPECIAL2, MYSQL_FRAG_ID, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), array_part, frag->fragment_name,
+						 where_part, MYSQL_FRAG_ID, limit_part);
+			}
+		}
+
+		if (query_buflen >= max_size) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+			return OPH_DC_SERVER_ERROR;
+		}
+
+		read_query = (char *) malloc(query_buflen * sizeof(char));
+
+		if (type_flag == OPH_DC_BIT_FLAG) {
+			if (array_clause)
 				n = snprintf(array_part, strlen(array_clause) + OPH_DC_MAX_SIZE, "(oph_bit_subarray2('','',%s,'%s'))", (compressed ? "oph_uncompress('','',measure)" : "measure"),
 					     array_clause);
 			else
@@ -2248,12 +2491,12 @@ int oph_dc_read_fragment_data(oph_ioserver_handler * server, oph_odb_fragment * 
 #ifdef OPH_DEBUG_MYSQL
 				printf("ORIGINAL QUERY: " MYSQL_DC_READ_FRAG_SPECIAL3 "\n", MYSQL_FRAG_ID, id_clause, array_part, frag->fragment_name, where_part_sql, MYSQL_FRAG_ID, limit_part_sql);
 #endif
-				n = snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_FRAG_SPECIAL3, MYSQL_FRAG_ID, id_clause, array_part, frag->fragment_name, where_part, MYSQL_FRAG_ID, limit_part);
+				n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_FRAG_SPECIAL3, MYSQL_FRAG_ID, id_clause, array_part, frag->fragment_name, where_part, MYSQL_FRAG_ID, limit_part);
 			} else {
 #ifdef OPH_DEBUG_MYSQL
 				printf("ORIGINAL QUERY: " MYSQL_DC_READ_FRAG_SPECIAL4 "\n", MYSQL_FRAG_ID, array_part, frag->fragment_name, where_part_sql, MYSQL_FRAG_ID, limit_part_sql);
 #endif
-				n = snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_FRAG_SPECIAL4, MYSQL_FRAG_ID, array_part, frag->fragment_name, where_part, MYSQL_FRAG_ID, limit_part);
+				n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_FRAG_SPECIAL4, MYSQL_FRAG_ID, array_part, frag->fragment_name, where_part, MYSQL_FRAG_ID, limit_part);
 			}
 		} else {
 			if (array_clause) {
@@ -2268,40 +2511,61 @@ int oph_dc_read_fragment_data(oph_ioserver_handler * server, oph_odb_fragment * 
 				printf("ORIGINAL QUERY: " MYSQL_DC_READ_FRAG_SPECIAL1 "\n", MYSQL_FRAG_ID, id_clause, oph_dc_stringof(type_flag), array_part, frag->fragment_name, where_part_sql,
 				       MYSQL_FRAG_ID, limit_part_sql);
 #endif
-				n = snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_FRAG_SPECIAL1, MYSQL_FRAG_ID, id_clause, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), array_part,
+				n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_FRAG_SPECIAL1, MYSQL_FRAG_ID, id_clause, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), array_part,
 					     frag->fragment_name, where_part, MYSQL_FRAG_ID, limit_part);
 			} else {
 #ifdef OPH_DEBUG_MYSQL
 				printf("ORIGINAL QUERY: " MYSQL_DC_READ_FRAG_SPECIAL2 "\n", MYSQL_FRAG_ID, oph_dc_stringof(type_flag), array_part, frag->fragment_name, where_part_sql, MYSQL_FRAG_ID,
 				       limit_part_sql);
 #endif
-				n = snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_FRAG_SPECIAL2, MYSQL_FRAG_ID, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), array_part,
+				n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_FRAG_SPECIAL2, MYSQL_FRAG_ID, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), array_part,
 					     frag->fragment_name, where_part, MYSQL_FRAG_ID, limit_part);
 			}
 		}
 		free(array_part);
 		free(limit_part);
 		free(where_part);
+
 	} else if (!array_clause)	// Real raw
 	{
+
+		if (data_type && !strcasecmp(data_type, OPH_DC_BIT_TYPE)) {
+			query_buflen =
+			    1 + snprintf(NULL, 0, OPH_DC_SQ_READ_RAW_FRAG2 "\n", compressed ? "oph_bit_export('','OPH_INT',oph_uncompress('','',measure))" : "oph_bit_export('','OPH_INT',measure)",
+					 frag->fragment_name);
+		} else {
+			if (compressed) {
+				query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG, frag->fragment_name);
+			} else {
+				query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_READ_RAW_FRAG, frag->fragment_name);
+			}
+		}
+
+		if (query_buflen >= max_size) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+			return OPH_DC_SERVER_ERROR;
+		}
+
+		read_query = (char *) malloc(query_buflen * sizeof(char));
+
 		if (data_type && !strcasecmp(data_type, OPH_DC_BIT_TYPE)) {
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_READ_RAW_FRAG2 "\n", compressed ? "oph_bit_export('','OPH_INT',oph_uncompress('','',measure))" : "oph_bit_export('','OPH_INT',measure)",
 			       frag->fragment_name);
 #endif
-			n = snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_FRAG2 "\n",
+			n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_RAW_FRAG2 "\n",
 				     compressed ? "oph_bit_export('','OPH_INT',oph_uncompress('','',measure))" : "oph_bit_export('','OPH_INT',measure)", frag->fragment_name);
 		} else {
 			if (compressed) {
 #ifdef OPH_DEBUG_MYSQL
 				printf("ORIGINAL QUERY: " MYSQL_DC_READ_RAW_COMPRESSED_FRAG "\n", frag->fragment_name);
 #endif
-				n = snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG, frag->fragment_name);
+				n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG, frag->fragment_name);
 			} else {
 #ifdef OPH_DEBUG_MYSQL
 				printf("ORIGINAL QUERY: " MYSQL_DC_READ_RAW_FRAG "\n", frag->fragment_name);
 #endif
-				n = snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_FRAG, frag->fragment_name);
+				n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_RAW_FRAG, frag->fragment_name);
 			}
 		}
 	} else			// Raw adapted to inspect cube
@@ -2309,27 +2573,64 @@ int oph_dc_read_fragment_data(oph_ioserver_handler * server, oph_odb_fragment * 
 		if (limit) {
 			if (where_clause) {
 				if (id_clause) {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_READ_RAW_FRAG3_WLI, id_clause, array_clause, frag->fragment_name, where_clause, limit);
+				} else {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_READ_RAW_FRAG3_WL, array_clause, frag->fragment_name, where_clause, limit);
+				}
+			} else {
+				if (id_clause) {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_READ_RAW_FRAG3_LI, id_clause, array_clause, frag->fragment_name, limit);
+				} else {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_READ_RAW_FRAG3_L, array_clause, frag->fragment_name, limit);
+				}
+			}
+		} else {
+			if (where_clause) {
+				if (id_clause) {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_READ_RAW_FRAG3_WI, id_clause, array_clause, frag->fragment_name, where_clause);
+				} else {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_READ_RAW_FRAG3_W, array_clause, frag->fragment_name, where_clause);
+				}
+			} else {
+				if (id_clause) {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_READ_RAW_FRAG3_I, id_clause, array_clause, frag->fragment_name);
+				} else {
+					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_READ_RAW_FRAG3, array_clause, frag->fragment_name);
+				}
+			}
+		}
+
+		if (query_buflen >= max_size) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+			return OPH_DC_SERVER_ERROR;
+		}
+
+		read_query = (char *) malloc(query_buflen * sizeof(char));
+
+		if (limit) {
+			if (where_clause) {
+				if (id_clause) {
 #ifdef OPH_DEBUG_MYSQL
 					printf("ORIGINAL QUERY: " MYSQL_DC_READ_RAW_FRAG3_WLI "\n", id_clause, array_clause, frag->fragment_name, where_clause, limit);
 #endif
-					n = snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_FRAG3_WLI, id_clause, array_clause, frag->fragment_name, where_clause, limit);
+					n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_RAW_FRAG3_WLI, id_clause, array_clause, frag->fragment_name, where_clause, limit);
 				} else {
 #ifdef OPH_DEBUG_MYSQL
 					printf("ORIGINAL QUERY: " MYSQL_DC_READ_RAW_FRAG3_WL "\n", array_clause, frag->fragment_name, where_clause, limit);
 #endif
-					n = snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_FRAG3_WL, array_clause, frag->fragment_name, where_clause, limit);
+					n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_RAW_FRAG3_WL, array_clause, frag->fragment_name, where_clause, limit);
 				}
 			} else {
 				if (id_clause) {
 #ifdef OPH_DEBUG_MYSQL
 					printf("ORIGINAL QUERY: " MYSQL_DC_READ_RAW_FRAG3_LI "\n", id_clause, array_clause, frag->fragment_name, limit);
 #endif
-					n = snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_FRAG3_LI, id_clause, array_clause, frag->fragment_name, limit);
+					n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_RAW_FRAG3_LI, id_clause, array_clause, frag->fragment_name, limit);
 				} else {
 #ifdef OPH_DEBUG_MYSQL
 					printf("ORIGINAL QUERY: " MYSQL_DC_READ_RAW_FRAG3_L "\n", array_clause, frag->fragment_name, limit);
 #endif
-					n = snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_FRAG3_L, array_clause, frag->fragment_name, limit);
+					n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_RAW_FRAG3_L, array_clause, frag->fragment_name, limit);
 				}
 			}
 		} else {
@@ -2338,32 +2639,33 @@ int oph_dc_read_fragment_data(oph_ioserver_handler * server, oph_odb_fragment * 
 #ifdef OPH_DEBUG_MYSQL
 					printf("ORIGINAL QUERY: " MYSQL_DC_READ_RAW_FRAG3_WI "\n", id_clause, array_clause, frag->fragment_name, where_clause);
 #endif
-					n = snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_FRAG3_WI, id_clause, array_clause, frag->fragment_name, where_clause);
+					n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_RAW_FRAG3_WI, id_clause, array_clause, frag->fragment_name, where_clause);
 				} else {
 #ifdef OPH_DEBUG_MYSQL
 					printf("ORIGINAL QUERY: " MYSQL_DC_READ_RAW_FRAG3_W "\n", array_clause, frag->fragment_name, where_clause);
 #endif
-					n = snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_FRAG3_W, array_clause, frag->fragment_name, where_clause);
+					n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_RAW_FRAG3_W, array_clause, frag->fragment_name, where_clause);
 				}
 			} else {
 				if (id_clause) {
 #ifdef OPH_DEBUG_MYSQL
 					printf("ORIGINAL QUERY: " MYSQL_DC_READ_RAW_FRAG3_I "\n", id_clause, array_clause, frag->fragment_name);
 #endif
-					n = snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_FRAG3_I, id_clause, array_clause, frag->fragment_name);
+					n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_RAW_FRAG3_I, id_clause, array_clause, frag->fragment_name);
 				} else {
 #ifdef OPH_DEBUG_MYSQL
 					printf("ORIGINAL QUERY: " MYSQL_DC_READ_RAW_FRAG3 "\n", array_clause, frag->fragment_name);
 #endif
-					n = snprintf(read_query, QUERY_BUFLEN, OPH_DC_SQ_READ_RAW_FRAG3, array_clause, frag->fragment_name);
+					n = snprintf(read_query, query_buflen, OPH_DC_SQ_READ_RAW_FRAG3, array_clause, frag->fragment_name);
 				}
 			}
 		}
 	}
 
-	if (n >= QUERY_BUFLEN) {
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		free(read_query);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -2371,6 +2673,7 @@ int oph_dc_read_fragment_data(oph_ioserver_handler * server, oph_odb_fragment * 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query '%s'\n", read_query);
 		return OPH_DC_SERVER_ERROR;
 	}
+	free(read_query);
 
 	if (oph_ioserver_execute_query(server, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation '%s'\n", read_query);
@@ -2402,43 +2705,64 @@ int oph_dc_get_total_number_of_elements_in_fragment(oph_ioserver_handler * serve
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	int n;
+	int n, query_buflen = QUERY_BUFLEN;
 	char type_flag = oph_dc_typeof(data_type);
 	if (!type_flag) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 		return OPH_DC_DATA_ERROR;
 	}
 
-	char select_query[QUERY_BUFLEN];
+	if (type_flag == OPH_DC_BIT_FLAG) {
+		if (compressed == 1) {
+			query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_COUNT_COMPRESSED_BIT_ELEMENTS_FRAG, frag->fragment_name);
+		} else {
+			query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_COUNT_BIT_ELEMENTS_FRAG, frag->fragment_name);
+		}
+	} else {
+		if (compressed == 1) {
+			query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_COUNT_COMPRESSED_ELEMENTS_FRAG, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), frag->fragment_name);
+		} else {
+			query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_COUNT_ELEMENTS_FRAG, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), frag->fragment_name);
+		}
+	}
+
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	char select_query[query_buflen];
 
 	if (type_flag == OPH_DC_BIT_FLAG) {
 		if (compressed == 1) {
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_COUNT_COMPRESSED_BIT_ELEMENTS_FRAG "\n", frag->fragment_name);
 #endif
-			n = snprintf(select_query, QUERY_BUFLEN, OPH_DC_SQ_COUNT_COMPRESSED_BIT_ELEMENTS_FRAG, frag->fragment_name);
+			n = snprintf(select_query, query_buflen, OPH_DC_SQ_COUNT_COMPRESSED_BIT_ELEMENTS_FRAG, frag->fragment_name);
 		} else {
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_COUNT_BIT_ELEMENTS_FRAG "\n", frag->fragment_name);
 #endif
-			n = snprintf(select_query, QUERY_BUFLEN, OPH_DC_SQ_COUNT_BIT_ELEMENTS_FRAG, frag->fragment_name);
+			n = snprintf(select_query, query_buflen, OPH_DC_SQ_COUNT_BIT_ELEMENTS_FRAG, frag->fragment_name);
 		}
 	} else {
 		if (compressed == 1) {
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_COUNT_COMPRESSED_ELEMENTS_FRAG "\n", oph_dc_stringof(type_flag), frag->fragment_name);
 #endif
-			n = snprintf(select_query, QUERY_BUFLEN, OPH_DC_SQ_COUNT_COMPRESSED_ELEMENTS_FRAG, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), frag->fragment_name);
+			n = snprintf(select_query, query_buflen, OPH_DC_SQ_COUNT_COMPRESSED_ELEMENTS_FRAG, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), frag->fragment_name);
 		} else {
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_COUNT_ELEMENTS_FRAG "\n", oph_dc_stringof(type_flag), frag->fragment_name);
 #endif
-			n = snprintf(select_query, QUERY_BUFLEN, OPH_DC_SQ_COUNT_ELEMENTS_FRAG, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), frag->fragment_name);
+			n = snprintf(select_query, query_buflen, OPH_DC_SQ_COUNT_ELEMENTS_FRAG, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), frag->fragment_name);
 		}
 	}
-	if (n >= QUERY_BUFLEN) {
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -2501,13 +2825,19 @@ int oph_dc_get_total_number_of_rows_in_fragment(oph_ioserver_handler * server, o
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	int n;
+	int query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_COUNT_ROWS_FRAG, frag->fragment_name);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
 
-	char select_query[QUERY_BUFLEN];
-	n = snprintf(select_query, QUERY_BUFLEN, OPH_DC_SQ_COUNT_ROWS_FRAG, frag->fragment_name);
-	if (n >= QUERY_BUFLEN) {
+	char select_query[query_buflen];
+	int n = snprintf(select_query, query_buflen, OPH_DC_SQ_COUNT_ROWS_FRAG, frag->fragment_name);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -2570,44 +2900,65 @@ int oph_dc_get_number_of_elements_in_fragment_row(oph_ioserver_handler * server,
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	int n;
+	int n, query_buflen = QUERY_BUFLEN;
 	char type_flag = oph_dc_typeof(data_type);
 	if (!type_flag) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 		return OPH_DC_DATA_ERROR;
 	}
 
-	char select_query[QUERY_BUFLEN];
+	if (type_flag == OPH_DC_BIT_FLAG) {
+		if (compressed == 1) {
+			query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_COUNT_COMPRESSED_BIT_ELEMENTS_FRAG_ROW, frag->fragment_name);
+		} else {
+			query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_COUNT_BIT_ELEMENTS_FRAG_ROW, frag->fragment_name);
+		}
+	} else {
+		if (compressed == 1) {
+			query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_COUNT_COMPRESSED_ELEMENTS_FRAG_ROW, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), frag->fragment_name);
+		} else {
+			query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_COUNT_ELEMENTS_FRAG_ROW, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), frag->fragment_name);
+		}
+	}
+
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	char select_query[query_buflen];
 
 	if (type_flag == OPH_DC_BIT_FLAG) {
 		if (compressed == 1) {
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_COUNT_COMPRESSED_BIT_ELEMENTS_FRAG_ROW "\n", frag->fragment_name);
 #endif
-			n = snprintf(select_query, QUERY_BUFLEN, OPH_DC_SQ_COUNT_COMPRESSED_BIT_ELEMENTS_FRAG_ROW, frag->fragment_name);
+			n = snprintf(select_query, query_buflen, OPH_DC_SQ_COUNT_COMPRESSED_BIT_ELEMENTS_FRAG_ROW, frag->fragment_name);
 		} else {
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_COUNT_BIT_ELEMENTS_FRAG_ROW "\n", frag->fragment_name);
 #endif
-			n = snprintf(select_query, QUERY_BUFLEN, OPH_DC_SQ_COUNT_BIT_ELEMENTS_FRAG_ROW, frag->fragment_name);
+			n = snprintf(select_query, query_buflen, OPH_DC_SQ_COUNT_BIT_ELEMENTS_FRAG_ROW, frag->fragment_name);
 		}
 	} else {
 		if (compressed == 1) {
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_COUNT_COMPRESSED_ELEMENTS_FRAG_ROW "\n", oph_dc_stringof(type_flag), frag->fragment_name);
 #endif
-			n = snprintf(select_query, QUERY_BUFLEN, OPH_DC_SQ_COUNT_COMPRESSED_ELEMENTS_FRAG_ROW, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), frag->fragment_name);
+			n = snprintf(select_query, query_buflen, OPH_DC_SQ_COUNT_COMPRESSED_ELEMENTS_FRAG_ROW, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), frag->fragment_name);
 		} else {
 #ifdef OPH_DEBUG_MYSQL
 			printf("ORIGINAL QUERY: " MYSQL_DC_COUNT_ELEMENTS_FRAG_ROW "\n", oph_dc_stringof(type_flag), frag->fragment_name);
 #endif
-			n = snprintf(select_query, QUERY_BUFLEN, OPH_DC_SQ_COUNT_ELEMENTS_FRAG_ROW, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), frag->fragment_name);
+			n = snprintf(select_query, query_buflen, OPH_DC_SQ_COUNT_ELEMENTS_FRAG_ROW, oph_dc_stringof(type_flag), oph_dc_stringof(type_flag), frag->fragment_name);
 		}
 	}
 
-	if (n >= QUERY_BUFLEN) {
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -2669,16 +3020,23 @@ int oph_dc_get_fragments_size_in_bytes(oph_ioserver_handler * server, oph_odb_db
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
 		return OPH_DC_SERVER_ERROR;
 	}
-
-
-	char select_query[10 * QUERY_BUFLEN];
 #ifdef OPH_DEBUG_MYSQL
 	printf("ORIGINAL QUERY: " MYSQL_DC_SIZE_ELEMENTS_FRAG "\n", frag_name);
 #endif
-	int n = snprintf(select_query, 10 * QUERY_BUFLEN, OPH_DC_SQ_SIZE_ELEMENTS_FRAG, frag_name);
-	if (n >= 10 * QUERY_BUFLEN) {
+
+	int query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_SIZE_ELEMENTS_FRAG, frag_name);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	char select_query[query_buflen];
+	int n = snprintf(select_query, query_buflen, OPH_DC_SQ_SIZE_ELEMENTS_FRAG, frag_name);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;
@@ -2741,22 +3099,37 @@ int oph_dc_get_primitives(oph_ioserver_handler * server, oph_odb_dbms_instance *
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	char select_query[10 * QUERY_BUFLEN];
-	int n = 0;
+	int n = 0, query_buflen = QUERY_BUFLEN;
+
+	if (!frag_name) {
+		query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_RETRIEVE_PRIMITIVES_LIST);
+	} else {
+		query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_RETRIEVE_PRIMITIVES_LIST_W, frag_name);
+	}
+
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	char select_query[query_buflen];
+
 	if (!frag_name) {
 #ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_QUERY_RETRIEVE_PRIMITIVES_LIST "\n");
 #endif
-		n = snprintf(select_query, 10 * QUERY_BUFLEN, OPH_DC_SQ_RETRIEVE_PRIMITIVES_LIST);
+		n = snprintf(select_query, query_buflen, OPH_DC_SQ_RETRIEVE_PRIMITIVES_LIST);
 	} else {
 #ifdef OPH_DEBUG_MYSQL
 		printf("ORIGINAL QUERY: " MYSQL_QUERY_RETRIEVE_PRIMITIVES_LIST_W "\n", frag_name);
 #endif
-		n = snprintf(select_query, 10 * QUERY_BUFLEN, OPH_DC_SQ_RETRIEVE_PRIMITIVES_LIST_W, frag_name);
+		n = snprintf(select_query, query_buflen, OPH_DC_SQ_RETRIEVE_PRIMITIVES_LIST_W, frag_name);
 	}
-	if (n >= 10 * QUERY_BUFLEN) {
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_DC_SERVER_ERROR;
+		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
 	oph_ioserver_query *query = NULL;

@@ -39,6 +39,7 @@ extern int msglevel;
 char *oph_web_server_name = NULL;
 char *oph_web_server_location = NULL;
 long long oph_memory_size = -1;
+long long oph_buffer_size = -1;
 char *oph_base_src_path = NULL;
 char *oph_base_user_path = NULL;
 char oph_user_space = -1;
@@ -108,6 +109,8 @@ int _oph_pid_load_data()
 					oph_web_server_location[size] = '\0';
 			} else if (!strncmp(buffer, OPH_PID_MEMORY, strlen(OPH_PID_MEMORY)) && !strncmp(buffer, OPH_PID_MEMORY, strlen(buffer))) {
 				oph_memory_size = (long long) strtoll(position, NULL, 10);
+			} else if (!strncmp(buffer, OPH_PID_BUFFER, strlen(OPH_PID_BUFFER)) && !strncmp(buffer, OPH_PID_BUFFER, strlen(buffer))) {
+				oph_buffer_size = (long long) strtoll(position, NULL, 10);
 			} else if (!strncmp(buffer, OPH_PID_BASE_SRC_PATH, strlen(OPH_PID_BASE_SRC_PATH)) && !strncmp(buffer, OPH_PID_BASE_SRC_PATH, strlen(buffer))) {
 				if (!(oph_base_src_path = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -156,6 +159,9 @@ int _oph_pid_load_data()
 	if (oph_user_space < 0)
 		oph_user_space = 0;
 
+	if (oph_buffer_size < 0)
+		oph_buffer_size = 0;
+
 	return OPH_PID_SUCCESS;
 }
 
@@ -197,6 +203,24 @@ int oph_pid_get_memory_size(long long *memory_size)
 			return res;
 	}
 	*memory_size = oph_memory_size;
+
+	return OPH_PID_SUCCESS;
+}
+
+int oph_pid_get_buffer_size(long long *buffer_size)
+{
+	if (!buffer_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_PID_NULL_PARAM;
+	}
+	*buffer_size = 0;
+
+	if (oph_buffer_size < 0) {
+		int res;
+		if ((res = _oph_pid_load_data()))
+			return res;
+	}
+	*buffer_size = oph_buffer_size ? oph_buffer_size : QUERY_BUFLEN;
 
 	return OPH_PID_SUCCESS;
 }
