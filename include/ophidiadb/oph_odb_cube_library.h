@@ -347,4 +347,6 @@ int oph_odb_cube_update_tuplexfragment(ophidiadb * oDB, int id_datacube, int tup
 
 int oph_odb_cube_update_level_in_cubehasdim_table(ophidiadb * oDB, int level, int id_cubehasdim);
 
+int oph_odb_cube_order_by(ophidiadb * oDB, int order, int *id_datacube, int n);
+
 #endif				/* __OPH_ODB_CUBE_H__ */

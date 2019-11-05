@@ -20,7 +20,10 @@ data cubes can be merged.
 - hold_values : enables the copy of the original values of implicit dimension; by default new values are incremental integers.
 - number : number of replies of the first cube; by default the first cube is considered only once.
 - description : additional description to be associated with the output cube.
-        
+- order : criteria on which input cubes are ordered before merging:
+          - source : cubes are ordered by source, provided that level is 0
+          By default input cubes are not ordered.
+
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
               asynchronous mode, sync for synchronous mode with json-compliant output.
@@ -52,6 +55,7 @@ SUBMISSION STRING: &quot;operator=oph_mergecubes;cubes=http://www.example.com/1/
 		<argument type="string" mandatory="no" default="no" values="yes|no">hold_values</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">number</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="none" values="none|source">order</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|mergecubes">objkey_filter</argument>
     </args>
 </operator>

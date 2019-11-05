@@ -316,9 +316,20 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
  * \param dim Dimension metadata
  * \param tm_time Time struct to save output; it must be already allocated
  * \param base_time Base time (in sec) evaluated internally (it could be NULL)
+ * \param raw_value Time value in seconds (it could be NULL)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, struct tm *tm_time, long long *base_time);
+int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, struct tm *tm_time, long long *base_time, long long *raw_value);
+
+/**
+ * \brief Function to extract the datetime string associated to a time dimension value
+ * \param dim_row Dimension array
+ * \param kk Index of dimension value to be classified
+ * \param dim Dimension metadata
+ * \param raw_value Time value in seconds
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_dim_set_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, long long raw_value);
 
 /**
  * \brief Function to extract the datetime string associated to a time dimension value
