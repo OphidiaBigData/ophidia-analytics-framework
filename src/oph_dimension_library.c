@@ -31,6 +31,7 @@
 
 #include "oph_framework_paths.h"
 #include "oph-lib-binary-io.h"
+#include "oph_pid_library.h"
 
 #include "query/oph_datacube_query.h"
 
@@ -333,7 +334,7 @@ int oph_day_to_date(long long g, int *yy, int *mm, int *dd, int *wd, int *yd, op
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, struct tm *tm_base, long long *base_time)
+int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, struct tm *tm_base, long long *base_time, long long *raw_value)
 {
 	if (!dim_row || !dim || !tm_base) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -371,7 +372,10 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 
 	// Add the base
 	if (dim->base_time && strlen(dim->base_time)) {
-		strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", tm_base);
+		if (strchr(dim->base_time, 'T'))
+			strptime(dim->base_time, "%Y-%m-%dT%H:%M:%S", tm_base);
+		else
+			strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", tm_base);
 		tm_base->tm_year += 1900;
 		tm_base->tm_mon++;
 		if (oph_date_to_day(tm_base->tm_year, tm_base->tm_mon, tm_base->tm_mday, base_time_, dim)) {
@@ -383,6 +387,8 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 	// Convert to "date"
 	memset(tm_base, 0, sizeof(struct tm));
 	long long value = (long long) _value + (*base_time_);
+	if (raw_value)
+		*raw_value = value;
 	tm_base->tm_sec = value % OPH_ODB_DIM_SECOND_NUMBER;
 	value /= OPH_ODB_DIM_SECOND_NUMBER;	// minutes
 	tm_base->tm_min = value % OPH_ODB_DIM_MINUTE_NUMBER;
@@ -393,6 +399,59 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
 		return OPH_DIM_DATA_ERROR;
 	}
+
+	return OPH_DIM_SUCCESS;
+}
+
+int oph_dim_set_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, long long raw_value)
+{
+	if (!dim_row || !dim) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_DIM_NULL_PARAM;
+	}
+	if (!dim->calendar || !strlen(dim->calendar))
+		return OPH_DIM_TIME_PARSING_ERROR;
+
+	// Remove the base
+	long long base_time = 0;
+	if (dim->base_time && strlen(dim->base_time)) {
+		struct tm tm_base;
+		memset(&tm_base, 0, sizeof(struct tm));
+		if (strchr(dim->base_time, 'T'))
+			strptime(dim->base_time, "%Y-%m-%dT%H:%M:%S", &tm_base);
+		else
+			strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", &tm_base);
+		tm_base.tm_year += 1900;
+		tm_base.tm_mon++;
+		if (oph_date_to_day(tm_base.tm_year, tm_base.tm_mon, tm_base.tm_mday, &base_time, dim)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
+			return OPH_DIM_DATA_ERROR;
+		}
+		base_time = tm_base.tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base.tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base.tm_hour + OPH_ODB_DIM_HOUR_NUMBER * base_time));
+	}
+	double _value = raw_value - base_time;
+
+	// Convert to "seconds"
+	switch (dim->units[0]) {
+		case 'd':
+			_value /= 4.0;
+		case '6':
+			_value /= 2.0;
+		case '3':
+			_value /= 3.0;
+		case 'h':
+			_value /= 60.0;
+		case 'm':
+			_value /= 60.0;
+		case 's':
+			break;
+		default:
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unrecognized or unsupported units\n");
+	}
+
+	// Write the offset
+	if (oph_dim_set_double_value_of(dim_row, kk, dim->dimension_type, _value))
+		return OPH_DIM_DATA_ERROR;
 
 	return OPH_DIM_SUCCESS;
 }
@@ -409,7 +468,7 @@ int oph_dim_get_time_string_of(char *dim_row, unsigned int kk, oph_odb_dimension
 	struct tm tm_base;
 	memset(&tm_base, 0, sizeof(struct tm));
 
-	if (oph_dim_get_time_value_of(dim_row, kk, dim, &tm_base, NULL))
+	if (oph_dim_get_time_value_of(dim_row, kk, dim, &tm_base, NULL, NULL))
 		return OPH_DIM_DATA_ERROR;
 
 	snprintf(output_string, MYSQL_BUFLEN, "%04d-%02d-%02d %02d:%02d:%02d", tm_base.tm_year, tm_base.tm_mon, tm_base.tm_mday, tm_base.tm_hour, tm_base.tm_min, tm_base.tm_sec);
@@ -532,7 +591,7 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 
 	struct tm tm_base;
 	long long base_time;
-	if (oph_dim_get_time_value_of(dim_row, kk, dim, &tm_base, &base_time))
+	if (oph_dim_get_time_value_of(dim_row, kk, dim, &tm_base, &base_time, NULL))
 		return OPH_DIM_DATA_ERROR;
 	int msize, prev_week, base_week;
 
@@ -749,7 +808,10 @@ int _oph_dim_get_base_time(oph_odb_dimension * dim, long long *base_time)
 	struct tm tm_value;
 	memset(&tm_value, 0, sizeof(struct tm));
 	if (dim->base_time && strlen(dim->base_time)) {
-		strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", &tm_value);
+		if (strchr(dim->base_time, 'T'))
+			strptime(dim->base_time, "%Y-%m-%dT%H:%M:%S", &tm_value);
+		else
+			strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", &tm_value);
 		tm_value.tm_year += 1900;
 		tm_value.tm_mon++;
 		if (oph_date_to_day(tm_value.tm_year, tm_value.tm_mon, tm_value.tm_mday, base_time, dim)) {
@@ -800,8 +862,11 @@ int oph_dim_parse_season_subset(const char *subset_string, oph_odb_dimension * d
 		return OPH_DIM_TIME_PARSING_ERROR;
 	*output_string = 0;
 
-	char *pch = NULL, *save_pointer = NULL, temp[MYSQL_BUFLEN];
-	snprintf(temp, MYSQL_BUFLEN, "%s", subset_string);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+
+	char *pch = NULL, *save_pointer = NULL, temp[max_size];
+	strcpy(temp, subset_string);
 
 	long long base_time = 0, value_time;
 	double min, max, scaling_factor;
@@ -840,7 +905,7 @@ int oph_dim_parse_season_subset(const char *subset_string, oph_odb_dimension * d
 
 	int i, n = 0, nn;
 	unsigned char type, first = 0;
-	char season[5], temp2[MYSQL_BUFLEN], temp3[MYSQL_BUFLEN];
+	char season[5], temp2[max_size], temp3[max_size];
 	for (i = 0; i < 5; ++i)
 		season[i] = 0;
 	while ((pch = strtok_r(pch ? NULL : temp, OPH_DIM_SUBSET_SEPARATOR1, &save_pointer))) {
@@ -854,7 +919,7 @@ int oph_dim_parse_season_subset(const char *subset_string, oph_odb_dimension * d
 			type = 4;
 		else {
 			type = 0;
-			n += snprintf(output_string + n, MYSQL_BUFLEN - n, "%s%s", first ? OPH_DIM_SUBSET_SEPARATOR1 : "", pch);
+			n += snprintf(output_string + n, max_size - n, "%s%s", first ? OPH_DIM_SUBSET_SEPARATOR1 : "", pch);
 		}
 		if (type && !season[type]) {
 			season[type] = 1;	// Avoid to repeat the same season more times
@@ -868,15 +933,15 @@ int oph_dim_parse_season_subset(const char *subset_string, oph_odb_dimension * d
 					tm_base.tm_mon = 11;
 					tm_base.tm_year--;
 				}
-				strftime(temp3, MYSQL_BUFLEN, "%Y-%m", &tm_base);
-				nn += snprintf(temp2 + nn, MYSQL_BUFLEN - nn, "%s%s%c", i > min_year ? OPH_DIM_SUBSET_SEPARATOR1 : "", temp3, OPH_DIM_SUBSET_SEPARATOR[1]);
+				strftime(temp3, max_size, "%Y-%m", &tm_base);
+				nn += snprintf(temp2 + nn, max_size - nn, "%s%s%c", i > min_year ? OPH_DIM_SUBSET_SEPARATOR1 : "", temp3, OPH_DIM_SUBSET_SEPARATOR[1]);
 				memset(&tm_base, 0, sizeof(struct tm));
 				tm_base.tm_mon = type - 1;
 				tm_base.tm_year = i;
-				strftime(temp3, MYSQL_BUFLEN, "%Y-%m", &tm_base);
-				nn += snprintf(temp2 + nn, MYSQL_BUFLEN - nn, "%s", temp3);
+				strftime(temp3, max_size, "%Y-%m", &tm_base);
+				nn += snprintf(temp2 + nn, max_size - nn, "%s", temp3);
 			}
-			n += snprintf(output_string + n, MYSQL_BUFLEN - n, "%s%s", first ? OPH_DIM_SUBSET_SEPARATOR1 : "", temp2);
+			n += snprintf(output_string + n, max_size - n, "%s%s", first ? OPH_DIM_SUBSET_SEPARATOR1 : "", temp2);
 		}
 		first = 1;
 	}
@@ -894,9 +959,12 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 		return OPH_DIM_TIME_PARSING_ERROR;
 	*output_string = 0;
 
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+
 	int n, nn, nnn;
-	char *pch = NULL, *save_pointer = NULL, temp[MYSQL_BUFLEN];
-	snprintf(temp, MYSQL_BUFLEN, "%s", subset_string);
+	char *pch = NULL, *save_pointer = NULL, temp[max_size];
+	strcpy(temp, subset_string);
 
 	nnn = strlen(temp);
 	char separator[1 + nnn];
@@ -927,7 +995,10 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 		memset(&tm_value, 0, sizeof(struct tm));
 
 		tm_value.tm_year = -1;
-		strptime(pch, "%Y-%m-%d %H:%M:%S", &tm_value);
+		if (strchr(pch, 'T'))
+			strptime(pch, "%Y-%m-%dT%H:%M:%S", &tm_value);
+		else
+			strptime(pch, "%Y-%m-%d %H:%M:%S", &tm_value);
 		if (tm_value.tm_year < 0)
 			return OPH_DIM_TIME_PARSING_ERROR;
 
@@ -944,17 +1015,17 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 		_value = ((double) value_time) / scaling_factor;
 
 		if (!strncmp(dim->dimension_type, OPH_DIM_DOUBLE_TYPE, sizeof(OPH_DIM_DOUBLE_TYPE)))
-			n += snprintf(output_string + n, MYSQL_BUFLEN - n, "%f%c", _value, separator[nn++]);
+			n += snprintf(output_string + n, max_size - n, "%f%c", _value, separator[nn++]);
 		else if (!strncmp(dim->dimension_type, OPH_DIM_FLOAT_TYPE, sizeof(OPH_DIM_FLOAT_TYPE)))
-			n += snprintf(output_string + n, MYSQL_BUFLEN - n, "%f%c", (float) _value, separator[nn++]);
+			n += snprintf(output_string + n, max_size - n, "%f%c", (float) _value, separator[nn++]);
 		else if (!strncmp(dim->dimension_type, OPH_DIM_LONG_TYPE, sizeof(OPH_DIM_LONG_TYPE)))
-			n += snprintf(output_string + n, MYSQL_BUFLEN - n, "%lld%c", (long long) _value, separator[nn++]);
+			n += snprintf(output_string + n, max_size - n, "%lld%c", (long long) _value, separator[nn++]);
 		else if (!strncmp(dim->dimension_type, OPH_DIM_INT_TYPE, sizeof(OPH_DIM_INT_TYPE)))
-			n += snprintf(output_string + n, MYSQL_BUFLEN - n, "%d%c", (int) _value, separator[nn++]);
+			n += snprintf(output_string + n, max_size - n, "%d%c", (int) _value, separator[nn++]);
 		else if (!strncmp(dim->dimension_type, OPH_DIM_SHORT_TYPE, sizeof(OPH_DIM_SHORT_TYPE)))
-			n += snprintf(output_string + n, MYSQL_BUFLEN - n, "%d%c", (short) _value, separator[nn++]);
+			n += snprintf(output_string + n, max_size - n, "%d%c", (short) _value, separator[nn++]);
 		else if (!strncmp(dim->dimension_type, OPH_DIM_BYTE_TYPE, sizeof(OPH_DIM_BYTE_TYPE)))
-			n += snprintf(output_string + n, MYSQL_BUFLEN - n, "%d%c", (char) _value, separator[nn++]);
+			n += snprintf(output_string + n, max_size - n, "%d%c", (char) _value, separator[nn++]);
 		else {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Data type not recognized\n");
 			return OPH_DIM_DATA_ERROR;
@@ -1082,9 +1153,17 @@ int oph_dim_create_db(oph_odb_db_instance * db)
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	char db_creation_query[MYSQL_BUFLEN];
-	int n = snprintf(db_creation_query, MYSQL_BUFLEN, MYSQL_DIM_CREATE_DB, db->db_name);
-	if (n >= MYSQL_BUFLEN) {
+	int query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_CREATE_DB, db->db_name);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	char db_creation_query[max_size];
+	int n = snprintf(db_creation_query, max_size, MYSQL_DIM_CREATE_DB, db->db_name);
+	if (n >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
@@ -1107,11 +1186,18 @@ int oph_dim_delete_db(oph_odb_db_instance * db)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
+
+	int query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_DELETE_DB, db->db_name);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_DIM_MYSQL_ERROR;
+	}
 	//Check if Databse is empty and DELETE
-	char delete_query[MYSQL_BUFLEN];
-	int n;
-	n = snprintf(delete_query, MYSQL_BUFLEN, MYSQL_DIM_DELETE_DB, db->db_name);
-	if (n >= MYSQL_BUFLEN) {
+	char delete_query[max_size];
+	int n = snprintf(delete_query, max_size, MYSQL_DIM_DELETE_DB, db->db_name);
+	if (n >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
@@ -1225,9 +1311,17 @@ int oph_dim_create_empty_table(oph_odb_db_instance * db, char *dimension_table_n
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	char create_query[MYSQL_BUFLEN];
-	int n = snprintf(create_query, MYSQL_BUFLEN, MYSQL_DIM_CREATE_TABLE, dimension_table_name);
-	if (n >= MYSQL_BUFLEN) {
+	int query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_CREATE_TABLE, dimension_table_name);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	char create_query[max_size];
+	int n = snprintf(create_query, max_size, MYSQL_DIM_CREATE_TABLE, dimension_table_name);
+	if (n >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
@@ -1247,15 +1341,22 @@ int oph_dim_retrieve_dimension(oph_odb_db_instance * db, char *dimension_table_n
 		return OPH_DIM_NULL_PARAM;
 	}
 
-	char query[MYSQL_BUFLEN];
-
 	if (oph_dim_check_connection_to_db(db->dbms_instance, db, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
+
+	int query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_SELECT_DIMENSION_ROW, dimension_table_name, dimension_id);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_DIM_MYSQL_ERROR;
+	}
 	//Execute query
-	int n = snprintf(query, MYSQL_BUFLEN, MYSQL_DIM_SELECT_DIMENSION_ROW, dimension_table_name, dimension_id);
-	if (n >= MYSQL_BUFLEN) {
+	char query[max_size];
+	int n = snprintf(query, max_size, MYSQL_DIM_SELECT_DIMENSION_ROW, dimension_table_name, dimension_id);
+	if (n >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_DATA_ERROR;
 	}
@@ -1327,9 +1428,17 @@ int oph_dim_compare_dimension2(oph_odb_db_instance * db, char *dimension_table_n
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	char select_query[MYSQL_BUFLEN];
-	int n = snprintf(select_query, MYSQL_BUFLEN, MYSQL_DIM_GET_DIMENSION, (apply_clause ? apply_clause : MYSQL_DIMENSION), dimension_table_name, dimension_id);
-	if (n >= MYSQL_BUFLEN) {
+	int query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_GET_DIMENSION, (apply_clause ? apply_clause : MYSQL_DIMENSION), dimension_table_name, dimension_id);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	char select_query[max_size];
+	int n = snprintf(select_query, max_size, MYSQL_DIM_GET_DIMENSION, (apply_clause ? apply_clause : MYSQL_DIMENSION), dimension_table_name, dimension_id);
+	if (n >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
@@ -1458,9 +1567,17 @@ int oph_dim_insert_into_dimension_table(oph_odb_db_instance * db, char *dimensio
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	char select_query[MYSQL_BUFLEN];
-	int n = snprintf(select_query, MYSQL_BUFLEN, MYSQL_DIM_INSERT_TABLE, dimension_table_name);
-	if (n >= MYSQL_BUFLEN) {
+	int query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_INSERT_TABLE, dimension_table_name);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	char select_query[max_size];
+	int n = snprintf(select_query, max_size, MYSQL_DIM_INSERT_TABLE, dimension_table_name);
+	if (n >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
@@ -1549,8 +1666,8 @@ int oph_dim_insert_into_dimension_table_from_query(oph_odb_db_instance * db, cha
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	int n;
-	char translated_query[MYSQL_BUFLEN], *tquery = translated_query, *cquery;
+	int n, query_buflen = 1 + strlen(query);
+	char translated_query[query_buflen], *tquery = translated_query, *cquery;
 	*translated_query = 0;
 	while (query && *query && (cquery = strcasestr(query, MYSQL_DIMENSION))) {
 		n = cquery - query;
@@ -1558,7 +1675,7 @@ int oph_dim_insert_into_dimension_table_from_query(oph_odb_db_instance * db, cha
 			strncpy(tquery, query, n);
 			tquery += n;
 		}
-		if (tquery - translated_query + 1 < MYSQL_BUFLEN) {
+		if (tquery - translated_query + 1 < query_buflen) {
 			*tquery = '?';
 			tquery++;
 			*tquery = 0;
@@ -1569,11 +1686,19 @@ int oph_dim_insert_into_dimension_table_from_query(oph_odb_db_instance * db, cha
 		query = cquery + strlen(MYSQL_DIMENSION);
 	}
 	if (query && *query)
-		snprintf(tquery, MYSQL_BUFLEN - strlen(translated_query), "%s", query);
+		snprintf(tquery, query_buflen - strlen(translated_query), "%s", query);
 
-	char select_query[MYSQL_BUFLEN];
-	n = snprintf(select_query, MYSQL_BUFLEN, MYSQL_DIM_INSERT_TABLE_FROM_QUERY, dimension_table_name, translated_query);
-	if (n >= MYSQL_BUFLEN) {
+	query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_INSERT_TABLE_FROM_QUERY, dimension_table_name, translated_query);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	char select_query[query_buflen];
+	n = snprintf(select_query, query_buflen, MYSQL_DIM_INSERT_TABLE_FROM_QUERY, dimension_table_name, translated_query);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
@@ -1652,9 +1777,17 @@ int oph_dim_check_if_dimension_table_exists(oph_odb_db_instance * db, char *dime
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	char selectQuery[MYSQL_BUFLEN];
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_DIM_CHECK_DIMENSION_TABLE, db->db_name, dimension_table_name);
-	if (n >= MYSQL_BUFLEN) {
+	int query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_CHECK_DIMENSION_TABLE, db->db_name, dimension_table_name);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	char selectQuery[max_size];
+	int n = snprintf(selectQuery, max_size, MYSQL_DIM_CHECK_DIMENSION_TABLE, db->db_name, dimension_table_name);
+	if (n >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_DATA_ERROR;
 	}
@@ -1710,9 +1843,17 @@ int oph_dim_insert_into_dimension_table_rand_data(oph_odb_db_instance * db, char
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	char select_query[MYSQL_BUFLEN];
-	int n = snprintf(select_query, MYSQL_BUFLEN, MYSQL_DIM_INSERT_TABLE, dimension_table_name);
-	if (n >= MYSQL_BUFLEN) {
+	int query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_INSERT_TABLE, dimension_table_name);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	char select_query[max_size];
+	int n = snprintf(select_query, max_size, MYSQL_DIM_INSERT_TABLE, dimension_table_name);
+	if (n >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
@@ -1824,14 +1965,27 @@ int oph_dim_read_dimension_data(oph_odb_db_instance * db, char *dimension_table_
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	int n;
-	char select_query[MYSQL_BUFLEN];
-	if (compressed)
-		n = snprintf(select_query, MYSQL_BUFLEN, MYSQL_DIM_RETRIEVE_COMPRESSED_DIMENSION_VALUES, array_clause, dimension_table_name, dimension_id);
-	else
-		n = snprintf(select_query, MYSQL_BUFLEN, MYSQL_DIM_RETRIEVE_DIMENSION_VALUES, array_clause, dimension_table_name, dimension_id);
+	int query_buflen;
 
-	if (n >= MYSQL_BUFLEN) {
+	if (compressed)
+		query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_RETRIEVE_COMPRESSED_DIMENSION_VALUES, array_clause, dimension_table_name, dimension_id);
+	else
+		query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_RETRIEVE_DIMENSION_VALUES, array_clause, dimension_table_name, dimension_id);
+
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	int n;
+	char select_query[query_buflen];
+	if (compressed)
+		n = snprintf(select_query, query_buflen, MYSQL_DIM_RETRIEVE_COMPRESSED_DIMENSION_VALUES, array_clause, dimension_table_name, dimension_id);
+	else
+		n = snprintf(select_query, query_buflen, MYSQL_DIM_RETRIEVE_DIMENSION_VALUES, array_clause, dimension_table_name, dimension_id);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
@@ -1894,14 +2048,26 @@ int oph_dim_read_dimension(oph_odb_db_instance * db, char *dimension_table_name,
 		return OPH_DIM_DATA_ERROR;
 	}
 
-	int n;
-	char select_query[MYSQL_BUFLEN];
+	int query_buflen;
 	if (compressed)
-		n = snprintf(select_query, MYSQL_BUFLEN, MYSQL_DIM_RETRIEVE_COMPRESSED_DIMENSION_DUMP, dimension_type, dimension_table_name, dimension_id);
+		query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_RETRIEVE_COMPRESSED_DIMENSION_DUMP, dimension_type, dimension_table_name, dimension_id);
 	else
-		n = snprintf(select_query, MYSQL_BUFLEN, MYSQL_DIM_RETRIEVE_DIMENSION_DUMP, dimension_type, dimension_table_name, dimension_id);
+		query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_RETRIEVE_DIMENSION_DUMP, dimension_type, dimension_table_name, dimension_id);
 
-	if (n >= MYSQL_BUFLEN) {
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	int n;
+	char select_query[query_buflen];
+	if (compressed)
+		n = snprintf(select_query, query_buflen, MYSQL_DIM_RETRIEVE_COMPRESSED_DIMENSION_DUMP, dimension_type, dimension_table_name, dimension_id);
+	else
+		n = snprintf(select_query, query_buflen, MYSQL_DIM_RETRIEVE_DIMENSION_DUMP, dimension_type, dimension_table_name, dimension_id);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
@@ -1966,13 +2132,26 @@ int oph_dim_read_dimension_filtered_data(oph_odb_db_instance * db, char *dimensi
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	int n;
-	char select_query[MYSQL_BUFLEN];
+	int query_buflen;
 	if (compressed)
-		n = snprintf(select_query, MYSQL_BUFLEN, MYSQL_DIM_RETRIEVE_COMPRESSED_DIMENSION_LABELS, dim_type, dim_type, array_clause, dimension_table_name, dimension_id);
+		query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_RETRIEVE_COMPRESSED_DIMENSION_LABELS, dim_type, dim_type, array_clause, dimension_table_name, dimension_id);
 	else
-		n = snprintf(select_query, MYSQL_BUFLEN, MYSQL_DIM_RETRIEVE_DIMENSION_LABELS, dim_type, dim_type, array_clause, dimension_table_name, dimension_id);
-	if (n >= MYSQL_BUFLEN) {
+		query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_RETRIEVE_DIMENSION_LABELS, dim_type, dim_type, array_clause, dimension_table_name, dimension_id);
+
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	int n;
+	char select_query[query_buflen];
+	if (compressed)
+		n = snprintf(select_query, query_buflen, MYSQL_DIM_RETRIEVE_COMPRESSED_DIMENSION_LABELS, dim_type, dim_type, array_clause, dimension_table_name, dimension_id);
+	else
+		n = snprintf(select_query, query_buflen, MYSQL_DIM_RETRIEVE_DIMENSION_LABELS, dim_type, dim_type, array_clause, dimension_table_name, dimension_id);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
@@ -2102,9 +2281,17 @@ int oph_dim_delete_table(oph_odb_db_instance * db, char *dimension_table_name)
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	char delete_query[MYSQL_BUFLEN];
-	int n = snprintf(delete_query, MYSQL_BUFLEN, MYSQL_DIM_DELETE_FRAG, dimension_table_name);
-	if (n >= MYSQL_BUFLEN) {
+	int query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_DELETE_FRAG, dimension_table_name);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	char delete_query[query_buflen];
+	int n = snprintf(delete_query, query_buflen, MYSQL_DIM_DELETE_FRAG, dimension_table_name);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
@@ -2139,9 +2326,17 @@ int oph_dim_copy_into_dimension_table(oph_odb_db_instance * db, char *from_dimen
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	char copy_query[MYSQL_BUFLEN];
-	int n = snprintf(copy_query, MYSQL_BUFLEN, MYSQL_DIM_COPY_FRAG, to_dimension_table_name, from_dimension_table_name, *dimension_id);
-	if (n >= MYSQL_BUFLEN) {
+	int query_buflen = 1 + snprintf(NULL, 0, MYSQL_DIM_COPY_FRAG, to_dimension_table_name, from_dimension_table_name, *dimension_id);
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		return OPH_DIM_MYSQL_ERROR;
+	}
+
+	char copy_query[query_buflen];
+	int n = snprintf(copy_query, query_buflen, MYSQL_DIM_COPY_FRAG, to_dimension_table_name, from_dimension_table_name, *dimension_id);
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}

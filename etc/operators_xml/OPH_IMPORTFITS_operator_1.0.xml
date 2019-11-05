@@ -44,14 +44,17 @@ Support is provided only for images fits files.
 				Must be the same number of &quot;subset_filter&quot; 
                 Allowed values are NAXIS1, NAXIS2, ..., NAXISn.
 - subset_filter : enumeration of comma-separated elementary filters (1 series of filters for each dimension). Possible forms are:
-					-- start_value : single value specifying the start index of the subset
-					-- start_value:stop_value : select elements from start_index to stop_index
+                  -- start_value : single value specifying the start index of the subset
+                  -- start_value:stop_value : select elements from start_index to stop_index
                   Values should be numbers.
 				  Multiple-value field: list of filters separated by &quot;|&quot; can be provided  
 				  Must be the same number of &quot;subset_dims&quot;. Example:
                     subset_dims=NAXIS1|NAXIS2;subset_filter=101:200|1001:1100;
 - compressed: save compressed data with &quot;yes&quot; or original data with &quot;no&quot; (default).
 - description : additional description to be associated with the output cube.
+- policy : rule to select how data are distribuited over hosts:
+           -- &apos;rr&apos; hosts are ordered on the basis of the number of cubes stored by it (default);
+           -- &apos;port&apos; hosts are ordered on the basis of port number.
         
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -97,6 +100,7 @@ SUBMISSION STRING: &quot;operator=oph_importfits;cwd=/session-code1;container=co
 		<argument type="string" mandatory="no" default="all" multivalue="yes">subset_filter</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">compressed</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="rr" values="rr|port">policy</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|importfits|importfits_summary">objkey_filter</argument>
     </args>
 </operator>

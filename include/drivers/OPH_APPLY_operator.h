@@ -36,6 +36,7 @@
  * \param schedule_algo Number of the distribution algorithm to use 
  * \param fragment_ids Contains the string of fragment relative index
  * \param array_operation Query to be executed on the input datacube 
+ * \param array_operation_length Length of query to be executed on the input datacube (it includes the last '\0')
  * \param dimension_operation Query to be executed on the implicit dimension of input datacube 
  * \param fragment_number Number of fragments that a process has to manage
  * \param fragment_id_start_position First fragment in the relative index set to work on
@@ -73,6 +74,7 @@ struct _OPH_APPLY_operator_handle {
 	int schedule_algo;
 	char *fragment_ids;
 	char *array_operation;
+	int array_operation_length;
 	char *dimension_operation;
 	int fragment_number;
 	int fragment_id_start_position;

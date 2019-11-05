@@ -485,11 +485,14 @@ int task_init(oph_operator_struct * handle)
 		int dim_number[((OPH_SUBSET2_operator_handle *) handle->operator_handle)->number_of_dim], first_explicit, d, i, explicit_dim_number = 0, implicit_dim_number = 0;
 		int subsetted_dim[number_of_dimensions];
 		char size_string_vector[((OPH_SUBSET2_operator_handle *) handle->operator_handle)->number_of_dim][OPH_COMMON_BUFFER_LEN], *size_string, *dim_row;
-		char temp[OPH_COMMON_BUFFER_LEN];
 		oph_subset *subset_struct[((OPH_SUBSET2_operator_handle *) handle->operator_handle)->number_of_dim];
 		oph_odb_dimension dim[number_of_dimensions];
 		oph_odb_dimension_instance dim_inst[number_of_dimensions];
 		char subarray_param[OPH_TP_TASKLEN];
+
+		long long max_size = QUERY_BUFLEN;
+		oph_pid_get_buffer_size(&max_size);
+		char temp[max_size];
 
 		for (d = 0; d < ((OPH_SUBSET2_operator_handle *) handle->operator_handle)->number_of_dim; ++d)
 			dim_number[d] = 0;

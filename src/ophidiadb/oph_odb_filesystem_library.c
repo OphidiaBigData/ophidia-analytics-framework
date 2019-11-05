@@ -1276,12 +1276,13 @@ int oph_odb_fs_is_allowed_name(char *name)
 {
 	if (!name)
 		return 0;
-	if (strlen(name) == 0)
+	size_t length = strlen(name);
+	if (!length || (length > OPH_ODB_FS_FOLDER_NAME_SIZE))
 		return 0;
 	if (!isalnum((int) name[0]) && name[0] != '_')
 		return 0;
 	unsigned int i, j;
-	for (i = 1; i < strlen(name); i++) {
+	for (i = 1; i < length; i++) {
 		for (j = 0; j < OPH_ODB_FS_CHARS_NUM; j++) {
 			if (name[i] == oph_odb_fs_chars[j])
 				return 0;
