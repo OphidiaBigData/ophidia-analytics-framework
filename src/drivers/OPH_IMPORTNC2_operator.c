@@ -1655,7 +1655,7 @@ int task_init(oph_operator_struct * handle)
 		//If default values are used: select fylesystem and partition
 		if (!strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(host_partition))
 		    && !strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT))) {
-			if (oph_odb_stge_get_default_host_partition_fs(oDB, ioserver_type, &id_host_partition, *host_number > 0 ? *host_number : 1) || !id_host_partition) {
+			if (oph_odb_stge_get_default_host_partition_fs(oDB, ioserver_type, id_user, &id_host_partition, *host_number > 0 ? *host_number : 1) || !id_host_partition) {
 				if (run) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
