@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 {
 
 	//Initialize environment
-	int size, myrank, res = -1;
+	int size, myrank;
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
@@ -47,26 +47,15 @@ int main(int argc, char *argv[])
 	if (argc != 2) {
 		if (!myrank)
 			fprintf(stdout, "USAGE: ./oph_analytics_framework \"operator=value;param=value;...\"\n");
-		res = 0;
-	}
-
-	if (!strcmp(argv[1], "-v")) {
-		res = 0;
-	}
-
-	if (!strcmp(argv[1], "-x")) {
+	} else if (!strcmp(argv[1], "-x")) {
 		if (!myrank)
 			fprintf(stdout, "%s", OPH_WARRANTY);
-		res = 0;
-	}
-
-	if (!strcmp(argv[1], "-z")) {
+	} else if (!strcmp(argv[1], "-z")) {
 		if (!myrank)
 			fprintf(stdout, "%s", OPH_CONDITIONS);
-		res = 0;
-	}
+	} else if (strcmp(argv[1], "-v")) {
 
-	if (res) {
+		int res;
 		struct timeval start_time, end_time, total_time;
 
 #ifdef OPH_PARALLEL_LOCATION
