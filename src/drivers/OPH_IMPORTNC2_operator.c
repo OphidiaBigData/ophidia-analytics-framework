@@ -118,6 +118,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->policy = 0;
+	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->ncid = 0;
 
 	char *value;
 
@@ -324,6 +325,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pointer++;
 		if (pointer) {
 			char tmp[OPH_COMMON_BUFFER_LEN];
+			char *tmp_base_path = NULL;
 			if (*pointer != '/') {
 				value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
 				if (!value) {
@@ -348,16 +350,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					pointer = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path;
 				}
 			}
-			if (oph_pid_get_base_src_path(&value)) {
+			if (oph_pid_get_base_src_path(&tmp_base_path)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
-			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
+			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", tmp_base_path ? tmp_base_path : "", *pointer != '/' ? "/" : "", pointer);
+			free(tmp_base_path);
 			free(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path);
 			((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
-			free(value);
-			oph_pid_free();
 		}
 		//Open netcdf file
 		struct stat st;
@@ -890,6 +891,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 	if (tmp_concept_levels)
 		free(tmp_concept_levels);
+
 
 	//ADDED TO MANAGE SUBSETTED IMPORT
 
@@ -4211,6 +4213,8 @@ int env_unset(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	int i, retval;
+
+	oph_pid_free();
 
 	//Only master process has to close and release connection to management OphidiaDB
 	if (handle->proc_rank == 0) {

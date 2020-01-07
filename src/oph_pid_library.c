@@ -462,6 +462,10 @@ int oph_pid_free()
 		free(oph_base_user_path);
 	oph_base_user_path = NULL;
 
+	if (oph_b2drop_webdav_url)
+		free(oph_b2drop_webdav_url);
+	oph_b2drop_webdav_url = NULL;
+
 	return OPH_PID_SUCCESS;
 }
 
