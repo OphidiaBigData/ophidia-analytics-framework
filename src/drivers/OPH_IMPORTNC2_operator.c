@@ -1630,6 +1630,7 @@ int task_init(oph_operator_struct * handle)
 		}
 	}
 
+	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->total_frag_number = 1;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->array_length = 1;
 	for (i = 0; i < measure->ndims; i++) {
