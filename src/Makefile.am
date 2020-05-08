@@ -100,13 +100,11 @@ liboph_idstring_la_LIBADD = -lz -lm @LIBLTDL@ -L. -ldebug
 liboph_analytics_framework_la_SOURCES = oph_analytics_framework.c
 if STANDALONE_MODE
 liboph_analytics_framework_la_CFLAGS= ${MYSQL_CFLAGS} -DOPH_STANDALONE_MODE -prefer-pic -I../include -Ioph_gsoap -Ioph_gsoap/$(INTERFACE_TYPE) @INCLTDL@ ${lib_CFLAGS}
-liboph_analytics_framework_la_LDFLAGS = -static $(LIB_OPERATOR)
-liboph_analytics_framework_la_LIBADD = ${MYSQL_LDFLAGS} @LIBLTDL@ -L. -lophidiadb -loph_analytics_operator -loph_json -loph_task_parser
 else
 liboph_analytics_framework_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include -Ioph_gsoap -Ioph_gsoap/$(INTERFACE_TYPE) @INCLTDL@ ${lib_CFLAGS}
-liboph_analytics_framework_la_LDFLAGS = -static $(LIB_OPERATOR)
-liboph_analytics_framework_la_LIBADD = ${MYSQL_LDFLAGS} @LIBLTDL@ -L. -lophidiadb -loph_analytics_operator -loph_json -loph_task_parser -Loph_gsoap -loph_soap
 endif
+liboph_analytics_framework_la_LDFLAGS = -static $(LIB_OPERATOR)
+liboph_analytics_framework_la_LIBADD = ${MYSQL_LDFLAGS} @LIBLTDL@ -Loph_gsoap -loph_soap -L. -lophidiadb -loph_analytics_operator -loph_json -loph_task_parser
 
 liboph_json_la_SOURCES = oph_json/oph_json_common.c oph_json/oph_json_graph.c oph_json/oph_json_grid.c  oph_json/oph_json_multigrid.c oph_json/oph_json_text.c oph_json/oph_json_tree.c
 liboph_json_la_CFLAGS= -prefer-pic -I../include -I../include/oph_json @INCLTDL@ $(JANSSON_CFLAGS) ${lib_CFLAGS}
