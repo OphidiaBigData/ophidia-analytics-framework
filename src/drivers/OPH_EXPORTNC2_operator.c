@@ -1212,25 +1212,6 @@ int task_execute(oph_operator_struct * handle)
 			result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			goto __OPH_EXIT_2;
 		}
-		//END OF DEFINITIONS
-		if ((retval = nc_enddef(ncid))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to complete output nc definition: %s\n", nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_NC_END_DEFINITION_ERROR,
-				nc_strerror(retval));
-			oph_odb_stge_free_fragment_list(&frags);
-			oph_odb_stge_free_db_list(&dbs);
-			oph_odb_stge_free_dbms_list(&dbmss);
-			nc_close(ncid);
-			for (l = 0; l < num_of_dims; l++) {
-				if (dim_rows[l]) {
-					free(dim_rows[l]);
-					dim_rows[l] = NULL;
-				}
-			}
-			free(dim_rows);
-			result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-			goto __OPH_EXIT_2;
-		}
 
 		if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata > 0) {
 
@@ -1378,6 +1359,25 @@ int task_execute(oph_operator_struct * handle)
 				result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				goto __OPH_EXIT_2;
 			}
+		}
+
+		if ((retval = nc_enddef(ncid))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to complete output nc definition: %s\n", nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_NC_END_DEFINITION_ERROR,
+				nc_strerror(retval));
+			oph_odb_stge_free_fragment_list(&frags);
+			oph_odb_stge_free_db_list(&dbs);
+			oph_odb_stge_free_dbms_list(&dbmss);
+			nc_close(ncid);
+			for (l = 0; l < num_of_dims; l++) {
+				if (dim_rows[l]) {
+					free(dim_rows[l]);
+					dim_rows[l] = NULL;
+				}
+			}
+			free(dim_rows);
+			result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			goto __OPH_EXIT_2;
 		}
 
 		for (inc = 0; inc < num_of_dims; inc++) {
