@@ -3,6 +3,7 @@
 
 ### Fixed:
 
+- Bug in parsing multivalue arguments
 - Bug in setting total fragment number in OPH_IMPORTNC2
 - Framework core functions to support longer input strings for operators [#94](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/94)
 - Bug when inserting new dimension if another one with the same name already exists [#90](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/90)
