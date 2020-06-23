@@ -321,10 +321,18 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!strcmp(value, OPH_COMMON_YES_VALUE))
 		((OPH_CDO_operator_handle *) handle->operator_handle)->force = 1;
 
-	struct stat st;
 	char *path = ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path;
+	if (!path) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MEMORY_ERROR_INPUT, "output_path");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+	size_t size = strlen(path);
+	if (size && (path[size - 1] == '/'))
+		path[--size] = 0;
 
 	//Create dir if not exist
+	struct stat st;
 	if (stat(path, &st)) {
 		if (errno == EACCES) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CDO_PERMISSION_ERROR, path);
@@ -435,7 +443,7 @@ int task_execute(oph_operator_struct * handle)
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_CDO_SERVER_PORT=%s ", ((oph_soap_data *) handle->soap_data)->port ? ((oph_soap_data *) handle->soap_data)->port : "");
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_CDO_USER='%s' ",
 		      ((OPH_CDO_operator_handle *) handle->operator_handle)->user ? ((OPH_CDO_operator_handle *) handle->operator_handle)->user : "");
-	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "%s/cdo %s ", cdo_path, ((OPH_CDO_operator_handle *) handle->operator_handle)->command);
+	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "%s/cdo '%s' ", cdo_path, ((OPH_CDO_operator_handle *) handle->operator_handle)->command);
 
 	char *new_arg = NULL, *arg;
 	for (i = 0; i < ((OPH_CDO_operator_handle *) handle->operator_handle)->args_num; i++) {
@@ -462,7 +470,7 @@ int task_execute(oph_operator_struct * handle)
 	char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' };
 	snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_CDO_OUTPUT_PATH_SINGLE_FILE, ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path,
 		 ((OPH_CDO_operator_handle *) handle->operator_handle)->output_name);
-	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "%s ", file_name);
+	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "'%s' ", file_name);
 
 	if (strcmp(((OPH_CDO_operator_handle *) handle->operator_handle)->out_redir, "stdout")) {
 		n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "1>>%s ", ((OPH_CDO_operator_handle *) handle->operator_handle)->out_redir);
