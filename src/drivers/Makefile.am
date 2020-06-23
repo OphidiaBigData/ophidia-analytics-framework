@@ -92,6 +92,7 @@ DRIVER+=liboph_hierarchyoperator.la
 DRIVER+=liboph_movecontaineroperator.la
 DRIVER+=liboph_showgridoperator.la
 DRIVER+=liboph_scriptoperator.la
+DRIVER+=liboph_cdooperator.la
 if HAVE_CURL
 DRIVER+=liboph_b2dropoperator.la
 endif
@@ -122,6 +123,11 @@ liboph_b2dropoperator_la_SOURCES = OPH_B2DROP_operator.c
 liboph_b2dropoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_b2dropoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(LIBCURL_LIB) $(BASIC_LIB) -loph_directory
 endif
+
+liboph_cdooperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" -I../oph_gsoap
+liboph_cdooperator_la_SOURCES = OPH_CDO_operator.c
+liboph_cdooperator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_cdooperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_directory
 
 liboph_containerschemaoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_containerschemaoperator_la_SOURCES = OPH_CONTAINERSCHEMA_operator.c
