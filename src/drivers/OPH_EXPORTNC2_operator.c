@@ -1908,9 +1908,9 @@ int task_execute(oph_operator_struct * handle)
 						goto __OPH_EXIT_2;
 					}
 				}
-				// ADD OUTPUT PID TO NOTIFICATION STRING
+				// ADD FILE TO NOTIFICATION STRING
 				char tmp_string[OPH_COMMON_BUFFER_LEN];
-				snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_LINK, jsonbuf);
+				snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_LINK, jsonbuf, OPH_IN_PARAM_FILE, jsonbuf);
 				if (handle->output_string) {
 					strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
 					free(handle->output_string);
@@ -1934,6 +1934,14 @@ int task_execute(oph_operator_struct * handle)
 						goto __OPH_EXIT_2;
 					}
 				}
+				// ADD FILE TO NOTIFICATION STRING
+				char tmp_string[OPH_COMMON_BUFFER_LEN];
+				snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_FILE, jsonbuf);
+				if (handle->output_string) {
+					strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
+					free(handle->output_string);
+				}
+				handle->output_string = strdup(tmp_string);
 			}
 		}
 
