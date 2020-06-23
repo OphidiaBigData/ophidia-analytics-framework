@@ -52,7 +52,7 @@ SUBMISSION STRING: &quot;operator=oph_script;script=./test.sh;args=var1|var2;&qu
     </info>
     <args>
 		<argument type="string" mandatory="no" default=":">script</argument>
-		<argument type="string" mandatory="no" default=" " multivalue="yes">args</argument>
+		<argument type="string" mandatory="no" default="" multivalue="yes">args</argument>
 		<argument type="string" mandatory="no" default="stdout">stdout</argument>
 		<argument type="string" mandatory="no" default="stderr">stderr</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">list</argument>

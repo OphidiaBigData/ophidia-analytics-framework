@@ -763,9 +763,13 @@ int oph_tp_parse_multiple_value_param(char *values, char ***value_list, int *val
 	if (!values || !value_list || !value_num)
 		return OPH_TP_TASK_PARSER_ERROR;
 
-	int param_num = 1, i, j, msize = 0, csize = 0;
-
 	*value_list = NULL;
+	*value_num = 0;
+
+	if (!strlen(values))
+		return OPH_TP_TASK_PARSER_SUCCESS;
+
+	int param_num = 1, i, j, msize = 0, csize = 0;
 
 	//Check if string is correct
 	for (i = 0; values[i]; i++) {
