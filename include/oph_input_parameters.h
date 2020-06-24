@@ -180,6 +180,9 @@
 #define OPH_IN_PARAM_POLICY					"policy"
 #define OPH_IN_PARAM_COMMAND				"command"
 
+#define OPH_IN_PARAM_INPUT					"input"
+#define OPH_IN_PARAM_OUTPUT					"output"
+
 #define OPH_IN_PARAM_SCRIPT					"script"
 #define OPH_IN_PARAM_ARGS					"args"
 #define OPH_IN_PARAM_STDOUT					"stdout"

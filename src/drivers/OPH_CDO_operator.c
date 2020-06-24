@@ -92,7 +92,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_CDO_operator_handle *) handle->operator_handle)->force = 0;
 
 	//3 - Fill struct with the correct data
-	char *value;
+	char *value, *input = NULL, *value2 = NULL;
+	size_t size;
 
 	// retrieve objkeys
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OBJKEY_FILTER);
@@ -120,18 +121,37 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
+	input = hashtbl_get(task_tbl, OPH_IN_PARAM_INPUT);
+	if (!input) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_INPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_INPUT);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_ARGS);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_ARGS);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_ARGS);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	if (input && ((size = strlen(input)))) {
+		size_t old_size = strlen(value);
+		if (old_size) {
+			value2 = (char *) malloc((2 + old_size + size) * sizeof(char));
+			sprintf(value2, "%s|%s", value, input);
+			value = value2;
+		} else
+			value = input;
+	}
 	if (oph_tp_parse_multiple_value_param(value, &((OPH_CDO_operator_handle *) handle->operator_handle)->args, &((OPH_CDO_operator_handle *) handle->operator_handle)->args_num)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
 		oph_tp_free_multiple_value_param_list(((OPH_CDO_operator_handle *) handle->operator_handle)->args, ((OPH_CDO_operator_handle *) handle->operator_handle)->args_num);
+		if (value2)
+			free(value2);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	if (value2)
+		free(value2);
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_STDOUT);
 	if (!value) {
@@ -220,7 +240,36 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	char *output_path = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	char *output_name = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_NAME);
+	char *output = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT);
+	char home[2];
+	home[0] = '/';
+	home[1] = 0;
+	if (output && ((size = strlen(output)))) {
+		char *pointer = output + size;
+		while ((pointer >= output) && (*pointer != '/'))
+			pointer--;
+		if (pointer < output) {
+			output_name = output;
+			if ((output[size - 3] == '.') && (output[size - 2] == 'n') && (output[size - 1] == 'c'))
+				output[size - 3] = 0;
+		} else {
+			if (pointer == output)
+				output_path = home;
+			else
+				output_path = output;
+			*pointer = 0;
+			pointer++;
+			if (pointer && *pointer) {
+				output_name = pointer;
+				if ((output[size - 3] == '.') && (output[size - 2] == 'n') && (output[size - 1] == 'c'))
+					output[size - 3] = 0;
+			}
+		}
+	}
+
+	value = output_path;
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
@@ -289,7 +338,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		free(value);
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_NAME);
+	value = output_name;
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_NAME);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_NAME);
@@ -327,7 +376,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MEMORY_ERROR_INPUT, "output_path");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
-	size_t size = strlen(path);
+	size = strlen(path);
 	if (size && (path[size - 1] == '/'))
 		path[--size] = 0;
 
@@ -592,7 +641,7 @@ int task_execute(oph_operator_struct * handle)
 int task_reduce(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handler\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_NULL_OPERATOR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
