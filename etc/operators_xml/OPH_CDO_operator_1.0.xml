@@ -42,8 +42,7 @@ The script can eventually process some environmental variables passed by the ope
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
-                  cdo : show the output of the command or the list of registered scripts;
-                  cdo_url : show the URL where the command could save some data;
+                  cdo_output : show the output of the command;
                   cdo_returncode : show the return code of the command.
 
 [Examples]
@@ -71,6 +70,6 @@ SUBMISSION STRING: &quot;operator=oph_cdo;command=-selname,tas;args=infile|outfi
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
-		<argument type="string" mandatory="no" default="all" values="all|none|cdo|cdo_url|cdo_returncode">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|cdo_output|cdo_returncode">objkey_filter</argument>
     </args>
 </operator>

@@ -565,24 +565,11 @@ int task_execute(oph_operator_struct * handle)
 	printf("Command:\n%s\n\nScript output:\n%s\n", command, system_output);
 
 	// ADD COMMAND TO JSON AS TEXT
-	s = oph_json_is_objkey_printable(((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_CDO);
-	if (s && oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_CDO, "Script output", system_output)) {
+	s = oph_json_is_objkey_printable(((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys_num,
+					 OPH_JSON_OBJKEY_CDO_OUTPUT);
+	if (s && oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_CDO_OUTPUT, "Script output", system_output)) {
 		pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
 		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
-	}
-
-	if (((OPH_CDO_operator_handle *) handle->operator_handle)->session_path
-	    && oph_json_is_objkey_printable(((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys_num,
-					    OPH_JSON_OBJKEY_CDO_URL)) {
-		if (((OPH_CDO_operator_handle *) handle->operator_handle)->workflow_id)
-			snprintf(system_output, MAX_OUT_LEN, "%s/%s", ((OPH_CDO_operator_handle *) handle->operator_handle)->session_url,
-				 ((OPH_CDO_operator_handle *) handle->operator_handle)->workflow_id);
-		else
-			snprintf(system_output, MAX_OUT_LEN, "%s", ((OPH_CDO_operator_handle *) handle->operator_handle)->session_url);
-		if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_CDO_URL, "Output URL", system_output)) {
-			pmesg(LOG_WARNING, __FILE__, __LINE__, "ADD TEXT error\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
-		}
 	}
 
 	char jsonbuf[OPH_COMMON_BUFFER_LEN];
@@ -593,7 +580,7 @@ int task_execute(oph_operator_struct * handle)
 		if (size && (output_path_file[size - 1] == '/'))
 			output_path_file[--size] = 0;
 		if (oph_json_is_objkey_printable
-		    (((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_CDO)) {
+		    (((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_CDO_OUTPUT)) {
 			snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s" OPH_CDO_OUTPUT_PATH_SINGLE_FILE, size
 				 && *output_path_file != '/' ? "/" : "", output_path_file, ((OPH_CDO_operator_handle *) handle->operator_handle)->output_name);
 		}
