@@ -848,8 +848,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 
 		int folder_id = 0;
 		if (oph_odb_fs_path_parsing("", "/standalone", &folder_id, NULL, &oDB)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Path /standalone doesn't exists\n");
-
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Path /standalone doesn't exists\n");
 			if (oph_odb_fs_insert_into_folder_table(&oDB, 1, "standalone", &folder_id)) {
 				//Add standalone folder always under root
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create standalone folder.\n");
