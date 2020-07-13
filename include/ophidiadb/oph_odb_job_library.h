@@ -119,4 +119,13 @@ int oph_odb_job_update_session_table(ophidiadb * oDB, char *sessionid, char *use
  */
 int oph_odb_job_update_job_table(ophidiadb * oDB, char *markerid, char *task_string, char *status, char *username, int id_session, int *id_job, char *parentid);
 
+/**
+ * \brief Function to retrieve the ID of a session
+ * \param oDB Pointer to OphidiaDB
+ * \param sessionid String representing the session URL
+ * \param id_folder ID of the session
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_job_retrieve_folder_id(ophidiadb * oDB, char *sessionid, int *id_folder);
+
 #endif				/* __OPH_ODB_JOB_LIBRARY__ */

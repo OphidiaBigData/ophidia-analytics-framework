@@ -195,7 +195,6 @@ int oph_af_create_job(ophidiadb * oDB, char *task_string, HASHTBL * task_tbl, in
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "'%s' '%s'\n", sessionid, markerid);
 
 	int res;
-	int id_folder = 1;
 	if ((res = oph_odb_job_retrieve_session_id(oDB, sessionid, &id_session))) {
 		if (res != OPH_ODB_NO_ROW_FOUND) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve session id\n");
@@ -203,7 +202,7 @@ int oph_af_create_job(ophidiadb * oDB, char *task_string, HASHTBL * task_tbl, in
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 		// A new entry has to be created in table 'session'
-		if (oph_odb_job_update_session_table(oDB, sessionid, username, id_folder, &id_session)) {
+		if (oph_odb_job_update_session_table(oDB, sessionid, username, 0, &id_session)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a new entry in table 'session'\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_OPHIDIADB_WRITE_ERROR, "new session");
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -837,6 +836,8 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		if (idjob)
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_RUNNING);
 
+		int folder_id = 0;
+
 #ifdef OPH_STANDALONE_MODE
 		/* If we are using stand-alone mode, replace server-side arguments with fill values */
 		hashtbl_remove(task_tbl, OPH_ARG_USERROLE);
@@ -846,7 +847,6 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		hashtbl_remove(task_tbl, OPH_ARG_SESSIONID);
 		hashtbl_insert(task_tbl, OPH_ARG_SESSIONID, "/session/standalone/experiment");
 
-		int folder_id = 0;
 		if (oph_odb_fs_path_parsing("", "/standalone", &folder_id, NULL, &oDB)) {
 			pmesg(LOG_WARNING, __FILE__, __LINE__, "Path /standalone doesn't exists\n");
 			if (oph_odb_fs_insert_into_folder_table(&oDB, 1, "standalone", &folder_id)) {
@@ -905,6 +905,9 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		}
 		if (idjob)
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_START);
+
+		if (!folder_id)
+			oph_odb_job_retrieve_folder_id(&oDB, hashtbl_get(task_tbl, OPH_ARG_SESSIONID), &folder_id);	// Create a new entry if not found
 
 #ifndef OPH_STANDALONE_MODE
 /* gSOAP notification start */
