@@ -112,9 +112,6 @@ LIB     @MYSQL_LDFLAGS@
 [OPH_PUBLISH]
 @DRIVER_PATH@/liboph_publishoperator.so
 LIB     @MYSQL_LDFLAGS@
-[OPH_LOGGINGBK]
-@DRIVER_PATH@/liboph_loggingbkoperator.so
-LIB     @MYSQL_LDFLAGS@
 [OPH_MAN]
 @DRIVER_PATH@/liboph_manoperator.so
 LIB     @MYSQL_LDFLAGS@

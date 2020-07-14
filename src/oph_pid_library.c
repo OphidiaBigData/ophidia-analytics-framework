@@ -284,37 +284,6 @@ int oph_pid_get_cdo_path(char **cdo_path)
 	return OPH_PID_SUCCESS;
 }
 
-int oph_pid_get_base_user_path(char *suffix, char **base_user_path)
-{
-	if (!base_user_path) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return OPH_PID_NULL_PARAM;
-	}
-	*base_user_path = NULL;
-
-	if (!oph_base_user_path) {
-		int res;
-		if ((res = _oph_pid_load_data()))
-			return res;
-	}
-	if (!oph_base_user_path)
-		return OPH_PID_SUCCESS;
-
-	if (oph_user_space && suffix) {
-		char tmp[strlen(oph_base_user_path) + strlen(suffix) + 1];
-		sprintf(tmp, "%s/%s", oph_base_user_path, suffix);
-		if (!(*base_user_path = strdup(tmp))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			return OPH_PID_MEMORY_ERROR;
-		}
-	} else if (!(*base_user_path = strdup(oph_base_user_path))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		return OPH_PID_MEMORY_ERROR;
-	}
-
-	return OPH_PID_SUCCESS;
-}
-
 int oph_pid_get_user_space(char *user_space)
 {
 	if (!user_space) {

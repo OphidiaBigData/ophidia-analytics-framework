@@ -529,7 +529,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_value_filter = NULL;
 	((OPH_SEARCH_operator_handle *) handle->operator_handle)->metadata_value_filter_num = 0;
 	((OPH_SEARCH_operator_handle *) handle->operator_handle)->path = NULL;
-	((OPH_SEARCH_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_SEARCH_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_SEARCH_operator_handle *) handle->operator_handle)->objkeys_num = -1;
 	((OPH_SEARCH_operator_handle *) handle->operator_handle)->sessionid = NULL;
@@ -660,18 +659,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				OPH_SEARCH_AND_SEPARATOR);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
-
-	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (!(((OPH_SEARCH_operator_handle *) handle->operator_handle)->user = (char *) strdup(value))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SEARCH_MEMORY_ERROR_INPUT, OPH_ARG_USERNAME);
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_RECURSIVE_SEARCH);
 	if (!value) {
@@ -864,10 +851,6 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_SEARCH_operator_handle *) handle->operator_handle)->path) {
 		free((char *) ((OPH_SEARCH_operator_handle *) handle->operator_handle)->path);
 		((OPH_SEARCH_operator_handle *) handle->operator_handle)->path = NULL;
-	}
-	if (((OPH_SEARCH_operator_handle *) handle->operator_handle)->user) {
-		free((char *) ((OPH_SEARCH_operator_handle *) handle->operator_handle)->user);
-		((OPH_SEARCH_operator_handle *) handle->operator_handle)->user = NULL;
 	}
 	if (((OPH_SEARCH_operator_handle *) handle->operator_handle)->container_filter) {
 		oph_tp_free_multiple_value_param_list(((OPH_SEARCH_operator_handle *) handle->operator_handle)->container_filter,

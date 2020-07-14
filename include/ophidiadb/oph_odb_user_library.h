@@ -22,7 +22,6 @@
 /* Project headers */
 #include "oph_ophidiadb_library.h"
 #include "oph_common.h"
-#include "query/oph_odb_user_query.h"
 
 /**
  * \brief Function to retrieve the ID of a user

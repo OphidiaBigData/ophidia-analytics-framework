@@ -81,7 +81,6 @@ DRIVER+=liboph_operators_listoperator.la
 DRIVER+=liboph_primitives_listoperator.la
 DRIVER+=liboph_log_infooperator.la
 DRIVER+=liboph_publishoperator.la
-DRIVER+=liboph_loggingbkoperator.la
 DRIVER+=liboph_manoperator.la
 DRIVER+=liboph_metadataoperator.la
 DRIVER+=liboph_createcontaineroperator.la
@@ -257,11 +256,6 @@ liboph_log_infooperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANA
 liboph_log_infooperator_la_SOURCES = OPH_LOG_INFO_operator.c
 liboph_log_infooperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_log_infooperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
-
-liboph_loggingbkoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"
-liboph_loggingbkoperator_la_SOURCES = OPH_LOGGINGBK_operator.c
-liboph_loggingbkoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_loggingbkoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
 
 liboph_manoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
 liboph_manoperator_la_SOURCES = OPH_MAN_operator.c
