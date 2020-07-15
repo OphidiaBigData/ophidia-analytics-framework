@@ -150,6 +150,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->nthread = (int) strtol(value, NULL, 10);
 
+	value = hashtbl_get(task_tbl, OPH_ARG_USERID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERID);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_ARG_USERID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->id_user = (int) strtol(value, NULL, 10);
+
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
@@ -209,11 +217,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			free(uri);
 		uri = NULL;
 
-		if (oph_odb_user_retrieve_user_id(oDB, username, &(((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->id_user))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to extract userid.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_USER_ID_ERROR);
-			break;
-		}
 		//Get id from measure name
 		oph_odb_datacube cube;
 		oph_odb_cube_init_datacube(&cube);

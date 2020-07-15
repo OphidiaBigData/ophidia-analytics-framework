@@ -98,12 +98,12 @@ int oph_odb_job_retrieve_job_id(ophidiadb * oDB, char *sessionid, char *markerid
  * \brief Function to update the session table
  * \param oDB Pointer to OphidiaDB
  * \param sessionid String representing the session URL
- * \param username Name of a user
+ * \param id_user User identifier
  * \param id_folder ID of the session folder
  * \param id_session ID of the new session
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_job_update_session_table(ophidiadb * oDB, char *sessionid, char *username, int id_folder, int *id_session);
+int oph_odb_job_update_session_table(ophidiadb * oDB, char *sessionid, int id_user, int id_folder, int *id_session);
 
 /**
  * \brief Function to update the job table
@@ -111,13 +111,13 @@ int oph_odb_job_update_session_table(ophidiadb * oDB, char *sessionid, char *use
  * \param markerid String representing the markerID
  * \param task_string String representing the submitted task
  * \param status Status of the task
- * \param username Name of a user
+ * \param id_user User identifier
  * \param id_session ID of the session
  * \param id_job ID of the new job
  * \param parentid ID of the parent job
  * \return 0 if successfull, -1 otherwise
  */
-int oph_odb_job_update_job_table(ophidiadb * oDB, char *markerid, char *task_string, char *status, char *username, int id_session, int *id_job, char *parentid);
+int oph_odb_job_update_job_table(ophidiadb * oDB, char *markerid, char *task_string, char *status, int id_user, int id_session, int *id_job, char *parentid);
 
 /**
  * \brief Function to retrieve the ID of a session

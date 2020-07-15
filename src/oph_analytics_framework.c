@@ -161,19 +161,24 @@ int oph_af_write_json(oph_json * oper_json, char **jstring, char *backtrace, con
 
 int oph_af_create_job(ophidiadb * oDB, char *task_string, HASHTBL * task_tbl, int *id_job)
 {
-	int id_session;
+	if (!id_job) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter task table\n");
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	*id_job = 0;
 
 	if (!task_tbl) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter task table\n");
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
-	char *username = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
+	char *username = hashtbl_get(task_tbl, OPH_ARG_USERID);
 	if (!username) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_ARG_USERNAME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_ARG_USERID);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_ARG_USERID);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	int id_user = (int) strtol(username, NULL, 10);
 
 	char *sessionid = hashtbl_get(task_tbl, OPH_ARG_SESSIONID);
 	if (!sessionid) {
@@ -194,7 +199,7 @@ int oph_af_create_job(ophidiadb * oDB, char *task_string, HASHTBL * task_tbl, in
 
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "'%s' '%s'\n", sessionid, markerid);
 
-	int res;
+	int res, id_session;
 	if ((res = oph_odb_job_retrieve_session_id(oDB, sessionid, &id_session))) {
 		if (res != OPH_ODB_NO_ROW_FOUND) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve session id\n");
@@ -202,12 +207,14 @@ int oph_af_create_job(ophidiadb * oDB, char *task_string, HASHTBL * task_tbl, in
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 		// A new entry has to be created in table 'session'
-		if (oph_odb_job_update_session_table(oDB, sessionid, username, 0, &id_session)) {
+		if (oph_odb_job_update_session_table(oDB, sessionid, id_user, 0, &id_session)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a new entry in table 'session'\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_OPHIDIADB_WRITE_ERROR, "new session");
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 	}
+#ifdef OPH_DB_SUPPORT
+
 #ifndef OPH_STANDALONE_MODE
 	if ((res = oph_odb_job_retrieve_job_id(oDB, sessionid, markerid, id_job))) {
 		if (res != OPH_ODB_NO_ROW_FOUND) {
@@ -217,7 +224,7 @@ int oph_af_create_job(ophidiadb * oDB, char *task_string, HASHTBL * task_tbl, in
 		}
 #endif
 		// A new entry has to be created in table 'job'
-		if (oph_odb_job_update_job_table(oDB, markerid, task_string, OPH_ODB_JOB_STATUS_UNKNOWN_STR, username, id_session, id_job, 0)) {
+		if (oph_odb_job_update_job_table(oDB, markerid, task_string, OPH_ODB_JOB_STATUS_UNKNOWN_STR, id_user, id_session, id_job, 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a new entry in table 'job'\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_OPHIDIADB_WRITE_ERROR, "new job");
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -228,6 +235,12 @@ int oph_af_create_job(ophidiadb * oDB, char *task_string, HASHTBL * task_tbl, in
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_OPHIDIADB_READ_JOB_ERROR);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+#endif
+
+#else
+
+	UNUSED(task_string);
+
 #endif
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -493,6 +506,44 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	}
 	hashtbl_insert(task_tbl, OPH_ARG_MARKERID, tmp_value);
 #endif
+
+	if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_USERID, tmp_value)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing %s input parameter\n", OPH_ARG_USERID);
+		hashtbl_destroy(task_tbl);
+		oph_tp_end_xml_parser();
+		if (!task_rank) {
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, OPH_LOG_ANALITICS_OPERATOR_MISSING_INPUT, "");
+#else
+			snprintf(error_message, OPH_COMMON_BUFFER_LEN, OPH_LOG_ANALITICS_OPERATOR_MISSING_INPUT, backtrace);
+#endif
+			if (oph_json_add_text(oper_json, OPH_JSON_OBJKEY_STATUS, "ERROR", error_message)) {
+				oph_json_free(oper_json);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+			} else
+				oph_af_write_json(oper_json, &handle->output_json, backtrace, notify_sessionid, marker_id);
+#ifndef OPH_STANDALONE_MODE
+/* gSOAP notification start */
+			if (have_soap) {
+				snprintf(notify_message, OPH_COMMON_BUFFER_LEN, "%s=%d;%s=%s;%s=%s;%s=%s;%s=%s;%s=%s;%s=%s;", OPH_ARG_STATUS, OPH_ODB_JOB_STATUS_RUNNING_ERROR, OPH_ARG_IDJOB,
+					 notify_jobid, OPH_ARG_PARENTID, notify_parent_jobid, OPH_ARG_TASKINDEX, notify_task_index, OPH_ARG_LIGHTTASKINDEX, notify_light_task_index, OPH_ARG_SESSIONID,
+					 notify_sessionid, OPH_ARG_MARKERID, marker_id);
+				if (oph_notify(&soap, &data, notify_message, handle->output_json, &response))
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "SOAP connection refused.\n");
+				else if (response)
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Error %d in sending SOAP notification.\n", response);
+				oph_soap_cleanup(&soap, &data);
+			}
+/* gSOAP notification end */
+#endif
+		}
+		mysql_library_end();
+		oph_pid_free();
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+	hashtbl_insert(task_tbl, OPH_ARG_USERID, tmp_value);
+
 	if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_USERNAME, tmp_value)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing %s input parameter\n", OPH_ARG_USERNAME);
 		hashtbl_destroy(task_tbl);
@@ -836,8 +887,6 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		if (idjob)
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_RUNNING);
 
-		int folder_id = 0;
-
 #ifdef OPH_STANDALONE_MODE
 		/* If we are using stand-alone mode, replace server-side arguments with fill values */
 		hashtbl_remove(task_tbl, OPH_ARG_USERROLE);
@@ -847,6 +896,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		hashtbl_remove(task_tbl, OPH_ARG_SESSIONID);
 		hashtbl_insert(task_tbl, OPH_ARG_SESSIONID, "/session/standalone/experiment");
 
+		int folder_id = 0;
 		if (oph_odb_fs_path_parsing("", "/standalone", &folder_id, NULL, &oDB)) {
 			pmesg(LOG_WARNING, __FILE__, __LINE__, "Path /standalone doesn't exists\n");
 			if (oph_odb_fs_insert_into_folder_table(&oDB, 1, "standalone", &folder_id)) {
@@ -864,7 +914,10 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		}
 #endif
 
+#ifdef OPH_DB_SUPPORT
 		if (idjob < 0) {
+#endif
+
 			if (oph_af_create_job(&oDB, task_string, task_tbl, &idjob)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to save job parameters into OphidiaDB. Check access parameters.\n");
 				oph_tp_end_xml_parser();
@@ -899,15 +952,15 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 				oph_pid_free();
 				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
+#ifdef OPH_DB_SUPPORT
 			//Insert idjob in hash table
 			snprintf(tmp_value, sizeof(tmp_value), "%d", idjob);
 			hashtbl_insert(task_tbl, OPH_ARG_IDJOB, tmp_value);
 		}
+#endif
+
 		if (idjob)
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_START);
-
-		if (!folder_id)
-			oph_odb_job_retrieve_folder_id(&oDB, hashtbl_get(task_tbl, OPH_ARG_SESSIONID), &folder_id);	// Create a new entry if not found
 
 #ifndef OPH_STANDALONE_MODE
 /* gSOAP notification start */

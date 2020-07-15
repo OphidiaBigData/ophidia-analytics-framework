@@ -96,6 +96,7 @@ struct _OPH_RANDCUBE_operator_handle {
 	char *rand_algo;
 	short int execute_error;
 	char policy;
+	int id_user;
 };
 typedef struct _OPH_RANDCUBE_operator_handle OPH_RANDCUBE_operator_handle;
 

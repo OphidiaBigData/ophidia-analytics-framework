@@ -234,6 +234,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
+	value = hashtbl_get(task_tbl, OPH_ARG_USERID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERID);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, OPH_ARG_USERID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user = (int) strtol(value, NULL, 10);
+
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
@@ -245,12 +253,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_OPHIDIADB_CONNECTION_ERROR_NO_CONTAINER);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-	}
-
-	if (oph_odb_user_retrieve_user_id(oDB, value, &(((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to extract userid.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_USER_ID_ERROR);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;

@@ -545,6 +545,17 @@ if  test "$plugin_host_path" = "no"; then
 fi
 AC_SUBST(PLUGIN_DEFAULT_HOSTNAME)
 
+OPH_DB_SUPPORT=
+AC_ARG_ENABLE(db, [ --disable-db	Disable Ophidia DB support. (Enabled by default)], [ db="no" ], [ db="yes" ])
+if test "x$db" = "xyes"; then
+	AC_MSG_NOTICE(Ophidia DB enabled)
+else
+	AC_MSG_NOTICE(Ophidia DB disabled)
+fi
+AM_CONDITIONAL([DB_SUPPORT], [test "x$db" = "xyes"])
+OPH_DB_SUPPORT=$db
+AC_SUBST(OPH_DB_SUPPORT)
+
 OPT="-Wno-error -Wno-format-security"
 case "${host}" in
         *-*-solaris*)   PLATFORM=SUN_OS

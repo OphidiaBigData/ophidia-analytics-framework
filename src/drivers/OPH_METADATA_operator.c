@@ -52,7 +52,7 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 				}
 
-				int idkey, idtype, iduser, idmetadatainstance;
+				int idkey, idtype, idmetadatainstance;
 				if (!handle->metadata_keys || !handle->metadata_value) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_INSTANCE_ERROR);
@@ -62,12 +62,6 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 				if (oph_odb_meta_retrieve_metadatatype_id(oDB, handle->metadata_type, &idtype)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_RETRIEVE_TYPE_ID_ERROR, handle->metadata_type);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_TYPE_ID_ERROR, handle->metadata_type);
-					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
-				}
-				//Retrieve user id
-				if (oph_odb_user_retrieve_user_id(oDB, handle->user, &iduser)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_RETRIEVE_USER_ID_ERROR, handle->user);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_USER_ID_ERROR, handle->user);
 					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 				}
 
@@ -108,7 +102,7 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 					}
 					//insert into manage table
-					if (oph_odb_meta_insert_into_manage_table(oDB, idmetadatainstance, iduser)) {
+					if (oph_odb_meta_insert_into_manage_table(oDB, idmetadatainstance, handle->id_user)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
 						if (handle->metadata_keys_num > 1)
@@ -145,7 +139,7 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 				}
 
-				int iduser = 0, exists = 0;
+				int exists = 0;
 				if (!handle->metadata_id || !handle->metadata_value) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
@@ -158,11 +152,6 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 				}
 				//Retrieve user id
-				if (oph_odb_user_retrieve_user_id(oDB, handle->user, &iduser)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_RETRIEVE_USER_ID_ERROR, handle->user);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_USER_ID_ERROR, handle->user);
-					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
-				}
 				//update medatainstance table
 				if (oph_odb_meta_update_metadatainstance_table(oDB, handle->metadata_id, handle->id_datacube_input, handle->metadata_value, handle->force)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
@@ -170,7 +159,7 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 				}
 				//insert into manage table
-				if (oph_odb_meta_insert_into_manage_table(oDB, handle->metadata_id, iduser)) {
+				if (oph_odb_meta_insert_into_manage_table(oDB, handle->metadata_id, handle->id_user)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
 					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
@@ -322,6 +311,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 
 	//Check if user can access container and retrieve container id
+	value = hashtbl_get(task_tbl, OPH_ARG_USERID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERID);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_MISSING_INPUT_PARAMETER, OPH_ARG_USERID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_METADATA_operator_handle *) handle->operator_handle)->id_user = (int) strtol(value, NULL, 10);
+
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);

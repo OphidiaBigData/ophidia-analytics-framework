@@ -98,6 +98,7 @@ struct _OPH_RANDCUBE2_operator_handle {
 	int nthread;
 	short int execute_error;
 	char policy;
+	int id_user;
 };
 typedef struct _OPH_RANDCUBE2_operator_handle OPH_RANDCUBE2_operator_handle;
 

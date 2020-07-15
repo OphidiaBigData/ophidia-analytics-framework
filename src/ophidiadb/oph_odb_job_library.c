@@ -30,7 +30,6 @@
 #include "debug.h"
 
 #include "oph_odb_cube_library.h"
-#include "oph_odb_user_library.h"
 
 extern int msglevel;
 
@@ -105,6 +104,7 @@ int oph_odb_job_set_job_status(ophidiadb * oDB, int id_job, oph_odb_job_status s
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+#ifdef OPH_DB_SUPPORT
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -142,6 +142,13 @@ int oph_odb_job_set_job_status(ophidiadb * oDB, int id_job, oph_odb_job_status s
 	}
 
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "Job status changed into '%s' using: %s\n", oph_odb_job_convert_status_to_str(status), insertQuery);
+
+#else
+
+	UNUSED(id_job);
+	UNUSED(status);
+
+#endif
 
 	return OPH_ODB_SUCCESS;
 }
@@ -207,6 +214,7 @@ int oph_odb_job_retrieve_job_id(ophidiadb * oDB, char *sessionid, char *markerid
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+#ifdef OPH_DB_SUPPORT
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -252,6 +260,8 @@ int oph_odb_job_retrieve_job_id(ophidiadb * oDB, char *sessionid, char *markerid
 		*id_job = (int) strtol(row[0], NULL, 10);
 
 	mysql_free_result(res);
+
+#endif
 
 	return OPH_ODB_SUCCESS;
 }
@@ -324,21 +334,15 @@ int oph_get_session_code(const char *sessionid, char *session_code)
 	return result;
 }
 
-int oph_odb_job_update_session_table(ophidiadb * oDB, char *sessionid, char *username, int id_folder, int *id_session)
+int oph_odb_job_update_session_table(ophidiadb * oDB, char *sessionid, int id_user, int id_folder, int *id_session)
 {
-	if (!oDB || !sessionid || !username || !id_session) {
+	if (!oDB || !sessionid || !id_user || !id_session) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
-		return OPH_ODB_MYSQL_ERROR;
-	}
-
-	int id_user;
-	if (oph_odb_user_retrieve_user_id(oDB, username, &id_user)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve username.\n");
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
@@ -376,12 +380,13 @@ int oph_odb_job_update_session_table(ophidiadb * oDB, char *sessionid, char *use
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_job_update_job_table(ophidiadb * oDB, char *markerid, char *task_string, char *status, char *username, int id_session, int *id_job, char *parentid)
+int oph_odb_job_update_job_table(ophidiadb * oDB, char *markerid, char *task_string, char *status, int id_user, int id_session, int *id_job, char *parentid)
 {
 	if (!oDB || !markerid || !task_string || !status || !id_job) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+#ifdef OPH_DB_SUPPORT
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -391,11 +396,6 @@ int oph_odb_job_update_job_table(ophidiadb * oDB, char *markerid, char *task_str
 	char insertQuery[MYSQL_BUFLEN];
 	int n, i, j;
 
-	int id_user;
-	if (oph_odb_user_retrieve_user_id(oDB, username, &id_user)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve username.\n");
-		return OPH_ODB_MYSQL_ERROR;
-	}
 	//Escape ' char with \'
 	char new_query[OPH_ODB_CUBE_OPERATION_QUERY_SIZE];
 	j = 0;
@@ -427,6 +427,13 @@ int oph_odb_job_update_job_table(ophidiadb * oDB, char *markerid, char *task_str
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted datacube id\n");
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
+#else
+
+	UNUSED(id_user);
+	UNUSED(id_session);
+	UNUSED(parentid);
+
+#endif
 
 	return OPH_ODB_SUCCESS;
 }
@@ -470,7 +477,7 @@ int oph_odb_job_retrieve_folder_id(ophidiadb * oDB, char *sessionid, int *id_fol
 			return OPH_ODB_NULL_PARAM;
 		}
 
-		if (oph_odb_update_folder_table(oDB, session_code, &id_folder) || !id_folder) {
+		if (oph_odb_update_folder_table(oDB, session_code, id_folder) || !*id_folder) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a new folder.\n");
 			return OPH_ODB_MYSQL_ERROR;
 		}

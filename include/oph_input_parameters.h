@@ -191,6 +191,7 @@
 
 #define OPH_ARG_NTHREAD						"nthreads"
 #define OPH_ARG_USERNAME					"username"
+#define OPH_ARG_USERID						"userid"
 #define OPH_ARG_SESSIONID					"sessionid"
 #define OPH_ARG_WORKFLOWID					"workflowid"
 #define OPH_ARG_MARKERID					"markerid"

@@ -1,6 +1,6 @@
 --
 --    Ophidia Analytics Framework
---    Copyright (C) 2012-2019 CMCC Foundation
+--    Copyright (C) 2012-2020 CMCC Foundation
 --
 --    This program is free software: you can redistribute it and/or modify
 --    it under the terms of the GNU General Public License as published by
@@ -153,8 +153,6 @@ UNLOCK TABLES;
 -- Table structure for table `hostpartition`
 --
 
--- Note: the constraint to foreign key `idjob` has been removed in order to enable dynamic clustering
-
 DROP TABLE IF EXISTS `hostpartition`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
@@ -262,7 +260,6 @@ INSERT INTO `folder` (`idfolder`, `foldername`) VALUES (1, 'root');
 /*!40000 ALTER TABLE `folder` ENABLE KEYS */;
 UNLOCK TABLES;
 
-
 --
 -- Table structure for table `source`
 --
@@ -286,7 +283,6 @@ LOCK TABLES `source` WRITE;
 /*!40000 ALTER TABLE `source` DISABLE KEYS */;
 /*!40000 ALTER TABLE `source` ENABLE KEYS */;
 UNLOCK TABLES;
-
 
 --
 -- Table structure for table `datacube`
@@ -346,7 +342,6 @@ LOCK TABLES `datacube` WRITE;
 /*!40000 ALTER TABLE `datacube` ENABLE KEYS */;
 UNLOCK TABLES;
 
-
 --
 -- Table structure for table `session`
 --
@@ -376,78 +371,6 @@ LOCK TABLES `session` WRITE;
 UNLOCK TABLES;
 
 --
--- Table structure for table `job`
---
-
-DROP TABLE IF EXISTS `job`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `job` (
-  `idjob` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `idparent` int(10) unsigned DEFAULT NULL,
-  `markerid` int(10) unsigned NOT NULL,
-  `workflowid` int(10) unsigned DEFAULT NULL,
-  `idsession` int(10) unsigned DEFAULT NULL,
-  `iduser` int(10) unsigned NOT NULL,
-  `creationdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `status` varchar(64) NOT NULL,
-  `submissionstring` varchar(2048) DEFAULT NULL,
-  `timestart` timestamp NULL DEFAULT NULL,
-  `timeend` timestamp NULL DEFAULT NULL,
-  `nchildrentotal` int(10) unsigned DEFAULT NULL,
-  `nchildrencompleted` int(10) unsigned DEFAULT NULL,
-  PRIMARY KEY (`idjob`),
-  CONSTRAINT `idparent_j` FOREIGN KEY (`idparent`) REFERENCES `job` (`idjob`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `idsession_j` FOREIGN KEY (`idsession`) REFERENCES `session` (`idsession`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `job`
---
-
-LOCK TABLES `job` WRITE;
-/*!40000 ALTER TABLE `job` DISABLE KEYS */;
-/*!40000 ALTER TABLE `job` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `jobaccounting`
---
-
-DROP TABLE IF EXISTS `jobaccounting`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `jobaccounting` (
-  `idjob` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `idparent` int(10) unsigned DEFAULT NULL,
-  `markerid` int(10) unsigned NOT NULL,
-  `workflowid` int(10) unsigned DEFAULT NULL,
-  `idsession` int(10) unsigned DEFAULT NULL,
-  `iduser` int(10) unsigned DEFAULT NULL,
-  `creationdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `status` varchar(64) NOT NULL,
-  `submissionstring` varchar(2048) DEFAULT NULL,
-  `timestart` timestamp NULL DEFAULT NULL,
-  `timeend` timestamp NULL DEFAULT NULL,
-  `nchildrentotal` int(10) unsigned DEFAULT NULL,
-  `nchildrencompleted` int(10) unsigned DEFAULT NULL,
-  PRIMARY KEY (`idjob`),
-  CONSTRAINT `idparent_ja` FOREIGN KEY (`idparent`) REFERENCES `jobaccounting` (`idjob`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `idsession_ja` FOREIGN KEY (`idsession`) REFERENCES `session` (`idsession`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `jobaccounting`
---
-
-LOCK TABLES `jobaccounting` WRITE;
-/*!40000 ALTER TABLE `jobaccounting` DISABLE KEYS */;
-/*!40000 ALTER TABLE `jobaccounting` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
 -- Table structure for table `task`
 --
 
@@ -462,7 +385,6 @@ CREATE TABLE `task` (
   `operation` varchar(256) NOT NULL,
   `query` varchar(2048) DEFAULT NULL,
   PRIMARY KEY (`idtask`),
-  CONSTRAINT `idjob_j` FOREIGN KEY (`idjob`) REFERENCES `job` (`idjob`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `idouputcube_t` FOREIGN KEY (`idoutputcube`) REFERENCES `datacube` (`iddatacube`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -475,7 +397,6 @@ LOCK TABLES `task` WRITE;
 /*!40000 ALTER TABLE `task` DISABLE KEYS */;
 /*!40000 ALTER TABLE `task` ENABLE KEYS */;
 UNLOCK TABLES;
-
 
 --
 -- Table structure for table `hasinput`
@@ -895,4 +816,3 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-13-08 22:09:07

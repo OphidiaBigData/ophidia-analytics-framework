@@ -19,16 +19,18 @@
 #ifndef __OPH_ODB_JOB_QUERY_H__
 #define __OPH_ODB_JOB_QUERY_H__
 
-#define MYSQL_QUERY_JOB_UPDATE_JOB_STATUS_1	"UPDATE job SET status='%s' WHERE idjob=%d"
-#define MYSQL_QUERY_JOB_UPDATE_JOB_STATUS_2	"UPDATE job SET status='%s', timestart=NOW() WHERE idjob=%d AND timestart IS NULL"
-#define MYSQL_QUERY_JOB_UPDATE_JOB_STATUS_3	"UPDATE job SET status='%s', timeend=NOW() WHERE idjob=%d AND timeend IS NULL"
-#define MYSQL_QUERY_JOB_UPDATE_SESSION		"INSERT INTO `session` (`iduser`, `idfolder`, `sessionid`) VALUES (%d, %d, '%s')"
-#define MYSQL_QUERY_JOB_UPDATE_JOB2		"INSERT INTO `job` (`idsession`, `markerid`, `status`, `submissionstring`, `idparent`, `iduser`) VALUES (%d, '%s', '%s', '%s', '%s', '%d')"
-#define MYSQL_QUERY_JOB_UPDATE_JOB		"INSERT INTO `job` (`idsession`, `markerid`, `status`, `submissionstring`, `iduser`) VALUES (%d, '%s', '%s', '%s', '%d')"
-#define MYSQL_QUERY_JOB_RETRIEVE_SESSION_ID	"SELECT idsession FROM session WHERE sessionid = '%s'"
-#define MYSQL_QUERY_JOB_RETRIEVE_JOB_ID		"SELECT idjob FROM session INNER JOIN job ON session.idsession = job.idsession WHERE sessionid = '%s' AND markerid = %s"
-#define MYSQL_QUERY_JOB_RETRIEVE_FOLDER_ID	"SELECT idfolder FROM session WHERE sessionid = '%s'"
+#define MYSQL_QUERY_JOB_RETRIEVE_SESSION_ID				"SELECT idsession FROM session WHERE sessionid = '%s'"
+#define MYSQL_QUERY_JOB_RETRIEVE_FOLDER_ID				"SELECT idfolder FROM session WHERE sessionid = '%s'"
+#define MYSQL_QUERY_JOB_UPDATE_SESSION					"INSERT INTO `session` (`iduser`, `idfolder`, `sessionid`) VALUES (%d, %d, '%s')"
+#define MYSQL_QUERY_UPDATE_OPHIDIADB_SESSION_FOLDER		"INSERT INTO `folder` (`idparent`, `foldername`) VALUES (1, '%s')"
 
-#define MYSQL_QUERY_UPDATE_OPHIDIADB_SESSION_FOLDER "INSERT INTO `folder` (`idparent`, `foldername`) VALUES (1, '%s')"
+#ifdef OPH_DB_SUPPORT
+#define MYSQL_QUERY_JOB_UPDATE_JOB_STATUS_1				"UPDATE job SET status='%s' WHERE idjob=%d"
+#define MYSQL_QUERY_JOB_UPDATE_JOB_STATUS_2				"UPDATE job SET status='%s', timestart=NOW() WHERE idjob=%d AND timestart IS NULL"
+#define MYSQL_QUERY_JOB_UPDATE_JOB_STATUS_3				"UPDATE job SET status='%s', timeend=NOW() WHERE idjob=%d AND timeend IS NULL"
+#define MYSQL_QUERY_JOB_UPDATE_JOB						"INSERT INTO `job` (`idsession`, `markerid`, `status`, `submissionstring`, `iduser`) VALUES (%d, '%s', '%s', '%s', '%d')"
+#define MYSQL_QUERY_JOB_UPDATE_JOB2						"INSERT INTO `job` (`idsession`, `markerid`, `status`, `submissionstring`, `idparent`, `iduser`) VALUES (%d, '%s', '%s', '%s', '%s', '%d')"
+#define MYSQL_QUERY_JOB_RETRIEVE_JOB_ID					"SELECT idjob FROM session INNER JOIN job ON session.idsession = job.idsession WHERE sessionid = '%s' AND markerid = %s"
+#endif
 
 #endif				/* __OPH_ODB_JOB_QUERY_H__ */
