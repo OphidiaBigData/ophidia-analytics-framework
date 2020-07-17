@@ -716,6 +716,7 @@ int oph_tp_task_params_parser2(const char *operator, char *task_string, HASHTBL 
 	xmlChar *content;
 
 	//Parse till args section
+	size_t len = strlen(task_string);
 	long number_arguments = 0;
 	char *value1 = NULL;
 	node = root->children;
@@ -736,7 +737,7 @@ int oph_tp_task_params_parser2(const char *operator, char *task_string, HASHTBL 
 					//Look for param names (xml content)
 					content = xmlNodeGetContent(subnode->xmlChildrenNode);
 					if (content) {
-						value1 = strdup(task_string);
+						value1 = (char *) malloc(len + 10);
 						if (!value1) {
 							xmlFree(content);
 							xmlFreeDoc(document);
