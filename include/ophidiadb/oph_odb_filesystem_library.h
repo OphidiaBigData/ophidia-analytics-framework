@@ -306,4 +306,6 @@ int oph_odb_fs_retrieve_container_from_container_name(ophidiadb * oDB, int folde
  */
 int oph_odb_fs_retrieve_container_name_from_container(ophidiadb * oDB, int container_id, char **container_name, int *folder_id);
 
+int oph_odb_fs_get_subfolders(int folder_id, int **subfolder_id, int *num_subfolders, ophidiadb * oDB);
+
 #endif				/* __OPH_ODB_FS_H__ */

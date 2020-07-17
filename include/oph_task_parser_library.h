@@ -75,6 +75,7 @@ int oph_tp_find_param_in_task_string(const char *task_string, const char *param,
 
 //Load the operator parameters from task_string and XML into the hash table
 int oph_tp_task_params_parser(char *task_string, HASHTBL ** hashtbl);
+int oph_tp_task_params_parser2(const char *operator, char *task_string, HASHTBL ** hashtbl);
 
 //Split multiple values params into a value_list of size value_num
 int oph_tp_parse_multiple_value_param(char *values, char ***value_list, int *value_num);

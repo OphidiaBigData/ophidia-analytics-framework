@@ -11,6 +11,7 @@ Levels from 0 to 2 show information about the folder tree. If the cwd is empty t
 Level 3 is similar to level 2 but it also shows additional information about the data cubes.
 Level 4 shows the location of the specified datacube.
 Levels from 5 to 8 show information about fragmentation of the input datacube.
+Level 9 allows to search datacubes based on a filter (see OPH_MASSIVE).
 Folders are identified by an ending &quot;/&quot;.
 Any filter can use SQL wildcards (%, _, etc.)
 
@@ -25,6 +26,7 @@ Any filter can use SQL wildcards (%, _, etc.)
 		  -- 6 : show containers, datacubes, hosts and dbmss
 		  -- 7 : show containers, datacubes, hosts, dbmss and dbs
 		  -- 8 : show containers, datacubes, hosts, dbmss, dbs and fragments
+		  -- 9 : show datacubes based on a filter
 - path : optional filter on absolute/relative path. Path is expanded so it can also contain 
 		 &apos;.&apos; and &apos;..&apos;  
 - cwd : absolute path corresponding to the current working directory,
@@ -34,7 +36,9 @@ Any filter can use SQL wildcards (%, _, etc.)
 - container_filter : optional filter on containers. The argument is considered only for the first three levels.
 				     Default is &quot;all&quot;.
 - cube : name of the requested datacube. This argument is mandatory only when level is &gt; = 3, otherwise it is not considered. 
-				   The name must be in PID format.					
+         The name must be in PID format.
+- cube_filter : filter on datacubes; valid only when level is = 9, otherwise it is not considered.
+                Filters needs to be set within square brackets; see OPH_MASSIVE.
 - host_filter : optional filter on hosts.
 			    Default is &quot;all&quot;.
 - dbms_filter : optional filter on DBMSs.
@@ -74,7 +78,7 @@ SUBMISSION STRING: &quot;operator=oph_list;level=2;cwd=/session-code;&quot;</abs
         <permission>read</permission>
     </info>
     <args>
-		<argument type="int" mandatory="no" default="1" minvalue="0" maxvalue="8" values="0|1|2|3|4|5|6|7|8">level</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="0" maxvalue="9" values="0|1|2|3|4|5|6|7|8|9">level</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
@@ -82,6 +86,7 @@ SUBMISSION STRING: &quot;operator=oph_list;level=2;cwd=/session-code;&quot;</abs
 		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="no" default="all">container_filter</argument>
 		<argument type="string" mandatory="no" default="all" multivalue="yes">cube</argument>
+		<argument type="string" mandatory="no" default="all">cube_filter</argument>
 		<argument type="string" mandatory="no" default="all">host_filter</argument>
 		<argument type="int" mandatory="no" default="all">dbms_filter</argument>
 		<argument type="string" mandatory="no" default="all">measure_filter</argument>

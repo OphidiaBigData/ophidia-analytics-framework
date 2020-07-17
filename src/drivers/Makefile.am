@@ -250,7 +250,7 @@ endif
 liboph_listoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_listoperator_la_SOURCES = OPH_LIST_operator.c
 liboph_listoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_listoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_utility
+liboph_listoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_utility -loph_subset
 
 liboph_log_infooperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"
 liboph_log_infooperator_la_SOURCES = OPH_LOG_INFO_operator.c

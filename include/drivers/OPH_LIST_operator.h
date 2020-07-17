@@ -42,6 +42,7 @@
  * \param level Level of verbosity 0 to 8
  * \param container_name Name of the container to filter on
  * \param datacube_name Name of the datacube to filter on
+ * \param filter Filter used to search datacubes 
  * \param hostname Name of the host to filter on
  * \param id_dbms ID of dbms to filter on
  * \param db_name Database name to filter on
@@ -62,6 +63,7 @@ struct _OPH_LIST_operator_handle {
 	char *cwd;
 	char *container_name;
 	char *datacube_name;
+	char *filter;
 	char *hostname;
 	char *src;
 	char *measure;

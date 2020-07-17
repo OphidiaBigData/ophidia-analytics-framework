@@ -42,6 +42,8 @@
 #define OPH_SUBSET_LIB_DOUBLE_TYPE		OPH_COMMON_DOUBLE_TYPE
 #define OPH_SUBSET_LIB_FLOAT_TYPE		OPH_COMMON_FLOAT_TYPE
 
+#define OPH_SUBSET_ISINSUBSET_PLUGIN "mysql.oph_is_in_subset(%s.%s,%lld,%lld,%lld)"
+
 typedef enum { OPH_SUBSET_LIB_SINGLE, OPH_SUBSET_LIB_INTERVAL, OPH_SUBSET_LIB_STRIDE } oph_subset_type;
 
 typedef struct {
