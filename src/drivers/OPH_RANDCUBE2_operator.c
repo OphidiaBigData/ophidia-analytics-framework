@@ -1010,6 +1010,7 @@ int task_init(oph_operator_struct * handle)
 				} else
 					id_grid = last_inserted_grid_id;
 			}
+			char is_time = 0;
 			//For each input dimension
 			for (i = 0; i < num_of_input_dim; i++) {
 				//Find container dimension
@@ -1046,7 +1047,12 @@ int task_init(oph_operator_struct * handle)
 				dim_inst[i].fk_id_dimension_label = 0;
 				dim_inst[i].id_grid = id_grid;
 				dim_inst[i].id_dimensioninst = 0;
-				if (oph_dim_insert_into_dimension_table_rand_data(db, label_dimension_table_name, tot_dims[j].dimension_type, dim_inst[i].size, &dimension_array_id)) {
+				if (!strncmp(dims[i].dimension_name, "time", strlen("time")))
+					is_time = 1;
+				else
+					is_time = 0;
+
+				if (oph_dim_insert_into_dimension_table_rand_data_time(db, label_dimension_table_name, tot_dims[j].dimension_type, dim_inst[i].size, &dimension_array_id, is_time)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DIM_ROW_ERROR, dims[j].dimension_name);
 					free(tot_dims);

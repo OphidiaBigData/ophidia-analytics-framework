@@ -206,6 +206,20 @@ int oph_dim_check_if_dimension_table_exists(oph_odb_db_instance * db, char *dime
 int oph_dim_insert_into_dimension_table_rand_data(oph_odb_db_instance * db, char *dimension_table_name, char *dimension_type, long long dim_size, int *dimension_id);
 
 /**
+ * \brief Function to populate a dimension table (with random or sequential values)
+ * \param db Pointer to db_instance used for dimension table
+ * \param dimension_table_name Name of new dimension table
+ * \param dimension_type Type of dimension to be inserted
+ * \param dimension_size Length of dimension to be inserted
+ * \param dimension_id Id of last inserted dimension
+ * \param is_time_dime Flag which identifies a time dimensions (sequence of values equally spaced). If not set, random values are used.
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_dim_insert_into_dimension_table_rand_data_time(oph_odb_db_instance * db, char *dimension_table_name, char *dimension_type, long long dim_size, int *dimension_id, char is_time_dim);
+
+
+
+/**
  * \brief Function to read a dimension table with filtering parameters
  * \param db Pointer to db_instance used for dimension table
  * \param dimension_table_name Name of new dimension table

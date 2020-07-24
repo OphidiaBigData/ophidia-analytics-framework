@@ -1819,6 +1819,11 @@ int oph_dim_check_if_dimension_table_exists(oph_odb_db_instance * db, char *dime
 
 int oph_dim_insert_into_dimension_table_rand_data(oph_odb_db_instance * db, char *dimension_table_name, char *dimension_type, long long dim_size, int *dimension_id)
 {
+	return oph_dim_insert_into_dimension_table_rand_data_time(db, dimension_table_name, dimension_type, dim_size, dimension_id, 0);
+}
+
+int oph_dim_insert_into_dimension_table_rand_data_time(oph_odb_db_instance * db, char *dimension_table_name, char *dimension_type, long long dim_size, int *dimension_id, char is_time_dim)
+{
 	if (!db || !dimension_table_name || !dimension_type || !dim_size || !dimension_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DIM_NULL_PARAM;
@@ -1885,34 +1890,70 @@ int oph_dim_insert_into_dimension_table_rand_data(oph_odb_db_instance * db, char
 	//Fill random array
 	char *dim_row = (char *) malloc(sizeof_var);
 	void *dim_array = NULL;
-	struct timeval time;
-	gettimeofday(&time, NULL);
-	srand(time.tv_sec * 1000000 + time.tv_usec);
-	if (type_flag == OPH_DIM_BYTE_FLAG) {
-		dim_array = (int *) malloc(dim_size * sizeof(char));
-		for (i = 0; i < dim_size; i++)
-			((char *) dim_array)[i] = ((double) rand() / RAND_MAX) * 99.0 + 1 + (i ? ((char *) dim_array)[i - 1] : 0);
-	} else if (type_flag == OPH_DIM_SHORT_FLAG) {
-		dim_array = (short *) malloc(dim_size * sizeof(short));
-		for (i = 0; i < dim_size; i++)
-			((short *) dim_array)[i] = ((double) rand() / RAND_MAX) * 99.0 + 1 + (i ? ((short *) dim_array)[i - 1] : 0);
-	} else if (type_flag == OPH_DIM_INT_FLAG) {
-		dim_array = (int *) malloc(dim_size * sizeof(int));
-		for (i = 0; i < dim_size; i++)
-			((int *) dim_array)[i] = ((double) rand() / RAND_MAX) * 99.0 + 1 + (i ? ((int *) dim_array)[i - 1] : 0);
-	} else if (type_flag == OPH_DIM_LONG_FLAG) {
-		dim_array = (long long *) malloc(dim_size * sizeof(long long));
-		for (i = 0; i < dim_size; i++)
-			((long long *) dim_array)[i] = ((double) rand() / RAND_MAX) * 99.0 + 1 + (i ? ((long long *) dim_array)[i - 1] : 0);
-	} else if (type_flag == OPH_DIM_FLOAT_FLAG) {
-		dim_array = (float *) malloc(dim_size * sizeof(float));
-		for (i = 0; i < dim_size; i++)
-			((float *) dim_array)[i] = ((float) rand() / RAND_MAX) * 99.0 + 1 + (i ? ((float *) dim_array)[i - 1] : 0);
-	} else if (type_flag == OPH_DIM_DOUBLE_FLAG) {
-		dim_array = (double *) malloc(dim_size * sizeof(double));
-		for (i = 0; i < dim_size; i++)
-			((double *) dim_array)[i] = ((double) rand() / RAND_MAX) * 99.0 + 1 + (i ? ((double *) dim_array)[i - 1] : 0);
+
+	if (is_time_dim) {
+		if (type_flag == OPH_DIM_BYTE_FLAG) {
+			int time_step = 1;
+			dim_array = (int *) malloc(dim_size * sizeof(char));
+			for (i = 0; i < dim_size; i++)
+				((char *) dim_array)[i] = (char) (time_step * i);
+		} else if (type_flag == OPH_DIM_SHORT_FLAG) {
+			int time_step = 1;
+			dim_array = (short *) malloc(dim_size * sizeof(short));
+			for (i = 0; i < dim_size; i++)
+				((short *) dim_array)[i] = (short) (time_step * i);
+		} else if (type_flag == OPH_DIM_INT_FLAG) {
+			int time_step = 1;
+			dim_array = (int *) malloc(dim_size * sizeof(int));
+			for (i = 0; i < dim_size; i++)
+				((int *) dim_array)[i] = (int) (time_step * i);
+		} else if (type_flag == OPH_DIM_LONG_FLAG) {
+			int time_step = 1;
+			dim_array = (long long *) malloc(dim_size * sizeof(long long));
+			for (i = 0; i < dim_size; i++)
+				((long long *) dim_array)[i] = (long long) (time_step * i);
+		} else if (type_flag == OPH_DIM_FLOAT_FLAG) {
+			float time_step = 0.25;
+			dim_array = (float *) malloc(dim_size * sizeof(float));
+			for (i = 0; i < dim_size; i++)
+				((float *) dim_array)[i] = (float) (time_step * i);
+		} else if (type_flag == OPH_DIM_DOUBLE_FLAG) {
+			float time_step = 0.25;
+			dim_array = (double *) malloc(dim_size * sizeof(double));
+			for (i = 0; i < dim_size; i++)
+				((double *) dim_array)[i] = (double) (time_step * i);
+		}
+	} else {
+		struct timeval time;
+		gettimeofday(&time, NULL);
+		srand(time.tv_sec * 1000000 + time.tv_usec);
+		if (type_flag == OPH_DIM_BYTE_FLAG) {
+			dim_array = (int *) malloc(dim_size * sizeof(char));
+			for (i = 0; i < dim_size; i++)
+				((char *) dim_array)[i] = ((double) rand() / RAND_MAX) * 99.0 + 1 + (i ? ((char *) dim_array)[i - 1] : 0);
+		} else if (type_flag == OPH_DIM_SHORT_FLAG) {
+			dim_array = (short *) malloc(dim_size * sizeof(short));
+			for (i = 0; i < dim_size; i++)
+				((short *) dim_array)[i] = ((double) rand() / RAND_MAX) * 99.0 + 1 + (i ? ((short *) dim_array)[i - 1] : 0);
+		} else if (type_flag == OPH_DIM_INT_FLAG) {
+			dim_array = (int *) malloc(dim_size * sizeof(int));
+			for (i = 0; i < dim_size; i++)
+				((int *) dim_array)[i] = ((double) rand() / RAND_MAX) * 99.0 + 1 + (i ? ((int *) dim_array)[i - 1] : 0);
+		} else if (type_flag == OPH_DIM_LONG_FLAG) {
+			dim_array = (long long *) malloc(dim_size * sizeof(long long));
+			for (i = 0; i < dim_size; i++)
+				((long long *) dim_array)[i] = ((double) rand() / RAND_MAX) * 99.0 + 1 + (i ? ((long long *) dim_array)[i - 1] : 0);
+		} else if (type_flag == OPH_DIM_FLOAT_FLAG) {
+			dim_array = (float *) malloc(dim_size * sizeof(float));
+			for (i = 0; i < dim_size; i++)
+				((float *) dim_array)[i] = ((float) rand() / RAND_MAX) * 99.0 + 1 + (i ? ((float *) dim_array)[i - 1] : 0);
+		} else if (type_flag == OPH_DIM_DOUBLE_FLAG) {
+			dim_array = (double *) malloc(dim_size * sizeof(double));
+			for (i = 0; i < dim_size; i++)
+				((double *) dim_array)[i] = ((double) rand() / RAND_MAX) * 99.0 + 1 + (i ? ((double *) dim_array)[i - 1] : 0);
+		}
 	}
+
 	memcpy(dim_row, (void *) dim_array, sizeof_var);
 	free(dim_array);
 
