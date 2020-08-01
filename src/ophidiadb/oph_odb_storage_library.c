@@ -910,7 +910,7 @@ int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type,
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_type, int *id_host_partition, int host_number)
+int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_type, int id_user, int *id_host_partition, int host_number)
 {
 	if (!oDB || !host_number || !id_host_partition || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -925,7 +925,7 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_t
 
 	char selectQuery[MYSQL_BUFLEN];
 
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS, ioserver_type, host_number);
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS, ioserver_type, id_user, host_number);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -1780,7 +1780,7 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_type, int id_host_partition, char hidden, int host_number, int id_datacube, int **id_dbmss, int **id_hosts, int policy)
+int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_type, int id_host_partition, char hidden, int host_number, int id_datacube, int **id_dbmss, int **id_hosts, char policy)
 {
 	if (!oDB || !host_number || !id_datacube || !id_dbmss || !ioserver_type || !id_host_partition || !id_hosts) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1820,7 +1820,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 	int n;
 	switch (policy) {
 		case 1:
-			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST "" MYSQL_STGE_POLICY_LOOP, id_host_partition, ioserver_type, hidden, host_number);
+			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST "" MYSQL_STGE_POLICY_PORT, id_host_partition, ioserver_type, host_number);
 			break;
 		default:
 			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_STGE_RETRIEVE_DBMS_LIST "" MYSQL_STGE_POLICY_RR, id_host_partition, ioserver_type, hidden, host_number);
@@ -1852,6 +1852,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 
 	short runs = 1;
 	int ret = 0;
+	int mysql_code = 0;
 	do {
 		//Start transaction
 		if (mysql_autocommit(oDB->conn, 0)) {
@@ -1864,10 +1865,11 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 		}
 		//Run select query
 		if ((ret = mysql_query(oDB->conn, selectQuery))) {
+			mysql_code = mysql_errno(oDB->conn);
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 			mysql_rollback(oDB->conn);
 			mysql_autocommit(oDB->conn, 1);
-			if (((ret == OPH_ODB_LOCK_ERROR) || (ret == OPH_ODB_LOCK_WAIT_ERROR)) && (runs < OPH_ODB_MAX_ATTEMPTS)) {
+			if (((mysql_code == OPH_ODB_LOCK_ERROR) || (mysql_code == OPH_ODB_LOCK_WAIT_ERROR)) && (runs < OPH_ODB_MAX_ATTEMPTS)) {
 				pmesg(LOG_WARNING, __FILE__, __LINE__, "Retry the query\n");
 				sleep(OPH_ODB_WAITING_TIME);
 				runs++;
@@ -1929,10 +1931,11 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 		}
 		//Run insert query
 		if ((ret = mysql_query(oDB->conn, insertQuery))) {
+			mysql_code = mysql_errno(oDB->conn);
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 			mysql_rollback(oDB->conn);
 			mysql_autocommit(oDB->conn, 1);
-			if (((ret == OPH_ODB_LOCK_ERROR) || (ret == OPH_ODB_LOCK_WAIT_ERROR)) && (runs < OPH_ODB_MAX_ATTEMPTS)) {
+			if (((mysql_code == OPH_ODB_LOCK_ERROR) || (mysql_code == OPH_ODB_LOCK_WAIT_ERROR)) && (runs < OPH_ODB_MAX_ATTEMPTS)) {
 				pmesg(LOG_WARNING, __FILE__, __LINE__, "Retry the query\n");
 				sleep(OPH_ODB_WAITING_TIME);
 				runs++;
@@ -1947,9 +1950,10 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 		}
 		//Run update query
 		if ((ret = mysql_query(oDB->conn, updateQuery))) {
+			mysql_code = mysql_errno(oDB->conn);
 			mysql_rollback(oDB->conn);
 			mysql_autocommit(oDB->conn, 1);
-			if (((ret == OPH_ODB_LOCK_ERROR) || (ret == OPH_ODB_LOCK_WAIT_ERROR)) && (runs < OPH_ODB_MAX_ATTEMPTS)) {
+			if (((mysql_code == OPH_ODB_LOCK_ERROR) || (mysql_code == OPH_ODB_LOCK_WAIT_ERROR)) && (runs < OPH_ODB_MAX_ATTEMPTS)) {
 				pmesg(LOG_WARNING, __FILE__, __LINE__, "MySQL query error ... retrying: %s\n", mysql_error(oDB->conn));
 				sleep(OPH_ODB_WAITING_TIME);
 				runs++;
@@ -2172,6 +2176,13 @@ int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_use
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+
+	size_t length = strlen(name);
+	if (!length || (length > OPH_ODB_STGE_PARTITION_NAME_SIZE)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong partition name: its size exceeds limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
 	*id_hostpartition = 0;
 
 	if (hosts < 0)

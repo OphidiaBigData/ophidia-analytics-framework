@@ -234,7 +234,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_DBMS_ID_FILTER);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (strcmp(value, OPH_COMMON_ALL_FILTER) != 0) {
+	if (strcmp(value, OPH_COMMON_ALL_FILTER) && strcmp(value, "0")) {
 		((OPH_LIST_operator_handle *) handle->operator_handle)->id_dbms = (int) strtol(value, NULL, 10);
 	}
 
@@ -286,7 +286,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_LEVEL_FILTER);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (strcmp(value, OPH_COMMON_ALL_FILTER) != 0) {
+	if (strcmp(value, OPH_COMMON_ALL_FILTER) && strcmp(value, "0")) {
 		((OPH_LIST_operator_handle *) handle->operator_handle)->oper_level = (int) strtol(value, NULL, 10);
 	}
 

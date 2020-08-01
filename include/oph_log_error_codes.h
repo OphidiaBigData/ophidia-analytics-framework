@@ -1895,7 +1895,9 @@
 #define OPH_LOG_OPH_B2DROP_FILE_OPEN_ERROR 						OPH_LOG_GENERIC_FILE_OPEN_ERROR
 #define OPH_LOG_OPH_B2DROP_STAT_FILE_ERROR					    "Unable to get '%s' file size or file is empty\n"
 #define OPH_LOG_OPH_B2DROP_UPLOAD_FILE_ERROR					"Error while uploading file with curl: %s\n"
+#define OPH_LOG_OPH_B2DROP_DOWNLOAD_FILE_ERROR					"Error while downloading file with curl: %s\n"
 #define OPH_LOG_OPH_B2DROP_HTTP_ERROR							"HTTP Error %ld with curl: '%s'\n"
+#define OPH_LOG_OPH_B2DROP_READ_FILE_ERROR						"Unable to read whole %d bytes from file\n"
 
 /*OPH_SCRIPT OPERATOR LOG ERRORS*/
 #define OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_HANDLE					OPH_LOG_GENERIC_MEMORY_ERROR_HANDLE

@@ -648,6 +648,9 @@ int task_init(oph_operator_struct * handle)
 		int n, residual_dim_number = 0, d;
 		char *dim_row, *cl_value;
 		int compressed = 0;
+		char new_container =
+		    ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_output_container != ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container;
+
 		for (l = 0; l < number_of_dimensions; ++l) {
 			if (!dim_inst[l].fk_id_dimension_index) {
 				pmesg(LOG_WARNING, __FILE__, __LINE__, "Dimension FK not set in cubehasdim.\n");
@@ -716,8 +719,7 @@ int task_init(oph_operator_struct * handle)
 				}
 			}
 
-			if (new_grid || !((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->grid_name
-			    || (((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_output_container != ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container)) {
+			if (new_grid || !((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->grid_name || new_container) {
 				if (oph_dim_insert_into_dimension_table(db, o_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, dim_inst[l].size, dim_row, &(dim_inst[l].fk_id_dimension_index))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in inserting a new row in dimension table.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_AGGREGATE_DIM_ROW_ERROR);

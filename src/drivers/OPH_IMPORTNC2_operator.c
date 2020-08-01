@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <mpi.h>
+#include <sys/stat.h>
 
 #include <math.h>
 #include <ctype.h>
@@ -116,6 +117,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->time_filter = 1;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->execute_error = 0;
+	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->policy = 0;
+	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->ncid = 0;
 
 	char *value;
 
@@ -148,6 +151,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	char *container_name = (!hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT) ? "NO-CONTAINER" : hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT));
 
 	//3 - Fill struct with the correct data
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_POLICY);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_POLICY);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_POLICY);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strcmp(value, OPH_COMMON_POLICY_PORT))
+		((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->policy = 1;
+	else if (strcmp(value, OPH_COMMON_POLICY_RR)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong input parameter %s\n", OPH_IN_PARAM_POLICY);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_POLICY);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_BASE_TIME);
 	if (!value) {
@@ -295,6 +312,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nthread = (int) strtol(value, NULL, 10);
 
+	int retval, j = 0;
 	if (strstr(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, "..")) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
@@ -307,6 +325,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pointer++;
 		if (pointer) {
 			char tmp[OPH_COMMON_BUFFER_LEN];
+			char *tmp_base_path = NULL;
 			if (*pointer != '/') {
 				value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
 				if (!value) {
@@ -331,15 +350,40 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					pointer = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path;
 				}
 			}
-			if (oph_pid_get_base_src_path(&value)) {
+			if (oph_pid_get_base_src_path(&tmp_base_path)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
-			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
+			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", tmp_base_path ? tmp_base_path : "", *pointer != '/' ? "/" : "", pointer);
+			free(tmp_base_path);
 			free(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path);
 			((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
-			free(value);
+		}
+		//Open netcdf file
+		struct stat st;
+		if (stat(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, &st) == 0) {
+			size_t size = (size_t) 2 * st.st_blksize;
+			if ((retval =
+			     nc__open(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, NC_NOWRITE, &size,
+				      &(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->ncid)))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path,
+				      nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_OPEN_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+		} else {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, strerror(errno));
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_OPEN_ERROR_NO_CONTAINER, container_name, strerror(errno));
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+
+	} else {
+		//Open netcdf file from URL
+		if ((retval = nc_open(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, NC_NOWRITE, &(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->ncid)))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_OPEN_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 	}
 
@@ -417,14 +461,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	int imp_number_of_dim_names = 0;
 	int imp_number_of_dim_clevels = 0;
 	int number_of_dim_clevels = 0;
-
-	//Open netcdf file
-	int retval, j = 0;
-	if ((retval = nc_open(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, NC_NOWRITE, &(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->ncid)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path, nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_OPEN_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
 
 	int ncid = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->ncid;
 	//Extract measured variable information
@@ -856,6 +892,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (tmp_concept_levels)
 		free(tmp_concept_levels);
 
+
 	//ADDED TO MANAGE SUBSETTED IMPORT
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OFFSET);
@@ -1258,7 +1295,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			}
 		}
 
-		char temp[OPH_COMMON_BUFFER_LEN];
+		long long max_size = QUERY_BUFLEN;
+		oph_pid_get_buffer_size(&max_size);
+		char temp[max_size];
 		if (oph_dim_parse_time_subset(sub_filters[tf], time_dim, temp)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing time values '%s'\n", sub_filters[tf]);
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
@@ -1602,6 +1641,7 @@ int task_init(oph_operator_struct * handle)
 		}
 	}
 
+	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->total_frag_number = 1;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->array_length = 1;
 	for (i = 0; i < measure->ndims; i++) {
@@ -1666,7 +1706,7 @@ int task_init(oph_operator_struct * handle)
 		//If default values are used: select fylesystem and partition
 		if (!strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(host_partition))
 		    && !strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT))) {
-			if (oph_odb_stge_get_default_host_partition_fs(oDB, ioserver_type, &id_host_partition, *host_number > 0 ? *host_number : 1) || !id_host_partition) {
+			if (oph_odb_stge_get_default_host_partition_fs(oDB, ioserver_type, id_user, &id_host_partition, *host_number > 0 ? *host_number : 1) || !id_host_partition) {
 				if (run) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
@@ -1969,6 +2009,7 @@ int task_init(oph_operator_struct * handle)
 			cont.id_folder = folder_id;
 			cont.operation[0] = 0;
 			cont.id_vocabulary = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_vocabulary;
+			cont.description[0] = 0;
 
 			if (oph_odb_fs_insert_into_container_table(oDB, &cont, &id_container_out)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update container table\n");
@@ -2653,7 +2694,6 @@ int task_init(oph_operator_struct * handle)
 		int id_src = 0;
 		strncpy(src.uri, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path_orig, OPH_ODB_CUBE_SOURCE_URI_SIZE);
 		src.uri[OPH_ODB_CUBE_SOURCE_URI_SIZE] = 0;
-
 		if (oph_odb_cube_insert_into_source_table(oDB, &src, &id_src)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert source URI\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_SOURCE_URI_ERROR, src.uri);
@@ -2811,11 +2851,12 @@ int task_init(oph_operator_struct * handle)
 			mysql_free_result(key_list);
 
 			//Get global attributes from nc file
-			char key[OPH_COMMON_BUFFER_LEN], value[OPH_COMMON_BUFFER_LEN], svalue[OPH_COMMON_BUFFER_LEN];
+			char key[OPH_COMMON_BUFFER_LEN], value[OPH_COMMON_BUFFER_LEN], svalue[OPH_COMMON_BUFFER_LEN], *big_value = NULL;
 			char *id_key, *keyptr, *keydup;
 			int id_metadatainstance;
 			keyptr = key;
 			int natts = 0;
+			size_t att_len = 0;
 			if (nc_inq_varnatts(ncid, NC_GLOBAL, &natts)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering number of global attributes\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_NC_NATTS_ERROR);
@@ -2901,15 +2942,74 @@ int task_init(oph_operator_struct * handle)
 
 				//Insert key value into OphidiaDB
 				keydup = strdup(key);
-				if (!keydup || nc_get_att(ncid, NC_GLOBAL, (const char *) key, (void *) &value)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
-					hashtbl_destroy(key_tbl);
-					hashtbl_destroy(required_tbl);
-					free(dimvar_ids);
-					if (keydup)
-						free(keydup);
-					goto __OPH_EXIT_1;
+
+				if (xtype == NC_CHAR || xtype == NC_STRING) {
+					//Check attribute length
+					if (nc_inq_attlen(ncid, NC_GLOBAL, (const char *) key, &att_len)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute length from file\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute length from file\n");
+						hashtbl_destroy(key_tbl);
+						hashtbl_destroy(required_tbl);
+						free(dimvar_ids);
+						if (keydup)
+							free(keydup);
+						goto __OPH_EXIT_1;
+					}
+
+					if (att_len >= OPH_COMMON_BUFFER_LEN) {
+
+						if (!(big_value = (char *) malloc((att_len + 1) * sizeof(char)))) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name,
+								"Tmp big attribute buffer");
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							free(dimvar_ids);
+							if (keydup)
+								free(keydup);
+							if (big_value)
+								free(big_value);
+							goto __OPH_EXIT_1;
+						}
+
+						if (!keydup || nc_get_att(ncid, NC_GLOBAL, (const char *) key, (void *) big_value)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							free(dimvar_ids);
+							free(big_value);
+							if (keydup)
+								free(keydup);
+							goto __OPH_EXIT_1;
+						}
+
+					} else {
+
+						if (!keydup || nc_get_att(ncid, NC_GLOBAL, (const char *) key, (void *) &value)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							free(dimvar_ids);
+							if (keydup)
+								free(keydup);
+							goto __OPH_EXIT_1;
+						}
+						value[att_len] = 0;
+					}
+				} else {
+
+					if (!keydup || nc_get_att(ncid, NC_GLOBAL, (const char *) key, (void *) &value)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+						hashtbl_destroy(key_tbl);
+						hashtbl_destroy(required_tbl);
+						free(dimvar_ids);
+						if (keydup)
+							free(keydup);
+						goto __OPH_EXIT_1;
+					}
 				}
 				strcpy(key, keydup);
 				free(keydup);
@@ -2951,14 +3051,21 @@ int task_init(oph_operator_struct * handle)
 
 				//Insert metadata instance (also manage relation)
 				if (oph_odb_meta_insert_into_metadatainstance_manage_tables
-				    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, NULL, sid_key_type, id_user, svalue, &id_metadatainstance)) {
+				    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, NULL, sid_key_type, id_user, big_value ? big_value : svalue, &id_metadatainstance)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_METADATAINSTANCE_ERROR, key, svalue);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_METADATAINSTANCE_ERROR, key, big_value ? big_value : svalue);
 					hashtbl_destroy(key_tbl);
 					hashtbl_destroy(required_tbl);
 					free(dimvar_ids);
+					if (big_value)
+						free(big_value);
 					goto __OPH_EXIT_1;
 				}
+
+				if (big_value)
+					free(big_value);
+				big_value = NULL;
+
 				// Drop the metadata out of the hashtable
 				if (id_key)
 					hashtbl_remove(key_tbl, key_and_variable);
@@ -3052,15 +3159,74 @@ int task_init(oph_operator_struct * handle)
 
 					//Insert key value into OphidiaDB
 					keydup = strdup(key);
-					if (!keydup || nc_get_att(ncid, dimvar_ids[ii], (const char *) key, (void *) &value)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
-						hashtbl_destroy(key_tbl);
-						hashtbl_destroy(required_tbl);
-						free(dimvar_ids);
-						if (keydup)
-							free(keydup);
-						goto __OPH_EXIT_1;
+					if (xtype == NC_CHAR || xtype == NC_STRING) {
+						//Check attribute length
+						if (nc_inq_attlen(ncid, dimvar_ids[ii], (const char *) key, &att_len)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute length from file\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute length from file\n");
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							free(dimvar_ids);
+							if (keydup)
+								free(keydup);
+							goto __OPH_EXIT_1;
+						}
+
+						if (att_len >= OPH_COMMON_BUFFER_LEN) {
+
+							if (!(big_value = (char *) malloc((att_len + 1) * sizeof(char)))) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name,
+									"Tmp big attribute buffer");
+								hashtbl_destroy(key_tbl);
+								hashtbl_destroy(required_tbl);
+								free(dimvar_ids);
+								if (keydup)
+									free(keydup);
+								if (big_value)
+									free(big_value);
+								goto __OPH_EXIT_1;
+							}
+
+							if (!keydup || nc_get_att(ncid, dimvar_ids[ii], (const char *) key, (void *) big_value)) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+								hashtbl_destroy(key_tbl);
+								hashtbl_destroy(required_tbl);
+								free(dimvar_ids);
+								free(big_value);
+								if (keydup)
+									free(keydup);
+								goto __OPH_EXIT_1;
+							}
+
+						} else {
+
+							if (!keydup || nc_get_att(ncid, dimvar_ids[ii], (const char *) key, (void *) &value)) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+								hashtbl_destroy(key_tbl);
+								hashtbl_destroy(required_tbl);
+								free(dimvar_ids);
+								if (keydup)
+									free(keydup);
+								goto __OPH_EXIT_1;
+							}
+							value[att_len] = 0;
+						}
+
+					} else {
+
+						if (!keydup || nc_get_att(ncid, dimvar_ids[ii], (const char *) key, (void *) &value)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							free(dimvar_ids);
+							if (keydup)
+								free(keydup);
+							goto __OPH_EXIT_1;
+						}
 					}
 					strcpy(key, keydup);
 					free(keydup);
@@ -3102,14 +3268,22 @@ int task_init(oph_operator_struct * handle)
 
 					//Insert metadata instance (also manage relation)
 					if (oph_odb_meta_insert_into_metadatainstance_manage_tables
-					    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->dims_name[ii], sid_key_type, id_user, svalue, &id_metadatainstance)) {
+					    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->dims_name[ii], sid_key_type, id_user, big_value ? big_value : svalue,
+					     &id_metadatainstance)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_METADATAINSTANCE_ERROR, key, value);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_METADATAINSTANCE_ERROR, key, big_value ? big_value : svalue);
 						hashtbl_destroy(key_tbl);
 						hashtbl_destroy(required_tbl);
 						free(dimvar_ids);
+						if (big_value)
+							free(big_value);
 						goto __OPH_EXIT_1;
 					}
+
+					if (big_value)
+						free(big_value);
+					big_value = NULL;
+
 					// Drop the metadata out of the hashtable
 					if (id_key)
 						hashtbl_remove(key_tbl, key_and_variable);
@@ -3199,14 +3373,69 @@ int task_init(oph_operator_struct * handle)
 
 				//Insert key value into OphidiaDB
 				keydup = strdup(key);
-				if (!keydup || nc_get_att(ncid, measure->varid, (const char *) key, (void *) &value)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
-					hashtbl_destroy(key_tbl);
-					hashtbl_destroy(required_tbl);
-					if (keydup)
-						free(keydup);
-					goto __OPH_EXIT_1;
+				if (xtype == NC_CHAR || xtype == NC_STRING) {
+					//Check attribute length
+					if (nc_inq_attlen(ncid, measure->varid, (const char *) key, &att_len)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute length from file\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute length from file\n");
+						hashtbl_destroy(key_tbl);
+						hashtbl_destroy(required_tbl);
+						if (keydup)
+							free(keydup);
+						goto __OPH_EXIT_1;
+					}
+
+					if (att_len >= OPH_COMMON_BUFFER_LEN) {
+
+						if (!(big_value = (char *) malloc((att_len + 1) * sizeof(char)))) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name,
+								"Tmp big attribute buffer");
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							if (keydup)
+								free(keydup);
+							if (big_value)
+								free(big_value);
+							goto __OPH_EXIT_1;
+						}
+
+						if (!keydup || nc_get_att(ncid, measure->varid, (const char *) key, (void *) big_value)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							free(big_value);
+							if (keydup)
+								free(keydup);
+							goto __OPH_EXIT_1;
+						}
+
+					} else {
+
+						if (!keydup || nc_get_att(ncid, measure->varid, (const char *) key, (void *) &value)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							if (keydup)
+								free(keydup);
+							goto __OPH_EXIT_1;
+						}
+						value[att_len] = 0;
+					}
+
+				} else {
+
+					if (!keydup || nc_get_att(ncid, measure->varid, (const char *) key, (void *) &value)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
+						hashtbl_destroy(key_tbl);
+						hashtbl_destroy(required_tbl);
+						if (keydup)
+							free(keydup);
+						goto __OPH_EXIT_1;
+					}
 				}
 				strcpy(key, keydup);
 				free(keydup);
@@ -3248,13 +3477,21 @@ int task_init(oph_operator_struct * handle)
 
 				//Insert metadata instance (also manage relation)
 				if (oph_odb_meta_insert_into_metadatainstance_manage_tables
-				    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->varname, sid_key_type, id_user, svalue, &id_metadatainstance)) {
+				    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->varname, sid_key_type, id_user, big_value ? big_value : svalue,
+				     &id_metadatainstance)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_METADATAINSTANCE_ERROR, key, value);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_METADATAINSTANCE_ERROR, key, big_value ? big_value : svalue);
 					hashtbl_destroy(key_tbl);
 					hashtbl_destroy(required_tbl);
+					if (big_value)
+						free(big_value);
 					goto __OPH_EXIT_1;
 				}
+
+				if (big_value)
+					free(big_value);
+				big_value = NULL;
+
 				// Drop the metadata out of the hashtable
 				if (id_key)
 					hashtbl_remove(key_tbl, key_and_variable);
@@ -3292,7 +3529,7 @@ int task_init(oph_operator_struct * handle)
 						goto __OPH_EXIT_1;
 					}
 				}
-			} else if ((time_dimension >= 0) && (oph_odb_dim_set_time_dimension(oDB, id_datacube_out, measure->dims_name[time_dimension]))) {
+			} else if ((time_dimension >= 0) && oph_odb_dim_set_time_dimension(oDB, id_datacube_out, measure->dims_name[time_dimension])) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_SET_TIME_ERROR);
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_SET_TIME_ERROR);
 				goto __OPH_EXIT_1;
@@ -3313,7 +3550,8 @@ int task_init(oph_operator_struct * handle)
 		dbmss_length = host_num = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->host_number;
 		int *id_dbmss = NULL, *id_hosts = NULL;
 		//Retreive ID dbms list
-		if (oph_odb_stge_retrieve_dbmsinstance_id_list(oDB, ioserver_type, id_host_partition, hidden, host_num, id_datacube_out, &id_dbmss, &id_hosts, 0)) {
+		if (oph_odb_stge_retrieve_dbmsinstance_id_list
+		    (oDB, ioserver_type, id_host_partition, hidden, host_num, id_datacube_out, &id_dbmss, &id_hosts, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->policy)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DBMS_LIST_ERROR);
 			if (id_dbmss)
@@ -3987,6 +4225,8 @@ int env_unset(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	int i, retval;
+
+	oph_pid_free();
 
 	//Only master process has to close and release connection to management OphidiaDB
 	if (handle->proc_rank == 0) {

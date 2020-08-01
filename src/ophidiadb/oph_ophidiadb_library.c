@@ -322,9 +322,11 @@ int oph_odb_query_ophidiadb(ophidiadb * oDB, char *query)
 
 	short runs = 1;
 	int ret = 0;
+	int mysql_code = 0;
 	do {
 		if ((ret = mysql_query(oDB->conn, query))) {
-			if (((ret == OPH_ODB_LOCK_ERROR) || (ret == OPH_ODB_LOCK_WAIT_ERROR)) && (runs < OPH_ODB_MAX_ATTEMPTS)) {
+			mysql_code = mysql_errno(oDB->conn);
+			if (((mysql_code == OPH_ODB_LOCK_ERROR) || (mysql_code == OPH_ODB_LOCK_WAIT_ERROR)) && (runs < OPH_ODB_MAX_ATTEMPTS)) {
 				pmesg(LOG_WARNING, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 				sleep(OPH_ODB_WAITING_TIME);
 				runs++;

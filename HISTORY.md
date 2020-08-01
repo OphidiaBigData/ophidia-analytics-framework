@@ -1,9 +1,57 @@
 
-## New features
+## v1.6.0 - 2020-07-27
+
+### Fixed:
+
+- Bug in parsing multivalue arguments
+- Bug in setting _Fillvalue in exportnc operators
+- Bug in setting total fragment number in OPH_IMPORTNC2
+- Framework core functions to support longer input strings for operators [#94](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/94)
+- Bug when inserting new dimension if another one with the same name already exists [#90](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/90)
+- Bug in selection of default host partition [#89](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/89)
+- Bug in assign elements to groups to be reduced by OPH_REDUCE2 in case new concept level is '3 hour', '6 hour' or 'quarter'
+- Bug [#84](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/84) when querying OphidiaDB
+- Bug [#83](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/83)
+- Bug [#82](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/82)
 
 ### Added:
 
-- Parameter 'recursive' to OPH_TASKS and OPH_SEARCH
+- New values '365_day' and '366_day' for parameter 'calendar'
+- New argument 'action' to OPH_B2DROP to support also file download [#95](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/95)
+- Creation date of host partitions to output of OPH_CLUSTER  [#93](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/93)
+- New parameter in import and randcube operators to set node selection policy [#92](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/92)
+- New argument 'space' to OPH_SCRIPT [#91](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/91)
+- Configuration option ENABLE_UNREGISTERED_SCRIPT to allow unregistered scripts [#87](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/87)
+- Support for new types of date formats in dimensions
+- New argument 'order' to mergecubes operators [#86](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/86)
+- Support to enable/disable users using OPH_SERVICE [#85](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/85)
+- New argument 'cubes' to OPH_INTERCUBE
+
+### Changed:
+
+- OPH_IMPORTNC2 to exploit block size upon nc file opening [#97](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/97)
+- OPH_EXPLORECUBE to remove row limit in case of base64 option is used [#96](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/96); it also fixes [#62] (https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/62)
+- Interface of OPH_SET and OPH_INPUT to allow 0 as a value for the 'id' parameter
+- OPH_INSTANCE operator when option 'auto' is used for argument 'host_partition'
+- Time hierarchy to support concept level 'c' as 'second' [#88](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/88)
+
+
+## v1.5.1 - 2019-04-16
+
+### Fixed:
+
+- Bug [#81](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/81) related to the use of a new container for the output datacube 
+- Bug [#80](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/80) in OPH_INTERCUBE operator 
+- Bug [#79](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/79) in OPH_MERGE operator 
+- Bug [#78](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/78) when thread number is smaller than host number
+
+### Added:
+
+- New parameter 'recursive' to OPH_TASKS and OPH_SEARCH
+
+### Changed:
+
+- Default value of parameter 'action' in OPH_MANAGE_SESSION
 
 
 ## v1.5.0 - 2019-01-24
