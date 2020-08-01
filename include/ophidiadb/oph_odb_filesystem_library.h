@@ -38,6 +38,8 @@
 
 #define OPH_ODB_FS_DESCRIPTION_SIZE 2048
 
+#define OPH_ODB_FS_FOLDER_NAME_SIZE 256
+
 /**
  * \brief Structure that contains a container
  * \param id_folder id of the folder

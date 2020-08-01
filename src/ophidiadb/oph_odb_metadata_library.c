@@ -29,6 +29,8 @@
 #include <mysql.h>
 #include "debug.h"
 
+#include "oph_pid_library.h"
+
 extern int msglevel;
 
 int oph_odb_meta_find_metadatakey_list(ophidiadb * oDB, int vocabulary_id, MYSQL_RES ** information_list)
@@ -90,23 +92,49 @@ int oph_odb_meta_insert_into_metadatainstance_manage_tables(ophidiadb * oDB, con
 	}
 	mysql_real_escape_string(oDB->conn, escaped_value, value, n);
 
-	//Update metadatainstance table
-	char insertQuery[MYSQL_BUFLEN];
+	int query_buflen = QUERY_BUFLEN;
+
 	if (id_metadatakey == -1) {
 		if (new_metadatakey_variable)
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1, id_datacube, id_metadatatype, escaped_value, new_metadatakey,
-				     new_metadatakey_variable);
+			query_buflen =
+			    1 + snprintf(NULL, 0, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1, id_datacube, id_metadatatype, escaped_value, new_metadatakey, new_metadatakey_variable);
 		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_metadatatype, escaped_value, new_metadatakey);
+			query_buflen = 1 + snprintf(NULL, 0, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_metadatatype, escaped_value, new_metadatakey);
 	} else {
 		if (new_metadatakey_variable)
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE3, id_datacube, id_metadatakey, id_metadatatype, escaped_value, new_metadatakey,
+			query_buflen =
+			    1 + snprintf(NULL, 0, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE3, id_datacube, id_metadatakey, id_metadatatype, escaped_value, new_metadatakey,
+					 new_metadatakey_variable);
+		else
+			query_buflen = 1 + snprintf(NULL, 0, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE4, id_datacube, id_metadatakey, id_metadatatype, escaped_value, new_metadatakey);
+	}
+
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		free(escaped_value);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+	//Update metadatainstance table
+	char insertQuery[query_buflen];
+	if (id_metadatakey == -1) {
+		if (new_metadatakey_variable)
+			n = snprintf(insertQuery, query_buflen, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1, id_datacube, id_metadatatype, escaped_value, new_metadatakey,
 				     new_metadatakey_variable);
 		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE4, id_datacube, id_metadatakey, id_metadatatype, escaped_value, new_metadatakey);
+			n = snprintf(insertQuery, query_buflen, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_metadatatype, escaped_value, new_metadatakey);
+	} else {
+		if (new_metadatakey_variable)
+			n = snprintf(insertQuery, query_buflen, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE3, id_datacube, id_metadatakey, id_metadatatype, escaped_value, new_metadatakey,
+				     new_metadatakey_variable);
+		else
+			n = snprintf(insertQuery, query_buflen, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE4, id_datacube, id_metadatakey, id_metadatatype, escaped_value, new_metadatakey);
 	}
+
 	free(escaped_value);
-	if (n >= MYSQL_BUFLEN) {
+
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
@@ -406,12 +434,8 @@ int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_data
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
 		return OPH_ODB_MYSQL_ERROR;
 	}
-
-	char insertQuery[MYSQL_BUFLEN];
-	int n;
-
 	//escape value
-	n = strlen(metadata_value);
+	int n = strlen(metadata_value);
 	char *escaped_value = (char *) malloc(2 * n + 1);
 	if (!escaped_value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory for escaped value\n");
@@ -419,20 +443,46 @@ int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_data
 	}
 	mysql_real_escape_string(oDB->conn, escaped_value, metadata_value, n);
 
+	int query_buflen = QUERY_BUFLEN;
+
 	if (id_metadatakey) {
 		if (metadata_variable)
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE3, id_datacube, id_metadatakey, id_metadatatype, escaped_value, metadata_key,
-				     metadata_variable);
+			query_buflen = 1 + snprintf(NULL, 0, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE3, id_datacube, id_metadatakey, id_metadatatype, escaped_value, metadata_key,
+						    metadata_variable);
 		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE4, id_datacube, id_metadatakey, id_metadatatype, escaped_value, metadata_key);
+			query_buflen = 1 + snprintf(NULL, 0, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE4, id_datacube, id_metadatakey, id_metadatatype, escaped_value, metadata_key);
 	} else {
 		if (metadata_variable)
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1, id_datacube, id_metadatatype, escaped_value, metadata_key, metadata_variable);
+			query_buflen = 1 + snprintf(NULL, 0, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1, id_datacube, id_metadatatype, escaped_value, metadata_key, metadata_variable);
 		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_metadatatype, escaped_value, metadata_key);
+			query_buflen = 1 + snprintf(NULL, 0, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_metadatatype, escaped_value, metadata_key);
 	}
+
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		free(escaped_value);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	char insertQuery[query_buflen];
+	if (id_metadatakey) {
+		if (metadata_variable)
+			n = snprintf(insertQuery, query_buflen, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE3, id_datacube, id_metadatakey, id_metadatatype, escaped_value, metadata_key,
+				     metadata_variable);
+		else
+			n = snprintf(insertQuery, query_buflen, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE4, id_datacube, id_metadatakey, id_metadatatype, escaped_value, metadata_key);
+	} else {
+		if (metadata_variable)
+			n = snprintf(insertQuery, query_buflen, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1, id_datacube, id_metadatatype, escaped_value, metadata_key, metadata_variable);
+		else
+			n = snprintf(insertQuery, query_buflen, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_metadatatype, escaped_value, metadata_key);
+	}
+
 	free(escaped_value);
-	if (n >= MYSQL_BUFLEN) {
+
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
@@ -463,9 +513,7 @@ int oph_odb_meta_insert_into_manage_table(ophidiadb * oDB, int id_metadatainstan
 	}
 
 	char insertQuery[MYSQL_BUFLEN];
-	int n;
-
-	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_MANAGE, id_user, id_metadatainstance);
+	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_MANAGE, id_user, id_metadatainstance);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -546,10 +594,11 @@ int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatai
 		return OPH_ODB_NULL_PARAM;
 	}
 
-	char insertQuery[MYSQL_BUFLEN];
 	int n;
 
 	if (!force) {
+
+		char insertQuery[MYSQL_BUFLEN];
 		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_CHECK_VOCABULARY, id_metadatainstance);
 		if (n >= MYSQL_BUFLEN) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
@@ -581,10 +630,22 @@ int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatai
 	}
 	mysql_real_escape_string(oDB->conn, escaped_value, metadata_value, n);
 
+	int query_buflen = 1 + snprintf(NULL, 0, MYSQL_QUERY_META_UPDATE_INSTANCE, escaped_value, id_metadatainstance, id_datacube);
+
+	long long max_size = QUERY_BUFLEN;
+	oph_pid_get_buffer_size(&max_size);
+	if (query_buflen >= max_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+		free(escaped_value);
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
 	//update metadata
-	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_INSTANCE, escaped_value, id_metadatainstance, id_datacube);
+	char insertQuery[query_buflen];
+	n = snprintf(insertQuery, query_buflen, MYSQL_QUERY_META_UPDATE_INSTANCE, escaped_value, id_metadatainstance, id_datacube);
+
 	free(escaped_value);
-	if (n >= MYSQL_BUFLEN) {
+
+	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}

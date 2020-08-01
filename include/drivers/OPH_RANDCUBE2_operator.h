@@ -62,6 +62,7 @@
  * \param nthread Number of pthreads related to each MPI task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  * \param output_path Folder where output cube has to be saved
+ * \param policy Rule to select hosts where data will be distributed
  */
 struct _OPH_RANDCUBE2_operator_handle {
 	ophidiadb oDB;
@@ -109,6 +110,7 @@ struct _OPH_RANDCUBE2_operator_handle {
 	int nthread;
 	short int execute_error;
 	char *output_path;
+	char policy;
 };
 typedef struct _OPH_RANDCUBE2_operator_handle OPH_RANDCUBE2_operator_handle;
 

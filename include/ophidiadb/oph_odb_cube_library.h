@@ -32,7 +32,7 @@
 #define OPH_ODB_CUBE_OPERATOR_SIZE 256
 #define OPH_ODB_CUBE_OPERATION_QUERY_SIZE 2048
 
-#define OPH_ODB_CUBE_SOURCE_URI_SIZE 512
+#define OPH_ODB_CUBE_SOURCE_URI_SIZE 2048
 
 #define OPH_ODB_CUBE_DESCRIPTION_SIZE 2048
 
@@ -344,5 +344,7 @@ int oph_odb_cube_retrieve_cubehasdim_list(ophidiadb * oDB, int id_datacube, oph_
 int oph_odb_cube_update_tuplexfragment(ophidiadb * oDB, int id_datacube, int tuplexfragment);
 
 int oph_odb_cube_update_level_in_cubehasdim_table(ophidiadb * oDB, int level, int id_cubehasdim);
+
+int oph_odb_cube_order_by(ophidiadb * oDB, int order, int *id_datacube, int n);
 
 #endif				/* __OPH_ODB_CUBE_H__ */

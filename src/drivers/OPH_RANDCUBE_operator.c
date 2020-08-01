@@ -99,6 +99,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->rand_algo = NULL;
 	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->output_path = NULL;
+	((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->policy = 0;
 
 	//3 - Fill struct with the correct data
 	char empty = 0, *container_name = &empty, *value;
@@ -753,6 +754,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_POLICY);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_POLICY);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_POLICY);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strcmp(value, OPH_COMMON_POLICY_PORT))
+		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->policy = 1;
+	else if (strcmp(value, OPH_COMMON_POLICY_RR)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong input parameter %s\n", OPH_IN_PARAM_POLICY);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_POLICY);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
 	value = hashtbl_get(task_tbl, OPH_ARG_IDJOB);
 	if (!value)
 		((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->id_job = 0;
@@ -822,7 +837,7 @@ int task_init(oph_operator_struct * handle)
 		if (!strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(host_partition))
 		    && !strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT))) {
 			if (oph_odb_stge_get_default_host_partition_fs
-			    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type, &id_host_partition,
+			    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type, id_user, &id_host_partition,
 			     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number > 0 ? ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number : 1)
 			    || !id_host_partition) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
@@ -1524,7 +1539,8 @@ int task_init(oph_operator_struct * handle)
 		int *id_dbmss = NULL, *id_hosts = NULL;
 		//Retreive ID dbms list 
 		if (oph_odb_stge_retrieve_dbmsinstance_id_list
-		    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type, id_host_partition, hidden, host_num, id_datacube_out, &id_dbmss, &id_hosts, 0)) {
+		    (oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type, id_host_partition, hidden, host_num, id_datacube_out, &id_dbmss, &id_hosts,
+		     ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->policy)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_RANDCUBE_DBMS_LIST_ERROR);
 			if (id_dbmss)

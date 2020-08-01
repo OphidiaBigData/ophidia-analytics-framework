@@ -142,9 +142,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PRIMITIVES_LIST_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_DBMS_ID_FILTER);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (strcmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE) == 0) {
-		((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->id_dbms = 0;
-	} else {
+	if (strcmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE) && strcmp(value, "0")) {
 		((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->id_dbms = (int) strtol(value, NULL, 10);
 		if (((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->id_dbms < 1) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "id of dbms must be positive\n");

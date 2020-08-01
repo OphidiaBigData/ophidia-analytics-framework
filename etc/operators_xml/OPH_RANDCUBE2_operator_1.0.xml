@@ -59,7 +59,10 @@ It creates a new datacube with random data and dimensions. Works only with Ophid
                  There must be 12 positive integers separated by commas. Default is &apos;31,28,31,30,31,30,31,31,30,31,30,31&apos;.
 - leap_year: in case of time dimension and user-defined calendar, it indicates the first leap year. By default it is set to 0.
 - leap_month: in case of time dimension and user-defined calendar, it indicates the leap month. By default it is set to 2 (i.e. February).
-  
+- policy : rule to select how data are distribuited over hosts:
+           -- &apos;rr&apos; hosts are ordered on the basis of the number of cubes stored by it (default);
+           -- &apos;port&apos; hosts are ordered on the basis of port number.
+     
 [System parameters]
 - exec_mode : operator execution mode. Possible values are async (default) for
               asynchronous mode, sync for synchronous mode with json-compliant output.
@@ -114,6 +117,7 @@ SUBMISSION STRING: &quot;operator=oph_randcube2;nhost=1;nfrag=8;ntuple=10;measur
 		<argument type="string" mandatory="no" default="31,28,31,30,31,30,31,31,30,31,30,31">month_lengths</argument>
 		<argument type="int" mandatory="no" default="0" minvalue="0">leap_year</argument>
 		<argument type="int" mandatory="no" default="2" minvalue="1" maxvalue="12">leap_month</argument>
+		<argument type="string" mandatory="no" default="rr" values="rr|port">policy</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|randcube2">objkey_filter</argument>
 		<argument type="string" mandatory="no" default="default" values="default|temperatures">algorithm</argument>
     </args>

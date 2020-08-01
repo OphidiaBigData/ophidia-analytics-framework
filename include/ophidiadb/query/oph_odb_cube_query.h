@@ -93,4 +93,6 @@
 
 #define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_TUPLEXFRAGMENT	"UPDATE datacube SET tuplexfragment = %d WHERE iddatacube = %d"
 
+#define MYSQL_QUERY_ORDER_CUBE_BY_SOURCE				"SELECT idcontainer, iddatacube FROM datacube INNER JOIN source ON datacube.idsource = source.idsource WHERE level = 0 AND iddatacube IN (%s) ORDER BY uri ASC;"
+
 #endif				/* __OPH_ODB_CUBE_QUERY_H__ */
