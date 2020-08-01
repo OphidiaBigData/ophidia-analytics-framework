@@ -31,6 +31,6 @@ SUBMISSION STRING: &quot;operator=oph_set;key=var;value=10;&quot;</abstract>
 		<argument type="string" mandatory="no" default="-" multivalue="yes">value</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no|real">subset_filter</argument>
 		<argument type="real" mandatory="no" default="1" minvalue="0">offset</argument>
-		<argument type="int" mandatory="no" default="@OPH_WORKFLOW_ID" minvalue="1">id</argument>
+		<argument type="int" mandatory="no" default="@OPH_WORKFLOW_ID" minvalue="0">id</argument>
     </args>
 </operator>

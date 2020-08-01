@@ -73,6 +73,8 @@
  * \param memory_size Maximum amount of memory available
  * \param description Free description to be associated with output cube
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
+ * \param output_path Folder where output cube has to be saved
+ * \param policy Rule to select hosts where data will be distributed
  */
 struct _OPH_IMPORTFITS_operator_handle {
 	ophidiadb oDB;
@@ -121,6 +123,8 @@ struct _OPH_IMPORTFITS_operator_handle {
 	long long memory_size;
 	char *description;
 	short int execute_error;
+	char *output_path;
+	char policy;
 };
 typedef struct _OPH_IMPORTFITS_operator_handle OPH_IMPORTFITS_operator_handle;
 

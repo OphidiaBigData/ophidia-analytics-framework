@@ -73,6 +73,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_FOLDER_operator_handle *) handle->operator_handle)->objkeys_num = -1;
 	((OPH_FOLDER_operator_handle *) handle->operator_handle)->sessionid = NULL;
 	((OPH_FOLDER_operator_handle *) handle->operator_handle)->userrole = OPH_ROLE_NONE;
+	((OPH_FOLDER_operator_handle *) handle->operator_handle)->force = 0;
 
 	ophidiadb *oDB = &((OPH_FOLDER_operator_handle *) handle->operator_handle)->oDB;
 
@@ -187,6 +188,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	((OPH_FOLDER_operator_handle *) handle->operator_handle)->userrole = (int) strtol(value, NULL, 10);
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_FORCE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_FORCE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FOLDER_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_FORCE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strcmp(value, OPH_COMMON_YES_VALUE) == 0)
+		((OPH_FOLDER_operator_handle *) handle->operator_handle)->force = 1;
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -403,7 +413,7 @@ int task_execute(oph_operator_struct * handle)
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 				if (answer == 0) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "There is already a folder or a visible container with the same name\n");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "There is already a folder with the same name\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FOLDER_NOT_UNIQUE_ERROR);
 					if (first_part) {
 						free(first_part);
@@ -693,7 +703,7 @@ int task_execute(oph_operator_struct * handle)
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 				if (answer == 0) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "There is already a folder or a visible container with the same name\n");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "There is already a folder with the same name\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FOLDER_NOT_UNIQUE_ERROR);
 					if (first_part) {
 						free(first_part);
@@ -855,15 +865,31 @@ int task_execute(oph_operator_struct * handle)
 					}
 					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 				}
-				if (oph_odb_fs_is_empty_folder(folderid1, &((OPH_FOLDER_operator_handle *) handle->operator_handle)->oDB, &answer)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check folder emptiness\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FOLDER_EMPTY_CHECK_ERROR);
-					if (abs_path1) {
-						free(abs_path1);
-						abs_path1 = NULL;
+				if (((OPH_FOLDER_operator_handle *) handle->operator_handle)->force) {
+
+					if (oph_odb_fs_does_folder_contain_cubes(folderid1, &((OPH_FOLDER_operator_handle *) handle->operator_handle)->oDB, &answer)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check folder emptiness\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FOLDER_EMPTY_CHECK_ERROR);
+						if (abs_path1) {
+							free(abs_path1);
+							abs_path1 = NULL;
+						}
+						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
-					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+
+				} else {
+
+					if (oph_odb_fs_is_empty_folder(folderid1, &((OPH_FOLDER_operator_handle *) handle->operator_handle)->oDB, &answer)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check folder emptiness\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FOLDER_EMPTY_CHECK_ERROR);
+						if (abs_path1) {
+							free(abs_path1);
+							abs_path1 = NULL;
+						}
+						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					}
 				}
+
 				if (answer == 0) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Folder is not empty\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FOLDER_FOLDER_NOT_EMPTY_ERROR);

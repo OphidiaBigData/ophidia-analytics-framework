@@ -52,7 +52,9 @@
 #define OPH_APPLY_BLACK_LIST_SIZE 2
 
 #define OPH_APPLY_COMPRESS_MEASURE "oph_compress('','',%s)"
+#define OPH_APPLY_COMPRESS_MEASURE_SIZE 32
 #define OPH_APPLY_UNCOMPRESS_MEASURE "oph_uncompress('','',%s)"
+#define OPH_APPLY_UNCOMPRESS_MEASURE_SIZE 32
 
 #define OPH_APPLY_PRIMITIVE_ID_STR "id"
 #define OPH_APPLY_PRIMITIVE_SIMPLE_STR "simple"
@@ -470,8 +472,10 @@ int oph_apply_parse_query(oph_operator_struct * handle, char *data_type, const c
 
 	int i = 0;
 	if ((is_measure && ((OPH_APPLY_operator_handle *) handle->operator_handle)->set_measure_type) || (!is_measure && ((OPH_APPLY_operator_handle *) handle->operator_handle)->set_dimension_type)) {
-		char tmp[OPH_TP_TASKLEN], *pch = array_operation, special_char = 0, write_char;
-		while (pch && *pch && (i < OPH_TP_TASKLEN)) {
+		long long max_size = QUERY_BUFLEN;
+		oph_pid_get_buffer_size(&max_size);
+		char tmp[max_size], *pch = array_operation, special_char = 0, write_char;
+		while (pch && *pch && (i < max_size)) {
 			write_char = 1;
 			if (special_char) {
 				if (*pch == special_char)
@@ -479,7 +483,7 @@ int oph_apply_parse_query(oph_operator_struct * handle, char *data_type, const c
 			} else if ((*pch == OPH_APPLY_CHAR_APOS) || (*pch == OPH_APPLY_CHAR_QUOT))
 				special_char = *pch;
 			else if (*pch == OPH_APPLY_CHAR_BRAKE_OPEN) {
-				i += snprintf(tmp + i, OPH_TP_TASKLEN - i, "('%s%s','%s%s',", OPH_APPLY_DATATYPE_PREFIX, data_type, OPH_APPLY_DATATYPE_PREFIX, data_type);
+				i += snprintf(tmp + i, max_size - i, "('%s%s','%s%s',", OPH_APPLY_DATATYPE_PREFIX, data_type, OPH_APPLY_DATATYPE_PREFIX, data_type);
 				write_char = 0;
 			}
 			if (write_char)
@@ -772,6 +776,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->id_output_container = 0;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->fragment_ids = NULL;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation = NULL;
+	((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation_length = 1;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation = NULL;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->objkeys_num = -1;
@@ -796,6 +801,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->on_reduce = 0;
+	((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path = NULL;
+	((OPH_APPLY_operator_handle *) handle->operator_handle)->cwd = NULL;
+	((OPH_APPLY_operator_handle *) handle->operator_handle)->folder_id = 0;
 
 	//3 - Fill struct with the correct data
 	char *datacube_in;
@@ -905,7 +913,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!strcmp(value, OPH_COMMON_AUTO_VALUE))
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->compressed = -1;
 
-	if (handle->proc_rank == 0) {
+	char *uri = NULL;
+	while (!handle->proc_rank) {
 		//Only master process has to initialize and open connection to management OphidiaDB
 		ophidiadb *oDB = &((OPH_APPLY_operator_handle *) handle->operator_handle)->oDB;
 		oph_odb_init_ophidiadb(oDB);
@@ -915,12 +924,16 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (oph_odb_read_ophidiadb_config_file(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_APPLY_OPHIDIADB_CONFIGURATION_FILE);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			id_datacube_in[0] = 0;
+			id_datacube_in[1] = 0;
+			break;
 		}
 		if (oph_odb_connect_to_ophidiadb(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_APPLY_OPHIDIADB_CONNECTION_ERROR);
-			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			id_datacube_in[0] = 0;
+			id_datacube_in[1] = 0;
+			break;
 		}
 #ifdef OPH_ODB_MNG
 		if (oph_odb_connect_to_mongodb(oDB)) {
@@ -932,7 +945,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		//Check if datacube exists (by ID container and datacube)
 		int exists = 0;
 		int status = 0;
-		char *uri = NULL;
 		int folder_id = 0;
 		int permission = 0;
 		if (oph_pid_parse_pid(datacube_in, &id_datacube_in[1], &id_datacube_in[0], &uri)) {
@@ -940,40 +952,74 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_PID_ERROR, datacube_in);
 			id_datacube_in[0] = 0;
 			id_datacube_in[1] = 0;
-		} else if ((oph_odb_cube_check_if_datacube_not_present_by_pid(oDB, uri, id_datacube_in[1], id_datacube_in[0], &exists)) || !exists) {
+			break;
+		}
+		if ((oph_odb_cube_check_if_datacube_not_present_by_pid(oDB, uri, id_datacube_in[1], id_datacube_in[0], &exists)) || !exists) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container - datacube combination\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_NO_INPUT_DATACUBE, datacube_in);
 			id_datacube_in[0] = 0;
 			id_datacube_in[1] = 0;
-		} else if ((oph_odb_cube_check_datacube_availability(oDB, id_datacube_in[0], 0, &status)) || !status) {
+			break;
+		}
+		if ((oph_odb_cube_check_datacube_availability(oDB, id_datacube_in[0], 0, &status)) || !status) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "I/O nodes storing datacube aren't available\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_DATACUBE_AVAILABILITY_ERROR, datacube_in);
 			id_datacube_in[0] = 0;
 			id_datacube_in[1] = 0;
-		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], &folder_id))) {
+			break;
+		}
+		if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], &folder_id))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_DATACUBE_FOLDER_ERROR, datacube_in);
 			id_datacube_in[0] = 0;
 			id_datacube_in[1] = 0;
-		} else if ((oph_odb_fs_check_folder_session(folder_id, ((OPH_APPLY_operator_handle *) handle->operator_handle)->sessionid, oDB, &permission)) || !permission) {
+			break;
+		}
+		if ((oph_odb_fs_check_folder_session(folder_id, ((OPH_APPLY_operator_handle *) handle->operator_handle)->sessionid, oDB, &permission)) || !permission) {
 			//Check if user can work on datacube
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "User %s is not allowed to work on this datacube\n", username);
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_DATACUBE_PERMISSION_ERROR, username);
 			id_datacube_in[0] = 0;
 			id_datacube_in[1] = 0;
+			break;
 		}
-		if (uri)
-			free(uri);
-		uri = NULL;
 
 		if (oph_odb_user_retrieve_user_id(oDB, username, &(((OPH_APPLY_operator_handle *) handle->operator_handle)->id_user))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to extract userid.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_USER_ID_ERROR);
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			id_datacube_in[0] = 0;
+			id_datacube_in[1] = 0;
+			break;
 		}
 
 		id_datacube_in[2] = id_datacube_in[1];
+
+		if (strcasecmp(((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path, OPH_FRAMEWORK_FS_DEFAULT_PATH)) {
+			char *sessionid = ((OPH_APPLY_operator_handle *) handle->operator_handle)->sessionid;
+			char *path = ((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path;
+			char *cwd = ((OPH_APPLY_operator_handle *) handle->operator_handle)->cwd;
+			char *abs_path = NULL;
+			if (oph_odb_fs_path_parsing(path, cwd, &folder_id, &abs_path, oDB) || !folder_id) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse path\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to parse path\n");
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			if (abs_path)
+				free(abs_path);
+			if ((oph_odb_fs_check_folder_session(folder_id, sessionid, oDB, &permission)) || !permission) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Path '%s' is not allowed\n", path);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Path '%s' is not allowed\n", path);
+				return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+			}
+		}
+		((OPH_APPLY_operator_handle *) handle->operator_handle)->folder_id = folder_id;
+
+		break;
 	}
+	if (uri)
+		free(uri);
+	uri = NULL;
+
 	//Broadcast to all other processes the fragment relative index
 	MPI_Bcast(id_datacube_in, 3, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -981,7 +1027,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (id_datacube_in[0] == 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_NO_INPUT_DATACUBE, datacube_in);
-
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_datacube = id_datacube_in[0];
@@ -989,7 +1034,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (id_datacube_in[1] == 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_NO_INPUT_CONTAINER, datacube_in);
-
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container = id_datacube_in[1];
@@ -999,7 +1043,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SCHEDULE_ALGORITHM);
 		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SCHEDULE_ALGORITHM);
-
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->schedule_algo = (int) strtol(value, NULL, 10);
@@ -1008,13 +1051,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_APPLY_QUERY);
 		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_APPLY_QUERY);
-
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (!(((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation = (char *) strndup(value, OPH_TP_TASKLEN))) {
+	if (!(((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation = (char *) strdup(value))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_MEMORY_ERROR_INPUT, "array operation");
-
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
@@ -1025,7 +1066,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strncasecmp(value, OPH_COMMON_NULL_VALUE, OPH_TP_TASKLEN)) {
-		if (!(((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		if (!(((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation = (char *) strdup(value))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_MEMORY_ERROR_INPUT, "dimension operation");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
@@ -1063,6 +1104,32 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
+		if (!(((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
+			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_MEMORY_ERROR_INPUT, OPH_IN_PARAM_OUTPUT_PATH);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CWD);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CWD);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CWD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!(((OPH_APPLY_operator_handle *) handle->operator_handle)->cwd = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_APPLY_MEMORY_ERROR_INPUT, OPH_IN_PARAM_CWD);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -1075,11 +1142,11 @@ int task_init(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 	//For error checking
-	int pointer, stream_max_size = 9 + OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE + 5 * sizeof(int) + sizeof(long long) + OPH_ODB_CUBE_MEASURE_TYPE_SIZE + OPH_TP_TASKLEN;
+	int pointer, stream_max_size = 9 + OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE + 6 * sizeof(int) + sizeof(long long) + OPH_ODB_CUBE_MEASURE_TYPE_SIZE;
 	char stream[stream_max_size];
 	memset(stream, 0, sizeof(stream));
 	*stream = 0;
-	char *id_string[6], *array_length, *data_type, *query;
+	char *id_string[7], *array_length, *data_type;
 	pointer = 0;
 	id_string[0] = stream + pointer;
 	pointer += 1 + OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE;
@@ -1093,11 +1160,12 @@ int task_init(oph_operator_struct * handle)
 	pointer += 1 + sizeof(int);
 	id_string[5] = stream + pointer;
 	pointer += 1 + sizeof(int);
+	id_string[6] = stream + pointer;
+	pointer += 1 + sizeof(int);
 	array_length = stream + pointer;
 	pointer += 1 + sizeof(long long);
 	data_type = stream + pointer;
 	pointer += 1 + OPH_ODB_CUBE_MEASURE_TYPE_SIZE;
-	query = stream + pointer;
 
 	if (handle->proc_rank == 0) {
 		// Open the cube
@@ -1137,30 +1205,30 @@ int task_init(oph_operator_struct * handle)
 
 		// Add 'oph_uncompress'
 		if (cube.compressed) {
-			int offset = 0;
-			char tmp[OPH_TP_TASKLEN], *pch, *residual = array_operation;
+			int offset = 0, max_size = 1 + strlen(array_operation) + OPH_APPLY_UNCOMPRESS_MEASURE_SIZE;
+			char tmp[max_size], *pch, *residual = array_operation;
 			while ((pch = strcasestr(residual, MYSQL_FRAG_MEASURE))) {
 				snprintf(tmp + offset, pch - residual + 1, "%s", residual);
 				offset += pch - residual;
-				offset += snprintf(tmp + offset, OPH_TP_TASKLEN - offset, OPH_APPLY_UNCOMPRESS_MEASURE, MYSQL_FRAG_MEASURE);
+				offset += snprintf(tmp + offset, max_size - offset, OPH_APPLY_UNCOMPRESS_MEASURE, MYSQL_FRAG_MEASURE);
 				residual = pch + strlen(MYSQL_FRAG_MEASURE);
 			}
-			snprintf(tmp + offset, OPH_TP_TASKLEN - offset, "%s", residual);
+			snprintf(tmp + offset, max_size - offset, "%s", residual);
 			free(array_operation);
 			((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation = array_operation = strdup(tmp);
 		}
 		// Change keyword MYSQL_DIMENSION with '?'
 		if (use_dim) {
-			int offset = 0;
-			char tmp[OPH_TP_TASKLEN], *pch, *residual = array_operation;
+			int offset = 0, max_size = 1 + strlen(array_operation);
+			char tmp[max_size], *pch, *residual = array_operation;
 			while ((pch = strcasestr(residual, MYSQL_DIMENSION))) {
 				snprintf(tmp + offset, pch - residual + 1, "%s", residual);
 				offset += pch - residual;
-				offset += snprintf(tmp + offset, OPH_TP_TASKLEN - offset, "?");
+				offset += snprintf(tmp + offset, max_size - offset, "?");
 				residual = pch + strlen(MYSQL_DIMENSION);
 				((OPH_APPLY_operator_handle *) handle->operator_handle)->num_reference_to_dim++;
 			}
-			snprintf(tmp + offset, OPH_TP_TASKLEN - offset, "%s", residual);
+			snprintf(tmp + offset, max_size - offset, "%s", residual);
 			free(array_operation);
 			((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation = array_operation = strdup(tmp);
 		}
@@ -1171,14 +1239,19 @@ int task_init(oph_operator_struct * handle)
 
 		// Add 'oph_compress'
 		if (cube.compressed) {
-			char tmp[OPH_TP_TASKLEN];
-			snprintf(tmp, OPH_TP_TASKLEN, OPH_APPLY_COMPRESS_MEASURE, array_operation);
+			int max_size = 1 + strlen(array_operation) + OPH_APPLY_COMPRESS_MEASURE_SIZE;
+			char tmp[max_size];
+			snprintf(tmp, max_size, OPH_APPLY_COMPRESS_MEASURE, array_operation);
 			free(array_operation);
 			((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation = array_operation = strdup(tmp);
 		}
+
+		((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation_length = 1 + strlen(((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation);
+
 		//New fields
 		cube.id_source = 0;
 		cube.level++;
+		cube.id_folder = ((OPH_APPLY_operator_handle *) handle->operator_handle)->folder_id;
 		if (((OPH_APPLY_operator_handle *) handle->operator_handle)->description)
 			snprintf(cube.description, OPH_ODB_CUBE_DESCRIPTION_SIZE, "%s", ((OPH_APPLY_operator_handle *) handle->operator_handle)->description);
 		else
@@ -1461,11 +1534,10 @@ int task_init(oph_operator_struct * handle)
 		memcpy(id_string[3], &((OPH_APPLY_operator_handle *) handle->operator_handle)->expl_size_update, sizeof(int));
 		memcpy(id_string[4], &((OPH_APPLY_operator_handle *) handle->operator_handle)->expl_size, sizeof(int));
 		memcpy(id_string[5], &((OPH_APPLY_operator_handle *) handle->operator_handle)->num_reference_to_dim, sizeof(int));
+		memcpy(id_string[6], &((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation_length, sizeof(int));
 		memcpy(array_length, &((OPH_APPLY_operator_handle *) handle->operator_handle)->array_length, sizeof(long long));
 
 		strncpy(data_type, ((OPH_APPLY_operator_handle *) handle->operator_handle)->measure_type, OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
-
-		strncpy(query, ((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation, OPH_TP_TASKLEN);
 	}
       __OPH_EXIT_1:
 
@@ -1490,19 +1562,22 @@ int task_init(oph_operator_struct * handle)
 			((OPH_APPLY_operator_handle *) handle->operator_handle)->execute_error = 1;
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
-		if (!(((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation = (char *) strndup(query, OPH_TP_TASKLEN))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_MEMORY_ERROR_INPUT, "array operation");
-			((OPH_APPLY_operator_handle *) handle->operator_handle)->execute_error = 1;
-			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-		}
+
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->id_output_datacube = *((int *) id_string[1]);
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->compressed = *((int *) id_string[2]);
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->expl_size_update = *((int *) id_string[3]);
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->expl_size = *((int *) id_string[4]);
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->num_reference_to_dim = *((int *) id_string[5]);
+		((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation_length = *((int *) id_string[6]);
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->array_length = *((long long *) array_length);
 	}
+	// Broadcast the query
+	if (handle->proc_rank) {
+		free(((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation);
+		((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation = (char *) malloc(((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation_length);
+	}
+	MPI_Bcast(((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation, ((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation_length, MPI_CHAR, 0,
+		  MPI_COMM_WORLD);
 
 	if (((OPH_APPLY_operator_handle *) handle->operator_handle)->num_reference_to_dim && ((OPH_APPLY_operator_handle *) handle->operator_handle)->array_length) {
 		if (handle->proc_rank)
@@ -2352,6 +2427,14 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_APPLY_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_APPLY_operator_handle *) handle->operator_handle)->description);
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->description = NULL;
+	}
+	if (((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path) {
+		free((char *) ((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path);
+		((OPH_APPLY_operator_handle *) handle->operator_handle)->output_path = NULL;
+	}
+	if (((OPH_APPLY_operator_handle *) handle->operator_handle)->cwd) {
+		free((char *) ((OPH_APPLY_operator_handle *) handle->operator_handle)->cwd);
+		((OPH_APPLY_operator_handle *) handle->operator_handle)->cwd = NULL;
 	}
 	free((OPH_APPLY_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;

@@ -47,6 +47,7 @@
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
  * \param userrole User role
+ * \param force Flag used to force a folder to be erased in case it and its subfoldrs do not contain cubes
  */
 typedef struct _OPH_FOLDER_operator_handle {
 	ophidiadb oDB;
@@ -59,6 +60,7 @@ typedef struct _OPH_FOLDER_operator_handle {
 	int objkeys_num;
 	char *sessionid;
 	int userrole;
+	char force;
 } OPH_FOLDER_operator_handle;
 
 

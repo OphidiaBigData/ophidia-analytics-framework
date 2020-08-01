@@ -120,12 +120,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_ACTION);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (!strcmp(value, "add"))
+	char new_partition = 0;
+	if (!strcmp(value, "add")) {
 		((OPH_INSTANCES_operator_handle *) handle->operator_handle)->action = 1;
-	else if (!strcmp(value, "remove"))
+		new_partition = 1;
+	} else if (!strcmp(value, "remove"))
 		((OPH_INSTANCES_operator_handle *) handle->operator_handle)->action = 2;
 	else if (!strcmp(value, "reserve")) {
 		//((OPH_INSTANCES_operator_handle *) handle->operator_handle)->action = 3;
+		//new_partition = 1;
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "INSTANCES action unrecognized\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "INSTANCES action unrecognized\n");
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
@@ -168,7 +171,21 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_PARTITION_NAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (strcmp(value, OPH_COMMON_ALL_FILTER) != 0) {
+	char random_value[OPH_TP_TASKLEN];
+	if (new_partition && !strcmp(value, OPH_COMMON_HOSTPARTITION_DEFAULT)) {
+		value = hashtbl_get(task_tbl, OPH_ARG_IDJOB);
+		if (!value) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set parameter %s to reserved word\n", OPH_IN_PARAM_PARTITION_NAME);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to set parameter %s to reserved word", "NO-CONTAINER", OPH_IN_PARAM_PARTITION_NAME);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		snprintf(random_value, OPH_COMMON_BUFFER_LEN, "_%s", value);
+		value = random_value;
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to set parameter %s to reserved word: the value '%s' will be adopted\n", OPH_IN_PARAM_PARTITION_NAME, value);
+		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to set parameter %s to reserved word: the value '%s' will be adopted", "NO-CONTAINER",
+			OPH_IN_PARAM_PARTITION_NAME, value);
+	}
+	if (strcmp(value, OPH_COMMON_ALL_FILTER)) {
 		if (!(((OPH_INSTANCES_operator_handle *) handle->operator_handle)->partition_name = (char *) strndup(value, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_MEMORY_ERROR_INPUT, "partition_name");
@@ -1045,7 +1062,7 @@ int task_execute(oph_operator_struct * handle)
 				//retrieve information INSTANCES
 				if (oph_odb_stge_find_instances_information
 				    (oDB, level, hostname, partition_name, ioserver_type, host_status, &info_instances, ((OPH_INSTANCES_operator_handle *) handle->operator_handle)->id_user)) {
-					pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive information INSTANCES\n");
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retrieve information INSTANCES\n");
 					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INSTANCES_INSTANCES_NOT_FOUND);
 					mysql_free_result(info_instances);
 					return OPH_ANALYTICS_OPERATOR_SUCCESS;

@@ -18,6 +18,11 @@ data cubes can be merged. A new implicit dimension will be created.
 - dim_type: data type associated with the new dimension. Default value is &quot;long&quot;.
 - number : number of replies of the first cube; by default the first cube is considered only once.
 - description : additional description to be associated with the output cube.
+- output_path : optional folder where the output cube will be stored; by default the cube is saved in current working directory.
+- cwd : absolute path corresponding to the current working directory.
+- order : criteria on which input cubes are ordered before merging:
+          - source : cubes are ordered by source, provided that level is 0
+          By default input cubes are not ordered.
         
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -43,12 +48,15 @@ SUBMISSION STRING: &quot;operator=oph_mergecubes2;cubes=http://www.example.com/1
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="yes" multivalue="yes">cubes</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="-">dim</argument>
 		<argument type="string" mandatory="no" default="long" values="double|float|int|long|short|byte">dim_type</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">number</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="-">output_path</argument>
+		<argument type="string" mandatory="no" default="none" values="none|source">order</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|mergecubes">objkey_filter</argument>
     </args>
 </operator>

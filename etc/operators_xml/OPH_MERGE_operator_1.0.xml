@@ -18,6 +18,8 @@ In addition, the number of tuples in each output fragment is generally different
 - nmerge : number of input fragments to merge in an output fragment. In order to
             merge all fragments it can be used the default value &quot;0&quot;.
 - description : additional description to be associated with the output cube.
+- output_path : optional folder where the output cube will be stored; by default the cube is saved in current working directory.
+- cwd : absolute path corresponding to the current working directory.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -43,10 +45,12 @@ SUBMISSION STRING: &quot;operator=oph_merge;cube=http://www.example.com/1/1;nmer
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="int" mandatory="no" default="0" minvalue="0">nmerge</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="-">output_path</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|merge">objkey_filter</argument>
     </args>
 </operator>

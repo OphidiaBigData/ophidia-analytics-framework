@@ -1196,3 +1196,71 @@ int oph_odb_cube_update_tuplexfragment(ophidiadb * oDB, int id_datacube, int tup
 
 	return OPH_ODB_SUCCESS;
 }
+
+int oph_odb_cube_order_by(ophidiadb * oDB, int order, int *id_datacube, int id_datacube_num)
+{
+	if (!oDB || !id_datacube) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (!order || (id_datacube_num < 2))
+		return OPH_ODB_SUCCESS;
+
+	int n = 0, cc, nn = 0;
+	size_t max_size = id_datacube_num * (OPH_COMMON_MAX_INT_LENGHT + 2);
+	char cube_list[max_size];
+	for (cc = 0; cc < id_datacube_num; ++cc)
+		nn += snprintf(cube_list + nn, max_size - nn, "%s%d", cc ? "," : "", id_datacube[2 * cc + 1]);
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char query[MYSQL_BUFLEN];
+	switch (order) {
+		case 1:
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_ORDER_CUBE_BY_SOURCE, cube_list);
+			break;
+		default:
+			return OPH_ODB_SUCCESS;
+	}
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+
+	if (mysql_field_count(oDB->conn) != 2) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query.\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	int num_rows = mysql_num_rows(res);
+	if (num_rows != id_datacube_num) {
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Cubes cannot be ordered by source.\n");
+		mysql_free_result(res);
+		return OPH_ODB_SUCCESS;
+	}
+
+	cc = 0;
+	while ((row = mysql_fetch_row(res))) {
+		id_datacube[2 * cc] = (int) strtol(row[0], NULL, 10);
+		id_datacube[2 * cc + 1] = (int) strtol(row[1], NULL, 10);
+		cc++;
+	}
+
+	mysql_free_result(res);
+
+	return OPH_ODB_SUCCESS;
+}

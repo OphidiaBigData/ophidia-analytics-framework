@@ -46,6 +46,9 @@
  * \param id_user ID of submitter
  * \param description Free description to be associated with output cube
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
+ * \param output_path Folder where output cube has to be saved
+ * \param cwd Absolute path where the container is
+ * \param folder_id Id of output folder
  */
 struct _OPH_MERGE_operator_handle {
 	ophidiadb oDB;
@@ -69,6 +72,9 @@ struct _OPH_MERGE_operator_handle {
 	int id_user;
 	char *description;
 	short int execute_error;
+	char *output_path;
+	char *cwd;
+	int folder_id;
 };
 typedef struct _OPH_MERGE_operator_handle OPH_MERGE_operator_handle;
 

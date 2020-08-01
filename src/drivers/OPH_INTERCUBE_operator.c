@@ -84,9 +84,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->ms = NAN;
 	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->execute_error = 0;
+	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->output_path = NULL;
+	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cwd = NULL;
+	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->folder_id = 0;
+	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube1 = NULL;
+	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2 = NULL;
 
-	char *datacube_in[2];
 	char *value;
+	char *datacube_in[2];
+	datacube_in[0] = datacube_in[1] = NULL;
 
 	// retrieve objkeys
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OBJKEY_FILTER);
@@ -144,20 +150,66 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	//3 - Fill struct with the correct data
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DATACUBE_INPUT);
-	datacube_in[0] = value;
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DATACUBE_INPUT);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INTERCUBE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DATACUBE_INPUT);
-
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN))
+		datacube_in[0] = value;
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DATACUBE_INPUT_2);
-	datacube_in[1] = value;
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DATACUBE_INPUT_2);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INTERCUBE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DATACUBE_INPUT_2);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN))
+		datacube_in[1] = value;
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DATACUBE_MULTI_INPUT);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DATACUBE_MULTI_INPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INTERCUBE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DATACUBE_MULTI_INPUT);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
+
+		int datacube_list_num = 0;
+		char **datacube_list = NULL;
+		if (oph_tp_parse_multiple_value_param(value, &datacube_list, &datacube_list_num)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
+			oph_tp_free_multiple_value_param_list(datacube_list, datacube_list_num);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+
+		if (datacube_list_num < 2) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "The number of datacubes is not correct: 2 PIDs are expected\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The number of datacubes is not correct: 2 PIDs are expected\n");
+			oph_tp_free_multiple_value_param_list(datacube_list, datacube_list_num);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+
+		if (datacube_list_num > 2) {
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "The number of datacubes is not correct: only the first 2 PIDs will be considered\n");
+			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The number of datacubes is not correct: only the first 2 PIDs will be considered\n");
+		}
+
+		datacube_in[0] = ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube1 = strdup(datacube_list[0]);
+		datacube_in[1] = ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2 = strdup(datacube_list[1]);
+
+		oph_tp_free_multiple_value_param_list(datacube_list, datacube_list_num);
+	}
+
+	if (!datacube_in[0]) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s or %s\n", OPH_IN_PARAM_DATACUBE_INPUT, OPH_IN_PARAM_DATACUBE_MULTI_INPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INTERCUBE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DATACUBE_MULTI_INPUT);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!datacube_in[1]) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s or %s\n", OPH_IN_PARAM_DATACUBE_INPUT_2, OPH_IN_PARAM_DATACUBE_MULTI_INPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INTERCUBE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DATACUBE_MULTI_INPUT);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	//For error checking
@@ -271,6 +323,26 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 
 		id_datacube_in[3] = id_datacube_in[2];
+
+		if (strcasecmp(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->output_path, OPH_FRAMEWORK_FS_DEFAULT_PATH)) {
+			char *sessionid = ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->sessionid;
+			char *path = ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->output_path;
+			char *cwd = ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cwd;
+			char *abs_path = NULL;
+			if (oph_odb_fs_path_parsing(path, cwd, &folder_id, &abs_path, oDB) || !folder_id) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse path\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to parse path\n");
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			if (abs_path)
+				free(abs_path);
+			if ((oph_odb_fs_check_folder_session(folder_id, sessionid, oDB, &permission)) || !permission) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Path '%s' is not allowed\n", path);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Path '%s' is not allowed\n", path);
+				return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+			}
+		}
+		((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->folder_id = folder_id;
 	}
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(id_datacube_in, 4, MPI_INT, 0, MPI_COMM_WORLD);
@@ -322,6 +394,32 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
+		if (!(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->output_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
+			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_INTERCUBE_MEMORY_ERROR_INPUT, OPH_IN_PARAM_OUTPUT_PATH);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CWD);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CWD);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CWD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!(((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cwd = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_INTERCUBE_MEMORY_ERROR_INPUT, OPH_IN_PARAM_CWD);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -406,6 +504,8 @@ int task_init(oph_operator_struct * handle)
 				"compression methods");
 			goto __OPH_EXIT_1;
 		}
+
+		int level2 = cube2.level;
 		oph_odb_cube_free_datacube(&cube2);
 
 
@@ -494,7 +594,11 @@ int task_init(oph_operator_struct * handle)
 		}
 		//New fields
 		cube.id_source = 0;
-		cube.level++;
+		if (cube.level >= level2)
+			cube.level++;
+		else
+			cube.level = 1 + level2;
+		cube.id_folder = ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->folder_id;
 		if (((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->description)
 			snprintf(cube.description, OPH_ODB_CUBE_DESCRIPTION_SIZE, "%s", ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->description);
 		else
@@ -1865,6 +1969,22 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->description);
 		((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->description = NULL;
+	}
+	if (((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->output_path) {
+		free((char *) ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->output_path);
+		((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->output_path = NULL;
+	}
+	if (((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cwd) {
+		free((char *) ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cwd);
+		((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cwd = NULL;
+	}
+	if (((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube1) {
+		free((char *) ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube1);
+		((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube1 = NULL;
+	}
+	if (((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2) {
+		free((char *) ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2);
+		((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2 = NULL;
 	}
 	free((OPH_INTERCUBE_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;

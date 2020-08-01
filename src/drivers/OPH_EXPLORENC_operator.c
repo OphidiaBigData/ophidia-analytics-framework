@@ -6059,7 +6059,8 @@ int task_execute(oph_operator_struct * handle)
 	} else {
 
 		int success = 1, j, natts, ndims, nvars;
-		char key[OPH_COMMON_BUFFER_LEN], key_type[OPH_COMMON_TYPE_SIZE], value[OPH_COMMON_BUFFER_LEN], variable[OPH_COMMON_BUFFER_LEN], **dims = NULL, **vars = NULL;
+		size_t att_len = 0;
+		char key[OPH_COMMON_BUFFER_LEN], key_type[OPH_COMMON_TYPE_SIZE], value[OPH_COMMON_BUFFER_LEN], variable[OPH_COMMON_BUFFER_LEN], **dims = NULL, **vars = NULL, *big_value = NULL;
 		nc_type xtype;
 
 		is_objkey_printable = !result && success
@@ -6883,11 +6884,55 @@ int task_execute(oph_operator_struct * handle)
 						if (!strlen(key_type))
 							break;
 						memset(value, 0, OPH_COMMON_BUFFER_LEN);
-						if (nc_get_att(ncid, varid, (const char *) key, (void *) &value)) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get attribute value from file\n");
-							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-							break;
+
+						if (xtype == NC_CHAR || xtype == NC_STRING) {
+							//Check attribute length
+							if (nc_inq_attlen(ncid, varid, (const char *) key, &att_len)) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute lenght from file\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get attribute length from file\n");
+								result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+								break;
+							}
+
+							if (att_len >= OPH_COMMON_BUFFER_LEN) {
+
+								if (!(big_value = (char *) malloc((att_len + 1) * sizeof(char)))) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT,
+										"Tmp big attribute buffer");
+									if (big_value)
+										free(big_value);
+									result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									break;
+								}
+
+								if (nc_get_att(ncid, varid, (const char *) key, (void *) big_value)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get attribute value from file\n");
+									free(big_value);
+									result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									break;
+								}
+
+							} else {
+
+								if (nc_get_att(ncid, varid, (const char *) key, (void *) &value)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get attribute value from file\n");
+									result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									break;
+								}
+								value[att_len] = 0;
+							}
+
+						} else {
+
+							if (nc_get_att(ncid, varid, (const char *) key, (void *) &value)) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get attribute value from file\n");
+								result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+								break;
+							}
 						}
 						switch (xtype) {
 							case NC_BYTE:
@@ -6970,7 +7015,7 @@ int task_execute(oph_operator_struct * handle)
 							break;
 						}
 						jjj++;
-						jsonvalues[jjj] = strdup(tmp_value);
+						jsonvalues[jjj] = strdup(big_value ? big_value : tmp_value);
 						if (!jsonvalues[jjj]) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "value");
@@ -7000,6 +7045,10 @@ int task_execute(oph_operator_struct * handle)
 								free(jsonvalues[iii]);
 						if (jsonvalues)
 							free(jsonvalues);
+
+						if (big_value)
+							free(big_value);
+						big_value = NULL;
 
 						success = 1;
 					}

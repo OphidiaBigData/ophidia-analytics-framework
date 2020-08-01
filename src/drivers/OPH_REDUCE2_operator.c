@@ -94,6 +94,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_REDUCE2_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_REDUCE2_operator_handle *) handle->operator_handle)->ms = NAN;
 	((OPH_REDUCE2_operator_handle *) handle->operator_handle)->execute_error = 0;
+	((OPH_REDUCE2_operator_handle *) handle->operator_handle)->output_path = NULL;
+	((OPH_REDUCE2_operator_handle *) handle->operator_handle)->cwd = NULL;
+	((OPH_REDUCE2_operator_handle *) handle->operator_handle)->folder_id = 0;
 
 	char *datacube_in;
 	char *value;
@@ -219,6 +222,26 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 
 		id_datacube_in[2] = id_datacube_in[1];
+
+		if (strcasecmp(((OPH_REDUCE2_operator_handle *) handle->operator_handle)->output_path, OPH_FRAMEWORK_FS_DEFAULT_PATH)) {
+			char *sessionid = ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->sessionid;
+			char *path = ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->output_path;
+			char *cwd = ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->cwd;
+			char *abs_path = NULL;
+			if (oph_odb_fs_path_parsing(path, cwd, &folder_id, &abs_path, oDB) || !folder_id) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse path\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to parse path\n");
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			if (abs_path)
+				free(abs_path);
+			if ((oph_odb_fs_check_folder_session(folder_id, sessionid, oDB, &permission)) || !permission) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Path '%s' is not allowed\n", path);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Path '%s' is not allowed\n", path);
+				return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+			}
+		}
+		((OPH_REDUCE2_operator_handle *) handle->operator_handle)->folder_id = folder_id;
 	}
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(id_datacube_in, 3, MPI_INT, 0, MPI_COMM_WORLD);
@@ -343,6 +366,32 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
+		if (!(((OPH_REDUCE2_operator_handle *) handle->operator_handle)->output_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
+			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_REDUCE_MEMORY_ERROR_INPUT, OPH_IN_PARAM_OUTPUT_PATH);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CWD);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CWD);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CWD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!(((OPH_REDUCE2_operator_handle *) handle->operator_handle)->cwd = (char *) strndup(value, OPH_TP_TASKLEN))) {
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_REDUCE_MEMORY_ERROR_INPUT, OPH_IN_PARAM_CWD);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -579,7 +628,7 @@ int task_init(oph_operator_struct * handle)
 			dim_inst[l].size = cubedims[l].size;
 			if (cubedims[l].id_dimensioninst == target_dimension_instance)
 				dim_inst[l].concept_level = concept_level_out;
-			if (oph_odb_dim_retrieve_dimension(oDB, dim_inst[l].id_dimension, &(dim[l]), datacube_id)) {
+			if (oph_odb_dim_retrieve_dimension(oDB, dim_inst[l].id_dimension, dim + l, datacube_id)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading dimension information.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_REDUCE2_DIM_READ_ERROR);
 				oph_odb_cube_free_datacube(&cube);
@@ -681,6 +730,7 @@ int task_init(oph_operator_struct * handle)
 		//New fields
 		cube.id_source = 0;
 		cube.level++;
+		cube.id_folder = ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->folder_id;
 		if (((OPH_REDUCE2_operator_handle *) handle->operator_handle)->description)
 			snprintf(cube.description, OPH_ODB_CUBE_DESCRIPTION_SIZE, "%s", ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->description);
 		else
@@ -723,6 +773,7 @@ int task_init(oph_operator_struct * handle)
 		char o_index_dimension_table_name[OPH_COMMON_BUFFER_LEN], o_label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
 		snprintf(o_index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_output_container);
 		snprintf(o_label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_output_container);
+		char new_container = ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_output_container != ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container;
 
 		int kk, residual_dim_number = 0, d, new_size = 0, prev_kk;
 		char *dim_row, *sizes_, *cl_value;
@@ -808,7 +859,7 @@ int task_init(oph_operator_struct * handle)
 					tm_prev.tm_year = -1;
 					for (prev_kk = kk = 0; kk < cubedims[l].size; ++kk) {
 						if (oph_dim_is_in_time_group_of
-						    (dim_row, kk, &(dim[l]), concept_level_out, &tm_prev, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->midnight, 0, &flag)) {
+						    (dim_row, kk, dim + l, concept_level_out, &tm_prev, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->midnight, 0, &flag)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in evaluating reduction groups.\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
 								OPH_LOG_OPH_REDUCE2_DIM_CHECK_ERROR);
@@ -827,8 +878,8 @@ int task_init(oph_operator_struct * handle)
 						}
 						if (!flag) {
 							if (kk) {
-								// Evaluate the centroid
-								if (oph_dim_update_value(dim_row, dim->dimension_type, prev_kk, kk - 1)) {
+								// Evaluate the centroid of current group
+								if (oph_dim_update_value(dim_row, dim[l].dimension_type, prev_kk, kk - 1)) {
 									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in evaluating reduction groups.\n");
 									logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
 										OPH_LOG_OPH_REDUCE2_DIM_CHECK_ERROR);
@@ -855,7 +906,8 @@ int task_init(oph_operator_struct * handle)
 							sizes[new_size]++;
 						value[new_size] = new_size;
 					}
-					if (oph_dim_update_value(dim_row, dim->dimension_type, prev_kk, kk - 1)) {
+					// Evaluate the centroid of the last group
+					if (oph_dim_update_value(dim_row, dim[l].dimension_type, prev_kk, kk - 1)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in evaluating reduction groups.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_REDUCE2_DIM_CHECK_ERROR);
@@ -986,11 +1038,25 @@ int task_init(oph_operator_struct * handle)
 				}
 			}
 
-
-			if (new_grid || !((OPH_REDUCE2_operator_handle *) handle->operator_handle)->grid_name
-			    || (((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_output_container != ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container)) {
+			if (new_grid || !((OPH_REDUCE2_operator_handle *) handle->operator_handle)->grid_name || new_container) {
 				if (oph_dim_insert_into_dimension_table(db, o_index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, dim_inst[l].size, dim_row, &(dim_inst[l].fk_id_dimension_index))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in inserting a new row in dimension table.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_REDUCE2_DIM_ROW_ERROR);
+					if (dim_row)
+						free(dim_row);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					free(cubedims);
+					if (stored_dims)
+						free(stored_dims);
+					if (stored_dim_insts)
+						free(stored_dim_insts);
+					goto __OPH_EXIT_1;
+				}
+				// Copy the labels in new container
+				if (dim_inst[l].fk_id_dimension_label && new_container && (l != reduced_dim)
+				    && oph_dim_copy_into_dimension_table(db, label_dimension_table_name, o_label_dimension_table_name, &(dim_inst[l].fk_id_dimension_label))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in copying a row in dimension table.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_REDUCE2_DIM_ROW_ERROR);
 					if (dim_row)
 						free(dim_row);
@@ -1661,6 +1727,14 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_REDUCE2_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->description);
 		((OPH_REDUCE2_operator_handle *) handle->operator_handle)->description = NULL;
+	}
+	if (((OPH_REDUCE2_operator_handle *) handle->operator_handle)->output_path) {
+		free((char *) ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->output_path);
+		((OPH_REDUCE2_operator_handle *) handle->operator_handle)->output_path = NULL;
+	}
+	if (((OPH_REDUCE2_operator_handle *) handle->operator_handle)->cwd) {
+		free((char *) ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->cwd);
+		((OPH_REDUCE2_operator_handle *) handle->operator_handle)->cwd = NULL;
 	}
 	free((OPH_REDUCE2_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;

@@ -38,6 +38,7 @@
  * \param marker_id Marker ID.
  * \param list Flag used to list available scripts.
  * \param user User that has submitted the task
+ * \param space Flag used to consider white spaces as separators of the arguments.
  */
 struct _OPH_SCRIPT_operator_handle {
 	char *script;
@@ -54,6 +55,7 @@ struct _OPH_SCRIPT_operator_handle {
 	char *marker_id;
 	int list;
 	char *user;
+	char space;
 };
 typedef struct _OPH_SCRIPT_operator_handle OPH_SCRIPT_operator_handle;
 

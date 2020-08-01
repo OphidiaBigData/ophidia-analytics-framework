@@ -36,6 +36,7 @@
  * \param schedule_algo Number of the distribution algorithm to use 
  * \param fragment_ids Contains the string of fragment relative index
  * \param array_operation Query to be executed on the input datacube 
+ * \param array_operation_length Length of query to be executed on the input datacube (it includes the last '\0')
  * \param dimension_operation Query to be executed on the implicit dimension of input datacube 
  * \param fragment_number Number of fragments that a process has to manage
  * \param fragment_id_start_position First fragment in the relative index set to work on
@@ -62,6 +63,9 @@
  * \param nthread Number of posix threads related to each MPI task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  * \param on_reduce Flag set to 1 in case the values of implicit dimension has to updated due to a reduction primitive
+ * \param output_path Folder where output cube has to be saved
+ * \param cwd Absolute path where the container is
+ * \param folder_id Id of output folder
  */
 struct _OPH_APPLY_operator_handle {
 	ophidiadb oDB;
@@ -73,6 +77,7 @@ struct _OPH_APPLY_operator_handle {
 	int schedule_algo;
 	char *fragment_ids;
 	char *array_operation;
+	int array_operation_length;
 	char *dimension_operation;
 	int fragment_number;
 	int fragment_id_start_position;
@@ -100,6 +105,9 @@ struct _OPH_APPLY_operator_handle {
 	unsigned int nthread;
 	short int execute_error;
 	char on_reduce;
+	char *output_path;
+	char *cwd;
+	int folder_id;
 };
 typedef struct _OPH_APPLY_operator_handle OPH_APPLY_operator_handle;
 

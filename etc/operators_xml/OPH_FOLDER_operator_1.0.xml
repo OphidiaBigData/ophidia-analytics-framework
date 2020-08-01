@@ -12,7 +12,7 @@ It manages folders of the Ophidia filesystem.
 - command : command to be executed among these:
             -- cd : change directory
             -- mkdir : create a new directory
-            -- rm : delete an empty directory 
+            -- rm : delete an empty directory (from cubes and subfolders) 
             -- mv : move/rename a directory
 - path : 0, 1 or 2 absolute/relative paths needed by commands.
          In case of mv, 2 paths are mandatory parameters and must end with a name
@@ -20,9 +20,11 @@ It manages folders of the Ophidia filesystem.
          In case of cd, without a path the new directory will be the session folder.
          In all other cases, it can be used only 1 path.
 - cwd : absolute path corresponding to the current working directory,
-         necessary to correctly parse paths.
-         All resolved paths must be associated to the calling session,
-         so they should contain /&lt;session-code&gt;.
+        necessary to correctly parse paths.
+        All resolved paths must be associated to the calling session,
+        so they should contain /&lt;session-code&gt;.
+- force : valid only in case of deletion, set to &quot;yes&quot; to remove a folder
+          provided that it and its subfolders are empty.
         
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -52,6 +54,7 @@ SUBMISSION STRING: &quot;operator=oph_folder;command=mv;path=fold1|fold2;cwd=/ab
 		<argument type="string" mandatory="yes" values="cd|mkdir|rm|mv">command</argument>
 		<argument type="string" mandatory="no" default="-" multivalue="yes">path</argument>
 		<argument type="string" mandatory="yes">cwd</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>

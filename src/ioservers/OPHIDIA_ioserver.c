@@ -33,8 +33,8 @@
 //Initialize storage server plugin
 int _ophidiaio_setup(oph_ioserver_handler * handle)
 {
-	UNUSED(handle)
-	    return (oph_io_client_setup() == OPH_IO_CLIENT_INTERFACE_OK) ? OPHIDIAIO_IO_SUCCESS : OPHIDIAIO_IO_ERROR;
+	UNUSED(handle);
+	return (oph_io_client_setup() == OPH_IO_CLIENT_INTERFACE_OK) ? OPHIDIAIO_IO_SUCCESS : OPHIDIAIO_IO_ERROR;
 }
 
 //Connect or reconnect to storage server
@@ -174,7 +174,6 @@ int _ophidiaio_close(oph_ioserver_handler * handle, void **connection)
 int _ophidiaio_cleanup(oph_ioserver_handler * handle)
 {
 	UNUSED(handle);
-
 	return (oph_io_client_cleanup() == OPH_IO_CLIENT_INTERFACE_OK) ? OPHIDIAIO_IO_SUCCESS : OPHIDIAIO_IO_ERROR;
 }
 
@@ -245,8 +244,8 @@ int _ophidiaio_fetch_row(oph_ioserver_handler * handle, oph_ioserver_result * re
 //Release result set resources
 int _ophidiaio_free_result(oph_ioserver_handler * handle, oph_ioserver_result * result)
 {
-	UNUSED(handle)
-	    if (!result) {
+	UNUSED(handle);
+	if (!result) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_OPHIDIAIO_NULL_INPUT_PARAM);
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_OPHIDIAIO_NULL_INPUT_PARAM);
 		return OPHIDIAIO_IO_NULL_PARAM;

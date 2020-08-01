@@ -187,6 +187,8 @@ CREATE TABLE `hostpartition` (
   `partitionname` varchar(64) NOT NULL,
   `hidden` tinyint(1) NOT NULL DEFAULT 0,
   `reserved` tinyint(1) NOT NULL DEFAULT 0,
+  `partitiontype` tinyint(1) NOT NULL DEFAULT 0,
+  `creationdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `hosts` int(10) unsigned NULL DEFAULT 0,
   `iduser` int(10) unsigned NULL DEFAULT NULL,
   `idjob` int(10) unsigned DEFAULT NULL,
@@ -329,7 +331,7 @@ DROP TABLE IF EXISTS `source`;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `source` (
   `idsource` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `uri` varchar(512) NOT NULL,  
+  `uri` varchar(2048) NOT NULL,  
   PRIMARY KEY (`idsource`),
   UNIQUE KEY `uri` (`uri`)
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;

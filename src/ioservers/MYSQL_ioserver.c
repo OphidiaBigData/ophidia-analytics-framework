@@ -1353,8 +1353,8 @@ int _mysql_execute_query(oph_ioserver_handler * handle, void *connection, oph_io
 //Setup the query structure with given operation and array argument
 int _mysql_setup_query(oph_ioserver_handler * handle, void *connection, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg ** args, oph_ioserver_query ** query)
 {
-	UNUSED(tot_run)		// TODO Handle tot number of runs
-	    if (!connection || !operation || !query) {
+	UNUSED(tot_run);	// TODO Handle tot number of runs
+	if (!connection || !operation || !query) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
 		return MYSQL_IO_NULL_PARAM;
@@ -1379,7 +1379,7 @@ int _mysql_setup_query(oph_ioserver_handler * handle, void *connection, const ch
 		return MYSQL_IO_ERROR;
 	}
 #ifdef OPH_DEBUG_MYSQL
-	printf("PARSED   QUERY: %s\n", sql_query);
+	printf("PARSED QUERY: %s\n", sql_query);
 #endif
 
 	if (!args || !is_stmt) {

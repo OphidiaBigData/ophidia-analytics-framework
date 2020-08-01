@@ -185,6 +185,11 @@
  * \param description Free description to be associated with output cube
  * \param ms Conventional value for missing values
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
+ * \param output_path Folder where output cube has to be saved
+ * \param cwd Absolute path where the container is
+ * \param folder_id Id of output folder
+ * \param cube1 Pointer to the first cube
+ * \param cube2 Pointer to the second cube
  */
 struct _OPH_INTERCUBE_operator_handle {
 	ophidiadb oDB;
@@ -209,6 +214,11 @@ struct _OPH_INTERCUBE_operator_handle {
 	char *description;
 	double ms;
 	short int execute_error;
+	char *output_path;
+	char *cwd;
+	int folder_id;
+	char *cube1;
+	char *cube2;
 };
 typedef struct _OPH_INTERCUBE_operator_handle OPH_INTERCUBE_operator_handle;
 

@@ -35,6 +35,7 @@ It creates a new datacube with random data and dimensions.
 - grid : optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
          or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
 - description : additional description to be associated with the output cube.
+- output_path : optional folder where the output cube will be stored; by default the cube is saved in current working directory.
 - algorithm : it can be used to specify the type of emulation schema used to generate data. By default values are sampled indipendently from a uniform distribution in the range [0, 1000]. If &quot;temperatures&quot; is used, then values are generated with a first order auto-regressive model to be consistent with temperature values (in Celsius).
 - dim_type: types of the dimensions. Default value is &quot;double&quot; for all the dimensions.
             Multiple-value field: list of types separated by &quot;|&quot; can be provided.
@@ -56,6 +57,9 @@ It creates a new datacube with random data and dimensions.
                  There must be 12 positive integers separated by commas. Default is &apos;31,28,31,30,31,30,31,31,30,31,30,31&apos;.
 - leap_year: in case of time dimension and user-defined calendar, it indicates the first leap year. By default it is set to 0.
 - leap_month: in case of time dimension and user-defined calendar, it indicates the leap month. By default it is set to 2 (i.e. February).
+- policy : rule to select how data are distribuited over hosts:
+           -- &apos;rr&apos; hosts are ordered on the basis of the number of cubes stored by it (default);
+           -- &apos;port&apos; hosts are ordered on the basis of port number.
 
 [System parameters]
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -99,6 +103,7 @@ SUBMISSION STRING: &quot;operator=oph_randcube;nhost=1;nfrag=8;ntuple=10;measure
 		<argument type="string" mandatory="no" default="no" values="yes|no">compressed</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="-">output_path</argument>
 		<argument type="string" mandatory="no" default="double" values="double|float|int|long|short|byte" multivalue="yes">dim_type</argument>
 		<argument type="string" mandatory="no" default="oph_base" multivalue="yes">hierarchy</argument>
 		<argument type="string" mandatory="no" default="CF">vocabulary</argument>
@@ -108,6 +113,7 @@ SUBMISSION STRING: &quot;operator=oph_randcube;nhost=1;nfrag=8;ntuple=10;measure
 		<argument type="string" mandatory="no" default="31,28,31,30,31,30,31,31,30,31,30,31">month_lengths</argument>
 		<argument type="int" mandatory="no" default="0" minvalue="0">leap_year</argument>
 		<argument type="int" mandatory="no" default="2" minvalue="1" maxvalue="12">leap_month</argument>
+		<argument type="string" mandatory="no" default="rr" values="rr|port">policy</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|randcube">objkey_filter</argument>
 		<argument type="string" mandatory="no" default="default" values="default|temperatures">algorithm</argument>
     </args>

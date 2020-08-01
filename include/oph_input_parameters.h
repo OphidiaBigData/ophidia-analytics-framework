@@ -174,11 +174,13 @@
 #define OPH_IN_PARAM_REALPATH					"realpath"
 #define OPH_IN_PARAM_ON_REDUCE					"on_reduce"
 #define OPH_IN_PARAM_ACTION					"action"
+#define OPH_IN_PARAM_POLICY					"policy"
 
 #define OPH_IN_PARAM_SCRIPT					"script"
 #define OPH_IN_PARAM_ARGS					"args"
 #define OPH_IN_PARAM_STDOUT					"stdout"
 #define OPH_IN_PARAM_STDERR					"stderr"
+#define OPH_IN_PARAM_SPACE					"space"
 
 #define OPH_ARG_NTHREAD						"nthreads"
 #define OPH_ARG_USERNAME					"username"
