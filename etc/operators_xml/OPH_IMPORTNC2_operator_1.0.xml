@@ -80,8 +80,10 @@ The following parameters are considered only in case the container has to be cre
             -- proleptic_gregorian
             -- julian
             -- 360_day
-            -- no_leap
-            -- all_leap
+            -- 365_day
+            -- 366_day
+            -- no_leap (equivalent to 365_day)
+            -- all_leap  (equivalent to 366_day)
             -- user_defined
 - month_lengths: in case of time dimension and user-defined calendar, it indicates the sizes of each month in days.
                  There must be 12 positive integers separated by commas. Default is &apos;31,28,31,30,31,30,31,31,30,31,30,31&apos;.
@@ -143,7 +145,7 @@ SUBMISSION STRING: &quot;operator=oph_importnc2;cwd=/session-code1;container=con
 		<argument type="string" mandatory="no" default="CF">vocabulary</argument>
 		<argument type="string" mandatory="no" default="1900-01-01 00:00:00">base_time</argument>
 		<argument type="string" mandatory="no" default="d" values="s|m|h|3|6|d">units</argument>
-		<argument type="string" mandatory="no" default="standard" values="standard|gregorian|proleptic_gregorian|julian|360_day|no_leap|all_leap|user_defined">calendar</argument>
+		<argument type="string" mandatory="no" default="standard" values="standard|gregorian|proleptic_gregorian|julian|360_day|365_day|366_day|no_leap|all_leap|user_defined">calendar</argument>
 		<argument type="string" mandatory="no" default="31,28,31,30,31,30,31,31,30,31,30,31">month_lengths</argument>
 		<argument type="int" mandatory="no" default="0" minvalue="0">leap_year</argument>
 		<argument type="int" mandatory="no" default="2" minvalue="1" maxvalue="12">leap_month</argument>
