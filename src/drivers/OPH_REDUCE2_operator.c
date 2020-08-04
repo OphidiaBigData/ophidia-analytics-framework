@@ -586,7 +586,7 @@ int task_init(oph_operator_struct * handle)
 			dim_inst[l].size = cubedims[l].size;
 			if (cubedims[l].id_dimensioninst == target_dimension_instance)
 				dim_inst[l].concept_level = concept_level_out;
-			if (oph_odb_dim_retrieve_dimension(oDB, dim_inst[l].id_dimension, &(dim[l]), datacube_id)) {
+			if (oph_odb_dim_retrieve_dimension(oDB, dim_inst[l].id_dimension, dim + l, datacube_id)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading dimension information.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_REDUCE2_DIM_READ_ERROR);
 				oph_odb_cube_free_datacube(&cube);
@@ -730,6 +730,7 @@ int task_init(oph_operator_struct * handle)
 		char o_index_dimension_table_name[OPH_COMMON_BUFFER_LEN], o_label_dimension_table_name[OPH_COMMON_BUFFER_LEN];
 		snprintf(o_index_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_output_container);
 		snprintf(o_label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_output_container);
+		char new_container = ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_output_container != ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container;
 
 		int kk, residual_dim_number = 0, d, new_size = 0, prev_kk;
 		char *dim_row, *sizes_, *cl_value;
@@ -815,7 +816,7 @@ int task_init(oph_operator_struct * handle)
 					tm_prev.tm_year = -1;
 					for (prev_kk = kk = 0; kk < cubedims[l].size; ++kk) {
 						if (oph_dim_is_in_time_group_of
-						    (dim_row, kk, &(dim[l]), concept_level_out, &tm_prev, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->midnight, 0, &flag)) {
+						    (dim_row, kk, dim + l, concept_level_out, &tm_prev, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->midnight, 0, &flag)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in evaluating reduction groups.\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
 								OPH_LOG_OPH_REDUCE2_DIM_CHECK_ERROR);
@@ -834,8 +835,8 @@ int task_init(oph_operator_struct * handle)
 						}
 						if (!flag) {
 							if (kk) {
-								// Evaluate the centroid
-								if (oph_dim_update_value(dim_row, dim->dimension_type, prev_kk, kk - 1)) {
+								// Evaluate the centroid of current group
+								if (oph_dim_update_value(dim_row, dim[l].dimension_type, prev_kk, kk - 1)) {
 									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in evaluating reduction groups.\n");
 									logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
 										OPH_LOG_OPH_REDUCE2_DIM_CHECK_ERROR);
@@ -862,7 +863,8 @@ int task_init(oph_operator_struct * handle)
 							sizes[new_size]++;
 						value[new_size] = new_size;
 					}
-					if (oph_dim_update_value(dim_row, dim->dimension_type, prev_kk, kk - 1)) {
+					// Evaluate the centroid of the last group
+					if (oph_dim_update_value(dim_row, dim[l].dimension_type, prev_kk, kk - 1)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in evaluating reduction groups.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_REDUCE2_DIM_CHECK_ERROR);
@@ -992,11 +994,25 @@ int task_init(oph_operator_struct * handle)
 				}
 			}
 
-
-			if (new_grid || !((OPH_REDUCE2_operator_handle *) handle->operator_handle)->grid_name
-			    || (((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_output_container != ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container)) {
+			if (new_grid || !((OPH_REDUCE2_operator_handle *) handle->operator_handle)->grid_name || new_container) {
 				if (oph_dim_insert_into_dimension_table(db, o_index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, dim_inst[l].size, dim_row, &(dim_inst[l].fk_id_dimension_index))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in inserting a new row in dimension table.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_REDUCE2_DIM_ROW_ERROR);
+					if (dim_row)
+						free(dim_row);
+					oph_dim_disconnect_from_dbms(db->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db);
+					free(cubedims);
+					if (stored_dims)
+						free(stored_dims);
+					if (stored_dim_insts)
+						free(stored_dim_insts);
+					goto __OPH_EXIT_1;
+				}
+				// Copy the labels in new container
+				if (dim_inst[l].fk_id_dimension_label && new_container && (l != reduced_dim)
+				    && oph_dim_copy_into_dimension_table(db, label_dimension_table_name, o_label_dimension_table_name, &(dim_inst[l].fk_id_dimension_label))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in copying a row in dimension table.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_REDUCE2_DIM_ROW_ERROR);
 					if (dim_row)
 						free(dim_row);
@@ -1486,7 +1502,7 @@ int task_execute(oph_operator_struct * handle)
 				mysql_thread_end();
 			}
 			//Update fragment counter
-			first_frag += frag_count;
+			first_frag = current_frag_count + frag_count;
 		}
 
 		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {

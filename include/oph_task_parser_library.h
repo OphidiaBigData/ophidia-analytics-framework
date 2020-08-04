@@ -26,7 +26,7 @@
 #define OPH_TP_TASK_PARSER_SUCCESS		0
 #define OPH_TP_TASK_PARSER_ERROR		1
 
-#define OPH_TP_TASKLEN				OPH_COMMON_BUFFER_LEN
+#define	OPH_TP_TASKLEN				OPH_COMMON_BUFFER_LEN
 #define	OPH_TP_BUFLEN				OPH_COMMON_BUFFER_LEN
 
 #define OPH_TP_DTD_SCHEMA			OPH_FRAMEWORK_OPERATOR_DTD_PATH
@@ -71,7 +71,7 @@
 int oph_tp_retrieve_function_xml_file(const char *function_name, const char *function_version, short int function_type_code, char (*xml_filename)[OPH_TP_BUFLEN]);
 
 //Look for value of param in task string
-int oph_tp_find_param_in_task_string(const char *task_string, const char *param, char (*value)[OPH_TP_TASKLEN]);
+int oph_tp_find_param_in_task_string(const char *task_string, const char *param, char *value);
 
 //Load the operator parameters from task_string and XML into the hash table
 int oph_tp_task_params_parser(char *task_string, HASHTBL ** hashtbl);

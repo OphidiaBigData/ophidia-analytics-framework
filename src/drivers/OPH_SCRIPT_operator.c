@@ -84,6 +84,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_SCRIPT_operator_handle *) handle->operator_handle)->workflow_id = NULL;
 	((OPH_SCRIPT_operator_handle *) handle->operator_handle)->marker_id = NULL;
 	((OPH_SCRIPT_operator_handle *) handle->operator_handle)->list = 0;
+	((OPH_SCRIPT_operator_handle *) handle->operator_handle)->space = 0;
 
 	//3 - Fill struct with the correct data
 	char *value;
@@ -157,8 +158,26 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_LIST);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN) == 0) {
+	if (strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN) == 0)
 		((OPH_SCRIPT_operator_handle *) handle->operator_handle)->list = 1;
+	else if (strncmp(value, OPH_COMMON_NO_VALUE, OPH_TP_TASKLEN)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid input parameter %s\n", OPH_IN_PARAM_LIST);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_LIST);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SPACE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SPACE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_SPACE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN) == 0)
+		((OPH_SCRIPT_operator_handle *) handle->operator_handle)->space = 1;
+	else if (strncmp(value, OPH_COMMON_NO_VALUE, OPH_TP_TASKLEN)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid input parameter %s\n", OPH_IN_PARAM_SPACE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_SPACE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
 	char session_code[OPH_COMMON_BUFFER_LEN];
@@ -412,7 +431,7 @@ int task_execute(oph_operator_struct * handle)
 	}
 	//Create dir if not exist
 	struct stat st;
-	char user_space;
+	char user_space = 0, enable_unregistered_script = 0;
 	if (oph_pid_get_user_space(&user_space)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read user_space\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read user_space\n");
@@ -432,6 +451,11 @@ int task_execute(oph_operator_struct * handle)
 			free(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url);
 			((OPH_SCRIPT_operator_handle *) handle->operator_handle)->session_url = NULL;
 		}
+	}
+	if (oph_pid_is_script_enabled(&enable_unregistered_script)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read user_space\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read user_space\n");
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
 	if (strcmp(((OPH_SCRIPT_operator_handle *) handle->operator_handle)->script, OPH_SCRIPT_NOP)) {
@@ -483,7 +507,7 @@ int task_execute(oph_operator_struct * handle)
 		}
 		fclose(file);
 
-		if (!found) {
+		if (!found && !enable_unregistered_script) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "%s: no such script\n", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->script);
 			logging(LOG_ERROR, __FILE__, __LINE__, 0, "%s: no such script\n", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->script);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -542,14 +566,14 @@ int task_execute(oph_operator_struct * handle)
 		if (arg) {
 			new_arg = (char *) calloc(4 * strlen(arg), sizeof(char));
 			for (j = k = 0; j < strlen(arg); ++j, ++k) {
-				if (arg[j] == OPH_SCRIPT_MARKER3)
+				if (!((OPH_SCRIPT_operator_handle *) handle->operator_handle)->space && (arg[j] == OPH_SCRIPT_MARKER3))
 					new_arg[k++] = OPH_SCRIPT_MARKER;
 				new_arg[k] = arg[j];
 				if (arg[j] == OPH_SCRIPT_MARKER) {
 					new_arg[++k] = OPH_SCRIPT_MARKER2;
 					new_arg[++k] = OPH_SCRIPT_MARKER;
 					new_arg[++k] = OPH_SCRIPT_MARKER;
-				} else if (arg[j] == OPH_SCRIPT_MARKER3)
+				} else if (!((OPH_SCRIPT_operator_handle *) handle->operator_handle)->space && (arg[j] == OPH_SCRIPT_MARKER3))
 					new_arg[++k] = OPH_SCRIPT_MARKER;
 			}
 			new_arg[k] = 0;

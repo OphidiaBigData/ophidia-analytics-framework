@@ -124,7 +124,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_VISUALIZZATION_LEVEL);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_VISUALIZZATION_LEVEL);
-
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	((OPH_LIST_operator_handle *) handle->operator_handle)->level = (int) strtol(value, NULL, 10);
@@ -150,14 +149,12 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CONTAINER_NAME_FILTER);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_CONTAINER_NAME_FILTER);
-
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strcmp(value, OPH_COMMON_ALL_FILTER) != 0) {
 		if (!(((OPH_LIST_operator_handle *) handle->operator_handle)->container_name = (char *) strndup(value, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "container name");
-
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 	}
@@ -173,7 +170,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (!(((OPH_LIST_operator_handle *) handle->operator_handle)->datacube_name = (char *) strndup(value, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "datacube name");
-
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 	} else {
@@ -188,7 +184,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_PATH);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_PATH);
-
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strcmp(value, OPH_FRAMEWORK_FS_DEFAULT_PATH) != 0) {
@@ -215,27 +210,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_RECURSIVE_SEARCH);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_RECURSIVE_SEARCH);
-
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (!strcmp(value, OPH_COMMON_NO_VALUE)) {
-		((OPH_LIST_operator_handle *) handle->operator_handle)->recursive_search = 0;
-	} else {
-		((OPH_LIST_operator_handle *) handle->operator_handle)->recursive_search = 1;
-	}
+	((OPH_LIST_operator_handle *) handle->operator_handle)->recursive_search = strcmp(value, OPH_COMMON_NO_VALUE);
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_HOSTNAME_FILTER);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_HOSTNAME_FILTER);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_HOSTNAME_FILTER);
-
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strcmp(value, OPH_COMMON_ALL_FILTER) != 0) {
 		if (!(((OPH_LIST_operator_handle *) handle->operator_handle)->hostname = (char *) strndup(value, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "hostname");
-
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 	}
@@ -244,10 +232,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DBMS_ID_FILTER);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_DBMS_ID_FILTER);
-
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (strcmp(value, OPH_COMMON_ALL_FILTER) != 0) {
+	if (strcmp(value, OPH_COMMON_ALL_FILTER) && strcmp(value, "0")) {
 		((OPH_LIST_operator_handle *) handle->operator_handle)->id_dbms = (int) strtol(value, NULL, 10);
 	}
 
@@ -255,14 +242,12 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DB_NAME_FILTER);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_DB_NAME_FILTER);
-
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strcmp(value, OPH_COMMON_ALL_FILTER) != 0) {
 		if (!(((OPH_LIST_operator_handle *) handle->operator_handle)->db_name = (char *) strndup(value, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MEMORY_ERROR_INPUT, "database instance name");
-
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 	}
@@ -301,7 +286,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_LIST_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_LEVEL_FILTER);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (strcmp(value, OPH_COMMON_ALL_FILTER) != 0) {
+	if (strcmp(value, OPH_COMMON_ALL_FILTER) && strcmp(value, "0")) {
 		((OPH_LIST_operator_handle *) handle->operator_handle)->oper_level = (int) strtol(value, NULL, 10);
 	}
 

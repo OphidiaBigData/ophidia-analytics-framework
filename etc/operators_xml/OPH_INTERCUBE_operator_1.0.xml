@@ -11,7 +11,11 @@ returns a new datacube as result of the specified operation applied element by e
 
 [Parameters]
 - cube : name of the first operand datacube. The name must be in PID format.
+         Considered only in case 'cubes' is not set.
 - cube2 : name of the second operand datacube. The name must be in PID format.
+          Considered only in case 'cubes' is not set.
+- cubes : list of input cubes (only two are significant). The name must be in PID format.
+          If set, the parameters 'cube' and 'cube2' are not considered.
 - operation : type of inter-cube operation among these (default is sub):
               -- sum : sum correspondent elements one by one;
               -- sub : subtract the elements of the second operand from the first operand one by one (default);
@@ -57,8 +61,9 @@ SUBMISSION STRING: &quot;operator=oph_intercube;cube=http://www.example.com/1/1;
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
-		<argument type="string" mandatory="yes">cube2</argument>
+		<argument type="string" mandatory="no" multivalue="yes" default="-">cube</argument>
+		<argument type="string" mandatory="no" default="-">cube2</argument>
+		<argument type="string" mandatory="no" multivalue="yes" default="-">cubes</argument>
 		<argument type="string" mandatory="no" default="sub" values="sum|sub|mul|div|abs|arg|corr|mask|max|min|arg_max|arg_min">operation</argument>
 		<argument type="real" mandatory="no" default="NAN">missingvalue</argument>
 		<argument type="string" mandatory="no" default="null">measure</argument>

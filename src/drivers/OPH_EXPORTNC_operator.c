@@ -1238,26 +1238,6 @@ int task_execute(oph_operator_struct * handle)
 					free(dim_rows);
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
-				if ((retval = nc_enddef(ncid))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to complete output nc definition: %s\n", nc_strerror(retval));
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_EXPORTNC_NC_END_DEFINITION_ERROR, nc_strerror(retval));
-					oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-					oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
-					oph_odb_stge_free_fragment_list(&frags);
-					oph_odb_stge_free_db_list(&dbs);
-					oph_odb_stge_free_dbms_list(&dbmss);
-					oph_odb_free_ophidiadb(&oDB_slave);
-					nc_close(ncid);
-					for (l = 0; l < num_of_dims; l++) {
-						if (dim_rows[l]) {
-							free(dim_rows[l]);
-							dim_rows[l] = NULL;
-						}
-					}
-					free(dim_rows);
-					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-				}
 
 				if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->export_metadata)	// Add metadata
 				{
@@ -1334,6 +1314,27 @@ int task_execute(oph_operator_struct * handle)
 						}
 					}
 					mysql_free_result(read_result);
+				}
+
+				if ((retval = nc_enddef(ncid))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to complete output nc definition: %s\n", nc_strerror(retval));
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_EXPORTNC_NC_END_DEFINITION_ERROR, nc_strerror(retval));
+					oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+					oph_dc_cleanup_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server);
+					oph_odb_stge_free_fragment_list(&frags);
+					oph_odb_stge_free_db_list(&dbs);
+					oph_odb_stge_free_dbms_list(&dbmss);
+					oph_odb_free_ophidiadb(&oDB_slave);
+					nc_close(ncid);
+					for (l = 0; l < num_of_dims; l++) {
+						if (dim_rows[l]) {
+							free(dim_rows[l]);
+							dim_rows[l] = NULL;
+						}
+					}
+					free(dim_rows);
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 
 				for (m = 0; m < num_of_dims; m++) {

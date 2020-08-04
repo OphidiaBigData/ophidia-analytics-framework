@@ -47,6 +47,7 @@ struct _OPH_TASKS_operator_handle {
 	char **objkeys;
 	int objkeys_num;
 	char *sessionid;
+	int recursive_search;
 };
 typedef struct _OPH_TASKS_operator_handle OPH_TASKS_operator_handle;
 
