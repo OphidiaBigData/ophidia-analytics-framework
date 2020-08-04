@@ -1,9 +1,10 @@
 
-## Next release
+## v1.6.0 - 2020-07-27
 
 ### Fixed:
 
 - Bug in parsing multivalue arguments
+- Bug in setting _Fillvalue in exportnc operators
 - Bug in setting total fragment number in OPH_IMPORTNC2
 - Framework core functions to support longer input strings for operators [#94](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/94)
 - Bug when inserting new dimension if another one with the same name already exists [#90](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/90)
@@ -15,6 +16,7 @@
 
 ### Added:
 
+- New values '365_day' and '366_day' for parameter 'calendar'
 - New argument 'action' to OPH_B2DROP to support also file download [#95](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/95)
 - Creation date of host partitions to output of OPH_CLUSTER  [#93](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/93)
 - New parameter in import and randcube operators to set node selection policy [#92](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/92)
