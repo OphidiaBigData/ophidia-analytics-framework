@@ -354,8 +354,6 @@ CREATE TABLE `session` (
   `iduser` int(10) unsigned NOT NULL,
   `idfolder` int(10) unsigned DEFAULT NULL,
   `sessionid` varchar(1024) NOT NULL,
-  `label` varchar(256) DEFAULT NULL,
-  `creationdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`idsession`),
   CONSTRAINT `idfolder_s` FOREIGN KEY (`idfolder`) REFERENCES `folder` (`idfolder`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
@@ -764,6 +762,7 @@ CREATE TABLE `metadatainstance` (
   `variable` varchar(256) DEFAULT NULL,
   `value` LONGBLOB NOT NULL,
   `size` int(10) unsigned NOT NULL DEFAULT 1,
+  `lastupdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`idmetadatainstance`),
   UNIQUE KEY `datacube_metadatakey` (`iddatacube`, `idkey`),
   FOREIGN KEY (`iddatacube`) REFERENCES `datacube` (`iddatacube`) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -779,31 +778,6 @@ CREATE TABLE `metadatainstance` (
 LOCK TABLES `metadatainstance` WRITE;
 /*!40000 ALTER TABLE `metadatainstance` DISABLE KEYS */;
 /*!40000 ALTER TABLE `metadatainstance` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `manage`
---
-
-DROP TABLE IF EXISTS `manage`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!40101 SET character_set_client = utf8 */;
-CREATE TABLE `manage` (
-  `iduser` int(10) unsigned NOT NULL,
-  `idmetadatainstance` int(10) unsigned NOT NULL,
-  `managedate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT `idmanage` PRIMARY KEY (`iduser`,`idmetadatainstance`,`managedate`),
-  FOREIGN KEY (`idmetadatainstance`) REFERENCES `metadatainstance` (`idmetadatainstance`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=0 DEFAULT CHARSET=latin1;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `manage`
---
-
-LOCK TABLES `manage` WRITE;
-/*!40000 ALTER TABLE `manage` DISABLE KEYS */;
-/*!40000 ALTER TABLE `manage` ENABLE KEYS */;
 UNLOCK TABLES;
 
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
