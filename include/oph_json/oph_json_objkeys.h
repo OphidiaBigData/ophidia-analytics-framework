@@ -146,6 +146,8 @@
 #define OPH_JSON_OBJKEY_FS							"fs"
 #define OPH_JSON_OBJKEY_CONTAINERSCHEMA_INFO 		"containerschema_info"
 #define OPH_JSON_OBJKEY_CONTAINERSCHEMA_DIMINFO 	"containerschema_diminfo"
+#define OPH_JSON_OBJKEY_CDO_OUTPUT					"cdo_output"
+#define OPH_JSON_OBJKEY_CDO_RETURNCODE				"cdo_returncode"
 
 
 #endif

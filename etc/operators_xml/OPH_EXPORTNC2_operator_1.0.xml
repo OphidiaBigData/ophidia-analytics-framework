@@ -18,6 +18,7 @@ It exports data of a datacube into a sinlge NetCDF files.
                 directory corresponding to the related cube in the nc folder at the framework installation directory.
                 In case it is set to &quot;local&quot;, the file will be saved in current directory on data repository (see &quot;cdd&quot;).
 - output_name : filename of the NetCDF output files. The default value is the measure name of input datacube.
+- output : alias for the pair &quot;output_path&quot; and &quot;output_name&quot;; the values of these arguments will be overwritten.
 - cdd : absolute path corresponding to the current directory on data repository.
 - force : flag used to force file creation. An existant file is overwritten with &quot;yes&quot; whereas
           the file is created only if it does not exist with &quot;no&quot; (default).
@@ -50,6 +51,7 @@ SUBMISSION STRING: &quot;operator=oph_exportnc2;cube=http://www.example.com/1/1;
 		<argument type="string" mandatory="no" default="no" values="yes|no">misc</argument>
 		<argument type="string" mandatory="no" default="default">output_path</argument>
 		<argument type="string" mandatory="no" default="default">output_name</argument>
+		<argument type="string" mandatory="no" default="">output</argument>
 		<argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no|postpone">export_metadata</argument>

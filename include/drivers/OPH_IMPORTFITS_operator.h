@@ -125,6 +125,8 @@ struct _OPH_IMPORTFITS_operator_handle {
 	short int execute_error;
 	char *output_path;
 	char policy;
+
+	int id_user;
 };
 typedef struct _OPH_IMPORTFITS_operator_handle OPH_IMPORTFITS_operator_handle;
 

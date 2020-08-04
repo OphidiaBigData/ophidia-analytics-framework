@@ -252,6 +252,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SRC_FILE_PATH);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	char *input = hashtbl_get(task_tbl, OPH_IN_PARAM_INPUT);
+	if (input && strlen(input))
+		value = input;
+	else if (!strlen(value)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "The param '%s' is mandatory; at least the param '%s' needs to be set\n", OPH_IN_PARAM_SRC_FILE_PATH, OPH_IN_PARAM_INPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_SRC_FILE_PATH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
 	if (!(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->fits_file_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MEMORY_ERROR_INPUT_NO_CONTAINER, value, "fits file path");
@@ -347,6 +355,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
+
+	value = hashtbl_get(task_tbl, OPH_ARG_USERID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERID);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_MISSING_INPUT_PARAMETER, container_name, OPH_ARG_USERID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_user = (int) strtol(value, NULL, 10);
 
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
@@ -1110,13 +1126,7 @@ int task_init(oph_operator_struct * handle)
 		int run = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->run;
 
 		//Retrieve user id
-		char *username = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->user;
-		int id_user = 0;
-		if (oph_odb_user_retrieve_user_id(oDB, username, &id_user)) {
-			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive user id\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTFITS_USER_ID_ERROR);
-			goto __OPH_EXIT_1;
-		}
+		int id_user = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_user;
 
 	  /********************************
 	   *INPUT PARAMETERS CHECK - BEGIN*

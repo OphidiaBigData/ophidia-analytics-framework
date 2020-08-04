@@ -124,10 +124,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SYSTEM_COMMAND);
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_COMMAND);
 	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SYSTEM_COMMAND);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FOLDER_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SYSTEM_COMMAND);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_COMMAND);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FOLDER_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_COMMAND);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!strcasecmp(value, OPH_FOLDER_CMD_CD)) {
@@ -913,8 +913,8 @@ int task_execute(oph_operator_struct * handle)
 			break;
 
 		default:
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid input parameter %s\n", OPH_IN_PARAM_SYSTEM_COMMAND);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FOLDER_INVALID_INPUT_PARAMETER, OPH_IN_PARAM_SYSTEM_COMMAND);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid input parameter %s\n", OPH_IN_PARAM_COMMAND);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FOLDER_INVALID_INPUT_PARAMETER, OPH_IN_PARAM_COMMAND);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 

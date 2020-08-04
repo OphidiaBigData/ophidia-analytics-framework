@@ -650,6 +650,11 @@ int oph_tp_end_xml_parser()
 
 int oph_tp_task_params_parser(char *task_string, HASHTBL ** hashtbl)
 {
+	return oph_tp_task_params_parser2(NULL, task_string, hashtbl);
+}
+
+int oph_tp_task_params_parser2(const char *operator, char *task_string, HASHTBL ** hashtbl)
+{
 	if (!task_string || !hashtbl)
 		return OPH_TP_TASK_PARSER_ERROR;
 
@@ -659,12 +664,16 @@ int oph_tp_task_params_parser(char *task_string, HASHTBL ** hashtbl)
 		return OPH_TP_TASK_PARSER_ERROR;
 	}
 
-	char *op, operator[OPH_TP_TASKLEN] = { '\0' };
+	char *op, _operator[OPH_TP_TASKLEN] = { '\0' };
 
-	//Find operator name in task string
-	if (oph_tp_find_param_in_task_string(task_string, OPH_IN_PARAM_OPERATOR_NAME, operator)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find operator name in the string\n");
-		return OPH_TP_TASK_PARSER_ERROR;
+	if (!operator) {
+
+		//Find operator name in task string
+		if (oph_tp_find_param_in_task_string(task_string, OPH_IN_PARAM_OPERATOR_NAME, _operator)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find operator name in the string\n");
+			return OPH_TP_TASK_PARSER_ERROR;
+		}
+		operator = _operator;
 	}
 
 	xmlDocPtr document;
@@ -707,6 +716,7 @@ int oph_tp_task_params_parser(char *task_string, HASHTBL ** hashtbl)
 	xmlChar *content;
 
 	//Parse till args section
+	size_t len = strlen(task_string);
 	long number_arguments = 0;
 	char *value1 = NULL;
 	node = root->children;
@@ -727,7 +737,7 @@ int oph_tp_task_params_parser(char *task_string, HASHTBL ** hashtbl)
 					//Look for param names (xml content)
 					content = xmlNodeGetContent(subnode->xmlChildrenNode);
 					if (content) {
-						value1 = strdup(task_string);
+						value1 = (char *) malloc(len + 10);
 						if (!value1) {
 							xmlFree(content);
 							xmlFreeDoc(document);

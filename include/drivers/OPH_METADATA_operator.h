@@ -80,6 +80,7 @@ typedef struct _OPH_METADATA_operator_handle {
 	int objkeys_num;
 	char *sessionid;
 	int userrole;
+	int id_user;
 } OPH_METADATA_operator_handle;
 
 #endif				//__OPH_METADATA_OPERATOR_H

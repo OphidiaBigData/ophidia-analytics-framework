@@ -21,21 +21,20 @@
 
 #define MYSQL_QUERY_META_RETRIEVE_METADATAKEY_LIST 		"SELECT idkey, label, variable, required, template FROM metadatakey WHERE idvocabulary=%d ORDER BY idkey ASC;"
 #define MYSQL_QUERY_META_RETRIEVE_METADATAINSTANCE		"SELECT idmetadatainstance FROM metadatainstance WHERE idmetadatainstance = %d AND iddatacube = %d;"
-#define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1 	"INSERT INTO `metadatainstance` (`iddatacube`, `idtype`, `value`, `label`, `variable`, `iduser`) VALUES (%d, %d, '%s', '%s', '%s', %d);"
-#define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2 	"INSERT INTO `metadatainstance` (`iddatacube`, `idtype`, `value`, `label`, `iduser`) VALUES (%d, %d, '%s', '%s', %d);"
-#define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE3 	"INSERT INTO `metadatainstance` (`iddatacube`, `idkey`, `idtype`, `value`, `label`, `variable`, `iduser`) VALUES (%d, %d, %d, '%s', '%s', '%s', %d);"
-#define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE4 	"INSERT INTO `metadatainstance` (`iddatacube`, `idkey`, `idtype`, `value`, `label`, `iduser`) VALUES (%d, %d, %d, '%s', '%s', %d);"
+#define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1 	"INSERT INTO `metadatainstance` (`iddatacube`, `idtype`, `value`, `label`, `variable`) VALUES (%d, %d, '%s', '%s', '%s');"
+#define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2 	"INSERT INTO `metadatainstance` (`iddatacube`, `idtype`, `value`, `label`) VALUES (%d, %d, '%s', '%s');"
+#define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE3 	"INSERT INTO `metadatainstance` (`iddatacube`, `idkey`, `idtype`, `value`, `label`, `variable`) VALUES (%d, %d, %d, '%s', '%s', '%s');"
+#define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE4 	"INSERT INTO `metadatainstance` (`iddatacube`, `idkey`, `idtype`, `value`, `label`) VALUES (%d, %d, %d, '%s', '%s');"
 #define MYSQL_QUERY_META_READ_KEY_ID 				"SELECT metadatakey.idkey FROM container,vocabulary,metadatakey WHERE container.idcontainer=%d AND container.idvocabulary=vocabulary.idvocabulary AND vocabulary.idvocabulary=metadatakey.idvocabulary AND metadatakey.label='%s' AND metadatakey.variable='%s'"
 #define MYSQL_QUERY_META_READ_KEY_ID2 				"SELECT metadatakey.idkey FROM container,vocabulary,metadatakey WHERE container.idcontainer=%d AND container.idvocabulary=vocabulary.idvocabulary AND vocabulary.idvocabulary=metadatakey.idvocabulary AND metadatakey.label='%s' AND metadatakey.variable IS NULL"
-#define MYSQL_QUERY_META_READ_INSTANCES				"SELECT metadatainstance.idmetadatainstance AS Id, metadatainstance.variable AS Variable, metadatainstance.label AS 'Key', metadatatype.name AS Type, metadatainstance.value AS Value, lastupdate AS Last_Modified, user.username AS User, vocabulary.name AS Vocabulary FROM ((( metadatainstance LEFT JOIN metadatakey ON metadatainstance.idkey=metadatakey.idkey ) LEFT JOIN vocabulary ON metadatakey.idvocabulary=vocabulary.idvocabulary ) INNER JOIN metadatatype ON metadatainstance.idtype=metadatatype.idtype ) INNER JOIN user ON metadatainstance.iduser=user.iduser WHERE metadatainstance.iddatacube=%d AND metadatainstance.idmetadatainstance LIKE '%s' AND (%s metadatainstance.variable LIKE '%s') AND metadatatype.name LIKE '%s' AND CONVERT(metadatainstance.value USING latin1) LIKE '%%%s%%' %s GROUP BY metadatainstance.idmetadatainstance"
-#define MYSQL_QUERY_META_UPDATE_INSTANCE 			"UPDATE metadatainstance SET value = '%s', iduser = %d WHERE idmetadatainstance = %d AND iddatacube = %d;"
-#define MYSQL_QUERY_META_DELETE_INSTANCE 			"DELETE FROM metadatainstance WHERE idmetadatainstance = %d AND iddatacube = %d;"
+#define MYSQL_QUERY_META_UPDATE_INSTANCE 			"UPDATE metadatainstance SET value='%s' WHERE idmetadatainstance=%d AND iddatacube=%d;"
+#define MYSQL_QUERY_META_DELETE_INSTANCE 			"DELETE FROM metadatainstance WHERE idmetadatainstance=%d AND iddatacube=%d;"
 #define MYSQL_QUERY_META_DELETE_INSTANCES 			"DELETE FROM metadatainstance WHERE iddatacube=%d AND (%s variable LIKE '%s') AND idtype IN (SELECT idtype FROM metadatatype WHERE name LIKE '%s') AND CONVERT(value USING latin1) LIKE '%%%s%%' %s;"
 #define MYSQL_QUERY_META_RETRIEVE_VOCABULARY_ID 		"SELECT idvocabulary from `vocabulary` where name = '%s';"
 #define MYSQL_QUERY_META_RETRIEVE_METADATATYPE_ID 		"SELECT idtype from `metadatatype` where name = '%s';"
 #define MYSQL_QUERY_META_RETRIEVE_VOCABULARY_ID_FROM_CONTAINER 	"SELECT idvocabulary FROM container WHERE idcontainer = %d AND idvocabulary IS NOT NULL;"
 #define MYSQL_QUERY_META_COPY_INSTANCES				"CREATE TEMPORARY TABLE IF NOT EXISTS metadatainstance_tmp AS (SELECT `idkey`, `idtype`, `value`, `label`, `variable` FROM metadatainstance WHERE iddatacube = %d);"
-#define MYSQL_QUERY_META_INSERT_INSTANCES			"INSERT INTO `metadatainstance` (`iddatacube`, `idkey`, `idtype`, `value`, `label`, `variable`, `id_user`) SELECT %d, `idkey`, `idtype`, `value`, `label`, `variable`, %d FROM metadatainstance_tmp;"
+#define MYSQL_QUERY_META_INSERT_INSTANCES			"INSERT INTO `metadatainstance` (`iddatacube`, `idkey`, `idtype`, `value`, `label`, `variable`) SELECT %d, `idkey`, `idtype`, `value`, `label`, `variable` FROM metadatainstance_tmp;"
 #define MYSQL_QUERY_META_GET1 					"SELECT idmetadatainstance, value FROM metadatainstance INNER JOIN metadatakey ON metadatainstance.idkey = metadatakey.idkey WHERE iddatacube = %d AND template = '%s' AND metadatakey.variable = '%s';"
 #define MYSQL_QUERY_META_GET2 					"SELECT idmetadatainstance, value FROM metadatainstance INNER JOIN metadatakey ON metadatainstance.idkey = metadatakey.idkey WHERE iddatacube = %d AND template = '%s'"
 #define MYSQL_QUERY_META_TIME_DIMENSION_CHECK			"SELECT COUNT(*), idvocabulary FROM metadatainstance INNER JOIN metadatakey ON metadatainstance.idkey = metadatakey.idkey WHERE template LIKE 'time:%%' AND iddatacube = %d AND (metadatakey.variable IS NULL OR metadatakey.variable = '%s') AND required"
@@ -49,11 +48,18 @@
 #define MONGODB_QUERY_META_CHECK_VOCABULARY			"SELECT idvocabulary FROM metadatakey WHERE idvocabulary IS NOT NULL AND idkey IN (%s);"
 #define MONGODB_QUERY_META_GET_TYPE					"SELECT idtype FROM metadatatype WHERE name LIKE '%s';"
 #define MONGODB_QUERY_META_GET_TYPE_BY_ID			"SELECT name FROM metadatatype WHERE idtype = %d;"
-#define MONGODB_QUERY_META_GET_USER_BY_ID			"SELECT username FROM user WHERE iduser = %d;"
 #define MONGODB_QUERY_META_GET_VOCABULARY_BY_IDKEY	"SELECT name FROM metadatakey LEFT JOIN vocabulary ON metadatakey.idvocabulary=vocabulary.idvocabulary WHERE idkey = %d;"
 #define MONGODB_QUERY_META_GET1 					"SELECT idkey FROM metadatakey WHERE template = '%s' AND variable = '%s';"
 #define MONGODB_QUERY_META_GET2 					"SELECT idkey FROM metadatakey WHERE template = '%s'"
 #define MONGODB_QUERY_META_TIME_DIMENSION_CHECK		"SELECT idkey, idvocabulary FROM metadatakey WHERE template LIKE 'time:%%' AND (variable IS NULL OR variable = '%s') AND required"
+#endif
+
+#ifdef OPH_DB_SUPPORT
+#define MYSQL_QUERY_META_UPDATE_OPHIDIADB_MANAGE 		"INSERT INTO `manage` (`iduser`, `idmetadatainstance` ) VALUES (%d, %d);"
+#define MYSQL_QUERY_META_COPY_MANAGE				"INSERT INTO `manage` (`iduser`, `idmetadatainstance`) SELECT %d, idmetadatainstance FROM metadatainstance WHERE iddatacube = %d;"
+#define MYSQL_QUERY_META_READ_INSTANCES				"SELECT metadatainstance.idmetadatainstance AS Id, metadatainstance.variable AS Variable, metadatainstance.label AS 'Key', metadatatype.name AS Type, metadatainstance.value AS Value, MAX(manage.managedate) AS Last_Modified, vocabulary.name AS Vocabulary FROM (((( metadatainstance LEFT JOIN metadatakey ON metadatainstance.idkey=metadatakey.idkey ) LEFT JOIN vocabulary ON metadatakey.idvocabulary=vocabulary.idvocabulary ) INNER JOIN metadatatype ON metadatainstance.idtype=metadatatype.idtype ) INNER JOIN manage ON metadatainstance.idmetadatainstance=manage.idmetadatainstance ) WHERE metadatainstance.iddatacube=%d AND metadatainstance.idmetadatainstance LIKE '%s' AND (%s metadatainstance.variable LIKE '%s') AND metadatatype.name LIKE '%s' AND CONVERT(metadatainstance.value USING latin1) LIKE '%%%s%%' %s GROUP BY manage.idmetadatainstance"
+#else
+#define MYSQL_QUERY_META_READ_INSTANCES				"SELECT metadatainstance.idmetadatainstance AS Id, metadatainstance.variable AS Variable, metadatainstance.label AS 'Key', metadatatype.name AS Type, metadatainstance.value AS Value, lastupdate AS Last_Modified, vocabulary.name AS Vocabulary FROM ((( metadatainstance LEFT JOIN metadatakey ON metadatainstance.idkey=metadatakey.idkey ) LEFT JOIN vocabulary ON metadatakey.idvocabulary=vocabulary.idvocabulary ) INNER JOIN metadatatype ON metadatainstance.idtype=metadatatype.idtype ) WHERE metadatainstance.iddatacube=%d AND metadatainstance.idmetadatainstance LIKE '%s' AND (%s metadatainstance.variable LIKE '%s') AND metadatatype.name LIKE '%s' AND CONVERT(metadatainstance.value USING latin1) LIKE '%%%s%%' %s"
 #endif
 
 #endif				/* __OPH_ODB_META_QUERY_H__ */

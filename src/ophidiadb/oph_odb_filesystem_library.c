@@ -1334,3 +1334,53 @@ int oph_odb_fs_add_suffix_to_container_name(ophidiadb * oDB, int containerid)
 
 	return OPH_ODB_SUCCESS;
 }
+
+int oph_odb_fs_get_subfolders(int folder_id, int **subfolder_id, int *num_subfolders, ophidiadb * oDB)
+{
+	if (!oDB || !folder_id || !subfolder_id || !num_subfolders) {
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		return OPH_ODB_MYSQL_ERROR;
+	}
+	//Retrive user home folder id
+	char query[MYSQL_BUFLEN];
+
+	int n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_RETRIEVE_SUB_FOLDER_ID, folder_id);
+	if (n >= MYSQL_BUFLEN) {
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, query)) {
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+
+	if (!(*num_subfolders = mysql_num_rows(res))) {
+		mysql_free_result(res);
+		return OPH_ODB_SUCCESS;
+	}
+
+	if (mysql_field_count(oDB->conn) != 1) {
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	*subfolder_id = (int *) malloc((*num_subfolders) * sizeof(int));
+	if (!(*subfolder_id)) {
+		mysql_free_result(res);
+		return OPH_ODB_MEMORY_ERROR;
+	}
+
+	n = 0;
+	while ((row = mysql_fetch_row(res)) != NULL)
+		(*subfolder_id)[n++] = (int) strtol(row[0], NULL, 10);
+
+	mysql_free_result(res);
+
+	return OPH_ODB_SUCCESS;
+}

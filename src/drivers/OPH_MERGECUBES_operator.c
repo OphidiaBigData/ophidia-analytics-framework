@@ -251,6 +251,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
+	value = hashtbl_get(task_tbl, OPH_ARG_USERID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERID);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MERGECUBES_MISSING_INPUT_PARAMETER, OPH_ARG_USERID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_user = (int) strtol(value, NULL, 10);
+
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
@@ -369,11 +377,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[0], OPH_LOG_OPH_MERGECUBES_DATACUBE_PERMISSION_ERROR, username);
 				id_datacube_in[0] = 0;
 			}
-		}
-		if (oph_odb_user_retrieve_user_id(oDB, username, &(((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->id_user))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to extract userid.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[0], OPH_LOG_GENERIC_USER_ID_ERROR);
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 
 		if (oph_odb_cube_order_by(oDB, order, id_datacube_in, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->input_datacube_num)) {

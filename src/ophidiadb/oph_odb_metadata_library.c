@@ -121,7 +121,6 @@ int oph_odb_meta_insert_into_metadatainstance_manage_tables(ophidiadb * oDB, con
 	BSON_APPEND_INT32(doc, "idtype", id_metadatatype);
 	BSON_APPEND_UTF8(doc, "value", value);
 	BSON_APPEND_UTF8(doc, "label", new_metadatakey);
-	BSON_APPEND_INT32(doc, "iduser", id_user);
 	BSON_APPEND_DATE_TIME(doc, "lastupdate", millisecondsSinceEpoch);
 	if (id_metadatakey > 0)
 		BSON_APPEND_INT32(doc, "idkey", id_metadatakey);
@@ -191,16 +190,15 @@ int oph_odb_meta_insert_into_metadatainstance_manage_tables(ophidiadb * oDB, con
 	if (id_metadatakey == -1) {
 		if (new_metadatakey_variable)
 			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1, id_datacube, id_metadatatype, escaped_value, new_metadatakey,
-				     new_metadatakey_variable, id_user);
+				     new_metadatakey_variable);
 		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_metadatatype, escaped_value, new_metadatakey, id_user);
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_metadatatype, escaped_value, new_metadatakey);
 	} else {
 		if (new_metadatakey_variable)
 			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE3, id_datacube, id_metadatakey, id_metadatatype, escaped_value, new_metadatakey,
-				     new_metadatakey_variable, id_user);
+				     new_metadatakey_variable);
 		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE4, id_datacube, id_metadatakey, id_metadatatype, escaped_value, new_metadatakey,
-				     id_user);
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE4, id_datacube, id_metadatakey, id_metadatatype, escaped_value, new_metadatakey);
 	}
 
 	free(escaped_value);
@@ -573,7 +571,6 @@ int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_data
 	BSON_APPEND_INT32(doc, "idtype", id_metadatatype);
 	BSON_APPEND_UTF8(doc, "value", metadata_value);
 	BSON_APPEND_UTF8(doc, "label", metadata_key);
-	BSON_APPEND_INT32(doc, "iduser", id_user);
 	BSON_APPEND_DATE_TIME(doc, "lastupdate", millisecondsSinceEpoch);
 	if (id_metadatakey)
 		BSON_APPEND_INT32(doc, "idkey", id_metadatakey);
@@ -639,16 +636,14 @@ int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_data
 	if (id_metadatakey) {
 		if (metadata_variable)
 			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE3, id_datacube, id_metadatakey, id_metadatatype, escaped_value, metadata_key,
-				     metadata_variable, id_user);
+				     metadata_variable);
 		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE4, id_datacube, id_metadatakey, id_metadatatype, escaped_value, metadata_key,
-				     id_user);
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE4, id_datacube, id_metadatakey, id_metadatatype, escaped_value, metadata_key);
 	} else {
 		if (metadata_variable)
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1, id_datacube, id_metadatatype, escaped_value, metadata_key, metadata_variable,
-				     id_user);
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1, id_datacube, id_metadatatype, escaped_value, metadata_key, metadata_variable);
 		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_metadatatype, escaped_value, metadata_key, id_user);
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_metadatatype, escaped_value, metadata_key);
 	}
 
 	free(escaped_value);
@@ -679,12 +674,13 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+
 	*metadata_list = NULL;
 	*num_rows = 0;
 
 	char query[MYSQL_BUFLEN];
 	int n = 0;
-	int num_fields = 8;
+	int num_fields = 7;
 
 #ifdef OPH_ODB_MNG
 
@@ -902,40 +898,6 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 			if (localtime_r(&timestep, &timeinfo))
 				strftime(buf, 64, "%Y-%m-%d %H:%M:%S", &timeinfo);
 			(*metadata_list)[k] = *buf ? strdup(buf) : NULL;
-		}
-		k++;		// Go to the next field
-		if (bson_iter_init(&iter, target) && bson_iter_find(&iter, "iduser") && BSON_ITER_HOLDS_INT32(&iter)) {
-			n = snprintf(query, MYSQL_BUFLEN, MONGODB_QUERY_META_GET_USER_BY_ID, bson_iter_int32(&iter));
-			if (n >= MYSQL_BUFLEN) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-				mongoc_cursor_destroy(cursor);
-				mongoc_collection_destroy(collection);
-				return OPH_ODB_STR_BUFF_OVERFLOW;
-			}
-			if (mysql_query(oDB->conn, query)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-				mongoc_cursor_destroy(cursor);
-				mongoc_collection_destroy(collection);
-				return OPH_ODB_MYSQL_ERROR;
-			}
-			res = mysql_store_result(oDB->conn);
-			if (mysql_num_rows(res) != 1) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "No row found by query\n");
-				mongoc_cursor_destroy(cursor);
-				mongoc_collection_destroy(collection);
-				mysql_free_result(res);
-				return OPH_ODB_TOO_MANY_ROWS;
-			}
-			if (mysql_field_count(oDB->conn) != 1) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
-				mongoc_cursor_destroy(cursor);
-				mongoc_collection_destroy(collection);
-				mysql_free_result(res);
-				return OPH_ODB_TOO_MANY_ROWS;
-			}
-			if ((row = mysql_fetch_row(res)))
-				(*metadata_list)[k] = row[0] ? strdup(row[0]) : NULL;
-			mysql_free_result(res);
 		}
 		k++;		// Go to the next field
 		if (bson_iter_init(&iter, target) && bson_iter_find(&iter, "idkey") && BSON_ITER_HOLDS_INT32(&iter)) {
@@ -1170,7 +1132,6 @@ int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatai
 
 	BSON_APPEND_DOCUMENT_BEGIN(update, "$set", &doc_item);
 	BSON_APPEND_UTF8(&doc_item, "value", metadata_value);
-	BSON_APPEND_INT32(doc, "iduser", id_user);
 	BSON_APPEND_DATE_TIME(&doc_item, "lastupdate", millisecondsSinceEpoch);
 	bson_append_document_end(update, &doc_item);
 
@@ -1240,7 +1201,7 @@ int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatai
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 	//update metadata
-	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_INSTANCE, escaped_value, id_user, id_metadatainstance, id_datacube);
+	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_INSTANCE, escaped_value, id_metadatainstance, id_datacube);
 	free(escaped_value);
 
 	if (n >= query_buflen) {
@@ -1639,7 +1600,6 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 		BSON_APPEND_OID(doc, "_id", &oid);
 		BSON_APPEND_INT32(doc, "idmetadatainstance", id_metadatainstance);
 		BSON_APPEND_INT32(doc, "iddatacube", id_datacube_output);
-		BSON_APPEND_INT32(doc, "iduser", id_user);
 		BSON_APPEND_DATE_TIME(doc, "lastupdate", millisecondsSinceEpoch);
 		if (bson_iter_init(&iter, target) && bson_iter_find(&iter, "idtype") && BSON_ITER_HOLDS_INT32(&iter))
 			BSON_APPEND_INT32(doc, "idtype", bson_iter_int32(&iter));
@@ -1693,7 +1653,7 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
-	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_INSERT_INSTANCES, id_datacube_output, id_user);
+	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_INSERT_INSTANCES, id_datacube_output);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -1925,7 +1885,6 @@ int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, con
 
 		BSON_APPEND_DOCUMENT_BEGIN(update, "$set", &doc_item);
 		BSON_APPEND_UTF8(&doc_item, "value", value);
-		BSON_APPEND_INT32(doc, "iduser", id_user);
 		BSON_APPEND_DATE_TIME(&doc_item, "lastupdate", millisecondsSinceEpoch);
 		bson_append_document_end(update, &doc_item);
 
@@ -1953,7 +1912,7 @@ int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, con
 #else
 
 		char query[MYSQL_BUFLEN];
-		int n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_INSTANCE, value, id_user, id_metadata_instance, id_datacube);
+		int n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_INSTANCE, value, id_metadata_instance, id_datacube);
 		if (n >= MYSQL_BUFLEN) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 			return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -2035,7 +1994,6 @@ int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, con
 		BSON_APPEND_INT32(doc, "idtype", id_metadatatype);
 		BSON_APPEND_UTF8(doc, "value", value);
 		BSON_APPEND_UTF8(doc, "label", metadatakey);
-		BSON_APPEND_INT32(doc, "iduser", id_user);
 		BSON_APPEND_DATE_TIME(doc, "lastupdate", millisecondsSinceEpoch);
 		if (variable)
 			BSON_APPEND_UTF8(doc, "variable", variable);
@@ -2060,9 +2018,9 @@ int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, con
 #else
 
 		if (variable)
-			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1, id_datacube, id_metadatatype, value, metadatakey, variable, id_user);
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1, id_datacube, id_metadatatype, value, metadatakey, variable);
 		else
-			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_metadatatype, value, metadatakey, id_user);
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2, id_datacube, id_metadatatype, value, metadatakey);
 		if (n >= MYSQL_BUFLEN) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 			return OPH_ODB_STR_BUFF_OVERFLOW;

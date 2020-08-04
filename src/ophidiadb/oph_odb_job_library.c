@@ -30,7 +30,6 @@
 #include "debug.h"
 
 #include "oph_odb_cube_library.h"
-#include "oph_odb_user_library.h"
 
 extern int msglevel;
 
@@ -105,6 +104,7 @@ int oph_odb_job_set_job_status(ophidiadb * oDB, int id_job, oph_odb_job_status s
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+#ifdef OPH_DB_SUPPORT
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -142,6 +142,13 @@ int oph_odb_job_set_job_status(ophidiadb * oDB, int id_job, oph_odb_job_status s
 	}
 
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "Job status changed into '%s' using: %s\n", oph_odb_job_convert_status_to_str(status), insertQuery);
+
+#else
+
+	UNUSED(id_job);
+	UNUSED(status);
+
+#endif
 
 	return OPH_ODB_SUCCESS;
 }
@@ -207,6 +214,7 @@ int oph_odb_job_retrieve_job_id(ophidiadb * oDB, char *sessionid, char *markerid
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+#ifdef OPH_DB_SUPPORT
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -253,12 +261,14 @@ int oph_odb_job_retrieve_job_id(ophidiadb * oDB, char *sessionid, char *markerid
 
 	mysql_free_result(res);
 
+#endif
+
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_job_update_session_table(ophidiadb * oDB, char *sessionid, char *username, int id_folder, int *id_session)
+int oph_odb_update_folder_table(ophidiadb * oDB, char *folder_name, int *id_folder)
 {
-	if (!oDB || !sessionid || !username || !id_session) {
+	if (!oDB || !folder_name || !id_folder) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
@@ -268,15 +278,90 @@ int oph_odb_job_update_session_table(ophidiadb * oDB, char *sessionid, char *use
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
-	int id_user;
-	if (oph_odb_user_retrieve_user_id(oDB, username, &id_user)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve username.\n");
+	char insertQuery[MYSQL_BUFLEN];
+	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_UPDATE_OPHIDIADB_SESSION_FOLDER, folder_name);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, insertQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	if (!(*id_folder = mysql_insert_id(oDB->conn))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted folder id\n");
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_get_session_code(const char *sessionid, char *session_code)
+{
+
+	if (!sessionid || !session_code)
+		return OPH_ODB_NULL_PARAM;
+
+	size_t length = strlen(sessionid);
+	if (!length)
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+
+	char *tmp = strdup(sessionid), *pointer = tmp + length;
+	if (!tmp)
+		return OPH_ODB_NULL_PARAM;
+
+	char counter = 2;
+	while (pointer && (pointer >= tmp)) {
+		if (*pointer == '/') {
+			*pointer = 0;
+			counter--;
+			if (!counter)
+				break;
+		}
+		pointer--;
+	}
+
+	int result = OPH_ODB_SUCCESS;
+	if (pointer && (pointer >= tmp))
+		strcpy(session_code, 1 + pointer);
+	else
+		result = OPH_ODB_STR_BUFF_OVERFLOW;
+
+	free(tmp);
+
+	return result;
+}
+
+int oph_odb_job_update_session_table(ophidiadb * oDB, char *sessionid, int id_user, int id_folder, int *id_session)
+{
+	if (!oDB || !sessionid || !id_user || !id_session) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	if (!id_folder) {
+
+		char session_code[MYSQL_BUFLEN];
+		if (oph_get_session_code(sessionid, session_code)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to extract session code.\n");
+			return OPH_ODB_NULL_PARAM;
+		}
+
+		if (oph_odb_update_folder_table(oDB, session_code, &id_folder) || !id_folder) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a new folder.\n");
+			return OPH_ODB_MYSQL_ERROR;
+		}
 	}
 
 	char insertQuery[MYSQL_BUFLEN];
 	int n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_JOB_UPDATE_SESSION, id_user, id_folder, sessionid);
-
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -295,12 +380,13 @@ int oph_odb_job_update_session_table(ophidiadb * oDB, char *sessionid, char *use
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_job_update_job_table(ophidiadb * oDB, char *markerid, char *task_string, char *status, char *username, int id_session, int *id_job, char *parentid)
+int oph_odb_job_update_job_table(ophidiadb * oDB, char *markerid, char *task_string, char *status, int id_user, int id_session, int *id_job, char *parentid)
 {
 	if (!oDB || !markerid || !task_string || !status || !id_job) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+#ifdef OPH_DB_SUPPORT
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -310,11 +396,6 @@ int oph_odb_job_update_job_table(ophidiadb * oDB, char *markerid, char *task_str
 	char insertQuery[MYSQL_BUFLEN];
 	int n, i, j;
 
-	int id_user;
-	if (oph_odb_user_retrieve_user_id(oDB, username, &id_user)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve username.\n");
-		return OPH_ODB_MYSQL_ERROR;
-	}
 	//Escape ' char with \'
 	char new_query[OPH_ODB_CUBE_OPERATION_QUERY_SIZE];
 	j = 0;
@@ -346,6 +427,80 @@ int oph_odb_job_update_job_table(ophidiadb * oDB, char *markerid, char *task_str
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted datacube id\n");
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
+#else
+
+	UNUSED(id_user);
+	UNUSED(id_session);
+	UNUSED(parentid);
+
+#endif
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_job_retrieve_folder_id(ophidiadb * oDB, char *sessionid, int *id_folder)
+{
+	if (!oDB || !sessionid || !id_folder) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char query[MYSQL_BUFLEN];
+
+	int n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_JOB_RETRIEVE_FOLDER_ID, sessionid);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+
+	if (mysql_num_rows(res) < 1) {
+
+		mysql_free_result(res);
+
+		char session_code[MYSQL_BUFLEN];
+		if (oph_get_session_code(sessionid, session_code)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to extract session code.\n");
+			return OPH_ODB_NULL_PARAM;
+		}
+
+		if (oph_odb_update_folder_table(oDB, session_code, id_folder) || !*id_folder) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create a new folder.\n");
+			return OPH_ODB_MYSQL_ERROR;
+		}
+
+		return OPH_ODB_SUCCESS;
+	}
+
+	if (mysql_num_rows(res) > 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "More than one row found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if (mysql_field_count(oDB->conn) != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if ((row = mysql_fetch_row(res)) != NULL)
+		*id_folder = (int) strtol(row[0], NULL, 10);
+
+	mysql_free_result(res);
 
 	return OPH_ODB_SUCCESS;
 }

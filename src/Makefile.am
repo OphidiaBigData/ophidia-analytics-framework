@@ -62,8 +62,12 @@ lib_CFLAGS =  -I. -I../include -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_
 endif
 endif
 
+if DB_SUPPORT
+lib_CFLAGS += -DOPH_DB_SUPPORT
+endif
+
 if HAVE_MONGO
-lib_CFLAGS+= -DOPH_ODB_MNG
+lib_CFLAGS += -DOPH_ODB_MNG
 endif
 
 libdebug_la_SOURCES = debug.c 
@@ -155,7 +159,7 @@ liboph_hierarchy_la_CFLAGS = $(LIBXML_INCLUDE) -prefer-pic -I../include @INCLTDL
 liboph_hierarchy_la_LDFLAGS = -static 
 liboph_hierarchy_la_LIBADD = -lz -lm $(LIBXML_LIB) @LIBLTDL@ -L. -ldebug
 
-libophidiadb_la_SOURCES = ophidiadb/oph_ophidiadb_library.c ophidiadb/oph_odb_filesystem_library.c ophidiadb/oph_odb_job_library.c  ophidiadb/oph_odb_user_library.c ophidiadb/oph_odb_metadata_library.c ophidiadb/oph_odb_storage_library.c ophidiadb/oph_odb_dimension_library.c ophidiadb/oph_odb_cube_library.c
+libophidiadb_la_SOURCES = ophidiadb/oph_ophidiadb_library.c ophidiadb/oph_odb_filesystem_library.c ophidiadb/oph_odb_job_library.c ophidiadb/oph_odb_metadata_library.c ophidiadb/oph_odb_storage_library.c ophidiadb/oph_odb_dimension_library.c ophidiadb/oph_odb_cube_library.c
 libophidiadb_la_CFLAGS = ${MYSQL_CFLAGS} ${MONGOC_CFLAGS} -prefer-pic -I../include -I../include/ophidiadb @INCLTDL@ ${lib_CFLAGS} $(LIBXML_INCLUDE)
 libophidiadb_la_LDFLAGS = -static $(LIB_OPERATOR)
 libophidiadb_la_LIBADD = -lz -lm ${MYSQL_LDFLAGS} ${MONGOC_LIBS} @LIBLTDL@ -L. -ldebug -loph_pid -loph_hierarchy

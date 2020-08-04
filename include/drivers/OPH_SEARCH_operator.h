@@ -33,7 +33,6 @@
  * \param metadata_value_filter_num : number of filters on metadata values.
  * \param path : absolute/relative path used as starting point of the recursive search.
  * \param cwd : current working directory.
- * \param user : username of the user searching metadata.
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
@@ -46,7 +45,6 @@ struct _OPH_SEARCH_operator_handle {
 	int metadata_value_filter_num;
 	char *path;
 	char *cwd;
-	char *user;
 	char **objkeys;
 	int objkeys_num;
 	char *sessionid;
