@@ -16,7 +16,8 @@
 
 ### Added:
 
-- New values '365_day' and '366_day' for parameter 'calendar'
+- Argument 'exec_mode' to OPH_WAIT
+- New values '365_day' and '366_day' for argument 'calendar'
 - New argument 'action' to OPH_B2DROP to support also file download [#95](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/95)
 - Creation date of host partitions to output of OPH_CLUSTER  [#93](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/93)
 - New parameter in import and randcube operators to set node selection policy [#92](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/92)
