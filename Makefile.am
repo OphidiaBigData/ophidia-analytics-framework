@@ -30,12 +30,15 @@ dist_log_DATA =
 xmloperdir = $(prefix)/etc/operators_xml/
 OPERATOR_XML=
 
+OPERATOR_XML+=etc/operators_xml/OPH_CDO_operator_1.0.xml
+
+if MYSQL_SUPPORT
+
 OPERATOR_XML+=etc/operators_xml/OPH_AGGREGATE2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_AGGREGATE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_APPLY_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_B2DROP_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CANCEL_operator_1.0.xml
-OPERATOR_XML+=etc/operators_xml/OPH_CDO_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CLUSTER_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CONTAINERSCHEMA_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CREATECONTAINER_operator_1.0.xml
@@ -105,6 +108,8 @@ OPERATOR_XML+=etc/operators_xml/OPH_SUBSET_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_TASKS_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_UNPUBLISH_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_WAIT_operator_1.0.xml
+
+endif
 
 dist_xmloper_DATA = $(OPERATOR_XML)
 
