@@ -16,7 +16,8 @@
 
 ### Added:
 
-- New values '365_day' and '366_day' for parameter 'calendar'
+- Argument 'exec_mode' to OPH_WAIT
+- New values '365_day' and '366_day' for argument 'calendar'
 - New argument 'action' to OPH_B2DROP to support also file download [#95](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/95)
 - Creation date of host partitions to output of OPH_CLUSTER  [#93](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/93)
 - New parameter in import and randcube operators to set node selection policy [#92](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/92)
@@ -29,6 +30,7 @@
 
 ### Changed:
 
+- Setting of output name for OPH_EXPORTNC and OPH_EXPORTNC2
 - OPH_IMPORTNC2 to exploit block size upon nc file opening [#97](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/97)
 - OPH_EXPLORECUBE to remove row limit in case of base64 option is used [#96](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/96); it also fixes [#62] (https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/62)
 - Interface of OPH_SET and OPH_INPUT to allow 0 as a value for the 'id' parameter
