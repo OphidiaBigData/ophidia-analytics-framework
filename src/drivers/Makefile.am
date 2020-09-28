@@ -36,6 +36,7 @@ DRIVER=
 NOSQL_LIB = -L.. -loph_task_parser -loph_idstring -loph_json -ldebug -lhashtbl -loph_pid
 
 DRIVER+=liboph_cdooperator.la
+DRIVER+=liboph_genericoperator.la
 
 if MYSQL_SUPPORT
 
@@ -115,6 +116,11 @@ liboph_cdooperator_la_CFLAGS =  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${pr
 liboph_cdooperator_la_SOURCES = OPH_CDO_operator.c
 liboph_cdooperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_cdooperator_la_LIBADD = -lz $(NOSQL_LIB) -loph_directory
+
+liboph_genericoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" -I../oph_gsoap
+liboph_genericoperator_la_SOURCES = OPH_GENERIC_operator.c
+liboph_genericoperator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_genericoperator_la_LIBADD = -lz $(NOSQL_LIB) -loph_directory
 
 if MYSQL_SUPPORT
 

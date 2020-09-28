@@ -31,6 +31,7 @@ xmloperdir = $(prefix)/etc/operators_xml/
 OPERATOR_XML=
 
 OPERATOR_XML+=etc/operators_xml/OPH_CDO_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_GENERIC_operator_1.0.xml
 
 if MYSQL_SUPPORT
 
