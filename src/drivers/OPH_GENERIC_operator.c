@@ -250,22 +250,17 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		char *pointer = output + size;
 		while ((pointer >= output) && (*pointer != '/'))
 			pointer--;
-		if (pointer < output) {
+		if (pointer < output)
 			output_name = output;
-			if ((output[size - 3] == '.') && (output[size - 2] == 'n') && (output[size - 1] == 'c'))
-				output[size - 3] = 0;
-		} else {
+		else {
 			if (pointer == output)
 				output_path = home;
 			else
 				output_path = output;
 			*pointer = 0;
 			pointer++;
-			if (pointer && *pointer) {
+			if (pointer && *pointer)
 				output_name = pointer;
-				if ((output[size - 3] == '.') && (output[size - 2] == 'n') && (output[size - 1] == 'c'))
-					output[size - 3] = 0;
-			}
 		}
 	}
 
