@@ -37,6 +37,10 @@
 - OPH_INSTANCE operator when option 'auto' is used for argument 'host_partition'
 - Time hierarchy to support concept level 'c' as 'second' [#88](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/88)
 
+### Removed:
+
+- Error log line printed when time dimension check fails in case a new container has to created during the execution of OPH_IMPORTNC or OPH_IMPORTNC2
+
 
 ## v1.5.1 - 2019-04-16
 
