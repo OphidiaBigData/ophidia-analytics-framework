@@ -30,6 +30,7 @@
 
 ### Changed:
 
+- Default output path of OPH_EXPORTNC and OPH_EXPORTNC2 set to CDD
 - Setting of output name for OPH_EXPORTNC and OPH_EXPORTNC2
 - OPH_IMPORTNC2 to exploit block size upon nc file opening [#97](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/97)
 - OPH_EXPLORECUBE to remove row limit in case of base64 option is used [#96](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/96); it also fixes [#62] (https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/62)
