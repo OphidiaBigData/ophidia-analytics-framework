@@ -92,6 +92,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_GENERIC_operator_handle *) handle->operator_handle)->force = 0;
 
 	//3 - Fill struct with the correct data
+	char tmp[OPH_COMMON_BUFFER_LEN];
 	char *value, *input = NULL, *value2 = NULL;
 	size_t size;
 
@@ -133,14 +134,24 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_ARGS);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (input && ((size = strlen(input)))) {
+	if (input && strlen(input)) {
+		char *base_src_path = NULL;
+		if (oph_pid_get_base_src_path(&base_src_path)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base user_path\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base user path\n");
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", base_src_path ? base_src_path : "", *input != '/' ? "/" : "", input);
+		size = strlen(tmp);
 		size_t old_size = strlen(value);
 		if (old_size) {
 			value2 = (char *) malloc((2 + old_size + size) * sizeof(char));
-			sprintf(value2, "%s|%s", value, input);
+			sprintf(value2, "%s|%s", value, tmp);
 			value = value2;
 		} else
-			value = input;
+			value = tmp;
+		if (base_src_path)
+			free(base_src_path);
 	}
 	if (oph_tp_parse_multiple_value_param(value, &((OPH_GENERIC_operator_handle *) handle->operator_handle)->args, &((OPH_GENERIC_operator_handle *) handle->operator_handle)->args_num)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
@@ -305,7 +316,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	while (pointer && (*pointer == ' '))
 		pointer++;
 	if (pointer) {
-		char tmp[OPH_COMMON_BUFFER_LEN];
 		if ((*pointer != '/') && (strlen(cdd) > 1)) {
 			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", cdd + 1, pointer);
 			((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_path_user = strdup(tmp);
