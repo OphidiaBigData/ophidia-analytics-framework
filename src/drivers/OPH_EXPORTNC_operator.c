@@ -293,8 +293,29 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	char session_code[OPH_COMMON_BUFFER_LEN];
 	oph_pid_get_session_code(hashtbl_get(task_tbl, OPH_ARG_SESSIONID), session_code);
+
+	char *cdd = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
+	if (!cdd) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (*cdd != '/') {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if ((strlen(cdd) > 1) && strstr(cdd, "..")) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
 	if (!strcmp(value, OPH_EXPORTNC_LOCAL_OUTPUT_PATH) || (user_space && !strcmp(value, OPH_EXPORTNC_DEFAULT_OUTPUT_PATH)))
 		value = &user_space_default;
+	else if (!user_space && !strcmp(value, OPH_EXPORTNC_DEFAULT_OUTPUT_PATH))
+		value = cdd;
+
 	if (!strcmp(value, OPH_EXPORTNC_DEFAULT_OUTPUT_PATH)) {
 		if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->misc) {
 			value = hashtbl_get(task_tbl, OPH_ARG_WORKFLOWID);
@@ -365,30 +386,12 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pointer++;
 		if (pointer) {
 			char tmp[OPH_COMMON_BUFFER_LEN];
-			if (*pointer != '/') {
-				value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
-				if (!value) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				if (*value != '/') {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				if (strlen(value) > 1) {
-					if (strstr(value, "..")) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
-						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-					}
-					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value + 1, pointer);
-					((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user = strdup(tmp);
-					free(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path);
-					((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
-					pointer = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path;
-				}
+			if ((*pointer != '/') && (strlen(cdd) > 1)) {
+				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", cdd + 1, pointer);
+				((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user = strdup(tmp);
+				free(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path);
+				((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
+				pointer = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path;
 			}
 			if (!((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user)
 				((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user = strdup(pointer);
@@ -400,7 +403,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
 			free(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path);
 			((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
-			free(value);
+			if (value)
+				free(value);
 		}
 		((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user_defined = 1;
 	}

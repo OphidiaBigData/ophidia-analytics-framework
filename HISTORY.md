@@ -30,12 +30,17 @@
 
 ### Changed:
 
+- Default output path of OPH_EXPORTNC and OPH_EXPORTNC2 set to CDD
 - Setting of output name for OPH_EXPORTNC and OPH_EXPORTNC2
 - OPH_IMPORTNC2 to exploit block size upon nc file opening [#97](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/97)
 - OPH_EXPLORECUBE to remove row limit in case of base64 option is used [#96](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/96); it also fixes [#62] (https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/62)
 - Interface of OPH_SET and OPH_INPUT to allow 0 as a value for the 'id' parameter
 - OPH_INSTANCE operator when option 'auto' is used for argument 'host_partition'
 - Time hierarchy to support concept level 'c' as 'second' [#88](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/88)
+
+### Removed:
+
+- Error log line printed when time dimension check fails in case a new container has to created during the execution of OPH_IMPORTNC or OPH_IMPORTNC2
 
 
 ## v1.5.1 - 2019-04-16
