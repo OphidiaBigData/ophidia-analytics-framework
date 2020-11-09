@@ -423,7 +423,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 	}
 	int s;
-	if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name) {
+	output_name = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name;
+	if (output_name && strncmp(output_name, "esdm://", 7)) {
 		for (s = 0; s < (int) strlen(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name); s++) {
 			if ((((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] == '/') || (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] == ':')) {
 				((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] = '_';
