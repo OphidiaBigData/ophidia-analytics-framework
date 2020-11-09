@@ -1140,7 +1140,8 @@ int task_execute(oph_operator_struct * handle)
 
 		int retval, ncid, cmode = NC_NETCDF4 | NC_MPIIO;
 		//CREATE FILE
-		n = snprintf(file_name, sizeof(file_name), OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE, path, file, strstr(file, OPH_EXPORTNC2_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC2_OUTPUT_FILE_EXT);
+		n = snprintf(file_name, sizeof(file_name), OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE, strncmp(file, "esdm://", 7) ? path : "", file,
+			     strstr(file, OPH_EXPORTNC2_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC2_OUTPUT_FILE_EXT);
 		if (n >= (int) sizeof(file_name)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of path exceeded limit.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_STRING_BUFFER_OVERFLOW, "path",
