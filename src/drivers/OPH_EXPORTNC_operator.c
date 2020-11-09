@@ -1100,12 +1100,24 @@ int task_execute(oph_operator_struct * handle)
 				if (frags.value[k].db_instance != &(dbs.value[j]))
 					continue;
 
-				if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
-					n = snprintf(file_name, sizeof(file_name), OPH_EXPORTNC_OUTPUT_PATH_SINGLE_FILE, strncmp(file, "esdm://", 7) ? path : "", file,
-						     strstr(file, OPH_EXPORTNC_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC_OUTPUT_FILE_EXT);
-				else
-					n = snprintf(file_name, sizeof(file_name), OPH_EXPORTNC_OUTPUT_PATH_MORE_FILES, strncmp(file, "esdm://", 7) ? path : "", file,
-						     ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->fragment_id_start_position + frag_count);
+				if (strncmp(file, "esdm://", 7)) {
+
+					if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
+						n = snprintf(file_name, sizeof(file_name), OPH_EXPORTNC_OUTPUT_PATH_SINGLE_FILE, path, file,
+							     strstr(file, OPH_EXPORTNC_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC_OUTPUT_FILE_EXT);
+					else
+						n = snprintf(file_name, sizeof(file_name), OPH_EXPORTNC_OUTPUT_PATH_MORE_FILES, path, file,
+							     ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->fragment_id_start_position + frag_count);
+
+				} else {
+
+					if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
+						n = snprintf(file_name, sizeof(file_name), "%s", file);
+					else
+						n = snprintf(file_name, sizeof(file_name), "%s_%d", file,
+							     ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->fragment_id_start_position + frag_count);
+
+				}
 
 				if (n >= (int) sizeof(file_name)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of path exceeded limit.\n");
