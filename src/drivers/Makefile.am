@@ -98,6 +98,9 @@ endif
 if HAVE_CFITSIO
 DRIVER+=liboph_importfitsoperator.la
 endif
+if HAVE_ESDM
+DRIVER+=liboph_exportesdmoperator.la
+endif
 
 driver_LTLIBRARIES = $(DRIVER)
 
@@ -378,3 +381,11 @@ liboph_importfitsoperator_la_SOURCES = OPH_IMPORTFITS_operator.c
 liboph_importfitsoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_importfitsoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} ${LIBCFITSIO_LIB} -lpthread -loph_fits $(BASIC_LIB) -loph_dimension -loph_hierarchy  -loph_datacube -loph_ioserver -loph_binary_io -loph_driver_proc
 endif
+
+if HAVE_ESDM
+liboph_exportesdmoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} $(NETCDF_CFLAGS) -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"
+liboph_exportesdmoperator_la_SOURCES = OPH_EXPORTESDM_operator.c
+liboph_exportesdmoperator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_exportesdmoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(NETCDF_LIBS) -L.. -loph_nc $(BASIC_LIB) -loph_directory -loph_dimension -loph_datacube -loph_ioserver
+endif
+

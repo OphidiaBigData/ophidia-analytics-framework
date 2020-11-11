@@ -301,6 +301,23 @@ if test "x${have_netcdf}" = "xyes"; then
 fi
 AM_CONDITIONAL([HAVE_NETCDF], [test "x$have_netcdf" = "xyes"])
 
+have_esdm=no
+ESDM_CFLAGS=
+ESDM_LIBS=
+AC_ARG_WITH(esdm_path,
+           [  --with-esdm-path=PATH  Set the esdm root dir],
+           [
+				have_esdm=yes
+				ESDM_CFLAGS="-I$withval/include"
+				ESDM_CFLAGS="-L$withval/lib -libesdm"
+				AC_MSG_NOTICE("ESDM support enabled")
+           ],
+           [
+				have_esdm=no
+           ]
+           )
+AM_CONDITIONAL([HAVE_ESDM], [test "x$have_esdm" = "xyes"])
+
 #Check if parallel netcdf is installed
 parallel_netcdf="no"
 AC_ARG_ENABLE(parallel_netcdf,
