@@ -46,6 +46,8 @@
 
 #include <errno.h>
 
+#include <esdm.h>
+
 int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
 	if (!handle) {
@@ -132,7 +134,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTESDM_MISSING_INPUT_PARAMETER, OPH_ARG_USERNAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	char *username = value, user_space, user_space_default = 0;
+	char *username = value, user_space;
 	if (oph_pid_get_user_space(&user_space)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read user_space\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read user_space\n");
@@ -273,7 +275,6 @@ int task_init(oph_operator_struct * handle)
 
 		MYSQL_RES *dim_rows = NULL;
 		MYSQL_ROW row;
-		struct stat st;
 
 		ophidiadb *oDB = &((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->oDB;
 		oph_odb_datacube cube;

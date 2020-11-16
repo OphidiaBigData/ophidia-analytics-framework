@@ -309,7 +309,9 @@ AC_ARG_WITH(esdm_path,
            [
 				have_esdm=yes
 				ESDM_CFLAGS="-I$withval/include"
-				ESDM_CFLAGS="-L$withval/lib -libesdm"
+				ESDM_LIBS="-L$withval/lib -lesdm"
+				AC_SUBST(ESDM_CFLAGS)
+				AC_SUBST(ESDM_LIBS)
 				AC_MSG_NOTICE("ESDM support enabled")
            ],
            [
