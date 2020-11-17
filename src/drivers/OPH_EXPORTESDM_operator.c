@@ -76,7 +76,7 @@ int oph_esdm_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n
 	return 0;
 }
 
-int _oph_esdm_get_next_id(size_t * id, unsigned int *sizemax, int i, int n)
+int _oph_esdm_get_next_id(int64_t * id, int64_t * sizemax, int i, int n)
 {
 	if (i < 0)
 		return 1;	// Overflow
@@ -88,7 +88,7 @@ int _oph_esdm_get_next_id(size_t * id, unsigned int *sizemax, int i, int n)
 	return 0;
 }
 
-int oph_esdm_get_next_id(size_t * id, unsigned int *sizemax, int n)
+int oph_esdm_get_next_id(int64_t * id, int64_t * sizemax, int n)
 {
 	return _oph_esdm_get_next_id(id, sizemax, n - 1, n);
 }
@@ -853,16 +853,16 @@ int task_execute(oph_operator_struct * handle)
 	oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 	oph_dim_unload_dim_dbinstance(db_dimension);
 
-	size_t start_dim[1] = { 0 };
+	int64_t start_dim[1] = { 0 };
 	int64_t count_dim[1] = { 1 };
-	size_t start[num_of_dims];
+	int64_t start[num_of_dims];
 	int64_t count[num_of_dims];
 
 	size_t dim_val_max[nexp];
 	size_t dim_val_min[nexp];
 	int dim_start[num_of_dims];
 	int dim_divider[nexp];
-	unsigned int dim_val_num[num_of_dims];
+	int64_t dim_val_num[num_of_dims];
 
 	size_t *maxptr[nexp];
 	size_t *minptr[nexp];
@@ -876,8 +876,9 @@ int task_execute(oph_operator_struct * handle)
 	int retval;
 	esdm_status ret;
 	esdm_container_t *container = NULL;
-	esdm_dataspace_t *dataspace = NULL, *subspace = NULL;
-	esdm_dataset_t *dataset = NULL;
+	esdm_dataspace_t *dataspace = NULL, *subspace = NULL, *dimspace[num_of_dims];
+	esdm_dataset_t *dataset = NULL, *dimset[num_of_dims];
+	esdm_type_t type_dim;
 
 	if (oph_dc_setup_dbms(&(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
@@ -1058,19 +1059,27 @@ int task_execute(oph_operator_struct * handle)
 						retval = 1;
 				}
 
-/*
 				for (inc = 0; inc < num_of_dims; inc++) {
-
+/*
 					if ((retval = nc_def_dim(ncid, dims[inc].dimname, dims[inc].dimunlimited ? NC_UNLIMITED : dim_val_num[inc], &dimids[inc]))) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to define dimensions %s: %s\n", dims[inc].dimname, "");
+					}
+
+					//Also define coordinate varibles associated to dimensions
+					if ((retval = nc_def_var(ncid, dims[inc].dimname, dims[inc].dimtype, 1, &dimids[inc], &vardimsids[inc]))) {
+					}
+*/
+					type_dim = SMD_DTYPE_UNKNOWN;
+					if (oph_esdm_get_esdm_type(dims[inc].dimtype, &type_dim)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension type not supported\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
-							OPH_LOG_OPH_EXPORTESDM_NC_DEFINE_DIM_ERROR, dims[inc].dimname, "");
+							OPH_LOG_OPH_EXPORTESDM_VAR_TYPE_NOT_SUPPORTED, data_type);
 						oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
 						oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
 						oph_odb_stge_free_fragment_list(&frags);
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
+						esdm_container_close(container);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
 								free(dim_rows[l]);
@@ -1078,12 +1087,35 @@ int task_execute(oph_operator_struct * handle)
 							}
 						}
 						free(dim_rows);
-						esdm_container_close(container);
 						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
 
-					//Also define coordinate varibles associated to dimensions
-					if ((retval = nc_def_var(ncid, dims[inc].dimname, dims[inc].dimtype, 1, &dimids[inc], &vardimsids[inc]))) {
+					ret = esdm_dataspace_create(1, dim_val_num + inc, type_dim, dimspace + inc);
+					if (ret) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to define dataspace: %s\n", "");
+						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
+							OPH_LOG_OPH_EXPORTESDM_NC_DEFINE_VAR_ERROR, "");
+						oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+						oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
+						oph_odb_stge_free_fragment_list(&frags);
+						oph_odb_stge_free_db_list(&dbs);
+						oph_odb_stge_free_dbms_list(&dbmss);
+						oph_odb_free_ophidiadb(&oDB_slave);
+						for (l = 0; l < inc; l++)
+							esdm_dataset_close(dimset[l]);
+						esdm_container_close(container);
+						for (l = 0; l < num_of_dims; l++) {
+							if (dim_rows[l]) {
+								free(dim_rows[l]);
+								dim_rows[l] = NULL;
+							}
+						}
+						free(dim_rows);
+						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					}
+
+					ret = esdm_dataset_create(container, dims[inc].dimname, dimspace[inc], dimset + inc);
+					if (ret) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to define variable: %s\n", "");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_EXPORTESDM_NC_DEFINE_VAR_ERROR, "");
@@ -1093,6 +1125,34 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
+						for (l = 0; l < inc; l++)
+							esdm_dataset_close(dimset[l]);
+						esdm_dataspace_destroy(dimspace[inc]);
+						esdm_container_close(container);
+						for (l = 0; l < num_of_dims; l++) {
+							if (dim_rows[l]) {
+								free(dim_rows[l]);
+								dim_rows[l] = NULL;
+							}
+						}
+						free(dim_rows);
+						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					}
+
+					ret = esdm_dataset_commit(dimset[inc]);
+					if (ret) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to define variable: %s\n", "");
+						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
+							OPH_LOG_OPH_EXPORTESDM_NC_DEFINE_VAR_ERROR, "");
+						oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+						oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
+						oph_odb_stge_free_fragment_list(&frags);
+						oph_odb_stge_free_db_list(&dbs);
+						oph_odb_stge_free_dbms_list(&dbmss);
+						oph_odb_free_ophidiadb(&oDB_slave);
+						for (l = 0; l < inc; l++)
+							esdm_dataset_close(dimset[l]);
+						esdm_dataspace_destroy(dimspace[inc]);
 						esdm_container_close(container);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
@@ -1104,7 +1164,6 @@ int task_execute(oph_operator_struct * handle)
 						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
 				}
-*/
 
 				ret = esdm_dataspace_create(num_of_dims, dimids, type_nc, &dataspace);
 				if (ret) {
@@ -1117,6 +1176,8 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
+					for (l = 0; l < num_of_dims; l++)
+						esdm_dataset_close(dimset[l]);
 					esdm_container_close(container);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
@@ -1139,6 +1200,8 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
+					for (l = 0; l < num_of_dims; l++)
+						esdm_dataset_close(dimset[l]);
 					esdm_dataspace_destroy(dataspace);
 					esdm_container_close(container);
 					for (l = 0; l < num_of_dims; l++) {
@@ -1165,6 +1228,8 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
+					for (l = 0; l < num_of_dims; l++)
+						esdm_dataset_close(dimset[l]);
 					esdm_dataset_close(dataset);
 					esdm_container_close(container);
 					for (l = 0; l < num_of_dims; l++) {
@@ -1189,6 +1254,8 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
+						for (l = 0; l < num_of_dims; l++)
+							esdm_dataset_close(dimset[l]);
 						esdm_dataset_close(dataset);
 						esdm_container_close(container);
 						for (l = 0; l < num_of_dims; l++) {
@@ -1243,6 +1310,8 @@ int task_execute(oph_operator_struct * handle)
 							oph_odb_stge_free_db_list(&dbs);
 							oph_odb_stge_free_dbms_list(&dbmss);
 							oph_odb_free_ophidiadb(&oDB_slave);
+							for (l = 0; l < num_of_dims; l++)
+								esdm_dataset_close(dimset[l]);
 							esdm_dataset_close(dataset);
 							esdm_container_close(container);
 							for (l = 0; l < num_of_dims; l++) {
@@ -1269,6 +1338,8 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
+					for (l = 0; l < num_of_dims; l++)
+						esdm_dataset_close(dimset[l]);
 					esdm_dataset_close(dataset);
 					esdm_container_close(container);
 					for (l = 0; l < num_of_dims; l++) {
@@ -1292,6 +1363,8 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
+					for (l = 0; l < num_of_dims; l++)
+						esdm_dataset_close(dimset[l]);
 					esdm_dataset_close(dataset);
 					esdm_container_close(container);
 					for (l = 0; l < num_of_dims; l++) {
@@ -1316,6 +1389,8 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
+						for (l = m; l < num_of_dims; l++)
+							esdm_dataset_close(dimset[l]);
 						esdm_dataset_close(dataset);
 						esdm_container_close(container);
 						for (l = 0; l < num_of_dims; l++) {
@@ -1361,6 +1436,8 @@ int task_execute(oph_operator_struct * handle)
 							oph_odb_stge_free_db_list(&dbs);
 							oph_odb_stge_free_dbms_list(&dbmss);
 							oph_odb_free_ophidiadb(&oDB_slave);
+							for (l = m; l < num_of_dims; l++)
+								esdm_dataset_close(dimset[l]);
 							esdm_dataset_close(dataset);
 							esdm_container_close(container);
 							for (l = 0; l < num_of_dims; l++) {
@@ -1372,7 +1449,7 @@ int task_execute(oph_operator_struct * handle)
 							free(dim_rows);
 							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
-					if (retval) {
+					if (ret) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write variable values: %s\n", "");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_EXPORTESDM_VAR_WRITE_ERROR, "");
@@ -1382,6 +1459,8 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
+						for (l = m; l < num_of_dims; l++)
+							esdm_dataset_close(dimset[l]);
 						esdm_dataset_close(dataset);
 						esdm_container_close(container);
 						for (l = 0; l < num_of_dims; l++) {
@@ -1393,6 +1472,33 @@ int task_execute(oph_operator_struct * handle)
 						free(dim_rows);
 						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
+
+					ret = esdm_dataset_commit(dimset + m);
+					if (ret) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write variable values: %s\n", "");
+						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
+							OPH_LOG_OPH_EXPORTESDM_VAR_WRITE_ERROR, "");
+						oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+						oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
+						oph_odb_stge_free_fragment_list(&frags);
+						oph_odb_stge_free_db_list(&dbs);
+						oph_odb_stge_free_dbms_list(&dbmss);
+						oph_odb_free_ophidiadb(&oDB_slave);
+						for (l = m; l < num_of_dims; l++)
+							esdm_dataset_close(dimset[l]);
+						esdm_dataset_close(dataset);
+						esdm_container_close(container);
+						for (l = 0; l < num_of_dims; l++) {
+							if (dim_rows[l]) {
+								free(dim_rows[l]);
+								dim_rows[l] = NULL;
+							}
+						}
+						free(dim_rows);
+						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					}
+
+					esdm_dataset_close(dimset[m]);
 				}
 */
 
@@ -1609,7 +1715,7 @@ int task_execute(oph_operator_struct * handle)
 
 		if (oph_json_is_objkey_printable
 		    (((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_EXPORTESDM)) {
-			snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s", ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name);
+			snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "esdm://%s", ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name);
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_EXPORTESDM, "Output File", jsonbuf)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
