@@ -48,19 +48,7 @@
 
 #include <esdm.h>
 
-#define ESDM_MAX_NAME 256
-struct _ESDM_dim {
-	int dimid;
-	char dimname[OPH_ODB_DIM_DIMENSION_SIZE + 1];
-	char dimtype[OPH_ODB_DIM_DIMENSION_TYPE_SIZE + 1];
-	int dimsize;
-	int dimfkid;
-	short int dimophlevel;	//Contains the oph_level of the dimension (explicit and implicit)
-	short int dimexplicit;	// 1 if explicit, 0 if implicit dimension
-	int dimfklabel;
-	char dimunlimited;
-};
-typedef struct _ESDM_dim ESDM_dim;
+#define OPH_EXPORTESDM_DEFAULT_OUTPUT "default"
 
 int _oph_esdm_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, size_t ** id, int i, int n)
 {
@@ -105,37 +93,37 @@ int oph_esdm_get_next_id(size_t * id, unsigned int *sizemax, int n)
 	return _oph_esdm_get_next_id(id, sizemax, n - 1, n);
 }
 
-int oph_esdm_get_esdm_type(char *in_c_type, smd_basic_type_t * type_nc)
+int oph_esdm_get_esdm_type(char *in_c_type, esdm_type_t * type_nc)
 {
 	if (!strcasecmp(in_c_type, OPH_COMMON_BYTE_TYPE)) {
-		*type_nc = SMD_TYPE_INT8;
+		*type_nc = SMD_DTYPE_INT8;
 		return 0;
 	}
 	if (!strcasecmp(in_c_type, OPH_COMMON_SHORT_TYPE)) {
-		*type_nc = SMD_TYPE_INT16;
+		*type_nc = SMD_DTYPE_INT16;
 		return 0;
 	}
 	if (!strcasecmp(in_c_type, OPH_COMMON_INT_TYPE)) {
-		*type_nc = SMD_TYPE_INT32;
+		*type_nc = SMD_DTYPE_INT32;
 		return 0;
 	}
 	if (!strcasecmp(in_c_type, OPH_COMMON_LONG_TYPE)) {
-		*type_nc = SMD_TYPE_INT64;
+		*type_nc = SMD_DTYPE_INT64;
 		return 0;
 	}
 	if (!strcasecmp(in_c_type, OPH_COMMON_FLOAT_TYPE)) {
-		*type_nc = SMD_TYPE_FLOAT;
+		*type_nc = SMD_DTYPE_FLOAT;
 		return 0;
 	}
 	if (!strcasecmp(in_c_type, OPH_COMMON_DOUBLE_TYPE)) {
-		*type_nc = SMD_TYPE_DOUBLE;
+		*type_nc = SMD_DTYPE_DOUBLE;
 		return 0;
 	}
 	if (!strcasecmp(in_c_type, OPH_COMMON_BIT_TYPE)) {
-		*type_nc = SMD_TYPE_INT8;
+		*type_nc = SMD_DTYPE_INT8;
 		return 0;
 	}
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Data type '%s' not supported\n", in_c_type);
 	return -1;
 
 }
@@ -323,15 +311,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SCHEDULE_ALGORITHM);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SCHEDULE_ALGORITHM);
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTESDM_MISSING_INPUT_PARAMETER,
-			OPH_IN_PARAM_SCHEDULE_ALGORITHM);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->schedule_algo = (int) strtol(value, NULL, 10);
-
 	char session_code[OPH_COMMON_BUFFER_LEN];
 	oph_pid_get_session_code(hashtbl_get(task_tbl, OPH_ARG_SESSIONID), session_code);
 
@@ -341,10 +320,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTESDM_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_NAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (!(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name = (char *) strdup(value))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTESDM_MEMORY_ERROR_INPUT, "output name");
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	if (strcmp(value, OPH_EXPORTESDM_DEFAULT_OUTPUT)) {
+		if (!(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name = (char *) strdup(value))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTESDM_MEMORY_ERROR_INPUT,
+				"output name");
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -355,6 +337,27 @@ int task_init(oph_operator_struct * handle)
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTESDM_NULL_OPERATOR_HANDLE);
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	esdm_status ret = esdm_init();
+	if (ret) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "ESDM cannot be initialized\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, "ESDM cannot be initialized\n");
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	ret = esdm_mkfs(ESDM_FORMAT_PURGE_RECREATE, ESDM_ACCESSIBILITY_GLOBAL);
+	if (ret) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "ESDM fs cannot be created\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, "ESDM fs cannot be created\n");
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	ret = esdm_mkfs(ESDM_FORMAT_PURGE_RECREATE, ESDM_ACCESSIBILITY_NODELOCAL);
+	if (ret) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "ESDM fs cannot be created\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, "ESDM fs cannot be created\n");
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 	//For error checking
@@ -647,7 +650,7 @@ int task_execute(oph_operator_struct * handle)
 	oph_odb_dbms_instance_list dbmss;
 
 	// Get data type of variable
-	smd_basic_type_t type_nc = 0;
+	esdm_type_t type_nc = SMD_DTYPE_UNKNOWN;
 	if (oph_esdm_get_esdm_type(data_type, &type_nc)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTESDM_VAR_TYPE_NOT_SUPPORTED, data_type);
@@ -851,9 +854,9 @@ int task_execute(oph_operator_struct * handle)
 	oph_dim_unload_dim_dbinstance(db_dimension);
 
 	size_t start_dim[1] = { 0 };
-	size_t count_dim[1] = { 1 };
+	int64_t count_dim[1] = { 1 };
 	size_t start[num_of_dims];
-	size_t count[num_of_dims];
+	int64_t count[num_of_dims];
 
 	size_t dim_val_max[nexp];
 	size_t dim_val_min[nexp];
@@ -864,11 +867,17 @@ int task_execute(oph_operator_struct * handle)
 	size_t *maxptr[nexp];
 	size_t *minptr[nexp];
 
-	int dimids[num_of_dims];
+	int64_t dimids[num_of_dims];
 	int vardimsids[num_of_dims];
 
 	int tmp_div = 0;
 	int tmp_rem = 0;
+
+	int retval;
+	esdm_status ret;
+	esdm_container_t *container = NULL;
+	esdm_dataspace_t *dataspace = NULL, *subspace = NULL;
+	esdm_dataset_t *dataset = NULL;
 
 	if (oph_dc_setup_dbms(&(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
@@ -934,12 +943,6 @@ int task_execute(oph_operator_struct * handle)
 				free(dim_rows);
 				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
-
-			int retval;
-			esdm_status ret;
-			esdm_container_t *container = NULL;
-			esdm_dataset_t *dataset = NULL;
-
 			//For each fragment
 			for (k = 0; k < frags.size; k++) {
 				//Check Fragment - DB Association
@@ -973,10 +976,8 @@ int task_execute(oph_operator_struct * handle)
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 
-/*
-				if ((retval = nc_create(file_name, cmode, &ncid))) {
-*/
-				if ((retval = 0)) {
+				ret = esdm_container_create(file_name, 1, &container);
+				if (ret) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create output object: %s\n", "");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
 						OPH_LOG_OPH_EXPORTESDM_NC_OUTPUT_FILE_ERROR, "");
@@ -1056,11 +1057,11 @@ int task_execute(oph_operator_struct * handle)
 					} else
 						retval = 1;
 				}
-				for (inc = 0; inc < num_of_dims; inc++) {
+
 /*
+				for (inc = 0; inc < num_of_dims; inc++) {
+
 					if ((retval = nc_def_dim(ncid, dims[inc].dimname, dims[inc].dimunlimited ? NC_UNLIMITED : dim_val_num[inc], &dimids[inc]))) {
-*/
-					if ((retval = 0)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to define dimensions %s: %s\n", dims[inc].dimname, "");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_EXPORTESDM_NC_DEFINE_DIM_ERROR, dims[inc].dimname, "");
@@ -1077,14 +1078,12 @@ int task_execute(oph_operator_struct * handle)
 							}
 						}
 						free(dim_rows);
-//                                              nc_close(ncid);
+						esdm_container_close(container);
 						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
-					//Also define coordinate varible associated to dimensions
-/*
+
+					//Also define coordinate varibles associated to dimensions
 					if ((retval = nc_def_var(ncid, dims[inc].dimname, dims[inc].dimtype, 1, &dimids[inc], &vardimsids[inc]))) {
-*/
-					if ((retval = 0)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to define variable: %s\n", "");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_EXPORTESDM_NC_DEFINE_VAR_ERROR, "");
@@ -1094,7 +1093,7 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
-//                                              nc_close(ncid);
+						esdm_container_close(container);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
 								free(dim_rows[l]);
@@ -1104,14 +1103,33 @@ int task_execute(oph_operator_struct * handle)
 						free(dim_rows);
 						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
+				}
+*/
 
+				ret = esdm_dataspace_create(num_of_dims, dimids, type_nc, &dataspace);
+				if (ret) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to define dataspace: %s\n", "");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_EXPORTESDM_NC_DEFINE_VAR_ERROR, "");
+					oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+					oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
+					oph_odb_stge_free_fragment_list(&frags);
+					oph_odb_stge_free_db_list(&dbs);
+					oph_odb_stge_free_dbms_list(&dbmss);
+					oph_odb_free_ophidiadb(&oDB_slave);
+					esdm_container_close(container);
+					for (l = 0; l < num_of_dims; l++) {
+						if (dim_rows[l]) {
+							free(dim_rows[l]);
+							dim_rows[l] = NULL;
+						}
+					}
+					free(dim_rows);
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 
-				int varid;
-/*
-				if ((retval = nc_def_var(ncid, measure_name, type_nc, num_of_dims, dimids, &varid))) {
-*/
-				if ((retval = 0)) {
+				ret = esdm_dataset_create(container, measure_name, dataspace, &dataset);
+				if (ret) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to define variable: %s\n", "");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
 						OPH_LOG_OPH_EXPORTESDM_NC_DEFINE_VAR_ERROR, "");
@@ -1121,7 +1139,34 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
-//                                      nc_close(ncid);
+					esdm_dataspace_destroy(dataspace);
+					esdm_container_close(container);
+					for (l = 0; l < num_of_dims; l++) {
+						if (dim_rows[l]) {
+							free(dim_rows[l]);
+							dim_rows[l] = NULL;
+						}
+					}
+					free(dim_rows);
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
+
+				char *names[num_of_dims];
+				for (inc = 0; inc < num_of_dims; inc++)
+					names[inc] = dims[inc].dimname;
+				ret = esdm_dataset_name_dims(dataset, names);
+				if (ret) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to assign name to dimensions\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
+						"Unable to assign name to dimensions\n");
+					oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+					oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
+					oph_odb_stge_free_fragment_list(&frags);
+					oph_odb_stge_free_db_list(&dbs);
+					oph_odb_stge_free_dbms_list(&dbmss);
+					oph_odb_free_ophidiadb(&oDB_slave);
+					esdm_dataset_close(dataset);
+					esdm_container_close(container);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
 							free(dim_rows[l]);
@@ -1144,7 +1189,8 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
-//                                              nc_close(ncid);
+						esdm_dataset_close(dataset);
+						esdm_container_close(container);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
 								free(dim_rows[l]);
@@ -1197,7 +1243,8 @@ int task_execute(oph_operator_struct * handle)
 							oph_odb_stge_free_db_list(&dbs);
 							oph_odb_stge_free_dbms_list(&dbmss);
 							oph_odb_free_ophidiadb(&oDB_slave);
-//                                                      nc_close(ncid);
+							esdm_dataset_close(dataset);
+							esdm_container_close(container);
 							for (l = 0; l < num_of_dims; l++) {
 								if (dim_rows[l]) {
 									free(dim_rows[l]);
@@ -1211,11 +1258,9 @@ int task_execute(oph_operator_struct * handle)
 					mysql_free_result(read_result);
 				}
 
-/*
-				if ((retval = nc_enddef(ncid))) {
-*/
-				if ((retval = 0)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to complete output nc definition: %s\n", "");
+				ret = esdm_dataset_commit(dataset);
+				if (ret) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to complete output definitions: %s\n", "");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
 						OPH_LOG_OPH_EXPORTESDM_NC_END_DEFINITION_ERROR, "");
 					oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
@@ -1224,7 +1269,8 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
-//                                      nc_close(ncid);
+					esdm_dataset_close(dataset);
+					esdm_container_close(container);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
 							free(dim_rows[l]);
@@ -1235,6 +1281,30 @@ int task_execute(oph_operator_struct * handle)
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 
+				ret = esdm_container_commit(container);
+				if (ret) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to complete output definitions: %s\n", "");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_EXPORTESDM_NC_END_DEFINITION_ERROR, "");
+					oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+					oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
+					oph_odb_stge_free_fragment_list(&frags);
+					oph_odb_stge_free_db_list(&dbs);
+					oph_odb_stge_free_dbms_list(&dbmss);
+					oph_odb_free_ophidiadb(&oDB_slave);
+					esdm_dataset_close(dataset);
+					esdm_container_close(container);
+					for (l = 0; l < num_of_dims; l++) {
+						if (dim_rows[l]) {
+							free(dim_rows[l]);
+							dim_rows[l] = NULL;
+						}
+					}
+					free(dim_rows);
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
+				// Write dimension values
+/*
 				for (m = 0; m < num_of_dims; m++) {
 					if ((m < nexp) && (dim_val_max[m] < dim_val_min[m])) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "This cube is too fragmented to be split in different files. Try to merge it\n");
@@ -1246,7 +1316,8 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
-//                                              nc_close(ncid);
+						esdm_dataset_close(dataset);
+						esdm_container_close(container);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
 								free(dim_rows[l]);
@@ -1260,7 +1331,6 @@ int task_execute(oph_operator_struct * handle)
 					retval = ESDM_ERROR;
 					count_dim[0] = dim_val_num[m];
 					start_dim[0] = 0;
-/*
 					switch (dims[m].dimtype) {
 						case NC_BYTE:
 						case NC_CHAR:
@@ -1291,7 +1361,8 @@ int task_execute(oph_operator_struct * handle)
 							oph_odb_stge_free_db_list(&dbs);
 							oph_odb_stge_free_dbms_list(&dbmss);
 							oph_odb_free_ophidiadb(&oDB_slave);
-							nc_close(ncid);
+							esdm_dataset_close(dataset);
+							esdm_container_close(container);
 							for (l = 0; l < num_of_dims; l++) {
 								if (dim_rows[l]) {
 									free(dim_rows[l]);
@@ -1301,7 +1372,6 @@ int task_execute(oph_operator_struct * handle)
 							free(dim_rows);
 							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
-*/
 					if (retval) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write variable values: %s\n", "");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
@@ -1312,7 +1382,8 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
-//                                              nc_close(ncid);
+						esdm_dataset_close(dataset);
+						esdm_container_close(container);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
 								free(dim_rows[l]);
@@ -1323,7 +1394,9 @@ int task_execute(oph_operator_struct * handle)
 						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
 				}
+*/
 
+				// Read the variable
 				if (oph_dc_read_fragment_data
 				    (((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, &(frags.value[k]), data_type, compressed, NULL, NULL, NULL, 0, 1, &frag_rows)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read fragment.\n");
@@ -1336,7 +1409,8 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
-//                                      nc_close(ncid);
+					esdm_dataset_close(dataset);
+					esdm_container_close(container);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
 							free(dim_rows[l]);
@@ -1349,7 +1423,8 @@ int task_execute(oph_operator_struct * handle)
 
 				if (frag_rows->num_rows < 1) {
 					oph_ioserver_free_result(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frag_rows);
-//                                      nc_close(ncid);
+					esdm_dataset_close(dataset);
+					esdm_container_close(container);
 					frag_count++;
 					continue;
 				}
@@ -1371,7 +1446,8 @@ int task_execute(oph_operator_struct * handle)
 						}
 					}
 					free(dim_rows);
-//                                      nc_close(ncid);
+					esdm_dataset_close(dataset);
+					esdm_container_close(container);
 					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				}
 
@@ -1382,6 +1458,29 @@ int task_execute(oph_operator_struct * handle)
 				for (inc = nexp; inc < num_of_dims; inc++)
 					count[inc] = dims[inc].dimsize;
 
+				ret = esdm_dataspace_create(num_of_dims, count, type_nc, &subspace);
+				if (ret) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set subspace\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, "Unable to set subspace\n");
+					oph_ioserver_free_result(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frag_rows);
+					oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+					oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
+					oph_odb_stge_free_fragment_list(&frags);
+					oph_odb_stge_free_db_list(&dbs);
+					oph_odb_stge_free_dbms_list(&dbmss);
+					oph_odb_free_ophidiadb(&oDB_slave);
+					for (l = 0; l < num_of_dims; l++) {
+						if (dim_rows[l]) {
+							free(dim_rows[l]);
+							dim_rows[l] = NULL;
+						}
+					}
+					free(dim_rows);
+					esdm_dataset_close(dataset);
+					esdm_container_close(container);
+					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+				}
+
 				if (oph_ioserver_fetch_row(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frag_rows, &curr_row)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
 					oph_ioserver_free_result(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frag_rows);
@@ -1391,7 +1490,8 @@ int task_execute(oph_operator_struct * handle)
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
-//                                      nc_close(ncid);
+					esdm_dataset_close(dataset);
+					esdm_container_close(container);
 					for (l = 0; l < num_of_dims; l++) {
 						if (dim_rows[l]) {
 							free(dim_rows[l]);
@@ -1403,51 +1503,9 @@ int task_execute(oph_operator_struct * handle)
 				}
 
 				while ((curr_row->row)) {
-					retval = ESDM_ERROR;
-/*
-					switch (type_nc) {
-						case NC_BYTE:
-						case NC_CHAR:
-							retval = nc_put_vara_uchar(ncid, varid, start, count, (unsigned char *) (curr_row->row[1]));
-							break;
-						case NC_SHORT:
-							retval = nc_put_vara_short(ncid, varid, start, count, (short *) (curr_row->row[1]));
-							break;
-						case NC_INT:
-							retval = nc_put_vara_int(ncid, varid, start, count, (int *) (curr_row->row[1]));
-							break;
-						case NC_INT64:
-							retval = nc_put_vara_longlong(ncid, varid, start, count, (long long *) (curr_row->row[1]));
-							break;
-						case NC_FLOAT:
-							retval = nc_put_vara_float(ncid, varid, start, count, (float *) (curr_row->row[1]));
-							break;
-						case NC_DOUBLE:
-							retval = nc_put_vara_double(ncid, varid, start, count, (double *) (curr_row->row[1]));
-							break;
-						default:
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
-								OPH_LOG_OPH_EXPORTESDM_VAR_TYPE_NOT_SUPPORTED, data_type);
-							oph_ioserver_free_result(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frag_rows);
-							oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-							oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
-							oph_odb_stge_free_fragment_list(&frags);
-							oph_odb_stge_free_db_list(&dbs);
-							oph_odb_stge_free_dbms_list(&dbmss);
-							oph_odb_free_ophidiadb(&oDB_slave);
-							nc_close(ncid);
-							for (l = 0; l < num_of_dims; l++) {
-								if (dim_rows[l]) {
-									free(dim_rows[l]);
-									dim_rows[l] = NULL;
-								}
-							}
-							free(dim_rows);
-							return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					}
-*/
-					if (retval) {
+
+					ret = esdm_write(dataset, curr_row->row[1], subspace);
+					if (ret) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write variable values: %s\n", "");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_EXPORTESDM_VAR_WRITE_ERROR, "");
@@ -1458,7 +1516,8 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
-//                                              nc_close(ncid);
+						esdm_dataset_close(dataset);
+						esdm_container_close(container);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
 								free(dim_rows[l]);
@@ -1468,6 +1527,31 @@ int task_execute(oph_operator_struct * handle)
 						free(dim_rows);
 						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
+
+					ret = esdm_dataset_commit(dataset);
+					if (ret) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write variable values: %s\n", "");
+						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
+							OPH_LOG_OPH_EXPORTESDM_VAR_WRITE_ERROR, "");
+						oph_ioserver_free_result(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frag_rows);
+						oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+						oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
+						oph_odb_stge_free_fragment_list(&frags);
+						oph_odb_stge_free_db_list(&dbs);
+						oph_odb_stge_free_dbms_list(&dbmss);
+						oph_odb_free_ophidiadb(&oDB_slave);
+						esdm_dataset_close(dataset);
+						esdm_container_close(container);
+						for (l = 0; l < num_of_dims; l++) {
+							if (dim_rows[l]) {
+								free(dim_rows[l]);
+								dim_rows[l] = NULL;
+							}
+						}
+						free(dim_rows);
+						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					}
+
 					oph_esdm_get_next_id(start, dim_val_num, nexp);
 					if (oph_ioserver_fetch_row(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frag_rows, &curr_row)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
@@ -1478,7 +1562,8 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
-//                                              nc_close(ncid);
+						esdm_dataset_close(dataset);
+						esdm_container_close(container);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {
 								free(dim_rows[l]);
@@ -1492,7 +1577,8 @@ int task_execute(oph_operator_struct * handle)
 
 				oph_ioserver_free_result(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frag_rows);
 
-//                              nc_close(ncid);
+				esdm_dataset_close(dataset);
+				esdm_container_close(container);
 				frag_count++;
 			}
 		}
@@ -1553,6 +1639,8 @@ int task_destroy(oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTESDM_NULL_OPERATOR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
+
+	esdm_finalize();
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

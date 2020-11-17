@@ -22,7 +22,6 @@
 //Operator specific headers
 #include "oph_common.h"
 #include "oph_ophidiadb_main.h"
-#include "oph_nc_library.h"
 #include "oph_ioserver_library.h"
 
 #define OPH_EXPORTESDM_OUTPUT_FILE_EXT ".nc"
@@ -32,6 +31,19 @@
 #define OPH_EXPORTESDM_OUTPUT_PATH_SINGLE_FILE OPH_EXPORTESDM_OUTPUT_PATH"%s%s"
 #define OPH_EXPORTESDM_OUTPUT_PATH_MORE_FILES OPH_EXPORTESDM_OUTPUT_PATH""OPH_EXPORTESDM_OUTPUT_FILE
 
+struct _ESDM_dim {
+	int dimid;
+	char dimname[OPH_ODB_DIM_DIMENSION_SIZE + 1];
+	char dimtype[OPH_ODB_DIM_DIMENSION_TYPE_SIZE + 1];
+	int dimsize;
+	int dimfkid;
+	short int dimophlevel;	//Contains the oph_level of the dimension (explicit and implicit)
+	short int dimexplicit;	// 1 if explicit, 0 if implicit dimension
+	int dimfklabel;
+	char dimunlimited;
+};
+typedef struct _ESDM_dim ESDM_dim;
+
 /**
  * \brief Structure of parameters needed by the operator OPH_EXPORTESDM. It export as nc files a datacube_input
  * \param oDB Contains the parameters and the connection to OphidiaDB
@@ -40,7 +52,6 @@
  * \param id_input_container ID of the input container related to datacube to export
  * \param output_name Filename for output files
  * \param export_metadata Flag to indicate if metadata has to be exported with data
- * \param schedule_algo Number of the distribution algorithm to use 
  * \param fragment_ids Contains the string of fragment relative index
  * \param total_fragment_number Number of total fragments
  * \param fragment_id_start_position First fragment in the relative index set to work on
@@ -60,7 +71,6 @@ struct _OPH_EXPORTESDM_operator_handle {
 	int id_input_container;
 	char *output_name;
 	int export_metadata;
-	int schedule_algo;
 	char *fragment_ids;
 	int total_fragment_number;
 	int fragment_id_start_position;
@@ -69,7 +79,7 @@ struct _OPH_EXPORTESDM_operator_handle {
 	int cached_flag;
 	int compressed;
 	int num_of_dims;
-	NETCDF_dim *dims;
+	ESDM_dim *dims;
 	char **objkeys;
 	int objkeys_num;
 	oph_ioserver_handler *server;
