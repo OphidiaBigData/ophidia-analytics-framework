@@ -588,7 +588,7 @@ int task_init(oph_operator_struct * handle)
 		//Check if file exists
 		char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' };
 		char *output_name = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name;
-		if (strncmp(output_name, "esdm://", 7)) {
+		if (output_name && strncmp(output_name, "esdm://", 7)) {
 			snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE "_%d" OPH_EXPORTNC2_OUTPUT_FILE_EXT, path,
 				 output_name ? output_name : ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure, "", datacube_id);
 			if (stat(file_name, &st)) {
