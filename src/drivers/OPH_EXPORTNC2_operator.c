@@ -588,7 +588,7 @@ int task_init(oph_operator_struct * handle)
 		//Check if file exists
 		char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' };
 		char *output_name = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name;
-		if (output_name && strncmp(output_name, "esdm://", 7)) {
+		if (!output_name || strncmp(output_name, "esdm://", 7)) {
 			snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE "_%d" OPH_EXPORTNC2_OUTPUT_FILE_EXT, path,
 				 output_name ? output_name : ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure, "", datacube_id);
 			if (stat(file_name, &st)) {
@@ -837,6 +837,9 @@ int task_execute(oph_operator_struct * handle)
 		int compressed = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->compressed;
 		int num_of_dims = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->num_of_dims;
 		NETCDF_dim *dims = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->dims;
+
+		if (!file)
+			file = measure_name;
 
 		// I need an array of dimensions size and I need to know the number of explicit dimensions
 		unsigned int dims_size[num_of_dims];
@@ -1935,7 +1938,29 @@ int task_execute(oph_operator_struct * handle)
 
 			char jsonbuf[OPH_COMMON_BUFFER_LEN];
 
-			if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_link) {
+			if (!strncmp(file, "esdm://", 7)) {
+
+				// ADD OUTPUT PID TO JSON AS TEXT
+				if (oph_json_is_objkey_printable
+				    (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->objkeys_num,
+				     OPH_JSON_OBJKEY_EXPORTNC2)) {
+					if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_EXPORTNC2, "Output File", file)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+						logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+						result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+						goto __OPH_EXIT_2;
+					}
+				}
+				// ADD FILE TO NOTIFICATION STRING
+				char tmp_string[OPH_COMMON_BUFFER_LEN];
+				snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_LINK, file, OPH_IN_PARAM_FILE, file);
+				if (handle->output_string) {
+					strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
+					free(handle->output_string);
+				}
+				handle->output_string = strdup(tmp_string);
+
+			} else if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_link) {
 
 				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_link, file,
 					 strstr(file, OPH_EXPORTNC2_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC2_OUTPUT_FILE_EXT);
@@ -2041,8 +2066,8 @@ int task_reduce(oph_operator_struct * handle)
 		}
 
 		if (oph_odb_meta_find_complete_metadata_list
-		    (&((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->oDB, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0, NULL, NULL, NULL, NULL,
-		     &read_result)) {
+		    (&((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->oDB, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0, NULL, NULL,
+		     NULL, NULL, &read_result)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 			retval = NC_EBADTYPE;

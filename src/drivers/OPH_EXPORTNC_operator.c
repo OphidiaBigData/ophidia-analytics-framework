@@ -748,6 +748,9 @@ int task_execute(oph_operator_struct * handle)
 	int num_of_dims = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->num_of_dims;
 	NETCDF_dim *dims = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->dims;
 
+	if (!file)
+		file = measure_name;
+
 	// I need an array of dimensions size and I need to know the number of explicit dimensions
 	unsigned int dims_size[num_of_dims];
 	short int nexp = 0;
@@ -1664,7 +1667,28 @@ int task_execute(oph_operator_struct * handle)
 
 		char jsonbuf[OPH_COMMON_BUFFER_LEN];
 
-		if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link) {
+		if (!strncmp(file, "esdm://", 7)) {
+
+			// ADD OUTPUT PID TO JSON AS TEXT
+			if (oph_json_is_objkey_printable
+			    (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_EXPORTNC)) {
+				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_EXPORTNC2, "Output File", file)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
+			}
+			// ADD FILE TO NOTIFICATION STRING
+			char tmp_string[OPH_COMMON_BUFFER_LEN];
+			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_LINK, file, OPH_IN_PARAM_FILE, file);
+			if (handle->output_string) {
+				strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
+				free(handle->output_string);
+			}
+			handle->output_string = strdup(tmp_string);
+
+		} else if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link) {
+
 			int type = 1;
 			if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
 				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC_OUTPUT_PATH_SINGLE_FILE, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link, file,
