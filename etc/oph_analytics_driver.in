@@ -160,6 +160,9 @@ LIB @MYSQL_LDFLAGS@
 [OPH_B2DROP]
 @DRIVER_PATH@/liboph_b2dropoperator.so
 LIB @MYSQL_LDFLAGS@
+[OPH_IMPORTESDM]
+@DRIVER_PATH@/liboph_importesdmoperator.so
+LIB @MYSQL_LDFLAGS@
 [OPH_EXPORTESDM]
 @DRIVER_PATH@/liboph_exportesdmoperator.so
 LIB @MYSQL_LDFLAGS@
