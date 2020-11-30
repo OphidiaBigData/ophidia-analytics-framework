@@ -728,7 +728,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			free(tmp_concept_levels);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-	int unlimdimid;
+	int unlimdimid = -1;
 	if ((retval = nc_inq_unlimdim(ncid, &unlimdimid))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
@@ -739,7 +739,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	//Extract dimensions information and check names provided by task string
-	char *dimname;
+	char *dimname = NULL;
 	short int flag = 0;
 	for (i = 0; i < ndims; i++) {
 		measure->dims_unlim[i] = measure->dims_id[i] == unlimdimid;

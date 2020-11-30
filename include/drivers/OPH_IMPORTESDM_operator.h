@@ -22,12 +22,37 @@
 //Operator specific headers
 #include "oph_common.h"
 #include "oph_ophidiadb_main.h"
-#include "oph_nc_library.h"
 #include "oph_ioserver_library.h"
+
+#include <esdm.h>
 
 #define OPH_IMPORTESDM_SUBSET_INDEX	    "index"
 #define OPH_IMPORTESDM_SUBSET_COORD	    "coord"
 #define OPH_IMPORTESDM_DIMENSION_DEFAULT	"auto"
+
+struct _ESDM_var {
+	esdm_dataset_t *dataset;
+	esdm_dataspace_t *dspace;
+	char varname[OPH_ODB_DIM_DIMENSION_SIZE + 1];
+	char vartype[OPH_ODB_DIM_DIMENSION_TYPE_SIZE + 1];
+	int varsize;
+	int ndims;
+	char **dims_name;
+	int *dims_id;
+	size_t *dims_length;
+	short int *dims_type;	//Contains the type of the dimension (explicit = 1/implicit = 0) as a boolean value
+	short int *dims_oph_level;	//Contains the oph_level of the dimensions (explicit and implicit)
+	// For allowing subsetting during the import phase
+	int *dims_start_index;	//Contains the start index for each dimension; it follows the dims_id array positionally
+	int *dims_end_index;	//Contains the end index for each dimension; it follows the dims_id array positionally
+	char *dims_concept_level;	//Contains the concept level of the dimensions (depends on hierarchy)
+	short int nexp;
+	short int nimp;
+	char *dims_unlim;
+	short int *dims_order;
+	int *oph_dims_id;
+};
+typedef struct _ESDM_var ESDM_var;
 
 //Only import of measured variables is supported
 
@@ -102,8 +127,8 @@ struct _OPH_IMPORTESDM_operator_handle {
 	int array_length;
 	int total_frag_number;
 	char *user;
-	int ncid;
-	NETCDF_var measure;
+	esdm_container_t *container;
+	ESDM_var measure;
 	int compressed;
 	char **objkeys;
 	int objkeys_num;

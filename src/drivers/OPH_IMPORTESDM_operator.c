@@ -43,6 +43,369 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
+int oph_esdm_set_esdm_type(char *out_c_type, esdm_type_t type_nc)
+{
+	switch (type_nc) {
+
+		case SMD_DTYPE_INT8:
+			strcpy(out_c_type, OPH_COMMON_BYTE_TYPE);
+			break;
+		case SMD_DTYPE_INT16:
+			strcpy(out_c_type, OPH_COMMON_SHORT_TYPE);
+			break;
+		case SMD_DTYPE_INT32:
+			strcpy(out_c_type, OPH_COMMON_INT_TYPE);
+			break;
+		case SMD_DTYPE_INT64:
+			strcpy(out_c_type, OPH_COMMON_LONG_TYPE);
+			break;
+		case SMD_DTYPE_FLOAT:
+			strcpy(out_c_type, OPH_COMMON_FLOAT_TYPE);
+			break;
+		case SMD_DTYPE_DOUBLE:
+			strcpy(out_c_type, OPH_COMMON_DOUBLE_TYPE);
+			break;
+		default:
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Data type not supported\n");
+			return -1;
+	}
+
+	return 0;
+}
+
+int oph_esdm_compare_types(int id_container, esdm_type_t var_type, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE])
+{
+	if (!var_type || !dim_type) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_NC_ERROR;
+	}
+	switch (var_type) {
+		case SMD_DTYPE_INT8:
+			if (strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+				return -1;
+		case SMD_DTYPE_INT16:
+			if (strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+				return -1;
+		case SMD_DTYPE_INT32:
+			if (strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+				return -1;
+		case SMD_DTYPE_INT64:
+			if (strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+				return -1;
+		case SMD_DTYPE_FLOAT:
+			if (strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+				return -1;
+		case SMD_DTYPE_DOUBLE:
+			if (strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+				return -1;
+		default:
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
+			return -1;
+	}
+	return 0;
+}
+
+int update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, esdm_container_t *container)
+{
+	MYSQL_RES *key_list = NULL;
+	MYSQL_ROW row = NULL;
+
+	int num_rows = 0;
+	if (oph_odb_meta_find_metadatakey_list(oDB, id_vocabulary, &key_list)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive key list\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_READ_KEY_LIST);
+		if (key_list)
+			mysql_free_result(key_list);
+		return OPH_NC_ERROR;
+	}
+	num_rows = mysql_num_rows(key_list);
+
+	if (num_rows)		// The vocabulary is not empty
+	{
+		int i, varid, num_attr = 0;
+		char *key, *variable, *template;
+		char value[OPH_COMMON_BUFFER_LEN], svalue[OPH_COMMON_BUFFER_LEN];
+		esdm_type_t xtype;
+
+		char **keys = (char **) calloc(num_rows, sizeof(char *));
+		if (!keys) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to allocate key list\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_READ_KEY_LIST);
+			mysql_free_result(key_list);
+			return OPH_NC_ERROR;
+		}
+		char **values = (char **) calloc(num_rows, sizeof(char *));
+		if (!values) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to allocate key list\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_READ_KEY_LIST);
+			mysql_free_result(key_list);
+			free(keys);
+			return OPH_NC_ERROR;
+		}
+
+		smd_attr_t *md = NULL, *attribute = NULL;
+
+		while ((row = mysql_fetch_row(key_list))) {
+			if (row[4])	// If the attribute is required and a template is given
+			{
+				key = row[1];
+				variable = row[2];
+				template = row[4];
+
+				memset(value, 0, OPH_COMMON_BUFFER_LEN);
+				memset(svalue, 0, OPH_COMMON_BUFFER_LEN);
+
+				if (variable) {
+					esdm_dataset_t* dataset = NULL;
+					if (esdm_dataset_open(container, variable, ESDM_MODE_FLAG_READ, &dataset)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering metadata of variable '%s'\n", variable);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_ATTRIBUTE_ERROR);
+						break;
+					}
+					if (esdm_dataset_get_attributes(dataset, &md)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering metadata of variable '%s'\n", variable);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_ATTRIBUTE_ERROR);
+						esdm_dataset_close(dataset);
+						break;
+					}					
+					attribute = smd_attr_get_child_by_name(md, key);
+					xtype = smd_attr_get_type(attribute);
+					if (!xtype)
+						value = smd_attr_get_value(attribute);
+					esdm_dataset_close(dataset);
+				} else {
+					if (esdm_container_get_attributes(container, &md)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering metadata of the container\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_ATTRIBUTE_ERROR);
+						break;
+					}
+					attribute = smd_attr_get_child_by_name(md, key);
+					xtype = smd_attr_get_type(attribute);
+					if (!xtype)
+						value = smd_attr_get_value(attribute);
+				}
+
+				if (!xtype)
+					continue;
+
+				switch (xtype) {
+					case SMD_DTYPE_INT8:
+						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((char *) value));
+						break;
+					case SMD_DTYPE_UINT8:
+						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned char *) value));
+						break;
+					case SMD_DTYPE_INT16:
+						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((short *) value));
+						break;
+					case SMD_DTYPE_INT16:
+						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned short *) value));
+						break;
+					case SMD_DTYPE_INT32:
+						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((int *) value));
+						break;
+					case SMD_DTYPE_UINT32:
+						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned int *) value));
+						break;
+					case SMD_DTYPE_INT64:
+						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", *((long long *) value));
+						break;
+					case SMD_DTYPE_UINT64:
+						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", *((unsigned long long *) value));
+						break;
+					case SMD_DTYPE_FLOAT:
+						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", *((float *) value));
+						break;
+					case SMD_DTYPE_DOUBLE:
+						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", *((double *) value));
+						break;
+					default:
+						strcpy(svalue, value);
+				}
+
+				keys[num_attr] = strdup(template);
+				values[num_attr++] = strdup(svalue);
+			}
+		}
+		if (row) {
+			mysql_free_result(key_list);
+			for (i = 0; i < num_attr; ++i) {
+				if (keys[i])
+					free(keys[i]);
+				if (values[i])
+					free(values[i]);
+			}
+			free(keys);
+			free(values);
+			return OPH_NC_ERROR;
+		}
+
+		if (oph_odb_dim_update_time_dimension(time_dim, keys, values, num_attr)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update dimension metadata\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_UPDATE_TIME_ERROR);
+			mysql_free_result(key_list);
+			for (i = 0; i < num_attr; ++i) {
+				if (keys[i])
+					free(keys[i]);
+				if (values[i])
+					free(values[i]);
+			}
+			free(keys);
+			free(values);
+			return OPH_NC_ERROR;
+		}
+
+		for (i = 0; i < num_attr; ++i) {
+			if (keys[i])
+				free(keys[i]);
+			if (values[i])
+				free(values[i]);
+		}
+		free(keys);
+		free(values);
+	}
+
+	mysql_free_result(key_list);
+
+	return OPH_NC_SUCCESS;
+}
+
+int oph_esdm_get_dim_array(int id_container, esdm_dataset_t* dataset, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, int start_index, int end_index, char **dim_array)
+{
+	if (!container || !dim_type || !dim_size || !dim_array) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_NC_ERROR;
+	}
+	*dim_array = NULL;
+
+	//Assume that the coordinate variable related to a dimension depends by one dimension only (Ex. lat(lat) not lat(x,y))  
+	size_t start[1];
+	size_t count[1];
+	start[0] = (size_t) start_index;
+	count[0] = 1;
+	if (start_index < end_index)
+		count[0] = (size_t) (end_index - start_index) + 1;
+	else if (start_index > end_index) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unsupported order for indexes\n");
+		return OPH_NC_ERROR;
+	}
+
+	void *binary_dim = NULL;
+	if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(char));
+	else if (!strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(short));
+	else if (!strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(int));
+	else if (!strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(float));
+	else if (!strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(double));
+	else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
+		binary_dim = (void *) malloc(dim_size * sizeof(long long));
+	else {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
+		return OPH_NC_ERROR;
+	}
+	if (!binary_dim) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Memory error\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Memory error\n");
+		return OPH_NC_ERROR;
+	}
+
+	if (dim_id >= 0) {
+
+		int retval = 0;
+		if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_vara_uchar(ncid, dim_id, start, count, (unsigned char *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else if (!strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_vara_short(ncid, dim_id, start, count, (short *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else if (!strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_vara_int(ncid, dim_id, start, count, (int *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else if (!strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_vara_float(ncid, dim_id, start, count, (float *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else if (!strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_vara_double(ncid, dim_id, start, count, (double *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			if ((retval = nc_get_vara_longlong(ncid, dim_id, start, count, (long long *) binary_dim))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+				free(binary_dim);
+				return OPH_NC_ERROR;
+			}
+		} else {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
+			return OPH_NC_ERROR;
+		}
+
+	} else {
+
+		int value;
+		if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			char *f = (char *) binary_dim;
+			for (value = start_index; value <= end_index; ++value, ++f)
+				*f = (char) value;
+		} else if (!strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			short *f = (short *) binary_dim;
+			for (value = start_index; value <= end_index; ++value, ++f)
+				*f = (short) value;
+		} else if (!strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			int *f = (int *) binary_dim;
+			for (value = start_index; value <= end_index; ++value, ++f)
+				*f = (int) value;
+		} else if (!strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			float *f = (float *) binary_dim;
+			for (value = start_index; value <= end_index; ++value, ++f)
+				*f = (float) value;
+		} else if (!strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			double *f = (double *) binary_dim;
+			for (value = start_index; value <= end_index; ++value, ++f)
+				*f = (double) value;
+		} else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+			long long *f = (long long *) binary_dim;
+			for (value = start_index; value <= end_index; ++value, ++f)
+				*f = (long long) value;
+		} else {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
+			return OPH_NC_ERROR;
+		}
+
+	}
+
+	*dim_array = (char *) binary_dim;
+
+	return OPH_NC_SUCCESS;
+}
+
 int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
 	if (!handle) {
@@ -78,7 +441,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->compressed = 0;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->import_metadata = 0;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->check_compliance = 0;
-	NETCDF_var *nc_measure = &(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure);
+	ESDM_var *nc_measure = &(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure);
 	nc_measure->dims_name = NULL;
 	nc_measure->dims_id = NULL;
 	nc_measure->dims_unlim = NULL;
@@ -110,7 +473,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->policy = 0;
-
+	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container = NULL;
+	
 	char *value;
 
 	// retrieve objkeys
@@ -301,47 +665,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (!strstr(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path, "http://")
-	    && !strstr(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path, "https://")) {
-		char *pointer = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path;
-		while (pointer && (*pointer == ' '))
-			pointer++;
-		if (pointer) {
-			char tmp[OPH_COMMON_BUFFER_LEN];
-			if (*pointer != '/') {
-				value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
-				if (!value) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				if (*value != '/') {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", value);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", value);
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				if (strlen(value) > 1) {
-					if (strstr(value, "..")) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
-						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-					}
-					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value + 1, pointer);
-					free(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path);
-					((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
-					pointer = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path;
-				}
-			}
-			if (oph_pid_get_base_src_path(&value)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-			}
-			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
-			free(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path);
-			((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
-			free(value);
-		}
+	if (strncmp(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path, "esdm://", 7)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong ESDM object\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Wrong ESDM object\n");
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
 	if (oph_pid_get_memory_size(&(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->memory_size))) {
@@ -399,15 +726,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
-	NETCDF_var *measure = ((NETCDF_var *) & (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure));
+	ESDM_var *measure = ((ESDM_var *) & (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure));
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_MEASURE_NAME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_MEASURE_NAME);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_MEASURE_NAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	strncpy(measure->varname, value, NC_MAX_NAME);
-	measure->varname[NC_MAX_NAME] = 0;
+	strncpy(measure->varname, value, OPH_ODB_DIM_DIMENSION_SIZE);
+	measure->varname[OPH_ODB_DIM_DIMENSION_SIZE] = 0;
 
 	int i;
 	char **exp_dim_names = NULL;
@@ -421,33 +748,40 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	//Open netcdf file
 	int retval, j = 0;
-	if ((retval = nc_open(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path, NC_NOWRITE, &(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->ncid)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path, nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_OPEN_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
+	esdm_status ret;
+
+	if ((ret = esdm_container_open(measure->varname, ESDM_MODE_FLAG_READ, &((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open ESDM object '%s': %s\n", ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path, "");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_OPEN_ERROR_NO_CONTAINER, container_name, "");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
-	int ncid = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->ncid;
+	esdm_container_t *container = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container;
+
 	//Extract measured variable information
-	if ((retval = nc_inq_varid(ncid, measure->varname, &(measure->varid)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
-	//Get information from id
-	if ((retval = nc_inq_vartype(ncid, measure->varid, &(measure->vartype)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
-	//Check ndims value
-	int ndims;
-	if ((retval = nc_inq_varndims(ncid, measure->varid, &ndims))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
+	if ((ret = esdm_dataset_open(container, measure->varname, ESDM_MODE_FLAG_READ, &measure->dataset))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, "");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
+	esdm_dataset_t *dataset = measure->dataset;
+
+	if ((ret = esdm_dataset_get_dataspace(dataset, &measure->dspace))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, "");
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+
+	esdm_dataspace_t *dspace = measure->dspace;
+
+	if (oph_esdm_set_esdm_type(measure->vartype, dspace->type)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, "");
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+
+	int ndims = dspace->dims;
 	char *tmp_concept_levels = NULL;
 
 	if (ndims) {
@@ -720,41 +1054,29 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			free(tmp_concept_levels);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
-	if ((retval = nc_inq_vardimid(ncid, measure->varid, measure->dims_id))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-		if (tmp_concept_levels)
-			free(tmp_concept_levels);
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
-	int unlimdimid;
+
+	int unlimdimid = -1;	// TODO: unsupported
+/*
 	if ((retval = nc_inq_unlimdim(ncid, &unlimdimid))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, "");
 		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 		if (tmp_concept_levels)
 			free(tmp_concept_levels);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+*/
+
 	//Extract dimensions information and check names provided by task string
-	char *dimname;
+	char *dimname = NULL;
 	short int flag = 0;
 	for (i = 0; i < ndims; i++) {
 		measure->dims_unlim[i] = measure->dims_id[i] == unlimdimid;
-		measure->dims_name[i] = (char *) malloc((NC_MAX_NAME + 1) * sizeof(char));
-		if ((retval = nc_inq_dim(ncid, measure->dims_id[i], measure->dims_name[i], &measure->dims_length[i]))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
-			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-			if (tmp_concept_levels)
-				free(tmp_concept_levels);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
+		measure->dims_name[i] = (char *) malloc((OPH_ODB_DIM_DIMENSION_SIZE + 1) * sizeof(char));
+		measure->dims_length[i] = dspace->size[i];
 	}
+	ret = esdm_dataset_get_name_dims(dataset, &measure->dims_name);
 
 	int level = 1;
 	int m2u[measure->ndims ? measure->ndims : 1];
@@ -1107,33 +1429,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 		if (create_container) {
 			if (!((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->import_metadata || !handle->proc_rank) {
+
 				strncpy(dim.base_time, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->base_time, OPH_ODB_DIM_TIME_SIZE);
 				dim.base_time[OPH_ODB_DIM_TIME_SIZE] = 0;
 				dim.leap_year = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->leap_year;
 				dim.leap_month = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->leap_month;
 
-				NETCDF_var tmp_var;
-				tmp_var.dims_id = NULL;
-				tmp_var.dims_length = NULL;
-				if (oph_nc_get_nc_var(OPH_GENERIC_CONTAINER_ID, measure->dims_name[j], ncid, 1, &tmp_var)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, nc_strerror(retval));
-					if (tmp_var.dims_id)
-						free(tmp_var.dims_id);
-					if (tmp_var.dims_length)
-						free(tmp_var.dims_length);
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-					oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					if (offset)
-						free(offset);
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				if (tmp_var.dims_id)
-					free(tmp_var.dims_id);
-				if (tmp_var.dims_length)
-					free(tmp_var.dims_length);
-
-				if (oph_nc_get_c_type(tmp_var.vartype, dim.dimension_type)) {
+				esdm_dataset_t *dim_dataset = NULL;
+				if ((ret = esdm_dataset_open(container, measure->dims_name[i], ESDM_MODE_FLAG_READ, &dim_dataset))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -1142,6 +1445,30 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 						free(offset);
 					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 				}
+
+				esdm_dataspace_t *dim_dspace = NULL;
+				if ((ret = esdm_dataset_get_dataspace(dim_dataset, &dim_dspace))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
+					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+					oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+					if (offset)
+						free(offset);
+					esdm_dataset_close(dim_dataset);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+
+				if (oph_esdm_set_esdm_type(dim.dimension_type, dim_dspace->type)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
+					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+					oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+					if (offset)
+						free(offset);
+					esdm_dataset_close(dim_dataset);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				esdm_dataset_close(dim_dataset);
 
 				j = 0;
 				strncpy(dim.units, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->units, OPH_ODB_DIM_TIME_SIZE);
@@ -1164,7 +1491,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				if (handle->proc_rank == 0) {
 					ophidiadb *oDB = &((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->oDB;
 
-					if (update_dim_with_nc_metadata(oDB, time_dim, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->id_vocabulary, OPH_GENERIC_CONTAINER_ID, ncid))
+					if (update_dim_with_esdm_metadata(oDB, time_dim, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->id_vocabulary, OPH_GENERIC_CONTAINER_ID, container))
 						time_dim->id_dimension = 0;
 					else
 						time_dim->id_dimension = -1;
@@ -1225,7 +1552,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 							break;
 						}
 
-						if (update_dim_with_nc_metadata(oDB, time_dim, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->id_vocabulary, id_container_out, ncid))
+						if (update_dim_with_esdm_metadata(oDB, time_dim, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->id_vocabulary, id_container_out, container))
 							break;
 					}
 
@@ -1563,17 +1890,24 @@ int task_init(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NULL_OPERATOR_HANDLE_NO_CONTAINER,
-			((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container_input);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NULL_OPERATOR_HANDLE_NO_CONTAINER, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container_input);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
+
+	esdm_status ret = esdm_init();
+	if (ret) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "ESDM cannot be initialized\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ESDM cannot be initialized\n");
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
 	//For error checking
 	int id_datacube[6] = { 0, 0, 0, 0, 0, 0 };
 
 	int i, retval = 0, flush = 1, id_datacube_out = 0, id_container_out = 0;
 
 	//Access data in the netcdf file
-	NETCDF_var *measure = &((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure;
+	ESDM_var *measure = &((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure;
 
 	//Find the last explicit dimension checking oph_value
 	short int max_lev = 0;
@@ -1917,10 +2251,9 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 
-		int ncid = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->ncid;
 		char *cwd = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->cwd;
 		char *user = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->user;
-		NETCDF_var tmp_var;
+		ESDM_var tmp_var;
 
 		int permission = 0;
 		int folder_id = 0;
@@ -1994,27 +2327,11 @@ int task_init(oph_operator_struct * handle)
 			dim.leap_month = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->leap_month;
 
 			for (i = 0; i < measure->ndims; i++) {
-				tmp_var.dims_id = NULL;
-				tmp_var.dims_length = NULL;
-
-				if (oph_nc_get_nc_var(OPH_GENERIC_CONTAINER_ID, measure->dims_name[i], ncid, 1, &tmp_var)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, nc_strerror(retval));
-					if (tmp_var.dims_id)
-						free(tmp_var.dims_id);
-					if (tmp_var.dims_length)
-						free(tmp_var.dims_length);
-					goto __OPH_EXIT_1;
-				}
-				if (tmp_var.dims_id)
-					free(tmp_var.dims_id);
-				if (tmp_var.dims_length)
-					free(tmp_var.dims_length);
 
 				// Load dimension names and types
 				strncpy(dim.dimension_name, measure->dims_name[i], OPH_ODB_DIM_DIMENSION_SIZE);
 				dim.dimension_name[OPH_ODB_DIM_DIMENSION_SIZE] = 0;
-				if (oph_nc_get_c_type(tmp_var.vartype, dim.dimension_type)) {
+				if (oph_esdm_set_esdm_type(dim.dimension_type, tmp_var.vartype)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 					goto __OPH_EXIT_1;
@@ -2178,6 +2495,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 
+		esdm_type_t xtype;
 		int id_grid = 0, time_dimension = -1;
 		oph_odb_dimension_instance *dim_inst = NULL;
 		int dim_inst_num = 0;
@@ -2225,7 +2543,12 @@ int task_init(oph_operator_struct * handle)
 			int found_flag;
 			char *dim_array = NULL;
 			int curdimlength = 1;
+
+			esdm_dataset_t *dimset = NULL;
+			esdm_dataspace_t *dimspace = NULL;
+
 			for (i = 0; i < measure->ndims; i++) {
+				dimvar_ids[i] = -1;
 				//Check if container dimension name, size and concept level matches input dimension params -
 				found_flag = 0;
 				for (j = 0; j < dim_inst_num; j++) {
@@ -2236,50 +2559,37 @@ int task_init(oph_operator_struct * handle)
 						else
 							curdimlength = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
 						if (dim_inst[j].size == curdimlength && dim_inst[j].concept_level == measure->dims_concept_level[i]) {
-							//Retrieve dimension row from nc file
-							if ((retval = nc_inq_varid(ncid, measure->dims_name[i], &(tmp_var.varid)))) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, nc_strerror(retval));
-								oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-								oph_dim_unload_dim_dbinstance(db_dimension);
-								free(dims);
-								free(dim_inst);
-								free(dimvar_ids);
-								goto __OPH_EXIT_1;
-							}
-							dimvar_ids[i] = tmp_var.varid;
 
-							if (nc_inq_vartype(ncid, tmp_var.varid, &(tmp_var.vartype))) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+							if (esdm_dataset_open(container, measure->dims_name[i], ESDM_MODE_FLAG_READ, &dimset)) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
+								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
 								oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 								oph_dim_unload_dim_dbinstance(db_dimension);
 								free(dims);
 								free(dim_inst);
 								free(dimvar_ids);
+								esdm_dataset_close(dimset);
 								goto __OPH_EXIT_1;
 							}
-							if ((tmp_var.varid >= 0) && oph_nc_compare_nc_c_types(id_container_out, tmp_var.vartype, dims[j].dimension_type)) {
+							if (esdm_dataset_get_dataspace(dataset, &dimspace)) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
+								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
+								oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+								oph_dim_unload_dim_dbinstance(db_dimension);
+								free(dims);
+								free(dim_inst);
+								free(dimvar_ids);
+								esdm_dataset_close(dimset);
+								goto __OPH_EXIT_1;
+							}
+
+							dimvar_ids[i] = i;
+							if (/*(dimvar_ids[i] >= 0) && */oph_esdm_compare_types(id_container_out, dimspace->type, dims[j].dimension_type)) {
 								pmesg(LOG_WARNING, __FILE__, __LINE__, "Dimension type in NC file doesn't correspond to the one stored in OphidiaDB\n");
 								logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
 							}
-							//Modified to allow subsetting
-							tmp_var.dims_start_index = &(measure->dims_start_index[i]);
-							tmp_var.dims_end_index = &(measure->dims_end_index[i]);
 
-							//Get information from id
-							if ((retval = nc_inq_varndims(ncid, tmp_var.varid, &(tmp_var.ndims)))) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, nc_strerror(retval));
-								oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-								oph_dim_unload_dim_dbinstance(db_dimension);
-								free(dims);
-								free(dim_inst);
-								free(dimvar_ids);
-								goto __OPH_EXIT_1;
-							}
-
-							if (tmp_var.ndims != 1) {
+							if (dimspace->dims != 1) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
 								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_NOT_ALLOWED);
 								oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -2287,48 +2597,24 @@ int task_init(oph_operator_struct * handle)
 								free(dims);
 								free(dim_inst);
 								free(dimvar_ids);
-								goto __OPH_EXIT_1;
-							}
-
-							tmp_var.dims_id = malloc(tmp_var.ndims * sizeof(int));
-							if (!(tmp_var.dims_id)) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT, "dimensions nc ids");
-								oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-								oph_dim_unload_dim_dbinstance(db_dimension);
-								free(dims);
-								free(dim_inst);
-								free(dimvar_ids);
-								goto __OPH_EXIT_1;
-							}
-							if ((retval = nc_inq_vardimid(ncid, tmp_var.varid, tmp_var.dims_id))) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, nc_strerror(retval));
-								oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-								oph_dim_unload_dim_dbinstance(db_dimension);
-								free(dims);
-								free(dim_inst);
-								free(tmp_var.dims_id);
-								free(dimvar_ids);
+								esdm_dataset_close(dimset);
 								goto __OPH_EXIT_1;
 							}
 
 							dim_array = NULL;
-
-							if (oph_nc_get_dim_array2
-							    (id_container_out, ncid, tmp_var.varid, dims[j].dimension_type, dim_inst[j].size, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index),
-							     &dim_array)) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, nc_strerror(retval));
+							if (oph_esdm_get_dim_array(id_container_out, dimset, dims[j].dimension_type, dim_inst[j].size, measure->dims_start_index[i], measure->dims_end_index[i], &dim_array)) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
+								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
 								oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 								oph_dim_unload_dim_dbinstance(db_dimension);
 								free(dims);
 								free(dim_inst);
-								free(tmp_var.dims_id);
 								free(dimvar_ids);
+								esdm_dataset_close(dimset);
 								goto __OPH_EXIT_1;
 							}
-							free(tmp_var.dims_id);
+
+							esdm_dataset_close(dimset);
 
 							if (!((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->check_grid || (!oph_dim_compare_dimension
 																	  (db_dimension, label_dimension_table_name,
@@ -2501,8 +2787,8 @@ int task_init(oph_operator_struct * handle)
 
 				if ((retval = oph_nc_get_nc_var(id_container_out, measure->dims_name[i], ncid, 1, &tmp_var))) {
 					if (create_container) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read information of dimension '%s': %s\n", measure->dims_name[i], nc_strerror(retval));
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, nc_strerror(retval));
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read information of dimension '%s': %s\n", measure->dims_name[i], "");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
 						free(tot_dims);
 						free(dims);
 						free(dim_inst);
@@ -2550,14 +2836,10 @@ int task_init(oph_operator_struct * handle)
 					pmesg(LOG_WARNING, __FILE__, __LINE__, "Dimension type in NC file doesn't correspond to the one stored in OphidiaDB\n");
 					logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
 				}
-				//Modified to allow subsetting
-				tmp_var.dims_start_index = &(measure->dims_start_index[i]);
-				tmp_var.dims_end_index = &(measure->dims_end_index[i]);
 
-				if (oph_nc_get_dim_array2
-				    (id_container_out, ncid, tmp_var.varid, tot_dims[j].dimension_type, tmp_var.varsize, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index), &dim_array)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, nc_strerror(retval));
+				if (oph_esdm_get_dim_array(id_container_out, dimset, tot_dims[j].dimension_type, tmp_var.varsize, measure->dims_start_index[i], measure->dims_end_index[i], &dim_array)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
 					free(tot_dims);
 					free(dims);
 					free(dim_inst);
@@ -3903,7 +4185,7 @@ int task_execute(oph_operator_struct * handle)
 				if (oph_nc_populate_fragment_from_nc3
 				    (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->server, &new_frag, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->ncid,
 				     ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->tuplexfrag_number, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->array_length,
-				     ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->compressed, (NETCDF_var *) & (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure),
+				     ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->compressed, (ESDM_var *) & (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure),
 				     ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->memory_size)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
@@ -3961,6 +4243,8 @@ int task_destroy(oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_NULL_OPERATOR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
+
+	esdm_finalize();
 
 	if (!((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->run)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -4144,9 +4428,9 @@ int env_unset(oph_operator_struct * handle)
 		((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path_orig = NULL;
 	}
 	if ((retval = nc_close(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->ncid)))
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", nc_strerror(retval));
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", "");
 
-	NETCDF_var *measure = ((NETCDF_var *) & (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure));
+	ESDM_var *measure = ((ESDM_var *) & (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure));
 	if (measure->dims_name) {
 		for (i = 0; i < measure->ndims; i++) {
 			if (measure->dims_name[i]) {

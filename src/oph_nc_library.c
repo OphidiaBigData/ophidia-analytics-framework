@@ -6270,9 +6270,9 @@ int update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, i
 				} else
 					varid = NC_GLOBAL;
 
-				if (nc_inq_atttype(ncid, varid, key, &xtype)) {
+				if (nc_inq_atttype(ncid, varid, key, &xtype))
 					continue;
-				}
+
 				if (nc_get_att(ncid, varid, key, (void *) &value)) {
 					pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to get attribute value from file\n");
 					logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
@@ -6297,11 +6297,11 @@ int update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, i
 					case NC_UINT:
 						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned int *) value));
 						break;
-					case NC_UINT64:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", *((unsigned long long *) value));
-						break;
 					case NC_INT64:
 						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", *((long long *) value));
+						break;
+					case NC_UINT64:
+						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", *((unsigned long long *) value));
 						break;
 					case NC_FLOAT:
 						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", *((float *) value));

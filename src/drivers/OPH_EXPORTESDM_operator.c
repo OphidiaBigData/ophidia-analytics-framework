@@ -125,7 +125,6 @@ int oph_esdm_get_esdm_type(char *in_c_type, esdm_type_t * type_nc)
 	}
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Data type '%s' not supported\n", in_c_type);
 	return -1;
-
 }
 
 int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
