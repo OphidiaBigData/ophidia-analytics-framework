@@ -2848,27 +2848,19 @@ int task_init(oph_operator_struct * handle)
 				if (xtype != NC_CHAR) {
 					switch (xtype) {
 						case NC_BYTE:
-							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
-							break;
 						case NC_UBYTE:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
 							break;
 						case NC_SHORT:
-							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_SHORT_TYPE);
-							break;
 						case NC_USHORT:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_SHORT_TYPE);
 							break;
 						case NC_INT:
-							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_INT_TYPE);
-							break;
 						case NC_UINT:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_INT_TYPE);
 							break;
-						case NC_UINT64:
-							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_LONG_TYPE);
-							break;
 						case NC_INT64:
+						case NC_UINT64:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_LONG_TYPE);
 							break;
 						case NC_FLOAT:
@@ -3064,27 +3056,19 @@ int task_init(oph_operator_struct * handle)
 					if (xtype != NC_CHAR) {
 						switch (xtype) {
 							case NC_BYTE:
-								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
-								break;
 							case NC_UBYTE:
 								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
 								break;
 							case NC_SHORT:
-								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_SHORT_TYPE);
-								break;
 							case NC_USHORT:
 								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_SHORT_TYPE);
 								break;
 							case NC_INT:
-								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_INT_TYPE);
-								break;
 							case NC_UINT:
 								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_INT_TYPE);
 								break;
-							case NC_UINT64:
-								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_LONG_TYPE);
-								break;
 							case NC_INT64:
+							case NC_UINT64:
 								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_LONG_TYPE);
 								break;
 							case NC_FLOAT:
@@ -3278,27 +3262,19 @@ int task_init(oph_operator_struct * handle)
 				if (xtype != NC_CHAR) {
 					switch (xtype) {
 						case NC_BYTE:
-							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
-							break;
 						case NC_UBYTE:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
 							break;
 						case NC_SHORT:
-							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_SHORT_TYPE);
-							break;
 						case NC_USHORT:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_SHORT_TYPE);
 							break;
 						case NC_INT:
-							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_INT_TYPE);
-							break;
 						case NC_UINT:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_INT_TYPE);
 							break;
-						case NC_UINT64:
-							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_LONG_TYPE);
-							break;
 						case NC_INT64:
+						case NC_UINT64:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_LONG_TYPE);
 							break;
 						case NC_FLOAT:
