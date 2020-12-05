@@ -33,11 +33,13 @@
 struct _ESDM_var {
 	esdm_dataset_t *dataset;
 	esdm_dataspace_t *dspace;
+	esdm_dataset_t **dim_dataset;
+	esdm_dataspace_t **dim_dspace;
 	char varname[OPH_ODB_DIM_DIMENSION_SIZE + 1];
 	char vartype[OPH_ODB_DIM_DIMENSION_TYPE_SIZE + 1];
 	int varsize;
 	int ndims;
-	char **dims_name;
+	char const *const *dims_name;
 	int *dims_id;
 	size_t *dims_length;
 	short int *dims_type;	//Contains the type of the dimension (explicit = 1/implicit = 0) as a boolean value
