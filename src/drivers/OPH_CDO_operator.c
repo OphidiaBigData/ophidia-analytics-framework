@@ -92,6 +92,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_CDO_operator_handle *) handle->operator_handle)->force = 0;
 
 	//3 - Fill struct with the correct data
+	char tmp[OPH_COMMON_BUFFER_LEN];
 	char *value, *input = NULL, *value2 = NULL;
 	size_t size;
 
@@ -133,14 +134,24 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_ARGS);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (input && ((size = strlen(input)))) {
+	if (input && strlen(input)) {
+		char *base_src_path = NULL;
+		if (oph_pid_get_base_src_path(&base_src_path)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base user_path\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base user path\n");
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", base_src_path ? base_src_path : "", *input != '/' ? "/" : "", input);
+		size = strlen(tmp);
 		size_t old_size = strlen(value);
 		if (old_size) {
 			value2 = (char *) malloc((2 + old_size + size) * sizeof(char));
-			sprintf(value2, "%s|%s", value, input);
+			sprintf(value2, "%s|%s", value, tmp);
 			value = value2;
 		} else
-			value = input;
+			value = tmp;
+		if (base_src_path)
+			free(base_src_path);
 	}
 	if (oph_tp_parse_multiple_value_param(value, &((OPH_CDO_operator_handle *) handle->operator_handle)->args, &((OPH_CDO_operator_handle *) handle->operator_handle)->args_num)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
@@ -276,14 +287,25 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
-	if (!strcmp(value, OPH_CDO_DEFAULT_OUTPUT_PATH)) {
-		if (!user_space) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "User space is not enabled: output file cannot saved\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "User space is not enabled: output file cannot saved\n");
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-		}
-		value = &user_space_default;
+	char *cdd = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
+	if (!cdd) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_GENERIC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	if (*cdd != '/') {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if ((strlen(cdd) > 1) && strstr(cdd, "..")) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
+	if (!strcmp(value, OPH_CDO_DEFAULT_OUTPUT_PATH))
+		value = user_space ? &user_space_default : cdd;
 
 	if (!(((OPH_CDO_operator_handle *) handle->operator_handle)->output_path = (char *) strdup(value))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -299,31 +321,12 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	while (pointer && (*pointer == ' '))
 		pointer++;
 	if (pointer) {
-		char tmp[OPH_COMMON_BUFFER_LEN];
-		if (*pointer != '/') {
-			value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
-			if (!value) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-			if (*value != '/') {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-			if (strlen(value) > 1) {
-				if (strstr(value, "..")) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value + 1, pointer);
-				((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user = strdup(tmp);
-				free(((OPH_CDO_operator_handle *) handle->operator_handle)->output_path);
-				((OPH_CDO_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
-				pointer = ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path;
-			}
+		if ((*pointer != '/') && (strlen(cdd) > 1)) {
+			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", cdd + 1, pointer);
+			((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user = strdup(tmp);
+			free(((OPH_CDO_operator_handle *) handle->operator_handle)->output_path);
+			((OPH_CDO_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
+			pointer = ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path;
 		}
 		if (!((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user)
 			((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user = strdup(pointer);
@@ -335,7 +338,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
 		free(((OPH_CDO_operator_handle *) handle->operator_handle)->output_path);
 		((OPH_CDO_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
-		free(value);
+		if (value)
+			free(value);
 	}
 
 	value = output_name;

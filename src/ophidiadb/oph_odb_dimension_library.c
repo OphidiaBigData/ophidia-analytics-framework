@@ -1598,10 +1598,8 @@ int oph_odb_dim_set_time_dimension(ophidiadb * oDB, int id_datacube, char *dimen
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
-	if (!ll) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Time dimension check failed\n");
+	if (!ll)
 		return OPH_ODB_NO_ROW_FOUND;
-	}
 
 	oph_odb_hierarchy hier;
 	*dim.units = *dim.base_time = *dim.calendar = 0;

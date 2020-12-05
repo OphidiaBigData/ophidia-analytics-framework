@@ -36,6 +36,7 @@ OPERATOR_XML+=etc/operators_xml/OPH_APPLY_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_B2DROP_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CANCEL_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CDO_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_GENERIC_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CLUSTER_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CUBEELEMENTS_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CUBEIO_operator_1.0.xml
