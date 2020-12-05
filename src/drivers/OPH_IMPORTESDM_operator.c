@@ -3921,6 +3921,7 @@ int task_init(oph_operator_struct * handle)
 	short int max_lev = 0;
 	short int last_dimid = 0;
 	for (i = 0; i < measure->ndims; i++) {
+		measure->dims_id[i] = i;
 		//Consider only explicit dimensions
 		if (measure->dims_type[i]) {
 			if (measure->dims_oph_level[i] > max_lev) {
@@ -6278,10 +6279,6 @@ int env_unset(oph_operator_struct * handle)
 	int i;
 	for (i = 0; i < ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.ndims; ++i) {
 		if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace) {
-			if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace[i]) {
-				esdm_dataspace_destroy(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace[i]);
-				((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace[i] = NULL;
-			}
 			free(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace);
 			((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace = NULL;
 		}
@@ -6295,7 +6292,6 @@ int env_unset(oph_operator_struct * handle)
 		}
 	}
 
-	esdm_dataspace_destroy(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dspace);
 	esdm_dataset_close(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dataset);
 	esdm_container_close(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container);
 
