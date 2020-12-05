@@ -4095,8 +4095,6 @@ int env_unset(oph_operator_struct * handle)
 
 	int i, retval;
 
-	oph_pid_free();
-
 	//Only master process has to close and release connection to management OphidiaDB
 	if (handle->proc_rank == 0) {
 		oph_odb_free_ophidiadb(&((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB);
