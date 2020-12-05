@@ -317,7 +317,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!strstr(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, "http://")
-	    && !strstr(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, "https://")) {
+	    && !strstr(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, "https://")
+	    && !strstr(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, "esdm://")) {
 		char *pointer = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path;
 		while (pointer && (*pointer == ' '))
 			pointer++;
