@@ -2671,6 +2671,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Wrong ESDM object\n");
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	char *tmp = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path;
+	value = strstr(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path, "//") + 2;
+	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path = strdup(value);
+	free(tmp);
 
 	if (oph_pid_get_memory_size(&(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->memory_size))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
@@ -2756,8 +2760,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
-	if ((ret = esdm_container_open(measure->varname, ESDM_MODE_FLAG_READ, &((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open ESDM object '%s': %s\n", ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path, "");
+	if ((ret =
+	     esdm_container_open(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path, ESDM_MODE_FLAG_READ,
+				 &((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open ESDM object '%s': %s\n", ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path, measure->varname);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_OPEN_ERROR_NO_CONTAINER, container_name, "");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -3061,19 +3067,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	int unlimdimid = -1;	// TODO: unsupported
-/*
-	if (nc_inq_unlimdim(ncid, &unlimdimid)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, "");
-		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
-		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
-		if (tmp_concept_levels)
-			free(tmp_concept_levels);
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
-*/
-
+	int64_t const *size = esdm_dataset_get_actual_size(dataset);
 	measure->dim_dataset = (esdm_dataset_t **) calloc(measure->ndims, sizeof(esdm_dataset_t *));
 	measure->dim_dspace = (esdm_dataspace_t **) calloc(measure->ndims, sizeof(esdm_dataspace_t *));
 
@@ -3081,9 +3075,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	char *dimname = NULL;
 	short int flag = 0;
 	for (i = 0; i < ndims; i++) {
-		measure->dims_unlim[i] = measure->dims_id[i] == unlimdimid;
+		measure->dims_unlim[i] = !dspace->size[i];
 		//measure->dims_name[i] = (char *) malloc((OPH_ODB_DIM_DIMENSION_SIZE + 1) * sizeof(char));
-		measure->dims_length[i] = dspace->size[i];
+		measure->dims_length[i] = dspace->size[i] ? dspace->size[i] : size[i];
 	}
 	ret = esdm_dataset_get_name_dims(dataset, &measure->dims_name);
 
@@ -6160,34 +6154,6 @@ int env_unset(oph_operator_struct * handle)
 	if (!handle || !handle->operator_handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	int i;
-	for (i = 0; i < ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.ndims; ++i) {
-		if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace) {
-			if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace[i]) {
-				esdm_dataspace_destroy(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace[i]);
-				((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace[i] = NULL;
-			}
-			free(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace);
-			((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace = NULL;
-		}
-		if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dataset) {
-			if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dataset[i]) {
-				esdm_dataset_close(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dataset[i]);
-				((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dataset[i] = NULL;
-			}
-			free(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dataset);
-			((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dataset = NULL;
-		}
-	}
-
-	esdm_dataspace_destroy(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dspace);
-	esdm_dataset_close(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dataset);
-	esdm_container_close(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container);
-
-	esdm_finalize();
-
-	oph_pid_free();
-
 	//Only master process has to close and release connection to management OphidiaDB
 	if (handle->proc_rank == 0) {
 		oph_odb_free_ophidiadb(&((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->oDB);
@@ -6203,7 +6169,6 @@ int env_unset(oph_operator_struct * handle)
 
 	if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->server)
 		oph_dc_cleanup_dbms(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->server);
-
 
 	if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->ioserver_type) {
 		free((char *) ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->ioserver_type);
@@ -6309,6 +6274,32 @@ int env_unset(oph_operator_struct * handle)
 		free((char *) ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->description);
 		((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->description = NULL;
 	}
+
+	int i;
+	for (i = 0; i < ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.ndims; ++i) {
+		if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace) {
+			if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace[i]) {
+				esdm_dataspace_destroy(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace[i]);
+				((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace[i] = NULL;
+			}
+			free(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace);
+			((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dspace = NULL;
+		}
+		if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dataset) {
+			if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dataset[i]) {
+				esdm_dataset_close(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dataset[i]);
+				((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dataset[i] = NULL;
+			}
+			free(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dataset);
+			((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dim_dataset = NULL;
+		}
+	}
+
+	esdm_dataspace_destroy(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dspace);
+	esdm_dataset_close(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dataset);
+	esdm_container_close(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container);
+
+	esdm_finalize();
 
 	free((OPH_IMPORTESDM_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
