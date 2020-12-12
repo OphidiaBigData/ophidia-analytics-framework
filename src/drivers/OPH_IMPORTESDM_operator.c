@@ -56,6 +56,9 @@
 #define OPH_ESDM_BLOCK_SIZE 524288	// Maximum size that could be transfered
 #define OPH_ESDM_BLOCK_ROWS 1000	// Maximum number of lines that could be transfered
 
+#define _NC_DIMS "_nc_dims"
+#define _NC_SIZES "_nc_sizes"
+
 int _oph_esdm_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, int64_t ** id, int i, int n)
 {
 	if (i < n - 1) {
@@ -4743,7 +4746,8 @@ int task_init(oph_operator_struct * handle)
 					    && !strcmp(hier.hierarchy_name, OPH_COMMON_TIME_HIERARCHY))
 						time_dimension = i;
 					else {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c': check container specifications\n", measure->dims_concept_level[i]);
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c' from '%s': check container specifications\n", measure->dims_concept_level[i],
+						      filename);
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_BAD2_PARAMETER, measure->dims_concept_level[i]);
 						free(tot_dims);
 						free(dims);
@@ -5115,8 +5119,8 @@ int task_init(oph_operator_struct * handle)
 			mysql_free_result(key_list);
 
 			//Get global attributes from nc file
-			char key[OPH_COMMON_BUFFER_LEN], *value = NULL, svalue[OPH_COMMON_BUFFER_LEN];
-			char *id_key, *keyptr;
+			char key[OPH_COMMON_BUFFER_LEN], svalue[OPH_COMMON_BUFFER_LEN];
+			char *id_key, *keyptr, is_string;
 			int id_metadatainstance;
 			keyptr = key;
 			int natts = 0;
@@ -5138,15 +5142,19 @@ int task_init(oph_operator_struct * handle)
 
 				current = smd_attr_get_child(md, i);
 
+				if (!strcmp(current->name, _NC_DIMS) || !strcmp(current->name, _NC_SIZES))	// Skip these special attibutes
+					continue;
+
 				// Check for attribute name
 				memset(key, 0, OPH_COMMON_BUFFER_LEN);
 				strcpy(keyptr, current->name);
 
 				// Check for attribute type
 				xtype = smd_attr_get_type(current);
-
-				if (xtype != SMD_TYPE_STRING) {
+				is_string = (xtype == SMD_TYPE_CHAR) || (xtype == SMD_TYPE_STRING) || (xtype == SMD_TYPE_ARRAY);
+				if (!is_string) {
 					switch (xtype) {
+						case SMD_TYPE_CHAR:
 						case SMD_TYPE_INT8:
 						case SMD_TYPE_UINT8:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
@@ -5170,7 +5178,7 @@ int task_init(oph_operator_struct * handle)
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_DOUBLE_TYPE);
 							break;
 						default:
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve metadata key type id\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_METADATATYPE_ID_ERROR);
 							hashtbl_destroy(key_tbl);
 							hashtbl_destroy(required_tbl);
@@ -5178,7 +5186,7 @@ int task_init(oph_operator_struct * handle)
 							goto __OPH_EXIT_1;
 					}
 					if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve metadata key type id\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_METADATATYPE_ID_ERROR);
 						hashtbl_destroy(key_tbl);
 						hashtbl_destroy(required_tbl);
@@ -5196,47 +5204,84 @@ int task_init(oph_operator_struct * handle)
 				id_key = hashtbl_get(key_tbl, key_and_variable);
 
 				//Insert key value into OphidiaDB
-				value = (char *) smd_attr_get_value(current);
 				switch (xtype) {
-					case SMD_TYPE_INT8:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((char *) value));
-						break;
-					case SMD_TYPE_UINT8:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned char *) value));
-						break;
-					case SMD_TYPE_INT16:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((short *) value));
-						break;
-					case SMD_TYPE_UINT16:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned short *) value));
-						break;
-					case SMD_TYPE_INT32:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((int *) value));
-						break;
-					case SMD_TYPE_UINT32:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned int *) value));
-						break;
-					case SMD_TYPE_INT64:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", *((long long *) value));
-						break;
-					case SMD_TYPE_UINT64:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", *((unsigned long long *) value));
-						break;
-					case SMD_TYPE_FLOAT:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", *((float *) value));
-						break;
-					case SMD_TYPE_DOUBLE:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", *((double *) value));
+					case SMD_TYPE_CHAR:{
+							char value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%c", value);
+							break;
+						}
+					case SMD_TYPE_INT8:{
+							int8_t value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_UINT8:{
+							uint8_t value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_INT16:{
+							int16_t value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_UINT16:{
+							uint16_t value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_INT32:{
+							int32_t value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_UINT32:{
+							uint32_t value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_INT64:{
+							int64_t value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", (long long) value);
+							break;
+						}
+					case SMD_TYPE_UINT64:{
+							uint64_t value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", (unsigned long long) value);
+							break;
+						}
+					case SMD_TYPE_FLOAT:{
+							float value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", value);
+							break;
+						}
+					case SMD_TYPE_DOUBLE:{
+							double value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", value);
+							break;
+						}
+					case SMD_TYPE_STRING:
+					case SMD_TYPE_ARRAY:
+						strncpy(svalue, (char *) smd_attr_get_value(current), current->type->size < OPH_COMMON_BUFFER_LEN ? current->type->size : OPH_COMMON_BUFFER_LEN);
 						break;
 					default:;
 				}
-
 				//Insert metadata instance (also manage relation)
 				if (oph_odb_meta_insert_into_metadatainstance_manage_tables
-				    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, NULL, sid_key_type, id_user, xtype == SMD_TYPE_STRING ? value : svalue,
-				     &id_metadatainstance)) {
+				    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, NULL, sid_key_type, id_user, svalue, &id_metadatainstance)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_INSERT_METADATAINSTANCE_ERROR, key, xtype == SMD_TYPE_STRING ? value : svalue);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_INSERT_METADATAINSTANCE_ERROR, key, svalue);
 					hashtbl_destroy(key_tbl);
 					hashtbl_destroy(required_tbl);
 					free(dimvar_ids);
@@ -5283,8 +5328,10 @@ int task_init(oph_operator_struct * handle)
 
 					// Check for attribute type
 					xtype = smd_attr_get_type(current);
-					if (xtype != SMD_TYPE_STRING) {
+					is_string = (xtype == SMD_TYPE_CHAR) || (xtype == SMD_TYPE_STRING) || (xtype == SMD_TYPE_ARRAY);
+					if (!is_string) {
 						switch (xtype) {
+							case SMD_TYPE_CHAR:
 							case SMD_TYPE_INT8:
 							case SMD_TYPE_UINT8:
 								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
@@ -5308,7 +5355,7 @@ int task_init(oph_operator_struct * handle)
 								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_DOUBLE_TYPE);
 								break;
 							default:
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve metadata key type id\n");
 								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_METADATATYPE_ID_ERROR);
 								hashtbl_destroy(key_tbl);
 								hashtbl_destroy(required_tbl);
@@ -5316,7 +5363,7 @@ int task_init(oph_operator_struct * handle)
 								goto __OPH_EXIT_1;
 						}
 						if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type)) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve metadata key type id '%s'\n", key_type);
 							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_METADATATYPE_ID_ERROR);
 							hashtbl_destroy(key_tbl);
 							hashtbl_destroy(required_tbl);
@@ -5334,48 +5381,86 @@ int task_init(oph_operator_struct * handle)
 					id_key = hashtbl_get(key_tbl, key_and_variable);
 
 					//Insert key value into OphidiaDB
-					value = (char *) smd_attr_get_value(current);
 					switch (xtype) {
-						case SMD_TYPE_INT8:
-							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((char *) value));
-							break;
-						case SMD_TYPE_UINT8:
-							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned char *) value));
-							break;
-						case SMD_TYPE_INT16:
-							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((short *) value));
-							break;
-						case SMD_TYPE_UINT16:
-							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned short *) value));
-							break;
-						case SMD_TYPE_INT32:
-							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((int *) value));
-							break;
-						case SMD_TYPE_UINT32:
-							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned int *) value));
-							break;
-						case SMD_TYPE_INT64:
-							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", *((long long *) value));
-							break;
-						case SMD_TYPE_UINT64:
-							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", *((unsigned long long *) value));
-							break;
-						case SMD_TYPE_FLOAT:
-							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", *((float *) value));
-							break;
-						case SMD_TYPE_DOUBLE:
-							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", *((double *) value));
+						case SMD_TYPE_CHAR:{
+								char value;
+								smd_attr_copy_value(current, &value);
+								snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%c", value);
+								break;
+							}
+						case SMD_TYPE_INT8:{
+								int8_t value;
+								smd_attr_copy_value(current, &value);
+								snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+								break;
+							}
+						case SMD_TYPE_UINT8:{
+								uint8_t value;
+								smd_attr_copy_value(current, &value);
+								snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+								break;
+							}
+						case SMD_TYPE_INT16:{
+								int16_t value;
+								smd_attr_copy_value(current, &value);
+								snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+								break;
+							}
+						case SMD_TYPE_UINT16:{
+								uint16_t value;
+								smd_attr_copy_value(current, &value);
+								snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+								break;
+							}
+						case SMD_TYPE_INT32:{
+								int32_t value;
+								smd_attr_copy_value(current, &value);
+								snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+								break;
+							}
+						case SMD_TYPE_UINT32:{
+								uint32_t value;
+								smd_attr_copy_value(current, &value);
+								snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+								break;
+							}
+						case SMD_TYPE_INT64:{
+								int64_t value;
+								smd_attr_copy_value(current, &value);
+								snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", (long long) value);
+								break;
+							}
+						case SMD_TYPE_UINT64:{
+								uint64_t value;
+								smd_attr_copy_value(current, &value);
+								snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", (unsigned long long) value);
+								break;
+							}
+						case SMD_TYPE_FLOAT:{
+								float value;
+								smd_attr_copy_value(current, &value);
+								snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", value);
+								break;
+							}
+						case SMD_TYPE_DOUBLE:{
+								double value;
+								smd_attr_copy_value(current, &value);
+								snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", value);
+								break;
+							}
+						case SMD_TYPE_STRING:
+						case SMD_TYPE_ARRAY:
+							strncpy(svalue, (char *) smd_attr_get_value(current),
+								current->type->size < OPH_COMMON_BUFFER_LEN ? current->type->size : OPH_COMMON_BUFFER_LEN);
 							break;
 						default:;
 					}
 
 					//Insert metadata instance (also manage relation)
 					if (oph_odb_meta_insert_into_metadatainstance_manage_tables
-					    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->dims_name[ii], sid_key_type, id_user,
-					     xtype == SMD_TYPE_STRING ? value : svalue, &id_metadatainstance)) {
+					    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->dims_name[ii], sid_key_type, id_user, svalue, &id_metadatainstance)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_INSERT_METADATAINSTANCE_ERROR, key,
-							xtype == SMD_TYPE_STRING ? value : svalue);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_INSERT_METADATAINSTANCE_ERROR, key, svalue);
 						hashtbl_destroy(key_tbl);
 						hashtbl_destroy(required_tbl);
 						free(dimvar_ids);
@@ -5412,8 +5497,10 @@ int task_init(oph_operator_struct * handle)
 
 				// Check for attribute type
 				xtype = smd_attr_get_type(current);
-				if (xtype != SMD_TYPE_STRING) {
+				is_string = (xtype == SMD_TYPE_CHAR) || (xtype == SMD_TYPE_STRING) || (xtype == SMD_TYPE_ARRAY);
+				if (!is_string) {
 					switch (xtype) {
+						case SMD_TYPE_CHAR:
 						case SMD_TYPE_INT8:
 						case SMD_TYPE_UINT8:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
@@ -5462,47 +5549,85 @@ int task_init(oph_operator_struct * handle)
 				id_key = hashtbl_get(key_tbl, key_and_variable);
 
 				//Insert key value into OphidiaDB
-				value = (char *) smd_attr_get_value(current);
 				switch (xtype) {
-					case SMD_TYPE_INT8:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((char *) value));
-						break;
-					case SMD_TYPE_UINT8:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned char *) value));
-						break;
-					case SMD_TYPE_INT16:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((short *) value));
-						break;
-					case SMD_TYPE_UINT16:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned short *) value));
-						break;
-					case SMD_TYPE_INT32:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((int *) value));
-						break;
-					case SMD_TYPE_UINT32:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned int *) value));
-						break;
-					case SMD_TYPE_INT64:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", *((long long *) value));
-						break;
-					case SMD_TYPE_UINT64:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", *((unsigned long long *) value));
-						break;
-					case SMD_TYPE_FLOAT:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", *((float *) value));
-						break;
-					case SMD_TYPE_DOUBLE:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", *((double *) value));
+					case SMD_TYPE_CHAR:{
+							char value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%c", value);
+							break;
+						}
+					case SMD_TYPE_INT8:{
+							int8_t value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_UINT8:{
+							uint8_t value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_INT16:{
+							int16_t value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_UINT16:{
+							uint16_t value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_INT32:{
+							int32_t value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_UINT32:{
+							uint32_t value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_INT64:{
+							int64_t value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", (long long) value);
+							break;
+						}
+					case SMD_TYPE_UINT64:{
+							uint64_t value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", (unsigned long long) value);
+							break;
+						}
+					case SMD_TYPE_FLOAT:{
+							float value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", value);
+							break;
+						}
+					case SMD_TYPE_DOUBLE:{
+							double value;
+							smd_attr_copy_value(current, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", value);
+							break;
+						}
+					case SMD_TYPE_STRING:
+					case SMD_TYPE_ARRAY:
+						strncpy(svalue, (char *) smd_attr_get_value(current), current->type->size < OPH_COMMON_BUFFER_LEN ? current->type->size : OPH_COMMON_BUFFER_LEN);
 						break;
 					default:;
 				}
 
 				//Insert metadata instance (also manage relation)
 				if (oph_odb_meta_insert_into_metadatainstance_manage_tables
-				    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->varname, sid_key_type, id_user, xtype == SMD_TYPE_STRING ? value : svalue,
-				     &id_metadatainstance)) {
+				    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->varname, sid_key_type, id_user, svalue, &id_metadatainstance)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_INSERT_METADATAINSTANCE_ERROR, key, xtype == SMD_TYPE_STRING ? value : svalue);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_INSERT_METADATAINSTANCE_ERROR, key, svalue);
 					hashtbl_destroy(key_tbl);
 					hashtbl_destroy(required_tbl);
 					goto __OPH_EXIT_1;
