@@ -31,6 +31,7 @@
 #define OPH_IMPORTESDM_DIMENSION_DEFAULT	"auto"
 
 struct _ESDM_var {
+	esdm_container_t *container;
 	esdm_dataset_t *dataset;
 	esdm_dataspace_t *dspace;
 	esdm_dataset_t **dim_dataset;
@@ -129,7 +130,6 @@ struct _OPH_IMPORTESDM_operator_handle {
 	int array_length;
 	int total_frag_number;
 	char *user;
-	esdm_container_t *container;
 	ESDM_var measure;
 	int compressed;
 	char **objkeys;

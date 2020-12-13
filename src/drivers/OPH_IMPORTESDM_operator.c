@@ -173,7 +173,7 @@ int oph_esdm_compare_types(int id_container, esdm_type_t var_type, const char di
 	return 0;
 }
 
-int update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, esdm_container_t * container)
+int update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, ESDM_var * measure)
 {
 	MYSQL_RES *key_list = NULL;
 	MYSQL_ROW row = NULL;
@@ -225,7 +225,7 @@ int update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim,
 
 				if (variable) {
 					esdm_dataset_t *dataset = NULL;
-					if (esdm_dataset_open(container, variable, ESDM_MODE_FLAG_READ, &dataset)) {
+					if (esdm_dataset_open(measure->container, variable, ESDM_MODE_FLAG_READ, &dataset)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering metadata of variable '%s'\n", variable);
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_ATTRIBUTE_ERROR);
 						break;
@@ -242,7 +242,7 @@ int update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim,
 						strcpy(value, smd_attr_get_value(attribute));
 					esdm_dataset_close(dataset);
 				} else {
-					if (esdm_container_get_attributes(container, &md)) {
+					if (esdm_container_get_attributes(measure->container, &md)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering metadata of the container\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_ATTRIBUTE_ERROR);
 						break;
@@ -447,10 +447,9 @@ int oph_esdm_get_dim_array(int id_container, esdm_dataset_t * dataset, int dim_i
 	return 0;
 }
 
-/*
-int oph_esdm_index_by_value(int id_container, esdm_container_t * container, int dim_id, esdm_type_t dim_type, int dim_size, char *value, int want_start, double offset, int *valorder, int *coord_index)
+int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, esdm_type_t dim_type, int dim_size, char *value, int want_start, double offset, int *valorder, int *coord_index)
 {
-	if (!container || !dim_size || !value || !coord_index || !valorder) {
+	if (!dim_size || !value || !coord_index || !valorder) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return -1;
 	}
@@ -462,77 +461,36 @@ int oph_esdm_index_by_value(int id_container, esdm_container_t * container, int 
 	int exact_value = 0;	//If I find the exact value
 	int i;
 
-	if (dim_type == SMD_DTYPE_INT16) {
-		binary_dim = (void *) malloc(sizeof(int) * dim_size);
-
-		if (nc_get_var_int(ncid, dim_id, (int *) binary_dim)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, "");
-			free(binary_dim);
-			return -1;
-		}
-		int *array_val = binary_dim, value_ = (int) (strtol(value, (char **) NULL, 10));
-		if (offset)
-			value_ += (int) (want_start ? -offset : offset);
-		//Check order of dimension values
-		if (array_val[0] > array_val[dim_size - 1])	//Descending
-			order = 0;
-		if (order) {
-			//Ascending
-			for (i = 0; i < dim_size; i++) {
-				if (array_val[i] >= value_) {
-					if (array_val[i] == value_)
-						exact_value = 1;
-					break;
-				}
-			}
-			if (exact_value) {
-				// Nothing to do
-				// i is the index I need
-			} else {
-				if (nearest_point) {
-					if ((i > 0) && ((i == dim_size) || (value_ - array_val[i - 1] < array_val[i] - value_)))
-						i--;
-				} else if (want_start) {
-					if (i == dim_size)
-						i--;
-				} else if (i)
-					i--;
-			}
-		}		//End if(order)
-		else {
-			//Descending
-			for (i = dim_size - 1; i >= 0; i--) {
-				if (array_val[i] >= value_) {
-					if (array_val[i] == value_)
-						exact_value = 1;
-					break;
-				}
-			}
-			if (exact_value) {
-				// Nothing to do
-				// i is the index I need
-			} else {
-				if (nearest_point) {
-					if ((i < dim_size - 1) && ((i < 0) || (value_ - array_val[i + 1] < array_val[i] - value_)))
-						i++;
-				} else if (want_start) {
-					if (i < 0)
-						i = 0;
-				} else if (i < dim_size - 1)
-					i++;
-			}
-		}		//End else if(order)
-	}			//End if(dim_type == NC_INT){
-	else if (dim_type == SMD_DTYPE_INT8) {
+	if (dim_type == SMD_DTYPE_INT8)
 		binary_dim = (void *) malloc(sizeof(char) * dim_size);
+	else if (dim_type == SMD_DTYPE_INT16)
+		binary_dim = (void *) malloc(sizeof(short) * dim_size);
+	else if (dim_type == SMD_DTYPE_INT32)
+		binary_dim = (void *) malloc(sizeof(int) * dim_size);
+	else if (dim_type == SMD_DTYPE_INT64)
+		binary_dim = (void *) malloc(sizeof(long long) * dim_size);
+	else if (dim_type == SMD_DTYPE_FLOAT)
+		binary_dim = (void *) malloc(sizeof(float) * dim_size);
+	else if (dim_type == SMD_DTYPE_DOUBLE)
+		binary_dim = (void *) malloc(sizeof(double) * dim_size);
+	else {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Data type not supported\n");
+		return -1;
+	}
+	if (!binary_dim) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Memory error\n");
+		return -1;
+	}
 
-		if (nc_get_var_uchar(ncid, dim_id, (unsigned char *) binary_dim)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, "");
-			free(binary_dim);
-			return -1;
-		}
+	if (esdm_read(measure->dim_dataset[dim_id], binary_dim, measure->dim_dspace[dim_id])) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
+		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, "");
+		free(binary_dim);
+		return -1;
+	}
+
+	if (dim_type == SMD_DTYPE_INT8) {
+
 		char *array_val = binary_dim, value_ = (char) (strtol(value, (char **) NULL, 10));
 		if (offset)
 			value_ += (char) (want_start ? -offset : offset);
@@ -587,14 +545,7 @@ int oph_esdm_index_by_value(int id_container, esdm_container_t * container, int 
 		}		//End else if(order)
 	}			//End if(dim_type == NC_BYTE){
 	else if (dim_type == SMD_DTYPE_INT16) {
-		binary_dim = (void *) malloc(sizeof(short) * dim_size);
 
-		if (nc_get_var_short(ncid, dim_id, (short *) binary_dim)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, "");
-			free(binary_dim);
-			return -1;
-		}
 		short *array_val = binary_dim, value_ = (short) (strtol(value, (char **) NULL, 10));
 		if (offset)
 			value_ += (short) (want_start ? -offset : offset);
@@ -648,15 +599,114 @@ int oph_esdm_index_by_value(int id_container, esdm_container_t * container, int 
 			}
 		}		//End else if(order)
 	}			//End if(dim_type == NC_SHORT){
-	else if (dim_type == SMD_DTYPE_FLOAT) {
-		binary_dim = (void *) malloc(sizeof(float) * dim_size);
+	else if (dim_type == SMD_DTYPE_INT32) {
 
-		if (nc_get_var_float(ncid, dim_id, (float *) binary_dim)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, "");
-			free(binary_dim);
-			return -1;
-		}
+		int *array_val = binary_dim, value_ = (int) (strtol(value, (char **) NULL, 10));
+		if (offset)
+			value_ += (int) (want_start ? -offset : offset);
+		//Check order of dimension values
+		if (array_val[0] > array_val[dim_size - 1])	//Descending
+			order = 0;
+		if (order) {
+			//Ascending
+			for (i = 0; i < dim_size; i++) {
+				if (array_val[i] >= value_) {
+					if (array_val[i] == value_)
+						exact_value = 1;
+					break;
+				}
+			}
+			if (exact_value) {
+				// Nothing to do
+				// i is the index I need
+			} else {
+				if (nearest_point) {
+					if ((i > 0) && ((i == dim_size) || (value_ - array_val[i - 1] < array_val[i] - value_)))
+						i--;
+				} else if (want_start) {
+					if (i == dim_size)
+						i--;
+				} else if (i)
+					i--;
+			}
+		}		//End if(order)
+		else {
+			//Descending
+			for (i = dim_size - 1; i >= 0; i--) {
+				if (array_val[i] >= value_) {
+					if (array_val[i] == value_)
+						exact_value = 1;
+					break;
+				}
+			}
+			if (exact_value) {
+				// Nothing to do
+				// i is the index I need
+			} else {
+				if (nearest_point) {
+					if ((i < dim_size - 1) && ((i < 0) || (value_ - array_val[i + 1] < array_val[i] - value_)))
+						i++;
+				} else if (want_start) {
+					if (i < 0)
+						i = 0;
+				} else if (i < dim_size - 1)
+					i++;
+			}
+		}		//End else if(order)
+	}			//End if(dim_type == NC_INT){
+	else if (dim_type == SMD_DTYPE_INT64) {
+
+		long long *array_val = binary_dim, value_ = (long long) (strtoll(value, (char **) NULL, 10));
+		if (offset)
+			value_ += (long long) (want_start ? -offset : offset);
+		//Check order of dimension values
+		if (array_val[0] > array_val[dim_size - 1])	//Descending
+			order = 0;
+		if (order) {
+			//Ascending
+			for (i = 0; i < dim_size; i++) {
+				if (array_val[i] >= value_) {
+					if (array_val[i] == value_)
+						exact_value = 1;
+					break;
+				}
+			}
+			if (exact_value) {
+			} else {
+				if (nearest_point) {
+					if ((i > 0) && ((i == dim_size) || (value_ - array_val[i - 1] < array_val[i] - value_)))
+						i--;
+				} else if (want_start) {
+					if (i == dim_size)
+						i--;
+				} else if (i)
+					i--;
+			}
+		}		//End if(order)
+		else {
+			//Descending
+			for (i = dim_size - 1; i >= 0; i--) {
+				if (array_val[i] >= value_) {
+					if (array_val[i] == value_)
+						exact_value = 1;
+					break;
+				}
+			}
+			if (exact_value) {
+			} else {
+				if (nearest_point) {
+					if ((i < dim_size - 1) && ((i < 0) || (value_ - array_val[i + 1] < array_val[i] - value_)))
+						i++;
+				} else if (want_start) {
+					if (i < 0)
+						i = 0;
+				} else if (i < dim_size - 1)
+					i++;
+			}
+		}		//End else if(order)
+	}			//End if(dim_type == NC_INT64){
+	else if (dim_type == SMD_DTYPE_FLOAT) {
+
 		float *array_val = binary_dim, value_ = (float) (strtof(value, NULL));
 		if (offset)
 			value_ += (float) (want_start ? -offset : offset);
@@ -707,14 +757,7 @@ int oph_esdm_index_by_value(int id_container, esdm_container_t * container, int 
 		}		//End else if(order)
 	}			//End if(dim_type == NC_FLOAT){
 	else if (dim_type == SMD_DTYPE_DOUBLE) {
-		binary_dim = (void *) malloc(sizeof(double) * dim_size);
 
-		if (nc_get_var_double(ncid, dim_id, (double *) binary_dim)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, "");
-			free(binary_dim);
-			return -1;
-		}
 		double *array_val = binary_dim, value_ = (double) (strtod(value, NULL));
 		if (offset)
 			value_ += want_start ? -offset : offset;
@@ -765,80 +808,22 @@ int oph_esdm_index_by_value(int id_container, esdm_container_t * container, int 
 			}
 		}		//End else if(order)
 	}			//End if(dim_type == NC_DOUBLE){
-	else if (dim_type == SMD_DTYPE_INT64) {
-		binary_dim = (void *) malloc(sizeof(long long) * dim_size);
-
-		if (nc_get_var_longlong(ncid, dim_id, (long long *) binary_dim)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, "");
-			free(binary_dim);
-			return -1;
-		}
-		long long *array_val = binary_dim, value_ = (long long) (strtoll(value, (char **) NULL, 10));
-		if (offset)
-			value_ += (long long) (want_start ? -offset : offset);
-		//Check order of dimension values
-		if (array_val[0] > array_val[dim_size - 1])	//Descending
-			order = 0;
-		if (order) {
-			//Ascending
-			for (i = 0; i < dim_size; i++) {
-				if (array_val[i] >= value_) {
-					if (array_val[i] == value_)
-						exact_value = 1;
-					break;
-				}
-			}
-			if (exact_value) {
-			} else {
-				if (nearest_point) {
-					if ((i > 0) && ((i == dim_size) || (value_ - array_val[i - 1] < array_val[i] - value_)))
-						i--;
-				} else if (want_start) {
-					if (i == dim_size)
-						i--;
-				} else if (i)
-					i--;
-			}
-		}		//End if(order)
-		else {
-			//Descending
-			for (i = dim_size - 1; i >= 0; i--) {
-				if (array_val[i] >= value_) {
-					if (array_val[i] == value_)
-						exact_value = 1;
-					break;
-				}
-			}
-			if (exact_value) {
-			} else {
-				if (nearest_point) {
-					if ((i < dim_size - 1) && ((i < 0) || (value_ - array_val[i + 1] < array_val[i] - value_)))
-						i++;
-				} else if (want_start) {
-					if (i < 0)
-						i = 0;
-				} else if (i < dim_size - 1)
-					i++;
-			}
-		}		//End else if(order)
-	}			//End if(dim_type == NC_INT64){
 	else {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
 		free(binary_dim);
 		return -1;
 	}
+
 	free(binary_dim);
 	*coord_index = i;
 	*valorder = order;
 	return 0;
 }
 
-int check_subset_string(char *curfilter, int i, ESDM_var * measure, int is_index, esdm_container_t * container, double offset)
+int check_subset_string(char *curfilter, int i, ESDM_var * measure, int is_index, double offset)
 {
-	ESDM_var tmp_var;
-	int ii, dims_id[1024];
+	int ii;
 	char *endfilter = strchr(curfilter, OPH_DIM_SUBSET_SEPARATOR2);
 	if (!endfilter && !offset) {
 		//Only single point
@@ -878,20 +863,20 @@ int check_subset_string(char *curfilter, int i, ESDM_var * measure, int is_index
 			}
 			//End of checking filter
 
-			//Extract the index of the coord based on the value
-			if (nc_inq_varid(ncid, measure->dims_name[i], &(tmp_var.varid))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, "");
-				return -1;
-			}
-			// Get all the information related to the dimension variable; we don't need name, since we already know it
-			if (nc_inq_var(ncid, tmp_var.varid, 0, &(tmp_var.vartype), &(tmp_var.ndims), dims_id, 0)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, "");
-				return -1;
-			}
-
-			if (tmp_var.ndims != 1) {
+			// Load dimension metadata is needed
+			if (!measure->dim_dataset[i])
+				if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, "");
+					return -1;
+				}
+			if (!measure->dim_dspace[i])
+				if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, "");
+					return -1;
+				}
+			if (measure->dim_dspace[i]->dims != 1) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
 				return -1;
@@ -901,7 +886,7 @@ int check_subset_string(char *curfilter, int i, ESDM_var * measure, int is_index
 			int want_start = 1;	//Single point, it is the same
 			int order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 			//Extract index of the point given the dimension value
-			if (oph_esdm_index_by_value(OPH_GENERIC_CONTAINER_ID, container, tmp_var.varid, dim_dspace->type, measure->dims_length[i], curfilter, want_start, 0, &order, &coord_index)) {
+			if (oph_esdm_index_by_value(OPH_GENERIC_CONTAINER_ID, measure, i, measure->dim_dspace[i]->type, measure->dims_length[i], curfilter, want_start, 0, &order, &coord_index)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, "");
 				return -1;
@@ -983,20 +968,20 @@ int check_subset_string(char *curfilter, int i, ESDM_var * measure, int is_index
 			}
 			//End of checking filter
 
-			//Extract the index of the coord based on the value
-			if (nc_inq_varid(ncid, measure->dims_name[i], &(tmp_var.varid))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, "");
-				return -1;
-			}
-			// Get all the information related to the dimension variable; we don't need name, since we already know it
-			if (nc_inq_var(ncid, tmp_var.varid, 0, &(tmp_var.vartype), &(tmp_var.ndims), dims_id, 0)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, "");
-				return -1;
-			}
-
-			if (tmp_var.ndims != 1) {
+			// Load dimension metadata is needed
+			if (!measure->dim_dataset[i])
+				if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, "");
+					return -1;
+				}
+			if (!measure->dim_dspace[i])
+				if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, "");
+					return -1;
+				}
+			if (measure->dim_dspace[i]->dims != 1) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
 				return -1;
@@ -1006,8 +991,7 @@ int check_subset_string(char *curfilter, int i, ESDM_var * measure, int is_index
 			int want_start = -1;
 			int order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 			//Extract index of the point given the dimension value
-			if (oph_esdm_index_by_value
-			    (OPH_GENERIC_CONTAINER_ID, container, tmp_var.varid, dim_dspace->type, measure->dims_length[i], startfilter, want_start, offset, &order, &coord_index)) {
+			if (oph_esdm_index_by_value(OPH_GENERIC_CONTAINER_ID, measure, i, measure->dim_dspace[i]->type, measure->dims_length[i], startfilter, want_start, offset, &order, &coord_index)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, "");
 				return -1;
@@ -1024,7 +1008,7 @@ int check_subset_string(char *curfilter, int i, ESDM_var * measure, int is_index
 			want_start = 0;
 			order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 			//Extract index of the point given the dimension value
-			if (oph_esdm_index_by_value(OPH_GENERIC_CONTAINER_ID, container, tmp_var.varid, dim_dspace->type, measure->dims_length[i], endfilter, want_start, offset, &order, &coord_index)) {
+			if (oph_esdm_index_by_value(OPH_GENERIC_CONTAINER_ID, measure, i, measure->dim_dspace[i]->type, measure->dims_length[i], endfilter, want_start, offset, &order, &coord_index)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
 				return -1;
@@ -1034,7 +1018,7 @@ int check_subset_string(char *curfilter, int i, ESDM_var * measure, int is_index
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
 				return -1;
 			}
-			//oph_nc_index_by value returns the index I need considering the order of the dimension values (ascending/descending)
+			//oph_esdm_index_by value returns the index I need considering the order of the dimension values (ascending/descending)
 			measure->dims_end_index[i] = coord_index;
 			//Descending order; I need to swap start and end index
 			if (!order) {
@@ -1048,7 +1032,6 @@ int check_subset_string(char *curfilter, int i, ESDM_var * measure, int is_index
 
 	return 0;
 }
-*/
 
 int _oph_esdm_cache_to_buffer(short int tot_dim_number, short int curr_dim, unsigned int *counters, unsigned int *limits, unsigned int *products, long long *index, char *binary_cache,
 			      char *binary_insert, size_t sizeof_var)
@@ -1087,9 +1070,9 @@ int oph_esdm_cache_to_buffer(short int tot_dim_number, unsigned int *counters, u
 	return _oph_esdm_cache_to_buffer(tot_dim_number, 0, counters, limits, products, &index, binary_cache, binary_insert, sizeof_var);
 }
 
-int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment * frag, esdm_container_t * container, int tuplexfrag_number, int array_length, int compressed, ESDM_var * measure)
+int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment * frag, int tuplexfrag_number, int array_length, int compressed, ESDM_var * measure)
 {
-	if (!frag || !container || !tuplexfrag_number || !array_length || !measure || !server) {
+	if (!frag || !tuplexfrag_number || !array_length || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return -1;
 	}
@@ -1499,7 +1482,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				return -1;
 			}
 
-			if ((esdm_write(measure->dataset, binary + jj * sizeof_var, subspace))) {
+			if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write data\n");
 				free(query_string);
 				free(idDim);
@@ -1684,7 +1667,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				return -1;
 			}
 
-			if ((esdm_write(measure->dataset, binary + jj * sizeof_var, subspace))) {
+			if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write data\n");
 				free(query_string);
 				free(idDim);
@@ -1768,10 +1751,9 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 	return 0;
 }
 
-int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment * frag, esdm_container_t * container, int tuplexfrag_number, int array_length, int compressed, ESDM_var * measure,
-				long long memory_size)
+int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment * frag, int tuplexfrag_number, int array_length, int compressed, ESDM_var * measure, long long memory_size)
 {
-	if (!frag || !container || !tuplexfrag_number || !array_length || !measure || !server) {
+	if (!frag || !tuplexfrag_number || !array_length || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return -1;
 	}
@@ -1845,7 +1827,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 
 	//If flag is set call old approach, else continue
 	if (!whole_fragment || dimension_ordered || !whole_explicit)
-		return oph_esdm_populate_fragment2(server, frag, container, tuplexfrag_number, array_length, compressed, measure);
+		return oph_esdm_populate_fragment2(server, frag, tuplexfrag_number, array_length, compressed, measure);
 
 	//Compute number of tuples per insert (regular case)
 	unsigned long long regular_rows = 0, regular_times = 0, remainder_rows = 0, jj = 0, l;
@@ -2141,7 +2123,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 		return -1;
 	}
 
-	if ((esdm_write(measure->dataset, binary_cache, subspace))) {
+	if ((esdm_read(measure->dataset, binary_cache, subspace))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write data\n");
 		free(query_string);
 		free(idDim);
@@ -2477,7 +2459,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->policy = 0;
-	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container = NULL;
 
 	char *value;
 
@@ -2763,18 +2744,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
-	if ((ret =
-	     esdm_container_open(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path, ESDM_MODE_FLAG_READ,
-				 &((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container))) {
+	if ((ret = esdm_container_open(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path, ESDM_MODE_FLAG_READ, &measure->container))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open ESDM object '%s': %s\n", ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path, measure->varname);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_OPEN_ERROR_NO_CONTAINER, container_name, "");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-
-	esdm_container_t *container = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container;
-
 	//Extract measured variable information
-	if ((ret = esdm_dataset_open(container, measure->varname, ESDM_MODE_FLAG_READ, &measure->dataset))) {
+	if ((ret = esdm_dataset_open(measure->container, measure->varname, ESDM_MODE_FLAG_READ, &measure->dataset))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, "");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -3442,7 +3418,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				dim.leap_month = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->leap_month;
 
 				if (!measure->dim_dataset[j])
-					if ((ret = esdm_dataset_open(container, measure->dims_name[j], ESDM_MODE_FLAG_READ, measure->dim_dataset + j))) {
+					if ((ret = esdm_dataset_open(measure->container, measure->dims_name[j], ESDM_MODE_FLAG_READ, measure->dim_dataset + j))) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 						oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -3495,7 +3471,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					ophidiadb *oDB = &((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->oDB;
 
 					if (update_dim_with_esdm_metadata
-					    (oDB, time_dim, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->id_vocabulary, OPH_GENERIC_CONTAINER_ID, container))
+					    (oDB, time_dim, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->id_vocabulary, OPH_GENERIC_CONTAINER_ID, measure))
 						time_dim->id_dimension = 0;
 					else
 						time_dim->id_dimension = -1;
@@ -3557,7 +3533,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 						}
 
 						if (update_dim_with_esdm_metadata
-						    (oDB, time_dim, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->id_vocabulary, id_container_out, container))
+						    (oDB, time_dim, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->id_vocabulary, id_container_out, measure))
 							break;
 					}
 
@@ -3675,22 +3651,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			measure->dims_start_index[i] = 0;
 			measure->dims_end_index[i] = measure->dims_length[i] - 1;
 		} else {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Subsetting is not supported\n");	// TODO
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-			if (offset)
-				free(offset);
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-/*
 			int ii;
-			if ((ii = check_subset_string(curfilter, i, measure, is_index[j], container, j < s_offset_num ? offset[j] : 0.0))) {
+			if ((ii = check_subset_string(curfilter, i, measure, is_index[j], j < s_offset_num ? offset[j] : 0.0))) {
 				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 				if (offset)
 					free(offset);
 				return ii;
-			} else if (measure->dims_start_index[i] < 0 || measure->dims_end_index[i] < 0 || measure->dims_start_index[i] > measure->dims_end_index[i] || measure->dims_start_index[i] >= (int) measure->dims_length[i] || measure->dims_end_index[i] >= (int) measure->dims_length[i]) {
+			} else if (measure->dims_start_index[i] < 0 || measure->dims_end_index[i] < 0 || measure->dims_start_index[i] > measure->dims_end_index[i]
+				   || measure->dims_start_index[i] >= (int) measure->dims_length[i] || measure->dims_end_index[i] >= (int) measure->dims_length[i]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -3699,7 +3668,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					free(offset);
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
-*/
 		}
 	}
 
@@ -3909,9 +3877,6 @@ int task_init(oph_operator_struct * handle)
 			((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container_input);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
-
-	esdm_container_t *container = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container;
-
 	//For error checking
 	int id_datacube[6] = { 0, 0, 0, 0, 0, 0 };
 
@@ -4342,7 +4307,7 @@ int task_init(oph_operator_struct * handle)
 			for (i = 0; i < measure->ndims; i++) {
 
 				if (!measure->dim_dataset[i])
-					if (esdm_dataset_open(container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
+					if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 						goto __OPH_EXIT_1;
@@ -4585,7 +4550,7 @@ int task_init(oph_operator_struct * handle)
 						if (dim_inst[j].size == curdimlength && dim_inst[j].concept_level == measure->dims_concept_level[i]) {
 
 							if (!measure->dim_dataset[i])
-								if (esdm_dataset_open(container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
+								if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
 									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
 									logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
 									oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -4806,7 +4771,7 @@ int task_init(oph_operator_struct * handle)
 
 				varid = i;
 				if (!measure->dim_dataset[i])
-					if (esdm_dataset_open(container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
+					if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
 						if (create_container) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
@@ -5127,7 +5092,7 @@ int task_init(oph_operator_struct * handle)
 
 			smd_attr_t *md, *current;
 			smd_basic_type_t xtype;
-			if ((esdm_container_get_attributes(container, &md))) {
+			if ((esdm_container_get_attributes(measure->container, &md))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering number of global attributes\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_NATTS_ERROR);
 				hashtbl_destroy(key_tbl);
@@ -5299,7 +5264,7 @@ int task_init(oph_operator_struct * handle)
 					continue;
 
 				if (!measure->dim_dataset[ii])
-					if ((esdm_dataset_open(container, measure->dims_name[ii], ESDM_MODE_FLAG_READ, measure->dim_dataset + ii))) {
+					if ((esdm_dataset_open(measure->container, measure->dims_name[ii], ESDM_MODE_FLAG_READ, measure->dim_dataset + ii))) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 						hashtbl_destroy(key_tbl);
@@ -6080,9 +6045,9 @@ int task_execute(oph_operator_struct * handle)
 				}
 				//Populate fragment
 				if (oph_esdm_populate_fragment3
-				    (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->server, &new_frag, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container,
-				     ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->tuplexfrag_number, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->array_length,
-				     ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->compressed, (ESDM_var *) & (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure),
+				    (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->server, &new_frag, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->tuplexfrag_number,
+				     ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->array_length, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->compressed,
+				     (ESDM_var *) & (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure),
 				     ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->memory_size)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
@@ -6418,7 +6383,7 @@ int env_unset(oph_operator_struct * handle)
 	}
 
 	esdm_dataset_close(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.dataset);
-	esdm_container_close(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->container);
+	esdm_container_close(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure.container);
 
 	esdm_finalize();
 
