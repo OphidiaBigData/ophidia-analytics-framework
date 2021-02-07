@@ -255,7 +255,37 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!strcmp(value, OPH_COMMON_YES_VALUE))
 		((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->misc = 1;
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	char *output_path = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	char *output_name = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_NAME);
+	char *output = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT);
+	char home[2];
+	home[0] = '/';
+	home[1] = 0;
+	size_t size;
+	if (output && ((size = strlen(output)))) {
+		char *pointer = output + size;
+		while ((pointer >= output) && (*pointer != '/'))
+			pointer--;
+		if (pointer < output) {
+			output_name = output;
+			if ((output[size - 3] == '.') && (output[size - 2] == 'n') && (output[size - 1] == 'c'))
+				output[size - 3] = 0;
+		} else {
+			if (pointer == output)
+				output_path = home;
+			else
+				output_path = output;
+			*pointer = 0;
+			pointer++;
+			if (pointer && *pointer) {
+				output_name = pointer;
+				if ((output[size - 3] == '.') && (output[size - 2] == 'n') && (output[size - 1] == 'c'))
+					output[size - 3] = 0;
+			}
+		}
+	}
+
+	value = output_path;
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
@@ -379,7 +409,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user_defined = 1;
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_NAME);
+	value = output_name;
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_NAME);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_NAME);
@@ -393,7 +423,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 	}
 	int s;
-	char *output_name = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name;
+	output_name = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name;
 	if (output_name && strncmp(output_name, "esdm://", 7)) {
 		for (s = 0; s < (int) strlen(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name); s++) {
 			if ((((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] == '/') || (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] == ':')) {
@@ -1658,6 +1688,7 @@ int task_execute(oph_operator_struct * handle)
 			handle->output_string = strdup(tmp_string);
 
 		} else if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link) {
+
 			int type = 1;
 			if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
 				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC_OUTPUT_PATH_SINGLE_FILE, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link, file,
@@ -1692,7 +1723,7 @@ int task_execute(oph_operator_struct * handle)
 			}
 			// ADD OUTPUT PID TO NOTIFICATION STRING
 			char tmp_string[OPH_COMMON_BUFFER_LEN];
-			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_LINK, jsonbuf);
+			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_LINK, jsonbuf, OPH_IN_PARAM_FILE, jsonbuf);
 			if (handle->output_string) {
 				strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
 				free(handle->output_string);
@@ -1715,6 +1746,14 @@ int task_execute(oph_operator_struct * handle)
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 			}
+			// ADD FILE TO NOTIFICATION STRING
+			char tmp_string[OPH_COMMON_BUFFER_LEN];
+			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_FILE, jsonbuf);
+			if (handle->output_string) {
+				strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
+				free(handle->output_string);
+			}
+			handle->output_string = strdup(tmp_string);
 		}
 	}
 
