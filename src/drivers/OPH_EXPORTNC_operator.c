@@ -1666,6 +1666,7 @@ int task_execute(oph_operator_struct * handle)
 	if (!handle->proc_rank) {
 
 		char jsonbuf[OPH_COMMON_BUFFER_LEN];
+		int type = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1;
 
 		if (!strncmp(file, "esdm://", 7)) {
 
@@ -1689,8 +1690,7 @@ int task_execute(oph_operator_struct * handle)
 
 		} else if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link) {
 
-			int type = 1;
-			if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
+			if (type)
 				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC_OUTPUT_PATH_SINGLE_FILE, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link, file,
 					 strstr(file, OPH_EXPORTNC_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC_OUTPUT_FILE_EXT);
 			else {
@@ -1738,9 +1738,13 @@ int task_execute(oph_operator_struct * handle)
 				output_path_file[--size] = 0;
 			if (oph_json_is_objkey_printable
 			    (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_EXPORTNC)) {
-				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s" OPH_EXPORTNC_OUTPUT_PATH_SINGLE_FILE, size
-					 && *output_path_file != '/' ? "/" : "", output_path_file, file, strstr(file, OPH_EXPORTNC_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC_OUTPUT_FILE_EXT);
-				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_EXPORTNC, "Output File", jsonbuf)) {
+				if (type)
+					snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s" OPH_EXPORTNC_OUTPUT_PATH_SINGLE_FILE, size
+						 && *output_path_file != '/' ? "/" : "", output_path_file, file, strstr(file, OPH_EXPORTNC_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC_OUTPUT_FILE_EXT);
+				else
+					snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s" OPH_EXPORTNC_OUTPUT_PATH "%s_*" OPH_EXPORTNC_OUTPUT_FILE_EXT, size
+						 && *output_path_file != '/' ? "/" : "", output_path_file, file);
+				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_EXPORTNC, type ? "Output File" : "Output Files", jsonbuf)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;

@@ -876,6 +876,11 @@ int task_execute(oph_operator_struct * handle)
 	esdm_dataset_t *dataset = NULL, *dimset[num_of_dims];
 	esdm_type_t type_dim;
 
+	for (l = 0; l < num_of_dims; l++) {
+		dimset[l] = NULL;
+		dimspace[l] = NULL;
+	}
+
 	if (oph_dc_setup_dbms(&(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server), (dbmss.value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTESDM_IOPLUGIN_SETUP_ERROR,
@@ -1097,8 +1102,10 @@ int task_execute(oph_operator_struct * handle)
 						oph_odb_stge_free_db_list(&dbs);
 						oph_odb_stge_free_dbms_list(&dbmss);
 						oph_odb_free_ophidiadb(&oDB_slave);
-						for (l = 0; l < inc; l++)
+						for (l = 0; l < inc; l++) {
 							esdm_dataset_close(dimset[l]);
+							esdm_dataspace_destroy(dimspace[l]);
+						}
 						esdm_container_close(container);
 						for (l = 0; l < num_of_dims; l++) {
 							if (dim_rows[l]) {

@@ -249,7 +249,7 @@ int oph_pid_get_base_src_path(char **base_src_path)
 		if ((res = _oph_pid_load_data()))
 			return res;
 	}
-	if (!oph_base_src_path)
+	if (!oph_base_src_path || !strcmp(oph_base_src_path, "/"))
 		return OPH_PID_SUCCESS;
 
 	if (!(*base_src_path = strdup(oph_base_src_path))) {
