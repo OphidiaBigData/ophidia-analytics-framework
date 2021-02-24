@@ -1793,7 +1793,10 @@ int task_execute(oph_operator_struct * handle)
 
 		if (oph_json_is_objkey_printable
 		    (((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_EXPORTESDM)) {
-			snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "esdm://%s", ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name);
+			if (((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
+				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "esdm://%s", ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name);
+			else
+				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "esdm://%s_i for i from 0 to %d", ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->total_fragment_number);
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_EXPORTESDM, "Output File", jsonbuf)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
