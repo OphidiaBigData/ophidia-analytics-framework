@@ -1475,17 +1475,17 @@ int task_execute(oph_operator_struct * handle)
 					}
 
 					if (!strcmp(dims[m].dimtype, OPH_COMMON_BYTE_TYPE))
-						ret = esdm_write(dataset, dim_rows[m] + dim_start[m] * sizeof(char), dimspace[m]);
+						ret = esdm_write(dimset[m], dim_rows[m] + dim_start[m] * sizeof(char), dimspace[m]);
 					else if (!strcmp(dims[m].dimtype, OPH_COMMON_SHORT_TYPE))
-						ret = esdm_write(dataset, dim_rows[m] + dim_start[m] * sizeof(short), dimspace[m]);
+						ret = esdm_write(dimset[m], dim_rows[m] + dim_start[m] * sizeof(short), dimspace[m]);
 					else if (!strcmp(dims[m].dimtype, OPH_COMMON_INT_TYPE))
-						ret = esdm_write(dataset, dim_rows[m] + dim_start[m] * sizeof(int), dimspace[m]);
+						ret = esdm_write(dimset[m], dim_rows[m] + dim_start[m] * sizeof(int), dimspace[m]);
 					else if (!strcmp(dims[m].dimtype, OPH_COMMON_LONG_TYPE))
-						ret = esdm_write(dataset, dim_rows[m] + dim_start[m] * sizeof(long long), dimspace[m]);
+						ret = esdm_write(dimset[m], dim_rows[m] + dim_start[m] * sizeof(long long), dimspace[m]);
 					else if (!strcmp(dims[m].dimtype, OPH_COMMON_FLOAT_TYPE))
-						ret = esdm_write(dataset, dim_rows[m] + dim_start[m] * sizeof(float), dimspace[m]);
+						ret = esdm_write(dimset[m], dim_rows[m] + dim_start[m] * sizeof(float), dimspace[m]);
 					else if (!strcmp(dims[m].dimtype, OPH_COMMON_DOUBLE_TYPE))
-						ret = esdm_write(dataset, dim_rows[m] + dim_start[m] * sizeof(double), dimspace[m]);
+						ret = esdm_write(dimset[m], dim_rows[m] + dim_start[m] * sizeof(double), dimspace[m]);
 					else {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
@@ -1636,30 +1636,6 @@ int task_execute(oph_operator_struct * handle)
 				for (inc = nexp; inc < num_of_dims; inc++)
 					count[inc] = dims[inc].dimsize;
 
-				ret = esdm_dataspace_create_full(num_of_dims, count, start, type_nc, &subspace);
-				if (ret) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set subspace\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, "Unable to set subspace\n");
-					oph_ioserver_free_result(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frag_rows);
-					oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-					oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
-					oph_odb_stge_free_fragment_list(&frags);
-					oph_odb_stge_free_db_list(&dbs);
-					oph_odb_stge_free_dbms_list(&dbmss);
-					oph_odb_free_ophidiadb(&oDB_slave);
-					for (l = 0; l < num_of_dims; l++) {
-						if (dim_rows[l]) {
-							free(dim_rows[l]);
-							dim_rows[l] = NULL;
-						}
-					}
-					free(dim_rows);
-					esdm_dataset_close(dataset);
-					esdm_dataspace_destroy(dataspace);
-					esdm_container_close(container);
-					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-				}
-
 				if (oph_ioserver_fetch_row(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frag_rows, &curr_row)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
 					oph_ioserver_free_result(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frag_rows);
@@ -1684,6 +1660,31 @@ int task_execute(oph_operator_struct * handle)
 
 				while ((curr_row->row)) {
 
+					ret = esdm_dataspace_subspace(dataspace, num_of_dims, count, start, &subspace);
+					if (ret) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set subspace\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, "Unable to set subspace\n");
+						oph_ioserver_free_result(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frag_rows);
+						oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+						oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
+						oph_odb_stge_free_fragment_list(&frags);
+						oph_odb_stge_free_db_list(&dbs);
+						oph_odb_stge_free_dbms_list(&dbmss);
+						oph_odb_free_ophidiadb(&oDB_slave);
+						esdm_dataset_close(dataset);
+						esdm_dataspace_destroy(dataspace);
+						esdm_container_close(container);
+						for (l = 0; l < num_of_dims; l++) {
+							if (dim_rows[l]) {
+								free(dim_rows[l]);
+								dim_rows[l] = NULL;
+							}
+						}
+						free(dim_rows);
+						esdm_dataspace_destroy(subspace);
+						return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+					}
+
 					ret = esdm_write(dataset, curr_row->row[1], subspace);
 					if (ret) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write variable values: %s\n", "");
@@ -1706,33 +1707,10 @@ int task_execute(oph_operator_struct * handle)
 							}
 						}
 						free(dim_rows);
+						esdm_dataspace_destroy(subspace);
 						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
-
-					ret = esdm_dataset_commit(dataset);
-					if (ret) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write variable values: %s\n", "");
-						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
-							OPH_LOG_OPH_EXPORTESDM_VAR_WRITE_ERROR, "");
-						oph_ioserver_free_result(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frag_rows);
-						oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-						oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
-						oph_odb_stge_free_fragment_list(&frags);
-						oph_odb_stge_free_db_list(&dbs);
-						oph_odb_stge_free_dbms_list(&dbmss);
-						oph_odb_free_ophidiadb(&oDB_slave);
-						esdm_dataset_close(dataset);
-						esdm_dataspace_destroy(dataspace);
-						esdm_container_close(container);
-						for (l = 0; l < num_of_dims; l++) {
-							if (dim_rows[l]) {
-								free(dim_rows[l]);
-								dim_rows[l] = NULL;
-							}
-						}
-						free(dim_rows);
-						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					}
+					esdm_dataspace_destroy(subspace);
 
 					oph_esdm_get_next_id(start, dim_val_num, nexp);
 					if (oph_ioserver_fetch_row(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frag_rows, &curr_row)) {
@@ -1759,6 +1737,30 @@ int task_execute(oph_operator_struct * handle)
 				}
 
 				oph_ioserver_free_result(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frag_rows);
+
+				ret = esdm_dataset_commit(dataset);
+				if (ret) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write variable values: %s\n", "");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_EXPORTESDM_VAR_WRITE_ERROR, "");
+					oph_ioserver_free_result(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frag_rows);
+					oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+					oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
+					oph_odb_stge_free_fragment_list(&frags);
+					oph_odb_stge_free_db_list(&dbs);
+					oph_odb_stge_free_dbms_list(&dbmss);
+					oph_odb_free_ophidiadb(&oDB_slave);
+					esdm_dataset_close(dataset);
+					esdm_dataspace_destroy(dataspace);
+					esdm_container_close(container);
+					for (l = 0; l < num_of_dims; l++) {
+						if (dim_rows[l]) {
+							free(dim_rows[l]);
+							dim_rows[l] = NULL;
+						}
+					}
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
 
 				esdm_dataset_close(dataset);
 				esdm_dataspace_destroy(dataspace);
@@ -1793,7 +1795,11 @@ int task_execute(oph_operator_struct * handle)
 
 		if (oph_json_is_objkey_printable
 		    (((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_EXPORTESDM)) {
-			snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "esdm://%s", ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name);
+			if (((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
+				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "esdm://%s", ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name);
+			else
+				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "esdm://%s_i for i from 0 to %d", ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name,
+					 ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->total_fragment_number - 1);
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_EXPORTESDM, "Output File", jsonbuf)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
