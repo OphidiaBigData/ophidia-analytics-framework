@@ -37,7 +37,6 @@ DRIVER=
 DRIVER+=liboph_explorecubeoperator.la
 DRIVER+=liboph_permuteoperator.la
 DRIVER+=liboph_subsetoperator.la
-DRIVER+=liboph_subset2operator.la
 DRIVER+=liboph_reduceoperator.la
 DRIVER+=liboph_reduce2operator.la
 DRIVER+=liboph_aggregateoperator.la
@@ -356,11 +355,6 @@ liboph_subsetoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_subsetoperator_la_SOURCES = OPH_SUBSET_operator.c
 liboph_subsetoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_subsetoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -lpthread  -loph_subset -loph_datacube -loph_ioserver -loph_dimension  -loph_hierarchy -loph_driver_proc
-
-liboph_subset2operator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} 
-liboph_subset2operator_la_SOURCES = OPH_SUBSET2_operator.c
-liboph_subset2operator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_subset2operator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_subset -loph_datacube -loph_ioserver -loph_dimension  -loph_hierarchy -loph_driver_proc
 
 liboph_tasksoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_tasksoperator_la_SOURCES = OPH_TASKS_operator.c
