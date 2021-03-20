@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2019 CMCC Foundation
+    Copyright (C) 2012-2020 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,10 +25,11 @@
 #include "oph_nc_library.h"
 #include "oph_ioserver_library.h"
 
-#define OPH_EXPORTNC2_OUTPUT_FILE "%s_%d.nc"
+#define OPH_EXPORTNC2_OUTPUT_FILE_EXT ".nc"
+#define OPH_EXPORTNC2_OUTPUT_FILE "%s_%d"OPH_EXPORTNC2_OUTPUT_FILE_EXT
 #define OPH_EXPORTNC2_OUTPUT_PATH "%s/"
 #define OPH_EXPORTNC2_OUTPUT_PATH_SUMMARY OPH_EXPORTNC2_OUTPUT_PATH"%s.html"
-#define OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE OPH_EXPORTNC2_OUTPUT_PATH"%s.nc"
+#define OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE OPH_EXPORTNC2_OUTPUT_PATH"%s%s"
 #define OPH_EXPORTNC2_OUTPUT_PATH_MORE_FILES OPH_EXPORTNC2_OUTPUT_PATH""OPH_EXPORTNC2_OUTPUT_FILE
 
 /**

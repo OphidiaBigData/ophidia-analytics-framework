@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2019 CMCC Foundation
+    Copyright (C) 2012-2020 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>
+#include <signal.h>
 
 #include "taketime.h"
 #include "oph_analytics_framework.h"
@@ -29,6 +30,10 @@
 #include "oph_common.h"
 
 int msglevel = LOG_WARNING_T;
+
+int oph_handle_signals();
+void oph_signal_handler(int sig);
+void oph_child_signal_handler(int sig);
 
 int main(int argc, char *argv[])
 {
@@ -66,6 +71,8 @@ int main(int argc, char *argv[])
 		res = 0;
 	}
 
+	oph_handle_signals();
+
 	if (res) {
 		struct timeval start_time, end_time, total_time;
 
@@ -96,4 +103,124 @@ int main(int argc, char *argv[])
 	MPI_Finalize();
 
 	return 0;
+}
+
+int oph_handle_signals(void)
+{
+	int rc;
+	struct sigaction act;
+
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "CALLED oph_handle_signals\n");
+
+	/* initialize the struct sigaction act */
+	memset(&act, 0, sizeof(act));
+	rc = sigfillset(&act.sa_mask);
+	if (rc != 0) {
+		return -1;
+	}
+#ifdef  SA_RESTART
+	act.sa_flags |= SA_RESTART;
+#endif
+
+	act.sa_handler = SIG_IGN;
+
+	rc = sigaction(SIGHUP, &act, NULL);
+	if (rc != 0) {
+		return -1;
+	}
+
+	rc = sigaction(SIGQUIT, &act, NULL);
+	if (rc != 0) {
+		return -1;
+	}
+
+	rc = sigaction(SIGPIPE, &act, NULL);
+	if (rc != 0) {
+		return -1;
+	}
+
+	rc = sigaction(SIGTSTP, &act, NULL);
+	if (rc != 0) {
+		return -1;
+	}
+
+	rc = sigaction(SIGTTIN, &act, NULL);
+	if (rc != 0) {
+		return -1;
+	}
+
+	rc = sigaction(SIGTTOU, &act, NULL);
+	if (rc != 0) {
+		return -1;
+	}
+
+	act.sa_handler = oph_signal_handler;
+
+	rc = sigaction(SIGINT, &act, NULL);
+	if (rc != 0) {
+		return -1;
+	}
+
+	rc = sigaction(SIGTERM, &act, NULL);
+	if (rc != 0) {
+		return -1;
+	}
+
+	rc = sigaction(SIGBUS, &act, NULL);
+	if (rc != 0) {
+		return -1;
+	}
+
+	rc = sigaction(SIGFPE, &act, NULL);
+	if (rc != 0) {
+		return -1;
+	}
+
+	rc = sigaction(SIGSEGV, &act, NULL);
+	if (rc != 0) {
+		return -1;
+	}
+
+	rc = sigaction(SIGSYS, &act, NULL);
+	if (rc != 0) {
+		return -1;
+	}
+
+	rc = sigaction(SIGXCPU, &act, NULL);
+	if (rc != 0) {
+		return -1;
+	}
+
+	rc = sigaction(SIGXFSZ, &act, NULL);
+	if (rc != 0) {
+		return -1;
+	}
+#ifdef  SA_NOCLDSTOP
+	act.sa_flags |= SA_NOCLDSTOP;
+#endif
+
+	act.sa_handler = oph_child_signal_handler;
+
+	rc = sigaction(SIGILL, &act, NULL);
+	if (rc != 0) {
+		return -1;
+	}
+
+	rc = sigaction(SIGCHLD, &act, NULL);
+	if (rc != 0) {
+		return -1;
+	}
+
+	return 0;
+}
+
+void oph_signal_handler(int sig)
+{
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "CALLED oph_signal_handler; catched signal nr %d (%s)\n", sig, sys_siglist[sig] ? sys_siglist[sig] : "");
+	exit(1);
+}
+
+void oph_child_signal_handler(int sig)
+{
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "CALLED oph_signal_handler; catched signal nr %d (%s)\n", sig, sys_siglist[sig] ? sys_siglist[sig] : "");
 }

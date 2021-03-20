@@ -33,6 +33,10 @@ The task can be unlocked by means of the command &quot;OPH_INPUT&quot;.
 - message : this user-defined message is appended to response in order to notify the waiting reason.
 - run : set to yes (default) to wait effectively
 
+[System parameters]
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+
 [Examples]
 Wait for 200 seconds:
 OPH_TERM: oph_wait timeout=200;
@@ -52,5 +56,6 @@ SUBMISSION STRING: &quot;operator=oph_wait;timeout=200;&quot;</abstract>
 		<argument type="string" mandatory="no" default="-">filename</argument>
 		<argument type="string" mandatory="no" default="-">message</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
+		<argument type="string" mandatory="no" default="sync" values="async|sync">exec_mode</argument>
     </args>
 </operator>
