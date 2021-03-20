@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2019 CMCC Foundation
+    Copyright (C) 2012-2020 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -538,7 +538,7 @@ int task_execute(oph_operator_struct * handle)
 			}
 
 			size_t read_bytes = fread(buffer, 1, out_file_info.st_size, out_file);
-			if (read_bytes < out_file_info.st_size) {
+			if (read_bytes < (size_t) out_file_info.st_size) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_B2DROP_READ_FILE_ERROR, out_file_info.st_size);
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_B2DROP_READ_FILE_ERROR, out_file_info.st_size);
 				if (buffer)

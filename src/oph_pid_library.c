@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2019 CMCC Foundation
+    Copyright (C) 2012-2020 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -249,7 +249,7 @@ int oph_pid_get_base_src_path(char **base_src_path)
 		if ((res = _oph_pid_load_data()))
 			return res;
 	}
-	if (!oph_base_src_path)
+	if (!oph_base_src_path || !strcmp(oph_base_src_path, "/"))
 		return OPH_PID_SUCCESS;
 
 	if (!(*base_src_path = strdup(oph_base_src_path))) {
