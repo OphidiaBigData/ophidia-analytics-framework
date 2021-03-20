@@ -23,7 +23,7 @@
 
 #define OPH_GENERIC_NOP ":"
 #define OPH_GENERIC_OUTPUT_PATH "%s/"
-#define OPH_GENERIC_OUTPUT_PATH_SINGLE_FILE OPH_GENERIC_OUTPUT_PATH"%s.nc"
+#define OPH_GENERIC_OUTPUT_PATH_SINGLE_FILE OPH_GENERIC_OUTPUT_PATH"%s"
 
 /**
  * \brief Structure of parameters needed by the operator OPH_GENERIC. It executes a script

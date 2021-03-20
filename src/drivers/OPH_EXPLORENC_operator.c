@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2019 CMCC Foundation
+    Copyright (C) 2012-2020 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -519,7 +519,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!strstr(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path, "http://")
-	    && !strstr(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path, "https://")) {
+	    && !strstr(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path, "https://")
+	    && !strstr(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path, "esdm://")) {
 		char *pointer = ((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path;
 		while (pointer && (*pointer == ' '))
 			pointer++;
