@@ -255,7 +255,11 @@ int oph_odb_dim_retrieve_dimension_list_from_grid_in_container(ophidiadb * oDB, 
  * \param datacube_id Id of the datacube, used to access time 
  * \return 0 if successfull, -1 otherwise
  */
+#ifdef OPH_MYSQL_SUPPORT
 int oph_odb_dim_find_dimensions_features(ophidiadb * oDB, int id_datacube, MYSQL_RES ** frag_rows, int *dim_num);
+#else
+int oph_odb_dim_find_dimensions_features(ophidiadb * oDB, int id_datacube, void **frag_rows, int *dim_num);
+#endif
 
 /**
  * \brief Function to retrieve list of all hierarchies
@@ -263,7 +267,11 @@ int oph_odb_dim_find_dimensions_features(ophidiadb * oDB, int id_datacube, MYSQL
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
+#ifdef OPH_MYSQL_SUPPORT
 int oph_odb_dim_find_hierarchy_list(ophidiadb * oDB, MYSQL_RES ** information_list);
+#else
+int oph_odb_dim_find_hierarchy_list(ophidiadb * oDB, void **information_list);
+#endif
 
 /**
  * \brief Function to retrieve list of all grids related to a container
@@ -272,7 +280,11 @@ int oph_odb_dim_find_hierarchy_list(ophidiadb * oDB, MYSQL_RES ** information_li
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
+#ifdef OPH_MYSQL_SUPPORT
 int oph_odb_dim_find_container_grid_list(ophidiadb * oDB, int id_container, MYSQL_RES ** information_list);
+#else
+int oph_odb_dim_find_container_grid_list(ophidiadb * oDB, int id_container, void **information_list);
+#endif
 
 /**
  * \brief Function to delete grid informations from OphidiaDB

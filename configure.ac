@@ -73,17 +73,17 @@ CPPFLAGS=""
 CXXFLAGS=""
 
 OPH_MYSQL_SUPPORT=
-AC_ARG_ENABLE(mdb, [  --disable-mysql	Disable MySQL support. (Enabled by default)], [ mdb="no" ], [ mdb="yes" ])
-if test "x$mdb" = "xyes"; then
+AC_ARG_ENABLE(mysql, [  --disable-mysql	Disable MySQL support. (Enabled by default)], [ mysql="no" ], [ mysql="yes" ])
+if test "x$mysql" = "xyes"; then
 	AC_MSG_NOTICE(MySQL enabled)
 else
 	AC_MSG_NOTICE(MySQL disabled)
 fi
-AM_CONDITIONAL([MYSQL_SUPPORT], [test "x$mdb" = "xyes"])
+AM_CONDITIONAL([MYSQL_SUPPORT], [test "x$mysql" = "xyes"])
 OPH_MYSQL_SUPPORT=$mdb
 AC_SUBST(OPH_MYSQL_SUPPORT)
 
-if test "x$mdb" = "xyes"; then
+if test "x$mysql" = "xyes"; then
 AX_LIB_MYSQL([5.6])
 if test -n $HAVE_MYSQL; then
 	AC_MSG_NOTICE([MySQL libraries available])

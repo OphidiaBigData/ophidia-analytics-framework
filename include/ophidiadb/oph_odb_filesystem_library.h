@@ -171,7 +171,11 @@ int oph_odb_fs_update_container_path_name(ophidiadb * oDB, int in_container_id, 
  * \param information_list Output result set
  * \return 0 if successfull, -1 otherwise
  */
+#ifdef OPH_MYSQL_SUPPORT
 int oph_odb_fs_find_fs_objects(ophidiadb * oDB, int level, int id_folder, char *container_name, MYSQL_RES ** information_list);
+#else
+int oph_odb_fs_find_fs_objects(ophidiadb * oDB, int level, int id_folder, char *container_name, void **information_list);
+#endif
 
 /**
  * \brief Function used to retrieve filesystem objects and also additional info. Output can be filtered on different arguments
@@ -184,7 +188,11 @@ int oph_odb_fs_find_fs_objects(ophidiadb * oDB, int level, int id_folder, char *
  * \param information_list Output result set
  * \return 0 if successfull, -1 otherwise
  */
+#ifdef OPH_MYSQL_SUPPORT
 int oph_odb_fs_find_fs_filtered_objects(ophidiadb * oDB, int id_folder, char *container_name, char *measure_filter, int oper_level, char *src_filter, MYSQL_RES ** information_list);
+#else
+int oph_odb_fs_find_fs_filtered_objects(ophidiadb * oDB, int id_folder, char *container_name, char *measure_filter, int oper_level, char *src_filter, void **information_list);
+#endif
 
 /**
  * \brief Function used to insert a new folder

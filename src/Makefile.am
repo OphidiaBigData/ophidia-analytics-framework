@@ -50,13 +50,6 @@ if HAVE_CFITSIO
 LIBRARY+= liboph_fits.la
 endif
 
-if MYSQL_SUPPORT
-LIBRARY+= libophidiadb.la
-OPHIDIADB=-lophidiadb
-else
-OPHIDIADB=
-endif
-
 lib_LTLIBRARIES = $(LIBRARY)
 if DEBUG_1
 lib_CFLAGS =  -I. -I../include -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(OPT) -DOPH_WITH_VALGRIND -DOPH_TIME_DEBUG_1
@@ -66,6 +59,14 @@ lib_CFLAGS =  -I. -I../include -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_
 else
 lib_CFLAGS =  -I. -I../include -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(OPT)
 endif
+endif
+
+if MYSQL_SUPPORT
+LIBRARY+= libophidiadb.la
+OPHIDIADB=-lophidiadb
+lib_CFLAGS += -DOPH_MYSQL_SUPPORT
+else
+OPHIDIADB=
 endif
 
 if DB_SUPPORT

@@ -27,6 +27,14 @@ endif
 endif
 bindir=${prefix}/bin
 
+if MYSQL_SUPPORT
+OPHIDIADB_CFLAGS=-DOPH_MYSQL_SUPPORT
+OPHIDIADB_LIBS=-lophidiadb
+else
+OPHIDIADB_CFLAGS=
+OPHIDIADB_LIBS=
+endif
+
 AM_CFLAGS = $(OPT)
 
 oph_analytics_framework_SOURCES=oph_analytics_framework.c
@@ -34,5 +42,5 @@ oph_analytics_framework_CFLAGS= $(OPT) -I../../include @INCLTDL@ -DOPH_PARALLEL_
 oph_analytics_framework_LDADD= -L.. -loph_analytics_framework @LIBLTDL@
 
 oph_ioserver_client_SOURCES= oph_ioserver_client.c 
-oph_ioserver_client_CFLAGS= $(OPT) -I../../include -I../../include/oph_ioserver @INCLTDL@ -DOPH_PARALLEL_LOCATION=\"${prefix}\" ${MYSQL_CFLAGS} -DPACKAGE_VERSION=\"@PACKAGE_VERSION@\"
-oph_ioserver_client_LDADD= ${MYSQL_LDFLAGS} -L.. -loph_datacube -lophidiadb @LIBLTDL@
+oph_ioserver_client_CFLAGS= $(OPT) -I../../include -I../../include/oph_ioserver @INCLTDL@ -DOPH_PARALLEL_LOCATION=\"${prefix}\" ${MYSQL_CFLAGS} -DPACKAGE_VERSION=\"@PACKAGE_VERSION@\" ${OPHIDIADB_CFLAGS}
+oph_ioserver_client_LDADD= ${MYSQL_LDFLAGS} -L.. -loph_datacube ${OPHIDIADB_LIBS} @LIBLTDL@
