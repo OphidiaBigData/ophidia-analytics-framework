@@ -21,7 +21,9 @@ ioserver_CFLAGS = -I. -I../../include -I../../include/oph_ioserver $(OPT)
 ioserverdir=${IOSERVER_PATH}
 IOSERVER=
 
+if MYSQL_SUPPORT
 IOSERVER+=libmysql_ioserver.la
+endif
 if OPHIDIAIO_SERVER_SUPPORT
 IOSERVER+=libophidia_ioserver.la
 endif
@@ -38,9 +40,11 @@ libmysql_ioserver_la_CFLAGS =  ${MYSQL_CFLAGS}  ${ioserver_CFLAGS} -DOPH_ANALYTI
 endif
 endif
 
+if MYSQL_SUPPORT
 libmysql_ioserver_la_SOURCES = MYSQL_ioserver.c
 libmysql_ioserver_la_LDFLAGS = -module -avoid-version -no-undefined 
 libmysql_ioserver_la_LIBADD = -lz ${MYSQL_LDFLAGS} -L.. -ldebug -lhashtbl -loph_ioserver_parser
+endif
 
 if OPHIDIAIO_SERVER_SUPPORT
 libophidia_ioserver_la_SOURCES = OPHIDIA_ioserver.c

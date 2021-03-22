@@ -18,9 +18,7 @@
 
 #define _GNU_SOURCE
 
-#ifdef OPH_MYSQL_SUPPORT
 #include <errmsg.h>
-#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

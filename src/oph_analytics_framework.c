@@ -199,6 +199,7 @@ int oph_af_create_job(ophidiadb * oDB, char *task_string, HASHTBL * task_tbl, in
 
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "'%s' '%s'\n", sessionid, markerid);
 
+#ifdef OPH_MYSQL_SUPPORT
 	int res, id_session;
 	if ((res = oph_odb_job_retrieve_session_id(oDB, sessionid, &id_session))) {
 		if (res != OPH_ODB_NO_ROW_FOUND) {
@@ -242,15 +243,26 @@ int oph_af_create_job(ophidiadb * oDB, char *task_string, HASHTBL * task_tbl, in
 	UNUSED(task_string);
 
 #endif
+#else
+
+	UNUSED(oDB);
+	UNUSED(task_string);
+	UNUSED(id_user);
+
+#endif
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
 int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, int task_number, int task_rank)
 {
-	int res = 0, idjob = -1;
-	ophidiadb oDB;
+	int res = 0;
 	oph_json *oper_json = NULL;
+
+#ifdef OPH_MYSQL_SUPPORT
+	ophidiadb oDB;
+	int idjob = -1;
+#endif
 
 #ifndef OPH_STANDALONE_MODE
 /* gSOAP data */
@@ -310,9 +322,11 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 
 	if (!task_rank) {
 #ifndef OPH_STANDALONE_MODE
+#ifdef OPH_MYSQL_SUPPORT
 		if (!oph_tp_find_param_in_task_string(task_string, OPH_ARG_IDJOB, notify_jobid))
 			idjob = (int) strtol(notify_jobid, NULL, 10);
 		else
+#endif
 			strcpy(notify_jobid, "0");
 		if (oph_tp_find_param_in_task_string(task_string, OPH_ARG_PARENTID, notify_parent_jobid))
 			strcpy(notify_parent_jobid, "0");
@@ -838,6 +852,8 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		//Init JSON END
 #endif
 
+#ifdef OPH_MYSQL_SUPPORT
+
 		oph_odb_init_ophidiadb(&oDB);
 		if (oph_odb_read_ophidiadb_config_file(&oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
@@ -870,9 +886,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 			}
 /* gSOAP notification end */
 #endif
-#ifdef OPH_MYSQL_SUPPORT
 			mysql_library_end();
-#endif
 			oph_pid_free();
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
@@ -907,15 +921,14 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 			}
 /* gSOAP notification end */
 #endif
-#ifdef OPH_MYSQL_SUPPORT
 			mysql_library_end();
-#endif
 			oph_pid_free();
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 
 		if (idjob)
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_RUNNING);
+#endif
 
 #ifdef OPH_STANDALONE_MODE
 		/* If we are using stand-alone mode, replace server-side arguments with fill values */
@@ -925,7 +938,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		hashtbl_insert(task_tbl, OPH_IN_PARAM_CWD, "/standalone");
 		hashtbl_remove(task_tbl, OPH_ARG_SESSIONID);
 		hashtbl_insert(task_tbl, OPH_ARG_SESSIONID, "/session/standalone/experiment");
-
+#ifdef OPH_MYSQL_SUPPORT
 		int folder_id = 0;
 		if (oph_odb_fs_path_parsing("", "/standalone", &folder_id, NULL, &oDB)) {
 			pmesg(LOG_WARNING, __FILE__, __LINE__, "Path /standalone doesn't exists\n");
@@ -937,15 +950,15 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 				oph_odb_free_ophidiadb(&oDB);
 				hashtbl_destroy(task_tbl);
 				snprintf(error_message, OPH_COMMON_BUFFER_LEN, "Unable to create standalone folder.\n");
-#ifdef OPH_MYSQL_SUPPORT
 				mysql_library_end();
-#endif
 				oph_pid_free();
 				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
 		}
 #endif
+#endif
 
+#ifdef OPH_MYSQL_SUPPORT
 #ifdef OPH_DB_SUPPORT
 		if (idjob < 0) {
 #endif
@@ -980,9 +993,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 				}
 /* gSOAP notification end */
 #endif
-#ifdef OPH_MYSQL_SUPPORT
 				mysql_library_end();
-#endif
 				oph_pid_free();
 				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
@@ -995,6 +1006,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 
 		if (idjob)
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_START);
+#endif
 
 #ifndef OPH_STANDALONE_MODE
 /* gSOAP notification start */
@@ -1038,8 +1050,10 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	gettimeofday(&stime, NULL);
 #endif
 
+#ifdef OPH_MYSQL_SUPPORT
 	if (!task_rank && idjob)
 		oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_SET_ENV);
+#endif
 
 	//Initialize all processes handles
 	if ((res = oph_set_env(task_tbl, handle))) {
@@ -1052,9 +1066,11 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 			oph_exit_task();
 		hashtbl_destroy(task_tbl);
 		if (!task_rank) {
+#ifdef OPH_MYSQL_SUPPORT
 			if (idjob)
 				oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_SET_ENV_ERROR);
 			oph_odb_free_ophidiadb(&oDB);
+#endif
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, OPH_LOG_ANALITICS_OPERATOR_SET_ENV_ERROR, "");
 #else
@@ -1107,8 +1123,10 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	gettimeofday(&stime, NULL);
 #endif
 
+#ifdef OPH_MYSQL_SUPPORT
 	if (!task_rank && idjob)
 		oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_INIT);
+#endif
 
 	//Perform task initializazion procedures (optional)
 	if ((res = oph_init_task(handle))) {
@@ -1121,9 +1139,11 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		if (handle->dlh)
 			oph_exit_task();
 		if (!task_rank) {
+#ifdef OPH_MYSQL_SUPPORT
 			if (idjob)
 				oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_INIT_ERROR);
 			oph_odb_free_ophidiadb(&oDB);
+#endif
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, OPH_LOG_ANALITICS_OPERATOR_INIT_ERROR, "");
 #else
@@ -1174,8 +1194,10 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	gettimeofday(&stime, NULL);
 #endif
 
+#ifdef OPH_MYSQL_SUPPORT
 	if (!task_rank && idjob)
 		oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DISTRIBUTE);
+#endif
 
 	//Perform workload distribution activities (optional)
 	if ((res = oph_distribute_task(handle))) {
@@ -1188,9 +1210,11 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		if (handle->dlh)
 			oph_exit_task();
 		if (!task_rank) {
+#ifdef OPH_MYSQL_SUPPORT
 			if (idjob)
 				oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DISTRIBUTE_ERROR);
 			oph_odb_free_ophidiadb(&oDB);
+#endif
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, OPH_LOG_ANALITICS_OPERATOR_DISTRIBUTE_ERROR, "");
 #else
@@ -1241,8 +1265,10 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	gettimeofday(&stime, NULL);
 #endif
 
+#ifdef OPH_MYSQL_SUPPORT
 	if (!task_rank && idjob)
 		oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_EXECUTE);
+#endif
 
 	//Perform distributive part of task
 	if ((res = oph_execute_task(handle))) {
@@ -1255,9 +1281,11 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		if (handle->dlh)
 			oph_exit_task();
 		if (!task_rank) {
+#ifdef OPH_MYSQL_SUPPORT
 			if (idjob)
 				oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_EXECUTE_ERROR);
 			oph_odb_free_ophidiadb(&oDB);
+#endif
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, OPH_LOG_ANALITICS_OPERATOR_EXECUTE_ERROR, "");
 #else
@@ -1308,8 +1336,10 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	gettimeofday(&stime, NULL);
 #endif
 
+#ifdef OPH_MYSQL_SUPPORT
 	if (!task_rank && idjob)
 		oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_REDUCE);
+#endif
 
 	//Perform reduction of results
 	if ((res = oph_reduce_task(handle))) {
@@ -1322,9 +1352,11 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		if (handle->dlh)
 			oph_exit_task();
 		if (!task_rank) {
+#ifdef OPH_MYSQL_SUPPORT
 			if (idjob)
 				oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_REDUCE_ERROR);
 			oph_odb_free_ophidiadb(&oDB);
+#endif
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, OPH_LOG_ANALITICS_OPERATOR_REDUCE_ERROR, "");
 #else
@@ -1375,8 +1407,10 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	gettimeofday(&stime, NULL);
 #endif
 
+#ifdef OPH_MYSQL_SUPPORT
 	if (!task_rank && idjob)
 		oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DESTROY);
+#endif
 
 	//Reset task specific initialization procedures
 	if ((res = oph_destroy_task(handle))) {
@@ -1388,9 +1422,11 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		if (handle->dlh)
 			oph_exit_task();
 		if (!task_rank) {
+#ifdef OPH_MYSQL_SUPPORT
 			if (idjob)
 				oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_DESTROY_ERROR);
 			oph_odb_free_ophidiadb(&oDB);
+#endif
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, OPH_LOG_ANALITICS_OPERATOR_DESTROY_ERROR, "");
 #else
@@ -1441,9 +1477,10 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	gettimeofday(&stime, NULL);
 #endif
 
+#ifdef OPH_MYSQL_SUPPORT
 	if (!task_rank && idjob)
 		oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_UNSET_ENV);
-
+#endif
 	//Release task and dynamic library resources
 	if ((res = oph_unset_env(handle))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Process deinit failed [Code: %d]!\n", res);
@@ -1453,9 +1490,11 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		if (handle->dlh)
 			oph_exit_task();
 		if (!task_rank) {
+#ifdef OPH_MYSQL_SUPPORT
 			if (idjob)
 				oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_UNSET_ENV_ERROR);
 			oph_odb_free_ophidiadb(&oDB);
+#endif
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
 			snprintf(error_message, OPH_COMMON_BUFFER_LEN, OPH_LOG_ANALITICS_OPERATOR_UNSET_ENV_ERROR, "");
 #else
@@ -1520,10 +1559,11 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 
 	int return_code = 0;
 	if (!task_rank) {
+#ifdef OPH_MYSQL_SUPPORT
 		if (idjob)
 			oph_odb_job_set_job_status(&oDB, idjob, OPH_ODB_JOB_STATUS_COMPLETED);
 		oph_odb_free_ophidiadb(&oDB);
-
+#endif
 		if (oph_json_add_text(oper_json, OPH_JSON_OBJKEY_STATUS, "SUCCESS", NULL)) {
 			oph_json_free(oper_json);
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");

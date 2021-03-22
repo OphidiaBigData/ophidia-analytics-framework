@@ -6359,6 +6359,14 @@ int update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, i
 
 	mysql_free_result(key_list);
 
+#else
+
+	UNUSED(oDB);
+	UNUSED(time_dim);
+	UNUSED(id_vocabulary);
+	UNUSED(id_container_out);
+	UNUSED(ncid);
+
 #endif
 
 	return OPH_NC_SUCCESS;

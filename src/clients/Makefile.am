@@ -15,7 +15,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-
+if MYSQL_SUPPORT
 if DEBUG_1
 bin_PROGRAMS=oph_analytics_framework oph_ioserver_client
 else
@@ -25,6 +25,10 @@ else
 bin_PROGRAMS=oph_analytics_framework
 endif
 endif
+else
+bin_PROGRAMS=oph_analytics_framework
+endif
+
 bindir=${prefix}/bin
 
 if MYSQL_SUPPORT
@@ -44,3 +48,4 @@ oph_analytics_framework_LDADD= -L.. -loph_analytics_framework @LIBLTDL@
 oph_ioserver_client_SOURCES= oph_ioserver_client.c 
 oph_ioserver_client_CFLAGS= $(OPT) -I../../include -I../../include/oph_ioserver @INCLTDL@ -DOPH_PARALLEL_LOCATION=\"${prefix}\" ${MYSQL_CFLAGS} -DPACKAGE_VERSION=\"@PACKAGE_VERSION@\" ${OPHIDIADB_CFLAGS}
 oph_ioserver_client_LDADD= ${MYSQL_LDFLAGS} -L.. -loph_datacube ${OPHIDIADB_LIBS} @LIBLTDL@
+

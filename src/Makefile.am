@@ -66,7 +66,7 @@ LIBRARY+= libophidiadb.la
 OPHIDIADB=-lophidiadb
 lib_CFLAGS += -DOPH_MYSQL_SUPPORT
 else
-OPHIDIADB=
+OPHIDIADB=-loph_pid
 endif
 
 if DB_SUPPORT

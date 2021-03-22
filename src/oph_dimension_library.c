@@ -1244,6 +1244,8 @@ int oph_dim_connect_to_dbms(oph_odb_dbms_instance * dbms, unsigned long flag)
 	}
 #else
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+
+	UNUSED(flag);
 #endif
 
 	return OPH_DIM_SUCCESS;
@@ -1304,6 +1306,9 @@ int oph_dim_check_connection_to_db(oph_odb_dbms_instance * dbms, oph_odb_db_inst
 	}
 #else
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+
+	UNUSED(db);
+	UNUSED(flag);
 #endif
 	return OPH_DIM_SUCCESS;
 }
@@ -1573,6 +1578,9 @@ int oph_dim_compare_dimension2(oph_odb_db_instance * db, char *dimension_table_n
 
 #else
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+
+	UNUSED(apply_clause);
+	UNUSED(dimension_id);
 #endif
 
 	return OPH_DIM_SUCCESS;
@@ -1803,6 +1811,8 @@ int oph_dim_insert_into_dimension_table_from_query(oph_odb_db_instance * db, cha
 	}
 #else
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+
+	UNUSED(query);
 #endif
 
 	return OPH_DIM_SUCCESS;
@@ -2330,6 +2340,11 @@ int oph_dim_read_dimension_filtered_data(oph_odb_db_instance * db, char *dimensi
 
 #else
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+
+	UNUSED(dimension_id);
+	UNUSED(array_clause);
+	UNUSED(compressed);
+	UNUSED(dim_size);
 #endif
 
 	return OPH_DIM_SUCCESS;
