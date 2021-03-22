@@ -22,7 +22,11 @@ ACLOCAL_AMFLAGS = -I m4
 
 SUBDIRS = . libltdl src 
 
+if MYSQL_SUPPORT
 sysconf_DATA = etc/oph_analytics_driver etc/oph_io_server etc/oph_configuration etc/ophidiadb.sql etc/oph_soap_configuration etc/oph_script_configuration
+else
+sysconf_DATA = etc/oph_analytics_driver etc/oph_io_server etc/oph_configuration etc/oph_soap_configuration etc/oph_script_configuration
+endif
  
 logdir = $(prefix)/log/
 dist_log_DATA =
@@ -34,7 +38,6 @@ OPERATOR_XML+=etc/operators_xml/OPH_CDO_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_GENERIC_operator_1.0.xml
 
 if MYSQL_SUPPORT
-
 OPERATOR_XML+=etc/operators_xml/OPH_AGGREGATE2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_AGGREGATE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_APPLY_operator_1.0.xml
@@ -109,19 +112,24 @@ OPERATOR_XML+=etc/operators_xml/OPH_SUBSET_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_TASKS_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_UNPUBLISH_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_WAIT_operator_1.0.xml
-
 endif
 
 dist_xmloper_DATA = $(OPERATOR_XML)
 
+if MYSQL_SUPPORT
 xmlprimdir = $(prefix)/etc/primitives_xml/
 dist_xmlprim_DATA = etc/primitives_xml/*.xml
 
 xmlhierdir = $(prefix)/etc/hierarchies_xml/
 dist_xmlhier_DATA = etc/hierarchies_xml/*.xml
+endif
 
 dtddir = $(prefix)/etc/ophidia_dtd/
+if MYSQL_SUPPORT
 dist_dtd_DATA = etc/ophidia_dtd/*.dtd
+else
+dist_dtd_DATA = etc/ophidia_dtd/ophidiaoperator.dtd
+endif
 
 imgdir = @OPH_WEB_SERVER_LOCATION@/img/
 dist_img_DATA = etc/img/*.png
