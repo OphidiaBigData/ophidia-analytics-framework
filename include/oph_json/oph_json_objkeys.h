@@ -147,6 +147,7 @@
 #define OPH_JSON_OBJKEY_CONTAINERSCHEMA_INFO 		"containerschema_info"
 #define OPH_JSON_OBJKEY_CONTAINERSCHEMA_DIMINFO 	"containerschema_diminfo"
 #define OPH_JSON_OBJKEY_IMPORTESDM					"importesdm"
+#define OPH_JSON_OBJKEY_IMPORTESDM2					"importesdm2"
 #define OPH_JSON_OBJKEY_EXPORTESDM					"exportesdm"
 
 #endif

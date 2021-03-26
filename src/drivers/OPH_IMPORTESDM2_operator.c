@@ -227,12 +227,12 @@ int update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim,
 					esdm_dataset_t *dataset = NULL;
 					if (esdm_dataset_open(measure->container, variable, ESDM_MODE_FLAG_READ, &dataset)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering metadata of variable '%s'\n", variable);
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_NC_ATTRIBUTE_ERROR);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_ATTRIBUTE_ERROR);
 						break;
 					}
 					if (esdm_dataset_get_attributes(dataset, &md)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering metadata of variable '%s'\n", variable);
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_NC_ATTRIBUTE_ERROR);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_ATTRIBUTE_ERROR);
 						esdm_dataset_close(dataset);
 						break;
 					}
@@ -244,7 +244,7 @@ int update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim,
 				} else {
 					if (esdm_container_get_attributes(measure->container, &md)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering metadata of the container\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_NC_ATTRIBUTE_ERROR);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_ATTRIBUTE_ERROR);
 						break;
 					}
 					attribute = smd_attr_get_child_by_name(md, key);
@@ -2407,7 +2407,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	if (!(handle->operator_handle = (OPH_IMPORTESDM2_operator_handle *) calloc(1, sizeof(OPH_IMPORTESDM2_operator_handle)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_HANDLE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	//1 - Set up struct to empty values
@@ -2511,58 +2511,58 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_BASE_TIME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_BASE_TIME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_BASE_TIME);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_BASE_TIME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->base_time = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_BASE_TIME);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_BASE_TIME);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_UNITS);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_UNITS);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_UNITS);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_UNITS);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->units = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_UNITS);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_UNITS);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CALENDAR);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CALENDAR);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CALENDAR);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CALENDAR);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->calendar = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_CALENDAR);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_CALENDAR);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_MONTH_LENGTHS);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_MONTH_LENGTHS);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_MONTH_LENGTHS);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_MONTH_LENGTHS);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->month_lengths = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_MONTH_LENGTHS);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, OPH_IN_PARAM_MONTH_LENGTHS);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_LEAP_YEAR);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_LEAP_YEAR);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_LEAP_YEAR);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_LEAP_YEAR);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->leap_year = (int) strtol(value, NULL, 10);
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_LEAP_MONTH);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_LEAP_MONTH);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_LEAP_MONTH);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_LEAP_MONTH);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->leap_month = (int) strtol(value, NULL, 10);
@@ -2575,7 +2575,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
 		if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->description = (char *) strndup(value, OPH_TP_TASKLEN))) {
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT, "description");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT, "description");
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
@@ -2588,7 +2588,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_IMPORT_METADATA);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IMPORT_METADATA);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IMPORT_METADATA);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IMPORT_METADATA);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN) == 0) {
@@ -2598,24 +2598,24 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SRC_FILE_PATH);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SRC_FILE_PATH);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SRC_FILE_PATH);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SRC_FILE_PATH);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->nc_file_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT_NO_CONTAINER, value, "nc file path");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT_NO_CONTAINER, value, "nc file path");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->nc_file_path_orig = strdup(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->nc_file_path))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "nc file path");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "nc file path");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CONTAINER_INPUT);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CONTAINER_INPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CONTAINER_INPUT);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
@@ -2630,19 +2630,19 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		container_name = value;
 	if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->container_input = (char *) strndup(container_name, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "container output name");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "container output name");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_ARG_USERNAME);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_ARG_USERNAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->user = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "username");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "username");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
@@ -2663,19 +2663,19 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	if (oph_pid_get_memory_size(&(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->memory_size))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_OPHIDIADB_CONFIGURATION_FILE, container_name);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_OPHIDIADB_CONFIGURATION_FILE, container_name);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CWD);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CWD);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CWD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CWD);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->cwd = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "cwd");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "cwd");
 
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
@@ -2683,7 +2683,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SCHEDULE_ALGORITHM);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SCHEDULE_ALGORITHM);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SCHEDULE_ALGORITHM);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SCHEDULE_ALGORITHM);
 
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
@@ -2692,7 +2692,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_HOST_NUMBER);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_HOST_NUMBER);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_HOST_NUMBER);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_HOST_NUMBER);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->host_number = (int) strtol(value, NULL, 10);
@@ -2702,7 +2702,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_FRAGMENENT_NUMBER);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_FRAGMENENT_NUMBER);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_FRAGMENENT_NUMBER);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_FRAGMENENT_NUMBER);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragxdb_number = (int) strtol(value, NULL, 10);
@@ -2711,8 +2711,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	//Additional check (all distrib arguments must be bigger than 0 or at least -1 if default values are given)
 	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->host_number == 0 || ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragxdb_number == 0) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_FRAG_PARAMS_ERROR, container_name);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_FRAG_PARAMS_ERROR, container_name);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_FRAG_PARAMS_ERROR, container_name);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_FRAG_PARAMS_ERROR, container_name);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
@@ -2720,7 +2720,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_MEASURE_NAME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_MEASURE_NAME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_MEASURE_NAME);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_MEASURE_NAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	strncpy(measure->varname, value, OPH_ODB_DIM_DIMENSION_SIZE);
@@ -2747,13 +2747,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	if ((ret = esdm_container_open(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->nc_file_path, ESDM_MODE_FLAG_READ, &measure->container))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open ESDM object '%s': %s\n", ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->nc_file_path, measure->varname);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_NC_OPEN_ERROR_NO_CONTAINER, container_name, "");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_OPEN_ERROR_NO_CONTAINER, container_name, "");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	//Extract measured variable information
 	if ((ret = esdm_dataset_open(measure->container, measure->varname, ESDM_MODE_FLAG_READ, &measure->dataset))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, "");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, "");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -2761,7 +2761,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	if ((ret = esdm_dataset_get_dataspace(dataset, &measure->dspace))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, "");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, "");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -2769,7 +2769,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	if (oph_esdm_set_esdm_type(measure->vartype, dspace->type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, "");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, "");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -2781,7 +2781,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		value = hashtbl_get(task_tbl, OPH_IN_PARAM_IMPLICIT_DIMENSION_NAME);
 		if (!value) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IMPLICIT_DIMENSION_NAME);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IMPLICIT_DIMENSION_NAME);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IMPLICIT_DIMENSION_NAME);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 
@@ -2789,7 +2789,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			//If implicit is differen't from auto use standard approach
 			if (oph_tp_parse_multiple_value_param(value, &imp_dim_names, &imp_number_of_dim_names)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INVALID_INPUT_STRING);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
@@ -2797,7 +2797,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 			if (measure->nimp > ndims) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong number of dimensions provided in task string\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_WRONG_DIM_NUMBER_NO_CONTAINER, container_name, ndims);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_WRONG_DIM_NUMBER_NO_CONTAINER, container_name, ndims);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
@@ -2805,7 +2805,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
 			if (!value) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
@@ -2814,7 +2814,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				//Explicit is not auto, use standard approach
 				if (oph_tp_parse_multiple_value_param(value, &exp_dim_names, &exp_number_of_dim_names)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INVALID_INPUT_STRING);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 					oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 					oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
@@ -2839,15 +2839,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXPLICIT_DIMENSION_CONCEPT_LEVEL);
 		if (!value) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_EXPLICIT_DIMENSION_CONCEPT_LEVEL);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name,
-				OPH_IN_PARAM_EXPLICIT_DIMENSION_CONCEPT_LEVEL);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_EXPLICIT_DIMENSION_CONCEPT_LEVEL);
 			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 		if (!(tmp_concept_levels = (char *) malloc(measure->ndims * sizeof(char)))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "Tmp concpet levels");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "Tmp concpet levels");
 			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
@@ -2856,7 +2855,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (strncmp(value, OPH_COMMON_DEFAULT_CONCEPT_LEVEL, strlen(value)) || strncmp(value, OPH_COMMON_DEFAULT_CONCEPT_LEVEL, strlen(OPH_COMMON_DEFAULT_CONCEPT_LEVEL))) {
 			if (oph_tp_parse_multiple_value_param(value, &exp_dim_clevels, &number_of_dim_clevels)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INVALID_INPUT_STRING);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 				oph_tp_free_multiple_value_param_list(exp_dim_clevels, number_of_dim_clevels);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
@@ -2867,7 +2866,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 			if (number_of_dim_clevels != measure->nexp) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 				oph_tp_free_multiple_value_param_list(exp_dim_clevels, number_of_dim_clevels);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
@@ -2886,7 +2885,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					tmp_concept_levels[i] = exp_dim_clevels[i][0];
 				if (tmp_concept_levels[i] == OPH_COMMON_ALL_CONCEPT_LEVEL) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c'\n", OPH_COMMON_ALL_CONCEPT_LEVEL);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_BAD2_PARAMETER, "dimension level", OPH_COMMON_ALL_CONCEPT_LEVEL);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_BAD2_PARAMETER, "dimension level", OPH_COMMON_ALL_CONCEPT_LEVEL);
 					oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 					oph_tp_free_multiple_value_param_list(exp_dim_clevels, number_of_dim_clevels);
 					oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
@@ -2906,8 +2905,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		value = hashtbl_get(task_tbl, OPH_IN_PARAM_IMPLICIT_DIMENSION_CONCEPT_LEVEL);
 		if (!value) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IMPLICIT_DIMENSION_CONCEPT_LEVEL);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name,
-				OPH_IN_PARAM_IMPLICIT_DIMENSION_CONCEPT_LEVEL);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IMPLICIT_DIMENSION_CONCEPT_LEVEL);
 			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 			if (tmp_concept_levels)
@@ -2917,7 +2915,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (strncmp(value, OPH_COMMON_DEFAULT_CONCEPT_LEVEL, strlen(value)) || strncmp(value, OPH_COMMON_DEFAULT_CONCEPT_LEVEL, strlen(OPH_COMMON_DEFAULT_CONCEPT_LEVEL))) {
 			if (oph_tp_parse_multiple_value_param(value, &imp_dim_clevels, &imp_number_of_dim_clevels)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INVALID_INPUT_STRING);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 				oph_tp_free_multiple_value_param_list(imp_dim_clevels, imp_number_of_dim_clevels);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
@@ -2928,7 +2926,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 			if (imp_number_of_dim_clevels != measure->nimp) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 				oph_tp_free_multiple_value_param_list(imp_dim_clevels, imp_number_of_dim_clevels);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
@@ -2947,7 +2945,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					tmp_concept_levels[i] = imp_dim_clevels[i - measure->nexp][0];
 				if (tmp_concept_levels[i] == OPH_COMMON_ALL_CONCEPT_LEVEL) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c'\n", OPH_COMMON_ALL_CONCEPT_LEVEL);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_BAD2_PARAMETER, "dimension level", OPH_COMMON_ALL_CONCEPT_LEVEL);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_BAD2_PARAMETER, "dimension level", OPH_COMMON_ALL_CONCEPT_LEVEL);
 					oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 					oph_tp_free_multiple_value_param_list(imp_dim_clevels, imp_number_of_dim_clevels);
 					oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
@@ -2966,7 +2964,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 		if (ndims != measure->ndims) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong number of dimensions provided in task string\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_WRONG_DIM_NUMBER_NO_CONTAINER, container_name, ndims);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_WRONG_DIM_NUMBER_NO_CONTAINER, container_name, ndims);
 			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 			if (tmp_concept_levels)
@@ -2976,7 +2974,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 /*
 		if (!(measure->dims_name = (char **) malloc(measure->ndims * sizeof(char *)))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_name");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_name");
 			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 			if (tmp_concept_levels)
@@ -2987,7 +2985,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 */
 		if (!(measure->dims_length = (size_t *) malloc(measure->ndims * sizeof(size_t)))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_length");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_length");
 			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 			if (tmp_concept_levels)
@@ -2996,7 +2994,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 		if (!(measure->dims_unlim = (char *) malloc(measure->ndims * sizeof(char)))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_unlim");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_unlim");
 			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 			if (tmp_concept_levels)
@@ -3005,7 +3003,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 		if (!(measure->dims_type = (short int *) malloc(measure->ndims * sizeof(short int)))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_type");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_type");
 			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 			if (tmp_concept_levels)
@@ -3014,7 +3012,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 		if (!(measure->dims_oph_level = (short int *) calloc(measure->ndims, sizeof(short int)))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_oph_level");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_oph_level");
 			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 			if (tmp_concept_levels)
@@ -3023,7 +3021,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 		if (!(measure->dims_concept_level = (char *) calloc(measure->ndims, sizeof(char)))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_concept_level");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_concept_level");
 			oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 			oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 			if (tmp_concept_levels)
@@ -3041,7 +3039,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	//Extract dimension ids following order in the nc file
 	if (!(measure->dims_id = (int *) malloc(measure->ndims * sizeof(int)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_id");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_id");
 		oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 		oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
 		if (tmp_concept_levels)
@@ -3079,7 +3077,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			}
 			if (!flag) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension %s related to variable %s in in nc file\n", dimname, measure->varname);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname,
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname,
 					measure->varname);
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
@@ -3138,7 +3136,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			}
 			if (!flag) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension %s related to variable %s in in nc file\n", dimname, measure->varname);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname,
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname,
 					measure->varname);
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
@@ -3170,14 +3168,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OFFSET);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OFFSET);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_OFFSET);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_OFFSET);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	char **s_offset = NULL;
 	int s_offset_num = 0;
 	if (oph_tp_parse_multiple_value_param(value, &s_offset, &s_offset_num)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INVALID_INPUT_STRING);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 		oph_tp_free_multiple_value_param_list(s_offset, s_offset_num);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
@@ -3186,7 +3184,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		offset = (double *) calloc(s_offset_num, sizeof(double));
 		if (!offset) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_NO_CONTAINER, container_name, "offset");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_NO_CONTAINER, container_name, "offset");
 			oph_tp_free_multiple_value_param_list(s_offset, s_offset_num);
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
@@ -3205,7 +3203,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_DIMENSIONS);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_DIMENSIONS);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SUBSET_DIMENSIONS);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SUBSET_DIMENSIONS);
 		if (offset)
 			free(offset);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
@@ -3216,7 +3214,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		issubset = 1;
 		if (oph_tp_parse_multiple_value_param(value, &sub_dims, &number_of_sub_dims)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INVALID_INPUT_STRING);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			if (offset)
 				free(offset);
@@ -3227,7 +3225,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_FILTER);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_FILTER);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SUBSET_FILTER);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SUBSET_FILTER);
 		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 		if (offset)
 			free(offset);
@@ -3240,7 +3238,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		isfilter = 1;
 		if (oph_tp_parse_multiple_value_param(value, &sub_filters, &number_of_sub_filters)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INVALID_INPUT_STRING);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)
@@ -3251,7 +3249,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	if ((issubset && !isfilter) || (!issubset && isfilter)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INVALID_INPUT_STRING);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 		if (offset)
@@ -3261,7 +3259,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	if (number_of_sub_dims != number_of_sub_filters) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
 		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 		if (offset)
@@ -3276,7 +3274,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				break;
 		if (j == ndims) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s' in in nc file\n", dimname, measure->varname);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname, measure->varname);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname, measure->varname);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)
@@ -3291,7 +3289,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->time_filter && strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR[1])) {
 			if (tf >= 0) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Not more than one time dimension can be considered\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INVALID_INPUT_STRING);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 				if (offset)
@@ -3305,7 +3303,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					break;
 		} else if (strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2) != strrchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Strided range are not supported\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INVALID_INPUT_STRING);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)
@@ -3322,7 +3320,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 		if (oph_odb_read_ophidiadb_config_file(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_OPHIDIADB_CONFIGURATION_FILE, container_name);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_OPHIDIADB_CONFIGURATION_FILE, container_name);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)
@@ -3332,7 +3330,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 		if (oph_odb_connect_to_ophidiadb(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_OPHIDIADB_CONNECTION_ERROR, container_name);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_OPHIDIADB_CONNECTION_ERROR, container_name);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)
@@ -3353,7 +3351,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
 			if ((oph_odb_meta_retrieve_vocabulary_id(oDB, value, &((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_vocabulary))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input vocabulary\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_NO_VOCABULARY_NO_CONTAINER, container_name, value);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NO_VOCABULARY_NO_CONTAINER, container_name, value);
 				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 				if (offset)
@@ -3379,7 +3377,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			if ((oph_odb_fs_path_parsing("", cwd, &folder_id, NULL, oDB))) {
 				//Check if user can work on datacube
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Path %s doesn't exists\n", cwd);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_CWD_ERROR, container_name, cwd);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_CWD_ERROR, container_name, cwd);
 				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 				if (offset)
@@ -3389,7 +3387,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			if ((oph_odb_fs_check_folder_session(folder_id, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->sessionid, oDB, &permission)) || !permission) {
 				//Check if user can work on datacube
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "User %s is not allowed to work in this folder\n", user);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DATACUBE_PERMISSION_ERROR, container_name, user);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DATACUBE_PERMISSION_ERROR, container_name, user);
 				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 				if (offset)
@@ -3399,7 +3397,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			//Check if container exists
 			if ((oph_odb_fs_check_if_container_not_present(oDB, container_name, folder_id, &container_exists))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check output container\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
 				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 				if (offset)
@@ -3423,7 +3421,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				if (!measure->dim_dataset[j])
 					if ((ret = esdm_dataset_open(measure->container, measure->dims_name[j], ESDM_MODE_FLAG_READ, measure->dim_dataset + j))) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DIM_READ_ERROR, "type cannot be converted");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 						oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 						oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 						if (offset)
@@ -3434,7 +3432,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				if (!measure->dim_dspace[j])
 					if ((ret = esdm_dataset_get_dataspace(measure->dim_dataset[j], measure->dim_dspace + j))) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DIM_READ_ERROR, "type cannot be converted");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 						oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 						oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 						if (offset)
@@ -3444,7 +3442,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 				if (oph_esdm_set_esdm_type(dim.dimension_type, measure->dim_dspace[j]->type)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DIM_READ_ERROR, "type cannot be converted");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 					oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 					if (offset)
@@ -3504,13 +3502,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 					if (oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, &id_container_out) && !id_container_out) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_NO_INPUT_CONTAINER_NO_CONTAINER, container_name,
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NO_INPUT_CONTAINER_NO_CONTAINER, container_name,
 							container_name);
 						break;
 					}
 					if (oph_odb_dim_retrieve_dimension_list_from_container(oDB, id_container_out, &tot_dims, &number_of_dimensions_c)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive dimensions .\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIMENSION_READ_ERROR);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIMENSION_READ_ERROR);
 						break;
 					}
 
@@ -3519,7 +3517,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 							break;
 					if (i >= number_of_dimensions_c) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension %s not found for container %s\n", measure->dims_name[j], container_name);
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_CONT_ERROR, measure->dims_name[j], container_name);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_CONT_ERROR, measure->dims_name[j], container_name);
 						break;
 					}
 
@@ -3531,7 +3529,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 						    && oph_odb_meta_retrieve_vocabulary_id_from_container(oDB, id_container_out,
 													  &((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_vocabulary)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown vocabulary\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_NO_VOCABULARY_NO_CONTAINER, container_name, "");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NO_VOCABULARY_NO_CONTAINER, container_name, "");
 							break;
 						}
 
@@ -3566,7 +3564,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		char temp[max_size];
 		if (oph_dim_parse_time_subset(sub_filters[tf], time_dim, temp)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing time values '%s'\n", sub_filters[tf]);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INVALID_INPUT_STRING);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)
@@ -3579,7 +3577,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	//Alloc space for subsetting parameters
 	if (!(measure->dims_start_index = (int *) malloc(measure->ndims * sizeof(int)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_start_index");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_start_index");
 		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 		if (offset)
@@ -3589,7 +3587,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	if (!(measure->dims_end_index = (int *) malloc(measure->ndims * sizeof(int)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_end_index");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_NO_CONTAINER, container_name, "measure dims_end_index");
 		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 		oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 		if (offset)
@@ -3600,7 +3598,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_FILTER_TYPE);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
 		if (offset)
 			free(offset);
 		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -3609,7 +3607,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	if (oph_tp_parse_multiple_value_param(value, &sub_types, &number_of_sub_types)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INVALID_INPUT_STRING);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 		if (offset)
 			free(offset);
 		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -3619,7 +3617,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	if (number_of_sub_dims && (number_of_sub_types > number_of_sub_dims)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
 		if (offset)
 			free(offset);
 		oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -3664,7 +3662,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			} else if (measure->dims_start_index[i] < 0 || measure->dims_end_index[i] < 0 || measure->dims_start_index[i] > measure->dims_end_index[i]
 				   || measure->dims_start_index[i] >= (int) measure->dims_length[i] || measure->dims_end_index[i] >= (int) measure->dims_length[i]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INVALID_INPUT_STRING);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 				if (offset)
@@ -3693,7 +3691,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 		if (!level_ok) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Explicit dimension levels aren't correct\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_EXP_DIM_LEVEL_ERROR, container_name);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_EXP_DIM_LEVEL_ERROR, container_name);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 	}
@@ -3710,7 +3708,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_COMPRESSION);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_COMPRESSION);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_COMPRESSION);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_COMPRESSION);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN) == 0) {
@@ -3720,7 +3718,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SIMULATE_RUN);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SIMULATE_RUN);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SIMULATE_RUN);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SIMULATE_RUN);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strncmp(value, OPH_COMMON_NO_VALUE, OPH_TP_TASKLEN) == 0) {
@@ -3730,7 +3728,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CHECK_COMPLIANCE);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CHECK_COMPLIANCE);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CHECK_COMPLIANCE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CHECK_COMPLIANCE);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN) == 0) {
@@ -3740,37 +3738,37 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_PARTITION_NAME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_PARTITION_NAME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_PARTITION_NAME);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_PARTITION_NAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->partition_input = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "input partition");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "input partition");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_IOSERVER_TYPE);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IOSERVER_TYPE);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IOSERVER_TYPE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IOSERVER_TYPE);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->ioserver_type = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "I/O server type");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "I/O server type");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_IMPORTDIM_GRID_NAME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_IMPORTDIM_GRID_NAME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IMPORTDIM_GRID_NAME);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IMPORTDIM_GRID_NAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strcasecmp(value, OPH_COMMON_DEFAULT_GRID) != 0) {
 		if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->grid_name = (char *) strndup(value, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "grid name");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "grid name");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 	}
@@ -3778,7 +3776,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CHECK_GRID);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CHECK_GRID);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CHECK_GRID);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CHECK_GRID);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN))
@@ -3791,7 +3789,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		value = hashtbl_get(task_tbl, OPH_IN_PARAM_HIERARCHY_NAME);
 		if (!value) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_HIERARCHY_NAME);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_HIERARCHY_NAME);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_HIERARCHY_NAME);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 		if (strncmp(value, OPH_COMMON_DEFAULT_HIERARCHY, strlen(value)) || strncmp(value, OPH_COMMON_DEFAULT_HIERARCHY, strlen(OPH_COMMON_DEFAULT_HIERARCHY))) {
@@ -3799,19 +3797,19 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			int number_of_dimensions_hierarchy = 0;
 			if (oph_tp_parse_multiple_value_param(value, &dim_hierarchy, &number_of_dimensions_hierarchy)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INVALID_INPUT_STRING);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 				oph_tp_free_multiple_value_param_list(dim_hierarchy, number_of_dimensions_hierarchy);
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
 			if (measure->ndims != number_of_dimensions_hierarchy) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
 				oph_tp_free_multiple_value_param_list(dim_hierarchy, number_of_dimensions_hierarchy);
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
 			if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_dimension_hierarchy = (int *) malloc(number_of_dimensions_hierarchy * sizeof(int)))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "id dimension hierarchy");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "id dimension hierarchy");
 				oph_tp_free_multiple_value_param_list(dim_hierarchy, number_of_dimensions_hierarchy);
 				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 			}
@@ -3822,7 +3820,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				//Retrieve hierarchy ID
 				if (oph_odb_dim_retrieve_hierarchy_id(oDB, dim_hierarchy[i], &id_hierarchy)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check input hierarchy, or it doesn't exists\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INPUT_HIERARCHY_ERROR_NO_CONTAINER, container_name, dim_hierarchy[i]);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INPUT_HIERARCHY_ERROR_NO_CONTAINER, container_name, dim_hierarchy[i]);
 					oph_tp_free_multiple_value_param_list(dim_hierarchy, number_of_dimensions_hierarchy);
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
@@ -3830,7 +3828,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				if (!strcasecmp(dim_hierarchy[i], OPH_COMMON_TIME_HIERARCHY)) {
 					if (found_oph_time) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Only one time dimension can be used\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INPUT_HIERARCHY_ERROR_NO_CONTAINER, container_name,
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INPUT_HIERARCHY_ERROR_NO_CONTAINER, container_name,
 							dim_hierarchy[i]);
 						oph_tp_free_multiple_value_param_list(dim_hierarchy, number_of_dimensions_hierarchy);
 						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -3845,7 +3843,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		else {
 			if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_dimension_hierarchy = (int *) malloc(measure->ndims * sizeof(int)))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "id dimension hierarchy");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "id dimension hierarchy");
 				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 			}
 			memset(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_dimension_hierarchy, 0, measure->ndims * sizeof(int));
@@ -3854,7 +3852,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			int id_hierarchy = 0;
 			if (oph_odb_dim_retrieve_hierarchy_id(oDB, OPH_COMMON_DEFAULT_HIERARCHY, &id_hierarchy)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check input hierarchy, or it doesn't exists\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INPUT_HIERARCHY_ERROR_NO_CONTAINER, container_name,
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INPUT_HIERARCHY_ERROR_NO_CONTAINER, container_name,
 					OPH_COMMON_DEFAULT_HIERARCHY);
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
@@ -3876,7 +3874,7 @@ int task_init(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_NULL_OPERATOR_HANDLE_NO_CONTAINER,
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NULL_OPERATOR_HANDLE_NO_CONTAINER,
 			((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->container_input);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
@@ -3949,7 +3947,7 @@ int task_init(oph_operator_struct * handle)
 		int id_user = 0;
 		if (oph_odb_user_retrieve_user_id(oDB, username, &id_user)) {
 			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive user id\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_USER_ID_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_USER_ID_ERROR);
 			goto __OPH_EXIT_1;
 		}
 
@@ -3975,7 +3973,7 @@ int task_init(oph_operator_struct * handle)
 			if (oph_odb_stge_get_default_host_partition_fs(oDB, ioserver_type, id_user, &id_host_partition, *host_number > 0 ? *host_number : 1) || !id_host_partition) {
 				if (run) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts or dbms per host is too big or server type and partition are not available!\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
 						((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->host_number, host_partition);
 					goto __OPH_EXIT_1;
 				} else {
@@ -3999,7 +3997,7 @@ int task_init(oph_operator_struct * handle)
 				if ((oph_odb_stge_check_number_of_host_dbms(oDB, ioserver_type, id_host_partition, *host_number, &exist_part)) || !exist_part) {
 					if (run) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
 							((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->host_number, host_partition);
 						goto __OPH_EXIT_1;
 					} else {
@@ -4016,11 +4014,11 @@ int task_init(oph_operator_struct * handle)
 			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
 				if (run) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
 						host_partition);
 					goto __OPH_EXIT_1;
 				} else {
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
 						host_partition);
 					frag_param_error = 1;
 				}
@@ -4035,23 +4033,23 @@ int task_init(oph_operator_struct * handle)
 					if (final_frag_number < user_arg_prod) {
 						//If import is executed then return error, else simply return a message
 						if (run) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER,
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER,
 								container_name, final_frag_number);
 							goto __OPH_EXIT_1;
 						} else {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
 							frag_param_error = 1;
 						}
 					} else {
 						if (final_frag_number % user_arg_prod != 0) {
 							if (run) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_FRAGMENTATION_ERROR);
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_FRAGMENTATION_ERROR);
+								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
 								goto __OPH_EXIT_1;
 							} else {
 								frag_param_error = 1;
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_FRAGMENTATION_ERROR);
+								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
 							}
 						} else {
 							admissible_frag_number = final_frag_number / user_arg_prod;
@@ -4076,23 +4074,23 @@ int task_init(oph_operator_struct * handle)
 					if (final_frag_number < user_arg_prod) {
 						//If import is executed then return error, else simply return a message
 						if (run) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER,
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER,
 								container_name, final_frag_number);
 							goto __OPH_EXIT_1;
 						} else {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
 							frag_param_error = 1;
 						}
 					} else {
 						if (final_frag_number % user_arg_prod != 0) {
 							if (run) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_FRAGMENTATION_ERROR);
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_FRAGMENTATION_ERROR);
+								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
 								goto __OPH_EXIT_1;
 							} else {
 								frag_param_error = 1;
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_FRAGMENTATION_ERROR);
+								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
 							}
 						} else {
 							admissible_frag_number = final_frag_number / user_arg_prod;
@@ -4120,12 +4118,12 @@ int task_init(oph_operator_struct * handle)
 					if (final_frag_number < user_arg_prod) {
 						//If import is executed then return error, else simply return a message
 						if (run) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER,
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER,
 								container_name, final_frag_number);
 							goto __OPH_EXIT_1;
 						} else {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
 							frag_param_error = 1;
 						}
 					} else {
@@ -4137,23 +4135,23 @@ int task_init(oph_operator_struct * handle)
 					if (max_frag_number < user_arg_prod) {
 						//If import is executed then return error, else simply return a message
 						if (run) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, max_frag_number);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER,
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, max_frag_number);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER,
 								container_name, max_frag_number);
 							goto __OPH_EXIT_1;
 						} else {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, max_frag_number);
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, max_frag_number);
 							frag_param_error = 1;
 						}
 					} else {
 						if (max_frag_number % user_arg_prod != 0) {
 							if (run) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_FRAGMENTATION_ERROR);
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_FRAGMENTATION_ERROR);
+								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
 								goto __OPH_EXIT_1;
 							} else {
 								frag_param_error = 1;
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_FRAGMENTATION_ERROR);
+								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
 							}
 						} else {
 							((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->tuplexfrag_number = (int) ceilf((float) max_frag_number / user_arg_prod);
@@ -4179,7 +4177,7 @@ int task_init(oph_operator_struct * handle)
 			//Check how many DBMS and HOST are available into specified partition and of server type
 			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
 				goto __OPH_EXIT_1;
 			}
 
@@ -4229,7 +4227,7 @@ int task_init(oph_operator_struct * handle)
 		//Check if are available DBMS and HOST number into specified partition and of server type
 		if ((oph_odb_stge_check_number_of_host_dbms(oDB, ioserver_type, id_host_partition, *host_number, &exist_part)) || !exist_part) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
 				((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->host_number, host_partition);
 			goto __OPH_EXIT_1;
 		}
@@ -4245,19 +4243,19 @@ int task_init(oph_operator_struct * handle)
 		if ((oph_odb_fs_path_parsing("", cwd, &folder_id, NULL, oDB))) {
 			//Check if user can work on datacube
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Path %s doesn't exists\n", cwd);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_CWD_ERROR, container_name, cwd);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_CWD_ERROR, container_name, cwd);
 			goto __OPH_EXIT_1;
 		}
 		if ((oph_odb_fs_check_folder_session(folder_id, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->sessionid, oDB, &permission)) || !permission) {
 			//Check if user can work on datacube
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "User %s is not allowed to work in this folder\n", user);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DATACUBE_PERMISSION_ERROR, container_name, user);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DATACUBE_PERMISSION_ERROR, container_name, user);
 			goto __OPH_EXIT_1;
 		}
 		//Check if container exists
 		if ((oph_odb_fs_check_if_container_not_present(oDB, container_name, folder_id, &container_exists))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check output container\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
 		}
 		if (container_exists)
@@ -4273,12 +4271,12 @@ int task_init(oph_operator_struct * handle)
 			int container_unique = 0;
 			if ((oph_odb_fs_is_unique(folder_id, container_name, oDB, &container_unique))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to check output container\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_OUTPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_OUTPUT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
 				goto __OPH_EXIT_1;
 			}
 			if (!container_unique) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Container '%s' already exists in this path or a folder has the same name\n", container_name);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_OUTPUT_CONTAINER_EXIST_ERROR, container_name, container_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_OUTPUT_CONTAINER_EXIST_ERROR, container_name, container_name);
 				goto __OPH_EXIT_1;
 			}
 			//If it doesn't then create new container and get last id
@@ -4292,14 +4290,14 @@ int task_init(oph_operator_struct * handle)
 
 			if (oph_odb_fs_insert_into_container_table(oDB, &cont, &id_container_out)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update container table\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INSERT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INSERT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
 				goto __OPH_EXIT_1;
 			}
 			((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container = id_container_out;
 
 			if (container_exists && oph_odb_fs_add_suffix_to_container_name(oDB, id_container_out)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update container table\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_INSERT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INSERT_CONTAINER_ERROR_NO_CONTAINER, container_name, container_name);
 				goto __OPH_EXIT_1;
 			}
 			//Create new dimensions
@@ -4315,20 +4313,20 @@ int task_init(oph_operator_struct * handle)
 				if (!measure->dim_dataset[i])
 					if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DIM_READ_ERROR, "type cannot be converted");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 						goto __OPH_EXIT_1;
 					}
 
 				if (!measure->dim_dspace[i])
 					if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DIM_READ_ERROR, "type cannot be converted");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 						goto __OPH_EXIT_1;
 					}
 
 				if (oph_esdm_set_esdm_type(dim.dimension_type, measure->dim_dspace[i]->type)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DIM_READ_ERROR, "type cannot be converted");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 					goto __OPH_EXIT_1;
 				}
 				// Load dimension names
@@ -4354,7 +4352,7 @@ int task_init(oph_operator_struct * handle)
 				}
 				if (oph_odb_dim_insert_into_dimension_table(oDB, &(dim), &last_insertd_id, 0)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert dimension.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_INSERT_DIMENSION_ERROR);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_INSERT_DIMENSION_ERROR);
 					goto __OPH_EXIT_1;
 				}
 			}
@@ -4363,13 +4361,13 @@ int task_init(oph_operator_struct * handle)
 			oph_odb_db_instance *db = &db_;
 			if (oph_dim_load_dim_dbinstance(db)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while loading dimension db paramters\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DIM_LOAD);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_LOAD);
 				oph_dim_unload_dim_dbinstance(db);
 				goto __OPH_EXIT_1;
 			}
 			if (oph_dim_connect_to_dbms(db->dbms_instance, 0)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while connecting to dimension dbms\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DIM_CONNECT);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_CONNECT);
 				oph_dim_disconnect_from_dbms(db->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db);
 				goto __OPH_EXIT_1;
@@ -4377,7 +4375,7 @@ int task_init(oph_operator_struct * handle)
 
 			if (oph_dim_create_db(db)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating dimension db\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DB_CREATION);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DB_CREATION);
 				oph_dim_disconnect_from_dbms(db->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db);
 				goto __OPH_EXIT_1;
@@ -4385,7 +4383,7 @@ int task_init(oph_operator_struct * handle)
 
 			if (oph_dim_use_db_of_dbms(db->dbms_instance, db)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while opening dimension db\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DIM_USE_DB);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_USE_DB);
 				oph_dim_disconnect_from_dbms(db->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db);
 				goto __OPH_EXIT_1;
@@ -4395,7 +4393,7 @@ int task_init(oph_operator_struct * handle)
 			snprintf(dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, id_container_out);
 			if (oph_dim_create_empty_table(db, dimension_table_name)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating dimension table\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_TABLE_CREATION_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_TABLE_CREATION_ERROR);
 				oph_dim_disconnect_from_dbms(db->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db);
 				goto __OPH_EXIT_1;
@@ -4404,7 +4402,7 @@ int task_init(oph_operator_struct * handle)
 			snprintf(dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, id_container_out);
 			if (oph_dim_create_empty_table(db, dimension_table_name)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating dimension table\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_TABLE_CREATION_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_TABLE_CREATION_ERROR);
 				oph_dim_disconnect_from_dbms(db->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db);
 				goto __OPH_EXIT_1;
@@ -4416,13 +4414,13 @@ int task_init(oph_operator_struct * handle)
 		} else if (!container_exists) {
 			//If it doesn't exist then return an error
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
 		}
 		//Else retreive container ID and check for dimension table
 		if (!create_container && oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, container_name, &id_container_out)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input container\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NO_INPUT_CONTAINER_NO_CONTAINER, container_name, container_name);
 			goto __OPH_EXIT_1;
 		}
 		//Check vocabulary
@@ -4430,7 +4428,7 @@ int task_init(oph_operator_struct * handle)
 			if (!((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_vocabulary
 			    && oph_odb_meta_retrieve_vocabulary_id_from_container(oDB, id_container_out, &((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_vocabulary)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown vocabulary\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_NO_VOCABULARY_NO_CONTAINER, container_name, "");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_NO_VOCABULARY_NO_CONTAINER, container_name, "");
 				goto __OPH_EXIT_1;
 			}
 		}
@@ -4439,20 +4437,20 @@ int task_init(oph_operator_struct * handle)
 		oph_odb_db_instance *db_dimension = &db_;
 		if (oph_dim_load_dim_dbinstance(db_dimension)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while loading dimension db paramters\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_LOAD);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_LOAD);
 			oph_dim_unload_dim_dbinstance(db_dimension);
 			goto __OPH_EXIT_1;
 		}
 		if (oph_dim_connect_to_dbms(db_dimension->dbms_instance, 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while connecting to dimension dbms\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_CONNECT);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_CONNECT);
 			oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 			oph_dim_unload_dim_dbinstance(db_dimension);
 			goto __OPH_EXIT_1;
 		}
 		if (oph_dim_use_db_of_dbms(db_dimension->dbms_instance, db_dimension)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while opening dimension db\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_USE_DB);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_USE_DB);
 			oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 			oph_dim_unload_dim_dbinstance(db_dimension);
 			goto __OPH_EXIT_1;
@@ -4465,14 +4463,14 @@ int task_init(oph_operator_struct * handle)
 
 		if (oph_dim_check_if_dimension_table_exists(db_dimension, index_dimension_table_name, &exist_flag)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving dimension table\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_TABLE_RETREIVE_ERROR, index_dimension_table_name);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_TABLE_RETREIVE_ERROR, index_dimension_table_name);
 			oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 			oph_dim_unload_dim_dbinstance(db_dimension);
 			goto __OPH_EXIT_1;
 		}
 		if (!exist_flag) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimensions table doesn't exists\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_USE_DB);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_USE_DB);
 			oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 			oph_dim_unload_dim_dbinstance(db_dimension);
 			goto __OPH_EXIT_1;
@@ -4480,14 +4478,14 @@ int task_init(oph_operator_struct * handle)
 
 		if (oph_dim_check_if_dimension_table_exists(db_dimension, label_dimension_table_name, &exist_flag)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving dimension table\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_TABLE_RETREIVE_ERROR, label_dimension_table_name);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_TABLE_RETREIVE_ERROR, label_dimension_table_name);
 			oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 			oph_dim_unload_dim_dbinstance(db_dimension);
 			goto __OPH_EXIT_1;
 		}
 		if (!exist_flag) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimensions table doesn't exists\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_USE_DB);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_USE_DB);
 			oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 			oph_dim_unload_dim_dbinstance(db_dimension);
 			goto __OPH_EXIT_1;
@@ -4514,7 +4512,7 @@ int task_init(oph_operator_struct * handle)
 			if (oph_odb_dim_retrieve_dimension_list_from_grid_in_container
 			    (oDB, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->grid_name, id_container_out, &dims, &dim_inst, &dim_inst_num)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Input grid name not usable! It is already used by another container.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_NO_GRID, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->grid_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NO_GRID, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->grid_name);
 				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db_dimension);
 				if (dims)
@@ -4528,7 +4526,7 @@ int task_init(oph_operator_struct * handle)
 
 			if (dim_inst_num != measure->ndims) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Input dimension number doesn't match with specified grid dimension number\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_INPUT_GRID_DIMENSION_MISMATCH, "number");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_INPUT_GRID_DIMENSION_MISMATCH, "number");
 				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db_dimension);
 				free(dims);
@@ -4558,7 +4556,7 @@ int task_init(oph_operator_struct * handle)
 							if (!measure->dim_dataset[i])
 								if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
 									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-									logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_READ_ERROR, "");
+									logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
 									oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 									oph_dim_unload_dim_dbinstance(db_dimension);
 									free(dims);
@@ -4569,7 +4567,7 @@ int task_init(oph_operator_struct * handle)
 							if (!measure->dim_dspace[i])
 								if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
 									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-									logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_READ_ERROR, "");
+									logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
 									oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 									oph_dim_unload_dim_dbinstance(db_dimension);
 									free(dims);
@@ -4581,12 +4579,12 @@ int task_init(oph_operator_struct * handle)
 							dimvar_ids[i] = i;
 							if ( /*(dimvar_ids[i] >= 0) && */ oph_esdm_compare_types(id_container_out, measure->dim_dspace[i]->type, dims[j].dimension_type)) {
 								pmesg(LOG_WARNING, __FILE__, __LINE__, "Dimension type in NC file doesn't correspond to the one stored in OphidiaDB\n");
-								logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
+								logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
 							}
 
 							if (measure->dim_dspace[i]->dims != 1) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_NOT_ALLOWED);
+								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_NOT_ALLOWED);
 								oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 								oph_dim_unload_dim_dbinstance(db_dimension);
 								free(dims);
@@ -4600,7 +4598,7 @@ int task_init(oph_operator_struct * handle)
 							    (id_container_out, measure->dim_dataset[i], dimvar_ids[i], dims[j].dimension_type, dim_inst[j].size, measure->dims_start_index[i],
 							     measure->dims_end_index[i], &dim_array)) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_READ_ERROR, "");
+								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
 								oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 								oph_dim_unload_dim_dbinstance(db_dimension);
 								free(dims);
@@ -4626,7 +4624,7 @@ int task_init(oph_operator_struct * handle)
 
 				if (!found_flag) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Input dimension '%s' doesn't match with specified container/grid dimensions\n", measure->dims_name[i]);
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_INPUT_DIMENSION_MISMATCH, measure->dims_name[i]);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_INPUT_DIMENSION_MISMATCH, measure->dims_name[i]);
 					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 					oph_dim_unload_dim_dbinstance(db_dimension);
 					free(dims);
@@ -4645,7 +4643,7 @@ int task_init(oph_operator_struct * handle)
 			//Read dimension
 			if (oph_odb_dim_retrieve_dimension_list_from_container(oDB, id_container_out, &tot_dims, &number_of_dimensions_c)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive dimensions.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIMENSION_READ_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIMENSION_READ_ERROR);
 				if (tot_dims)
 					free(tot_dims);
 				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -4676,7 +4674,7 @@ int task_init(oph_operator_struct * handle)
 				if (j == number_of_dimensions_c) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension %s not found for container %s\n", measure->dims_name[i],
 					      ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->container_input);
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_CONT_ERROR, measure->dims_name[i],
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_CONT_ERROR, measure->dims_name[i],
 						((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->container_input);
 					free(tot_dims);
 					free(dims);
@@ -4689,7 +4687,7 @@ int task_init(oph_operator_struct * handle)
 				//Find dimension level into hierarchy file
 				if (oph_odb_dim_retrieve_hierarchy(oDB, tot_dims[j].id_hierarchy, &hier)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving hierarchy\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_HIERARCHY_ERROR);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_HIERARCHY_ERROR);
 					free(tot_dims);
 					free(dims);
 					free(dim_inst);
@@ -4703,7 +4701,7 @@ int task_init(oph_operator_struct * handle)
 				snprintf(filename, 2 * OPH_TP_BUFLEN, OPH_FRAMEWORK_HIERARCHY_XML_FILE_PATH_DESC, OPH_ANALYTICS_LOCATION, hier.filename);
 				if (oph_hier_check_concept_level_short(filename, measure->dims_concept_level[i], &exists)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error retrieving hierarchy\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_HIERARCHY_ERROR);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_HIERARCHY_ERROR);
 					free(tot_dims);
 					free(dims);
 					free(dim_inst);
@@ -4719,7 +4717,7 @@ int task_init(oph_operator_struct * handle)
 					else {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c' from '%s': check container specifications\n", measure->dims_concept_level[i],
 						      filename);
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_BAD2_PARAMETER, measure->dims_concept_level[i]);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_BAD2_PARAMETER, measure->dims_concept_level[i]);
 						free(tot_dims);
 						free(dims);
 						free(dim_inst);
@@ -4739,7 +4737,7 @@ int task_init(oph_operator_struct * handle)
 				int last_inserted_grid_id = 0;
 				if (oph_odb_dim_insert_into_grid_table(oDB, &new_grid, &last_inserted_grid_id, &grid_exist)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert grid in OphidiaDB, or grid already exists.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_GRID_INSERT_ERROR);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_GRID_INSERT_ERROR);
 					free(tot_dims);
 					free(dims);
 					free(dim_inst);
@@ -4764,7 +4762,7 @@ int task_init(oph_operator_struct * handle)
 				if (j == number_of_dimensions_c) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension %s not found for container %s\n", measure->dims_name[i],
 					      ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->container_input);
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_CONT_ERROR, measure->dims_name[i],
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_CONT_ERROR, measure->dims_name[i],
 						((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->container_input);
 					free(tot_dims);
 					free(dims);
@@ -4780,7 +4778,7 @@ int task_init(oph_operator_struct * handle)
 					if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
 						if (create_container) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DIM_READ_ERROR, "type cannot be converted");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 							free(tot_dims);
 							free(dims);
 							free(dim_inst);
@@ -4800,7 +4798,7 @@ int task_init(oph_operator_struct * handle)
 					if (!measure->dim_dspace[i])
 						if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DIM_READ_ERROR, "type cannot be converted");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 							free(tot_dims);
 							free(dims);
 							free(dim_inst);
@@ -4834,14 +4832,14 @@ int task_init(oph_operator_struct * handle)
 
 				if ((varid >= 0) && oph_esdm_compare_types(id_container_out, xtype, tot_dims[j].dimension_type)) {
 					pmesg(LOG_WARNING, __FILE__, __LINE__, "Dimension type in NC file doesn't correspond to the one stored in OphidiaDB\n");
-					logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
+					logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
 				}
 
 				if (oph_esdm_get_dim_array
 				    (id_container_out, measure->dim_dataset[i], varid, tot_dims[j].dimension_type, tmp_var.varsize, measure->dims_start_index[i], measure->dims_end_index[i],
 				     &dim_array)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_READ_ERROR, "");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
 					free(tot_dims);
 					free(dims);
 					free(dim_inst);
@@ -4853,7 +4851,7 @@ int task_init(oph_operator_struct * handle)
 
 				if (oph_dim_insert_into_dimension_table(db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, tmp_var.varsize, dim_array, &dimension_array_id)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_ROW_ERROR, tot_dims[j].dimension_name);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_ROW_ERROR, tot_dims[j].dimension_name);
 					free(tot_dims);
 					free(dims);
 					free(dim_inst);
@@ -4871,7 +4869,7 @@ int task_init(oph_operator_struct * handle)
 					index_array[kk] = 1 + kk;	// Non 'C'-like indexing
 				if (oph_dim_insert_into_dimension_table(db_dimension, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, tmp_var.varsize, (char *) index_array, &dimension_array_id)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIM_ROW_ERROR, tot_dims[j].dimension_name);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_ROW_ERROR, tot_dims[j].dimension_name);
 					free(tot_dims);
 					free(dims);
 					free(dim_inst);
@@ -4886,7 +4884,7 @@ int task_init(oph_operator_struct * handle)
 
 				if (oph_odb_dim_insert_into_dimensioninstance_table(oDB, &(dim_inst[i]), &dimension_array_id, 0, NULL, NULL)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension instance row\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIMINST_INSERT_ERROR, tot_dims[j].dimension_name);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIMINST_INSERT_ERROR, tot_dims[j].dimension_name);
 					free(tot_dims);
 					free(dims);
 					free(dim_inst);
@@ -4926,7 +4924,7 @@ int task_init(oph_operator_struct * handle)
 		char *tmp = id_string;
 		if (oph_ids_create_new_id_string(&tmp, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, 1, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->total_frag_number)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create fragment ids string\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_CREATE_ID_STRING_ERROR);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_CREATE_ID_STRING_ERROR);
 			free(dims);
 			free(dim_inst);
 			free(dimvar_ids);
@@ -4942,7 +4940,7 @@ int task_init(oph_operator_struct * handle)
 		src.uri[OPH_ODB_CUBE_SOURCE_URI_SIZE] = 0;
 		if (oph_odb_cube_insert_into_source_table(oDB, &src, &id_src)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert source URI\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_INSERT_SOURCE_URI_ERROR, src.uri);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_INSERT_SOURCE_URI_ERROR, src.uri);
 			oph_odb_cube_free_datacube(&cube);
 			free(dims);
 			free(dim_inst);
@@ -4983,7 +4981,7 @@ int task_init(oph_operator_struct * handle)
 			}
 			if (j == dim_inst_num) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive dimension %s in OphidiaDB.\n", measure->dims_name[i]);
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DIMENSION_ODB_ERROR, measure->dims_name[i]);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIMENSION_ODB_ERROR, measure->dims_name[i]);
 				oph_odb_cube_free_datacube(&cube);
 				free(dims);
 				free(dim_inst);
@@ -5000,7 +4998,7 @@ int task_init(oph_operator_struct * handle)
 		//Insert new datacube
 		if (oph_odb_cube_insert_into_datacube_partitioned_tables(oDB, &cube, &id_datacube_out)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update datacube table\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DATACUBE_INSERT_ERROR);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DATACUBE_INSERT_ERROR);
 			oph_odb_cube_free_datacube(&cube);
 			free(dims);
 			free(dim_inst);
@@ -5014,7 +5012,7 @@ int task_init(oph_operator_struct * handle)
 			cubedim[i].id_datacube = id_datacube_out;
 			if (oph_odb_cube_insert_into_cubehasdim_table(oDB, &(cubedim[i]), &last_insertd_id)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new datacube - dimension relations.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_CUBEHASDIM_INSERT_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_CUBEHASDIM_INSERT_ERROR);
 				free(dims);
 				free(cubedim);
 				free(dim_inst);
@@ -5041,7 +5039,7 @@ int task_init(oph_operator_struct * handle)
 			int id_key_type = 0, sid_key_type;
 			if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &id_key_type)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_METADATATYPE_ID_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_METADATATYPE_ID_ERROR);
 				free(dimvar_ids);
 				goto __OPH_EXIT_1;
 			}
@@ -5050,7 +5048,7 @@ int task_init(oph_operator_struct * handle)
 			int num_rows = 0;
 			if (oph_odb_meta_find_metadatakey_list(oDB, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_vocabulary, &key_list)) {
 				pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive key list\n");
-				logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_READ_KEY_LIST);
+				logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_READ_KEY_LIST);
 				mysql_free_result(key_list);
 				free(dimvar_ids);
 				goto __OPH_EXIT_1;
@@ -5061,14 +5059,14 @@ int task_init(oph_operator_struct * handle)
 			HASHTBL *key_tbl = NULL, *required_tbl = NULL;
 			if (!(key_tbl = hashtbl_create(num_rows + 1, NULL))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT, "Key hash table");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT, "Key hash table");
 				mysql_free_result(key_list);
 				free(dimvar_ids);
 				goto __OPH_EXIT_1;
 			}
 			if (!(required_tbl = hashtbl_create(num_rows + 1, NULL))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_MEMORY_ERROR_INPUT, "Required hash table");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT, "Required hash table");
 				mysql_free_result(key_list);
 				free(dimvar_ids);
 				hashtbl_destroy(key_tbl);
@@ -5100,7 +5098,7 @@ int task_init(oph_operator_struct * handle)
 			smd_basic_type_t xtype;
 			if ((esdm_container_get_attributes(measure->container, &md))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering number of global attributes\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_NC_NATTS_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_NATTS_ERROR);
 				hashtbl_destroy(key_tbl);
 				hashtbl_destroy(required_tbl);
 				free(dimvar_ids);
@@ -5150,7 +5148,7 @@ int task_init(oph_operator_struct * handle)
 							break;
 						default:
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve metadata key type id\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_METADATATYPE_ID_ERROR);
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_METADATATYPE_ID_ERROR);
 							hashtbl_destroy(key_tbl);
 							hashtbl_destroy(required_tbl);
 							free(dimvar_ids);
@@ -5158,7 +5156,7 @@ int task_init(oph_operator_struct * handle)
 					}
 					if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve metadata key type id\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_METADATATYPE_ID_ERROR);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_METADATATYPE_ID_ERROR);
 						hashtbl_destroy(key_tbl);
 						hashtbl_destroy(required_tbl);
 						free(dimvar_ids);
@@ -5252,7 +5250,7 @@ int task_init(oph_operator_struct * handle)
 				if (oph_odb_meta_insert_into_metadatainstance_manage_tables
 				    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, NULL, sid_key_type, id_user, svalue, &id_metadatainstance)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_INSERT_METADATAINSTANCE_ERROR, key, svalue);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_INSERT_METADATAINSTANCE_ERROR, key, svalue);
 					hashtbl_destroy(key_tbl);
 					hashtbl_destroy(required_tbl);
 					free(dimvar_ids);
@@ -5272,7 +5270,7 @@ int task_init(oph_operator_struct * handle)
 				if (!measure->dim_dataset[ii])
 					if ((esdm_dataset_open(measure->container, measure->dims_name[ii], ESDM_MODE_FLAG_READ, measure->dim_dataset + ii))) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM2_DIM_READ_ERROR, "type cannot be converted");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 						hashtbl_destroy(key_tbl);
 						hashtbl_destroy(required_tbl);
 						free(dimvar_ids);
@@ -5280,7 +5278,7 @@ int task_init(oph_operator_struct * handle)
 					}
 				if ((esdm_dataset_get_attributes(measure->dim_dataset[ii], &md))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering number of global attributes\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_NC_NATTS_ERROR);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_NATTS_ERROR);
 					hashtbl_destroy(key_tbl);
 					hashtbl_destroy(required_tbl);
 					free(dimvar_ids);
@@ -5327,7 +5325,7 @@ int task_init(oph_operator_struct * handle)
 								break;
 							default:
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve metadata key type id\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_METADATATYPE_ID_ERROR);
+								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_METADATATYPE_ID_ERROR);
 								hashtbl_destroy(key_tbl);
 								hashtbl_destroy(required_tbl);
 								free(dimvar_ids);
@@ -5335,7 +5333,7 @@ int task_init(oph_operator_struct * handle)
 						}
 						if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve metadata key type id '%s'\n", key_type);
-							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_METADATATYPE_ID_ERROR);
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_METADATATYPE_ID_ERROR);
 							hashtbl_destroy(key_tbl);
 							hashtbl_destroy(required_tbl);
 							free(dimvar_ids);
@@ -5431,7 +5429,7 @@ int task_init(oph_operator_struct * handle)
 					if (oph_odb_meta_insert_into_metadatainstance_manage_tables
 					    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->dims_name[ii], sid_key_type, id_user, svalue, &id_metadatainstance)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_INSERT_METADATAINSTANCE_ERROR, key, svalue);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_INSERT_METADATAINSTANCE_ERROR, key, svalue);
 						hashtbl_destroy(key_tbl);
 						hashtbl_destroy(required_tbl);
 						free(dimvar_ids);
@@ -5449,7 +5447,7 @@ int task_init(oph_operator_struct * handle)
 
 			if ((esdm_dataset_get_attributes(measure->dataset, &md))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering number of global attributes\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_NC_NATTS_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_NATTS_ERROR);
 				hashtbl_destroy(key_tbl);
 				hashtbl_destroy(required_tbl);
 				free(dimvar_ids);
@@ -5496,7 +5494,7 @@ int task_init(oph_operator_struct * handle)
 							break;
 						default:
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_METADATATYPE_ID_ERROR);
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_METADATATYPE_ID_ERROR);
 							hashtbl_destroy(key_tbl);
 							hashtbl_destroy(required_tbl);
 							free(dimvar_ids);
@@ -5504,7 +5502,7 @@ int task_init(oph_operator_struct * handle)
 					}
 					if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_METADATATYPE_ID_ERROR);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_METADATATYPE_ID_ERROR);
 						hashtbl_destroy(key_tbl);
 						hashtbl_destroy(required_tbl);
 						goto __OPH_EXIT_1;
@@ -5598,7 +5596,7 @@ int task_init(oph_operator_struct * handle)
 				if (oph_odb_meta_insert_into_metadatainstance_manage_tables
 				    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->varname, sid_key_type, id_user, svalue, &id_metadatainstance)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_INSERT_METADATAINSTANCE_ERROR, key, svalue);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_INSERT_METADATAINSTANCE_ERROR, key, svalue);
 					hashtbl_destroy(key_tbl);
 					hashtbl_destroy(required_tbl);
 					goto __OPH_EXIT_1;
@@ -5617,8 +5615,8 @@ int task_init(oph_operator_struct * handle)
 					free(id_key);
 				}
 				if (found_a_required_attribute) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_COMPLIANCE_ERROR);
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_COMPLIANCE_ERROR);
+					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_COMPLIANCE_ERROR);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_COMPLIANCE_ERROR);
 					hashtbl_destroy(key_tbl);
 					hashtbl_destroy(required_tbl);
 					goto __OPH_EXIT_1;
@@ -5636,14 +5634,14 @@ int task_init(oph_operator_struct * handle)
 						break;
 					else if (ii != OPH_ODB_NO_ROW_FOUND)	// Time dimension cannot be set
 					{
-						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_UPDATE_TIME_ERROR);
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_UPDATE_TIME_ERROR);
+						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_UPDATE_TIME_ERROR);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_UPDATE_TIME_ERROR);
 						goto __OPH_EXIT_1;
 					}
 				}
 			} else if ((time_dimension >= 0) && oph_odb_dim_set_time_dimension(oDB, id_datacube_out, (char *) measure->dims_name[time_dimension])) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM2_SET_TIME_ERROR);
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_SET_TIME_ERROR);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_SET_TIME_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_SET_TIME_ERROR);
 				goto __OPH_EXIT_1;
 			}
 		}
@@ -5661,7 +5659,7 @@ int task_init(oph_operator_struct * handle)
 		if (oph_odb_stge_retrieve_dbmsinstance_id_list
 		    (oDB, ioserver_type, id_host_partition, hidden, host_num, id_datacube_out, &id_dbmss, &id_hosts, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->policy)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DBMS_LIST_ERROR);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DBMS_LIST_ERROR);
 			if (id_dbmss)
 				free(id_dbmss);
 			if (id_hosts)
@@ -5678,7 +5676,7 @@ int task_init(oph_operator_struct * handle)
 			//Retreive DBMS params
 			if (oph_odb_stge_retrieve_dbmsinstance(oDB, db.id_dbms, &dbms)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive DBMS\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DBMS_ERROR, db.id_dbms);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DBMS_ERROR, db.id_dbms);
 				free(id_dbmss);
 				free(id_hosts);
 				goto __OPH_EXIT_1;
@@ -5688,7 +5686,7 @@ int task_init(oph_operator_struct * handle)
 			if (!((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server) {
 				if (oph_dc_setup_dbms(&(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server), dbms.io_server_type)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_IOPLUGIN_SETUP_ERROR, db.id_dbms);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_IOPLUGIN_SETUP_ERROR, db.id_dbms);
 					free(id_dbmss);
 					free(id_hosts);
 					goto __OPH_EXIT_1;
@@ -5697,7 +5695,7 @@ int task_init(oph_operator_struct * handle)
 
 			if (oph_dc_connect_to_dbms(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server, &(dbms), 0)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DBMS_CONNECTION_ERROR, dbms.id_dbms);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DBMS_CONNECTION_ERROR, dbms.id_dbms);
 				oph_dc_disconnect_from_dbms(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server, &(dbms));
 				free(id_dbmss);
 				free(id_hosts);
@@ -5706,7 +5704,7 @@ int task_init(oph_operator_struct * handle)
 
 			if (oph_dc_generate_db_name(oDB->name, id_datacube_out, db.id_dbms, 0, 1, &db_name)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of Db instance  name exceed limit.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_STRING_BUFFER_OVERFLOW, "DB instance name", db_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_STRING_BUFFER_OVERFLOW, "DB instance name", db_name);
 				free(id_dbmss);
 				free(id_hosts);
 				oph_dc_disconnect_from_dbms(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server, &(dbms));
@@ -5715,7 +5713,7 @@ int task_init(oph_operator_struct * handle)
 			strcpy(db.db_name, db_name);
 			if (oph_dc_create_db(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server, &db)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create new db\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_NEW_DB_ERROR, db.db_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NEW_DB_ERROR, db.db_name);
 				free(id_dbmss);
 				free(id_hosts);
 				oph_dc_disconnect_from_dbms(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server, &(dbms));
@@ -5724,7 +5722,7 @@ int task_init(oph_operator_struct * handle)
 			//Insert new database instance and partitions
 			if (oph_odb_stge_insert_into_dbinstance_partitioned_tables(oDB, &db, id_datacube_out)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update dbinstance table\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_DB_INSERT_ERROR, db.db_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DB_INSERT_ERROR, db.db_name);
 				free(id_dbmss);
 				free(id_hosts);
 				oph_dc_disconnect_from_dbms(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server, &(dbms));
@@ -5754,7 +5752,7 @@ int task_init(oph_operator_struct * handle)
 		new_task.id_inputcube = NULL;
 		if (oph_odb_cube_insert_into_task_table(oDB, &new_task, &last_insertd_id)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new task.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM2_TASK_INSERT_ERROR, new_task.operator);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_TASK_INSERT_ERROR, new_task.operator);
 			goto __OPH_EXIT_1;
 		}
 
@@ -5778,14 +5776,14 @@ int task_init(oph_operator_struct * handle)
 			//Remove also grid related to container dimensions
 			if (oph_odb_dim_delete_from_grid_table(oDB, id_container_out)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting grid related to container\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_GRID_DELETE_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_GRID_DELETE_ERROR);
 				break;
 			}
 			//Delete container and related dimensions/ dimension instances
 			if (oph_odb_fs_delete_from_container_table(oDB, id_container_out)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting input container\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container,
-					OPH_LOG_OPH_IMPORTESDM2_CONTAINER_DELETE_ERROR);
+					OPH_LOG_OPH_IMPORTESDM_CONTAINER_DELETE_ERROR);
 				break;
 			}
 
@@ -5793,20 +5791,20 @@ int task_init(oph_operator_struct * handle)
 			oph_odb_db_instance *db = &db_;
 			if (oph_dim_load_dim_dbinstance(db)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while loading dimension db paramters\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_DIM_LOAD);
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_DIM_LOAD);
 				oph_dim_unload_dim_dbinstance(db);
 				break;
 			}
 			if (oph_dim_connect_to_dbms(db->dbms_instance, 0)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while connecting to dimension dbms\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_DIM_CONNECT);
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_DIM_CONNECT);
 				oph_dim_disconnect_from_dbms(db->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db);
 				break;
 			}
 			if (oph_dim_use_db_of_dbms(db->dbms_instance, db)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while opening dimension db\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_DIM_USE_DB);
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_DIM_USE_DB);
 				oph_dim_disconnect_from_dbms(db->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db);
 				break;
@@ -5819,7 +5817,7 @@ int task_init(oph_operator_struct * handle)
 			if (oph_dim_delete_table(db, index_dimension_table_name)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting dimension table\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container,
-					OPH_LOG_OPH_IMPORTESDM2_DIM_TABLE_DELETE_ERROR);
+					OPH_LOG_OPH_IMPORTESDM_DIM_TABLE_DELETE_ERROR);
 				oph_dim_disconnect_from_dbms(db->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db);
 				break;
@@ -5827,7 +5825,7 @@ int task_init(oph_operator_struct * handle)
 			if (oph_dim_delete_table(db, label_dimension_table_name)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while deleting dimension table\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container,
-					OPH_LOG_OPH_IMPORTESDM2_DIM_TABLE_DELETE_ERROR);
+					OPH_LOG_OPH_IMPORTESDM_DIM_TABLE_DELETE_ERROR);
 				oph_dim_disconnect_from_dbms(db->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db);
 				break;
@@ -5846,7 +5844,7 @@ int task_init(oph_operator_struct * handle)
 	//Check if sequential part has been completed
 	if (!id_datacube[0] || !id_datacube[1]) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube[1], OPH_LOG_OPH_IMPORTESDM2_MASTER_TASK_INIT_FAILED_NO_CONTAINER, container_name);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube[1], OPH_LOG_OPH_IMPORTESDM_MASTER_TASK_INIT_FAILED_NO_CONTAINER, container_name);
 		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->execute_error = 1;
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -5864,7 +5862,7 @@ int task_distribute(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_NULL_OPERATOR_HANDLE);
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_NULL_OPERATOR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
@@ -5910,7 +5908,7 @@ int task_execute(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_NULL_OPERATOR_HANDLE);
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_NULL_OPERATOR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
@@ -5940,7 +5938,7 @@ int task_execute(oph_operator_struct * handle)
 
 	if (oph_odb_read_ophidiadb_config_file(&oDB_slave)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_OPHIDIADB_CONFIGURATION_FILE,
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_OPHIDIADB_CONFIGURATION_FILE,
 			((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->container_input);
 
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -5948,7 +5946,7 @@ int task_execute(oph_operator_struct * handle)
 
 	if (oph_odb_connect_to_ophidiadb(&oDB_slave)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_OPHIDIADB_CONNECTION_ERROR,
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_OPHIDIADB_CONNECTION_ERROR,
 			((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->container_input);
 		oph_odb_free_ophidiadb(&oDB_slave);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -5956,7 +5954,7 @@ int task_execute(oph_operator_struct * handle)
 	//retrieve connection string
 	if (oph_odb_stge_fetch_db_connection_string(&oDB_slave, id_datacube_out, start_position, row_number, &dbs, &dbmss)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_CONNECTION_STRINGS_NOT_FOUND);
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_CONNECTION_STRINGS_NOT_FOUND);
 		oph_odb_free_ophidiadb(&oDB_slave);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -5970,7 +5968,7 @@ int task_execute(oph_operator_struct * handle)
 	if (!((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server) {
 		if (oph_dc_setup_dbms(&(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server), dbmss.value[0].io_server_type)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_IOPLUGIN_SETUP_ERROR,
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_IOPLUGIN_SETUP_ERROR,
 				dbmss.value[0].id_dbms);
 			oph_odb_stge_free_db_list(&dbs);
 			oph_odb_stge_free_dbms_list(&dbmss);
@@ -5983,7 +5981,7 @@ int task_execute(oph_operator_struct * handle)
 
 		if (oph_dc_connect_to_dbms(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_DBMS_CONNECTION_ERROR,
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_DBMS_CONNECTION_ERROR,
 				(dbmss.value[i]).id_dbms);
 			oph_dc_disconnect_from_dbms(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 			oph_odb_stge_free_db_list(&dbs);
@@ -5999,7 +5997,7 @@ int task_execute(oph_operator_struct * handle)
 
 			if (oph_dc_use_db_of_dbms(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_DB_SELECTION_ERROR,
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_DB_SELECTION_ERROR,
 					(dbs.value[j]).db_name);
 				oph_dc_disconnect_from_dbms(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 				oph_odb_stge_free_db_list(&dbs);
@@ -6035,7 +6033,7 @@ int task_execute(oph_operator_struct * handle)
 				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &fragment_name)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag  name exceed limit.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_IMPORTESDM2_STRING_BUFFER_OVERFLOW, "fragment name", fragment_name);
+						OPH_LOG_OPH_IMPORTESDM_STRING_BUFFER_OVERFLOW, "fragment name", fragment_name);
 					oph_dc_disconnect_from_dbms(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
@@ -6047,7 +6045,7 @@ int task_execute(oph_operator_struct * handle)
 				if (oph_dc_create_empty_fragment(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server, &new_frag)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_IMPORTESDM2_FRAGMENT_CREATION_ERROR, new_frag.fragment_name);
+						OPH_LOG_OPH_IMPORTESDM_FRAGMENT_CREATION_ERROR, new_frag.fragment_name);
 					oph_dc_disconnect_from_dbms(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
@@ -6062,7 +6060,7 @@ int task_execute(oph_operator_struct * handle)
 				     ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->memory_size)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_IMPORTESDM2_FRAG_POPULATE_ERROR, new_frag.fragment_name, "");
+						OPH_LOG_OPH_IMPORTESDM_FRAG_POPULATE_ERROR, new_frag.fragment_name, "");
 					oph_dc_disconnect_from_dbms(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
@@ -6073,7 +6071,7 @@ int task_execute(oph_operator_struct * handle)
 				if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &new_frag)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update fragment table.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_IMPORTESDM2_FRAGMENT_INSERT_ERROR, new_frag.fragment_name);
+						OPH_LOG_OPH_IMPORTESDM_FRAGMENT_INSERT_ERROR, new_frag.fragment_name);
 					oph_dc_disconnect_from_dbms(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
@@ -6102,7 +6100,7 @@ int task_reduce(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_NULL_OPERATOR_HANDLE);
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_NULL_OPERATOR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
@@ -6113,7 +6111,7 @@ int task_destroy(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_NULL_OPERATOR_HANDLE);
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_NULL_OPERATOR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
@@ -6132,13 +6130,13 @@ int task_destroy(oph_operator_struct * handle)
 		char *tmp_uri = NULL;
 		if (oph_pid_get_uri(&tmp_uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve web server URI.\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_PID_URI_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_PID_URI_ERROR);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 		if (oph_pid_show_pid
 		    (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_output_datacube, tmp_uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to print PID string\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_PID_SHOW_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_PID_SHOW_ERROR);
 			free(tmp_uri);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
@@ -6182,7 +6180,7 @@ int task_destroy(oph_operator_struct * handle)
 			//retrieve input datacube
 			if (oph_odb_cube_retrieve_datacube(oDB, id_datacube, &cube)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_DATACUBE_READ_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_DATACUBE_READ_ERROR);
 			} else {
 				//Copy fragment id relative index set 
 				strncpy(id_string, cube.frag_relative_index_set, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
@@ -6195,7 +6193,7 @@ int task_destroy(oph_operator_struct * handle)
 		//Check if sequential part has been completed
 		if (id_string[0] == 0) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM2_MASTER_TASK_INIT_FAILED);
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_MASTER_TASK_INIT_FAILED);
 		} else {
 			if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragment_first_id >= 0 || handle->proc_rank == 0) {
 				//Partition fragment relative index string
@@ -6206,7 +6204,7 @@ int task_destroy(oph_operator_struct * handle)
 				     ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragment_number, &new_ptr)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to split IDs fragment string\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_IMPORTESDM2_ID_STRING_SPLIT_ERROR);
+						OPH_LOG_OPH_IMPORTESDM_ID_STRING_SPLIT_ERROR);
 				} else {
 					//Delete fragments
 					int start_position =

@@ -100,6 +100,7 @@ DRIVER+=liboph_importfitsoperator.la
 endif
 if HAVE_ESDM
 DRIVER+=liboph_importesdmoperator.la
+DRIVER+=liboph_importesdm2operator.la
 DRIVER+=liboph_exportesdmoperator.la
 endif
 
