@@ -293,7 +293,7 @@ if test "x${have_netcdf}" = "xyes"; then
 	if test "x${NETCDF_LIBS}" != "x"; then
 		AC_SUBST(NETCDF_CFLAGS)
 		AC_SUBST(NETCDF_LIBS)
-		AC_MSG_NOTICE([Enabled NetCDF support.])
+		AC_MSG_NOTICE([NetCDF support enabled])
 	else
 		AC_MSG_WARN([NetCDF not found! NetCDF support automatically disabled!])
 		have_netcdf=no
@@ -312,7 +312,7 @@ AC_ARG_WITH(esdm_path,
 				ESDM_LIBS="-L$withval/lib -lesdm -Wl,-rpath -Wl,$withval/lib"
 				AC_SUBST(ESDM_CFLAGS)
 				AC_SUBST(ESDM_LIBS)
-				AC_MSG_NOTICE("ESDM support enabled")
+				AC_MSG_NOTICE([ESDM support enabled])
            ],
            [
 				have_esdm=no
