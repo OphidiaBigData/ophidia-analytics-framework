@@ -2480,7 +2480,7 @@ int oph_esdm_populate_fragment5(oph_ioserver_handler * server, oph_odb_fragment 
 	}
 
 	long long query_size = 0;
-	char *insert_query = OPH_DC_SQ_CREATE_FRAG_FROM_FILE;
+	char *insert_query = OPH_DC_SQ_CREATE_FRAG_FROM_ESDM;
 	if (compressed == 1) {
 		query_size =
 		    snprintf(NULL, 0, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_YES, tuplexfrag_number, frag->key_start, "", "", "",
@@ -6303,7 +6303,7 @@ int task_execute(oph_operator_struct * handle)
 				strcpy(new_frag[current_frag_count + frag_count].fragment_name, fragment_name);
 				//Create  and populate fragment
 				if (oph_esdm_populate_fragment5
-				    (server, &(new_frag[current_frag_count + frag_count]), oper_handle->nc_file_path, oper_handle->tuplexfrag_number, oper_handle->compressed,
+				    (server, &(new_frag[current_frag_count + frag_count]), oper_handle->nc_file_path_orig, oper_handle->tuplexfrag_number, oper_handle->compressed,
 				     (ESDM_var *) & (oper_handle->measure))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_FRAG_POPULATE_ERROR,
