@@ -61,6 +61,25 @@
 
 #define OPH_ESDM_FUNCTION_MAX "max"
 
+static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, void *fill_value)
+{
+	UNUSED(space);
+	UNUSED(buff);
+	UNUSED(user_ptr);
+	UNUSED(fill_value);
+
+	return NULL;
+}
+
+static void reduce_func(esdm_dataspace_t * space, void *user_ptr, void *stream_func_out)
+{
+	UNUSED(space);
+	UNUSED(user_ptr);
+
+	if (stream_func_out)
+		free(stream_func_out);
+}
+
 int _oph_esdm_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, int64_t ** id, int i, int n)
 {
 	if (i < n - 1) {
@@ -1484,7 +1503,34 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				return -1;
 			}
 
-			if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
+			if (!strcmp(measure->operation, OPH_ESDM_FUNCTION_MAX)) {
+
+				if ((esdm_read_stream(measure->dataset, subspace, binary + jj * sizeof_var, stream_func, reduce_func))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
+					free(query_string);
+					free(idDim);
+					free(binary);
+					for (ii = 0; ii < c_arg; ii++)
+						if (args[ii])
+							free(args[ii]);
+					free(args);
+					oph_ioserver_free_query(server, query);
+					free(start);
+					free(count);
+					free(start_pointer);
+					free(sizemax);
+					if (binary_tmp)
+						free(binary_tmp);
+					if (counters)
+						free(counters);
+					if (products)
+						free(products);
+					if (limits)
+						free(limits);
+					return -1;
+				}
+
+			} else if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
 				free(query_string);
 				free(idDim);
@@ -1669,7 +1715,34 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				return -1;
 			}
 
-			if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
+			if (!strcmp(measure->operation, OPH_ESDM_FUNCTION_MAX)) {
+
+				if ((esdm_read_stream(measure->dataset, subspace, binary + jj * sizeof_var, stream_func, reduce_func))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
+					free(query_string);
+					free(idDim);
+					free(binary);
+					if (binary_tmp)
+						free(binary_tmp);
+					for (ii = 0; ii < c_arg; ii++)
+						if (args[ii])
+							free(args[ii]);
+					free(args);
+					oph_ioserver_free_query(server, query);
+					free(start);
+					free(count);
+					free(start_pointer);
+					free(sizemax);
+					if (counters)
+						free(counters);
+					if (products)
+						free(products);
+					if (limits)
+						free(limits);
+					return -1;
+				}
+
+			} else if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
 				free(query_string);
 				free(idDim);
@@ -2439,6 +2512,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	nc_measure->dspace = NULL;
 	nc_measure->dim_dataset = NULL;
 	nc_measure->dim_dspace = NULL;
+	nc_measure->operation = NULL;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->cwd = NULL;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->run = 1;
