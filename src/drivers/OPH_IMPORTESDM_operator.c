@@ -68,10 +68,8 @@ typedef struct _stream_data_t {
 	void *buff;
 } stream_data_t;
 
-static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, void *fill_value)
+static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, void *esdm_fill_value)
 {
-	UNUSED(fill_value);
-
 	if (!space || !buff || !user_ptr)
 		return NULL;
 
@@ -89,6 +87,13 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 	}
 	uint64_t k, n = esdm_dataspace_element_count(space);
 	esdm_type_t type = esdm_dataspace_get_type(space);
+	char *fill_value = NULL;
+
+	if (esdm_fill_value) {
+		fill_value = smd_attr_get_value(esdm_fill_value);
+		//pmesg(LOG_ERROR, __FILE__, __LINE__, "fill value %f\n", fill_value);
+		UNUSED(fill_value);
+	}
 
 	if (!strcmp(stream_data->operation, OPH_ESDM_FUNCTION_STREAM)) {
 
@@ -300,6 +305,26 @@ int oph_esdm_set_esdm_type(char *out_c_type, esdm_type_t type_nc)
 		return -1;
 	}
 
+	return 0;
+}
+
+size_t _oph_sizeof(char *in_c_type)
+{
+	if (!strcasecmp(in_c_type, OPH_COMMON_BYTE_TYPE))
+		return sizeof(char);
+	if (!strcasecmp(in_c_type, OPH_COMMON_SHORT_TYPE))
+		return sizeof(short);
+	if (!strcasecmp(in_c_type, OPH_COMMON_INT_TYPE))
+		return sizeof(int);
+	if (!strcasecmp(in_c_type, OPH_COMMON_LONG_TYPE))
+		return sizeof(long long);
+	if (!strcasecmp(in_c_type, OPH_COMMON_FLOAT_TYPE))
+		return sizeof(float);
+	if (!strcasecmp(in_c_type, OPH_COMMON_DOUBLE_TYPE))
+		return sizeof(double);
+	if (!strcasecmp(in_c_type, OPH_COMMON_BIT_TYPE))
+		return sizeof(char);
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Data type '%s' not supported\n", in_c_type);
 	return 0;
 }
 
@@ -1429,7 +1454,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 	//Check
 	int total = 1;
 	for (i = 0; i < measure->ndims; i++)
-		if (!measure->dims_type[i])
+		if (!measure->dims_type[i] && (!measure->operation || !strcmp(measure->operation, OPH_ESDM_FUNCTION_STREAM)))
 			total *= count[i];
 
 	if (total != array_length) {
@@ -2247,7 +2272,8 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 	//Check
 	int total = 1;
 	for (i = 0; i < measure->ndims; i++)
-		total *= count[i];
+		if (measure->dims_type[i] || !measure->operation || !strcmp(measure->operation, OPH_ESDM_FUNCTION_STREAM))
+			total *= count[i];
 
 	if (total != array_length * tuplexfrag_number) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "ARRAY_LENGTH = %d, TOTAL = %d\n", array_length, total);
@@ -5067,9 +5093,13 @@ int task_init(oph_operator_struct * handle)
 				dim_inst[i].id_grid = id_grid;
 				dim_inst[i].id_dimensioninst = 0;
 				//Modified to allow subsetting
-				tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
+				if (!((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation
+				    || !strcmp(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation, OPH_ESDM_FUNCTION_STREAM))
+					tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
+				else
+					tmp_var.varsize = 1;
 				dim_inst[i].size = tmp_var.varsize;
-				dim_inst[i].concept_level = measure->dims_concept_level[i];
+				dim_inst[i].concept_level = measure->dims_concept_level[i];	// TODO: see next note
 				dim_inst[i].unlimited = measure->dims_unlim[i] ? 1 : 0;
 
 				if ((varid >= 0) && oph_esdm_compare_types(id_container_out, xtype, tot_dims[j].dimension_type)) {
@@ -5077,18 +5107,34 @@ int task_init(oph_operator_struct * handle)
 					logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
 				}
 
-				if (oph_esdm_get_dim_array
-				    (id_container_out, measure->dim_dataset[i], varid, tot_dims[j].dimension_type, tmp_var.varsize, measure->dims_start_index[i], measure->dims_end_index[i],
-				     &dim_array)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
-					free(tot_dims);
-					free(dims);
-					free(dim_inst);
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					free(dimvar_ids);
-					goto __OPH_EXIT_1;
+				if (!((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation
+				    || !strcmp(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation, OPH_ESDM_FUNCTION_STREAM)) {
+					if (oph_esdm_get_dim_array
+					    (id_container_out, measure->dim_dataset[i], varid, tot_dims[j].dimension_type, tmp_var.varsize, measure->dims_start_index[i], measure->dims_end_index[i],
+					     &dim_array)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
+						free(tot_dims);
+						free(dims);
+						free(dim_inst);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						free(dimvar_ids);
+						goto __OPH_EXIT_1;
+					}
+				} else {	// TODO: size of collapsed dimensions should be zero; in addition concept level needs to be set to ALL
+					if (!(dim_array = (char *) malloc(_oph_sizeof(tot_dims[j].dimension_type)))) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to allocate memory for dimension information\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to allocate memory for dimension information\n");
+						free(tot_dims);
+						free(dims);
+						free(dim_inst);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						free(dimvar_ids);
+						goto __OPH_EXIT_1;
+					}
+					*dim_array = 0;
 				}
 
 				if (oph_dim_insert_into_dimension_table(db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, tmp_var.varsize, dim_array, &dimension_array_id)) {
