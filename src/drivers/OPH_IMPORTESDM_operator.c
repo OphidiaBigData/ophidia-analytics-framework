@@ -59,14 +59,167 @@
 #define _NC_DIMS "_nc_dims"
 #define _NC_SIZES "_nc_sizes"
 
+#define OPH_ESDM_FUNCTION_STREAM "stream"
 #define OPH_ESDM_FUNCTION_MAX "max"
+
+typedef struct _stream_data_t {
+	char *operation;
+	double value;
+	void *buff;
+} stream_data_t;
 
 static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, void *fill_value)
 {
-	UNUSED(space);
-	UNUSED(buff);
-	UNUSED(user_ptr);
 	UNUSED(fill_value);
+
+	if (!space || !buff || !user_ptr)
+		return NULL;
+
+	stream_data_t *stream_data = (stream_data_t *) user_ptr;
+	if (!stream_data->operation)
+		return NULL;
+
+	if (!strcmp(stream_data->operation, OPH_ESDM_FUNCTION_STREAM)) {
+
+		// TODO: copy only the data related to the dataspace
+		memcpy(stream_data->buff, buff, esdm_dataspace_total_bytes(space));
+
+	} else if (!strcmp(stream_data->operation, OPH_ESDM_FUNCTION_MAX)) {
+
+		int64_t i, j, idx, ndims = esdm_dataspace_get_dims(space);
+		int64_t const *s = esdm_dataspace_get_size(space);
+		int64_t const *si = esdm_dataspace_get_offset(space);
+		int64_t ci[ndims], ei[ndims];
+		for (i = 0; i < ndims; ++i) {
+			ci[i] = si[i];
+			ei[i] = si[i] + s[i];
+		}
+		uint64_t k, n = esdm_dataspace_element_count(space);
+
+		esdm_type_t type = esdm_dataspace_get_type(space);
+		if (type == SMD_DTYPE_INT8) {
+
+			char *a = (char *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (j = ndims - 1; j >= 0; j--)
+					idx = idx * 10 + ci[j];
+				if (!k)
+					v = a[idx];
+				else if (v < a[idx])
+					v = a[idx];
+				for (j = ndims - 1; j >= 0; j--) {
+					ci[j]++;
+					if (ci[j] < ei[j])
+						break;
+					ci[j] = si[j];
+				}
+			}
+			memcpy(stream_data->buff, &v, sizeof(char));
+
+		} else if (type == SMD_DTYPE_INT16) {
+
+			short *a = (short *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (j = ndims - 1; j >= 0; j--)
+					idx = idx * 10 + ci[j];
+				if (!k)
+					v = a[idx];
+				else if (v < a[idx])
+					v = a[idx];
+				for (j = ndims - 1; j >= 0; j--) {
+					ci[j]++;
+					if (ci[j] < ei[j])
+						break;
+					ci[j] = si[j];
+				}
+			}
+			memcpy(stream_data->buff, &v, sizeof(short));
+
+		} else if (type == SMD_DTYPE_INT32) {
+
+			int *a = (int *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (j = ndims - 1; j >= 0; j--)
+					idx = idx * 10 + ci[j];
+				if (!k)
+					v = a[idx];
+				else if (v < a[idx])
+					v = a[idx];
+				for (j = ndims - 1; j >= 0; j--) {
+					ci[j]++;
+					if (ci[j] < ei[j])
+						break;
+					ci[j] = si[j];
+				}
+			}
+			memcpy(stream_data->buff, &v, sizeof(int));
+
+		} else if (type == SMD_DTYPE_INT64) {
+
+			long long *a = (long long *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (j = ndims - 1; j >= 0; j--)
+					idx = idx * 10 + ci[j];
+				if (!k)
+					v = a[idx];
+				else if (v < a[idx])
+					v = a[idx];
+				for (j = ndims - 1; j >= 0; j--) {
+					ci[j]++;
+					if (ci[j] < ei[j])
+						break;
+					ci[j] = si[j];
+				}
+			}
+			memcpy(stream_data->buff, &v, sizeof(long long));
+
+		} else if (type == SMD_DTYPE_FLOAT) {
+
+			float *a = (float *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (j = ndims - 1; j >= 0; j--)
+					idx = idx * 10 + ci[j];
+				if (!k)
+					v = a[idx];
+				else if (v < a[idx])
+					v = a[idx];
+				for (j = ndims - 1; j >= 0; j--) {
+					ci[j]++;
+					if (ci[j] < ei[j])
+						break;
+					ci[j] = si[j];
+				}
+			}
+			memcpy(stream_data->buff, &v, sizeof(float));
+
+		} else if (type == SMD_DTYPE_DOUBLE) {
+
+			double *a = (double *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (j = ndims - 1; j >= 0; j--)
+					idx = idx * 10 + ci[j];
+				if (!k)
+					v = a[idx];
+				else if (v < a[idx])
+					v = a[idx];
+				for (j = ndims - 1; j >= 0; j--) {
+					ci[j]++;
+					if (ci[j] < ei[j])
+						break;
+					ci[j] = si[j];
+				}
+			}
+			memcpy(stream_data->buff, &v, sizeof(double));
+
+		} else
+			return NULL;
+	}
 
 	return NULL;
 }
@@ -1461,6 +1614,8 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 	}
 
 	size_t sizeof_type = (int) sizeof_var / array_length;
+	esdm_dataspace_t *subspace;
+	stream_data_t stream_data;
 
 	for (l = 0; l < regular_times; l++) {
 
@@ -1477,7 +1632,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 			}
 
 			//Fill array
-			esdm_dataspace_t *subspace = NULL;
+			subspace = NULL;
 			if ((esdm_dataspace_create_full(measure->ndims, count, start, type_nc, &subspace))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create data space\n");
 				free(query_string);
@@ -1503,9 +1658,14 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				return -1;
 			}
 
-			if (!strcmp(measure->operation, OPH_ESDM_FUNCTION_MAX)) {
+			if (measure->operation) {
 
-				if ((esdm_read_stream(measure->dataset, subspace, binary + jj * sizeof_var, stream_func, reduce_func))) {
+				// Initialize stream data
+				stream_data.operation = measure->operation;
+				stream_data.value = 0;
+				stream_data.buff = binary + jj * sizeof_var;
+
+				if ((esdm_read_stream(measure->dataset, subspace, &stream_data, stream_func, reduce_func))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
 					free(query_string);
 					free(idDim);
@@ -1689,7 +1849,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				}
 			}
 			//Fill array
-			esdm_dataspace_t *subspace = NULL;
+			subspace = NULL;
 			if ((esdm_dataspace_create_full(measure->ndims, count, start, type_nc, &subspace))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create data space\n");
 				free(query_string);
@@ -1715,9 +1875,14 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				return -1;
 			}
 
-			if (!strcmp(measure->operation, OPH_ESDM_FUNCTION_MAX)) {
+			if (measure->operation) {
 
-				if ((esdm_read_stream(measure->dataset, subspace, binary + jj * sizeof_var, stream_func, reduce_func))) {
+				// Initialize stream data
+				stream_data.operation = measure->operation;
+				stream_data.value = 0;
+				stream_data.buff = binary + jj * sizeof_var;
+
+				if ((esdm_read_stream(measure->dataset, subspace, &stream_data, stream_func, reduce_func))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
 					free(query_string);
 					free(idDim);
@@ -3953,10 +4118,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (!strcmp(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation, OPH_COMMON_NONE_FILTER)) {
 			free(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation);
 			((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation = NULL;
-		} else if (strcmp(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation, OPH_ESDM_FUNCTION_MAX)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operation '%s' not valid\n", value);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operation '%s' not valid\n", value);
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 		measure->operation = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation;
 	}
