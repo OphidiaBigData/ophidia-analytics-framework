@@ -59,6 +59,8 @@
 #define _NC_DIMS "_nc_dims"
 #define _NC_SIZES "_nc_sizes"
 
+#define OPH_ESDM_FUNCTION_MAX "max"
+
 int _oph_esdm_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, int64_t ** id, int i, int n)
 {
 	if (i < n - 1) {
@@ -1458,7 +1460,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 			//Fill array
 			esdm_dataspace_t *subspace = NULL;
 			if ((esdm_dataspace_create_full(measure->ndims, count, start, type_nc, &subspace))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write data\n");
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create data space\n");
 				free(query_string);
 				free(idDim);
 				free(binary);
@@ -1483,7 +1485,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 			}
 
 			if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write data\n");
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
 				free(query_string);
 				free(idDim);
 				free(binary);
@@ -1643,7 +1645,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 			//Fill array
 			esdm_dataspace_t *subspace = NULL;
 			if ((esdm_dataspace_create_full(measure->ndims, count, start, type_nc, &subspace))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write data\n");
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create data space\n");
 				free(query_string);
 				free(idDim);
 				free(binary);
@@ -1668,7 +1670,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 			}
 
 			if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write data\n");
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
 				free(query_string);
 				free(idDim);
 				free(binary);
@@ -2459,6 +2461,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->policy = 0;
+	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation = NULL;
 
 	char *value;
 
@@ -3865,6 +3868,24 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->id_job = 0;
 	else
 		((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->id_job = (int) strtol(value, NULL, 10);
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_REDUCTION_OPERATION);
+	if (value) {
+		if (!(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation = (char *) strndup(value, OPH_TP_TASKLEN))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT, OPH_IN_PARAM_REDUCTION_OPERATION);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		if (!strcmp(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation, OPH_COMMON_NONE_FILTER)) {
+			free(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation);
+			((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation = NULL;
+		} else if (strcmp(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation, OPH_ESDM_FUNCTION_MAX)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operation '%s' not valid\n", value);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operation '%s' not valid\n", value);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		measure->operation = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation;
+	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -6364,6 +6385,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->description);
 		((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->description = NULL;
+	}
+	if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation) {
+		free((char *) ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation);
+		((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation = NULL;
 	}
 
 	int i;
