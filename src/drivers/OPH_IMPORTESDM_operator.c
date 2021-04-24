@@ -79,6 +79,17 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 	if (!stream_data->operation)
 		return NULL;
 
+	int64_t i, idx, ndims = esdm_dataspace_get_dims(space);
+	int64_t const *s = esdm_dataspace_get_size(space);
+	int64_t const *si = esdm_dataspace_get_offset(space);
+	int64_t ci[ndims], ei[ndims];
+	for (i = 0; i < ndims; ++i) {
+		ci[i] = si[i];
+		ei[i] = si[i] + s[i];
+	}
+	uint64_t k, n = esdm_dataspace_element_count(space);
+	esdm_type_t type = esdm_dataspace_get_type(space);
+
 	if (!strcmp(stream_data->operation, OPH_ESDM_FUNCTION_STREAM)) {
 
 		// TODO: copy only the data related to the dataspace
@@ -86,33 +97,20 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 
 	} else if (!strcmp(stream_data->operation, OPH_ESDM_FUNCTION_MAX)) {
 
-		int64_t i, j, idx, ndims = esdm_dataspace_get_dims(space);
-		int64_t const *s = esdm_dataspace_get_size(space);
-		int64_t const *si = esdm_dataspace_get_offset(space);
-		int64_t ci[ndims], ei[ndims];
-		for (i = 0; i < ndims; ++i) {
-			ci[i] = si[i];
-			ei[i] = si[i] + s[i];
-		}
-		uint64_t k, n = esdm_dataspace_element_count(space);
-
-		esdm_type_t type = esdm_dataspace_get_type(space);
 		if (type == SMD_DTYPE_INT8) {
 
 			char *a = (char *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (j = ndims - 1; j >= 0; j--)
-					idx = idx * 10 + ci[j];
-				if (!k)
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v < a[idx]))
 					v = a[idx];
-				else if (v < a[idx])
-					v = a[idx];
-				for (j = ndims - 1; j >= 0; j--) {
-					ci[j]++;
-					if (ci[j] < ei[j])
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
 						break;
-					ci[j] = si[j];
+					ci[i] = si[i];
 				}
 			}
 			memcpy(stream_data->buff, &v, sizeof(char));
@@ -122,17 +120,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			short *a = (short *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (j = ndims - 1; j >= 0; j--)
-					idx = idx * 10 + ci[j];
-				if (!k)
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v < a[idx]))
 					v = a[idx];
-				else if (v < a[idx])
-					v = a[idx];
-				for (j = ndims - 1; j >= 0; j--) {
-					ci[j]++;
-					if (ci[j] < ei[j])
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
 						break;
-					ci[j] = si[j];
+					ci[i] = si[i];
 				}
 			}
 			memcpy(stream_data->buff, &v, sizeof(short));
@@ -142,17 +138,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			int *a = (int *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (j = ndims - 1; j >= 0; j--)
-					idx = idx * 10 + ci[j];
-				if (!k)
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v < a[idx]))
 					v = a[idx];
-				else if (v < a[idx])
-					v = a[idx];
-				for (j = ndims - 1; j >= 0; j--) {
-					ci[j]++;
-					if (ci[j] < ei[j])
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
 						break;
-					ci[j] = si[j];
+					ci[i] = si[i];
 				}
 			}
 			memcpy(stream_data->buff, &v, sizeof(int));
@@ -162,17 +156,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			long long *a = (long long *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (j = ndims - 1; j >= 0; j--)
-					idx = idx * 10 + ci[j];
-				if (!k)
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v < a[idx]))
 					v = a[idx];
-				else if (v < a[idx])
-					v = a[idx];
-				for (j = ndims - 1; j >= 0; j--) {
-					ci[j]++;
-					if (ci[j] < ei[j])
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
 						break;
-					ci[j] = si[j];
+					ci[i] = si[i];
 				}
 			}
 			memcpy(stream_data->buff, &v, sizeof(long long));
@@ -182,17 +174,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			float *a = (float *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (j = ndims - 1; j >= 0; j--)
-					idx = idx * 10 + ci[j];
-				if (!k)
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v < a[idx]))
 					v = a[idx];
-				else if (v < a[idx])
-					v = a[idx];
-				for (j = ndims - 1; j >= 0; j--) {
-					ci[j]++;
-					if (ci[j] < ei[j])
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
 						break;
-					ci[j] = si[j];
+					ci[i] = si[i];
 				}
 			}
 			memcpy(stream_data->buff, &v, sizeof(float));
@@ -202,17 +192,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			double *a = (double *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (j = ndims - 1; j >= 0; j--)
-					idx = idx * 10 + ci[j];
-				if (!k)
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v < a[idx]))
 					v = a[idx];
-				else if (v < a[idx])
-					v = a[idx];
-				for (j = ndims - 1; j >= 0; j--) {
-					ci[j]++;
-					if (ci[j] < ei[j])
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
 						break;
-					ci[j] = si[j];
+					ci[i] = si[i];
 				}
 			}
 			memcpy(stream_data->buff, &v, sizeof(double));
@@ -4172,12 +4160,14 @@ int task_init(oph_operator_struct * handle)
 
 	// Compute array length
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->array_length = 1;
-	for (i = 0; i < measure->ndims; i++) {
-		//Consider only implicit dimensions
-		if (!measure->dims_type[i]) {
-			if (measure->dims_end_index[i] == measure->dims_start_index[i])
-				continue;
-			((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->array_length *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
+	if (!((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation || !strcmp(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation, OPH_ESDM_FUNCTION_STREAM)) {
+		for (i = 0; i < measure->ndims; i++) {
+			//Consider only implicit dimensions
+			if (!measure->dims_type[i]) {
+				if (measure->dims_end_index[i] == measure->dims_start_index[i])
+					continue;
+				((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->array_length *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
+			}
 		}
 	}
 
