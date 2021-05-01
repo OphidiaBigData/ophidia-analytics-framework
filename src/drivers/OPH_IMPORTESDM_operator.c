@@ -59,6 +59,632 @@
 #define _NC_DIMS "_nc_dims"
 #define _NC_SIZES "_nc_sizes"
 
+#define OPH_ESDM_FUNCTION_STREAM "stream"
+#define OPH_ESDM_FUNCTION_MAX "max"
+#define OPH_ESDM_FUNCTION_MIN "min"
+#define OPH_ESDM_FUNCTION_AVG "avg"
+
+typedef struct _stream_data_t {
+	char *operation;
+	void *buff;
+	char valid;
+	double value;
+	uint64_t number;
+} stream_data_t;
+
+typedef struct _stream_data_out_t {
+	double value;
+	uint64_t number;
+} stream_data_out_t;
+
+static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, void *esdm_fill_value)
+{
+	if (!space || !buff || !user_ptr)
+		return NULL;
+
+	stream_data_t *stream_data = (stream_data_t *) user_ptr;
+	if (!stream_data->operation)
+		return NULL;
+
+	int64_t i, idx, ndims = esdm_dataspace_get_dims(space);
+	int64_t const *s = esdm_dataspace_get_size(space);
+	int64_t const *si = esdm_dataspace_get_offset(space);
+	int64_t ci[ndims], ei[ndims];
+	for (i = 0; i < ndims; ++i) {
+		ci[i] = si[i];
+		ei[i] = si[i] + s[i];
+	}
+	uint64_t k, n = esdm_dataspace_element_count(space);
+	esdm_type_t type = esdm_dataspace_get_type(space);
+	char *fill_value = NULL;
+	stream_data_out_t *tmp = NULL;
+
+	if (esdm_fill_value) {
+		fill_value = smd_attr_get_value(esdm_fill_value);
+		//pmesg(LOG_ERROR, __FILE__, __LINE__, "fill value %f\n", fill_value);
+		UNUSED(fill_value);
+	}
+
+	if (!strcmp(stream_data->operation, OPH_ESDM_FUNCTION_STREAM)) {
+
+		// TODO: copy only the data related to the dataspace
+		memcpy(stream_data->buff, buff, esdm_dataspace_total_bytes(space));
+
+	} else if (!strcmp(stream_data->operation, OPH_ESDM_FUNCTION_MAX)) {
+
+		tmp = (stream_data_out_t *) malloc(sizeof(stream_data_out_t));
+		tmp->number = 0;
+
+		if (type == SMD_DTYPE_INT8) {
+
+			char *a = (char *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v < a[idx]))
+					v = a[idx];
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+			tmp->value = v;
+
+		} else if (type == SMD_DTYPE_INT16) {
+
+			short *a = (short *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v < a[idx]))
+					v = a[idx];
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+			tmp->value = v;
+
+		} else if (type == SMD_DTYPE_INT32) {
+
+			int *a = (int *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v < a[idx]))
+					v = a[idx];
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+			tmp->value = v;
+
+		} else if (type == SMD_DTYPE_INT64) {
+
+			long long *a = (long long *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v < a[idx]))
+					v = a[idx];
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+			tmp->value = v;
+
+		} else if (type == SMD_DTYPE_FLOAT) {
+
+			float *a = (float *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v < a[idx]))
+					v = a[idx];
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+			tmp->value = v;
+
+		} else if (type == SMD_DTYPE_DOUBLE) {
+
+			double *a = (double *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v < a[idx]))
+					v = a[idx];
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+			tmp->value = v;
+
+		} else {
+			free(tmp);
+			return NULL;
+		}
+
+	} else if (!strcmp(stream_data->operation, OPH_ESDM_FUNCTION_MIN)) {
+
+		tmp = (stream_data_out_t *) malloc(sizeof(stream_data_out_t));
+		tmp->number = 0;
+
+		if (type == SMD_DTYPE_INT8) {
+
+			char *a = (char *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v > a[idx]))
+					v = a[idx];
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+			tmp->value = v;
+
+		} else if (type == SMD_DTYPE_INT16) {
+
+			short *a = (short *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v > a[idx]))
+					v = a[idx];
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+			tmp->value = v;
+
+		} else if (type == SMD_DTYPE_INT32) {
+
+			int *a = (int *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v > a[idx]))
+					v = a[idx];
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+			tmp->value = v;
+
+		} else if (type == SMD_DTYPE_INT64) {
+
+			long long *a = (long long *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v > a[idx]))
+					v = a[idx];
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+			tmp->value = v;
+
+		} else if (type == SMD_DTYPE_FLOAT) {
+
+			float *a = (float *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v > a[idx]))
+					v = a[idx];
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+			tmp->value = v;
+
+		} else if (type == SMD_DTYPE_DOUBLE) {
+
+			double *a = (double *) buff, v;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				if (!k || (v > a[idx]))
+					v = a[idx];
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+			tmp->value = v;
+
+		} else {
+			free(tmp);
+			return NULL;
+		}
+
+	} else if (!strcmp(stream_data->operation, OPH_ESDM_FUNCTION_AVG)) {
+
+		tmp = (stream_data_out_t *) malloc(sizeof(stream_data_out_t));
+		tmp->value = 0;
+		tmp->number = 0;
+
+		if (type == SMD_DTYPE_INT8) {
+
+			char *a = (char *) buff;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				tmp->value += a[idx];
+				tmp->number++;	// Needed to avoid missing values
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+
+		} else if (type == SMD_DTYPE_INT16) {
+
+			short *a = (short *) buff;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				tmp->value += a[idx];
+				tmp->number++;	// Needed to avoid missing values
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+
+		} else if (type == SMD_DTYPE_INT32) {
+
+			int *a = (int *) buff;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				tmp->value += a[idx];
+				tmp->number++;	// Needed to avoid missing values
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+
+		} else if (type == SMD_DTYPE_INT64) {
+
+			long long *a = (long long *) buff;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				tmp->value += a[idx];
+				tmp->number++;	// Needed to avoid missing values
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+
+		} else if (type == SMD_DTYPE_FLOAT) {
+
+			float *a = (float *) buff;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				tmp->value += a[idx];
+				tmp->number++;	// Needed to avoid missing values
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+
+		} else if (type == SMD_DTYPE_DOUBLE) {
+
+			double *a = (double *) buff;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = ndims - 1; i >= 0; i--)
+					idx = idx * 10 + ci[i];
+				tmp->value += a[idx];
+				tmp->number++;	// Needed to avoid missing values
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = si[i];
+				}
+			}
+
+		} else {
+			free(tmp);
+			return NULL;
+		}
+	}
+
+	return tmp;
+}
+
+static void reduce_func(esdm_dataspace_t * space, void *user_ptr, void *stream_func_out)
+{
+	stream_data_out_t *tmp = (stream_data_out_t *) stream_func_out;
+
+	do {
+
+		if (!space || !user_ptr)
+			break;
+
+		esdm_type_t type = esdm_dataspace_get_type(space);
+		stream_data_t *stream_data = (stream_data_t *) user_ptr;
+		if (!stream_data->operation)
+			break;
+
+		if (!strcmp(stream_data->operation, OPH_ESDM_FUNCTION_STREAM)) {
+
+			// No operation
+
+		} else if (!strcmp(stream_data->operation, OPH_ESDM_FUNCTION_MAX)) {
+
+			if (type == SMD_DTYPE_INT8) {
+
+				char v = (char) tmp->value;
+				if (stream_data->valid) {
+					char pre = *(char *) stream_data->buff;
+					if (pre < v)
+						memcpy(stream_data->buff, &v, sizeof(char));
+				} else {
+					memcpy(stream_data->buff, &v, sizeof(char));
+					stream_data->valid = 1;
+				}
+
+			} else if (type == SMD_DTYPE_INT16) {
+
+				short v = (short) tmp->value;
+				if (stream_data->valid) {
+					short pre = *(short *) stream_data->buff;
+					if (pre < v)
+						memcpy(stream_data->buff, &v, sizeof(short));
+				} else {
+					memcpy(stream_data->buff, &v, sizeof(short));
+					stream_data->valid = 1;
+				}
+
+			} else if (type == SMD_DTYPE_INT32) {
+
+				int v = (int) tmp->value;
+				if (stream_data->valid) {
+					int pre = *(int *) stream_data->buff;
+					if (pre < v)
+						memcpy(stream_data->buff, &v, sizeof(int));
+				} else {
+					memcpy(stream_data->buff, &v, sizeof(int));
+					stream_data->valid = 1;
+				}
+
+			} else if (type == SMD_DTYPE_INT64) {
+
+				long long v = (long long) tmp->value;
+				if (stream_data->valid) {
+					long long pre = *(long long *) stream_data->buff;
+					if (pre < v)
+						memcpy(stream_data->buff, &v, sizeof(long long));
+				} else {
+					memcpy(stream_data->buff, &v, sizeof(long long));
+					stream_data->valid = 1;
+				}
+
+			} else if (type == SMD_DTYPE_FLOAT) {
+
+				float v = (float) tmp->value;
+				if (stream_data->valid) {
+					float pre = *(float *) stream_data->buff;
+					if (pre < v)
+						memcpy(stream_data->buff, &v, sizeof(float));
+				} else {
+					memcpy(stream_data->buff, &v, sizeof(float));
+					stream_data->valid = 1;
+				}
+
+			} else if (type == SMD_DTYPE_DOUBLE) {
+
+				double v = (double) tmp->value;
+				if (stream_data->valid) {
+					double pre = *(double *) stream_data->buff;
+					if (pre < v)
+						memcpy(stream_data->buff, &v, sizeof(double));
+				} else {
+					memcpy(stream_data->buff, &v, sizeof(double));
+					stream_data->valid = 1;
+				}
+
+			} else
+				break;
+
+		} else if (!strcmp(stream_data->operation, OPH_ESDM_FUNCTION_MIN)) {
+
+			if (type == SMD_DTYPE_INT8) {
+
+				char v = (char) tmp->value;
+				if (stream_data->valid) {
+					char pre = *(char *) stream_data->buff;
+					if (pre > v)
+						memcpy(stream_data->buff, &v, sizeof(char));
+				} else {
+					memcpy(stream_data->buff, &v, sizeof(char));
+					stream_data->valid = 1;
+				}
+
+			} else if (type == SMD_DTYPE_INT16) {
+
+				short v = (short) tmp->value;
+				if (stream_data->valid) {
+					short pre = *(short *) stream_data->buff;
+					if (pre > v)
+						memcpy(stream_data->buff, &v, sizeof(short));
+				} else {
+					memcpy(stream_data->buff, &v, sizeof(short));
+					stream_data->valid = 1;
+				}
+
+			} else if (type == SMD_DTYPE_INT32) {
+
+				int v = (int) tmp->value;
+				if (stream_data->valid) {
+					int pre = *(int *) stream_data->buff;
+					if (pre > v)
+						memcpy(stream_data->buff, &v, sizeof(int));
+				} else {
+					memcpy(stream_data->buff, &v, sizeof(int));
+					stream_data->valid = 1;
+				}
+
+			} else if (type == SMD_DTYPE_INT64) {
+
+				long long v = (long long) tmp->value;
+				if (stream_data->valid) {
+					long long pre = *(long long *) stream_data->buff;
+					if (pre > v)
+						memcpy(stream_data->buff, &v, sizeof(long long));
+				} else {
+					memcpy(stream_data->buff, &v, sizeof(long long));
+					stream_data->valid = 1;
+				}
+
+			} else if (type == SMD_DTYPE_FLOAT) {
+
+				float v = (float) tmp->value;
+				if (stream_data->valid) {
+					float pre = *(float *) stream_data->buff;
+					if (pre > v)
+						memcpy(stream_data->buff, &v, sizeof(float));
+				} else {
+					memcpy(stream_data->buff, &v, sizeof(float));
+					stream_data->valid = 1;
+				}
+
+			} else if (type == SMD_DTYPE_DOUBLE) {
+
+				double v = (double) tmp->value;
+				if (stream_data->valid) {
+					double pre = *(double *) stream_data->buff;
+					if (pre > v)
+						memcpy(stream_data->buff, &v, sizeof(double));
+				} else {
+					memcpy(stream_data->buff, &v, sizeof(double));
+					stream_data->valid = 1;
+				}
+
+			} else
+				break;
+
+		} else if (!strcmp(stream_data->operation, OPH_ESDM_FUNCTION_AVG)) {
+
+			if (!stream_data->valid) {
+				stream_data->valid = 1;
+				stream_data->value = 0;
+				stream_data->number = 0;
+			}
+			stream_data->value += tmp->value;
+			stream_data->number += tmp->number;
+
+			if (type == SMD_DTYPE_INT8) {
+
+				char v = (char) (stream_data->value / stream_data->number);
+				memcpy(stream_data->buff, &v, sizeof(char));
+
+			} else if (type == SMD_DTYPE_INT16) {
+
+				short v = (short) (stream_data->value / stream_data->number);
+				memcpy(stream_data->buff, &v, sizeof(short));
+
+			} else if (type == SMD_DTYPE_INT32) {
+
+				int v = (int) (stream_data->value / stream_data->number);
+				memcpy(stream_data->buff, &v, sizeof(int));
+
+			} else if (type == SMD_DTYPE_INT64) {
+
+				long long v = (long long) (stream_data->value / stream_data->number);
+				memcpy(stream_data->buff, &v, sizeof(long long));
+
+			} else if (type == SMD_DTYPE_FLOAT) {
+
+				float v = (float) (stream_data->value / stream_data->number);
+				memcpy(stream_data->buff, &v, sizeof(float));
+
+			} else if (type == SMD_DTYPE_DOUBLE) {
+
+				double v = (double) (stream_data->value / stream_data->number);
+				memcpy(stream_data->buff, &v, sizeof(double));
+
+			} else
+				break;
+		}
+
+	} while (0);
+
+	if (stream_func_out)
+		free(stream_func_out);
+}
+
 int _oph_esdm_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, int64_t ** id, int i, int n)
 {
 	if (i < n - 1) {
@@ -138,6 +764,26 @@ int oph_esdm_set_esdm_type(char *out_c_type, esdm_type_t type_nc)
 		return -1;
 	}
 
+	return 0;
+}
+
+size_t _oph_sizeof(char *in_c_type)
+{
+	if (!strcasecmp(in_c_type, OPH_COMMON_BYTE_TYPE))
+		return sizeof(char);
+	if (!strcasecmp(in_c_type, OPH_COMMON_SHORT_TYPE))
+		return sizeof(short);
+	if (!strcasecmp(in_c_type, OPH_COMMON_INT_TYPE))
+		return sizeof(int);
+	if (!strcasecmp(in_c_type, OPH_COMMON_LONG_TYPE))
+		return sizeof(long long);
+	if (!strcasecmp(in_c_type, OPH_COMMON_FLOAT_TYPE))
+		return sizeof(float);
+	if (!strcasecmp(in_c_type, OPH_COMMON_DOUBLE_TYPE))
+		return sizeof(double);
+	if (!strcasecmp(in_c_type, OPH_COMMON_BIT_TYPE))
+		return sizeof(char);
+	pmesg(LOG_ERROR, __FILE__, __LINE__, "Data type '%s' not supported\n", in_c_type);
 	return 0;
 }
 
@@ -1267,7 +1913,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 	//Check
 	int total = 1;
 	for (i = 0; i < measure->ndims; i++)
-		if (!measure->dims_type[i])
+		if (!measure->dims_type[i] && (!measure->operation || !strcmp(measure->operation, OPH_ESDM_FUNCTION_STREAM)))
 			total *= count[i];
 
 	if (total != array_length) {
@@ -1440,6 +2086,8 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 	}
 
 	size_t sizeof_type = (int) sizeof_var / array_length;
+	esdm_dataspace_t *subspace;
+	stream_data_t stream_data;
 
 	for (l = 0; l < regular_times; l++) {
 
@@ -1456,9 +2104,9 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 			}
 
 			//Fill array
-			esdm_dataspace_t *subspace = NULL;
+			subspace = NULL;
 			if ((esdm_dataspace_create_full(measure->ndims, count, start, type_nc, &subspace))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write data\n");
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create data space\n");
 				free(query_string);
 				free(idDim);
 				free(binary);
@@ -1482,8 +2130,40 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				return -1;
 			}
 
-			if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write data\n");
+			if (measure->operation) {
+
+				// Initialize stream data
+				stream_data.operation = measure->operation;
+				stream_data.buff = binary + jj * sizeof_var;
+				stream_data.valid = 0;
+
+				if ((esdm_read_stream(measure->dataset, subspace, &stream_data, stream_func, reduce_func))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
+					free(query_string);
+					free(idDim);
+					free(binary);
+					for (ii = 0; ii < c_arg; ii++)
+						if (args[ii])
+							free(args[ii]);
+					free(args);
+					oph_ioserver_free_query(server, query);
+					free(start);
+					free(count);
+					free(start_pointer);
+					free(sizemax);
+					if (binary_tmp)
+						free(binary_tmp);
+					if (counters)
+						free(counters);
+					if (products)
+						free(products);
+					if (limits)
+						free(limits);
+					return -1;
+				}
+
+			} else if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
 				free(query_string);
 				free(idDim);
 				free(binary);
@@ -1641,9 +2321,9 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				}
 			}
 			//Fill array
-			esdm_dataspace_t *subspace = NULL;
+			subspace = NULL;
 			if ((esdm_dataspace_create_full(measure->ndims, count, start, type_nc, &subspace))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write data\n");
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create data space\n");
 				free(query_string);
 				free(idDim);
 				free(binary);
@@ -1667,8 +2347,40 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				return -1;
 			}
 
-			if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write data\n");
+			if (measure->operation) {
+
+				// Initialize stream data
+				stream_data.operation = measure->operation;
+				stream_data.buff = binary + jj * sizeof_var;
+				stream_data.valid = 0;
+
+				if ((esdm_read_stream(measure->dataset, subspace, &stream_data, stream_func, reduce_func))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
+					free(query_string);
+					free(idDim);
+					free(binary);
+					if (binary_tmp)
+						free(binary_tmp);
+					for (ii = 0; ii < c_arg; ii++)
+						if (args[ii])
+							free(args[ii]);
+					free(args);
+					oph_ioserver_free_query(server, query);
+					free(start);
+					free(count);
+					free(start_pointer);
+					free(sizemax);
+					if (counters)
+						free(counters);
+					if (products)
+						free(products);
+					if (limits)
+						free(limits);
+					return -1;
+				}
+
+			} else if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
 				free(query_string);
 				free(idDim);
 				free(binary);
@@ -2019,7 +2731,8 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 	//Check
 	int total = 1;
 	for (i = 0; i < measure->ndims; i++)
-		total *= count[i];
+		if (measure->dims_type[i] || !measure->operation || !strcmp(measure->operation, OPH_ESDM_FUNCTION_STREAM))
+			total *= count[i];
 
 	if (total != array_length * tuplexfrag_number) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "ARRAY_LENGTH = %d, TOTAL = %d\n", array_length, total);
@@ -2437,6 +3150,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	nc_measure->dspace = NULL;
 	nc_measure->dim_dataset = NULL;
 	nc_measure->dim_dspace = NULL;
+	nc_measure->operation = NULL;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->cwd = NULL;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->run = 1;
@@ -2459,6 +3173,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->policy = 0;
+	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation = NULL;
 
 	char *value;
 
@@ -3866,6 +4581,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	else
 		((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->id_job = (int) strtol(value, NULL, 10);
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_REDUCTION_OPERATION);
+	if (value) {
+		if (!(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation = (char *) strndup(value, OPH_TP_TASKLEN))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT, OPH_IN_PARAM_REDUCTION_OPERATION);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		if (!strcmp(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation, OPH_COMMON_NONE_FILTER)) {
+			free(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation);
+			((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation = NULL;
+		}
+		measure->operation = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation;
+	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -3916,12 +4645,14 @@ int task_init(oph_operator_struct * handle)
 
 	// Compute array length
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->array_length = 1;
-	for (i = 0; i < measure->ndims; i++) {
-		//Consider only implicit dimensions
-		if (!measure->dims_type[i]) {
-			if (measure->dims_end_index[i] == measure->dims_start_index[i])
-				continue;
-			((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->array_length *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
+	if (!((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation || !strcmp(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation, OPH_ESDM_FUNCTION_STREAM)) {
+		for (i = 0; i < measure->ndims; i++) {
+			//Consider only implicit dimensions
+			if (!measure->dims_type[i]) {
+				if (measure->dims_end_index[i] == measure->dims_start_index[i])
+					continue;
+				((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->array_length *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
+			}
 		}
 	}
 
@@ -4821,9 +5552,13 @@ int task_init(oph_operator_struct * handle)
 				dim_inst[i].id_grid = id_grid;
 				dim_inst[i].id_dimensioninst = 0;
 				//Modified to allow subsetting
-				tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
+				if (measure->dims_type[i] || !((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation
+				    || !strcmp(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation, OPH_ESDM_FUNCTION_STREAM))
+					tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
+				else
+					tmp_var.varsize = 1;
 				dim_inst[i].size = tmp_var.varsize;
-				dim_inst[i].concept_level = measure->dims_concept_level[i];
+				dim_inst[i].concept_level = measure->dims_concept_level[i];	// TODO: see next note
 				dim_inst[i].unlimited = measure->dims_unlim[i] ? 1 : 0;
 
 				if ((varid >= 0) && oph_esdm_compare_types(id_container_out, xtype, tot_dims[j].dimension_type)) {
@@ -4831,18 +5566,34 @@ int task_init(oph_operator_struct * handle)
 					logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
 				}
 
-				if (oph_esdm_get_dim_array
-				    (id_container_out, measure->dim_dataset[i], varid, tot_dims[j].dimension_type, tmp_var.varsize, measure->dims_start_index[i], measure->dims_end_index[i],
-				     &dim_array)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
-					free(tot_dims);
-					free(dims);
-					free(dim_inst);
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					free(dimvar_ids);
-					goto __OPH_EXIT_1;
+				if (measure->dims_type[i] || !((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation
+				    || !strcmp(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation, OPH_ESDM_FUNCTION_STREAM)) {
+					if (oph_esdm_get_dim_array
+					    (id_container_out, measure->dim_dataset[i], varid, tot_dims[j].dimension_type, tmp_var.varsize, measure->dims_start_index[i], measure->dims_end_index[i],
+					     &dim_array)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
+						free(tot_dims);
+						free(dims);
+						free(dim_inst);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						free(dimvar_ids);
+						goto __OPH_EXIT_1;
+					}
+				} else {	// TODO: size of collapsed dimensions should be zero; in addition concept level needs to be set to ALL
+					if (!(dim_array = (char *) malloc(_oph_sizeof(tot_dims[j].dimension_type)))) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to allocate memory for dimension information\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to allocate memory for dimension information\n");
+						free(tot_dims);
+						free(dims);
+						free(dim_inst);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						free(dimvar_ids);
+						goto __OPH_EXIT_1;
+					}
+					*dim_array = 0;
 				}
 
 				if (oph_dim_insert_into_dimension_table(db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, tmp_var.varsize, dim_array, &dimension_array_id)) {
@@ -6364,6 +7115,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->description);
 		((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->description = NULL;
+	}
+	if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation) {
+		free((char *) ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation);
+		((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation = NULL;
 	}
 
 	int i;

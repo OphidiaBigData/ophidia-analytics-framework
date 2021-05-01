@@ -54,6 +54,7 @@ struct _ESDM_var {
 	char *dims_unlim;
 	short int *dims_order;
 	int *oph_dims_id;
+	char *operation;
 };
 typedef struct _ESDM_var ESDM_var;
 
@@ -104,6 +105,7 @@ typedef struct _ESDM_var ESDM_var;
  * \param id_job ID of the job related to the task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  * \param policy Rule to select hosts where data will be distributed
+ * \param operation Operation to be applied to data imported
  */
 struct _OPH_IMPORTESDM_operator_handle {
 	ophidiadb oDB;
@@ -150,6 +152,7 @@ struct _OPH_IMPORTESDM_operator_handle {
 	int id_job;
 	short int execute_error;
 	char policy;
+	char *operation;
 };
 typedef struct _OPH_IMPORTESDM_operator_handle OPH_IMPORTESDM_operator_handle;
 
