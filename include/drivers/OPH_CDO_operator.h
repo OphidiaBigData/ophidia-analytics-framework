@@ -60,6 +60,7 @@ struct _OPH_CDO_operator_handle {
 	char *output_path_user;
 	char *output_name;
 	int force;
+	int nthread;
 };
 typedef struct _OPH_CDO_operator_handle OPH_CDO_operator_handle;
 
