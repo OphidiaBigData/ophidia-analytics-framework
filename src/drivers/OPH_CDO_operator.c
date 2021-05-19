@@ -90,6 +90,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user = NULL;
 	((OPH_CDO_operator_handle *) handle->operator_handle)->output_name = NULL;
 	((OPH_CDO_operator_handle *) handle->operator_handle)->force = 0;
+	((OPH_CDO_operator_handle *) handle->operator_handle)->nthread = 0;
 
 	//3 - Fill struct with the correct data
 	char tmp[OPH_COMMON_BUFFER_LEN];
@@ -374,6 +375,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!strcmp(value, OPH_COMMON_YES_VALUE))
 		((OPH_CDO_operator_handle *) handle->operator_handle)->force = 1;
 
+	value = hashtbl_get(task_tbl, OPH_ARG_NTHREAD);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_NTHREAD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MISSING_INPUT_PARAMETER, OPH_ARG_NTHREAD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_CDO_operator_handle *) handle->operator_handle)->nthread = (int) strtol(value, NULL, 10);
+
 	char *path = ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path;
 	if (!path) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -496,7 +505,8 @@ int task_execute(oph_operator_struct * handle)
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_CDO_SERVER_PORT=%s ", ((oph_soap_data *) handle->soap_data)->port ? ((oph_soap_data *) handle->soap_data)->port : "");
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_CDO_USER='%s' ",
 		      ((OPH_CDO_operator_handle *) handle->operator_handle)->user ? ((OPH_CDO_operator_handle *) handle->operator_handle)->user : "");
-	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "%s/cdo '%s' ", cdo_path, ((OPH_CDO_operator_handle *) handle->operator_handle)->command);
+	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "%s/cdo -P %d '%s' ", cdo_path, ((OPH_CDO_operator_handle *) handle->operator_handle)->nthread,
+		      ((OPH_CDO_operator_handle *) handle->operator_handle)->command);
 
 	char *new_arg = NULL, *arg;
 	for (i = 0; i < ((OPH_CDO_operator_handle *) handle->operator_handle)->args_num; i++) {
