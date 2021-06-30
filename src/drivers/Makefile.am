@@ -124,6 +124,8 @@ liboph_genericoperator_la_LIBADD = -lz $(NOSQL_LIB) -loph_directory
 
 if MYSQL_SUPPORT
 
+driver_CFLAGS += -DOPH_MYSQL_SUPPORT
+
 liboph_aggregateoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
 liboph_aggregateoperator_la_SOURCES = OPH_AGGREGATE_operator.c
 liboph_aggregateoperator_la_LDFLAGS = -module -avoid-version -no-undefined
