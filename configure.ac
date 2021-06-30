@@ -80,7 +80,7 @@ else
 	AC_MSG_NOTICE(MySQL disabled)
 fi
 AM_CONDITIONAL([MYSQL_SUPPORT], [test "x$mysql" = "xyes"])
-OPH_MYSQL_SUPPORT=$mdb
+OPH_MYSQL_SUPPORT=$mysql
 AC_SUBST(OPH_MYSQL_SUPPORT)
 
 if test "x$mysql" = "xyes"; then
