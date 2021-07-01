@@ -45,6 +45,10 @@
 #define OPH_NC_ERROR		1
 #define OPH_NC_SUCCESS		0
 
+#define OPH_NC_SKIP_ATTRIBUTES
+#define OPH_NC_BOUNDS		"bounds"
+#define OPH_NC_PROPERTIES	"_NCProperties"
+
 //Structure used by OPH_EXPORTNC operator
 struct _NETCDF_dim {
 	int dimid;
