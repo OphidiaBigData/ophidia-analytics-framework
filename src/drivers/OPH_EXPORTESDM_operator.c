@@ -1320,7 +1320,7 @@ int task_execute(oph_operator_struct * handle)
 								float svalue = (float) strtof(mvalue, NULL);
 								attr = smd_attr_new(mkey, SMD_DTYPE_FLOAT, &svalue);
 							} else if (!strcmp(mtype, OPH_COMMON_DOUBLE_TYPE)) {
-								double svalue = (double) strtof(mvalue, NULL);
+								double svalue = (double) strtod(mvalue, NULL);
 								attr = smd_attr_new(mkey, SMD_DTYPE_DOUBLE, &svalue);
 							}
 
