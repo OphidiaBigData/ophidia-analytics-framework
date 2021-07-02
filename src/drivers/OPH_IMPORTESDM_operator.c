@@ -88,13 +88,14 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 
 	int64_t i, idx, ndims = esdm_dataspace_get_dims(space);
 	int64_t const *s = esdm_dataspace_get_size(space);
-	int64_t const *si = esdm_dataspace_get_offset(space);
+	//int64_t const *si = esdm_dataspace_get_offset(space);
 	int64_t ci[ndims], ei[ndims];
 	for (i = 0; i < ndims; ++i) {
-		ci[i] = si[i];
-		ei[i] = si[i] + s[i];
+		ci[i] = 0;	// + si[i]
+		ei[i] = s[i];	// + si[i]
 	}
-	uint64_t k, n = esdm_dataspace_element_count(space);
+
+	uint64_t k = 1, n = esdm_dataspace_element_count(space);
 	esdm_type_t type = esdm_dataspace_get_type(space);
 	char *fill_value = NULL;
 	stream_data_out_t *tmp = NULL;
@@ -120,15 +121,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			char *a = (char *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				if (!k || (v < a[idx]))
 					v = a[idx];
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 			tmp->value = v;
@@ -138,15 +139,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			short *a = (short *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				if (!k || (v < a[idx]))
 					v = a[idx];
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 			tmp->value = v;
@@ -156,15 +157,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			int *a = (int *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				if (!k || (v < a[idx]))
 					v = a[idx];
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 			tmp->value = v;
@@ -174,15 +175,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			long long *a = (long long *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				if (!k || (v < a[idx]))
 					v = a[idx];
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 			tmp->value = v;
@@ -192,15 +193,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			float *a = (float *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				if (!k || (v < a[idx]))
 					v = a[idx];
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 			tmp->value = v;
@@ -210,15 +211,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			double *a = (double *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				if (!k || (v < a[idx]))
 					v = a[idx];
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 			tmp->value = v;
@@ -238,15 +239,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			char *a = (char *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				if (!k || (v > a[idx]))
 					v = a[idx];
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 			tmp->value = v;
@@ -256,15 +257,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			short *a = (short *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				if (!k || (v > a[idx]))
 					v = a[idx];
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 			tmp->value = v;
@@ -274,15 +275,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			int *a = (int *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				if (!k || (v > a[idx]))
 					v = a[idx];
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 			tmp->value = v;
@@ -292,15 +293,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			long long *a = (long long *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				if (!k || (v > a[idx]))
 					v = a[idx];
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 			tmp->value = v;
@@ -310,15 +311,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			float *a = (float *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				if (!k || (v > a[idx]))
 					v = a[idx];
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 			tmp->value = v;
@@ -328,15 +329,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			double *a = (double *) buff, v;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				if (!k || (v > a[idx]))
 					v = a[idx];
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 			tmp->value = v;
@@ -357,15 +358,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			char *a = (char *) buff;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				tmp->value += a[idx];
 				tmp->number++;	// Needed to avoid missing values
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 
@@ -374,15 +375,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			short *a = (short *) buff;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				tmp->value += a[idx];
 				tmp->number++;	// Needed to avoid missing values
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 
@@ -391,15 +392,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			int *a = (int *) buff;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				tmp->value += a[idx];
 				tmp->number++;	// Needed to avoid missing values
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 
@@ -408,15 +409,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			long long *a = (long long *) buff;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				tmp->value += a[idx];
 				tmp->number++;	// Needed to avoid missing values
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 
@@ -425,15 +426,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			float *a = (float *) buff;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				tmp->value += a[idx];
 				tmp->number++;	// Needed to avoid missing values
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 
@@ -442,15 +443,15 @@ static void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, v
 			double *a = (double *) buff;
 			for (k = 0; k < n; k++) {
 				idx = 0;
-				for (i = ndims - 1; i >= 0; i--)
-					idx = idx * 10 + ci[i];
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
 				tmp->value += a[idx];
 				tmp->number++;	// Needed to avoid missing values
 				for (i = ndims - 1; i >= 0; i--) {
 					ci[i]++;
 					if (ci[i] < ei[i])
 						break;
-					ci[i] = si[i];
+					ci[i] = 0;	// si[i];
 				}
 			}
 
@@ -5380,7 +5381,7 @@ int task_init(oph_operator_struct * handle)
 			}
 
 			int dimension_array_id = 0;
-			char *dim_array = NULL;
+			char *dim_array = NULL, collapsed = 0;
 			int exists = 0;
 			char filename[2 * OPH_TP_BUFLEN];
 			oph_odb_hierarchy hier;
@@ -5566,6 +5567,7 @@ int task_init(oph_operator_struct * handle)
 					logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
 				}
 
+				collapsed = 0;
 				if (measure->dims_type[i] || !((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation
 				    || !strcmp(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation, OPH_ESDM_FUNCTION_STREAM)) {
 					if (oph_esdm_get_dim_array
@@ -5581,40 +5583,42 @@ int task_init(oph_operator_struct * handle)
 						free(dimvar_ids);
 						goto __OPH_EXIT_1;
 					}
-				} else {	// TODO: size of collapsed dimensions should be zero; in addition concept level needs to be set to ALL
-					if (!(dim_array = (char *) malloc(_oph_sizeof(tot_dims[j].dimension_type)))) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to allocate memory for dimension information\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to allocate memory for dimension information\n");
+				} else {
+					collapsed = 1;
+					dim_inst[i].size = 0;
+					dim_inst[i].concept_level = OPH_COMMON_ALL_CONCEPT_LEVEL;
+					dim_array = NULL;
+				}
+
+				if (!collapsed) {
+					if (!collapsed
+					    && oph_dim_insert_into_dimension_table(db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, tmp_var.varsize, dim_array,
+										   &dimension_array_id)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_ROW_ERROR, tot_dims[j].dimension_name);
 						free(tot_dims);
 						free(dims);
 						free(dim_inst);
+						free(dim_array);
 						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 						oph_dim_unload_dim_dbinstance(db_dimension);
 						free(dimvar_ids);
 						goto __OPH_EXIT_1;
 					}
-					*dim_array = 0;
-				}
-
-				if (oph_dim_insert_into_dimension_table(db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, tmp_var.varsize, dim_array, &dimension_array_id)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_ROW_ERROR, tot_dims[j].dimension_name);
-					free(tot_dims);
-					free(dims);
-					free(dim_inst);
 					free(dim_array);
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					free(dimvar_ids);
-					goto __OPH_EXIT_1;
-				}
-				free(dim_array);
+				} else
+					dimension_array_id = 0;
 				dim_inst[i].fk_id_dimension_label = dimension_array_id;	// Real dimension
 
-				index_array = (long long *) malloc(tmp_var.varsize * sizeof(long long));
-				for (kk = 0; kk < tmp_var.varsize; ++kk)
-					index_array[kk] = 1 + kk;	// Non 'C'-like indexing
-				if (oph_dim_insert_into_dimension_table(db_dimension, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, tmp_var.varsize, (char *) index_array, &dimension_array_id)) {
+				if (!collapsed) {
+					index_array = (long long *) malloc(tmp_var.varsize * sizeof(long long));
+					for (kk = 0; kk < tmp_var.varsize; ++kk)
+						index_array[kk] = 1 + kk;	// Non 'C'-like indexing
+				} else
+					index_array = NULL;
+				if (oph_dim_insert_into_dimension_table
+				    (db_dimension, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, collapsed ? 0 : tmp_var.varsize, collapsed ? NULL : (char *) index_array,
+				     &dimension_array_id)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_ROW_ERROR, tot_dims[j].dimension_name);
 					free(tot_dims);
@@ -5626,7 +5630,8 @@ int task_init(oph_operator_struct * handle)
 					free(dimvar_ids);
 					goto __OPH_EXIT_1;
 				}
-				free(index_array);
+				if (index_array)
+					free(index_array);
 				dim_inst[i].fk_id_dimension_index = dimension_array_id;	// Indexes
 
 				if (oph_odb_dim_insert_into_dimensioninstance_table(oDB, &(dim_inst[i]), &dimension_array_id, 0, NULL, NULL)) {
