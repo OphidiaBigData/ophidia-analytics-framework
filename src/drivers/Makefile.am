@@ -28,6 +28,10 @@ driver_CFLAGS = -I../../include -I../../include/oph_ioserver $(OPT)
 endif
 endif
 
+if HAVE_ESDM
+driver_CFLAGS += -DOPH_ESDM
+endif
+
 #define set of libraries commonly called together
 BASIC_LIB = -L.. -lophidiadb -loph_task_parser -loph_idstring -loph_json -ldebug -lhashtbl -loph_pid
 
@@ -188,10 +192,10 @@ liboph_folderoperator_la_SOURCES = OPH_FOLDER_operator.c
 liboph_folderoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_folderoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
 
-liboph_fsoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
+liboph_fsoperator_la_CFLAGS  =  ${MYSQL_CFLAGS} ${driver_CFLAGS} $(ESDM_CFLAGS)
 liboph_fsoperator_la_SOURCES = OPH_FS_operator.c
 liboph_fsoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_fsoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
+liboph_fsoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(ESDM_LIBS) $(BASIC_LIB)
 
 liboph_hierarchyoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
 liboph_hierarchyoperator_la_SOURCES = OPH_HIERARCHY_operator.c

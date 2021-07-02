@@ -26,6 +26,10 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+#ifdef OPH_ESDM
+#include <esdm.h>
+#endif
+
 #include "drivers/OPH_FS_operator.h"
 #include "oph_analytics_operator_library.h"
 
@@ -420,27 +424,45 @@ int task_execute(oph_operator_struct * handle)
 	if (!abs_path)
 		abs_path = strdup("/");
 
-	char *rel_path = NULL, *dest_path = NULL;
+	size_t len = 0;
+	char *rel_path = NULL, *dest_path = NULL, *url = NULL;
 	char is_valid = strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->path[0], OPH_FRAMEWORK_FS_DEFAULT_PATH);
 	char file_is_valid = strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->file, OPH_FRAMEWORK_FS_DEFAULT_PATH);
-	if (oph_odb_fs_path_parsing
-	    (is_valid ? ((OPH_FS_operator_handle *) handle->operator_handle)->path[0] : (((OPH_FS_operator_handle *) handle->operator_handle)->mode == OPH_FS_MODE_CD ? "/" : ""),
-	     ((OPH_FS_operator_handle *) handle->operator_handle)->cwd, NULL, &rel_path, NULL)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse path\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_PATH_PARSING_ERROR);
-		if (abs_path) {
-			free(abs_path);
-			abs_path = NULL;
-		}
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
-	size_t len = strlen(rel_path);
-	if (len > 1)
-		rel_path[len - 1] = 0;
-
 	char path[OPH_COMMON_BUFFER_LEN];
-	snprintf(path, OPH_COMMON_BUFFER_LEN, "%s%s", abs_path, rel_path);
-	printf(OPH_FS_CD_MESSAGE " is: %s from %s and %s\n", path, ((OPH_FS_operator_handle *) handle->operator_handle)->path[0], ((OPH_FS_operator_handle *) handle->operator_handle)->cwd);
+
+#ifdef OPH_ESDM
+	if (file_is_valid) {
+		url = strstr(((OPH_FS_operator_handle *) handle->operator_handle)->file, "esdm://");
+		if (url && (((OPH_FS_operator_handle *) handle->operator_handle)->mode != OPH_FS_MODE_LS)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse '%s' to perform this operation\n", ((OPH_FS_operator_handle *) handle->operator_handle)->file);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_PATH_PARSING_ERROR);
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+	}
+#endif
+
+	if (!url) {
+		if (oph_odb_fs_path_parsing
+		    (is_valid ? ((OPH_FS_operator_handle *) handle->operator_handle)->path[0] : (((OPH_FS_operator_handle *) handle->operator_handle)->mode == OPH_FS_MODE_CD ? "/" : ""),
+		     ((OPH_FS_operator_handle *) handle->operator_handle)->cwd, NULL, &rel_path, NULL)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse path '%s'\n", ((OPH_FS_operator_handle *) handle->operator_handle)->path[0]);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_PATH_PARSING_ERROR);
+			if (abs_path) {
+				free(abs_path);
+				abs_path = NULL;
+			}
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		len = strlen(rel_path);
+		if (len > 1)
+			rel_path[len - 1] = 0;
+
+		snprintf(path, OPH_COMMON_BUFFER_LEN, "%s%s", abs_path, rel_path);
+		printf(OPH_FS_CD_MESSAGE " is: %s from %s and %s\n", path, ((OPH_FS_operator_handle *) handle->operator_handle)->path[0], ((OPH_FS_operator_handle *) handle->operator_handle)->cwd);
+
+	} else
+		snprintf(path, OPH_COMMON_BUFFER_LEN, "%s", url);
+
 	int result = OPH_ANALYTICS_OPERATOR_SUCCESS;
 	struct stat file_stat;
 
@@ -537,7 +559,7 @@ int task_execute(oph_operator_struct * handle)
 					break;
 				}
 
-				if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_FS, rel_path, NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
+				if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_FS, rel_path ? rel_path : "URL", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
 					for (iii = 0; iii < num_fields; iii++)
@@ -565,120 +587,147 @@ int task_execute(oph_operator_struct * handle)
 				if (fieldtypes)
 					free(fieldtypes);
 
-				// Data
+				if (!url) {	// Posix
 
-				int recursive = 0;
-				if (((OPH_FS_operator_handle *) handle->operator_handle)->recursive) {
-					recursive = 1;
-					if (((OPH_FS_operator_handle *) handle->operator_handle)->depth)
-						recursive = -((OPH_FS_operator_handle *) handle->operator_handle)->depth;
-				}
-
-				char real_path[PATH_MAX], *_real_path;
-				if (strchr(path, '*') || strchr(path, '~') || strchr(path, '{') || strchr(path, '}'))	// Use glob
-				{
-					if (recursive) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Recursive option cannot be selected for '%s'\n", ((OPH_FS_operator_handle *) handle->operator_handle)->path[0]);
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Recursive option cannot be selected for '%s'\n",
-							((OPH_FS_operator_handle *) handle->operator_handle)->path[0]);
-						result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-						break;
+					int recursive = 0;
+					if (((OPH_FS_operator_handle *) handle->operator_handle)->recursive) {
+						recursive = 1;
+						if (((OPH_FS_operator_handle *) handle->operator_handle)->depth)
+							recursive = -((OPH_FS_operator_handle *) handle->operator_handle)->depth;
 					}
-					int s;
-					glob_t globbuf;
-					if ((s = glob(path, GLOB_MARK | GLOB_NOSORT | GLOB_TILDE_CHECK | GLOB_BRACE, NULL, &globbuf))) {
-						if (s != GLOB_NOMATCH) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse '%s'\n", ((OPH_FS_operator_handle *) handle->operator_handle)->path[0]);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to parse '%s'\n",
+
+					char real_path[PATH_MAX], *_real_path;
+					if (strchr(path, '*') || strchr(path, '~') || strchr(path, '{') || strchr(path, '}'))	// Use glob
+					{
+						if (recursive) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Recursive option cannot be selected for '%s'\n",
+							      ((OPH_FS_operator_handle *) handle->operator_handle)->path[0]);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Recursive option cannot be selected for '%s'\n",
 								((OPH_FS_operator_handle *) handle->operator_handle)->path[0]);
 							result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-						}
-						break;
-					}
-					for (ii = 0; ii < globbuf.gl_pathc; ++ii) {
-						if (!realpath(globbuf.gl_pathv[ii], real_path)) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong path name '%s'\n", globbuf.gl_pathv[ii]);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Wrong path name '%s'\n", globbuf.gl_pathv[ii]);
-							result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 							break;
 						}
-						lstat(real_path, &file_stat);
-						if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode))
-							jj++;
-					}
-					if (ii < globbuf.gl_pathc) {
-						globfree(&globbuf);
-						break;
-					}
-					char filenames[jj][OPH_COMMON_BUFFER_LEN];
-					for (ii = jj = 0; ii < globbuf.gl_pathc; ++ii) {
-						if (!realpath(globbuf.gl_pathv[ii], real_path))
+						int s;
+						glob_t globbuf;
+						if ((s = glob(path, GLOB_MARK | GLOB_NOSORT | GLOB_TILDE_CHECK | GLOB_BRACE, NULL, &globbuf))) {
+							if (s != GLOB_NOMATCH) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse '%s'\n", ((OPH_FS_operator_handle *) handle->operator_handle)->path[0]);
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to parse '%s'\n",
+									((OPH_FS_operator_handle *) handle->operator_handle)->path[0]);
+								result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+							}
 							break;
-						lstat(real_path, &file_stat);
-						if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode)) {
-							if (((OPH_FS_operator_handle *) handle->operator_handle)->realpath) {
-								_real_path = real_path;
-								if (strlen(abs_path) > 1)
-									for (iii = 0; _real_path && *_real_path && (*_real_path == abs_path[iii]); iii++, _real_path++);
-							} else
-								_real_path = strrchr(real_path, '/') + 1;
-							if (!_real_path || !*_real_path) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in handling real path of '%s'\n", globbuf.gl_pathv[ii]);
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error in handling real path of '%s'\n", globbuf.gl_pathv[ii]);
+						}
+						for (ii = 0; ii < globbuf.gl_pathc; ++ii) {
+							if (!realpath(globbuf.gl_pathv[ii], real_path)) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong path name '%s'\n", globbuf.gl_pathv[ii]);
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Wrong path name '%s'\n", globbuf.gl_pathv[ii]);
 								result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 								break;
 							}
-							snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s%s", _real_path, S_ISDIR(file_stat.st_mode) ? "/" : "");
+							lstat(real_path, &file_stat);
+							if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode))
+								jj++;
 						}
-					}
-					globfree(&globbuf);
-					if (ii < globbuf.gl_pathc)
-						break;
+						if (ii < globbuf.gl_pathc) {
+							globfree(&globbuf);
+							break;
+						}
+						char filenames[jj][OPH_COMMON_BUFFER_LEN];
+						for (ii = jj = 0; ii < globbuf.gl_pathc; ++ii) {
+							if (!realpath(globbuf.gl_pathv[ii], real_path))
+								break;
+							lstat(real_path, &file_stat);
+							if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode)) {
+								if (((OPH_FS_operator_handle *) handle->operator_handle)->realpath) {
+									_real_path = real_path;
+									if (strlen(abs_path) > 1)
+										for (iii = 0; _real_path && *_real_path && (*_real_path == abs_path[iii]); iii++, _real_path++);
+								} else
+									_real_path = strrchr(real_path, '/') + 1;
+								if (!_real_path || !*_real_path) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in handling real path of '%s'\n", globbuf.gl_pathv[ii]);
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error in handling real path of '%s'\n", globbuf.gl_pathv[ii]);
+									result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+									break;
+								}
+								snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s%s", _real_path, S_ISDIR(file_stat.st_mode) ? "/" : "");
+							}
+						}
+						globfree(&globbuf);
+						if (ii < globbuf.gl_pathc)
+							break;
 
-					result = write_json(filenames, jj, handle->operator_json, num_fields);
+						result = write_json(filenames, jj, handle->operator_json, num_fields);
 
-				} else {
+					} else {
 
-					if (!realpath(path, real_path)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong path name '%s'\n", path);
-						result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-						break;
-					}
+						if (!realpath(path, real_path)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong path name '%s'\n", path);
+							result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+							break;
+						}
 
-					char *tbuffer = NULL;
-					if (openDir(real_path, recursive, &jj, &tbuffer, file_is_valid ? ((OPH_FS_operator_handle *) handle->operator_handle)->file : NULL)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open '%s'.\n", path);
-						result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+						char *tbuffer = NULL;
+						if (openDir(real_path, recursive, &jj, &tbuffer, file_is_valid ? ((OPH_FS_operator_handle *) handle->operator_handle)->file : NULL)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open '%s'.\n", path);
+							result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+							if (tbuffer)
+								free(tbuffer);
+							break;
+						}
+
+						if (jj && tbuffer) {
+
+							unsigned int nn = strlen(abs_path) > 1, ni;
+							char *filename = real_path;
+							while ((filename = strchr(filename, '/'))) {
+								nn++;
+								filename++;
+							}
+
+							char filenames[jj][OPH_COMMON_BUFFER_LEN], *start = tbuffer, *save_pointer = NULL;
+							for (ii = 0; ii < jj; ++ii, start = NULL) {
+								filename = strtok_r(start, OPH_SEPARATOR_PARAM, &save_pointer);
+								lstat(filename, &file_stat);
+								if (((OPH_FS_operator_handle *) handle->operator_handle)->realpath) {
+									if (nn)
+										for (iii = 0; filename && *filename && (*filename == abs_path[iii]); iii++, filename++);
+								} else
+									for (ni = 0; ni < nn; ++ni)
+										filename = strchr(filename, '/') + 1;
+								snprintf(filenames[ii], OPH_COMMON_BUFFER_LEN, "%s%s", filename, S_ISDIR(file_stat.st_mode) ? "/" : "");
+							}
+							result = write_json(filenames, jj, handle->operator_json, num_fields);
+						}
 						if (tbuffer)
 							free(tbuffer);
+					}
+#ifdef OPH_ESDM
+				} else {	// ESDM Container
+
+					int jj = 0;
+					char filenames[1][OPH_COMMON_BUFFER_LEN];	// TODO: consider only one ESDM Container in this implementation
+
+					esdm_status ret = esdm_init();
+					if (ret) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "ESDM cannot be initialized\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ESDM cannot be initialized\n");
+						result = OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 						break;
 					}
 
-					if (jj && tbuffer) {
+					esdm_container_t *container = NULL;
+					if (!(ret = esdm_container_open(path + 7, ESDM_MODE_FLAG_READ, &container))) {	// Skip protocol name
 
-						unsigned int nn = strlen(abs_path) > 1, ni;
-						char *filename = real_path;
-						while ((filename = strchr(filename, '/'))) {
-							nn++;
-							filename++;
-						}
+						esdm_container_close(container);
+						esdm_finalize();
 
-						char filenames[jj][OPH_COMMON_BUFFER_LEN], *start = tbuffer, *save_pointer = NULL;
-						for (ii = 0; ii < jj; ++ii, start = NULL) {
-							filename = strtok_r(start, OPH_SEPARATOR_PARAM, &save_pointer);
-							lstat(filename, &file_stat);
-							if (((OPH_FS_operator_handle *) handle->operator_handle)->realpath) {
-								if (nn)
-									for (iii = 0; filename && *filename && (*filename == abs_path[iii]); iii++, filename++);
-							} else
-								for (ni = 0; ni < nn; ++ni)
-									filename = strchr(filename, '/') + 1;
-							snprintf(filenames[ii], OPH_COMMON_BUFFER_LEN, "%s%s", filename, S_ISDIR(file_stat.st_mode) ? "/" : "");
-						}
-						result = write_json(filenames, jj, handle->operator_json, num_fields);
+						snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s", path);
 					}
-					if (tbuffer)
-						free(tbuffer);
+
+					result = write_json(filenames, jj, handle->operator_json, num_fields);
+#endif
 				}
 			}
 
