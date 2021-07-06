@@ -105,7 +105,6 @@ OPERATOR_XML+=etc/operators_xml/OPH_SERVICE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_SET_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_SHOWGRID_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_SPLIT_operator_1.0.xml
-OPERATOR_XML+=etc/operators_xml/OPH_SUBSET2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_SUBSET_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_TASKS_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_UNPUBLISH_operator_1.0.xml

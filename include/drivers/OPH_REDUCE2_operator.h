@@ -90,6 +90,7 @@ struct _OPH_REDUCE2_operator_handle {
 	double ms;
 	unsigned int nthread;
 	short int execute_error;
+	char user_missing_value;
 };
 typedef struct _OPH_REDUCE2_operator_handle OPH_REDUCE2_operator_handle;
 

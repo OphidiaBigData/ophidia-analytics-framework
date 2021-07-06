@@ -213,6 +213,7 @@ struct _OPH_INTERCUBE_operator_handle {
 	short int execute_error;
 	char *cube1;
 	char *cube2;
+	char user_missing_value;
 };
 typedef struct _OPH_INTERCUBE_operator_handle OPH_INTERCUBE_operator_handle;
 

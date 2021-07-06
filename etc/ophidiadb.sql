@@ -370,6 +370,7 @@ CREATE TABLE `datacube` (
   `compress` int(10) DEFAULT 0,
   `level` int(10) NOT NULL,
   `idsource` int(10) unsigned DEFAULT NULL,
+  `idmissingvalue` int(10) unsigned NULL DEFAULT NULL,
   PRIMARY KEY (`iddatacube`),
   CONSTRAINT `idsource_d` FOREIGN KEY (`idsource`) REFERENCES `source` (`idsource`) ON DELETE SET NULL ON UPDATE CASCADE,
   KEY `idcontainer` (`idcontainer`),

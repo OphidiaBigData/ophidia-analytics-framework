@@ -3462,6 +3462,14 @@ int task_init(oph_operator_struct * handle)
 				// Drop the metadata out of the hashtable
 				if (id_key)
 					hashtbl_remove(key_tbl, key_and_variable);
+
+				if (!strcmp(key, OPH_COMMON_FILLVALUE) && oph_odb_cube_update_missingvalue(oDB, id_datacube_out, id_metadatainstance)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set the missing value\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to set the missing value\n");
+					hashtbl_destroy(key_tbl);
+					hashtbl_destroy(required_tbl);
+					goto __OPH_EXIT_1;
+				}
 			}
 
 			if (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->check_compliance)	// Check if all the mandatory metadata are taken

@@ -149,4 +149,6 @@
 // Check for role presence
 #define IS_OPH_ROLE_PRESENT(userrole,oph_role_pos)	((userrole) & (1<<(oph_role_pos)))
 
+#define OPH_COMMON_FILLVALUE		"_FillValue"
+
 #endif				//__OPH_COMMON_H

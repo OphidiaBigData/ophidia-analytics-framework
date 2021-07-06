@@ -349,4 +349,8 @@ int oph_odb_cube_update_level_in_cubehasdim_table(ophidiadb * oDB, int level, in
 
 int oph_odb_cube_order_by(ophidiadb * oDB, int order, int *id_datacube, int n);
 
+int oph_odb_cube_update_missingvalue(ophidiadb * oDB, int id_datacube, int idmissingvalue);
+
+int oph_odb_cube_retrieve_missingvalue(ophidiadb * oDB, int id_datacube, int *idmissingvalue, char *measure);
+
 #endif				/* __OPH_ODB_CUBE_H__ */

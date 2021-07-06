@@ -88,6 +88,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_REDUCE_operator_handle *) handle->operator_handle)->order = 2.0;
 	((OPH_REDUCE_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_REDUCE_operator_handle *) handle->operator_handle)->ms = NAN;
+	((OPH_REDUCE_operator_handle *) handle->operator_handle)->user_missing_value = 0;
 	((OPH_REDUCE_operator_handle *) handle->operator_handle)->execute_error = 0;
 
 	char *datacube_in;
@@ -272,8 +273,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_MISSINGVALUE);
-	if (value && strncmp(value, OPH_COMMON_NAN, OPH_TP_TASKLEN))
-		((OPH_REDUCE_operator_handle *) handle->operator_handle)->ms = strtod(value, NULL);
+	if (value && strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
+		if (strncmp(value, OPH_COMMON_NAN, OPH_TP_TASKLEN))
+			((OPH_REDUCE_operator_handle *) handle->operator_handle)->ms = strtod(value, NULL);
+		((OPH_REDUCE_operator_handle *) handle->operator_handle)->user_missing_value = 1;
+	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_REDUCTION_SIZE);
 	if (!value) {
@@ -835,6 +839,45 @@ int task_init(oph_operator_struct * handle)
 			}
 		}
 		free(cubedims);
+
+		if (!((OPH_REDUCE_operator_handle *) handle->operator_handle)->user_missing_value) {
+			int idmissingvalue = 0;
+			if (oph_odb_cube_retrieve_missingvalue(oDB, ((OPH_REDUCE_operator_handle *) handle->operator_handle)->id_output_datacube, &idmissingvalue, NULL)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve missing value\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE_operator_handle *) handle->operator_handle)->id_input_container, "Unable to retrieve missing value\n");
+				goto __OPH_EXIT_1;
+			}
+			if (idmissingvalue) {
+				char *mtype = NULL, *mvalue = NULL;
+				if (oph_odb_meta_retrieve_single_metadata_instance(oDB, idmissingvalue, &mtype, &mvalue) || !mtype || !mvalue) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve missing value\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE_operator_handle *) handle->operator_handle)->id_input_container, "Unable to retrieve missing value\n");
+					if (mtype)
+						free(mtype);
+					if (mvalue)
+						free(mvalue);
+					goto __OPH_EXIT_1;
+				}
+
+				if (!strcmp(mtype, OPH_COMMON_BYTE_TYPE))
+					((OPH_REDUCE_operator_handle *) handle->operator_handle)->ms = (unsigned char) strtol(mvalue, NULL, 10);
+				else if (!strcmp(mtype, OPH_COMMON_SHORT_TYPE))
+					((OPH_REDUCE_operator_handle *) handle->operator_handle)->ms = (short) strtol(mvalue, NULL, 10);
+				else if (!strcmp(mtype, OPH_COMMON_INT_TYPE))
+					((OPH_REDUCE_operator_handle *) handle->operator_handle)->ms = (int) strtol(mvalue, NULL, 10);
+				else if (!strcmp(mtype, OPH_COMMON_LONG_TYPE))
+					((OPH_REDUCE_operator_handle *) handle->operator_handle)->ms = (long long) strtoll(mvalue, NULL, 10);
+				else if (!strcmp(mtype, OPH_COMMON_FLOAT_TYPE))
+					((OPH_REDUCE_operator_handle *) handle->operator_handle)->ms = (float) strtof(mvalue, NULL);
+				else if (!strcmp(mtype, OPH_COMMON_DOUBLE_TYPE))
+					((OPH_REDUCE_operator_handle *) handle->operator_handle)->ms = (double) strtod(mvalue, NULL);
+				else if (!strcmp(mtype, OPH_COMMON_METADATA_TYPE_TEXT))
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Missing value is a text: skipping\n");
+
+				free(mtype);
+				free(mvalue);
+			}
+		}
 
 		last_insertd_id = 0;
 		oph_odb_task new_task;
