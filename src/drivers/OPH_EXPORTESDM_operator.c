@@ -1258,6 +1258,33 @@ int task_execute(oph_operator_struct * handle)
 
 				if (((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->export_metadata)	// Add metadata
 				{
+					int idmissingvalue = 0;
+					if (oph_odb_cube_retrieve_missingvalue(&oDB_slave, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_datacube, &idmissingvalue, NULL)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve missing value id");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to retrieve missing value id");
+						oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+						oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
+						oph_odb_stge_free_fragment_list(&frags);
+						oph_odb_stge_free_db_list(&dbs);
+						oph_odb_stge_free_dbms_list(&dbmss);
+						oph_odb_free_ophidiadb(&oDB_slave);
+						for (l = 0; l < num_of_dims; l++) {
+							esdm_dataset_close(dimset[l]);
+							esdm_dataspace_destroy(dimspace[l]);
+						}
+						esdm_dataset_close(dataset);
+						esdm_dataspace_destroy(dataspace);
+						esdm_container_close(container);
+						for (l = 0; l < num_of_dims; l++) {
+							if (dim_rows[l]) {
+								free(dim_rows[l]);
+								dim_rows[l] = NULL;
+							}
+						}
+						free(dim_rows);
+						return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+					}
+
 					smd_attr_t *attr = NULL;
 
 					if (oph_odb_meta_find_complete_metadata_list
@@ -1302,26 +1329,40 @@ int task_execute(oph_operator_struct * handle)
 
 						if (!mvariable || (l < num_of_dims)) {
 
-							if (!strcmp(mtype, OPH_COMMON_METADATA_TYPE_TEXT))
+							if (!strcmp(mtype, OPH_COMMON_METADATA_TYPE_TEXT)) {
 								attr = smd_attr_new(mkey, SMD_DTYPE_STRING, mvalue);
-							else if (!strcmp(mtype, OPH_COMMON_BYTE_TYPE)) {
+								if (idmissingvalue && row[0] && (idmissingvalue == strtol(row[0], NULL, 10)))
+									esdm_dataset_set_fill_value(dataset, mvalue);
+							} else if (!strcmp(mtype, OPH_COMMON_BYTE_TYPE)) {
 								unsigned char svalue = (unsigned char) strtol(mvalue, NULL, 10);
 								attr = smd_attr_new(mkey, SMD_DTYPE_UINT8, &svalue);
+								if (idmissingvalue && row[0] && (idmissingvalue == strtol(row[0], NULL, 10)))
+									esdm_dataset_set_fill_value(dataset, &svalue);
 							} else if (!strcmp(mtype, OPH_COMMON_SHORT_TYPE)) {
 								short svalue = (short) strtol(mvalue, NULL, 10);
 								attr = smd_attr_new(mkey, SMD_DTYPE_INT16, &svalue);
+								if (idmissingvalue && row[0] && (idmissingvalue == strtol(row[0], NULL, 10)))
+									esdm_dataset_set_fill_value(dataset, &svalue);
 							} else if (!strcmp(mtype, OPH_COMMON_INT_TYPE)) {
 								int svalue = (int) strtol(mvalue, NULL, 10);
 								attr = smd_attr_new(mkey, SMD_DTYPE_INT32, &svalue);
+								if (idmissingvalue && row[0] && (idmissingvalue == strtol(row[0], NULL, 10)))
+									esdm_dataset_set_fill_value(dataset, &svalue);
 							} else if (!strcmp(mtype, OPH_COMMON_LONG_TYPE)) {
 								long long svalue = (long long) strtoll(mvalue, NULL, 10);
 								attr = smd_attr_new(mkey, SMD_DTYPE_INT64, &svalue);
+								if (idmissingvalue && row[0] && (idmissingvalue == strtol(row[0], NULL, 10)))
+									esdm_dataset_set_fill_value(dataset, &svalue);
 							} else if (!strcmp(mtype, OPH_COMMON_FLOAT_TYPE)) {
 								float svalue = (float) strtof(mvalue, NULL);
 								attr = smd_attr_new(mkey, SMD_DTYPE_FLOAT, &svalue);
+								if (idmissingvalue && row[0] && (idmissingvalue == strtol(row[0], NULL, 10)))
+									esdm_dataset_set_fill_value(dataset, &svalue);
 							} else if (!strcmp(mtype, OPH_COMMON_DOUBLE_TYPE)) {
 								double svalue = (double) strtod(mvalue, NULL);
 								attr = smd_attr_new(mkey, SMD_DTYPE_DOUBLE, &svalue);
+								if (idmissingvalue && row[0] && (idmissingvalue == strtol(row[0], NULL, 10)))
+									esdm_dataset_set_fill_value(dataset, &svalue);
 							}
 
 							if (!attr) {
