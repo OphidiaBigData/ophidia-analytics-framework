@@ -6260,7 +6260,6 @@ int task_init(oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_NATTS_ERROR);
 				hashtbl_destroy(key_tbl);
 				hashtbl_destroy(required_tbl);
-				free(dimvar_ids);
 				goto __OPH_EXIT_1;
 			}
 			natts = md->children;
@@ -6309,7 +6308,6 @@ int task_init(oph_operator_struct * handle)
 							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_METADATATYPE_ID_ERROR);
 							hashtbl_destroy(key_tbl);
 							hashtbl_destroy(required_tbl);
-							free(dimvar_ids);
 							goto __OPH_EXIT_1;
 					}
 					if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type)) {
