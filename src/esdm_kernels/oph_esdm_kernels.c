@@ -25,6 +25,7 @@
 
 typedef struct _oph_esdm_stream_data_out_t {
 	double value;
+	double value2;
 	uint64_t number;
 } oph_esdm_stream_data_out_t;
 
@@ -40,6 +41,10 @@ int oph_esdm_is_a_reduce_func(const char *operation)
 	if (!strcmp(operation, OPH_ESDM_FUNCTION_AVG))
 		return 1;
 	if (!strcmp(operation, OPH_ESDM_FUNCTION_SUM))
+		return 1;
+	if (!strcmp(operation, OPH_ESDM_FUNCTION_STD))
+		return 1;
+	if (!strcmp(operation, OPH_ESDM_FUNCTION_VAR))
 		return 1;
 
 	return 0;
@@ -445,6 +450,138 @@ void *oph_esdm_stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr,
 					idx = idx * s[i] + ci[i];
 				if (!fill_value || (a[idx] != fv)) {
 					tmp->value += a[idx];
+					tmp->number++;
+				}
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = 0;	// si[i];
+				}
+			}
+
+		} else {
+			free(tmp);
+			return NULL;
+		}
+
+	} else if (!strcmp(stream_data->operation, OPH_ESDM_FUNCTION_STD) || !strcmp(stream_data->operation, OPH_ESDM_FUNCTION_VAR)) {
+
+		tmp = (oph_esdm_stream_data_out_t *) malloc(sizeof(oph_esdm_stream_data_out_t));
+		tmp->value = 0;
+		tmp->value2 = 0;
+		tmp->number = 0;
+
+		if (type == SMD_DTYPE_INT8) {
+
+			char *a = (char *) buff, fv = fill_value ? *(char *) fill_value : 0;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
+				if (!fill_value || (a[idx] != fv)) {
+					tmp->value += a[idx];
+					tmp->value2 += a[idx] * a[idx];
+					tmp->number++;
+				}
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = 0;	// si[i];
+				}
+			}
+
+		} else if (type == SMD_DTYPE_INT16) {
+
+			short *a = (short *) buff, fv = fill_value ? *(short *) fill_value : 0;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
+				if (!fill_value || (a[idx] != fv)) {
+					tmp->value += a[idx];
+					tmp->value2 += a[idx] * a[idx];
+					tmp->number++;
+				}
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = 0;	// si[i];
+				}
+			}
+
+		} else if (type == SMD_DTYPE_INT32) {
+
+			int *a = (int *) buff, fv = fill_value ? *(int *) fill_value : 0;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
+				if (!fill_value || (a[idx] != fv)) {
+					tmp->value += a[idx];
+					tmp->value2 += a[idx] * a[idx];
+					tmp->number++;
+				}
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = 0;	// si[i];
+				}
+			}
+
+		} else if (type == SMD_DTYPE_INT64) {
+
+			long long *a = (long long *) buff, fv = fill_value ? *(long long *) fill_value : 0;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
+				if (!fill_value || (a[idx] != fv)) {
+					tmp->value += a[idx];
+					tmp->value2 += a[idx] * a[idx];
+					tmp->number++;
+				}
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = 0;	// si[i];
+				}
+			}
+
+		} else if (type == SMD_DTYPE_FLOAT) {
+
+			float *a = (float *) buff, fv = fill_value ? *(float *) fill_value : 0;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
+				if (!fill_value || (a[idx] != fv)) {
+					tmp->value += a[idx];
+					tmp->value2 += a[idx] * a[idx];
+					tmp->number++;
+				}
+				for (i = ndims - 1; i >= 0; i--) {
+					ci[i]++;
+					if (ci[i] < ei[i])
+						break;
+					ci[i] = 0;	// si[i];
+				}
+			}
+
+		} else if (type == SMD_DTYPE_DOUBLE) {
+
+			double *a = (double *) buff, fv = fill_value ? *(double *) fill_value : 0;
+			for (k = 0; k < n; k++) {
+				idx = 0;
+				for (i = 0; i < ndims; i++)
+					idx = idx * s[i] + ci[i];
+				if (!fill_value || (a[idx] != fv)) {
+					tmp->value += a[idx];
+					tmp->value2 += a[idx] * a[idx];
 					tmp->number++;
 				}
 				for (i = ndims - 1; i >= 0; i--) {
@@ -2656,6 +2793,56 @@ void oph_esdm_reduce_func(esdm_dataspace_t * space, void *user_ptr, void *stream
 			} else if (type == SMD_DTYPE_DOUBLE) {
 
 				double v = (double) (stream_data->value / stream_data->number);
+				memcpy(stream_data->buff, &v, sizeof(double));
+
+			}
+
+		} else if (!strcmp(stream_data->operation, OPH_ESDM_FUNCTION_STD) || !strcmp(stream_data->operation, OPH_ESDM_FUNCTION_VAR)) {
+
+			if (!stream_data->valid) {
+				stream_data->valid = 1;
+				stream_data->value = 0;
+				stream_data->value2 = 0;
+				stream_data->number = 0;
+			}
+			stream_data->value += tmp->value;
+			stream_data->value2 += tmp->value2;
+			stream_data->number += tmp->number;
+
+			double tmp = (stream_data->value2 - stream_data->value * stream_data->value / stream_data->number) / stream_data->number;
+			if (stream_data->number > 1)
+				tmp *= stream_data->number / (stream_data->number - 1.0);
+			if (!strcmp(stream_data->operation, OPH_ESDM_FUNCTION_STD))
+				tmp = sqrt(tmp);
+
+			if (type == SMD_DTYPE_INT8) {
+
+				char v = (char) tmp;
+				memcpy(stream_data->buff, &v, sizeof(char));
+
+			} else if (type == SMD_DTYPE_INT16) {
+
+				short v = (short) tmp;
+				memcpy(stream_data->buff, &v, sizeof(short));
+
+			} else if (type == SMD_DTYPE_INT32) {
+
+				int v = (int) tmp;
+				memcpy(stream_data->buff, &v, sizeof(int));
+
+			} else if (type == SMD_DTYPE_INT64) {
+
+				long long v = (long long) tmp;
+				memcpy(stream_data->buff, &v, sizeof(long long));
+
+			} else if (type == SMD_DTYPE_FLOAT) {
+
+				float v = (float) tmp;
+				memcpy(stream_data->buff, &v, sizeof(float));
+
+			} else if (type == SMD_DTYPE_DOUBLE) {
+
+				double v = (double) tmp;
 				memcpy(stream_data->buff, &v, sizeof(double));
 
 			}

@@ -158,6 +158,6 @@ SUBMISSION STRING: &quot;operator=oph_importesdm;cwd=/session-code1;container=co
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="rr" values="rr|port">policy</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|importesdm">objkey_filter</argument>
-		<argument type="string" mandatory="no" default="none" values="none|stream|max|min|avg|sum|abs|sqrt|ceil|floor|exp|log|log10|sin|cos|tan|asin|acos|atan|sinh|cosh|tanh">operation</argument>
+		<argument type="string" mandatory="no" default="none" values="none|stream|max|min|avg|sum|std|var|abs|sqrt|ceil|floor|exp|log|log10|sin|cos|tan|asin|acos|atan|sinh|cosh|tanh">operation</argument>
     </args>
 </operator>

@@ -28,6 +28,8 @@
 #define OPH_ESDM_FUNCTION_MIN "min"
 #define OPH_ESDM_FUNCTION_AVG "avg"
 #define OPH_ESDM_FUNCTION_SUM "sum"
+#define OPH_ESDM_FUNCTION_STD "std"
+#define OPH_ESDM_FUNCTION_VAR "var"
 
 #define OPH_ESDM_FUNCTION_ABS "abs"
 #define OPH_ESDM_FUNCTION_SQRT "sqrt"
@@ -53,6 +55,7 @@ typedef struct _oph_esdm_stream_data_t {
 	void *buff;
 	char valid;
 	double value;
+	double value2;
 	uint64_t number;
 	void *fill_value;
 } oph_esdm_stream_data_t;
