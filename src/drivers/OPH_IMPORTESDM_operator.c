@@ -1289,7 +1289,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 	//Check
 	int total = 1;
 	for (i = 0; i < measure->ndims; i++)
-		if (!measure->dims_type[i] && (!measure->operation || !strcmp(measure->operation, OPH_ESDM_FUNCTION_STREAM)))
+		if (!measure->dims_type[i] && (!measure->operation || !oph_esdm_is_a_reduce_func(measure->operation)))
 			total *= count[i];
 
 	if (total != array_length) {
@@ -1463,7 +1463,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 
 	size_t sizeof_type = (int) sizeof_var / array_length;
 	esdm_dataspace_t *subspace;
-	stream_data_t stream_data;
+	oph_esdm_stream_data_t stream_data;
 	char fill_value[sizeof_type];
 
 	if (esdm_dataset_get_fill_value(measure->dataset, fill_value)) {
@@ -1542,7 +1542,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				for (ii = 0; ii < sizeof_type; ii++)
 					memcpy(stream_data.buff, fill_value, sizeof_type);
 
-				if ((esdm_read_stream(measure->dataset, subspace, &stream_data, stream_func, reduce_func))) {
+				if ((esdm_read_stream(measure->dataset, subspace, &stream_data, oph_esdm_stream_func, oph_esdm_reduce_func))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
 					free(query_string);
 					free(idDim);
@@ -1762,7 +1762,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				for (ii = 0; ii < sizeof_type; ii++)
 					memcpy(stream_data.buff, fill_value, sizeof_type);
 
-				if ((esdm_read_stream(measure->dataset, subspace, &stream_data, stream_func, reduce_func))) {
+				if ((esdm_read_stream(measure->dataset, subspace, &stream_data, oph_esdm_stream_func, oph_esdm_reduce_func))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
 					free(query_string);
 					free(idDim);
@@ -2139,7 +2139,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 	//Check
 	int total = 1;
 	for (i = 0; i < measure->ndims; i++)
-		if (measure->dims_type[i] || !measure->operation || !strcmp(measure->operation, OPH_ESDM_FUNCTION_STREAM))
+		if (measure->dims_type[i] || !measure->operation || !oph_esdm_is_a_reduce_func(measure->operation))
 			total *= count[i];
 
 	if (total != array_length * tuplexfrag_number) {
@@ -4053,7 +4053,7 @@ int task_init(oph_operator_struct * handle)
 
 	// Compute array length
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->array_length = 1;
-	if (!((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation || !strcmp(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation, OPH_ESDM_FUNCTION_STREAM)) {
+	if (!((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation || !oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation)) {
 		for (i = 0; i < measure->ndims; i++) {
 			//Consider only implicit dimensions
 			if (!measure->dims_type[i]) {
@@ -4961,7 +4961,7 @@ int task_init(oph_operator_struct * handle)
 				dim_inst[i].id_dimensioninst = 0;
 				//Modified to allow subsetting
 				if (measure->dims_type[i] || !((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation
-				    || !strcmp(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation, OPH_ESDM_FUNCTION_STREAM))
+				    || !oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation))
 					tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
 				else
 					tmp_var.varsize = 1;
@@ -4976,7 +4976,7 @@ int task_init(oph_operator_struct * handle)
 
 				collapsed = 0;
 				if (measure->dims_type[i] || !((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation
-				    || !strcmp(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation, OPH_ESDM_FUNCTION_STREAM)) {
+				    || !oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation)) {
 					if (oph_esdm_get_dim_array
 					    (id_container_out, measure->dim_dataset[i], varid, tot_dims[j].dimension_type, tmp_var.varsize, measure->dims_start_index[i], measure->dims_end_index[i],
 					     &dim_array)) {

@@ -94,7 +94,9 @@ The following parameters are considered only in case the container has to be cre
               &quot;stream&quot; no operation is to be applied but stream mode is usd to load data;
               &quot;max&quot; to evaluate the maximum value of data to be imported;
               &quot;min&quot; to evaluate the minimum value of data to be imported;
-              &quot;avg&quot; to evaluate the mean value of data to be imported.
+              &quot;avg&quot; to evaluate the mean value of data to be imported;
+              &quot;sum&quot; to evaluate the sum of data to be imported;
+              &quot;abs&quot; to evaluate the absolute values of data to be imported.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -156,6 +158,6 @@ SUBMISSION STRING: &quot;operator=oph_importesdm;cwd=/session-code1;container=co
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="rr" values="rr|port">policy</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|importesdm">objkey_filter</argument>
-		<argument type="string" mandatory="no" default="none" values="none|stream|max|min|avg">operation</argument>
+		<argument type="string" mandatory="no" default="none" values="none|stream|max|min|avg|sum|abs|sqrt|ceil|floor|exp|log|log10|sin|cos|tan|asin|acos|atan|sinh|cosh|tanh">operation</argument>
     </args>
 </operator>

@@ -21,21 +21,44 @@
 
 #include <esdm.h>
 
+#define OPH_ESDM_FUNCTION_NOP "nop"
 #define OPH_ESDM_FUNCTION_STREAM "stream"
+
 #define OPH_ESDM_FUNCTION_MAX "max"
 #define OPH_ESDM_FUNCTION_MIN "min"
 #define OPH_ESDM_FUNCTION_AVG "avg"
+#define OPH_ESDM_FUNCTION_SUM "sum"
 
-typedef struct _stream_data_t {
+#define OPH_ESDM_FUNCTION_ABS "abs"
+#define OPH_ESDM_FUNCTION_SQRT "sqrt"
+#define OPH_ESDM_FUNCTION_CEIL "ceil"
+#define OPH_ESDM_FUNCTION_FLOOR "floor"
+
+#define OPH_ESDM_FUNCTION_EXP "exp"
+#define OPH_ESDM_FUNCTION_LOG "log"
+#define OPH_ESDM_FUNCTION_LOG10 "log10"
+
+#define OPH_ESDM_FUNCTION_SIN "sin"
+#define OPH_ESDM_FUNCTION_COS "cos"
+#define OPH_ESDM_FUNCTION_TAN "tan"
+#define OPH_ESDM_FUNCTION_ASIN "asin"
+#define OPH_ESDM_FUNCTION_ACOS "acos"
+#define OPH_ESDM_FUNCTION_ATAN "atan"
+#define OPH_ESDM_FUNCTION_SINH "sinh"
+#define OPH_ESDM_FUNCTION_COSH "cosh"
+#define OPH_ESDM_FUNCTION_TANH "tanh"
+
+typedef struct _oph_esdm_stream_data_t {
 	char *operation;
 	void *buff;
 	char valid;
 	double value;
 	uint64_t number;
 	void *fill_value;
-} stream_data_t;
+} oph_esdm_stream_data_t;
 
-void *stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, void *esdm_fill_value);
-void reduce_func(esdm_dataspace_t * space, void *user_ptr, void *stream_func_out);
+int oph_esdm_is_a_reduce_func(const char *operation);
+void *oph_esdm_stream_func(esdm_dataspace_t * space, void *buff, void *user_ptr, void *esdm_fill_value);
+void oph_esdm_reduce_func(esdm_dataspace_t * space, void *user_ptr, void *stream_func_out);
 
 #endif				//__OPH_ESDM_READ_STREAM_H

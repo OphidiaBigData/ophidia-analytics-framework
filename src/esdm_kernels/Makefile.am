@@ -27,7 +27,7 @@ lib_LTLIBRARIES = $(KERNEL)
 liboph_esdm_kernels_la_CFLAGS = -prefer-pic -I../../include/esdm_kernels $(ESDM_CFLAGS)
 liboph_esdm_kernels_la_SOURCES = oph_esdm_kernels.c
 liboph_esdm_kernels_la_LDFLAGS = -static
-liboph_esdm_kernels_la_LIBADD = $(ESDM_LIBS)
+liboph_esdm_kernels_la_LIBADD = -lm $(ESDM_LIBS)
 
 endif
 
