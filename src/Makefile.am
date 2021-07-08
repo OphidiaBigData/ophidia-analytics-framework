@@ -16,11 +16,18 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-if STANDALONE_MODE
-SUBDIRS= . clients ioservers drivers
-else
-SUBDIRS= oph_gsoap . clients ioservers drivers
+SUBDIRS=
+
+if HAVE_ESDM
+SUBDIRS+= esdm_kernels
 endif
+
+if STANDALONE_MODE
+else
+SUBDIRS+= oph_gsoap
+endif
+
+SUBDIRS+= . clients ioservers drivers
 
 LIBRARY=
 

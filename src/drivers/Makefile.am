@@ -389,10 +389,10 @@ liboph_importfitsoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} ${LIBCFITSIO_LIB} -lp
 endif
 
 if HAVE_ESDM
-liboph_importesdmoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} $(ESDM_CFLAGS) -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
+liboph_importesdmoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} $(ESDM_CFLAGS) -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE) -I../../include/esdm_kernels
 liboph_importesdmoperator_la_SOURCES = OPH_IMPORTESDM_operator.c
 liboph_importesdmoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_importesdmoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(ESDM_LIBS) $(BASIC_LIB) -loph_dimension -loph_hierarchy -loph_datacube -loph_ioserver -loph_binary_io -loph_driver_proc
+liboph_importesdmoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(ESDM_LIBS) $(BASIC_LIB) -loph_dimension -loph_hierarchy -loph_datacube -loph_ioserver -loph_binary_io -loph_driver_proc -L../esdm_kernels -loph_esdm_kernels
 
 liboph_importesdm2operator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} $(ESDM_CFLAGS) -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
 liboph_importesdm2operator_la_SOURCES = OPH_IMPORTESDM2_operator.c
