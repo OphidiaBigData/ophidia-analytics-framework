@@ -1536,6 +1536,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 
 				// Initialize stream data
 				stream_data.operation = measure->operation;
+				stream_data.args = measure->args;
 				stream_data.buff = binary + jj * sizeof_var;
 				stream_data.valid = 0;
 				stream_data.fill_value = fill_value;
@@ -1756,6 +1757,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 
 				// Initialize stream data
 				stream_data.operation = measure->operation;
+				stream_data.args = measure->args;
 				stream_data.buff = binary + jj * sizeof_var;
 				stream_data.valid = 0;
 				stream_data.fill_value = fill_value;
@@ -2559,6 +2561,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	nc_measure->dim_dataset = NULL;
 	nc_measure->dim_dspace = NULL;
 	nc_measure->operation = NULL;
+	nc_measure->args = NULL;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->cwd = NULL;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->run = 1;
@@ -2582,6 +2585,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->policy = 0;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation = NULL;
+	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->args = NULL;
+	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->args_num = -1;
 
 	char *value;
 
@@ -4002,6 +4007,31 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 		measure->operation = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation;
 	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_ARGS);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_ARGS);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_ARGS);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_NONE_FILTER, OPH_TP_TASKLEN)) {
+		if (oph_tp_parse_multiple_value_param
+		    (value, &((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->args, &((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->args_num)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
+			oph_tp_free_multiple_value_param_list(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->args,
+							      ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->args_num);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+	} else
+		((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->args_num = 0;
+
+	if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->args_num > 1) {
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Only the first argument of '%s' will be considered\n", value);
+		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Only the first argument of '%s' will be considered\n", value);
+	}
+	if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->args_num > 0)
+		measure->args = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->args[0];
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -6529,6 +6559,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation) {
 		free((char *) ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation);
 		((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation = NULL;
+	}
+	if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->args) {
+		oph_tp_free_multiple_value_param_list(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->args, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->args_num);
+		((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->args = NULL;
 	}
 
 	int i;

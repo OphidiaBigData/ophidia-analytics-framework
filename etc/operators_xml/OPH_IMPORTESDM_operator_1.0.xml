@@ -96,7 +96,27 @@ The following parameters are considered only in case the container has to be cre
               &quot;min&quot; to evaluate the minimum value of data to be imported;
               &quot;avg&quot; to evaluate the mean value of data to be imported;
               &quot;sum&quot; to evaluate the sum of data to be imported;
-              &quot;abs&quot; to evaluate the absolute values of data to be imported.
+              &quot;std&quot; to evaluate the standard deviation of data to be imported;
+              &quot;var&quot; to evaluate the variance of data to be imported;
+              &quot;sum_scalar&quot; to sum a value to data to be imported (see the argument &quot;args&quot;);
+              &quot;mul_scalar&quot; to multiply a value to data to be imported (see the argument &quot;args&quot;);
+              &quot;abs&quot; to evaluate the absolute values of data to be imported;
+              &quot;sqrt&quot; to evaluate the square root of data to be imported;
+              &quot;ceil&quot; to evaluate the integers upper than the values of data to be imported;
+              &quot;floor&quot; to evaluate the integers lower than the values of data to be imported;
+              &quot;exp&quot; to evaluate the exponential of the values of data to be imported;
+              &quot;log&quot; to evaluate the natural logarithm of the values of data to be imported;
+              &quot;log10&quot; to evaluate the base-10 logarithm of the values of data to be imported;
+              &quot;sin&quot; to evaluate the sine of the values of data to be imported;
+              &quot;cos&quot; to evaluate the cosine of the values of data to be imported;
+              &quot;tan&quot; to evaluate the tangent of the values of data to be imported;
+              &quot;asin&quot; to evaluate the arc-sine of the values of data to be imported;
+              &quot;acos&quot; to evaluate the arc-cosine of the values of data to be imported;
+              &quot;atan&quot; to evaluate the arc-tangent of the values of data to be imported;
+              &quot;sinh&quot; to evaluate the hyperbolicsine of the values of data to be imported;
+              &quot;cosh&quot; to evaluate the hyperboliccosine of the values of data to be imported;
+              &quot;tanh&quot; to evaluate the hyperbolic tangent of the values of data to be imported.
+- args : list of the comma-separated parameters associated with a specific &quot;operation&quot;.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -158,6 +178,7 @@ SUBMISSION STRING: &quot;operator=oph_importesdm;cwd=/session-code1;container=co
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="rr" values="rr|port">policy</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|importesdm">objkey_filter</argument>
-		<argument type="string" mandatory="no" default="none" values="none|stream|max|min|avg|sum|std|var|abs|sqrt|ceil|floor|exp|log|log10|sin|cos|tan|asin|acos|atan|sinh|cosh|tanh">operation</argument>
+		<argument type="string" mandatory="no" default="none" values="none|stream|max|min|avg|sum|std|var|sum_scalar|mul_scalar|abs|sqrt|ceil|floor|exp|log|log10|sin|cos|tan|asin|acos|atan|sinh|cosh|tanh">operation</argument>
+		<argument type="string" mandatory="no" default="none">args</argument>
     </args>
 </operator>

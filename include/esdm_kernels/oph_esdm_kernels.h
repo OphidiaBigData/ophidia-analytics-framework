@@ -21,6 +21,8 @@
 
 #include <esdm.h>
 
+#define OPH_ESDM_SEPARATOR ","
+
 #define OPH_ESDM_FUNCTION_NOP "nop"
 #define OPH_ESDM_FUNCTION_STREAM "stream"
 
@@ -30,6 +32,9 @@
 #define OPH_ESDM_FUNCTION_SUM "sum"
 #define OPH_ESDM_FUNCTION_STD "std"
 #define OPH_ESDM_FUNCTION_VAR "var"
+
+#define OPH_ESDM_FUNCTION_SUM_SCALAR "sum_scalar"
+#define OPH_ESDM_FUNCTION_MUL_SCALAR "mul_scalar"
 
 #define OPH_ESDM_FUNCTION_ABS "abs"
 #define OPH_ESDM_FUNCTION_SQRT "sqrt"
@@ -52,6 +57,7 @@
 
 typedef struct _oph_esdm_stream_data_t {
 	char *operation;
+	char *args;
 	void *buff;
 	char valid;
 	double value;
