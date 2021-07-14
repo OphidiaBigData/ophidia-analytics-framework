@@ -504,7 +504,7 @@ int task_execute(oph_operator_struct * handle)
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_CDO_SERVER_PORT=%s ", ((oph_soap_data *) handle->soap_data)->port ? ((oph_soap_data *) handle->soap_data)->port : "");
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "OPH_CDO_USER='%s' ",
 		      ((OPH_CDO_operator_handle *) handle->operator_handle)->user ? ((OPH_CDO_operator_handle *) handle->operator_handle)->user : "");
-	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "%s/cdo -P %d '%s' ", cdo_path, ((OPH_CDO_operator_handle *) handle->operator_handle)->nthread,
+	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "%s/cdo -P %d %s ", cdo_path, ((OPH_CDO_operator_handle *) handle->operator_handle)->nthread,
 		      ((OPH_CDO_operator_handle *) handle->operator_handle)->command);
 
 	char *new_arg = NULL, *arg;
