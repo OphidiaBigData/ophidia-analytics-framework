@@ -408,6 +408,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	//Create a random name
 	if (!((OPH_CDO_operator_handle *) handle->operator_handle)->output_name) {
 		char tmp[20];
+		srand(time(NULL));
 		snprintf(tmp, 20, "%d", rand());
 		((OPH_CDO_operator_handle *) handle->operator_handle)->output_name = strdup(tmp);
 	}
@@ -508,9 +509,9 @@ int task_execute(oph_operator_struct * handle)
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "%s/cdo -P %d %s ", cdo_path, ((OPH_CDO_operator_handle *) handle->operator_handle)->nthread,
 		      ((OPH_CDO_operator_handle *) handle->operator_handle)->command);
 
-	if (!cdo_path)
+	if (cdo_path)
 		free(cdo_path);
-	if (!base_src_path)
+	if (base_src_path)
 		free(base_src_path);
 
 	char *new_arg = NULL, *arg;
