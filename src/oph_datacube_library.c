@@ -868,25 +868,25 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 	}
 
 	oph_ioserver_query *query = NULL;
-	int c_arg = 3, ii;
-	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(c_arg, sizeof(oph_ioserver_query_arg *));
+	int c_arg = 2, ii;
+	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(1 + c_arg, sizeof(oph_ioserver_query_arg *));
 	if (!(args)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		return OPH_DC_DATA_ERROR;
 	}
 
-	for (ii = 0; ii < c_arg - 1; ii++) {
+	for (ii = 0; ii < c_arg; ii++) {
 		args[ii] = (oph_ioserver_query_arg *) calloc(1, sizeof(oph_ioserver_query_arg));
 		if (!args[ii]) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate input arguments\n");
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
 			return OPH_DC_DATA_ERROR;
 		}
 	}
-	args[c_arg - 1] = NULL;
+	args[c_arg] = NULL;
 
 	int n, query_buflen = QUERY_BUFLEN;
 	if (!param)
@@ -923,7 +923,7 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 
 		if (oph_ioserver_setup_query(server, create_query, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -932,7 +932,7 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 
 		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -940,7 +940,7 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 			return OPH_DC_SERVER_ERROR;
 		}
 
-		for (ii = 0; ii < c_arg - 1; ii++)
+		for (ii = 0; ii < c_arg; ii++)
 			if (args[ii])
 				free(args[ii]);
 		free(args);
@@ -1048,7 +1048,7 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 
 		if (oph_ioserver_setup_query(server, create_query, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query '%s'\n", create_query);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -1057,7 +1057,7 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 
 		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query '%s'\n", query);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
@@ -1065,7 +1065,7 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 			return OPH_DC_SERVER_ERROR;
 		}
 
-		for (ii = 0; ii < c_arg - 1; ii++)
+		for (ii = 0; ii < c_arg; ii++)
 			if (args[ii])
 				free(args[ii]);
 		free(args);
@@ -1550,7 +1550,7 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 			free(query_string);
 			free(idDim);
 			free(binary);
-			for (i = 0; i < c_arg - 1; i++)
+			for (i = 0; i < c_arg; i++)
 				if (args[i])
 					free(args[i]);
 			free(args);
@@ -1580,7 +1580,7 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 			free(query_string);
 			free(idDim);
 			free(binary);
-			for (i = 0; i < c_arg - 1; i++)
+			for (i = 0; i < c_arg; i++)
 				if (args[i])
 					free(args[i]);
 			free(args);
@@ -1648,7 +1648,7 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 			free(query_string);
 			free(idDim);
 			free(binary);
-			for (i = 0; i < c_arg - 1; i++)
+			for (i = 0; i < c_arg; i++)
 				if (args[i])
 					free(args[i]);
 			free(args);
@@ -1663,7 +1663,7 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_o
 		free(query_string);
 	free(idDim);
 	free(binary);
-	for (i = 0; i < c_arg - 1; i++)
+	for (i = 0; i < c_arg; i++)
 		if (args[i])
 			free(args[i]);
 	free(args);
@@ -1822,7 +1822,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 	unsigned long long *id_dim = NULL;
 	char *binary = NULL;
 	oph_ioserver_query_arg **args = NULL;
-	int c_arg = 3, ii, remake = 0;
+	int c_arg = 2, ii, remake = 0;
 
 	if ((exec_flag == 0) || (exec_flag == 2)) {
 		//Last or middle
@@ -1838,7 +1838,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 		if (!*exec_query) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute query\n");
 			if (*exec_args) {
-				for (ii = 0; ii < c_arg - 1; ii++) {
+				for (ii = 0; ii < c_arg; ii++) {
 					if ((*exec_args)[ii]) {
 						if ((*exec_args)[ii]->arg)
 							free((*exec_args)[ii]->arg);
@@ -1859,7 +1859,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute query\n");
 			oph_ioserver_free_result(input_server, old_result);
 			oph_ioserver_free_query(output_server, query);
-			for (ii = 0; ii < c_arg - 1; ii++) {
+			for (ii = 0; ii < c_arg; ii++) {
 				if (args[ii]) {
 					if (args[ii]->arg)
 						free(args[ii]->arg);
@@ -1878,7 +1878,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 		if (sizeof_var > args[1]->arg_length) {
 			if (*exec_query)
 				oph_ioserver_free_query(output_server, *exec_query);
-			for (ii = 0; ii < c_arg - 1; ii++) {
+			for (ii = 0; ii < c_arg; ii++) {
 				if (args[ii]) {
 					if (args[ii]->arg)
 						free(args[ii]->arg);
@@ -1930,7 +1930,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 		}
 
 		query = NULL;
-		args = (oph_ioserver_query_arg **) calloc(c_arg, sizeof(oph_ioserver_query_arg *));
+		args = (oph_ioserver_query_arg **) calloc(1 + c_arg, sizeof(oph_ioserver_query_arg *));
 		if (!(args)) {
 			free(binary);
 			free(id_dim);
@@ -1939,21 +1939,21 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 			return OPH_DC_DATA_ERROR;
 		}
 
-		for (ii = 0; ii < c_arg - 1; ii++) {
+		for (ii = 0; ii < c_arg; ii++) {
 			args[ii] = (oph_ioserver_query_arg *) calloc(1, sizeof(oph_ioserver_query_arg));
 			if (!args[ii]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate input arguments\n");
 				free(binary);
 				free(id_dim);
 				oph_ioserver_free_result(input_server, old_result);
-				for (ii = 0; ii < c_arg - 1; ii++)
+				for (ii = 0; ii < c_arg; ii++)
 					if (args[ii])
 						free(args[ii]);
 				free(args);
 				return OPH_DC_DATA_ERROR;
 			}
 		}
-		args[c_arg - 1] = NULL;
+		args[c_arg] = NULL;
 
 
 		args[0]->arg_length = sizeof(unsigned long long);
@@ -1970,7 +1970,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 		if (oph_ioserver_setup_query(output_server, insert_query, tot_rows, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 			oph_ioserver_free_result(input_server, old_result);
-			for (ii = 0; ii < c_arg - 1; ii++) {
+			for (ii = 0; ii < c_arg; ii++) {
 				if (args[ii]) {
 					if (args[ii]->arg)
 						free(args[ii]->arg);
@@ -1995,7 +1995,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
 			oph_ioserver_free_result(input_server, old_result);
 			oph_ioserver_free_query(output_server, query);
-			for (ii = 0; ii < c_arg - 1; ii++) {
+			for (ii = 0; ii < c_arg; ii++) {
 				if (args[ii]) {
 					if (args[ii]->arg)
 						free(args[ii]->arg);
@@ -2021,7 +2021,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			oph_ioserver_free_result(input_server, old_result);
 			oph_ioserver_free_query(output_server, query);
-			for (ii = 0; ii < c_arg - 1; ii++) {
+			for (ii = 0; ii < c_arg; ii++) {
 				if (args[ii]) {
 					if (args[ii]->arg)
 						free(args[ii]->arg);
@@ -2038,7 +2038,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 	oph_ioserver_free_result(input_server, old_result);
 	if ((exec_flag == 2) || (exec_flag == 3)) {
 		//If last or only one - clean 
-		for (ii = 0; ii < c_arg - 1; ii++) {
+		for (ii = 0; ii < c_arg; ii++) {
 			if (args[ii]) {
 				if (args[ii]->arg)
 					free(args[ii]->arg);
@@ -2181,7 +2181,7 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 	}
 
 	unsigned long long actual_size = 0;
-	int c_arg = 4, ii;
+	int c_arg = 3, ii;
 
 	query_buflen = 1 + snprintf(NULL, 0, compressed ? OPH_DC_SQ_INSERT_COMPRESSED_FRAG2 : OPH_DC_SQ_INSERT_FRAG2, frag_name, operation, measure_type, measure_type, measure_type);
 	if (query_buflen >= max_size) {
@@ -2225,7 +2225,7 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 	}
 
 	query = NULL;
-	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(c_arg, sizeof(oph_ioserver_query_arg *));
+	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(1 + c_arg, sizeof(oph_ioserver_query_arg *));
 	if (!(args)) {
 		free(binary1);
 		free(binary2);
@@ -2236,7 +2236,7 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 		return OPH_DC_DATA_ERROR;
 	}
 
-	for (ii = 0; ii < c_arg - 1; ii++) {
+	for (ii = 0; ii < c_arg; ii++) {
 		args[ii] = (oph_ioserver_query_arg *) calloc(1, sizeof(oph_ioserver_query_arg));
 		if (!args[ii]) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate input arguments\n");
@@ -2245,14 +2245,14 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 			free(id_dim);
 			oph_ioserver_free_result(first_server, old_result1);
 			oph_ioserver_free_result(second_server, old_result2);
-			for (ii = 0; ii < c_arg - 1; ii++)
+			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
 			free(args);
 			return OPH_DC_DATA_ERROR;
 		}
 	}
-	args[c_arg - 1] = NULL;
+	args[c_arg] = NULL;
 
 	args[0]->arg_length = sizeof(unsigned long long);
 	args[0]->arg_type = OPH_IOSERVER_TYPE_LONGLONG;
@@ -2273,7 +2273,7 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 		oph_ioserver_free_result(first_server, old_result1);
 		oph_ioserver_free_result(second_server, old_result2);
-		for (ii = 0; ii < c_arg - 1; ii++) {
+		for (ii = 0; ii < c_arg; ii++) {
 			if (args[ii]) {
 				if (args[ii]->arg)
 					free(args[ii]->arg);
@@ -2293,7 +2293,7 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 			oph_ioserver_free_result(first_server, old_result1);
 			oph_ioserver_free_result(second_server, old_result2);
 			oph_ioserver_free_query(first_server, query);
-			for (ii = 0; ii < c_arg - 1; ii++) {
+			for (ii = 0; ii < c_arg; ii++) {
 				if (args[ii]) {
 					if (args[ii]->arg)
 						free(args[ii]->arg);
@@ -2308,7 +2308,7 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 			oph_ioserver_free_result(first_server, old_result1);
 			oph_ioserver_free_result(second_server, old_result2);
 			oph_ioserver_free_query(first_server, query);
-			for (ii = 0; ii < c_arg - 1; ii++) {
+			for (ii = 0; ii < c_arg; ii++) {
 				if (args[ii]) {
 					if (args[ii]->arg)
 						free(args[ii]->arg);
@@ -2334,7 +2334,7 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 			oph_ioserver_free_result(first_server, old_result1);
 			oph_ioserver_free_result(second_server, old_result2);
 			oph_ioserver_free_query(first_server, query);
-			for (ii = 0; ii < c_arg - 1; ii++) {
+			for (ii = 0; ii < c_arg; ii++) {
 				if (args[ii]) {
 					if (args[ii]->arg)
 						free(args[ii]->arg);
@@ -2350,7 +2350,7 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 	oph_ioserver_free_result(second_server, old_result2);
 
 	//If last or only one - clean 
-	for (ii = 0; ii < c_arg - 1; ii++) {
+	for (ii = 0; ii < c_arg; ii++) {
 		if (args[ii]) {
 			if (args[ii]->arg)
 				free(args[ii]->arg);

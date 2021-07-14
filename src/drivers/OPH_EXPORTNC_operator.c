@@ -1308,7 +1308,7 @@ int task_execute(oph_operator_struct * handle)
 							float svalue = (float) strtof(mvalue, NULL);
 							retval = nc_put_att_float(ncid, mvariable ? varidp : NC_GLOBAL, mkey, NC_FLOAT, 1, &svalue);
 						} else if (!strcmp(mtype, OPH_COMMON_DOUBLE_TYPE)) {
-							double svalue = (double) strtof(mvalue, NULL);
+							double svalue = (double) strtod(mvalue, NULL);
 							retval = nc_put_att_double(ncid, mvariable ? varidp : NC_GLOBAL, mkey, NC_DOUBLE, 1, &svalue);
 						}
 						if (retval) {
