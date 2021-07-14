@@ -486,6 +486,9 @@ int task_execute(oph_operator_struct * handle)
 		      ((OPH_GENERIC_operator_handle *) handle->operator_handle)->user ? ((OPH_GENERIC_operator_handle *) handle->operator_handle)->user : "");
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "%s ", ((OPH_GENERIC_operator_handle *) handle->operator_handle)->command);
 
+	if (!base_src_path)
+		free(base_src_path);
+
 	char *new_arg = NULL, *arg;
 	for (i = 0; i < ((OPH_GENERIC_operator_handle *) handle->operator_handle)->args_num; i++) {
 		arg = ((OPH_GENERIC_operator_handle *) handle->operator_handle)->args[i];
