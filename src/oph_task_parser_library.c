@@ -740,14 +740,14 @@ int oph_tp_task_params_parser(char *task_string, HASHTBL ** hashtbl)
 							free(value1);
 							return OPH_TP_TASK_PARSER_ERROR;
 						}
-						hashtbl_insert(*hashtbl, (char *) content, value1);
+						hashtbl_insert(*hashtbl, (char *) content, (void *) value1);
 						free(value1);
 						xmlFree(content);
 					}
 				}
 				subnode = subnode->next;
 			}
-			hashtbl_insert(*hashtbl, OPH_IN_PARAM_OPERATOR_NAME, operator);
+			hashtbl_insert(*hashtbl, OPH_IN_PARAM_OPERATOR_NAME, (void *) operator);
 			break;
 		}
 		node = node->next;

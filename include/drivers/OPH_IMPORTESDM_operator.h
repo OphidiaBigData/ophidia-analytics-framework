@@ -55,6 +55,7 @@ struct _ESDM_var {
 	short int *dims_order;
 	int *oph_dims_id;
 	char *operation;
+	char *args;
 };
 typedef struct _ESDM_var ESDM_var;
 
@@ -153,6 +154,8 @@ struct _OPH_IMPORTESDM_operator_handle {
 	short int execute_error;
 	char policy;
 	char *operation;
+	char **args;
+	int args_num;
 };
 typedef struct _OPH_IMPORTESDM_operator_handle OPH_IMPORTESDM_operator_handle;
 
