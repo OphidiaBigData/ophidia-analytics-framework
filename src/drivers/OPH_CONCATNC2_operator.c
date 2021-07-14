@@ -22,9 +22,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <mpi.h>
-
 #include <math.h>
+#ifndef MPI_DISABLE_SUPPORT
+#include <mpi.h>
+#endif
 
 #include "oph_analytics_operator_library.h"
 #include "drivers/OPH_CONCATNC2_operator.h"
@@ -233,9 +234,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		oph_odb_cube_free_datacube(&cube);
 		break;
 	}
+#ifndef MPI_DISABLE_SUPPORT
 	//Broadcast to all other processes the fragment relative index
 	//MPI_Barrier(MPI_COMM_WORLD);
 	MPI_Bcast(stream, stream_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+#endif
 
 	id_in_datacube = *((int *) stream);
 	id_in_container = *((int *) (stream + sizeof(int)));
@@ -671,9 +674,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				time_dim->id_dimension = 0;
 
 			memcpy(buffer, time_dim, packet_size);
+#ifndef MPI_DISABLE_SUPPORT
 			MPI_Bcast(buffer, packet_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+#endif
 		} else {
+#ifndef MPI_DISABLE_SUPPORT
 			MPI_Bcast(buffer, packet_size, MPI_CHAR, 0, MPI_COMM_WORLD);
+#endif
 			memcpy(time_dim, buffer, packet_size);
 		}
 
@@ -1676,6 +1683,7 @@ int task_init(oph_operator_struct * handle)
 			free(tmp_var.dims_length);
 
 	}
+#ifndef MPI_DISABLE_SUPPORT
 	//Broadcast to all other processes the result
 	//MPI_Barrier(MPI_COMM_WORLD);
 	MPI_Bcast(stream, stream_max_size, MPI_CHAR, 0, MPI_COMM_WORLD);
@@ -1689,6 +1697,7 @@ int task_init(oph_operator_struct * handle)
 			free(measure_stream);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+#endif
 
 	if (handle->proc_rank != 0) {
 		if (!(((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->fragment_ids = (char *) strndup(id_string[0], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))) {
@@ -1705,8 +1714,9 @@ int task_init(oph_operator_struct * handle)
 		ndim = *((int *) id_string[3]);
 		measure_stream = (int *) malloc((3 + 3 * ndim) * sizeof(int));
 	}
-
+#ifndef MPI_DISABLE_SUPPORT
 	MPI_Bcast(measure_stream, 3 + 3 * ndim, MPI_INT, 0, MPI_COMM_WORLD);
+#endif
 
 	// Previous data are not considered
 	if (measure->dims_length)
@@ -2121,12 +2131,14 @@ int task_destroy(oph_operator_struct * handle)
 
 	OPH_CONCATNC2_operator_handle *oper_handle = (OPH_CONCATNC2_operator_handle *) handle->operator_handle;
 
-	short int proc_error = oper_handle->execute_error;
 	int id_datacube = oper_handle->id_output_datacube;
 	short int global_error = 0;
 
+#ifndef MPI_DISABLE_SUPPORT
+	short int proc_error = oper_handle->execute_error;
 	//Reduce results
 	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
+#endif
 
 	if (handle->proc_rank == 0 && global_error == 0) {
 		//Master process prints output datacube PID
@@ -2177,12 +2189,14 @@ int task_destroy(oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}
 		}
-
+#ifndef MPI_DISABLE_SUPPORT
 		if (handle->output_code)
 			proc_error = (short int) handle->output_code;
 		else
 			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
+
 		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
+#endif
 		handle->output_code = global_error;
 
 		//Delete from OphidiaDB

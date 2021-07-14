@@ -23,9 +23,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <mpi.h>
 #include <strings.h>
 #include <math.h>
+#ifndef MPI_DISABLE_SUPPORT
+#include <mpi.h>
+#endif
 
 #include "oph_analytics_operator_library.h"
 
@@ -230,6 +232,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			}
 		}
 	}
+#ifndef MPI_DISABLE_SUPPORT
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(id_datacube_in, 3, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -239,6 +242,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_REDUCE2_NO_INPUT_DATACUBE, datacube_in);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+#endif
 	((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_datacube = id_datacube_in[0];
 
 	if (id_datacube_in[1] == 0) {
@@ -1190,6 +1194,7 @@ int task_init(oph_operator_struct * handle)
 		memcpy(bsizep, &((OPH_REDUCE2_operator_handle *) handle->operator_handle)->block_size, sizeof(long long));
 	}
       __OPH_EXIT_1:
+#ifndef MPI_DISABLE_SUPPORT
 	//Broadcast to all other processes the fragment relative index
 	MPI_Bcast(stream, stream_max_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 	if (*stream == 0) {
@@ -1198,6 +1203,7 @@ int task_init(oph_operator_struct * handle)
 		((OPH_REDUCE2_operator_handle *) handle->operator_handle)->execute_error = 1;
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+#endif
 
 	if (handle->proc_rank != 0) {
 		if (!(((OPH_REDUCE2_operator_handle *) handle->operator_handle)->fragment_ids = (char *) strndup(id_string[0], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))) {
@@ -1232,8 +1238,10 @@ int task_init(oph_operator_struct * handle)
 	} else
 		sizep = ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->sizes;
 
+#ifndef MPI_DISABLE_SUPPORT
 	if (((OPH_REDUCE2_operator_handle *) handle->operator_handle)->size_num)
 		MPI_Bcast(sizep, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->size_num * sizeof(long long), MPI_CHAR, 0, MPI_COMM_WORLD);
+#endif
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -1606,12 +1614,14 @@ int task_destroy(oph_operator_struct * handle)
 
 	OPH_REDUCE2_operator_handle *oper_handle = (OPH_REDUCE2_operator_handle *) handle->operator_handle;
 
-	short int proc_error = oper_handle->execute_error;
 	int id_datacube = oper_handle->id_output_datacube;
 	short int global_error = 0;
 
+#ifndef MPI_DISABLE_SUPPORT
+	short int proc_error = oper_handle->execute_error;
 	//Reduce results
 	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
+#endif
 
 	if (handle->proc_rank == 0 && global_error == 0) {
 		//Master process print output datacube PID
@@ -1663,12 +1673,14 @@ int task_destroy(oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}
 		}
-
+#ifndef MPI_DISABLE_SUPPORT
 		if (handle->output_code)
 			proc_error = (short int) handle->output_code;
 		else
 			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
+
 		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
+#endif
 		handle->output_code = global_error;
 
 		//Delete from OphidiaDB

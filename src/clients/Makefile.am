@@ -15,6 +15,11 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+
+if !MPI_DISABLE
+
+bin_PROGRAMS = esdm_pav_runtime_worker
+else
 if MYSQL_SUPPORT
 if DEBUG_1
 bin_PROGRAMS=oph_analytics_framework oph_ioserver_client
@@ -27,6 +32,8 @@ endif
 endif
 else
 bin_PROGRAMS=oph_analytics_framework
+endif
+
 endif
 
 bindir=${prefix}/bin
@@ -49,3 +56,8 @@ oph_ioserver_client_SOURCES= oph_ioserver_client.c
 oph_ioserver_client_CFLAGS= $(OPT) -I../../include -I../../include/oph_ioserver @INCLTDL@ -DOPH_PARALLEL_LOCATION=\"${prefix}\" ${MYSQL_CFLAGS} -DPACKAGE_VERSION=\"@PACKAGE_VERSION@\" ${OPHIDIADB_CFLAGS}
 oph_ioserver_client_LDADD= ${MYSQL_LDFLAGS} -L.. -loph_datacube ${OPHIDIADB_LIBS} @LIBLTDL@
 
+if !MPI_DISABLE
+esdm_pav_runtime_worker_SOURCES = esdm_pav_runtime_worker.c
+esdm_pav_runtime_worker_CFLAGS = $(OPT) -I../../include -I../oph_gsoap @INCLTDL@ $(RABBITMQ_INCLUDE) -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DPACKAGE_VERSION=\"@PACKAGE_VERSION@\" -DMPI_DISABLE_SUPPORT
+esdm_pav_runtime_worker_LDADD = -L.. -ldebug -loph_server_conf -lrabbitmq_utils -loph_analytics_framework $(RABBITMQ_LIB)
+endif

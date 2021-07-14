@@ -23,8 +23,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <mpi.h>
 #include <strings.h>
+#ifndef MPI_DISABLE_SUPPORT
+#include <mpi.h>
+#endif
 
 #include "oph_analytics_operator_library.h"
 
@@ -387,10 +389,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
       __OPH_EXIT_1:
 
+	free(tmp_username);
+
+#ifndef MPI_DISABLE_SUPPORT
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(result, 3, MPI_INT, 0, MPI_COMM_WORLD);
-
-	free(tmp_username);
 
 	//Check if sequential part has been completed
 	if (result[0] == 0) {
@@ -403,7 +406,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, result[2], OPH_LOG_OPH_CUBEELEMENTS_NO_INPUT_CONTAINER, datacube_name);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-
+#endif
 	((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->id_input_datacube = result[0];
 	((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->first_time_computation = result[1];
 	((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->id_input_container = result[2];
@@ -464,6 +467,7 @@ int task_init(oph_operator_struct * handle)
 		oph_odb_cube_free_datacube(&cube);
 
 	}
+#ifndef MPI_DISABLE_SUPPORT
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(id_string, 3 * OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
 
@@ -473,7 +477,7 @@ int task_init(oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CUBEELEMENTS_MASTER_TASK_INIT_FAILED);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-
+#endif
 	if (handle->proc_rank != 0) {
 		if (!(((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->fragment_ids = (char *) strndup(id_string[0], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -714,11 +718,13 @@ int task_reduce(oph_operator_struct * handle)
 	if (((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->first_time_computation == 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	long long partial_result = ((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->partial_count;
 	long long final_result = 0;
 
+#ifndef MPI_DISABLE_SUPPORT
+	long long partial_result = ((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->partial_count;
 	//Reduce results
 	MPI_Reduce(&partial_result, &final_result, 1, MPI_LONG_LONG_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+#endif
 
 	//Check if sequential part has been completed
 	if (handle->proc_rank == 0) {

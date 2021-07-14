@@ -23,7 +23,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#ifndef MPI_DISABLE_SUPPORT
 #include <mpi.h>
+#endif
 
 #include "oph_analytics_operator_library.h"
 
@@ -183,6 +185,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			free(uri);
 		uri = NULL;
 	}
+#ifndef MPI_DISABLE_SUPPORT
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(id_datacube_in, 2, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -193,6 +196,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+#endif
 	((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_datacube = id_datacube_in[0];
 
 	if (id_datacube_in[1] == 0) {
@@ -264,6 +268,7 @@ int task_init(oph_operator_struct * handle)
 			}
 		}
 	}
+#ifndef MPI_DISABLE_SUPPORT
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
 
@@ -273,6 +278,7 @@ int task_init(oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_MASTER_TASK_INIT_FAILED);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+#endif
 
 	if (handle->proc_rank != 0) {
 		if (!(((OPH_DELETE_operator_handle *) handle->operator_handle)->fragment_ids = (char *) strndup(id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))) {
@@ -399,6 +405,7 @@ int task_destroy(oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_NULL_OPERATOR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
+#ifndef MPI_DISABLE_SUPPORT
 	//For error checking
 	int result = OPH_ANALYTICS_OPERATOR_SUCCESS;
 
@@ -418,6 +425,8 @@ int task_destroy(oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_MASTER_TASK_DESTROY_FAILED);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+#endif
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 

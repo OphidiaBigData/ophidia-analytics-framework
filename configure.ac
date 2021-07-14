@@ -40,6 +40,8 @@ AM_PROG_CC_STDC
 AM_PROG_CC_C_O
 AC_PROG_CXX
 
+OPH_ANALYTICS_LOCATION=$prefix
+AC_SUBST(OPH_ANALYTICS_LOCATION)
 
 if test -z "$CC" && test -n "$MPICC"; then
    CC="$MPICC"
@@ -91,6 +93,17 @@ else
 	AC_MSG_ERROR([MySQL libraries not found! Aborting configure!])
 fi
 fi
+
+MPI_DISABLE_SUPPORT=
+AC_ARG_ENABLE(mpi, [  --disable-mpi     Disable MPI support. (Enabled by default)], [ mpi="no" ], [ mpi="yes" ])
+if test "x$mpi" = "xyes"; then
+	AC_MSG_NOTICE(MPI enabled)
+else
+	AC_MSG_NOTICE(MPI disabled)
+fi
+AM_CONDITIONAL([MPI_DISABLE], [test "x$mpi" = "xyes"])
+MPI_DISABLE_SUPPORT=$mpi
+AC_SUBST(MPI_DISABLE_SUPPORT)
 
 AC_CHECK_LIB(pthread, pthread_create)
 if test "$ac_cv_lib_pthread_pthread_create" = yes ; then
@@ -568,6 +581,30 @@ fi
 AM_CONDITIONAL([DB_SUPPORT], [test "x$db" = "xyes"])
 OPH_DB_SUPPORT=$db
 AC_SUBST(OPH_DB_SUPPORT)
+
+if test "x$mpi" = "xno"; then
+PKG_CHECK_MODULES(LIBRABBITMQ, librabbitmq >= 0.10.0)
+AC_ARG_WITH(librabbitmq_header_path,
+		[ --with-librabbitmq-header-path=PATH Location of librabbitmq include directory],
+		[
+				librabbitmq_header_path="$withval"
+		],
+		[
+				librabbitmq_header_path="$LIBRABBITMQ_CFLAGS"
+		])
+AC_ARG_WITH(librabbitmq_lib_path,
+		[ --with-librabbitmq-lib-path=PATH Location of librabbitmq lib],
+		[
+				librabbitmq_lib_path="$withval"
+		],
+		[
+				librabbitmq_lib_path="$LIBRABBITMQ_LIBS"
+		])
+RABBITMQ_INCLUDE="$librabbitmq_header_path"
+AC_SUBST(RABBITMQ_INCLUDE)
+RABBITMQ_LIB="$librabbitmq_lib_path"
+AC_SUBST(RABBITMQ_LIB)
+fi
 
 OPT="-Wno-error -Wno-format-security"
 case "${host}" in

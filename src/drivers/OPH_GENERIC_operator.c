@@ -28,7 +28,6 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <mpi.h>
 
 #include "oph_analytics_operator_library.h"
 #include "oph_task_parser_library.h"

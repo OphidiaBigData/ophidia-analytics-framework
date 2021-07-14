@@ -21,13 +21,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <pthread.h>
+#include <sys/types.h>
 
 #include "oph_common.h"
 #define MAX_LOG_LINE OPH_COMMON_BUFFER_LEN
 
-extern int msglevel;		/* the higher, the more messages... */
+int msglevel = LOG_INFO;	/* the higher, the more messages... */
 char *prefix = NULL;
 char **backtrace = NULL;
+FILE *log_file = 0;
 
 #if defined(NDEBUG) && defined(__GNUC__)
 /* Nothing. pmesg has been "defined away" in debug.h already. */
@@ -109,6 +112,63 @@ void pmesg(int level, const char *source, long int line_number, const char *form
 	}
 #endif				/* NDEBUG */
 }
+
+void pmesg_safe(pthread_mutex_t * flag, int level, const char *source, long int line_number, const char *format, ...)
+{
+#ifdef NDEBUG
+	/* Empty body, so a good compiler will optimise calls to pmesg away */
+#else
+	va_list args;
+	char log_type[10];
+	int new_msglevel = msglevel % 10;
+	if (level > new_msglevel)
+		return;
+
+	switch (level) {
+		case LOG_ERROR:
+			sprintf(log_type, "ERROR");
+			break;
+		case LOG_INFO:
+			sprintf(log_type, "INFO");
+			break;
+		case LOG_WARNING:
+			sprintf(log_type, "WARNING");
+			break;
+		case LOG_DEBUG:
+			sprintf(log_type, "DEBUG");
+			break;
+		case LOG_RAW:
+			*log_type = 0;
+			break;
+		default:
+			sprintf(log_type, "UNKNOWN");
+			break;
+	}
+
+	if (flag)
+		pthread_mutex_lock(flag);
+
+	if (level) {
+		if (msglevel > 10) {
+			time_t t1 = time(NULL);
+			char *s = ctime(&t1);
+			s[strlen(s) - 1] = 0;	// remove \n
+			fprintf(log_file ? log_file : stderr, "[%s][%s][%s][%ld]\t", s, log_type, source, line_number);
+		} else
+			fprintf(log_file ? log_file : stderr, "[%s][%s][%ld]\t", log_type, source, line_number);
+	}
+
+	va_start(args, format);
+	vfprintf(log_file ? log_file : stderr, format, args);
+	va_end(args);
+	fflush(log_file ? log_file : stderr);
+
+	if (flag)
+		pthread_mutex_unlock(flag);
+
+#endif				/* NDEBUG */
+}
+
 #endif				/* NDEBUG && __GNUC__ */
 
 void logging(int level, const char *source, long int line_number, int container_id, const char *format, ...)
@@ -289,4 +349,14 @@ void set_log_prefix(char *p)
 void set_log_backtrace(char **p)
 {
 	backtrace = p;
+}
+
+void set_debug_level(int level)
+{
+	msglevel = level;
+}
+
+void set_log_file(FILE * file)
+{
+	log_file = file;
 }

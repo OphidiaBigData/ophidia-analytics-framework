@@ -23,7 +23,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <mpi.h>
 
 #include "oph_analytics_operator_library.h"
 #include "oph_json_library.h"

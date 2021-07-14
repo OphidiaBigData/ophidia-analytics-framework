@@ -21,6 +21,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <pthread.h>
 
 #include "oph_framework_paths.h"
 
@@ -28,6 +29,8 @@
 
 #define LOG_OUTPUT_FORMAT1 "[%s][%s][%s][%ld]\t"
 #define LOG_OUTPUT_FORMAT2 "[%s][%s][%ld]\t"
+
+#define LOG_RAW			0
 
 #define LOG_ERROR 	1
 #define LOG_INFO 	2
@@ -58,6 +61,8 @@
 void pmesg(int level, const char *source, long int line_number, const char *format, ...);
 /* print a message, if it is considered significant enough.
       Adapted from [K&R2], p. 174 */
+
+void pmesg_safe(pthread_mutex_t * flag, int level, const char *source, long int line_number, const char *format, ...);
 #endif
 
 void logging(int level, const char *source, long int line_number, int container_id, const char *format, ...);
@@ -66,5 +71,7 @@ void logging_server(int level, const char *source, long int line_number, const c
 
 void set_log_prefix(char *p);
 void set_log_backtrace(char **p);
+void set_debug_level(int level);
+void set_log_file(FILE * file);
 
 #endif				/* DEBUG_H */

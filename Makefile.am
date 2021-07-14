@@ -27,7 +27,11 @@ sysconf_DATA = etc/oph_analytics_driver etc/oph_io_server etc/oph_configuration 
 else
 sysconf_DATA = etc/oph_analytics_driver etc/oph_io_server etc/oph_configuration etc/oph_soap_configuration etc/oph_script_configuration
 endif
- 
+
+if !MPI_DISABLE
+sysconf_DATA += etc/scheduler.conf
+endif
+
 logdir = $(prefix)/log/
 dist_log_DATA =
 

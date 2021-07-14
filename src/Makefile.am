@@ -50,6 +50,11 @@ if HAVE_CFITSIO
 LIBRARY+= liboph_fits.la
 endif
 
+if !MPI_DISABLE
+LIBRARY+= liboph_server_conf.la
+LIBRARY+= librabbitmq_utils.la
+endif
+
 lib_LTLIBRARIES = $(LIBRARY)
 if DEBUG_1
 lib_CFLAGS =  -I. -I../include -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(OPT) -DOPH_WITH_VALGRIND -DOPH_TIME_DEBUG_1
@@ -76,7 +81,7 @@ endif
 libdebug_la_SOURCES = debug.c 
 libdebug_la_CFLAGS= -prefer-pic -I../include @INCLTDL@ ${lib_CFLAGS}
 libdebug_la_LDFLAGS = -static
-libdebug_la_LIBADD = -lz -lm @LIBLTDL@
+libdebug_la_LIBADD = -lz -lm -lpthread @LIBLTDL@
 
 libhashtbl_la_SOURCES = hashtbl.c 
 libhashtbl_la_CFLAGS= -prefer-pic -I../include @INCLTDL@ ${lib_CFLAGS}
@@ -117,6 +122,9 @@ liboph_analytics_framework_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include -
 liboph_analytics_framework_la_LIBADD = ${MYSQL_LDFLAGS} @LIBLTDL@ -Loph_gsoap -loph_soap -L. ${OPHIDIADB} -loph_analytics_operator -loph_json -loph_task_parser
 endif
 liboph_analytics_framework_la_LDFLAGS = -static $(LIB_OPERATOR)
+if !MPI_DISABLE
+liboph_analytics_framework_la_CFLAGS += -DMPI_DISABLE_SUPPORT
+endif
 
 liboph_json_la_SOURCES = oph_json/oph_json_common.c oph_json/oph_json_graph.c oph_json/oph_json_grid.c  oph_json/oph_json_multigrid.c oph_json/oph_json_text.c oph_json/oph_json_tree.c
 liboph_json_la_CFLAGS= -prefer-pic -I../include -I../include/oph_json @INCLTDL@ $(JANSSON_CFLAGS) ${lib_CFLAGS}
@@ -196,4 +204,16 @@ liboph_fits_la_SOURCES = oph_fits_library.c
 liboph_fits_la_CFLAGS= ${MYSQL_CFLAGS} ${LIBCFITSIO_INCLUDE} -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
 liboph_fits_la_LDFLAGS = -static
 liboph_fits_la_LIBADD = -lz -lm ${LIBCFITSIO_LIB} -lpthread @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube
+endif
+
+if !MPI_DISABLE
+liboph_server_conf_la_SOURCES = oph_server_confs.c
+liboph_server_conf_la_CFLAGS = -prefer-pic -I../include @INCLTDL@ $(RABBITMQ_INCLUDE)
+liboph_server_conf_la_LDFLAGS = -static
+liboph_server_conf_la_LIBADD = @LIBLTDL@ -L. -ldebug -lhashtbl $(RABBITMQ_LIB)
+
+librabbitmq_utils_la_SOURCES = rabbitmq_utils.c
+librabbitmq_utils_la_CFLAGS = -prefer-pic -I../include @INCLTDL@ $(RABBITMQ_INCLUDE)
+librabbitmq_utils_la_LDFLAGS = -static
+librabbitmq_utils_la_LIBADD = @LIBLTDL@ -L. -ldebug -lpthread $(RABBITMQ_LIB)
 endif

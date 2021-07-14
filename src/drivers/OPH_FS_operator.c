@@ -21,7 +21,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <mpi.h>
 #include <glob.h>
 #include <dirent.h>
 #include <sys/stat.h>

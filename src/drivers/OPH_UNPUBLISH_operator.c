@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
-#include <mpi.h>
 
 #include "oph_analytics_operator_library.h"
 

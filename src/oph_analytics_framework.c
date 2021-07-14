@@ -32,7 +32,10 @@
 #include "oph_pid_library.h"
 
 #include "debug.h"
+
+#ifndef MPI_DISABLE_SUPPORT
 #include <mpi.h>
+#endif
 
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 #include "clients/taketime.h"
@@ -1033,7 +1036,9 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		handle->operator_json = oper_json;
 
 #ifdef OPH_TIME_DEBUG_1
+#ifndef MPI_DISABLE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 	if (task_rank == 0) {
 		gettimeofday(&etime, NULL);
 		timeval_subtract(&ttime, &etime, &stime);
@@ -1106,7 +1111,9 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	hashtbl_destroy(task_tbl);
 
 #ifdef OPH_TIME_DEBUG_1
+#ifndef MPI_DISABLE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 	if (task_rank == 0) {
 		gettimeofday(&etime, NULL);
 		timeval_subtract(&ttime, &etime, &stime);
@@ -1177,7 +1184,9 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 #ifdef OPH_TIME_DEBUG_1
+#ifndef MPI_DISABLE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 	if (task_rank == 0) {
 		gettimeofday(&etime, NULL);
 		timeval_subtract(&ttime, &etime, &stime);
@@ -1248,7 +1257,9 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 #ifdef OPH_TIME_DEBUG_1
+#ifndef MPI_DISABLE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 	if (task_rank == 0) {
 		gettimeofday(&etime, NULL);
 		timeval_subtract(&ttime, &etime, &stime);
@@ -1319,7 +1330,9 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 #ifdef OPH_TIME_DEBUG_1
+#ifndef MPI_DISABLE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 	if (task_rank == 0) {
 		gettimeofday(&etime, NULL);
 		timeval_subtract(&ttime, &etime, &stime);
@@ -1390,7 +1403,9 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 #ifdef OPH_TIME_DEBUG_1
+#ifndef MPI_DISABLE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 	if (task_rank == 0) {
 		gettimeofday(&etime, NULL);
 		timeval_subtract(&ttime, &etime, &stime);
@@ -1460,7 +1475,9 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 #ifdef OPH_TIME_DEBUG_1
+#ifndef MPI_DISABLE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 	if (task_rank == 0) {
 		gettimeofday(&etime, NULL);
 		timeval_subtract(&ttime, &etime, &stime);
@@ -1528,7 +1545,9 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 #ifdef OPH_TIME_DEBUG_1
+#ifndef MPI_DISABLE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 	if (task_rank == 0) {
 		gettimeofday(&etime, NULL);
 		timeval_subtract(&ttime, &etime, &stime);
@@ -1583,7 +1602,9 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	}
 #ifndef OPH_STANDALONE_MODE
 /* gSOAP notification start */
+#ifndef MPI_DISABLE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);	//Barrier synchronization before successful notification
+#endif
 	if (!task_rank && have_soap) {
 		snprintf(notify_message, OPH_COMMON_BUFFER_LEN, "%s=%d;%s=%s;%s=%s;%s=%s;%s=%s;%s=%s;%s=%s;", OPH_ARG_STATUS, OPH_ODB_JOB_STATUS_COMPLETED, OPH_ARG_IDJOB, notify_jobid,
 			 OPH_ARG_PARENTID, notify_parent_jobid, OPH_ARG_TASKINDEX, notify_task_index, OPH_ARG_LIGHTTASKINDEX, notify_light_task_index, OPH_ARG_SESSIONID, notify_sessionid,
@@ -1630,7 +1651,9 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 
 #ifdef OPH_TIME_DEBUG_1
+#ifndef MPI_DISABLE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 	if (task_rank == 0) {
 		gettimeofday(&etime, NULL);
 		timeval_subtract(&ttime, &etime, &stime);

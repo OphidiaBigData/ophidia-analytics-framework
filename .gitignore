@@ -30,5 +30,7 @@ stamp-h1
 etc/oph_analytics_driver
 etc/oph_io_server
 etc/oph_configuration
+etc/scheduler.conf
 src/clients/oph_analytics_framework
 src/clients/oph_ioserver_client
+src/clients/esdm_pav_runtime_worker

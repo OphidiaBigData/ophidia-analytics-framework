@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <mpi.h>
 
 #include "drivers/OPH_HIERARCHY_operator.h"
 #include "oph_analytics_operator_library.h"

@@ -22,7 +22,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <mpi.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_wavelet.h>
 #include <gsl/gsl_sort.h>
