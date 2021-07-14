@@ -97,6 +97,8 @@
 #define OPH_FILTER_NOT1 "!"
 #define OPH_FILTER_NOT2 "NOT "
 
+#define OPH_SUBSET_ISINSUBSET_PLUGIN "mysql.oph_is_in_subset(%s.%s,%lld,%lld,%lld)"
+
 int oph_get_session_code(const char *sessionid, char *code, const char *oph_web_server)
 {
 	char tmp[OPH_MAX_STRING_SIZE];
