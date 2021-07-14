@@ -1,4 +1,12 @@
 
+## Next release
+
+### Fixed:
+
+- Some memory leaks in oph_datacube_library
+- Drop OPH_SUBSET2 from operator list [#98](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/98)
+
+
 ## v1.6.0 - 2021-03-05
 
 ### Fixed:
