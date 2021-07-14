@@ -508,6 +508,11 @@ int task_execute(oph_operator_struct * handle)
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "%s/cdo -P %d %s ", cdo_path, ((OPH_CDO_operator_handle *) handle->operator_handle)->nthread,
 		      ((OPH_CDO_operator_handle *) handle->operator_handle)->command);
 
+	if (!cdo_path)
+		free(cdo_path);
+	if (!base_src_path)
+		free(base_src_path);
+
 	char *new_arg = NULL, *arg;
 	for (i = 0; i < ((OPH_CDO_operator_handle *) handle->operator_handle)->args_num; i++) {
 		arg = ((OPH_CDO_operator_handle *) handle->operator_handle)->args[i];
