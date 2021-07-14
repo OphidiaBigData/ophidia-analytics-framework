@@ -560,7 +560,7 @@ int task_execute(oph_operator_struct * handle)
 		      ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->user ? ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->user : "");
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "%s ", ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->script);
 
-	if (!base_src_path)
+	if (base_src_path)
 		free(base_src_path);
 
 	char *new_arg = NULL, *arg;
