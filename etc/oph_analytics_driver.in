@@ -10,9 +10,6 @@ LIB	@MYSQL_LDFLAGS@
 [OPH_SUBSET]
 @DRIVER_PATH@/liboph_subsetoperator.so
 LIB	@MYSQL_LDFLAGS@
-[OPH_SUBSET2]
-@DRIVER_PATH@/liboph_subset2operator.so
-LIB	@MYSQL_LDFLAGS@
 [OPH_REDUCE]
 @DRIVER_PATH@/liboph_reduceoperator.so
 LIB	@MYSQL_LDFLAGS@
