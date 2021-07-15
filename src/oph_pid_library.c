@@ -511,6 +511,8 @@ int oph_pid_free()
 		free(oph_cdo_path);
 	oph_cdo_path = NULL;
 
+	read_file = 0;
+
 	return OPH_PID_SUCCESS;
 }
 
