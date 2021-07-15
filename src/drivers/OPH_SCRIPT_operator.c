@@ -568,19 +568,22 @@ int task_execute(oph_operator_struct * handle)
 		arg = ((OPH_SCRIPT_operator_handle *) handle->operator_handle)->args[i];
 		if (arg) {
 			new_arg = (char *) calloc(4 * strlen(arg), sizeof(char));
-			for (j = k = 0; j < strlen(arg); ++j, ++k) {
-				if (!((OPH_SCRIPT_operator_handle *) handle->operator_handle)->space && (arg[j] == OPH_SCRIPT_MARKER3))
-					new_arg[k++] = OPH_SCRIPT_MARKER;
-				new_arg[k] = arg[j];
-				if (arg[j] == OPH_SCRIPT_MARKER) {
-					new_arg[++k] = OPH_SCRIPT_MARKER2;
-					new_arg[++k] = OPH_SCRIPT_MARKER;
-					new_arg[++k] = OPH_SCRIPT_MARKER;
-				} else if (!((OPH_SCRIPT_operator_handle *) handle->operator_handle)->space && (arg[j] == OPH_SCRIPT_MARKER3))
-					new_arg[++k] = OPH_SCRIPT_MARKER;
+			if (new_arg) {
+				for (j = k = 0; j < strlen(arg); ++j, ++k) {
+					if (!((OPH_SCRIPT_operator_handle *) handle->operator_handle)->space && (arg[j] == OPH_SCRIPT_MARKER3))
+						new_arg[k++] = OPH_SCRIPT_MARKER;
+					new_arg[k] = arg[j];
+					if (arg[j] == OPH_SCRIPT_MARKER) {
+						new_arg[++k] = OPH_SCRIPT_MARKER2;
+						new_arg[++k] = OPH_SCRIPT_MARKER;
+						new_arg[++k] = OPH_SCRIPT_MARKER;
+					} else if (!((OPH_SCRIPT_operator_handle *) handle->operator_handle)->space && (arg[j] == OPH_SCRIPT_MARKER3))
+						new_arg[++k] = OPH_SCRIPT_MARKER;
+				}
+				new_arg[k] = 0;
+				n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "'%s' ", new_arg);
+				free(new_arg);
 			}
-			new_arg[k] = 0;
-			n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "'%s' ", new_arg);
 		}
 	}
 
