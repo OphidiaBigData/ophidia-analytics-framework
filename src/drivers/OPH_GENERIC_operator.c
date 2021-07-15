@@ -93,7 +93,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	//3 - Fill struct with the correct data
 	char tmp[OPH_COMMON_BUFFER_LEN];
-	char *value, *input = NULL, *value2 = NULL;
+	char *value, **inputs = NULL, *value2 = NULL;
+	int i, inputs_num = 0;
 	size_t size;
 
 	// retrieve objkeys
@@ -122,47 +123,62 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	input = hashtbl_get(task_tbl, OPH_IN_PARAM_INPUT);
-	if (!input) {
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_INPUT);
+	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_INPUT);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_INPUT);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (oph_tp_parse_multiple_value_param(value, &inputs, &inputs_num)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_ARGS);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_ARGS);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_ARGS);
+		oph_tp_free_multiple_value_param_list(inputs, inputs_num);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (input && strlen(input)) {
+	if (inputs && (inputs_num > 0)) {
 		char *base_src_path = NULL;
 		if (oph_pid_get_base_src_path(&base_src_path)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base user_path\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base user path\n");
+			oph_tp_free_multiple_value_param_list(inputs, inputs_num);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-		snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", base_src_path ? base_src_path : "", *input != '/' ? "/" : "", input);
-		size = strlen(tmp);
-		size_t old_size = strlen(value);
-		if (old_size) {
-			value2 = (char *) malloc((2 + old_size + size) * sizeof(char));
-			sprintf(value2, "%s|%s", value, tmp);
-			value = value2;
-		} else
-			value = tmp;
-		if (base_src_path)
+		if (base_src_path) {
+			size_t old_size;
+			value = value2 = strdup(value);
+			for (i = 0; i < inputs_num; i++) {
+				if (inputs[i] && strlen(inputs[i])) {
+					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", base_src_path ? base_src_path : "", *inputs[i] != '/' ? "/" : "", inputs[i]);
+					size = strlen(tmp);
+					old_size = strlen(value);
+					if (old_size) {
+						value2 = (char *) malloc((2 + old_size + size) * sizeof(char));
+						sprintf(value2, "%s|%s", value, tmp);
+					} else
+						value2 = strdup(tmp);
+					free(value);
+					value = value2;
+				}
+			}
 			free(base_src_path);
+		}
+		oph_tp_free_multiple_value_param_list(inputs, inputs_num);
 	}
 	if (oph_tp_parse_multiple_value_param(value, &((OPH_GENERIC_operator_handle *) handle->operator_handle)->args, &((OPH_GENERIC_operator_handle *) handle->operator_handle)->args_num)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
-		oph_tp_free_multiple_value_param_list(((OPH_GENERIC_operator_handle *) handle->operator_handle)->args, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->args_num);
 		if (value2)
 			free(value2);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (value2)
-		free(value2);
+		free(value2);	// Do not put it before previous parsing function
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_STDOUT);
 	if (!value) {
@@ -486,7 +502,7 @@ int task_execute(oph_operator_struct * handle)
 		      ((OPH_GENERIC_operator_handle *) handle->operator_handle)->user ? ((OPH_GENERIC_operator_handle *) handle->operator_handle)->user : "");
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "%s ", ((OPH_GENERIC_operator_handle *) handle->operator_handle)->command);
 
-	if (!base_src_path)
+	if (base_src_path)
 		free(base_src_path);
 
 	char *new_arg = NULL, *arg;
@@ -494,19 +510,22 @@ int task_execute(oph_operator_struct * handle)
 		arg = ((OPH_GENERIC_operator_handle *) handle->operator_handle)->args[i];
 		if (arg) {
 			new_arg = (char *) calloc(4 * strlen(arg), sizeof(char));
-			for (j = k = 0; j < strlen(arg); ++j, ++k) {
-				if (!((OPH_GENERIC_operator_handle *) handle->operator_handle)->space && (arg[j] == OPH_GENERIC_MARKER3))
-					new_arg[k++] = OPH_GENERIC_MARKER;
-				new_arg[k] = arg[j];
-				if (arg[j] == OPH_GENERIC_MARKER) {
-					new_arg[++k] = OPH_GENERIC_MARKER2;
-					new_arg[++k] = OPH_GENERIC_MARKER;
-					new_arg[++k] = OPH_GENERIC_MARKER;
-				} else if (!((OPH_GENERIC_operator_handle *) handle->operator_handle)->space && (arg[j] == OPH_GENERIC_MARKER3))
-					new_arg[++k] = OPH_GENERIC_MARKER;
+			if (new_arg) {
+				for (j = k = 0; j < strlen(arg); ++j, ++k) {
+					if (!((OPH_GENERIC_operator_handle *) handle->operator_handle)->space && (arg[j] == OPH_GENERIC_MARKER3))
+						new_arg[k++] = OPH_GENERIC_MARKER;
+					new_arg[k] = arg[j];
+					if (arg[j] == OPH_GENERIC_MARKER) {
+						new_arg[++k] = OPH_GENERIC_MARKER2;
+						new_arg[++k] = OPH_GENERIC_MARKER;
+						new_arg[++k] = OPH_GENERIC_MARKER;
+					} else if (!((OPH_GENERIC_operator_handle *) handle->operator_handle)->space && (arg[j] == OPH_GENERIC_MARKER3))
+						new_arg[++k] = OPH_GENERIC_MARKER;
+				}
+				new_arg[k] = 0;
+				n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "'%s' ", new_arg);
+				free(new_arg);
 			}
-			new_arg[k] = 0;
-			n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "'%s' ", new_arg);
 		}
 	}
 
