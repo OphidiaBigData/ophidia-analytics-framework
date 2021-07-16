@@ -677,8 +677,7 @@ int task_execute(oph_operator_struct * handle)
 	// ADD OUTPUT TO NOTIFICATION STRING
 	if (((OPH_CDO_operator_handle *) handle->operator_handle)->session_url) {
 		char tmp_string[OPH_COMMON_BUFFER_LEN];
-		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_LINK, s ? system_output : ((OPH_CDO_operator_handle *) handle->operator_handle)->session_url,
-			 OPH_IN_PARAM_FILE, jsonbuf);
+		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_LINK, ((OPH_CDO_operator_handle *) handle->operator_handle)->session_url, OPH_IN_PARAM_FILE, jsonbuf);
 		if (handle->output_string) {
 			strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
 			free(handle->output_string);
