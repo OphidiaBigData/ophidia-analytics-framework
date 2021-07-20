@@ -80,6 +80,8 @@ static const char *const oph_server_conf_params[] = { SERVER_CONF_RABBITMQ_USERN
 	SERVER_CONF_WORKER_PORT, SERVER_CONF_FRAMEWORK_PATH, SERVER_CONF_MAX_NCORES, SERVER_CONF_WORKER_THREAD_NUMBER
 };
 
+#define OPH_WORKER_CONFIGURATION_FILE OPH_ANALYTICS_LOCATION "/etc/scheduler.conf"
+
 /**
  * \brief			        Function to load parameters from configuration file
  * \param instance    Server instance to be loaded (if 0 then the first instance will be selected)

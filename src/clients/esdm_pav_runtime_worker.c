@@ -38,7 +38,6 @@
 #include "oph_server_confs.h"
 #include "oph_license.h"
 #include "rabbitmq_utils.h"
-#include "oph_gather.h"
 #include "oph_analytics_framework.h"
 
 #define OPH_SCHED_CONF_FILE OPH_WORKER_CONFIGURATION_FILE
