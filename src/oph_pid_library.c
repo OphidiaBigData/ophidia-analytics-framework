@@ -36,6 +36,8 @@
 #include "debug.h"
 
 extern int msglevel;
+char read_file = 0;
+
 char *oph_web_server_name = NULL;
 char *oph_web_server_location = NULL;
 long long oph_memory_size = -1;
@@ -72,6 +74,10 @@ int oph_pid_create_pid(const char *url, int id_container, int id_datacube, char 
 
 int _oph_pid_load_data()
 {
+	if (read_file)
+		return OPH_PID_SUCCESS;
+	read_file = 1;
+
 	char config[OPH_FRAMEWORK_CONF_PATH_SIZE];
 	snprintf(config, sizeof(config), OPH_FRAMEWORK_OPHIDIADB_CONF_FILE_PATH, OPH_ANALYTICS_LOCATION);
 
@@ -504,6 +510,8 @@ int oph_pid_free()
 	if (oph_cdo_path)
 		free(oph_cdo_path);
 	oph_cdo_path = NULL;
+
+	read_file = 0;
 
 	return OPH_PID_SUCCESS;
 }

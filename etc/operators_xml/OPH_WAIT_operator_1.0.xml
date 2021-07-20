@@ -30,6 +30,7 @@ The task can be unlocked by means of the command &quot;OPH_INPUT&quot;.
 - key : name of the parameter. It should comply with IEEE Std 1003.1-2001 conventions, unless brackets {} are adopted to refer it. More keys are allowed.
 - value : value of the parameter. It can be accessed with @key or @{key}. More values are allowed, one for each key.
 - filename : name of the file to be checked (only for type &quot;file&quot;).
+- output : alias for the pair &quot;filename&quot;; the value of this argument will be overwritten.
 - message : this user-defined message is appended to response in order to notify the waiting reason.
 - run : set to yes (default) to wait effectively
 
@@ -54,6 +55,7 @@ SUBMISSION STRING: &quot;operator=oph_wait;timeout=200;&quot;</abstract>
 		<argument type="string" mandatory="no" default="-" multivalue="yes">key</argument>
 		<argument type="string" mandatory="no" default="-" multivalue="yes">value</argument>
 		<argument type="string" mandatory="no" default="-">filename</argument>
+		<argument type="string" mandatory="no" default="">output</argument>
 		<argument type="string" mandatory="no" default="-">message</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
 		<argument type="string" mandatory="no" default="sync" values="async|sync">exec_mode</argument>
