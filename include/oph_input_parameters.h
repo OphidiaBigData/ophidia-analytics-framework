@@ -197,5 +197,6 @@
 #define OPH_ARG_LIGHTTASKINDEX					"lighttaskindex"
 #define OPH_ARG_STATUS						"status"
 #define OPH_ARG_USERROLE					"userrole"
+#define OPH_ARG_SAVE						"save"
 
 #endif				//__OPH_INPUT_PARAMETERS_H

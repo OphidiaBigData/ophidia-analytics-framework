@@ -25,6 +25,7 @@ It shows the list of all active operators.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   operators_list_list : show the operators list.
 		  operators_list_tip: show a help message.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]
 Get at most 10 operators with names containing the word &quot;list&quot; :
@@ -43,5 +44,6 @@ SUBMISSION STRING: &quot;operator=oph_operators_list;operator_filter=list;limit_
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|operators_list_list|operators_list_tip">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>
