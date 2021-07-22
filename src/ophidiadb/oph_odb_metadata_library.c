@@ -29,6 +29,7 @@
 #include <mysql.h>
 #include "debug.h"
 
+#include "oph_odb_cube_library.h"
 #include "oph_pid_library.h"
 
 extern int msglevel;
