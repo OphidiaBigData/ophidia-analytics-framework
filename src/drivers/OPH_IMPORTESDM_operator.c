@@ -5906,10 +5906,6 @@ int task_init(oph_operator_struct * handle)
 							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", *(double *) fill_value);
 							break;
 						}
-					case SMD_TYPE_STRING:
-					case SMD_TYPE_ARRAY:
-						strncpy(svalue, fill_value, measure->dspace->type->size < OPH_COMMON_BUFFER_LEN ? current->type->size : OPH_COMMON_BUFFER_LEN);
-						break;
 					default:;
 				}
 
