@@ -60,6 +60,8 @@ struct _OPH_GENERIC_operator_handle {
 	char *output_path_user;
 	char *output_name;
 	int force;
+	char **inputs;
+	int inputs_num;
 };
 typedef struct _OPH_GENERIC_operator_handle OPH_GENERIC_operator_handle;
 

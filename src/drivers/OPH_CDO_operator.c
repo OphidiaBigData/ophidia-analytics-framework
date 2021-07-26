@@ -51,6 +51,20 @@
 
 #define OPH_CDO_DEFAULT_OUTPUT_PATH "default"
 
+#define OPH_CDO_BEGIN_PARAMETER "%"
+
+int _is_ended(char pointer)
+{
+	switch (pointer) {
+		case ' ':
+		case '[':
+		case ']':
+		case '%':
+			return 1;
+	}
+	return 0;
+}
+
 int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
 	if (!handle) {
@@ -75,6 +89,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	//1 - Set up struct to empty values
 	((OPH_CDO_operator_handle *) handle->operator_handle)->command = NULL;
+	((OPH_CDO_operator_handle *) handle->operator_handle)->inputs = NULL;
+	((OPH_CDO_operator_handle *) handle->operator_handle)->inputs_num = 0;
 	((OPH_CDO_operator_handle *) handle->operator_handle)->args = NULL;
 	((OPH_CDO_operator_handle *) handle->operator_handle)->args_num = -1;
 	((OPH_CDO_operator_handle *) handle->operator_handle)->out_redir = NULL;
@@ -94,8 +110,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	//3 - Fill struct with the correct data
 	char tmp[OPH_COMMON_BUFFER_LEN];
-	char *value, **inputs = NULL, *value2 = NULL;
-	int i, inputs_num = 0;
+	char *value, *value2 = NULL;
 	size_t size;
 
 	// retrieve objkeys
@@ -130,7 +145,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_INPUT);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (oph_tp_parse_multiple_value_param(value, &inputs, &inputs_num)) {
+	if (oph_tp_parse_multiple_value_param(value, &((OPH_CDO_operator_handle *) handle->operator_handle)->inputs, &((OPH_CDO_operator_handle *) handle->operator_handle)->inputs_num)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
@@ -139,37 +154,45 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_ARGS);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_ARGS);
-		oph_tp_free_multiple_value_param_list(inputs, inputs_num);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (inputs && (inputs_num > 0)) {
+	if (((OPH_CDO_operator_handle *) handle->operator_handle)->inputs && (((OPH_CDO_operator_handle *) handle->operator_handle)->inputs_num > 0)) {
+		int i;
 		char *base_src_path = NULL;
 		if (oph_pid_get_base_src_path(&base_src_path)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base user_path\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base user path\n");
-			oph_tp_free_multiple_value_param_list(inputs, inputs_num);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 		if (base_src_path) {
-			size_t old_size;
 			value = value2 = strdup(value);
-			for (i = 0; i < inputs_num; i++) {
-				if (inputs[i] && strlen(inputs[i])) {
-					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", base_src_path ? base_src_path : "", *inputs[i] != '/' ? "/" : "", inputs[i]);
-					size = strlen(tmp);
-					old_size = strlen(value);
-					if (old_size) {
-						value2 = (char *) malloc((2 + old_size + size) * sizeof(char));
-						sprintf(value2, "%s|%s", value, tmp);
-					} else
-						value2 = strdup(tmp);
-					free(value);
-					value = value2;
+			for (i = 0; i < ((OPH_CDO_operator_handle *) handle->operator_handle)->inputs_num; i++) {
+				if (((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i] && strlen(((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i])) {
+					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", base_src_path ? base_src_path : "",
+						 *((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i] != '/' ? "/" : "", ((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i]);
+					free(((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i]);
+					((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i] = strdup(tmp);
 				}
 			}
 			free(base_src_path);
 		}
-		oph_tp_free_multiple_value_param_list(inputs, inputs_num);
+		if (!strstr(((OPH_CDO_operator_handle *) handle->operator_handle)->command, OPH_CDO_BEGIN_PARAMETER)) {
+			size_t old_size;
+			value = value2 = strdup(value);
+			for (i = 0; i < ((OPH_CDO_operator_handle *) handle->operator_handle)->inputs_num; i++) {
+				if (((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i] && strlen(((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i])) {
+					size = strlen(((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i]);
+					old_size = strlen(value);
+					if (old_size) {
+						value2 = (char *) malloc((2 + old_size + size) * sizeof(char));
+						sprintf(value2, "%s|%s", value, ((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i]);
+					} else
+						value2 = strdup(((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i]);
+					free(value);
+					value = value2;
+				}
+			}
+		}
 	}
 	if (oph_tp_parse_multiple_value_param(value, &((OPH_CDO_operator_handle *) handle->operator_handle)->args, &((OPH_CDO_operator_handle *) handle->operator_handle)->args_num)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
@@ -490,6 +513,31 @@ int task_execute(oph_operator_struct * handle)
 		}
 	}
 
+	if (strstr(((OPH_CDO_operator_handle *) handle->operator_handle)->command, OPH_CDO_BEGIN_PARAMETER)) {
+		int n = 0, index;
+		char command_c[OPH_COMMON_BUFFER_LEN], *start_pointer = ((OPH_CDO_operator_handle *) handle->operator_handle)->command, *current_pointer, *number;
+		while ((current_pointer = strstr(start_pointer, OPH_CDO_BEGIN_PARAMETER))) {
+			for (number = 1 + current_pointer; number && *number && !_is_ended(*number); ++number);
+			if (!number)
+				break;
+			char end_char = *number;
+			*number = 0;
+			index = strtol(1 + current_pointer, NULL, 10) - 1;	// Non 'C'-like indexing
+			if ((index < 0) || (index >= ((OPH_CDO_operator_handle *) handle->operator_handle)->inputs_num)) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "Wrong parameter '%s'\n", current_pointer);
+				break;
+			}
+			*current_pointer = 0;
+			pmesg(LOG_INFO, __FILE__, __LINE__, "Change parameter %%%d with '%s'\n", index + 1, ((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[index]);
+			n += snprintf(command_c + n, OPH_COMMON_BUFFER_LEN - n, "%s%s", start_pointer, ((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[index]);
+			*number = end_char;
+			start_pointer = number;
+		}
+		snprintf(command_c + n, OPH_COMMON_BUFFER_LEN - n, "%s", start_pointer);
+		free(((OPH_CDO_operator_handle *) handle->operator_handle)->command);
+		((OPH_CDO_operator_handle *) handle->operator_handle)->command = strdup(command_c);
+	}
+
 	char *cdo_path = NULL;
 	if (oph_pid_get_cdo_path(&cdo_path)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read configuration\n");
@@ -501,6 +549,8 @@ int task_execute(oph_operator_struct * handle)
 	if (oph_pid_get_base_src_path(&base_src_path)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read configuration\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, 0, "Unable to read configuration\n");
+		if (cdo_path)
+			free(cdo_path);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
@@ -627,8 +677,7 @@ int task_execute(oph_operator_struct * handle)
 	// ADD OUTPUT TO NOTIFICATION STRING
 	if (((OPH_CDO_operator_handle *) handle->operator_handle)->session_url) {
 		char tmp_string[OPH_COMMON_BUFFER_LEN];
-		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_LINK, s ? system_output : ((OPH_CDO_operator_handle *) handle->operator_handle)->session_url,
-			 OPH_IN_PARAM_FILE, jsonbuf);
+		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_LINK, ((OPH_CDO_operator_handle *) handle->operator_handle)->session_url, OPH_IN_PARAM_FILE, jsonbuf);
 		if (handle->output_string) {
 			strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
 			free(handle->output_string);
@@ -691,6 +740,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_CDO_operator_handle *) handle->operator_handle)->output_name) {
 		free((char *) ((OPH_CDO_operator_handle *) handle->operator_handle)->output_name);
 		((OPH_CDO_operator_handle *) handle->operator_handle)->output_name = NULL;
+	}
+	if (((OPH_CDO_operator_handle *) handle->operator_handle)->inputs) {
+		oph_tp_free_multiple_value_param_list(((OPH_CDO_operator_handle *) handle->operator_handle)->inputs, ((OPH_CDO_operator_handle *) handle->operator_handle)->inputs_num);
+		((OPH_CDO_operator_handle *) handle->operator_handle)->inputs = NULL;
 	}
 	if (((OPH_CDO_operator_handle *) handle->operator_handle)->args) {
 		oph_tp_free_multiple_value_param_list(((OPH_CDO_operator_handle *) handle->operator_handle)->args, ((OPH_CDO_operator_handle *) handle->operator_handle)->args_num);
