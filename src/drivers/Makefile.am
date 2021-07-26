@@ -36,6 +36,7 @@ DRIVER=
 NOSQL_LIB = -L.. -loph_task_parser -loph_idstring -loph_json -ldebug -lhashtbl -loph_pid
 
 DRIVER+=liboph_cdooperator.la
+DRIVER+=liboph_fsoperator.la
 DRIVER+=liboph_genericoperator.la
 
 if MYSQL_SUPPORT
@@ -93,7 +94,6 @@ DRIVER+=liboph_metadataoperator.la
 DRIVER+=liboph_createcontaineroperator.la
 DRIVER+=liboph_searchoperator.la
 DRIVER+=liboph_folderoperator.la
-DRIVER+=liboph_fsoperator.la
 DRIVER+=liboph_hierarchyoperator.la
 DRIVER+=liboph_movecontaineroperator.la
 DRIVER+=liboph_showgridoperator.la
@@ -115,6 +115,11 @@ liboph_cdooperator_la_CFLAGS =  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${pr
 liboph_cdooperator_la_SOURCES = OPH_CDO_operator.c
 liboph_cdooperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_cdooperator_la_LIBADD = -lz $(NOSQL_LIB) -loph_directory
+
+liboph_fsoperator_la_CFLAGS  =  ${driver_CFLAGS}
+liboph_fsoperator_la_SOURCES = OPH_FS_operator.c
+liboph_fsoperator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_fsoperator_la_LIBADD = -lz $(NOSQL_LIB)
 
 liboph_genericoperator_la_CFLAGS =  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" -I../oph_gsoap
 liboph_genericoperator_la_SOURCES = OPH_GENERIC_operator.c
@@ -206,11 +211,6 @@ liboph_folderoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_folderoperator_la_SOURCES = OPH_FOLDER_operator.c
 liboph_folderoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_folderoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
-
-liboph_fsoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
-liboph_fsoperator_la_SOURCES = OPH_FS_operator.c
-liboph_fsoperator_la_LDFLAGS = -module -avoid-version -no-undefined
-liboph_fsoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
 
 liboph_hierarchyoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
 liboph_hierarchyoperator_la_SOURCES = OPH_HIERARCHY_operator.c
