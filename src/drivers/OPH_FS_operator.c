@@ -717,14 +717,10 @@ int task_execute(oph_operator_struct * handle)
 						break;
 					}
 
-					esdm_container_t *container = NULL;
-					if (!(ret = esdm_container_open(path + 7, ESDM_MODE_FLAG_READ, &container))) {	// Skip protocol name
-
-						esdm_container_close(container);
-						esdm_finalize();
-
+					if (esdm_container_probe(path + 7))	// Skip protocol name
 						snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s", path);
-					}
+
+					esdm_finalize();
 
 					result = write_json(filenames, jj, handle->operator_json, num_fields);
 #endif
