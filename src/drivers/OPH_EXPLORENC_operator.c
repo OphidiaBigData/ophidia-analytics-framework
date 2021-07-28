@@ -7201,5 +7201,9 @@ int env_unset(oph_operator_struct * handle)
 	free((OPH_EXPLORENC_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
 
+#ifdef OPH_ESDM
+	handle->dlh = NULL;
+#endif
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
