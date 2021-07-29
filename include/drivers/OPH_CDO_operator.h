@@ -59,10 +59,13 @@ struct _OPH_CDO_operator_handle {
 	char *output_path;
 	char *output_path_user;
 	char *output_name;
-	int force;
+	char force;
 	int nthread;
+	char skip;
 	char **inputs;
 	int inputs_num;
+	char **outputs;
+	int outputs_num;
 };
 typedef struct _OPH_CDO_operator_handle OPH_CDO_operator_handle;
 
