@@ -29,6 +29,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <dirent.h>
 #include <mpi.h>
 
 #include "oph_analytics_operator_library.h"
@@ -52,6 +53,39 @@
 #define OPH_CDO_DEFAULT_OUTPUT "none"
 
 #define OPH_CDO_BEGIN_PARAMETER "%"
+
+#define OPH_CDO_VALUE_SEPARATOR "|"
+
+typedef struct _oph_cdo_output {
+	char *name;
+	struct _oph_cdo_output *next;
+} oph_cdo_output;
+
+void oph_cdo_output_append(oph_cdo_output ** head, oph_cdo_output ** tail, const char *name)
+{
+	if (!head || !tail || !name)
+		return;
+	oph_cdo_output *item = (oph_cdo_output *) malloc(sizeof(oph_cdo_output));
+	item->name = strdup(name);
+	item->next = NULL;
+	if (!*head)
+		*head = item;
+	else
+		(*tail)->next = item;
+	*tail = item;
+}
+
+void oph_cdo_output_free(oph_cdo_output * list)
+{
+	oph_cdo_output *next;
+	while (list) {
+		next = list->next;
+		if (list->name)
+			free(list->name);
+		free(list);
+		list = next;
+	}
+}
 
 int _is_ended(char pointer)
 {
@@ -498,16 +532,16 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		//Create dir if not exist
 		if (stat(tmp, &st)) {
 			if (errno == EACCES) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CDO_PERMISSION_ERROR, output_path);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_PERMISSION_ERROR, output_path);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CDO_PERMISSION_ERROR, tmp);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_PERMISSION_ERROR, tmp);
 				if (base_src_path)
 					free(base_src_path);
 				if (value2)
 					free(value2);
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-			} else if ((errno != ENOENT) || oph_dir_r_mkdir(output_path)) {
-				pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_CDO_DIR_CREATION_ERROR, output_path);
-				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_DIR_CREATION_ERROR, output_path);
+			} else if ((errno != ENOENT) || oph_dir_r_mkdir(tmp)) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_CDO_DIR_CREATION_ERROR, tmp);
+				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_DIR_CREATION_ERROR, tmp);
 			}
 		}
 
@@ -832,6 +866,40 @@ int task_execute(oph_operator_struct * handle)
 	// Print command and output in text log
 	printf("Command:\n%s\n\nScript output:\n%s\n", command, system_output);
 
+	char *output_name = ((OPH_CDO_operator_handle *) handle->operator_handle)->output_name;
+
+	// Check for output files
+	DIR *dirp = NULL;
+	oph_cdo_output *list = NULL, *tail = NULL;
+	struct dirent *entry = NULL, save_entry;
+	if (((OPH_CDO_operator_handle *) handle->operator_handle)->output_path) {
+		dirp = opendir(((OPH_CDO_operator_handle *) handle->operator_handle)->output_path);	// Correct: output_path_user is the user point-of-view
+		if (!dirp) {
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Output folder does not exist\n");
+			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Output folder does not exist\n");
+			free(((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user);
+			((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user = NULL;
+		}
+	}
+	if (((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user) {	// Correct: output_path_user is the user point-of-view
+
+		n = 0;
+		while (!readdir_r(dirp, &save_entry, &entry) && entry) {
+
+			if (!strstr(entry->d_name, output_name))
+				continue;
+			n++;
+			printf("Found output file %s in %s\n", entry->d_name, ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user);
+			oph_cdo_output_append(&list, &tail, entry->d_name);
+		}
+		if (n)
+			printf("Found %d output file%s in %s\n", n, n == 1 ? "" : "s", ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user);
+		else
+			printf("No output file found in %s\n", ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user);
+	}
+	if (dirp)
+		closedir(dirp);
+
 	// ADD COMMAND TO JSON AS TEXT
 	s = oph_json_is_objkey_printable(((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys_num,
 					 OPH_JSON_OBJKEY_CDO_OUTPUT);
@@ -850,10 +918,10 @@ int task_execute(oph_operator_struct * handle)
 				output_path_file[size] = 0;
 		}
 		if (oph_json_is_objkey_printable
-		    (((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_CDO_OUTPUT)) {
-			snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s" OPH_CDO_OUTPUT_PATH_SINGLE_FILE, size
-				 && *output_path_file != '/' ? "/" : "", output_path_file, ((OPH_CDO_operator_handle *) handle->operator_handle)->output_name);
-		}
+		    (((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_CDO_OUTPUT))
+			for (n = 0, tail = list; tail; tail = tail->next)
+				n += snprintf(jsonbuf + n, OPH_COMMON_BUFFER_LEN - n, "%s" OPH_CDO_OUTPUT_PATH_SINGLE_FILE_EXT "%s", size
+					      && *output_path_file != '/' ? "/" : "", output_path_file, tail->name, tail->next ? OPH_CDO_VALUE_SEPARATOR : "");
 	}
 	// ADD OUTPUT TO NOTIFICATION STRING
 	if (((OPH_CDO_operator_handle *) handle->operator_handle)->session_url || (strlen(jsonbuf) > 0)) {
@@ -869,6 +937,8 @@ int task_execute(oph_operator_struct * handle)
 		}
 		handle->output_string = strdup(tmp_string);
 	}
+
+	oph_cdo_output_free(list);
 
 	char return_code[MAX_OUT_LEN];
 	if (error == -1)

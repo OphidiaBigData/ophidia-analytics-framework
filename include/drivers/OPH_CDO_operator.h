@@ -22,8 +22,9 @@
 #include "oph_common.h"
 
 #define OPH_CDO_NOP ":"
-#define OPH_CDO_OUTPUT_PATH "%s/"
-#define OPH_CDO_OUTPUT_PATH_SINGLE_FILE OPH_CDO_OUTPUT_PATH"%s.nc"
+#define OPH_CDO_OUTPUT_PATH						"%s/"
+#define OPH_CDO_OUTPUT_PATH_SINGLE_FILE			OPH_CDO_OUTPUT_PATH"%s.nc"
+#define OPH_CDO_OUTPUT_PATH_SINGLE_FILE_EXT		OPH_CDO_OUTPUT_PATH"%s"
 
 /**
  * \brief Structure of parameters needed by the operator OPH_CDO. It executes a script
