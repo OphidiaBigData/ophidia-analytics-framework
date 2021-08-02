@@ -28,7 +28,9 @@ The script can eventually process some environmental variables passed by the ope
 - cdd : absolute path corresponding to the current directory on data repository.
 - force : flag used to force file creation. An existant file is overwritten with &quot;yes&quot; whereas
           the file is created only if it does not exist with &quot;no&quot; (default).
-- skip_output : set this flag to &quot;yes&quot; in case no output has to be created (disabled by default).
+- skip_output : set this flag to &quot;yes&quot; in case no output file has to be created (disabled by default).
+- multiple_output : set this flag to &quot;yes&quot; in case more than one output file has to be created (disabled by default);
+                    if enabled, output file names are discovered by listing output folder.
 - stdout : file where stdout will be redirected (appended) or &quot;stdout&quot; for no redirection.
 - stderr : file where stderr will be redirected (appended) or &quot;stderr&quot; for no redirection.
 
@@ -62,6 +64,7 @@ SUBMISSION STRING: &quot;operator=oph_cdo;command=-selname,tas;args=infile|outfi
 		<argument type="string" mandatory="no" default="none" multivalue="yes">input</argument>
 		<argument type="string" mandatory="no" default="none" multivalue="yes">output</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">skip_output</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">multiple_output</argument>
 		<argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
 		<argument type="string" mandatory="no" default="stdout">stdout</argument>

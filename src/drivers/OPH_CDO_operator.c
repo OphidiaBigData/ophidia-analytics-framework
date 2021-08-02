@@ -144,6 +144,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_CDO_operator_handle *) handle->operator_handle)->force = 0;
 	((OPH_CDO_operator_handle *) handle->operator_handle)->nthread = 0;
 	((OPH_CDO_operator_handle *) handle->operator_handle)->skip = 0;
+	((OPH_CDO_operator_handle *) handle->operator_handle)->multiple_output = 0;
 
 	//3 - Fill struct with the correct data
 	char tmp[OPH_COMMON_BUFFER_LEN];
@@ -190,6 +191,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	if (!strcmp(value, OPH_COMMON_YES_VALUE))
 		((OPH_CDO_operator_handle *) handle->operator_handle)->skip = 1;
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_MULTIPLE_OUTPUT);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_MULTIPLE_OUTPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_MULTIPLE_OUTPUT);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strcmp(value, OPH_COMMON_YES_VALUE))
+		((OPH_CDO_operator_handle *) handle->operator_handle)->multiple_output = 1;
 
 	char *cdd = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
 	if (!cdd) {
@@ -872,7 +882,7 @@ int task_execute(oph_operator_struct * handle)
 	DIR *dirp = NULL;
 	oph_cdo_output *list = NULL, *tail = NULL;
 	struct dirent *entry = NULL, save_entry;
-	if (((OPH_CDO_operator_handle *) handle->operator_handle)->output_path) {
+	if (((OPH_CDO_operator_handle *) handle->operator_handle)->multiple_output && ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path) {
 		dirp = opendir(((OPH_CDO_operator_handle *) handle->operator_handle)->output_path);	// Correct: output_path_user is the user point-of-view
 		if (!dirp) {
 			pmesg(LOG_WARNING, __FILE__, __LINE__, "Output folder does not exist\n");
@@ -881,7 +891,7 @@ int task_execute(oph_operator_struct * handle)
 			((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user = NULL;
 		}
 	}
-	if (((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user) {	// Correct: output_path_user is the user point-of-view
+	if (dirp && ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user) {	// Correct: output_path_user is the user point-of-view
 
 		n = 0;
 		while (!readdir_r(dirp, &save_entry, &entry) && entry) {
@@ -918,10 +928,14 @@ int task_execute(oph_operator_struct * handle)
 				output_path_file[size] = 0;
 		}
 		if (oph_json_is_objkey_printable
-		    (((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_CDO_OUTPUT))
-			for (n = 0, tail = list; tail; tail = tail->next)
-				n += snprintf(jsonbuf + n, OPH_COMMON_BUFFER_LEN - n, "%s" OPH_CDO_OUTPUT_PATH_SINGLE_FILE_EXT "%s", size
-					      && *output_path_file != '/' ? "/" : "", output_path_file, tail->name, tail->next ? OPH_CDO_VALUE_SEPARATOR : "");
+		    (((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_CDO_OUTPUT)) {
+			if (((OPH_CDO_operator_handle *) handle->operator_handle)->multiple_output) {
+				for (n = 0, tail = list; tail; tail = tail->next)
+					n += snprintf(jsonbuf + n, OPH_COMMON_BUFFER_LEN - n, "%s" OPH_CDO_OUTPUT_PATH_SINGLE_FILE_EXT "%s", size
+						      && *output_path_file != '/' ? "/" : "", output_path_file, tail->name, tail->next ? OPH_CDO_VALUE_SEPARATOR : "");
+			} else
+				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s" OPH_CDO_OUTPUT_PATH_SINGLE_FILE, size && *output_path_file != '/' ? "/" : "", output_path_file, output_name);
+		}
 	}
 	// ADD OUTPUT TO NOTIFICATION STRING
 	if (((OPH_CDO_operator_handle *) handle->operator_handle)->session_url || (strlen(jsonbuf) > 0)) {

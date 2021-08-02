@@ -189,6 +189,7 @@
 #define OPH_IN_PARAM_STDERR					"stderr"
 #define OPH_IN_PARAM_SPACE					"space"
 #define OPH_IN_PARAM_SKIP_OUTPUT			"skip_output"
+#define OPH_IN_PARAM_MULTIPLE_OUTPUT		"multiple_output"
 
 #define OPH_ARG_NTHREAD						"nthreads"
 #define OPH_ARG_USERNAME					"username"

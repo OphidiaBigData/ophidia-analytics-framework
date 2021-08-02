@@ -63,6 +63,7 @@ struct _OPH_CDO_operator_handle {
 	char force;
 	int nthread;
 	char skip;
+	char multiple_output;
 	char **inputs;
 	int inputs_num;
 	char **outputs;
