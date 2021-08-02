@@ -29,6 +29,7 @@ It shows a description of the behaviour of an operator/primitive.
                   man_args : show arguments section as a grid;
                   man_function : show function name and version as text;
                   man_multiargs : show multi-arguments for primitives as grid.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]
 Get the description of the operator &quot;oph_list&quot; :
@@ -48,5 +49,6 @@ SUBMISSION STRING: &quot;operator=oph_man;function=oph_list;function_version=lat
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|man_info|man_args|man_function|man_multiargs">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>
