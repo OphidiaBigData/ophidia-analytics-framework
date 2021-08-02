@@ -2868,6 +2868,10 @@ int task_init(oph_operator_struct * handle)
 					free(dimvar_ids);
 					goto __OPH_EXIT_1;
 				}
+#ifdef OPH_NC_SKIP_ATTRIBUTES
+				if (!strcmp(key, OPH_NC_PROPERTIES))
+					continue;
+#endif
 				// Check for attribute type
 				if (nc_inq_atttype(ncid, NC_GLOBAL, keyptr, &xtype)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering a global attribute\n");
@@ -3085,6 +3089,10 @@ int task_init(oph_operator_struct * handle)
 						free(dimvar_ids);
 						goto __OPH_EXIT_1;
 					}
+#ifdef OPH_NC_SKIP_ATTRIBUTES
+					if (!strcmp(key, OPH_NC_BOUNDS))
+						continue;
+#endif
 					// Check for attribute type
 					if (nc_inq_atttype(ncid, dimvar_ids[ii], keyptr, &xtype)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering a global attribute\n");
