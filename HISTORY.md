@@ -1,11 +1,16 @@
 
-## Next release
+## v1.6.1 - 2021-08-02
 
 ### Fixed:
 
+- Skip import/export of metadata 'bounds' and '_NCProperties' [#99](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/99)
 - Some memory leaks in oph_datacube_library
 - Drop OPH_SUBSET2 from operator list [#98](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/98)
 
+### Changed:
+
+-'missingvalue' argument to read the related metadata value by default [#101](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/101)
+- Operators XML descriptions with argument 'save' for saving the JSON response [#100](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/100)
 
 ## v1.6.0 - 2021-03-05
 
