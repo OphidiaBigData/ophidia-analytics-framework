@@ -89,6 +89,7 @@ struct _OPH_AGGREGATE2_operator_handle {
 	double ms;
 	unsigned int nthread;
 	short int execute_error;
+	char user_missing_value;
 };
 typedef struct _OPH_AGGREGATE2_operator_handle OPH_AGGREGATE2_operator_handle;
 

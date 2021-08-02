@@ -13,7 +13,7 @@ It performs a reduction operation on a datacube with respect to implicit dimensi
 - schedule : scheduling algorithm. The only possible value is 0,
 		     for a static linear block distribution of resources.		   
 - group_size : size of the aggregation set. If set to &quot;all&quot;
-	     the reduction will occur on all elements of each tuple.	   
+	           the reduction will occur on all elements of each tuple.	   
 - operation : reduction operation. Possible values are:
               &quot;count&quot; to evaluate the actual values (not missing);
               &quot;max&quot; to evaluate the maximum value;
@@ -30,7 +30,8 @@ It performs a reduction operation on a datacube with respect to implicit dimensi
               &quot;arg_max&quot; to evaluate the index of the maximum value;
               &quot;arg_min&quot; to evaluate the index of the minimum value.
 - order : order used in evaluation the moments or value of the quantile in range [0, 1].
-- missingvalue : value to be considered as missing value; by default it is NAN (for float and double).
+- missingvalue : value to be considered as missing value;
+                 by default the internal value is considered, if set, otherwise it is NAN (for float and double).
 - grid : optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
          or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
 - check_grid : optional flag to be enabled in case the values of grid have to be checked (valid only if the grid already exists).
@@ -69,7 +70,7 @@ SUBMISSION STRING: &quot;operator=oph_reduce;operation=max;group_size=10;cube=ht
 		<argument type="string" mandatory="no" minvalue="1" default="all">group_size</argument>
 		<argument type="string" mandatory="yes" values="count|max|min|avg|sum|std|var|cmoment|acmoment|rmoment|armoment|quantile|arg_max|arg_min">operation</argument>
 		<argument type="real" mandatory="no" default="2" minvalue="0">order</argument>
-		<argument type="real" mandatory="no" default="NAN">missingvalue</argument>
+		<argument type="real" mandatory="no" default="-">missingvalue</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">check_grid</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>

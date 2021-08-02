@@ -102,4 +102,7 @@
 
 #define MYSQL_QUERY_ORDER_CUBE_BY_SOURCE				"SELECT idcontainer, iddatacube FROM datacube INNER JOIN source ON datacube.idsource = source.idsource WHERE level = 0 AND iddatacube IN (%s) ORDER BY uri ASC;"
 
+#define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_MS		"UPDATE datacube SET idmissingvalue = %d WHERE iddatacube = %d;"
+#define MYSQL_QUERY_CUBE_RETRIEVE_OPHIDIADB_CUBE_MS		"SELECT idmissingvalue, measure FROM `datacube` WHERE iddatacube = %d;"
+
 #endif				/* __OPH_ODB_CUBE_QUERY_H__ */
