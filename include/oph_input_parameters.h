@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2021 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -201,5 +201,6 @@
 #define OPH_ARG_LIGHTTASKINDEX					"lighttaskindex"
 #define OPH_ARG_STATUS						"status"
 #define OPH_ARG_USERROLE					"userrole"
+#define OPH_ARG_SAVE						"save"
 
 #endif				//__OPH_INPUT_PARAMETERS_H

@@ -1,6 +1,6 @@
 --
 --    Ophidia Analytics Framework
---    Copyright (C) 2012-2020 CMCC Foundation
+--    Copyright (C) 2012-2021 CMCC Foundation
 --
 --    This program is free software: you can redistribute it and/or modify
 --    it under the terms of the GNU General Public License as published by
@@ -307,6 +307,7 @@ CREATE TABLE `datacube` (
   `compress` int(10) DEFAULT 0,
   `level` int(10) NOT NULL,
   `idsource` int(10) unsigned DEFAULT NULL,
+  `idmissingvalue` int(10) unsigned NULL DEFAULT NULL,
   PRIMARY KEY (`iddatacube`),
   CONSTRAINT `idsource_d` FOREIGN KEY (`idsource`) REFERENCES `source` (`idsource`) ON DELETE SET NULL ON UPDATE CASCADE,
   KEY `idcontainer` (`idcontainer`),

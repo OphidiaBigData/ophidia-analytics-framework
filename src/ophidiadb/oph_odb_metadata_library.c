@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2021 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@
 #include <mysql.h>
 #include "debug.h"
 
+#include "oph_odb_cube_library.h"
 #include "oph_pid_library.h"
 
 extern int msglevel;
@@ -210,8 +211,8 @@ int oph_odb_meta_retrieve_vocabulary_id(ophidiadb * oDB, char *vocabulary_name, 
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 
-	row = mysql_fetch_row(res);
-	*id_vocabulary = (int) strtol(row[0], NULL, 10);
+	if ((row = mysql_fetch_row(res)))
+		*id_vocabulary = (int) strtol(row[0], NULL, 10);
 
 	mysql_free_result(res);
 
@@ -260,8 +261,8 @@ int oph_odb_meta_retrieve_vocabulary_id_from_container(ophidiadb * oDB, int id_c
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 
-	row = mysql_fetch_row(res);
-	*id_vocabulary = (int) strtol(row[0], NULL, 10);
+	if ((row = mysql_fetch_row(res)))
+		*id_vocabulary = (int) strtol(row[0], NULL, 10);
 
 	mysql_free_result(res);
 	return OPH_ODB_SUCCESS;
@@ -783,6 +784,48 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 		return OPH_ODB_MYSQL_ERROR;
 	}
 #endif
+
+	int idmissingvalue = 0;
+	char measure_name[OPH_COMMON_BUFFER_LEN];
+	if (oph_odb_cube_retrieve_missingvalue(oDB, id_datacube_input, &idmissingvalue, measure_name))
+		return OPH_ODB_MYSQL_ERROR;
+
+	if (idmissingvalue) {
+		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_RETRIEVE_ID_BY_NAME, OPH_COMMON_FILLVALUE, measure_name, id_datacube_output);
+		if (n >= MYSQL_BUFLEN) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+			return OPH_ODB_STR_BUFF_OVERFLOW;
+		}
+
+		if (mysql_query(oDB->conn, insertQuery)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			return OPH_ODB_MYSQL_ERROR;
+		}
+
+		MYSQL_RES *res;
+		MYSQL_ROW row;
+		res = mysql_store_result(oDB->conn);
+		int num_rows = mysql_num_rows(res);
+		if (num_rows != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		if (mysql_field_count(oDB->conn) != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		if ((row = mysql_fetch_row(res)))
+			idmissingvalue = strtol(row[0], NULL, 10);
+
+		mysql_free_result(res);
+
+		if (oph_odb_cube_update_missingvalue(oDB, id_datacube_output, idmissingvalue))
+			return OPH_ODB_MYSQL_ERROR;
+	}
 
 	return OPH_ODB_SUCCESS;
 }
