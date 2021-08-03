@@ -5643,6 +5643,8 @@ int task_init(oph_operator_struct * handle)
 			}
 			natts = md->children;
 
+			char found_fill_value = 0;
+
 			//For each local attribute find the corresponding key
 			for (i = 0; i < natts; i++) {
 
@@ -5791,6 +5793,138 @@ int task_init(oph_operator_struct * handle)
 				// Drop the metadata out of the hashtable
 				if (id_key)
 					hashtbl_remove(key_tbl, key_and_variable);
+
+				if (!strcmp(key, OPH_COMMON_FILLVALUE)) {
+					found_fill_value = 1;
+					if (oph_odb_cube_update_missingvalue(oDB, id_datacube_out, id_metadatainstance)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set the missing value\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to set the missing value\n");
+						hashtbl_destroy(key_tbl);
+						hashtbl_destroy(required_tbl);
+						goto __OPH_EXIT_1;
+					}
+				}
+			}
+
+			if (!found_fill_value) {
+
+				char fill_value[measure->dspace->type->size];
+				if (esdm_dataset_get_fill_value(measure->dataset, fill_value)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering number of global attributes\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_NATTS_ERROR);
+					hashtbl_destroy(key_tbl);
+					hashtbl_destroy(required_tbl);
+					goto __OPH_EXIT_1;
+				}
+				// Check for attribute type
+				xtype = measure->dspace->type->type;
+				is_string = (xtype == SMD_TYPE_CHAR) || (xtype == SMD_TYPE_STRING) || (xtype == SMD_TYPE_ARRAY);
+				if (!is_string) {
+					switch (xtype) {
+						case SMD_TYPE_CHAR:
+						case SMD_TYPE_INT8:
+						case SMD_TYPE_UINT8:
+							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
+							break;
+						case SMD_TYPE_INT16:
+						case SMD_TYPE_UINT16:
+							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_SHORT_TYPE);
+							break;
+						case SMD_TYPE_INT32:
+						case SMD_TYPE_UINT32:
+							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_INT_TYPE);
+							break;
+						case SMD_TYPE_INT64:
+						case SMD_TYPE_UINT64:
+							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_LONG_TYPE);
+							break;
+						case SMD_TYPE_FLOAT:
+							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_FLOAT_TYPE);
+							break;
+						case SMD_TYPE_DOUBLE:
+							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_DOUBLE_TYPE);
+							break;
+						default:
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_METADATATYPE_ID_ERROR);
+							hashtbl_destroy(key_tbl);
+							hashtbl_destroy(required_tbl);
+							goto __OPH_EXIT_1;
+					}
+					if (oph_odb_meta_retrieve_metadatatype_id(oDB, key_type, &sid_key_type)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive metadata key type id\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_METADATATYPE_ID_ERROR);
+						hashtbl_destroy(key_tbl);
+						hashtbl_destroy(required_tbl);
+						goto __OPH_EXIT_1;
+					}
+				} else
+					sid_key_type = id_key_type;
+
+				switch (xtype) {
+					case SMD_TYPE_CHAR:{
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%c", *(char *) fill_value);
+							break;
+						}
+					case SMD_TYPE_INT8:{
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *(int8_t *) fill_value);
+							break;
+						}
+					case SMD_TYPE_UINT8:{
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *(uint8_t *) fill_value);
+							break;
+						}
+					case SMD_TYPE_INT16:{
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *(int16_t *) fill_value);
+							break;
+						}
+					case SMD_TYPE_UINT16:{
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *(uint16_t *) fill_value);
+							break;
+						}
+					case SMD_TYPE_INT32:{
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *(int32_t *) fill_value);
+							break;
+						}
+					case SMD_TYPE_UINT32:{
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *(uint32_t *) fill_value);
+							break;
+						}
+					case SMD_TYPE_INT64:{
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", (long long) *(int64_t *) fill_value);
+							break;
+						}
+					case SMD_TYPE_UINT64:{
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", (unsigned long long) *(uint64_t *) fill_value);
+							break;
+						}
+					case SMD_TYPE_FLOAT:{
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", *(float *) fill_value);
+							break;
+						}
+					case SMD_TYPE_DOUBLE:{
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", *(double *) fill_value);
+							break;
+						}
+					default:;
+				}
+
+				if (oph_odb_meta_insert_into_metadatainstance_manage_tables
+				    (oDB, id_datacube_out, -1, OPH_COMMON_FILLVALUE, measure->varname, sid_key_type, id_user, svalue, &id_metadatainstance)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_INSERT_METADATAINSTANCE_ERROR, key, svalue);
+					hashtbl_destroy(key_tbl);
+					hashtbl_destroy(required_tbl);
+					goto __OPH_EXIT_1;
+				}
+
+				if (oph_odb_cube_update_missingvalue(oDB, id_datacube_out, id_metadatainstance)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set the missing value\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to set the missing value\n");
+					hashtbl_destroy(key_tbl);
+					hashtbl_destroy(required_tbl);
+					goto __OPH_EXIT_1;
+				}
 			}
 
 			if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->check_compliance)	// Check if all the mandatory metadata are taken
