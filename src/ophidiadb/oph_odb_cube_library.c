@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2021 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -1142,7 +1142,8 @@ int oph_odb_cube_check_datacube_availability(ophidiadb * oDB, int id_input, int 
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 	MYSQL_ROW row = mysql_fetch_row(res);
-	*status = ((int) strtol(row[0], NULL, 10) > 0 ? 0 : 1);
+	if (row)
+		*status = ((int) strtol(row[0], NULL, 10) > 0 ? 0 : 1);
 
 	mysql_free_result(res);
 	return OPH_ODB_SUCCESS;
@@ -1246,8 +1247,67 @@ int oph_odb_cube_retrieve_datacube_measure(ophidiadb * oDB, int id_datacube, cha
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 
-	row = mysql_fetch_row(res);
-	snprintf(measure, OPH_COMMON_BUFFER_LEN, "%s", row[0]);
+	if ((row = mysql_fetch_row(res)))
+		snprintf(measure, OPH_COMMON_BUFFER_LEN, "%s", row[0]);
+
+	mysql_free_result(res);
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_cube_retrieve_missingvalue(ophidiadb * oDB, int id_datacube, int *idmissingvalue, char *measure)
+{
+	if (!oDB || !id_datacube || !idmissingvalue) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, 0, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	*idmissingvalue = 0;
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		//logging(LOG_ERROR, __FILE__, __LINE__,0,"Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char query[MYSQL_BUFLEN];
+	int n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_RETRIEVE_OPHIDIADB_CUBE_MS, id_datacube);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		//logging(LOG_ERROR, __FILE__, __LINE__,0,"Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		//logging(LOG_ERROR, __FILE__, __LINE__,0,"MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+	int num_rows = mysql_num_rows(res);
+	if (num_rows != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+		//logging(LOG_ERROR, __FILE__, __LINE__,0,"No/more than one row found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if (mysql_field_count(oDB->conn) != 2) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+		//logging(LOG_ERROR, __FILE__, __LINE__,0,"Not enough fields found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if ((row = mysql_fetch_row(res))) {
+		if (row[0])
+			*idmissingvalue = strtol(row[0], NULL, 10);
+		if (measure)
+			snprintf(measure, OPH_COMMON_BUFFER_LEN, "%s", row[1]);
+	}
 
 	mysql_free_result(res);
 
@@ -1268,6 +1328,33 @@ int oph_odb_cube_update_tuplexfragment(ophidiadb * oDB, int id_datacube, int tup
 
 	char deleteQuery[MYSQL_BUFLEN];
 	int n = snprintf(deleteQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_TUPLEXFRAGMENT, tuplexfragment, id_datacube);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, deleteQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_cube_update_missingvalue(ophidiadb * oDB, int id_datacube, int idmissingvalue)
+{
+	if (!oDB || !id_datacube) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char deleteQuery[MYSQL_BUFLEN];
+	int n = snprintf(deleteQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_MS, idmissingvalue, id_datacube);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;

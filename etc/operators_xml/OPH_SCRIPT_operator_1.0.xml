@@ -39,6 +39,7 @@ The script can eventually process some environmental variables passed by the ope
                   script : show the output of the command or the list of registered scripts;
                   script_url : show the URL where the command could save some data;
                   script_returncode : show the return code of the command.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]
 Execute the script &quot;./test.sh var1 var2&quot; without redirecting stdout and stderr:
@@ -61,5 +62,6 @@ SUBMISSION STRING: &quot;operator=oph_script;script=./test.sh;args=var1|var2;&qu
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|script|script_url|script_returncode">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

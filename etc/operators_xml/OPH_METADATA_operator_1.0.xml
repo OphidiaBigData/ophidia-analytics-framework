@@ -68,6 +68,7 @@ It provides CRUD operations (Create, Read, Update and Delete) on OphidiaDB metad
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   metadata_list : show metadata list.
 		  metadata_summary : show the number of metadata.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]       
 Insert new metadata in &apos;container1&apos; located into the &apos;session1&apos; folder with &apos;key1&apos;, of type &apos;text&apos; and value &apos;test_text&apos; :
@@ -95,5 +96,6 @@ SUBMISSION STRING: &quot;operator=oph_metadata;mode=insert;cube=http://www.examp
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|metadata_list|metadata_summary">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

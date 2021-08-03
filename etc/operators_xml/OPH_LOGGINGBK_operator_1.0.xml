@@ -60,6 +60,7 @@ Any filter can use SQL wildcards (%, _, etc.)
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   loggingbk : show operator's output table.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
         
 [Examples]       
 Get sessionid (with session label), session creation date, job id (with parent job id if present), workflowid, markerid, job submission date, job status, job submission string, job start date and job end date. Filters select all sessions created between 1900 and 2100, with jobs submitted between 1900 and 2100, started since 1900 and terminated up to 2100.  :
@@ -91,5 +92,6 @@ SUBMISSION STRING: &quot;operator=oph_loggingbk;session_level=1;job_level=2;mask
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|loggingbk">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

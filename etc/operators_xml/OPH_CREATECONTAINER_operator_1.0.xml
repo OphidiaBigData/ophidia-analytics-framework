@@ -50,6 +50,7 @@ It creates an empty container.
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   createcontainer : show operator's output PID as text.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]       
 Create a new container &apos;container1&apos; with dimensions lat, lon and time into folder &apos;/folder&apos;:
@@ -80,5 +81,6 @@ SUBMISSION STRING: &quot;operator=oph_createcontainer;container=container1;cwd=/
 		<argument type="string" mandatory="no" default="no" values="yes|no">compressed</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|createcontainer">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

@@ -17,9 +17,10 @@ It executes an aggregation function on a datacube.
 - midnight : if 00 then the edge point of two consecutive aggregate time sets will be aggregated into the right set;
              if 24 (default) then the edge point will be aggragated into the left set.
 - operation : reduction operation. Possible values are &quot;count&quot;, &quot;max&quot;, &quot;min&quot;, &quot;avg&quot; and &quot;sum&quot;.
-- missingvalue : value to be considered as missing value; by default it is NAN (for float and double).
+- missingvalue : value to be considered as missing value;
+                 by default the internal value is considered, if set, otherwise it is NAN (for float and double).
 - grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
-             or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
+        or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
 - check_grid : optional flag to be enabled in case the values of grid have to be checked (valid only if the grid already exists).
 - container : name of the container to be used to store the output cube; by default it is the input container.
 - description : additional description to be associated with the output cube.
@@ -34,6 +35,7 @@ It executes an aggregation function on a datacube.
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   aggregate2 : show operator's output PID as text.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
         
 [Examples]
 Compute the maximum with respect to time dimension on the datacube identified by the PID &quot;http://www.example.com/1/1&quot;:
@@ -56,11 +58,12 @@ SUBMISSION STRING: &quot;operator=oph_aggregate2;operation=max;dim=time;concept_
 		<argument type="char" mandatory="no" default="A">concept_level</argument>
 		<argument type="char" mandatory="no" default="24" values="00|24">midnight</argument>
 		<argument type="string" mandatory="yes" values="count|max|min|avg|sum">operation</argument>
-		<argument type="real" mandatory="no" default="NAN">missingvalue</argument>
+		<argument type="real" mandatory="no" default="-">missingvalue</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">check_grid</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|aggregate2">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>
