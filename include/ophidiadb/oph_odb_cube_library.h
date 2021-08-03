@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2021 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -360,5 +360,9 @@ int oph_odb_cube_update_tuplexfragment(ophidiadb * oDB, int id_datacube, int tup
 int oph_odb_cube_update_level_in_cubehasdim_table(ophidiadb * oDB, int level, int id_cubehasdim);
 
 int oph_odb_cube_order_by(ophidiadb * oDB, int order, int *id_datacube, int n);
+
+int oph_odb_cube_update_missingvalue(ophidiadb * oDB, int id_datacube, int idmissingvalue);
+
+int oph_odb_cube_retrieve_missingvalue(ophidiadb * oDB, int id_datacube, int *idmissingvalue, char *measure);
 
 #endif				/* __OPH_ODB_CUBE_H__ */

@@ -13,11 +13,12 @@ It executes an aggregation function on a datacube with respect to explicit dimen
 - schedule : scheduling algorithm. The only possible value is 0,
 		     for a static linear block distribution of resources.
 - group_size : number of tuples per group to consider in the aggregation function. If set to &quot;all&quot;
-	     the aggregation will occur on all tuples of the table.
+	           the aggregation will occur on all tuples of the table.
 - operation : reduction function. Possible values are &quot;count&quot;, &quot;max&quot;, &quot;min&quot;, &quot;avg&quot; and &quot;sum&quot;.
-- missingvalue : value to be considered as missing value; by default it is NAN (for float and double).
+- missingvalue : value to be considered as missing value;
+                 by default the internal value is considered, if set, otherwise it is NAN (for float and double).
 - grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
-             or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
+        or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
 - check_grid : optional flag to be enabled in case the values of grid have to be checked (valid only if the grid already exists).
 - container : name of the container to be used to store the output cube; by default it is the input container.
 - description : additional description to be associated with the output cube.
@@ -32,6 +33,7 @@ It executes an aggregation function on a datacube with respect to explicit dimen
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   aggregate : show operator's output PID as text.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
         
 [Examples]       
 Compute the maximum values of 10-tuple groups in the datacube identified by the PID &quot;http://www.example.com/1/1&quot; :
@@ -52,11 +54,12 @@ SUBMISSION STRING: &quot;operator=oph_aggregate;operation=max;group_size=10;cube
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" minvalue="1" default="all">group_size</argument>
 		<argument type="string" mandatory="yes" values="count|max|min|avg|sum">operation</argument>
-		<argument type="real" mandatory="no" default="NAN">missingvalue</argument>
+		<argument type="real" mandatory="no" default="-">missingvalue</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">check_grid</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|aggregate">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

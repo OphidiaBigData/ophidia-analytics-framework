@@ -18,6 +18,9 @@ Send commands or data to an interactive task (&quot;OPH_WAIT&quot;). Set paramet
 - key : name of the parameter. It should comply with IEEE Std 1003.1-2001 conventions, unless brackets {} are adopted to refer it.
 - value : value of the parameter. By default it will se to 1. It can be accessed with @key or @{key}.
 
+[System parameters]
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
+
 [Examples]
 Set the parameter &quot;var&quot; to 10 for task &quot;example&quot; in workflow 1 and unblock the task:
 OPH_TERM: oph_input key=var;value=10;id=1;taskname=example;
@@ -34,5 +37,6 @@ SUBMISSION STRING: &quot;operator=oph_input;key=var;value=10;id=1;taskname=examp
 		<argument type="string" mandatory="no" default="continue" values="continue|abort|wait">action</argument>
 		<argument type="string" mandatory="no" default="-" multivalue="yes">key</argument>
 		<argument type="string" mandatory="no" default="-" multivalue="yes">value</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

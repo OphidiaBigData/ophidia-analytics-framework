@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2021 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,6 +43,7 @@
 #define MYSQL_QUERY_META_CHECK_VOCABULARIES			"SELECT idvocabulary FROM metadatakey INNER JOIN metadatainstance ON metadatakey.idkey = metadatainstance.idkey WHERE idvocabulary IS NOT NULL AND metadatainstance.iddatacube=%d %s;"
 #define MYSQL_QUERY_META_RETRIEVE_KEY_OF_INSTANCE		"SELECT idmetadatainstance FROM metadatainstance WHERE iddatacube = %d AND variable = '%s';"
 #define MYSQL_QUERY_META_UPDATE_KEY_OF_INSTANCE			"UPDATE metadatainstance SET variable = '%s' WHERE idmetadatainstance = %d;"
+#define MYSQL_QUERY_META_RETRIEVE_ID_BY_NAME			"SELECT idmetadatainstance FROM metadatainstance WHERE label = '%s' AND variable = '%s' AND iddatacube = %d;"
 
 #ifdef OPH_DB_SUPPORT
 #define MYSQL_QUERY_META_UPDATE_OPHIDIADB_MANAGE 		"INSERT INTO `manage` (`iduser`, `idmetadatainstance` ) VALUES (%d, %d);"

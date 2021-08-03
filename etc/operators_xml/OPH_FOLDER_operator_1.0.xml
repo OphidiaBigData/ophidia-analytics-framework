@@ -34,6 +34,7 @@ It manages folders of the Ophidia filesystem.
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   folder : show the new working directory in case it is changed.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
         
 [Examples]       
 - Change directory to &quot;/absolute/path/folder1&quot; :
@@ -56,5 +57,6 @@ SUBMISSION STRING: &quot;operator=oph_folder;command=mv;path=fold1|fold2;cwd=/ab
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|folder">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

@@ -31,7 +31,8 @@ This operator requires administrator privileges.
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   log_info : show log data as text.
-        
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
+
 [Examples]
 Read the last 10 lines of the log file related to the container with id 3 :
 OPH_TERM: oph_log_info log_type=container;container_id=3;nlines=10;
@@ -51,5 +52,6 @@ SUBMISSION STRING: &quot;operator=oph_log_info;log_type=container;container_id=3
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|log_info">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

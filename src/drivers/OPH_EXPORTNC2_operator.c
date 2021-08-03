@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2021 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -50,7 +50,6 @@
 #define OPH_EXPORTNC_DEFAULT_OUTPUT_PATH "default"
 #define OPH_EXPORTNC_LOCAL_OUTPUT_PATH "local"
 #define OPH_EXPORTNC_POSTPONE "postpone"
-#define OPH_EXPORTNC_FILLVALUE "_FillValue"
 
 int _oph_get_next_count(size_t * id, unsigned int *sizemax, int i, int n)
 {
@@ -2076,12 +2075,16 @@ int task_reduce(oph_operator_struct * handle)
 		while (!retval && ((row = mysql_fetch_row(read_result)))) {
 			mvariable = row[1];
 			mkey = row[2];
+#ifdef OPH_NC_SKIP_ATTRIBUTES
+			if ((!mvariable && !strcmp(mkey, OPH_NC_PROPERTIES)) || (mvariable && !strcmp(mkey, OPH_NC_BOUNDS)))
+				continue;
+#endif
 			mtype = row[3];
 			mvalue = row[4];
 			retval = NC_EBADTYPE;
-			if (!strcmp(mkey, OPH_EXPORTNC_FILLVALUE)) {	// Skip OPH_EXPORTNC_FILLVALUE in this mode
-				pmesg(LOG_WARNING, __FILE__, __LINE__, "Attribute '%s' cannot be set with this mode... skipping.\n", OPH_EXPORTNC_FILLVALUE);
-				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Attribute '%s' cannot be set with this mode... skipping\n", OPH_EXPORTNC_FILLVALUE);
+			if (!strcmp(mkey, OPH_COMMON_FILLVALUE)) {	// Skip OPH_COMMON_FILLVALUE in this mode
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "Attribute '%s' cannot be set with this mode... skipping.\n", OPH_COMMON_FILLVALUE);
+				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Attribute '%s' cannot be set with this mode... skipping\n", OPH_COMMON_FILLVALUE);
 				retval = NC_NOERR;
 			} else if (mvariable && ((retval = nc_inq_varid(ncid, mvariable, &varidp)))) {
 				if (retval == NC_ENOTVAR)

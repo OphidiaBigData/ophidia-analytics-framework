@@ -23,6 +23,7 @@ It removes a datacube.
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
 		delete : no output.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]
 Remove datacube identified by the PID &quot;http://www.example.com/1/1&quot; :
@@ -42,5 +43,6 @@ SUBMISSION STRING: &quot;operator=oph_delete;cube=http://www.example.com/1/1;&qu
 		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|delete">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

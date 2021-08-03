@@ -67,6 +67,7 @@ Support is provided only for images fits files.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output):
                   importfits: show operator's output PID as text;
                   importfits_summary : show additional information about imported data.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples] 
 Import a FITS file including metadata into the session directory &quot;session-code1&quot; :
@@ -104,5 +105,6 @@ SUBMISSION STRING: &quot;operator=oph_importfits;cwd=/session-code1;container=co
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="rr" values="rr|port">policy</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|importfits|importfits_summary">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>
