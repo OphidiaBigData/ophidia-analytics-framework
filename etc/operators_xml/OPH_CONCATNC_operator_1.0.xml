@@ -50,6 +50,7 @@ while those considered as implicit dimensions must not overlap with those in the
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   concatnc : show operator's output PID as text.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples] 
 Concat a NetCDF file excluding metadata into the datacube &quot;http://www.example.com/1/1&quot; :
@@ -81,5 +82,6 @@ SUBMISSION STRING: &quot;operator=oph_concatnc;src_path=/path/of/ncfile.nc;cube=
 		<argument type="string" mandatory="no" default="yes" values="yes|no">check_exp_dim</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|concatnc">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

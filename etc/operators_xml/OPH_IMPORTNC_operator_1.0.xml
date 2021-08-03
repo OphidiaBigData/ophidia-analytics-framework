@@ -100,6 +100,7 @@ The following parameters are considered only in case the container has to be cre
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   importnc : show operator's output PID as text.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples] 
 Import a NetCDF file excluding metadata into the session directory &quot;session-code1&quot; :
@@ -152,5 +153,6 @@ SUBMISSION STRING: &quot;operator=oph_importnc;cwd=/session-code1;container=cont
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="rr" values="rr|port">policy</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|importnc">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

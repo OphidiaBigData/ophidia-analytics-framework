@@ -7,7 +7,10 @@ Flow control.
 
 [Behaviour]
 Close a loop &quot;for&quot;.
-      
+
+[System parameters]
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
+
 </abstract>
         <author>CMCC Foundation</author>
         <category>Workflow Management</category>
@@ -16,5 +19,6 @@ Close a loop &quot;for&quot;.
         <permission>read</permission>
     </info>
     <args>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>
