@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2021 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -2838,6 +2838,10 @@ int task_init(oph_operator_struct * handle)
 					free(dimvar_ids);
 					goto __OPH_EXIT_1;
 				}
+#ifdef OPH_NC_SKIP_ATTRIBUTES
+				if (!strcmp(key, OPH_NC_PROPERTIES))
+					continue;
+#endif
 				// Check for attribute type
 				if (nc_inq_atttype(ncid, NC_GLOBAL, keyptr, &xtype)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering a global attribute\n");
@@ -3046,6 +3050,10 @@ int task_init(oph_operator_struct * handle)
 						free(dimvar_ids);
 						goto __OPH_EXIT_1;
 					}
+#ifdef OPH_NC_SKIP_ATTRIBUTES
+					if (!strcmp(key, OPH_NC_BOUNDS))
+						continue;
+#endif
 					// Check for attribute type
 					if (nc_inq_atttype(ncid, dimvar_ids[ii], keyptr, &xtype)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering a global attribute\n");
@@ -4205,6 +4213,10 @@ int env_unset(oph_operator_struct * handle)
 
 	free((OPH_IMPORTNC_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
+
+#ifdef OPH_ESDM
+	handle->dlh = NULL;
+#endif
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

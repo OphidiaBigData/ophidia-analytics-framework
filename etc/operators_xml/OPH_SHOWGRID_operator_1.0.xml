@@ -33,6 +33,7 @@ It shows information about one or more grids related to the specified container.
                   showgrid_diminfo : show the list of the dimensions associated with a container.
 		  showgrid_dimvalues : show the values of the dimensions associated with a container.
 		  showgrid_tip : show a help message.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
             
 [Examples]
 Show the grid &apos;grid1&apos; related to container &apos;container1&apos; :
@@ -54,5 +55,6 @@ SUBMISSION STRING: &quot;operator=oph_showgrid;container=container1;grid=grid1;c
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|showgrid_diminfo|showgrid_dimvalues|showgrid_tip">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

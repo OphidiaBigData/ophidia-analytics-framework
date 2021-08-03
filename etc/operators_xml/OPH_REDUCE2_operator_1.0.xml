@@ -79,5 +79,6 @@ SUBMISSION STRING: &quot;operator=oph_reduce2;operation=max;dim=time;concept_lev
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|reduce2">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

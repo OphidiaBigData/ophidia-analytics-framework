@@ -47,6 +47,7 @@ returns a new datacube as result of the specified operation applied element by e
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   intercube : show operator's output PID as text.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
         
 [Examples]       
 Sum the datacubes identified by the PIDs &quot;http://www.example.com/1/1&quot; and &quot;http://www.example.com/1/2&quot; :
@@ -72,5 +73,6 @@ SUBMISSION STRING: &quot;operator=oph_intercube;cube=http://www.example.com/1/1;
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|intercube">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

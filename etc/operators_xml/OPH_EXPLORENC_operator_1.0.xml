@@ -101,6 +101,7 @@ WARNING: It handles only mono-dimensional coordinate variables.
                   explorenc_stats: show a number of statistics on data
                   explorenc_fit: show fitted data
                   explorenc_metadata: show file attributes (only for level 0).
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples] 
 Read the NetCDF file /path/of/ncfile.nc:
@@ -139,5 +140,6 @@ SUBMISSION STRING: &quot;operator=oph_explorenc;measure=pressure;src_path=/path/
 		<argument type="real" mandatory="no" default="0" minvalue="0" maxvalue="100">wavelet_ratio</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">wavelet_coeff</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|explorenc_data|explorenc_summary|explorenc_dimvalues|explorenc_wavelet_data|explorenc_wavelet_coeff|explorenc_stats|explorenc_fit|explorenc_metadata">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

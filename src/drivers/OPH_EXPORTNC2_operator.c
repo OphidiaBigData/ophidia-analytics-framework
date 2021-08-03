@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2021 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -2037,6 +2037,10 @@ int task_reduce(oph_operator_struct * handle)
 		while (!retval && ((row = mysql_fetch_row(read_result)))) {
 			mvariable = row[1];
 			mkey = row[2];
+#ifdef OPH_NC_SKIP_ATTRIBUTES
+			if ((!mvariable && !strcmp(mkey, OPH_NC_PROPERTIES)) || (mvariable && !strcmp(mkey, OPH_NC_BOUNDS)))
+				continue;
+#endif
 			mtype = row[3];
 			mvalue = row[4];
 			retval = NC_EBADTYPE;

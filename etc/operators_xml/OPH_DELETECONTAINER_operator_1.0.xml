@@ -27,6 +27,7 @@ It removes a container with related dimensions and grids. The container can be d
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   deletecontainer : no output.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
         
 [Examples]       
 Logically remove the empty visible container &quot;container1&quot; :
@@ -48,6 +49,7 @@ SUBMISSION STRING: &quot;operator=oph_deletecontainer;container=container1;cwd=/
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">nthreads</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|deletecontainer">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>
 

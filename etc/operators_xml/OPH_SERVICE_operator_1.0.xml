@@ -12,8 +12,8 @@ Request or set the service status.
 - status : new service status, 'up' or 'down'.
 - level : use level &quot;1&quot; (default) to ask for service status only;
           use level &quot;2&quot; to ask for job list.
-- enable : list of the users to be enabled (&quot;all&quot; by default).
-- disable : list of the users to be disabled (&quot;all&quot; by default).
+- enable : list of the users to be enabled; use &quot;all&quot; to enable all users.
+- disable : list of the users to be disabled; use &quot;all&quot; to disable all users.
 
 [System parameters]
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
@@ -33,8 +33,8 @@ SUBMISSION STRING: &quot;operator=oph_service;status=up;&quot;</abstract>
     <args>
 		<argument type="string" mandatory="no" default="" values="up|down">status</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="2" values="1|2">level</argument>
-		<argument type="string" mandatory="no" default="all" multivalue="yes">enable</argument>
-		<argument type="string" mandatory="no" default="all" multivalue="yes">disable</argument>
+		<argument type="string" mandatory="no" default="none" multivalue="yes">enable</argument>
+		<argument type="string" mandatory="no" default="none" multivalue="yes">disable</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|service_status|service_tasks">objkey_filter</argument>
     </args>
 </operator>
