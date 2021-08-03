@@ -1,11 +1,14 @@
 
-## v1.6.1 - 2021-08-02
+## v1.6.1 - 2021-08-03
 
 ### Fixed:
 
 - Skip import/export of metadata 'bounds' and '_NCProperties' [#99](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/99)
 - Some memory leaks in oph_datacube_library
-- Drop OPH_SUBSET2 from operator list [#98](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/98)
+
+### Removed:
+
+- OPH_SUBSET2 from operator list [#98](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/98)
 
 ### Changed:
 
