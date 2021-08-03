@@ -17,6 +17,9 @@ Implement a loop &quot;for&quot;.
             Current value can be accessed with &amp;key or &amp;{key}.
 - parallel : set to &quot;yes&quot; in case of parallel processing; sequential processing is the default.
 
+[System parameters]
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
+
 At least one of arguments &quot;values&quot; or &quot;counter&quot; has to be set.
 By default &quot;counter&quot; will be set to &quot;1&quot; in case &quot;values&quot; is not provided.
 </abstract>
@@ -31,5 +34,6 @@ By default &quot;counter&quot; will be set to &quot;1&quot; in case &quot;values
 		<argument type="string" mandatory="no" default="-" multivalue="yes">values</argument>
 		<argument type="string" mandatory="no" default="-">counter</argument>
 		<argument type="string" mandatory="no" default="no" values="no|yes">parallel</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

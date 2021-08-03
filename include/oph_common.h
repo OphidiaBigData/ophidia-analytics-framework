@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2021 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -148,5 +148,7 @@
 #define OPH_ROLE_OWNER_POS			4
 // Check for role presence
 #define IS_OPH_ROLE_PRESENT(userrole,oph_role_pos)	((userrole) & (1<<(oph_role_pos)))
+
+#define OPH_COMMON_FILLVALUE		"_FillValue"
 
 #endif				//__OPH_COMMON_H

@@ -16,6 +16,9 @@ Set parameters in a workflow environment.
 - offset : expected difference between two consecutive items of input array in case subset_strings have to be evaluated. By default, it will se to &quot;1&quot;.
 - id : workflow identifier. By default the hosting workflow is selected. The target workflow must have been submitted in the same session.
 
+[System parameters]
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
+
 [Examples]
 Set the parameter &quot;var&quot; to 10:
 OPH_TERM: oph_set key=var;value=10;
@@ -32,5 +35,6 @@ SUBMISSION STRING: &quot;operator=oph_set;key=var;value=10;&quot;</abstract>
 		<argument type="string" mandatory="no" default="no" values="yes|no|real">subset_filter</argument>
 		<argument type="real" mandatory="no" default="1" minvalue="0">offset</argument>
 		<argument type="int" mandatory="no" default="@OPH_WORKFLOW_ID" minvalue="0">id</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

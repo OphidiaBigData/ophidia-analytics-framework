@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2021 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -80,6 +80,7 @@ struct _OPH_AGGREGATE_operator_handle {
 	double ms;
 	unsigned int nthread;
 	short int execute_error;
+	char user_missing_value;
 };
 typedef struct _OPH_AGGREGATE_operator_handle OPH_AGGREGATE_operator_handle;
 

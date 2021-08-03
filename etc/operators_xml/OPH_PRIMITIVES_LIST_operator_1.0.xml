@@ -41,6 +41,7 @@ It shows a list with info about active Ophidia Primitives loaded into a specific
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   primitives_list_list : show the list of primitives as a grid;
                   primitives_list_tip : show the operator help message as text.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]
 Get at most 10 primitives related to dbms instance 1 :
@@ -63,5 +64,6 @@ SUBMISSION STRING: &quot;operator=oph_primitives_list;level=5;dbms_filter=1;retu
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|primitives_list_list|primitives_list_tip">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

@@ -24,6 +24,7 @@ It shows the hierarchy of all datacubes used to generate the input datacube and 
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   cubeio : show cube provenance as a grid;
                   cubeio_graph : show cube provenance as a directed graph.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
         
 [Examples]
 Show the hierarchy of all datacubes used to generate the datacube &quot;http://www.example.com/1/1&quot; and of those derived from it :
@@ -42,5 +43,6 @@ SUBMISSION STRING: &quot;operator=oph_cubeio;cube=http://www.example.com/1/1;bra
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|cubeio|cubeio_graph">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

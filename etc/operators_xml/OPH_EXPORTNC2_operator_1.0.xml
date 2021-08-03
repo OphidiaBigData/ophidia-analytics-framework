@@ -34,6 +34,7 @@ It exports data of a datacube into a sinlge NetCDF files.
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
 		exportnc2 : no output.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
         
 [Examples] 
 Export data of the datacube identified by the PID &quot;http://www.example.com/1/1&quot; :
@@ -58,5 +59,6 @@ SUBMISSION STRING: &quot;operator=oph_exportnc2;cube=http://www.example.com/1/1;
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|exportnc2">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

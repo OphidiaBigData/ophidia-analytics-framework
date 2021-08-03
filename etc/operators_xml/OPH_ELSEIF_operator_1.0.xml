@@ -12,6 +12,10 @@ Start anew sub-block of a selection block &quot;if&quot;.
 - condition : boolean expression to be checked:
               if true, the tasks depending on OPH_ELSEIF are executed, whereas the tasks OPH_ELSEIFs and OPH_ELSE associated with the following selection sub-blocks are skipped;
               if false, the tasks depending on OPH_ELSEIF are skipped, whereas the task OPH_ELSEIF or OPH_ELSE associated with the following selection sub-block is executed.
+
+[System parameters]
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
+
 </abstract>
         <author>CMCC Foundation</author>
         <category>Workflow Management</category>
@@ -21,5 +25,6 @@ Start anew sub-block of a selection block &quot;if&quot;.
     </info>
     <args>
 		<argument type="string" mandatory="no" default="true">condition</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

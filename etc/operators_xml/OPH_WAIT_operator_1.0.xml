@@ -36,6 +36,7 @@ The task can be unlocked by means of the command &quot;OPH_INPUT&quot;.
 [System parameters]
 - exec_mode : operator execution mode. Possible values are async (default) for
               asynchronous mode, sync for synchronous mode with json-compliant output.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]
 Wait for 200 seconds:
@@ -57,5 +58,6 @@ SUBMISSION STRING: &quot;operator=oph_wait;timeout=200;&quot;</abstract>
 		<argument type="string" mandatory="no" default="-">message</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
 		<argument type="string" mandatory="no" default="sync" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

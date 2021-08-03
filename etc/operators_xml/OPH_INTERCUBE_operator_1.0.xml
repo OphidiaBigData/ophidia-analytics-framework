@@ -30,7 +30,8 @@ returns a new datacube as result of the specified operation applied element by e
               -- min: return the minimum value between the corresponding elements one by one;
               -- arg_max: return 1 if the maximum value is associated with the first cube, 2 otherwise;
               -- arg_min: return 1 if the minimum value is associated with the first cube, 2 otherwise.
-- missingvalue : value to be considered as missing value; by default it is NAN (for float and double).
+- missingvalue : value to be considered as missing value;
+                 by default the internal value is considered, if set, otherwise it is NAN (for float and double).
 - measure : name of the new measure resulting from the specified operation
 - schedule : scheduling algorithm. The only possible value is 0,
 		     for a static linear block distribution of resources.
@@ -46,6 +47,7 @@ returns a new datacube as result of the specified operation applied element by e
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   intercube : show operator's output PID as text.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
         
 [Examples]       
 Sum the datacubes identified by the PIDs &quot;http://www.example.com/1/1&quot; and &quot;http://www.example.com/1/2&quot; :
@@ -65,11 +67,12 @@ SUBMISSION STRING: &quot;operator=oph_intercube;cube=http://www.example.com/1/1;
 		<argument type="string" mandatory="no" default="-">cube2</argument>
 		<argument type="string" mandatory="no" multivalue="yes" default="-">cubes</argument>
 		<argument type="string" mandatory="no" default="sub" values="sum|sub|mul|div|abs|arg|corr|mask|max|min|arg_max|arg_min">operation</argument>
-		<argument type="real" mandatory="no" default="NAN">missingvalue</argument>
+		<argument type="real" mandatory="no" default="-">missingvalue</argument>
 		<argument type="string" mandatory="no" default="null">measure</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|intercube">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>
