@@ -42,6 +42,7 @@ It shows information about host partitions, hosts and dbms instances.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   instances : show operator's output table.
                   instances_summary : show operator's output table with summary.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]
 Show all information about hosts and dbms instances :
@@ -65,5 +66,6 @@ SUBMISSION STRING: &quot;operator=oph_instances;level=2;host_filter=all;&quot;</
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|instances|instances_summary">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

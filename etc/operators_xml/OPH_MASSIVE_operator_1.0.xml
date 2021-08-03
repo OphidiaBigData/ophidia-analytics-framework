@@ -38,15 +38,15 @@ Not given</abstract>
         <permission>read</permission>
     </info>
     <args>
-		<argument type="int" mandatory="no" default="" minvalue="0" multivalue="yes">level</argument>
-		<argument type="string" mandatory="no" default="">measure</argument>
-		<argument type="string" mandatory="no" default="">parent_cube</argument>
-		<argument type="string" mandatory="no" default="">container</argument>
-		<argument type="string" mandatory="no" default="">container_pid</argument>
-		<argument type="string" mandatory="no" default="">cube_filter</argument>
-		<argument type="string" mandatory="no" default="" multivalue="yes">metadata_key</argument>
-		<argument type="string" mandatory="no" default="" multivalue="yes">metadata_value</argument>
-		<argument type="string" mandatory="no" default="">path</argument>
+		<argument type="int" mandatory="no" default="" minvalue="0" allownot="yes" multivalue="yes">level</argument>
+		<argument type="string" mandatory="no" default="" allownot="yes">measure</argument>
+		<argument type="string" mandatory="no" default="" allownot="yes">parent_cube</argument>
+		<argument type="string" mandatory="no" default="" allownot="yes">container</argument>
+		<argument type="string" mandatory="no" default="" allownot="yes">container_pid</argument>
+		<argument type="string" mandatory="no" default="" allownot="yes" multivalue="yes">cube_filter</argument>
+		<argument type="string" mandatory="no" default="" allownot="yes" multivalue="yes">metadata_key</argument>
+		<argument type="string" mandatory="no" default="" allownot="yes" multivalue="yes">metadata_value</argument>
+		<argument type="string" mandatory="no" default="" allownot="yes">path</argument>
 		<argument type="string" mandatory="no" default="">file</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">recursive</argument>
 		<argument type="string" mandatory="no" default="no" values="cmip5|no">convention</argument>

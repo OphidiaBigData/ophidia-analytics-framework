@@ -51,6 +51,7 @@ It creates a new datacube with random data and dimensions.
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   randcube : show operator's output PID as text in case "run" is "yes", else the parameter check is shown.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]
 Generate a random compressed data cube with 1 host, 8 fragments/db, 10 tuples/fragment, 
@@ -89,5 +90,6 @@ SUBMISSION STRING: &quot;operator=oph_randcube;container=container1;nhost=1;nfra
 		<argument type="string" mandatory="no" default="rr" values="rr|port">policy</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|randcube">objkey_filter</argument>
 		<argument type="string" mandatory="no" default="default" values="default|temperatures">algorithm</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

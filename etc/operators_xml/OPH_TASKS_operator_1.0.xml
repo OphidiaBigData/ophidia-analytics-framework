@@ -40,6 +40,7 @@ Any filter can use SQL wildcards (%, _, etc.)
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   tasks : show a list of tasks submitted previously.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]
 Show information about all tasks :
@@ -62,5 +63,6 @@ SUBMISSION STRING: &quot;operator=oph_tasks;cube_filter=all;operator_filter=all;
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|tasks">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

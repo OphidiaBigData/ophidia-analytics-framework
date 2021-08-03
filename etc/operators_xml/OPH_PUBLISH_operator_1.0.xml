@@ -33,6 +33,7 @@ It creates HTML pages with data and other information from a datacube.
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   publish2 : no output.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples] 
 Publish data from the datacube &quot;http://www.example.com/1/1&quot; :
@@ -55,5 +56,6 @@ SUBMISSION STRING: &quot;operator=oph_publish;content=data;cube=http://www.examp
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|publish">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

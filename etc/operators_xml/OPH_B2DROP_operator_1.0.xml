@@ -43,6 +43,7 @@ It uploads/downloads a file onto/from a B2DROP remote folder. Note that in order
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   b2drop : show operator's output.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]
 Upload the file &quot;test.nc&quot; into B2DROP base folder:
@@ -64,5 +65,6 @@ SUBMISSION STRING: &quot;operator=oph_b2drop;src_path=test.nc;&quot;</abstract>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|b2drop">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

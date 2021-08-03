@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2021 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -101,5 +101,8 @@
 #define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_TUPLEXFRAGMENT	"UPDATE datacube SET tuplexfragment = %d WHERE iddatacube = %d"
 
 #define MYSQL_QUERY_ORDER_CUBE_BY_SOURCE				"SELECT idcontainer, iddatacube FROM datacube INNER JOIN source ON datacube.idsource = source.idsource WHERE level = 0 AND iddatacube IN (%s) ORDER BY uri ASC;"
+
+#define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_MS		"UPDATE datacube SET idmissingvalue = %d WHERE iddatacube = %d;"
+#define MYSQL_QUERY_CUBE_RETRIEVE_OPHIDIADB_CUBE_MS		"SELECT idmissingvalue, measure FROM `datacube` WHERE iddatacube = %d;"
 
 #endif				/* __OPH_ODB_CUBE_QUERY_H__ */
