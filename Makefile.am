@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2020 CMCC Foundation
+#    Copyright (C) 2012-2021 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -39,6 +39,7 @@ xmloperdir = $(prefix)/etc/operators_xml/
 OPERATOR_XML=
 
 OPERATOR_XML+=etc/operators_xml/OPH_CDO_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_FS_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_GENERIC_operator_1.0.xml
 
 if MYSQL_SUPPORT
@@ -77,7 +78,6 @@ OPERATOR_XML+=etc/operators_xml/OPH_EXPORTNC2_operator_1.0.xml
 endif
 endif
 OPERATOR_XML+=etc/operators_xml/OPH_FOLDER_operator_1.0.xml
-OPERATOR_XML+=etc/operators_xml/OPH_FS_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_FOR_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_GET_CONFIG_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_HIERARCHY_operator_1.0.xml

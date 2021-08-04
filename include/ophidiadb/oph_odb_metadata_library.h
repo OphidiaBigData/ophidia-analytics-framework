@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2021 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -236,5 +236,7 @@ int oph_odb_meta_check_for_time_dimension(ophidiadb * oDB, int id_datacube, cons
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const char *old_variable, const char *new_variable);
+
+int oph_odb_meta_retrieve_single_metadata_instance(ophidiadb * oDB, int id_metadata_instance, char **type, char **value);
 
 #endif				/* __OPH_ODB_META_H__ */

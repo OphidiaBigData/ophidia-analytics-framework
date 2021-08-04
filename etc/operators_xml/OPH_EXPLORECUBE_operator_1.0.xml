@@ -66,6 +66,7 @@ Dimension values are used as input filters for subsetting.
 		  explorecube_data : show the content of a cube.
 		  explorecube_summary : show the number of rows to be extracted.
 		  explorecube_dimvalues : show the values of the dimensions of output cube.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]       
 Print the subset consisting of values 1 through 10 of dimension &quot;lat&quot; and 20 through 30 of dimension &quot;lon&quot; :
@@ -97,5 +98,7 @@ SUBMISSION STRING: &quot;operator=oph_explorecube;cube=http://www.example.com/1/
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|explorecube_data|explorecube_summary|explorecube_dimvalues">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

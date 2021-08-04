@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2021 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -213,6 +213,7 @@ struct _OPH_INTERCUBE_operator_handle {
 	short int execute_error;
 	char *cube1;
 	char *cube2;
+	char user_missing_value;
 };
 typedef struct _OPH_INTERCUBE_operator_handle OPH_INTERCUBE_operator_handle;
 

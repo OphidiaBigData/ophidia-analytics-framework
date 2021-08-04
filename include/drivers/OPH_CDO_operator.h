@@ -61,6 +61,8 @@ struct _OPH_CDO_operator_handle {
 	char *output_name;
 	int force;
 	int nthread;
+	char **inputs;
+	int inputs_num;
 };
 typedef struct _OPH_CDO_operator_handle OPH_CDO_operator_handle;
 

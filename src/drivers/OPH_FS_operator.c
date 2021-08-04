@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2021 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,7 +17,11 @@
 */
 
 #define _GNU_SOURCE
+
+#ifdef OPH_MYSQL_SUPPORT
 #include <errmsg.h>
+#endif
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -43,6 +47,146 @@
 
 #define OPH_FS_HPREFIX '.'
 #define OPH_SEPARATOR_PARAM ";"
+
+#ifndef OPH_MYSQL_SUPPORT
+int oph_odb_fs_path_parsing(char *inpath, char *cwd, int *folder_id, char **output_path, ophidiadb * oDB)
+{
+	if (!inpath || !cwd) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+	}
+
+	if (cwd[0] != OPH_ODB_FS_FOLDER_SLASH_CHAR) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "CWD must start with / (root)\n");
+		return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+	}
+
+	char buffer[MYSQL_BUFLEN];
+	char buffer2[MYSQL_BUFLEN];
+	int list_size = 0;
+	int i, j;
+
+	if (inpath[0] == OPH_ODB_FS_FOLDER_SLASH_CHAR)
+		snprintf(buffer, MYSQL_BUFLEN, "%s", inpath);
+	else if (!cwd || !cwd[0] || !strcmp(cwd, OPH_ODB_FS_FOLDER_SLASH))
+		snprintf(buffer, MYSQL_BUFLEN, "/%s", inpath);	// Root folder is an exception
+	else
+		snprintf(buffer, MYSQL_BUFLEN, "%s/%s", cwd, inpath);
+
+	strcpy(buffer2, buffer);
+	char *savepointer = NULL, *ptr2 = strtok_r(buffer2, OPH_ODB_FS_FOLDER_SLASH, &savepointer);
+	if (ptr2) {
+		list_size++;
+		while ((ptr2 = strtok_r(NULL, OPH_ODB_FS_FOLDER_SLASH, &savepointer)) != NULL)
+			list_size++;
+	}
+
+	char **list = list_size ? (char **) malloc(sizeof(char *) * list_size) : NULL;
+	if (!list && list_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory for path\n");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+	for (i = 0; i < list_size; i++) {
+		list[i] = (char *) malloc(MYSQL_BUFLEN);
+		if (!list[i]) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory for path\n");
+			for (j = 0; j < i; j++) {
+				free(list[j]);
+			}
+			free(list);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+	}
+
+	i = 0;
+	char *ptr = strtok_r(buffer, OPH_ODB_FS_FOLDER_SLASH, &savepointer);
+	if (ptr) {
+		if (!strcmp(ptr, OPH_ODB_FS_CURRENT_DIR)) {
+			if (!output_path) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid path\n");
+				free(list);
+				return OPH_ODB_ERROR;
+			}
+		} else if (!strcmp(ptr, OPH_ODB_FS_PARENT_DIR)) {
+			if (!output_path) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid path\n");
+				free(list);
+				return OPH_ODB_ERROR;
+			}
+			i--;
+			if (i < 0) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid path\n");
+				for (j = 0; j < list_size; j++) {
+					free(list[j]);
+				}
+				free(list);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+		} else {
+			snprintf(list[i], MYSQL_BUFLEN, "%s", ptr);
+			i++;
+		}
+
+		while ((ptr = strtok_r(NULL, OPH_ODB_FS_FOLDER_SLASH, &savepointer)) != NULL) {
+			if (!strcmp(ptr, OPH_ODB_FS_CURRENT_DIR)) {
+				if (!output_path) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid path\n");
+					if (list)
+						free(list);
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
+			} else if (!strcmp(ptr, OPH_ODB_FS_PARENT_DIR)) {
+				if (!output_path) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid path\n");
+					if (list)
+						free(list);
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
+				i--;
+				if (i < 0) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid path\n");
+					for (j = 0; j < list_size; j++) {
+						free(list[j]);
+					}
+					if (list)
+						free(list);
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
+			} else {
+				snprintf(list[i], MYSQL_BUFLEN, "%s", ptr);
+				i++;
+			}
+		}
+	}
+
+	int n = 0;
+	if (output_path) {
+		*output_path = (char *) malloc(MYSQL_BUFLEN);
+		if (!*output_path) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory for path\n");
+			for (j = 0; j < list_size; j++) {
+				free(list[j]);
+			}
+			if (list)
+				free(list);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+
+		n += snprintf((*output_path) + n, MYSQL_BUFLEN, OPH_ODB_FS_FOLDER_SLASH);
+		for (j = 0; j < i; j++) {
+			n += snprintf((*output_path) + n, MYSQL_BUFLEN, "%s/", list[j]);
+		}
+	}
+	// cleanup
+	for (j = 0; j < list_size; j++) {
+		free(list[j]);
+	}
+	if (list)
+		free(list);
+
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+}
+#endif
 
 int cmpfunc(const void *a, const void *b)
 {

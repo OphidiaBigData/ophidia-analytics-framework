@@ -31,6 +31,7 @@ Start, stop and get information about clusters of I/O servers.
                   cluster_list_summary : show cluster list summary;
                   cluster_user : show cluster user list (reserved to administrators);
                   cluster_user_summary : show cluster user list summary (reserved to administrators).
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]       
 Start 3 I/O servers:
@@ -50,5 +51,6 @@ SUBMISSION STRING: &quot;operator=oph_cluster;action=deploy;nhost=3;host_partiti
 		<argument type="string" mandatory="no" default="all">user_filter</argument>
 		<argument type="string" mandatory="no" default="io" values="io|compute">host_type</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|cluster_summary|cluster_list|cluster_list_summary|cluster_user|cluster_user_summary">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>
