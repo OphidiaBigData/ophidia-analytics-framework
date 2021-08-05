@@ -241,6 +241,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_FS_operator_handle *) handle->operator_handle)->path = NULL;
 	((OPH_FS_operator_handle *) handle->operator_handle)->path_num = -1;
 	((OPH_FS_operator_handle *) handle->operator_handle)->file = NULL;
+	((OPH_FS_operator_handle *) handle->operator_handle)->measure = NULL;
 	((OPH_FS_operator_handle *) handle->operator_handle)->recursive = 0;
 	((OPH_FS_operator_handle *) handle->operator_handle)->depth = 0;
 	((OPH_FS_operator_handle *) handle->operator_handle)->realpath = 0;
@@ -309,6 +310,18 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!(((OPH_FS_operator_handle *) handle->operator_handle)->file = (char *) strdup(value))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_MEASURE_NAME);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_MEASURE_NAME);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_MEASURE_NAME);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!(((OPH_FS_operator_handle *) handle->operator_handle)->measure = (char *) strdup(value))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
@@ -427,7 +440,7 @@ int task_execute(oph_operator_struct * handle)
 	size_t len = 0;
 	char *rel_path = NULL, *dest_path = NULL, *url = NULL;
 	char is_valid = strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->path[0], OPH_FRAMEWORK_FS_DEFAULT_PATH);
-	char file_is_valid = strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->file, OPH_FRAMEWORK_FS_DEFAULT_PATH);
+	char file_is_valid = ((OPH_FS_operator_handle *) handle->operator_handle)->file && strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->file, OPH_FRAMEWORK_FS_DEFAULT_PATH);
 	char path[OPH_COMMON_BUFFER_LEN];
 
 #ifdef OPH_ESDM
@@ -717,7 +730,12 @@ int task_execute(oph_operator_struct * handle)
 						break;
 					}
 
-					if (esdm_container_probe(path + 7))	// Skip protocol name
+					if (((OPH_FS_operator_handle *) handle->operator_handle)->measure
+					    && strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->measure, OPH_FRAMEWORK_FS_DEFAULT_PATH))
+						result = esdm_dataset_probe(path + 7, ((OPH_FS_operator_handle *) handle->operator_handle)->measure);
+					else
+						result = esdm_container_probe(path + 7);
+					if (result)	// Skip protocol name
 						snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s", path);
 
 					esdm_finalize();
@@ -909,6 +927,10 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_FS_operator_handle *) handle->operator_handle)->file) {
 		free((char *) ((OPH_FS_operator_handle *) handle->operator_handle)->file);
 		((OPH_FS_operator_handle *) handle->operator_handle)->file = NULL;
+	}
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->measure) {
+		free((char *) ((OPH_FS_operator_handle *) handle->operator_handle)->measure);
+		((OPH_FS_operator_handle *) handle->operator_handle)->measure = NULL;
 	}
 	if (((OPH_FS_operator_handle *) handle->operator_handle)->cwd) {
 		free((char *) ((OPH_FS_operator_handle *) handle->operator_handle)->cwd);
