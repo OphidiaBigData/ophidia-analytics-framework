@@ -212,39 +212,10 @@ int oph_odb_fs_path_parsing(char *inpath, char *cwd, int *folder_id, char **outp
 		// retrieve folder id
 		int k;
 		for (k = 0; k < i; k++) {
-			snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_FS_PATH_PARSING_ID, *folder_id, list[k]);
-			if (mysql_query(oDB->conn, query)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
-				for (j = 0; j < list_size; j++) {
-					free(list[j]);
-				}
-				if (list)
-					free(list);
-				if (output_path) {
-					free(*output_path);
-					*output_path = NULL;
-				}
-				return OPH_ODB_MYSQL_ERROR;
-			}
-			res = mysql_store_result(oDB->conn);
-			num_rows = mysql_num_rows(res);
-			if (num_rows != 1) {
+			if (oph_odb_fs_insert_into_folder_table(oDB, *folder_id, list[k], *folder_id)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find id of folder %s\n", list[k]);
-				mysql_free_result(res);
-				for (j = 0; j < list_size; j++) {
-					free(list[j]);
-				}
-				if (list)
-					free(list);
-				if (output_path) {
-					free(*output_path);
-					*output_path = NULL;
-				}
 				return OPH_ODB_ERROR;
 			}
-			row = mysql_fetch_row(res);
-			*folder_id = (int) strtol(row[0], NULL, 10);
-			mysql_free_result(res);
 		}
 	}
 	// cleanup
@@ -856,24 +827,48 @@ int oph_odb_fs_insert_into_folder_table(ophidiadb * oDB, int parent_folder_id, c
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
-	char insertQuery[MYSQL_BUFLEN];
-	int n;
-
-	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_MKDIR, parent_folder_id, child_folder);
+	char selectQuery[MYSQL_BUFLEN];
+	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_RETRIEVE_FOLDER_FOLDER_ID, child_folder);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	if (mysql_query(oDB->conn, insertQuery)) {
+	if (mysql_query(oDB->conn, selectQuery)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
 
-	if (!(*last_insertd_id = mysql_insert_id(oDB->conn))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted datacube id\n");
-		return OPH_ODB_TOO_MANY_ROWS;
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+	int num_rows = mysql_num_rows(res);
+	if (num_rows == 0) {
+		char insertQuery[MYSQL_BUFLEN];
+		int n;
+
+		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_FS_MKDIR, parent_folder_id, child_folder);
+		if (n >= MYSQL_BUFLEN) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+			return OPH_ODB_STR_BUFF_OVERFLOW;
+		}
+
+		if (mysql_query(oDB->conn, insertQuery)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			return OPH_ODB_MYSQL_ERROR;
+		}
+
+		if (!(*last_insertd_id = mysql_insert_id(oDB->conn))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted datacube id\n");
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+	} else {
+		MYSQL_ROW row;
+		if ((row = mysql_fetch_row(res)) && row[0])
+			*last_insertd_id = (int) strtol(row[0], NULL, 10);
 	}
+
+	mysql_free_result(res);
 
 	return OPH_ODB_SUCCESS;
 }
