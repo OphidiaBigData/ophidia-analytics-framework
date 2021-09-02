@@ -105,6 +105,17 @@ AM_CONDITIONAL([MPI_DISABLE], [test "x$mpi" = "xyes"])
 MPI_DISABLE_SUPPORT=$mpi
 AC_SUBST(MPI_DISABLE_SUPPORT)
 
+UPDATE_CANCELLATION_SUPPORT=
+AC_ARG_ENABLE(update_cancellation, [ --enable-update_cancellation  Enable update and cancellation support. (Disabled by default)], [ update_cancellation="yes" ], [ update_cancellation="no" ])
+if test "x$update_cancellation" = "xyes"; then
+	AC_MSG_NOTICE(UPDATE_CANCELLATION enabled)
+else
+	AC_MSG_NOTICE(UPDATE_CANCELLATION disabled)
+fi
+AM_CONDITIONAL([UPDATE_CANCELLATION], [test "x$update_cancellation" = "xyes"])
+UPDATE_CANCELLATION_SUPPORT=$update_cancellation
+AC_SUBST(UPDATE_CANCELLATION_SUPPORT)
+
 AC_CHECK_LIB(pthread, pthread_create)
 if test "$ac_cv_lib_pthread_pthread_create" = yes ; then
    CFLAGS="$CFLAGS -D_REENTRANT"
@@ -604,6 +615,28 @@ RABBITMQ_INCLUDE="$librabbitmq_header_path"
 AC_SUBST(RABBITMQ_INCLUDE)
 RABBITMQ_LIB="$librabbitmq_lib_path"
 AC_SUBST(RABBITMQ_LIB)
+
+PKG_CHECK_MODULES(SQLITE, sqlite3 >= 3.7.11)
+AC_ARG_WITH(sqlite_header_path,
+                [  --with-sqlite-header-path=PATH 		Location of sqlite include directory],
+                [
+                sqlite_header_path="$withval"
+                ],
+                [
+                sqlite_header_path="$SQLITE_CFLAGS"
+                ])
+AC_ARG_WITH(sqlite_lib_path,
+                [  --with-sqlite-lib-path=PATH 		Location of sqlite],
+                [
+                sqlite_lib_path="$withval"
+                ],
+                [
+                sqlite_lib_path="$SQLITE_LIBS"
+                ])
+SQLITE_INCLUDE="$sqlite_header_path"
+AC_SUBST(SQLITE_INCLUDE)
+SQLITE_LIB="$sqlite_lib_path"
+AC_SUBST(SQLITE_LIB)
 fi
 
 OPT="-Wno-error -Wno-format-security"
@@ -666,4 +699,4 @@ AC_SUBST(REENTRANT)
 
 AM_CONDITIONAL(VOMS, test $voms_enable = 1)
 
-AC_OUTPUT([Makefile etc/oph_configuration src/Makefile src/oph_gsoap/Makefile src/clients/Makefile src/ioservers/Makefile src/drivers/Makefile etc/oph_analytics_driver etc/oph_io_server])
+AC_OUTPUT([Makefile etc/oph_configuration src/Makefile src/oph_gsoap/Makefile src/clients/Makefile src/ioservers/Makefile src/drivers/Makefile etc/oph_analytics_driver etc/oph_io_server etc/scheduler.conf])

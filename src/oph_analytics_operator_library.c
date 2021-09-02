@@ -238,22 +238,26 @@ int oph_unset_env(oph_operator_struct * handle)
 		free(handle->lib);
 		handle->lib = NULL;
 	}
+#ifndef MPI_DISABLE_SUPPORT
 #ifndef OPH_WITH_VALGRIND
 	if (handle->dlh && (lt_dlclose(handle->dlh))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "lt_dlclose error: %s\n", lt_dlerror());
 		return OPH_ANALYTICS_OPERATOR_DLCLOSE_ERR;
 	}
 #endif
+#endif
 	return res;
 }
 
 int oph_exit_task()
 {
+#ifndef MPI_DISABLE_SUPPORT
 #ifndef OPH_WITH_VALGRIND
 	if (lt_dlexit()) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while executing lt_dlexit\n");
 		return OPH_ANALYTICS_OPERATOR_DLEXIT_ERR;
 	}
+#endif
 #endif
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

@@ -19,6 +19,9 @@
 if !MPI_DISABLE
 
 bin_PROGRAMS = esdm_pav_runtime_worker
+if UPDATE_CANCELLATION
+bin_PROGRAMS += esdm_pav_runtime_dbmanager
+endif
 else
 if MYSQL_SUPPORT
 if DEBUG_1
@@ -58,6 +61,18 @@ oph_ioserver_client_LDADD= ${MYSQL_LDFLAGS} -L.. -loph_datacube ${OPHIDIADB_LIBS
 
 if !MPI_DISABLE
 esdm_pav_runtime_worker_SOURCES = esdm_pav_runtime_worker.c
+if UPDATE_CANCELLATION
+esdm_pav_runtime_worker_CFLAGS = $(OPT) -I../../include -I../oph_gsoap @INCLTDL@ $(RABBITMQ_INCLUDE) -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DPACKAGE_VERSION=\"@PACKAGE_VERSION@\" -DMPI_DISABLE_SUPPORT -DUPDATE_CANCELLATION_SUPPORT
+else
 esdm_pav_runtime_worker_CFLAGS = $(OPT) -I../../include -I../oph_gsoap @INCLTDL@ $(RABBITMQ_INCLUDE) -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DPACKAGE_VERSION=\"@PACKAGE_VERSION@\" -DMPI_DISABLE_SUPPORT
+endif
 esdm_pav_runtime_worker_LDADD = -L.. -ldebug -loph_server_conf -lrabbitmq_utils -loph_analytics_framework $(RABBITMQ_LIB)
+endif
+
+if !MPI_DISABLE
+if UPDATE_CANCELLATION
+esdm_pav_runtime_dbmanager_SOURCES = esdm_pav_runtime_dbmanager.c
+esdm_pav_runtime_dbmanager_CFLAGS = $(OPT) -I../../include -I../oph_gsoap @INCLTDL@ $(RABBITMQ_INCLUDE) -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DPACKAGE_VERSION=\"@PACKAGE_VERSION@\" $(SQLITE_INCLUDE)
+esdm_pav_runtime_dbmanager_LDADD = -L.. -ldebug -loph_server_conf -lrabbitmq_utils $(RABBITMQ_LIB) $(SQLITE_LIB)
+endif
 endif

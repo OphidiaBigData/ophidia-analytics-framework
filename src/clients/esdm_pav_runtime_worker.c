@@ -1,6 +1,6 @@
 /*
-    Esdm-pav-runtime
-    Copyright (C) 2021 CMCC Foundation
+    Ophidia Analytics Framework
+    Copyright (C) 2012-2020 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,9 +29,6 @@
 #include <getopt.h>
 #include <sys/types.h>
 
-#include <amqp_tcp_socket.h>
-#include <amqp.h>
-#include <amqp_framing.h>
 #include "assert.h"
 
 #include "debug.h"
@@ -48,13 +45,37 @@ pthread_mutex_t ncores_mutex;
 
 pthread_mutex_t framework_mutex;
 
+#ifdef UPDATE_CANCELLATION_SUPPORT
+int *shared_ids_array = NULL;
+pid_t *PID_array = NULL;
+
+typedef struct {
+	int id;
+	int checks_todo;
+	int consumed_messages;
+} cancellation_struct;
+
+int cancellation_struct_size = 0;
+cancellation_struct *canc_struct_list = NULL;
+int delete_routine_isup = 0;
+
+pthread_rwlock_t *thread_lock_list = NULL;
+pthread_rwlock_t struct_size_lock, canc_struct_lock;
+
+pthread_t update_thread_tid, delete_thread_tid;
+
+amqp_connection_state_t *conn_thread_publish_list = NULL;
+
+amqp_connection_state_t consume_updater_conn, publish_db_conn, consume_delete_conn, publish_delete_conn, publish_delete_update_conn;
+#endif
+
 int thread_number;
 
 pthread_t *thread_cont_list = NULL;
 int *pthread_create_arg = NULL;
 
-int ptr_list_size = 13;
-char *ptr_list[13];
+int ptr_list_size = 18;
+char *ptr_list[18];
 
 amqp_connection_state_t *conn_thread_consume_list = NULL;
 amqp_channel_t default_channel = 1;
@@ -64,13 +85,11 @@ sigset_t signal_set;
 
 HASHTBL *hashtbl;
 
-char *launcher = 0;
 char *hostname = 0;
 char *port = 0;
 char *task_queue_name = 0;
 char *username = 0;
 char *password = 0;
-char *framework_path = 0;
 char *config_file = 0;
 char *rabbitmq_direct_mode = "amq.direct";
 char *max_ncores = 0;
@@ -81,6 +100,15 @@ char *thread_number_str = 0;
 
 pthread_mutex_t global_flag;
 
+#ifdef UPDATE_CANCELLATION_SUPPORT
+char *update_queue_name = 0;
+char *db_manager_queue_name = 0;
+char *delete_queue_name = 0;
+char *cancellation_multiplication_factor = 0;
+char *max_cancellation_struct_size_str = 0;
+int max_cancellation_struct_size;
+#endif
+
 void kill_threads()
 {
 	int ii;
@@ -90,6 +118,17 @@ void kill_threads()
 	}
 
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "All worker threads have been closed\n");
+
+#ifdef UPDATE_CANCELLATION_SUPPORT
+	if (pthread_kill(update_thread_tid, SIGUSR1) != 0)
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error on pthread_kill - Update thread\n");
+	else
+		pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Updater thread has been closed\n");
+	if (pthread_kill(delete_thread_tid, SIGUSR1) != 0)
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error on pthread_kill - Delete thread\n");
+	else
+		pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Deleter thread has been closed\n");
+#endif
 }
 
 void release_thread()
@@ -105,6 +144,72 @@ void release_main()
 			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error join thread %d\n", ii);
 	}
 
+#ifdef UPDATE_CANCELLATION_SUPPORT
+	if (pthread_join(update_thread_tid, NULL) != 0)
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error join thread %d\n", ii);
+
+	if (pthread_join(delete_thread_tid, NULL) != 0)
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error join thread %d\n", ii);
+
+	// REMOVE PROCESS ENTRIES FROM CENTRALIZED DB
+	amqp_connection_state_t publish_remove_entries_conn;
+	rabbitmq_publish_connection(&publish_remove_entries_conn, default_channel, master_hostname, master_port, username, password, db_manager_queue_name);
+
+	char *delete_message = 0;
+	create_update_message(global_ip_address, port, 0, "-1", "-1", delete_queue_name, &delete_message);
+
+	// SEND MESSAGE TO DB MANAGER QUEUE
+	int status = amqp_basic_publish(publish_remove_entries_conn,
+					default_channel,
+					amqp_cstring_bytes(""),
+					amqp_cstring_bytes(db_manager_queue_name),
+					0,	// mandatory (message must be routed to a queue)
+					0,	// immediate (message must be delivered to a consumer immediately)
+					&props,	// properties
+					amqp_cstring_bytes(delete_message));
+
+	if (status == AMQP_STATUS_OK) {
+		pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Message has been sent on %s: %s\n", db_manager_queue_name, delete_message);
+		pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Removed all process entries from centralized database\n");
+	} else
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Cannot send message to %s\n", db_manager_queue_name);
+
+	if (delete_message)
+		free(delete_message);
+
+	char *delete_queue_from_rabbitmq = 0;
+
+	int neededSize = snprintf(NULL, 0, "rabbitmqctl list_queues | awk '{ print $1 }' | grep \"%s_%s\" | " "xargs -L1 rabbitmqctl delete_queue > /dev/null", global_ip_address, port);
+	delete_queue_from_rabbitmq = (char *) malloc(neededSize + 1);
+	snprintf(delete_queue_from_rabbitmq, neededSize + 1, "rabbitmqctl list_queues | awk '{ print $1 }' | grep \"%s_%s\" | "
+		 "xargs -L1 rabbitmqctl delete_queue > /dev/null", global_ip_address, port);
+
+	int systemRes = system(delete_queue_from_rabbitmq);
+	if (systemRes != -1)
+		pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "All consumer queues have been deleted\n");
+
+	if (delete_queue_from_rabbitmq)
+		free(delete_queue_from_rabbitmq);
+
+	for (ii = 0; ii < thread_number; ii++)
+		pthread_rwlock_destroy(&thread_lock_list[ii]);
+	pthread_rwlock_destroy(&struct_size_lock);
+	pthread_rwlock_destroy(&canc_struct_lock);
+	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "All locks have been destroyed\n");
+
+	close_rabbitmq_connection(publish_db_conn, default_channel);
+	close_rabbitmq_connection(publish_delete_conn, default_channel);
+	close_rabbitmq_connection(publish_delete_update_conn, default_channel);
+	close_rabbitmq_connection(publish_remove_entries_conn, default_channel);
+	close_rabbitmq_connection(consume_updater_conn, default_channel);
+	close_rabbitmq_connection(consume_delete_conn, default_channel);
+
+	for (ii = 0; ii < thread_number; ii++)
+		close_rabbitmq_connection(conn_thread_publish_list[ii], (amqp_channel_t) (ii + 1));
+
+	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "All RabbitMQ connections for cancellation system have been closed (%d connections)\n", ii + 6);
+#endif
+
 	for (ii = 0; ii < thread_number; ii++)
 		close_rabbitmq_connection(conn_thread_consume_list[ii], (amqp_channel_t) (ii + 1));
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "All RabbitMQ connections for consume system have been closed (%d connections)\n", ii);
@@ -115,6 +220,14 @@ void release_main()
 	free(pthread_create_arg);
 	free(conn_thread_consume_list);
 	free(thread_cont_list);
+
+#ifdef UPDATE_CANCELLATION_SUPPORT
+	free(shared_ids_array);
+	free(PID_array);
+	free(thread_lock_list);
+	free(conn_thread_publish_list);
+	free(canc_struct_list);
+#endif
 
 	for (ii = 0; ii < ptr_list_size; ii++) {
 		if (ptr_list[ii])
@@ -131,8 +244,14 @@ void release_main()
 	exit(0);
 }
 
+#ifdef UPDATE_CANCELLATION_SUPPORT
+int process_message(amqp_envelope_t full_message, int thread_param, amqp_channel_t channel)
+{
+#else
 int process_message(amqp_envelope_t full_message)
 {
+#endif
+
 	char *message = (char *) malloc(full_message.message.body.len + 1);
 	strncpy(message, (char *) full_message.message.body.bytes, full_message.message.body.len);
 	message[full_message.message.body.len] = 0;
@@ -164,9 +283,76 @@ int process_message(amqp_envelope_t full_message)
 		return 0;
 	}
 
+#ifdef UPDATE_CANCELLATION_SUPPORT
+	pthread_rwlock_rdlock(&struct_size_lock);
+	int list_size = cancellation_struct_size;
+	pthread_rwlock_unlock(&struct_size_lock);
+
+	int ii;
+	for (ii = 0; ii < list_size; ii++) {
+		pthread_rwlock_rdlock(&canc_struct_lock);
+		int w_id = canc_struct_list[ii].id;
+		pthread_rwlock_unlock(&canc_struct_lock);
+
+		if (w_id != 0 && w_id == atoi(workflow_id)) {
+			pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "A message has been discarded\n");
+
+			if (message)
+				free(message);
+
+			return 1;
+		}
+	}
+
+	// WRITE ON UPDATE_QUEUE AND SHARED ARRAY
+	char *update_message = 0;
+	create_update_message(global_ip_address, port, thread_param, workflow_id, job_id, delete_queue_name, &update_message);
+	pthread_rwlock_rdlock(&thread_lock_list[thread_param]);
+	shared_ids_array[thread_param] = atoi(workflow_id);
+	pthread_rwlock_unlock(&thread_lock_list[thread_param]);
+
+	int status = amqp_basic_publish(conn_thread_publish_list[thread_param],
+					channel,
+					amqp_cstring_bytes(""),
+					amqp_cstring_bytes(update_queue_name),
+					0,	// mandatory (message must be routed to a queue)
+					0,	// immediate (message must be delivered to a consumer immediately)
+					&props,	// properties
+					amqp_cstring_bytes(update_message));
+
+	if (status == AMQP_STATUS_OK)
+		pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Message has been sent on %s: %s\n", update_queue_name, update_message);
+	else
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Cannot send message to %s\n", update_queue_name);
+
+	if (update_message)
+		free(update_message);
+#endif
+
 	int process_ncores = atoi(ncores);
 	if (process_ncores > atoi(max_ncores)) {
 		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "This consumer process does not support job processing that require more than %s cores\n", max_ncores);
+
+#ifdef UPDATE_CANCELLATION_SUPPORT
+		char *update_message_2 = 0;
+		create_update_message(global_ip_address, port, thread_param, "0", "0", delete_queue_name, &update_message_2);
+		pthread_rwlock_rdlock(&thread_lock_list[thread_param]);
+		shared_ids_array[thread_param] = 0;
+		pthread_rwlock_unlock(&thread_lock_list[thread_param]);
+
+		status = amqp_basic_publish(conn_thread_publish_list[thread_param], channel, amqp_cstring_bytes(""), amqp_cstring_bytes(update_queue_name), 0,	// mandatory (message must be routed to a queue)
+					    0,	// immediate (message must be delivered to a consumer immediately)
+					    &props,	// properties
+					    amqp_cstring_bytes(update_message_2));
+
+		if (status == AMQP_STATUS_OK)
+			pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Message has been sent on %s: %s\n", update_queue_name, update_message_2);
+		else
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Cannot send message to %s\n", update_queue_name);
+
+		if (update_message_2)
+			free(update_message_2);
+#endif
 
 		if (message)
 			free(message);
@@ -184,16 +370,62 @@ int process_message(amqp_envelope_t full_message)
 	total_used_ncores += process_ncores;
 	pthread_mutex_unlock(&ncores_mutex);
 
-	pthread_mutex_lock(&framework_mutex);
-	int res = oph_af_execute_framework(submission_string, 1, 0);
-	pthread_mutex_unlock(&framework_mutex);
-	if (res)
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Framework execution failed! ERROR: %d\n", res);
+#ifdef UPDATE_CANCELLATION_SUPPORT
+	pthread_rwlock_wrlock(&thread_lock_list[thread_param]);
+	int exec_pid = fork();
+	PID_array[thread_param] = exec_pid;
+	pthread_rwlock_unlock(&thread_lock_list[thread_param]);
+#else
+	int exec_pid = fork();
+#endif
+
+	if (exec_pid < 0) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error on fork\n");
+		exit(0);
+	}
+	if (exec_pid == 0) {
+		if (oph_af_execute_framework(submission_string, 1, 0))
+			exit(0);
+		else
+			exit(1);
+	}
+
+	int pid_status;
+	waitpid(exec_pid, &pid_status, 0);
+	if (WIFEXITED(pid_status) != 0) {
+		if (WEXITSTATUS(pid_status) == 0)
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Framework execution failed!\n");
+		else
+			pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Framework execution successful!\n");
+	}
 
 	pthread_mutex_lock(&ncores_mutex);
 	total_used_ncores -= process_ncores;
 	pthread_cond_signal(&cond_var);
 	pthread_mutex_unlock(&ncores_mutex);
+
+#ifdef UPDATE_CANCELLATION_SUPPORT
+	// WRITE ON UPDATE_QUEUE AND SHARED ARRAY
+	char *update_message_3 = 0;
+	create_update_message(global_ip_address, port, thread_param, "0", "0", delete_queue_name, &update_message_3);
+	pthread_rwlock_rdlock(&thread_lock_list[thread_param]);
+	shared_ids_array[thread_param] = 0;
+	PID_array[thread_param] = 0;
+	pthread_rwlock_unlock(&thread_lock_list[thread_param]);
+
+	status = amqp_basic_publish(conn_thread_publish_list[thread_param], channel, amqp_cstring_bytes(""), amqp_cstring_bytes(update_message_3), 0,	// mandatory (message must be routed to a queue)
+				    0,	// immediate (message must be delivered to a consumer immediately)
+				    &props,	// properties
+				    amqp_cstring_bytes(update_message_3));
+
+	if (status == AMQP_STATUS_OK)
+		pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Message has been sent on %s: %s\n", update_queue_name, update_message_3);
+	else
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Cannot send message to %s\n", update_queue_name);
+
+	if (update_message_3)
+		free(update_message_3);
+#endif
 
 	if (message)
 		free(message);
@@ -219,7 +451,7 @@ void *worker_pthread_function(void *param)
 		exit(0);
 	}
 
-	int ack_res, nack_res;
+	int ack_res, nack_res, process_res;
 	amqp_rpc_reply_t reply;
 	amqp_envelope_t envelope;
 	amqp_channel_t thread_channel = (amqp_channel_t) (thread_param + 1);
@@ -236,7 +468,26 @@ void *worker_pthread_function(void *param)
 		else
 			continue;
 
-		if (process_message(envelope)) {
+#ifdef UPDATE_CANCELLATION_SUPPORT
+		process_res = process_message(envelope, thread_param, thread_channel);
+#else
+		process_res = process_message(envelope);
+#endif
+
+#ifdef UPDATE_CANCELLATION_SUPPORT
+		pthread_rwlock_rdlock(&struct_size_lock);
+		int list_size = cancellation_struct_size;
+		pthread_rwlock_unlock(&struct_size_lock);
+
+		int ii;
+		for (ii = 0; ii < list_size; ii++) {
+			pthread_rwlock_rdlock(&canc_struct_lock);
+			canc_struct_list[ii].consumed_messages += 1;
+			pthread_rwlock_unlock(&canc_struct_lock);
+		}
+#endif
+
+		if (process_res == 1) {
 			// ACKNOWLEDGE MESSAGE
 			ack_res = amqp_basic_ack(conn_thread_consume_list[thread_param], thread_channel, envelope.delivery_tag, 0);	// last param: if true, ack all messages up to this delivery tag, if false ack only this delivery tag
 			if (ack_res != 0) {
@@ -267,20 +518,361 @@ void *worker_pthread_function(void *param)
 	return (NULL);
 }
 
+#ifdef UPDATE_CANCELLATION_SUPPORT
+void *update_pthread_function()
+{
+	pthread_sigmask(SIG_UNBLOCK, &signal_set, NULL);
+	struct sigaction thread_new_act, thread_old_act;
+
+	thread_new_act.sa_handler = release_thread;
+	sigemptyset(&thread_new_act.sa_mask);
+	thread_new_act.sa_flags = 0;
+
+	int res;
+	if ((res = sigaction(SIGUSR1, &thread_new_act, &thread_old_act)) < 0) {
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Unable to setup signal\n");
+		exit(0);
+	}
+
+	amqp_rpc_reply_t reply;
+	amqp_envelope_t envelope;
+
+	int ack_res, nack_res, status;
+
+	rabbitmq_consume_connection(&consume_updater_conn, default_channel, hostname, port, username, password, update_queue_name, rabbitmq_direct_mode, 1);
+	rabbitmq_publish_connection(&publish_db_conn, default_channel, master_hostname, master_port, username, password, db_manager_queue_name);
+
+
+	while (consume_updater_conn) {
+		amqp_maybe_release_buffers_on_channel(consume_updater_conn, default_channel);
+
+		reply = amqp_consume_message(consume_updater_conn, &envelope, NULL, 0);
+		// CONN, POINTER TO MESSAGE, TIMEOUT = NULL = BLOCKING, UNUSED FLAG
+
+		if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
+			//pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error on consume message - Updater thread\n");
+
+			// exit(0);
+			amqp_destroy_envelope(&envelope);
+			continue;
+		} else
+			pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "A message has been consumed - Updater thread\n");
+
+		char *message = (char *) malloc(envelope.message.body.len + 1);
+		snprintf(message, envelope.message.body.len + 1, "%s", (char *) envelope.message.body.bytes);
+		message[envelope.message.body.len] = 0;
+
+		// SEND MESSAGE TO DB MANAGER QUEUE
+		status = amqp_basic_publish(publish_db_conn, default_channel, amqp_cstring_bytes(""), amqp_cstring_bytes(db_manager_queue_name), 0,	// mandatory (message must be routed to a queue)
+					    0,	// immediate (message must be delivered to a consumer immediately)
+					    &props,	// properties
+					    amqp_cstring_bytes(message));
+
+		if (status == AMQP_STATUS_OK)
+			pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Message has been sent on %s: %s\n", db_manager_queue_name, message);
+		else
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Cannot send message to %s\n", db_manager_queue_name);
+
+		// ACKNOWLEDGE MESSAGE
+		ack_res = amqp_basic_ack(consume_updater_conn, default_channel, envelope.delivery_tag, 0);	// last param: if true, ack all messages up to this delivery tag, if false ack only this delivery tag
+		if (ack_res != 0) {
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Failed to ack message. Delivery tag: %d - Updater thread: %d\n", (int) envelope.delivery_tag);
+
+			nack_res = amqp_basic_reject(consume_updater_conn, default_channel, envelope.delivery_tag, (amqp_boolean_t) 1);	// 1 To put the message back in the queue
+			if (nack_res != 0) {
+				pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Failed to Nack message. Delivery tag: %d - Updater thread: %d\n", (int) envelope.delivery_tag);
+				exit(0);
+			} else
+				pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "A message has been requeued from updater_thread\n");
+		} else
+			pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "A message has been acked - Updater thread\n");
+
+		if (message)
+			free(message);
+
+		amqp_destroy_envelope(&envelope);
+	}
+
+	return (NULL);
+}
+#endif
+
+#ifdef UPDATE_CANCELLATION_SUPPORT
+int stop_thread_function(int position)
+{
+	pthread_rwlock_wrlock(&thread_lock_list[position]);
+	int pid = PID_array[position];
+	pthread_rwlock_unlock(&thread_lock_list[position]);
+
+	if (pid != 0) {
+		int neededSize = snprintf(NULL, 0, "ps -ef | grep \"%d\" | awk 'NR==2 {print $2}'", pid);
+		char *get_mpi_pid = (char *) malloc(neededSize + 1);
+		snprintf(get_mpi_pid, neededSize + 1, "ps -ef | grep \"%d\" | awk 'NR==2 {print $2}'", pid);
+
+		FILE *fp;
+		fp = popen(get_mpi_pid, "r");
+		if (fp == NULL)
+			exit(1);
+
+		char *mpi_pid = (char *) malloc(10);
+		if (fgets(mpi_pid, 10, fp) == NULL) {
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Unable to get mpi pid\n");
+			release_main();
+
+			exit(0);
+		}
+		pclose(fp);
+		mpi_pid[strcspn(mpi_pid, "\n")] = 0;
+
+		neededSize = snprintf(NULL, 0, "kill -9 %d", pid);
+		char *kill_parent = (char *) malloc(neededSize + 1);
+		snprintf(kill_parent, neededSize + 1, "kill -9 %d", pid);
+
+		neededSize = snprintf(NULL, 0, "kill -9 %s", mpi_pid);
+		char *kill_command = (char *) malloc(neededSize + 1);
+		snprintf(kill_command, neededSize + 1, "kill -9 %s", mpi_pid);
+
+		int systemRes;
+
+		pthread_rwlock_wrlock(&thread_lock_list[position]);
+		pid = PID_array[position];
+		pthread_rwlock_unlock(&thread_lock_list[position]);
+
+		if (pid != 0) {
+			systemRes = system(kill_parent);
+			if (systemRes == -1) {
+				pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Failed to kill pid %d!\n", pid);
+
+				return 0;
+			}
+
+			systemRes = system(kill_command);
+			if (systemRes == -1) {
+				pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Failed to kill pid %d!\n", mpi_pid);
+
+				return 0;
+			}
+		}
+
+		if (get_mpi_pid)
+			free(get_mpi_pid);
+		if (mpi_pid)
+			free(mpi_pid);
+		if (kill_parent)
+			free(kill_parent);
+		if (kill_command)
+			free(kill_command);
+
+		pthread_rwlock_wrlock(&thread_lock_list[position]);
+		shared_ids_array[position] = 0;
+		pthread_rwlock_unlock(&thread_lock_list[position]);
+
+		return 1;
+	}
+
+	return 0;
+}
+#endif
+
+#ifdef UPDATE_CANCELLATION_SUPPORT
+int delete_routine()
+{
+	delete_routine_isup = 1;
+	int ii, total_killed = 0;
+
+	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Delete routine has been started\n");
+
+	pthread_rwlock_wrlock(&struct_size_lock);
+	int list_size = cancellation_struct_size;
+	pthread_rwlock_unlock(&struct_size_lock);
+
+	do {
+		for (ii = 0; ii < list_size; ii++) {
+			pthread_rwlock_wrlock(&canc_struct_lock);
+			int wid_tocancel = canc_struct_list[ii].id;
+			int checks_todo = canc_struct_list[ii].checks_todo;
+			int consumed_messages = canc_struct_list[ii].consumed_messages;
+			pthread_rwlock_unlock(&canc_struct_lock);
+
+			if (wid_tocancel != 0) {
+				if (consumed_messages > checks_todo) {
+					pthread_rwlock_wrlock(&canc_struct_lock);
+					canc_struct_list[ii].id = 0;
+					canc_struct_list[ii].checks_todo = 0;
+					canc_struct_list[ii].consumed_messages = 0;
+					pthread_rwlock_unlock(&canc_struct_lock);
+
+					pthread_rwlock_wrlock(&struct_size_lock);
+					cancellation_struct_size -= 1;
+					pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Removed wid %d from cancellation structure\n", wid_tocancel);
+					pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Total workflows processed by delete routine: %d\n", cancellation_struct_size);
+					pthread_rwlock_unlock(&struct_size_lock);
+				} else {
+					int jj;
+					for (jj = 0; jj < thread_number; jj++) {
+						pthread_rwlock_wrlock(&thread_lock_list[jj]);
+						int shared_id = shared_ids_array[jj];
+						pthread_rwlock_unlock(&thread_lock_list[jj]);
+
+						if (shared_id == wid_tocancel) {
+							pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Job processing (WORKFLOW_ID: %d) is going to be stopped\n", wid_tocancel);
+
+							total_killed += stop_thread_function(jj);
+
+							pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Job processing (WORKFLOW_ID: %d) has been stopped\n", wid_tocancel);
+						}
+					}
+				}
+			}
+		}
+
+		pthread_rwlock_wrlock(&struct_size_lock);
+		list_size = cancellation_struct_size;
+		pthread_rwlock_unlock(&struct_size_lock);
+	} while (list_size > 0);
+
+	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Delete routine is ended. Total job killed: %d\n", total_killed);
+
+	delete_routine_isup = 0;
+	return 0;
+}
+#endif
+
+#ifdef UPDATE_CANCELLATION_SUPPORT
+void *delete_pthread_function()
+{
+	pthread_sigmask(SIG_UNBLOCK, &signal_set, NULL);
+	struct sigaction thread_new_act, thread_old_act;
+
+	thread_new_act.sa_handler = release_thread;
+	sigemptyset(&thread_new_act.sa_mask);
+	thread_new_act.sa_flags = 0;
+
+	int res;
+	if ((res = sigaction(SIGUSR1, &thread_new_act, &thread_old_act)) < 0) {
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Unable to setup signal\n");
+		exit(0);
+	}
+
+	amqp_rpc_reply_t reply;
+	amqp_envelope_t envelope;
+
+	int ack_res, nack_res;
+
+	rabbitmq_consume_connection(&consume_delete_conn, default_channel, hostname, port, username, password, delete_queue_name, rabbitmq_direct_mode, 1);
+	rabbitmq_publish_connection(&publish_delete_update_conn, default_channel, hostname, port, username, password, update_queue_name);
+	rabbitmq_publish_connection(&publish_delete_conn, default_channel, hostname, port, username, password, delete_queue_name);
+
+	while (consume_delete_conn) {
+		amqp_maybe_release_buffers_on_channel(consume_delete_conn, default_channel);
+
+		reply = amqp_consume_message(consume_delete_conn, &envelope, NULL, 0);
+		// CONN, POINTER TO MESSAGE, TIMEOUT = NULL = BLOCKING, UNUSED FLAG
+
+		if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
+			//pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error on consume message - Deleter thread\n");
+
+			// exit(0);
+			amqp_destroy_envelope(&envelope);
+			continue;
+		} else
+			pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "A message has been consumed - Deleter thread\n");
+
+		int neededSize = snprintf(NULL, 0, "%s", (char *) envelope.message.body.bytes);
+		char *message = (char *) malloc(neededSize + 1);
+		snprintf(message, neededSize + 1, "%s", (char *) envelope.message.body.bytes);
+
+		char *ptr = NULL;
+		char *w_id = strtok_r(message, "***", &ptr);
+		if (!w_id) {
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Fail to read submission_string parameter\n");
+			return 0;
+		}
+
+		char *checks_todo = strtok_r(NULL, "***", &ptr);
+		if (!checks_todo) {
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Fail to read submission_string parameter\n");
+			return 0;
+		}
+
+		int ii, id;
+		for (ii = 0; ii < max_cancellation_struct_size; ii++) {
+			pthread_rwlock_wrlock(&canc_struct_lock);
+			id = canc_struct_list[ii].id;
+			pthread_rwlock_unlock(&canc_struct_lock);
+
+			if (id == 0) {
+				pthread_rwlock_wrlock(&canc_struct_lock);
+				canc_struct_list[ii].id = atoi(w_id);
+				canc_struct_list[ii].checks_todo = atoi(checks_todo);
+				if (canc_struct_list[ii].checks_todo == 0)
+					canc_struct_list[ii].checks_todo = atoi(cancellation_multiplication_factor);
+				else
+					canc_struct_list[ii].checks_todo *= atoi(cancellation_multiplication_factor);
+				canc_struct_list[ii].consumed_messages = 0;
+				pthread_rwlock_unlock(&canc_struct_lock);
+
+				pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Added %d checks to delete routine for workflow %s\n", canc_struct_list[ii].checks_todo, w_id);
+
+				pthread_rwlock_wrlock(&struct_size_lock);
+				cancellation_struct_size += 1;
+				pthread_rwlock_unlock(&struct_size_lock);
+
+				if (!delete_routine_isup)
+					delete_routine();
+
+				break;
+			}
+		}
+
+		// ACKNOWLEDGE MESSAGE
+		ack_res = amqp_basic_ack(consume_delete_conn, default_channel, envelope.delivery_tag, 0);	// last param: if true, ack all messages up to this delivery tag, if false ack only this delivery tag
+		if (ack_res != 0) {
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Failed to ack message. Delivery tag: %d - Deleter thread: %d\n", (int) envelope.delivery_tag);
+
+			nack_res = amqp_basic_reject(consume_delete_conn, default_channel, envelope.delivery_tag, (amqp_boolean_t) 1);	// 1 To put the message back in the queue
+			if (nack_res != 0) {
+				pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Failed to Nack message. Delivery tag: %d - Deleter thread: %d\n", (int) envelope.delivery_tag);
+				exit(0);
+			} else
+				pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "A message has been requeued from deleter_thread\n");
+		} else
+			pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "A message has been acked - Deleter thread\n");
+
+		amqp_destroy_envelope(&envelope);
+
+		if (message)
+			free(message);
+	}
+
+	return (NULL);
+}
+#endif
+
 int main(int argc, char const *const *argv)
 {
 	int msglevel = LOG_INFO;
-	set_debug_level(msglevel + 10);
+	set_debug_level(msglevel);
 
 	(void) argv;
 
 	int ch, neededSize = 0;
 
-	static char *USAGE = "\nUSAGE:\nesdm_pav_runtime_worker [-d] [-c <config_file>] [-L <launcher>] [-H <RabbitMQ hostname>] "
-	    "[-P <RabbitMQ port>] [-Q <RabbitMQ task_queue>] [-a <master hostname>] [-b <master port>] [-u <RabbitMQ username>] "
-	    "[-p <RabbitMQ password>] [-f <framework_path>] [-n <max_ncores>] [-t <thread_number>]\n";
+#ifdef UPDATE_CANCELLATION_SUPPORT
+	static char *USAGE = "\nUSAGE:\nesdm_pav_runtime_worker [-d] [-c <config_file>] [-H <RabbitMQ hostname>] "
+	    "[-P <RabbitMQ port>] [-Q <RabbitMQ task_queue>] [-U <RabbitMQ update_queue>] [-a <master hostname>] [-b <master port>] "
+	    "[-M <RabbitMQ db_manager_queue>] [-D <RabbitMQ delete_queue>] [-u <RabbitMQ username>] [-p <RabbitMQ password>] "
+	    "[-n <max_ncores>] [-m <cancellation_multiplication_factor>] [-s <cancellation_struct_size>] [-t <thread_number>] [-h <USAGE>]\n";
 
-	while ((ch = getopt(argc, (char *const *) argv, ":c:L:H:P:Q:a:b:u:p:f:n:t:dhxz")) != -1) {
+	while ((ch = getopt(argc, (char *const *) argv, ":c:H:P:Q:U:a:b:M:D:u:p:n:m:s:t:dhxz")) != -1) {
+#else
+	static char *USAGE = "\nUSAGE:\nesdm_pav_runtime_worker [-d] [-c <config_file>] [-H <RabbitMQ hostname>] "
+	    "[-P <RabbitMQ port>] [-Q <RabbitMQ task_queue>] [-a <master hostname>] [-b <master port>] [-u <RabbitMQ username>] "
+	    "[-p <RabbitMQ password>] [-n <max_ncores>] [-t <thread_number>] [-h <USAGE>]\n";
+
+	while ((ch = getopt(argc, (char *const *) argv, ":c:H:P:Q:a:b:u:p:n:t:dhxz")) != -1) {
+#endif
+
 		switch (ch) {
 			case 'c':
 				neededSize = snprintf(NULL, 0, "%s", optarg);
@@ -288,30 +880,32 @@ int main(int argc, char const *const *argv)
 				snprintf(config_file, neededSize + 1, "%s", optarg);
 				ptr_list[0] = config_file;
 				break;
-			case 'L':
-				neededSize = snprintf(NULL, 0, "%s", optarg);
-				launcher = (char *) malloc(neededSize + 1);
-				snprintf(launcher, neededSize + 1, "%s", optarg);
-				ptr_list[1] = launcher;
-				break;
 			case 'H':
 				neededSize = snprintf(NULL, 0, "%s", optarg);
 				hostname = (char *) malloc(neededSize + 1);
 				snprintf(hostname, neededSize + 1, "%s", optarg);
-				ptr_list[2] = hostname;
+				ptr_list[1] = hostname;
 				break;
 			case 'P':
 				neededSize = snprintf(NULL, 0, "%s", optarg);
 				port = (char *) malloc(neededSize + 1);
 				snprintf(port, neededSize + 1, "%s", optarg);
-				ptr_list[3] = port;
+				ptr_list[2] = port;
 				break;
 			case 'Q':
 				neededSize = snprintf(NULL, 0, "%s", optarg);
 				task_queue_name = (char *) malloc(neededSize + 1);
 				snprintf(task_queue_name, neededSize + 1, "%s", optarg);
-				ptr_list[4] = task_queue_name;
+				ptr_list[3] = task_queue_name;
 				break;
+#ifdef UPDATE_CANCELLATION_SUPPORT
+			case 'U':
+				neededSize = snprintf(NULL, 0, "%s", optarg);
+				update_queue_name = (char *) malloc(neededSize + 1);
+				snprintf(update_queue_name, neededSize + 1, "%s", optarg);
+				ptr_list[4] = update_queue_name;
+				break;
+#endif
 			case 'a':
 				neededSize = snprintf(NULL, 0, "%s", optarg);
 				master_hostname = (char *) malloc(neededSize + 1);
@@ -324,35 +918,57 @@ int main(int argc, char const *const *argv)
 				snprintf(master_port, neededSize + 1, "%s", optarg);
 				ptr_list[6] = master_port;
 				break;
+#ifdef UPDATE_CANCELLATION_SUPPORT
+			case 'M':
+				neededSize = snprintf(NULL, 0, "%s", optarg);
+				db_manager_queue_name = (char *) malloc(neededSize + 1);
+				snprintf(db_manager_queue_name, neededSize + 1, "%s", optarg);
+				ptr_list[7] = db_manager_queue_name;
+				break;
+			case 'D':
+				neededSize = snprintf(NULL, 0, "%s", optarg);
+				delete_queue_name = (char *) malloc(neededSize + 1);
+				snprintf(delete_queue_name, neededSize + 1, "%s", optarg);
+				ptr_list[8] = delete_queue_name;
+				break;
+#endif
 			case 'u':
 				neededSize = snprintf(NULL, 0, "%s", optarg);
 				username = (char *) malloc(neededSize + 1);
 				snprintf(username, neededSize + 1, "%s", optarg);
-				ptr_list[7] = username;
+				ptr_list[9] = username;
 				break;
 			case 'p':
 				neededSize = snprintf(NULL, 0, "%s", optarg);
 				password = (char *) malloc(neededSize + 1);
 				snprintf(password, neededSize + 1, "%s", optarg);
-				ptr_list[8] = password;
-				break;
-			case 'f':
-				neededSize = snprintf(NULL, 0, "%s", optarg);
-				framework_path = (char *) malloc(neededSize + 1);
-				snprintf(framework_path, neededSize + 1, "%s", optarg);
-				ptr_list[9] = framework_path;
+				ptr_list[10] = password;
 				break;
 			case 'n':
 				neededSize = snprintf(NULL, 0, "%s", optarg);
 				max_ncores = (char *) malloc(neededSize + 1);
 				snprintf(max_ncores, neededSize + 1, "%s", optarg);
-				ptr_list[10] = max_ncores;
+				ptr_list[11] = max_ncores;
 				break;
+#ifdef UPDATE_CANCELLATION_SUPPORT
+			case 'm':
+				neededSize = snprintf(NULL, 0, "%s", optarg);
+				cancellation_multiplication_factor = (char *) malloc(neededSize + 1);
+				snprintf(cancellation_multiplication_factor, neededSize + 1, "%s", optarg);
+				ptr_list[12] = cancellation_multiplication_factor;
+				break;
+			case 's':
+				neededSize = snprintf(NULL, 0, "%s", optarg);
+				max_cancellation_struct_size_str = (char *) malloc(neededSize + 1);
+				snprintf(max_cancellation_struct_size_str, neededSize + 1, "%s", optarg);
+				ptr_list[13] = max_cancellation_struct_size_str;
+				break;
+#endif
 			case 't':
 				neededSize = snprintf(NULL, 0, "%s", optarg);
 				thread_number_str = (char *) malloc(neededSize + 1);
 				snprintf(thread_number_str, neededSize + 1, "%s", optarg);
-				ptr_list[11] = thread_number_str;
+				ptr_list[14] = thread_number_str;
 				break;
 			case 'd':
 				msglevel = LOG_DEBUG;
@@ -372,7 +988,9 @@ int main(int argc, char const *const *argv)
 		}
 	}
 
-	set_debug_level(msglevel + 10);
+	pthread_mutex_init(&global_flag, NULL);
+
+	set_debug_level(msglevel);
 	pmesg_safe(&global_flag, LOG_INFO, __FILE__, __LINE__, "Selected log level %d\n", msglevel);
 
 	FILE *fp;
@@ -389,7 +1007,7 @@ int main(int argc, char const *const *argv)
 	}
 	pclose(fp);
 	global_ip_address[strcspn(global_ip_address, "\n")] = 0;
-	ptr_list[12] = global_ip_address;
+	ptr_list[15] = global_ip_address;
 
 	short unsigned int instance = 0;
 
@@ -404,15 +1022,6 @@ int main(int argc, char const *const *argv)
 		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Unable to open configuration file\n");
 		exit(0);
 	}
-
-	if (!launcher) {
-		if (oph_server_conf_get_param(hashtbl, "WORKER_LAUNCHER", &launcher)) {
-			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Unable to get WORKER_LAUNCHER param\n");
-			oph_server_conf_unload(&hashtbl);
-			exit(0);
-		}
-	}
-	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM WORKER_LAUNCHER: %s\n", launcher);
 
 	if (!hostname) {
 		if (oph_server_conf_get_param(hashtbl, "WORKER_HOSTNAME", &hostname)) {
@@ -441,6 +1050,59 @@ int main(int argc, char const *const *argv)
 	}
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM TASK_QUEUE_NAME: %s\n", task_queue_name);
 
+#ifdef UPDATE_CANCELLATION_SUPPORT
+	char *update_queue = 0;
+	char *delete_queue = 0;
+
+	if (!update_queue_name) {
+		if (oph_server_conf_get_param(hashtbl, "UPDATE_QUEUE_NAME", &update_queue)) {
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Unable to get UPDATE_QUEUE_NAME param\n");
+			oph_server_conf_unload(&hashtbl);
+			exit(0);
+		} else {
+			neededSize = snprintf(NULL, 0, "%s_%s_%s", update_queue, global_ip_address, port);
+			update_queue_name = (char *) malloc(neededSize + 1);
+			snprintf(update_queue_name, neededSize + 1, "%s_%s_%s", update_queue, global_ip_address, port);
+		}
+	} else {
+		neededSize = snprintf(NULL, 0, "%s_%s_%s", update_queue_name, global_ip_address, port);
+		update_queue = (char *) malloc(neededSize + 1);
+		snprintf(update_queue, neededSize + 1, "%s_%s_%s", update_queue_name, global_ip_address, port);
+
+		strcpy(update_queue_name, update_queue);
+	}
+
+	ptr_list[16] = update_queue_name;
+	if (update_queue)
+		free(update_queue);
+
+	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM UPDATE_QUEUE_NAME: %s\n", update_queue_name);
+
+	if (!delete_queue_name) {
+		if (oph_server_conf_get_param(hashtbl, "DELETE_QUEUE_NAME", &delete_queue)) {
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Unable to get DELETE_QUEUE_NAME param\n");
+			oph_server_conf_unload(&hashtbl);
+			exit(0);
+		} else {
+			neededSize = snprintf(NULL, 0, "%s_%s_%s", delete_queue, global_ip_address, port);
+			delete_queue_name = (char *) malloc(neededSize + 1);
+			snprintf(delete_queue_name, neededSize + 1, "%s_%s_%s", delete_queue, global_ip_address, port);
+		}
+	} else {
+		neededSize = snprintf(NULL, 0, "%s_%s_%s", delete_queue_name, global_ip_address, port);
+		delete_queue = (char *) malloc(neededSize + 1);
+		snprintf(delete_queue, neededSize + 1, "%s_%s_%s", delete_queue_name, global_ip_address, port);
+
+		strcpy(delete_queue_name, delete_queue);
+	}
+
+	ptr_list[17] = delete_queue_name;
+	if (delete_queue)
+		free(delete_queue);
+
+	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM DELETE_QUEUE_NAME: %s\n", delete_queue_name);
+#endif
+
 	if (!master_hostname) {
 		if (oph_server_conf_get_param(hashtbl, "MASTER_HOSTNAME", &master_hostname)) {
 			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Unable to get MASTER_HOSTNAME param\n");
@@ -458,6 +1120,17 @@ int main(int argc, char const *const *argv)
 		}
 	}
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM MASTER_PORT: %s\n", master_port);
+
+#ifdef UPDATE_CANCELLATION_SUPPORT
+	if (!db_manager_queue_name) {
+		if (oph_server_conf_get_param(hashtbl, "DBMANAGER_QUEUE_NAME", &db_manager_queue_name)) {
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Unable to get DBMANAGER_QUEUE_NAME param\n");
+			oph_server_conf_unload(&hashtbl);
+			exit(0);
+		}
+	}
+	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM DBMANAGER_QUEUE_NAME: %s\n", db_manager_queue_name);
+#endif
 
 	if (!username) {
 		if (oph_server_conf_get_param(hashtbl, "RABBITMQ_USERNAME", &username)) {
@@ -477,15 +1150,6 @@ int main(int argc, char const *const *argv)
 	}
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM RABBITMQ_PASSWORD: %s\n", password);
 
-	if (!framework_path) {
-		if (oph_server_conf_get_param(hashtbl, "FRAMEWORK_PATH", &framework_path)) {
-			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Unable to get FRAMEWORK_PATH param\n");
-			oph_server_conf_unload(&hashtbl);
-			exit(0);
-		}
-	}
-	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM FRAMEWORK_PATH: %s\n", framework_path);
-
 	if (!max_ncores) {
 		if (oph_server_conf_get_param(hashtbl, "MAX_NCORES", &max_ncores)) {
 			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Unable to get MAX_NCORES param\n");
@@ -504,9 +1168,36 @@ int main(int argc, char const *const *argv)
 	}
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM WORKER_THREAD_NUMBER: %s\n", thread_number_str);
 
+#ifdef UPDATE_CANCELLATION_SUPPORT
+	if (!cancellation_multiplication_factor) {
+		if (oph_server_conf_get_param(hashtbl, "CANCELLATION_MULTIPLICATION_FACTOR", &cancellation_multiplication_factor)) {
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Unable to get CANCELLATION_MULTIPLICATION_FACTOR param\n");
+			oph_server_conf_unload(&hashtbl);
+			exit(0);
+		}
+	}
+	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM CANCELLATION_MULTIPLICATION_FACTOR: %s\n", cancellation_multiplication_factor);
+
+	if (!max_cancellation_struct_size_str) {
+		if (oph_server_conf_get_param(hashtbl, "MAX_CANCELLATION_STRUCT_SIZE", &max_cancellation_struct_size_str)) {
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Unable to get MAX_CANCELLATION_STRUCT_SIZE param\n");
+			oph_server_conf_unload(&hashtbl);
+			exit(0);
+		}
+	}
+	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM MAX_CANCELLATION_STRUCT_SIZE: %s\n", max_cancellation_struct_size_str);
+#endif
+
 	props._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG;
 	props.content_type = amqp_cstring_bytes("text/plain");
 	props.delivery_mode = AMQP_DELIVERY_PERSISTENT;
+
+#ifdef UPDATE_CANCELLATION_SUPPORT
+	if (pthread_rwlock_init(&struct_size_lock, NULL) != 0)
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error on mutex init\n");
+	if (pthread_rwlock_init(&canc_struct_lock, NULL) != 0)
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error on mutex init\n");
+#endif
 
 	if (pthread_mutex_init(&ncores_mutex, NULL) != 0)
 		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error on mutex init\n");
@@ -523,8 +1214,45 @@ int main(int argc, char const *const *argv)
 	pthread_create_arg = (int *) malloc(sizeof(int) * thread_number);
 	conn_thread_consume_list = (amqp_connection_state_t *) malloc(sizeof(amqp_connection_state_t) * thread_number);
 
+#ifdef UPDATE_CANCELLATION_SUPPORT
+	max_cancellation_struct_size = atoi(max_cancellation_struct_size_str);
+	shared_ids_array = (int *) malloc(sizeof(int) * thread_number);
+	PID_array = (pid_t *) malloc(sizeof(pid_t) * thread_number);
+	thread_lock_list = (pthread_rwlock_t *) malloc(sizeof(pthread_rwlock_t) * thread_number);
+	conn_thread_publish_list = (amqp_connection_state_t *) malloc(sizeof(amqp_connection_state_t) * thread_number);
+	canc_struct_list = (cancellation_struct *) malloc(sizeof(cancellation_struct) * max_cancellation_struct_size);
+#endif
+
 	int ii;
+#ifdef UPDATE_CANCELLATION_SUPPORT
 	for (ii = 0; ii < thread_number; ii++) {
+		canc_struct_list[ii].id = 0;
+		canc_struct_list[ii].checks_todo = 0;
+		canc_struct_list[ii].consumed_messages = 0;
+	}
+
+	// UPDATER THREAD
+	if (pthread_create(&update_thread_tid, NULL, &update_pthread_function, NULL) != 0) {
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error creating update thread %d\n");
+		exit(0);
+	}
+	// DELETER THREAD
+	if (pthread_create(&delete_thread_tid, NULL, &delete_pthread_function, NULL) != 0) {
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error creating delete thread %d\n");
+		exit(0);
+	}
+#endif
+
+	for (ii = 0; ii < thread_number; ii++) {
+#ifdef UPDATE_CANCELLATION_SUPPORT
+		shared_ids_array[ii] = 0;
+
+		rabbitmq_publish_connection(&conn_thread_publish_list[ii], (amqp_channel_t) (ii + 1), hostname, port, username, password, update_queue_name);
+
+		if (pthread_rwlock_init(&thread_lock_list[ii], NULL) != 0)
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error on mutex init\n");
+#endif
+
 		rabbitmq_consume_connection(&conn_thread_consume_list[ii], (amqp_channel_t) (ii + 1), master_hostname, master_port, username, password, task_queue_name, rabbitmq_direct_mode, 1);
 
 		*pthread_create_arg = ii;

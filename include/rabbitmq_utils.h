@@ -16,9 +16,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <amqp_tcp_socket.h>
-#include <amqp.h>
-#include <amqp_framing.h>
+#include <rabbitmq-c/tcp_socket.h>
+#include <rabbitmq-c/amqp.h>
+#include <rabbitmq-c/framing.h>
 
 #define RABBITMQ_FAILURE -1
 #define RABBITMQ_SUCCESS 1
@@ -72,3 +72,5 @@ int close_rabbitmq_connection(amqp_connection_state_t conn, amqp_channel_t chann
  * \return                      Number of message in queue_name
  */
 int get_number_queued_messages(char *hostname, char *port, char *username, char *password, char *queue_name);
+
+void create_update_message(char *ip_address, char *port, int thread_number, char *workflow_id, char *job_id, char *delete_queue_name, char **update_message);
