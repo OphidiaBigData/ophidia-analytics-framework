@@ -385,19 +385,20 @@ int process_message(amqp_envelope_t full_message)
 	}
 	if (exec_pid == 0) {
 		if (oph_af_execute_framework(submission_string, 1, 0))
-			exit(0);
-		else
 			exit(1);
+		else
+			exit(0);
 	}
 
 	int pid_status;
 	waitpid(exec_pid, &pid_status, 0);
 	if (WIFEXITED(pid_status) != 0) {
 		if (WEXITSTATUS(pid_status) == 0)
-			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Framework execution failed!\n");
-		else
 			pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Framework execution successful!\n");
-	}
+		else
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Framework execution failed! Error on processing task\n");
+	} else
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Framework execution failed! Child process crashed\n");
 
 	pthread_mutex_lock(&ncores_mutex);
 	total_used_ncores -= process_ncores;
