@@ -105,6 +105,7 @@ if HAVE_ESDM
 DRIVER+=liboph_importesdmoperator.la
 DRIVER+=liboph_importesdm2operator.la
 DRIVER+=liboph_exportesdmoperator.la
+#DRIVER+=liboph_concatesdmoperator.la
 endif
 
 driver_LTLIBRARIES = $(DRIVER)
@@ -231,7 +232,6 @@ liboph_importnc2operator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} $(NETCDF_
 liboph_importnc2operator_la_SOURCES = OPH_IMPORTNC2_operator.c
 liboph_importnc2operator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_importnc2operator_la_LIBADD = -lz ${MYSQL_LDFLAGS} -L.. $(NETCDF_LIBS) -loph_nc $(BASIC_LIB) -lpthread -loph_dimension -loph_hierarchy  -loph_datacube -loph_ioserver -loph_binary_io -loph_driver_proc
-
 
 liboph_concatncoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} $(NETCDF_CFLAGS) -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
 liboph_concatncoperator_la_SOURCES = OPH_CONCATNC_operator.c
@@ -397,5 +397,10 @@ liboph_exportesdmoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} $(ESDM_C
 liboph_exportesdmoperator_la_SOURCES = OPH_EXPORTESDM_operator.c
 liboph_exportesdmoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_exportesdmoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(ESDM_LIBS) $(BASIC_LIB) -loph_directory -loph_dimension -loph_datacube -loph_ioserver
+
+#liboph_concatesdmoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} $(ESDM_CFLAGS) -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE) -I../../include/esdm_kernels
+#liboph_concatesdmoperator_la_SOURCES = OPH_CONCATESDM_operator.c
+#liboph_concatesdmoperator_la_LDFLAGS = -module -avoid-version -no-undefined
+#liboph_concatesdmoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(ESDM_LIBS) $(BASIC_LIB) -loph_dimension -loph_hierarchy -loph_datacube -loph_ioserver -loph_binary_io -loph_driver_proc -L../esdm_kernels -loph_esdm_kernels
 endif
 
