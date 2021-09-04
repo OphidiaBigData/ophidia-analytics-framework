@@ -36,18 +36,16 @@ WARNING: It imports only mono-dimensional coordinate variables.
             Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided 
             It implicitly defines implicit dimension number and level (order).  
             Must be the same number of &quot;imp_concept_level&quot; 
-            If default value &quot;auto&quot; is specified, then the last dimension of the measure in the nc file 
-            will be used as implicit dimension.
+            If default value &quot;auto&quot; is specified, then the last dimension of the measure will be used as implicit dimension.
 - subset_dims : dimension names used for the subsetting.
                 Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
                 Must be the same number of &quot;subset_filter&quot; 
 - subset_filter : enumeration of comma-separated elementary filters (1 series of filters for each dimension). Possible forms are:
-                  -- start_value : single value specifying the start index of the subset
-                  -- start_value:stop_value : select elements from start_index to stop_index
-                  Values should be numbers.
-                  Example: subset_dims=lat|lon;subset_filter=35:45|15:20;
-                  Multiple-value field: list of filters separated by &quot;|&quot; can be provided  
-                  Must be the same number of &quot;subset_dims&quot;
+                  -- start_value : single value specifying the start index of the subset (from 0 to size - 1)
+                  -- start_value:stop_value : select elements from start_index to stop_index (from 0 to size - 1)
+                  Values should be numbers, for example: subset_dims=lat|lon;subset_filter=35:45|15:20;
+                  Multiple-value field: list of filters separated by &quot;|&quot; can be provided.
+                  Must be the same number of &quot;subset_dims&quot;.
 - subset_type : if set to &quot;index&quot; (default), the subset_filter is considered on dimension index. 
                 With &quot;coord&quot;, filter is considered on dimension values.
                 In case of single value, that value is used for all the dimensions.
