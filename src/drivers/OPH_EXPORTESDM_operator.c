@@ -268,6 +268,7 @@ int task_init(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
+/*
 	ret = esdm_mkfs(ESDM_FORMAT_PURGE_RECREATE, ESDM_ACCESSIBILITY_GLOBAL);
 	if (ret) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "ESDM fs cannot be created\n");
@@ -281,6 +282,8 @@ int task_init(oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, "ESDM fs cannot be created\n");
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
+*/
+
 	//For error checking
 	char id_string[5][OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
 	memset(id_string, 0, sizeof(id_string));

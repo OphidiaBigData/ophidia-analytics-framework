@@ -3345,7 +3345,7 @@ int task_init(oph_operator_struct * handle)
 
 				char fill_value[measure->dspace->type->size];
 				if (esdm_dataset_get_fill_value(measure->dataset, fill_value)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering number of global attributes\n");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get the missing value\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_NATTS_ERROR);
 					hashtbl_destroy(key_tbl);
 					hashtbl_destroy(required_tbl);
