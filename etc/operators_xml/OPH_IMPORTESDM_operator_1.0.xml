@@ -22,10 +22,10 @@ WARNING: It imports only mono-dimensional coordinate variables.
 - nhost : number of output hosts. With default value (&apos;0&apos;) all host available in the host partition are used.
 - nfrag : number of fragments per database. With default value (&apos;0&apos;) the number of fragments will be the ratio of
           the product of sizes of the n-1 most outer explicit dimensions to the product of the other arguments.
-- measure : name of the measure related to the NetCDF file.
+- measure : name of the ESDM dataset.
 - run : If set to &apos;no&apos; the operator simulates the import and computes the fragmentation parameters 
         that would be used, else if set to &apos;yes&apos; the actual import operation is executed.
-- src_path : link to the ESDM object.
+- src_path : link to the ESDM container.
 - cdd : absolute path corresponding to the current directory on data repository.
 - exp_dim : names of explicit dimensions.
             Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  

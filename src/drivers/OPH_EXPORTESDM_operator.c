@@ -43,89 +43,11 @@
 
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
+#include "oph_esdm_library.h"
 
 #include <errno.h>
 
-#include <esdm.h>
-
 #define OPH_EXPORTESDM_DEFAULT_OUTPUT "default"
-
-int _oph_esdm_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, size_t ** id, int i, int n)
-{
-	if (i < n - 1) {
-		unsigned long tmp;
-		tmp = total / sizemax[i];
-		*(id[i]) = (size_t) (residual / tmp + 1);
-		residual %= tmp;
-		_oph_esdm_get_dimension_id(residual, tmp, sizemax, id, i + 1, n);
-	} else {
-		*(id[i]) = (size_t) (residual + 1);
-	}
-	return 0;
-}
-
-int oph_esdm_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n, size_t ** id)
-{
-	if (n > 0) {
-		int i;
-		unsigned long total = 1;
-		for (i = 0; i < n; ++i)
-			total *= sizemax[i];
-		_oph_esdm_get_dimension_id(ID - 1, total, sizemax, id, 0, n);
-	}
-	return 0;
-}
-
-int _oph_esdm_get_next_id(int64_t * id, int64_t * sizemax, int i, int n)
-{
-	if (i < 0)
-		return 1;	// Overflow
-	(id[i])++;
-	if (id[i] >= sizemax[i]) {
-		id[i] = 0;
-		return _oph_esdm_get_next_id(id, sizemax, i - 1, n);
-	}
-	return 0;
-}
-
-int oph_esdm_get_next_id(int64_t * id, int64_t * sizemax, int n)
-{
-	return _oph_esdm_get_next_id(id, sizemax, n - 1, n);
-}
-
-int oph_esdm_get_esdm_type(char *in_c_type, esdm_type_t * type_nc)
-{
-	if (!strcasecmp(in_c_type, OPH_COMMON_BYTE_TYPE)) {
-		*type_nc = SMD_DTYPE_INT8;
-		return 0;
-	}
-	if (!strcasecmp(in_c_type, OPH_COMMON_SHORT_TYPE)) {
-		*type_nc = SMD_DTYPE_INT16;
-		return 0;
-	}
-	if (!strcasecmp(in_c_type, OPH_COMMON_INT_TYPE)) {
-		*type_nc = SMD_DTYPE_INT32;
-		return 0;
-	}
-	if (!strcasecmp(in_c_type, OPH_COMMON_LONG_TYPE)) {
-		*type_nc = SMD_DTYPE_INT64;
-		return 0;
-	}
-	if (!strcasecmp(in_c_type, OPH_COMMON_FLOAT_TYPE)) {
-		*type_nc = SMD_DTYPE_FLOAT;
-		return 0;
-	}
-	if (!strcasecmp(in_c_type, OPH_COMMON_DOUBLE_TYPE)) {
-		*type_nc = SMD_DTYPE_DOUBLE;
-		return 0;
-	}
-	if (!strcasecmp(in_c_type, OPH_COMMON_BIT_TYPE)) {
-		*type_nc = SMD_DTYPE_INT8;
-		return 0;
-	}
-	pmesg(LOG_ERROR, __FILE__, __LINE__, "Data type '%s' not supported\n", in_c_type);
-	return -1;
-}
 
 int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
@@ -854,17 +776,16 @@ int task_execute(oph_operator_struct * handle)
 	int64_t start[num_of_dims];
 	int64_t count[num_of_dims];
 
-	size_t dim_val_max[nexp];
-	size_t dim_val_min[nexp];
-	int dim_start[num_of_dims];
-	int dim_divider[nexp];
+	int64_t dim_val_max[nexp];
+	int64_t dim_val_min[nexp];
 	int64_t dim_val_num[num_of_dims];
-
-	size_t *maxptr[nexp];
-	size_t *minptr[nexp];
+	int64_t *maxptr[nexp];
+	int64_t *minptr[nexp];
 
 	int64_t dimids[num_of_dims];
-	int vardimsids[num_of_dims];
+
+	int dim_start[num_of_dims];
+	int dim_divider[nexp];
 
 	int tmp_div = 0;
 	int tmp_rem = 0;
@@ -1003,29 +924,28 @@ int task_execute(oph_operator_struct * handle)
 				//Find max values for all explicit dimensions and min value for explicit ophlevel=1 dimension
 				memset(dim_val_max, 0, sizeof(dim_val_max));
 				memset(dim_val_min, 0, sizeof(dim_val_min));
-				memset(dim_start, 0, sizeof(dim_start));
-				memset(dim_divider, 0, sizeof(dim_divider));
 				memset(dim_val_num, 0, sizeof(dim_val_num));
 
 				memset(maxptr, 0, sizeof(maxptr));
 				memset(minptr, 0, sizeof(minptr));
 
 				memset(dimids, 0, sizeof(dimids));
-				memset(vardimsids, 0, sizeof(vardimsids));
+
+				memset(dim_start, 0, sizeof(dim_start));
+				memset(dim_divider, 0, sizeof(dim_divider));
 
 				if (nexp) {
 					for (inc = 0; inc < nexp; inc++)
-						maxptr[inc] = &(dim_val_max[inc]);
-
+						maxptr[inc] = dim_val_max + inc;
 					for (inc = 0; inc < nexp; inc++)
-						minptr[inc] = &(dim_val_min[inc]);
+						minptr[inc] = dim_val_min + inc;
 					oph_esdm_compute_dimension_id(frags.value[k].key_start, dims_size, nexp, minptr);
 					oph_esdm_compute_dimension_id(frags.value[k].key_end, dims_size, nexp, maxptr);
 					for (inc = 0; inc < nexp; inc++) {
 						if (dim_val_max[inc] < dim_val_min[inc])
 							dim_val_num[inc] = dims[inc].dimsize;	// Explicit dimension is wrapped around in the same fragment
 						else
-							dim_val_num[inc] = dim_val_max[inc] - dim_val_min[inc] + 1;
+							dim_val_num[inc] = 1 + dim_val_max[inc] - dim_val_min[inc];
 					}
 				}
 				// I know that implicit dimensions are at the end of dims array
@@ -1037,8 +957,8 @@ int task_execute(oph_operator_struct * handle)
 				for (inc = 0; inc < nexp; inc++) {
 					dim_divider[inc] = tmp_div / dims_size[inc];
 					tmp_div = dim_divider[inc];
-					dim_start[inc] = (int) (tmp_rem) / dim_divider[inc];
-					tmp_rem = (int) (tmp_rem) % dim_divider[inc];
+					dim_start[inc] = tmp_rem / dim_divider[inc];
+					tmp_rem = tmp_rem % dim_divider[inc];
 				}
 				for (inc = nexp; inc < num_of_dims; inc++)
 					dim_start[inc] = 0;
@@ -1061,14 +981,7 @@ int task_execute(oph_operator_struct * handle)
 				}
 
 				for (inc = 0; inc < num_of_dims; inc++) {
-/*
-					if ((retval = nc_def_dim(ncid, dims[inc].dimname, dims[inc].dimunlimited ? NC_UNLIMITED : dim_val_num[inc], &dimids[inc]))) {
-					}
 
-					//Also define coordinate varibles associated to dimensions
-					if ((retval = nc_def_var(ncid, dims[inc].dimname, dims[inc].dimtype, 1, &dimids[inc], &vardimsids[inc]))) {
-					}
-*/
 					type_dim = SMD_DTYPE_UNKNOWN;
 					if (oph_esdm_get_esdm_type(dims[inc].dimtype, &type_dim)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension type not supported\n");
