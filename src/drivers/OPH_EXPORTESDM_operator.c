@@ -1232,6 +1232,10 @@ int task_execute(oph_operator_struct * handle)
 					while ((row = mysql_fetch_row(read_result))) {
 						mvariable = row[1];
 						mkey = row[2];
+#ifdef OPH_ESDM_SKIP_ATTRIBUTES
+						if ((!mvariable && !strcmp(mkey, _NC_PROPERTIES)) || (mvariable && !strcmp(mkey, _NC_BOUNDS)))
+							continue;
+#endif
 						mtype = row[3];
 						mvalue = row[4];
 						retval = ESDM_ERROR;

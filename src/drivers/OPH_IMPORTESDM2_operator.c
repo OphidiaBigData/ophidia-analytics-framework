@@ -2796,8 +2796,10 @@ int task_init(oph_operator_struct * handle)
 
 				current = smd_attr_get_child(md, i);
 
-				if (!strcmp(current->name, _NC_DIMS) || !strcmp(current->name, _NC_SIZES))	// Skip these special attibutes
+#ifdef OPH_ESDM_SKIP_ATTRIBUTES
+				if (!strcmp(current->name, _NC_DIMS) || !strcmp(current->name, _NC_SIZES) || !strcmp(current->name, _NC_PROPERTIES))	// Skip these special attibutes
 					continue;
+#endif
 
 				// Check for attribute name
 				memset(key, 0, OPH_COMMON_BUFFER_LEN);
@@ -2975,6 +2977,11 @@ int task_init(oph_operator_struct * handle)
 				for (i = 0; i < natts; i++) {
 
 					current = smd_attr_get_child(md, i);
+
+#ifdef OPH_ESDM_SKIP_ATTRIBUTES
+					if (!strcmp(current->name, _NC_BOUNDS))
+						continue;
+#endif
 
 					// Check for attribute name
 					memset(key, 0, OPH_COMMON_BUFFER_LEN);
