@@ -719,6 +719,7 @@ int task_execute(oph_operator_struct * handle)
 	MYSQL_RES *read_result = NULL;
 	MYSQL_ROW row;
 	char *mvariable, *mkey, *mtype, *mvalue;
+	char *names[num_of_dims];
 
 	for (m = 0; m < num_of_dims; m++) {
 		n = snprintf(operation, OPH_COMMON_BUFFER_LEN, "%s", MYSQL_DIMENSION);
@@ -1065,6 +1066,34 @@ int task_execute(oph_operator_struct * handle)
 						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
 
+					names[0] = dims[inc].dimname;
+					ret = esdm_dataset_name_dims(dimset[inc], names);
+					if (ret) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to define variable: %s\n", "");
+						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
+							OPH_LOG_OPH_EXPORTESDM_NC_DEFINE_VAR_ERROR, "");
+						oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
+						oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
+						oph_odb_stge_free_fragment_list(&frags);
+						oph_odb_stge_free_db_list(&dbs);
+						oph_odb_stge_free_dbms_list(&dbmss);
+						oph_odb_free_ophidiadb(&oDB_slave);
+						for (l = 0; l < inc; l++) {
+							esdm_dataset_close(dimset[l]);
+							esdm_dataspace_destroy(dimspace[l]);
+						}
+						esdm_dataspace_destroy(dimspace[inc]);
+						esdm_container_close(container);
+						for (l = 0; l < num_of_dims; l++) {
+							if (dim_rows[l]) {
+								free(dim_rows[l]);
+								dim_rows[l] = NULL;
+							}
+						}
+						free(dim_rows);
+						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					}
+
 					ret = esdm_dataset_commit(dimset[inc]);
 					if (ret) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to define variable: %s\n", "");
@@ -1146,7 +1175,6 @@ int task_execute(oph_operator_struct * handle)
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 
-				char *names[num_of_dims];
 				for (inc = 0; inc < num_of_dims; inc++)
 					names[inc] = dims[inc].dimname;
 				ret = esdm_dataset_name_dims(dataset, names);
