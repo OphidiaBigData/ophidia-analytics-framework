@@ -242,7 +242,12 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strcmp(value, OPH_EXPORTESDM_DEFAULT_OUTPUT)) {
-		if (!(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name = (char *) strdup(value))) {
+		if (strncmp(value, OPH_ESDM_PREFIX, 7)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong ESDM object\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, "Wrong ESDM object\n");
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		if (!(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name = (char *) strdup(value + 7))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTESDM_MEMORY_ERROR_INPUT,
 				"output name");
@@ -442,7 +447,7 @@ int task_init(oph_operator_struct * handle)
 
 	if (!((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name) {
 		((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name =
-		    (char *) malloc(strlen(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->measure) + OPH_COMMON_MAX_INT_LENGHT + 2);
+		    (char *) malloc(strlen(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->measure) + OPH_COMMON_MAX_INT_LENGHT + 10);
 		if (!((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTESDM_MEMORY_ERROR_INPUT,
@@ -1757,9 +1762,9 @@ int task_execute(oph_operator_struct * handle)
 		if (oph_json_is_objkey_printable
 		    (((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_EXPORTESDM)) {
 			if (((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
-				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "esdm://%s", ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name);
+				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s%s", OPH_ESDM_PREFIX, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name);
 			else
-				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "esdm://%s_i for i from 0 to %d", ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name,
+				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s%s_i for i from 0 to %d", OPH_ESDM_PREFIX, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name,
 					 ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->total_fragment_number - 1);
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_EXPORTESDM, "Output File", jsonbuf)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");

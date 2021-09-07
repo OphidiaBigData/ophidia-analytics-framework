@@ -325,7 +325,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (strncmp(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->nc_file_path, "esdm://", 7)) {
+	if (strncmp(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->nc_file_path, OPH_ESDM_PREFIX, 7)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong ESDM object\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Wrong ESDM object\n");
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;

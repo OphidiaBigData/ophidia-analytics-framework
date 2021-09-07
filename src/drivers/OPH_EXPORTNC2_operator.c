@@ -420,7 +420,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	size_t s;
 	char *output_name = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name;
-	if (output_name && strncmp(output_name, "esdm://", 7)) {
+	if (output_name && strncmp(output_name, OPH_ESDM_PREFIX, 7)) {
 		for (s = 0; s < strlen(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name); s++) {
 			if ((((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name[s] == '/')
 			    || (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name[s] == ':')) {
@@ -557,7 +557,7 @@ int task_init(oph_operator_struct * handle)
 		//Check if file exists
 		char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' };
 		char *output_name = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name;
-		if (!output_name || strncmp(output_name, "esdm://", 7)) {
+		if (!output_name || strncmp(output_name, OPH_ESDM_PREFIX, 7)) {
 			snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE "_%d" OPH_EXPORTNC2_OUTPUT_FILE_EXT, path,
 				 output_name ? output_name : ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure, "", datacube_id);
 			if (stat(file_name, &st)) {
@@ -1112,7 +1112,7 @@ int task_execute(oph_operator_struct * handle)
 
 		int retval, ncid, cmode = NC_NETCDF4 | NC_MPIIO;
 		//CREATE FILE
-		if (strncmp(file, "esdm://", 7))
+		if (strncmp(file, OPH_ESDM_PREFIX, 7))
 			n = snprintf(file_name, sizeof(file_name), OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE, path, file, strstr(file, OPH_EXPORTNC2_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC2_OUTPUT_FILE_EXT);
 		else
 			n = snprintf(file_name, sizeof(file_name), "%s", file);
@@ -1907,7 +1907,7 @@ int task_execute(oph_operator_struct * handle)
 
 			char jsonbuf[OPH_COMMON_BUFFER_LEN];
 
-			if (!strncmp(file, "esdm://", 7)) {
+			if (!strncmp(file, OPH_ESDM_PREFIX, 7)) {
 
 				// ADD OUTPUT PID TO JSON AS TEXT
 				if (oph_json_is_objkey_printable
