@@ -1093,33 +1093,6 @@ int task_execute(oph_operator_struct * handle)
 						free(dim_rows);
 						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
-
-					ret = esdm_dataset_commit(dimset[inc]);
-					if (ret) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to define variable: %s\n", "");
-						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
-							OPH_LOG_OPH_EXPORTESDM_NC_DEFINE_VAR_ERROR, "");
-						oph_dc_disconnect_from_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
-						oph_dc_cleanup_dbms(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->server);
-						oph_odb_stge_free_fragment_list(&frags);
-						oph_odb_stge_free_db_list(&dbs);
-						oph_odb_stge_free_dbms_list(&dbmss);
-						oph_odb_free_ophidiadb(&oDB_slave);
-						for (l = 0; l < inc; l++) {
-							esdm_dataset_close(dimset[l]);
-							esdm_dataspace_destroy(dimspace[l]);
-						}
-						esdm_dataspace_destroy(dimspace[inc]);
-						esdm_container_close(container);
-						for (l = 0; l < num_of_dims; l++) {
-							if (dim_rows[l]) {
-								free(dim_rows[l]);
-								dim_rows[l] = NULL;
-							}
-						}
-						free(dim_rows);
-						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					}
 				}
 
 				ret = esdm_dataspace_create(num_of_dims, dimids, type_nc, &dataspace);
@@ -1384,7 +1357,11 @@ int task_execute(oph_operator_struct * handle)
 					mysql_free_result(read_result);
 				}
 
-				ret = esdm_dataset_commit(dataset);
+				ret = 0;
+				for (inc = 0; !ret && (inc < num_of_dims); inc++)
+					ret = esdm_dataset_commit(dimset[inc]);
+				if (!ret)
+					ret = esdm_dataset_commit(dataset);
 				if (ret) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to complete output definitions: %s\n", "");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container,
