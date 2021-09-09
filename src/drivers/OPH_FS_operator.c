@@ -26,8 +26,12 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+#ifdef OPH_NETCDF
+#include "oph_nc_library.h"
+#endif
+
 #ifdef OPH_ESDM
-#include <esdm.h>
+#include "oph_esdm_library.h"
 #endif
 
 #include "drivers/OPH_FS_operator.h"
@@ -48,6 +52,29 @@
 
 #define OPH_FS_HPREFIX '.'
 #define OPH_SEPARATOR_PARAM ";"
+
+#ifdef OPH_NETCDF
+int _oph_check_nc_measure(const char *file, const char *measure)
+{
+	int ncid, varidp;
+
+	if (!file || !measure) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing parameter\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Missing parameter\n");
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	if (nc_open(file, NC_NOWRITE, &ncid))
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+
+	if (nc_inq_varid(ncid, measure, &varidp))
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+
+	nc_close(ncid);
+
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+}
+#endif
 
 int cmpfunc(const void *a, const void *b)
 {
@@ -445,7 +472,7 @@ int task_execute(oph_operator_struct * handle)
 
 #ifdef OPH_ESDM
 	if (file_is_valid) {
-		url = strstr(((OPH_FS_operator_handle *) handle->operator_handle)->file, "esdm://");
+		url = strstr(((OPH_FS_operator_handle *) handle->operator_handle)->file, OPH_ESDM_PREFIX);
 		if (url && (((OPH_FS_operator_handle *) handle->operator_handle)->mode != OPH_FS_MODE_LS)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse '%s' to perform this operation\n", ((OPH_FS_operator_handle *) handle->operator_handle)->file);
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_PATH_PARSING_ERROR);
@@ -652,6 +679,15 @@ int task_execute(oph_operator_struct * handle)
 								break;
 							lstat(real_path, &file_stat);
 							if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode)) {
+#ifdef OPH_NETCDF
+								if (((OPH_FS_operator_handle *) handle->operator_handle)->measure
+								    && strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->measure, OPH_FRAMEWORK_FS_DEFAULT_PATH)) {
+									if (!S_ISREG(file_stat.st_mode))
+										continue;
+									if (_oph_check_nc_measure(real_path, ((OPH_FS_operator_handle *) handle->operator_handle)->measure))
+										continue;
+								}
+#endif
 								if (((OPH_FS_operator_handle *) handle->operator_handle)->realpath) {
 									_real_path = real_path;
 									if (strlen(abs_path) > 1)
@@ -700,16 +736,29 @@ int task_execute(oph_operator_struct * handle)
 							}
 
 							char filenames[jj][OPH_COMMON_BUFFER_LEN], *start = tbuffer, *save_pointer = NULL;
-							for (ii = 0; ii < jj; ++ii, start = NULL) {
+							int jjc = jj;
+							for (ii = jj = 0; ii < jjc; ++ii, start = NULL) {
 								filename = strtok_r(start, OPH_SEPARATOR_PARAM, &save_pointer);
 								lstat(filename, &file_stat);
+#ifdef OPH_NETCDF
+								if (((OPH_FS_operator_handle *) handle->operator_handle)->measure
+								    && strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->measure, OPH_FRAMEWORK_FS_DEFAULT_PATH)) {
+									if (!S_ISREG(file_stat.st_mode))
+										continue;
+									if (_oph_check_nc_measure(filename, ((OPH_FS_operator_handle *) handle->operator_handle)->measure))
+										continue;
+
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Found '%s'\n", filename);
+
+								}
+#endif
 								if (((OPH_FS_operator_handle *) handle->operator_handle)->realpath) {
 									if (nn)
 										for (iii = 0; filename && *filename && (*filename == abs_path[iii]); iii++, filename++);
 								} else
 									for (ni = 0; ni < nn; ++ni)
 										filename = strchr(filename, '/') + 1;
-								snprintf(filenames[ii], OPH_COMMON_BUFFER_LEN, "%s%s", filename, S_ISDIR(file_stat.st_mode) ? "/" : "");
+								snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s%s", filename, S_ISDIR(file_stat.st_mode) ? "/" : "");
 							}
 							result = write_json(filenames, jj, handle->operator_json, num_fields);
 						}
@@ -946,6 +995,10 @@ int env_unset(oph_operator_struct * handle)
 	}
 	free((OPH_FS_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
+
+#ifdef OPH_ESDM
+	handle->dlh = NULL;
+#endif
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
