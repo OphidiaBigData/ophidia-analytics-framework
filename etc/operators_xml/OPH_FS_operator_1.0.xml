@@ -40,6 +40,8 @@ It manages folders of the Ophidia filesystem.
 - subset_type : if set to &quot;index&quot; (default), the subset_filter is considered on dimension index. 
                 With &quot;coord&quot;, filter is considered on dimension values.
                 In case of single value, that value is used for all the dimensions.
+- time_filter : enable filters using dates for time dimensions; enabled by default.
+- offset : it is added to the bounds of subset intervals defined with &quot;subset_filter&quot; in case of &quot;coord&quot; filter type is used.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -80,5 +82,7 @@ SUBMISSION STRING: &quot;operator=oph_fs;command=cd;dpath=folder1;cdd=/absolute/
 		<argument type="string" mandatory="no" default="none" multivalue="yes">subset_dims</argument>
 		<argument type="string" mandatory="no" default="index" values="index|coord" multivalue="yes">subset_type</argument>
 		<argument type="string" mandatory="no" default="all" multivalue="yes">subset_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">time_filter</argument>
+		<argument type="real" mandatory="no" default="0" multivalue="yes">offset</argument>
     </args>
 </operator>

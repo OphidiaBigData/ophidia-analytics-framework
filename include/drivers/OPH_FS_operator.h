@@ -64,6 +64,14 @@ typedef struct _OPH_FS_operator_handle {
 	int realpath;
 	char **objkeys;
 	int objkeys_num;
+	int time_filter;
+	char **sub_dims;
+	char **sub_filters;
+	char **sub_types;
+	int number_of_sub_dims;
+	int number_of_sub_filters;
+	int number_of_sub_types;
+	double *offset;
 } OPH_FS_operator_handle;
 
 

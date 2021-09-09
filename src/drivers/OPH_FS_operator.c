@@ -274,6 +274,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_FS_operator_handle *) handle->operator_handle)->realpath = 0;
 	((OPH_FS_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_FS_operator_handle *) handle->operator_handle)->objkeys_num = -1;
+	((OPH_FS_operator_handle *) handle->operator_handle)->time_filter = 1;
+	((OPH_FS_operator_handle *) handle->operator_handle)->sub_dims = NULL;
+	((OPH_FS_operator_handle *) handle->operator_handle)->sub_filters = NULL;
+	((OPH_FS_operator_handle *) handle->operator_handle)->sub_types = NULL;
+	((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_dims = 0;
+	((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_filters = 0;
+	((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_types = 0;
+	((OPH_FS_operator_handle *) handle->operator_handle)->offset = NULL;
 
 	//Only master process has to continue
 	if (handle->proc_rank != 0)
@@ -417,6 +425,99 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MEMORY_ERROR_INPUT, OPH_IN_PARAM_CDD);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_TIME_FILTER);
+	if (value && !strcmp(value, OPH_COMMON_NO_VALUE))
+		((OPH_FS_operator_handle *) handle->operator_handle)->time_filter = 0;
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OFFSET);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OFFSET);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OFFSET);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	char **s_offset = NULL, issubset = 0, isfilter = 0;
+	int i, s_offset_num = 0;
+	if (oph_tp_parse_multiple_value_param(value, &s_offset, &s_offset_num)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING);
+		oph_tp_free_multiple_value_param_list(s_offset, s_offset_num);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (s_offset_num > 0) {
+		double *offset = ((OPH_FS_operator_handle *) handle->operator_handle)->offset = (double *) calloc(s_offset_num, sizeof(double));
+		if (!offset) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MEMORY_ERROR_INPUT, OPH_IN_PARAM_OFFSET);
+			oph_tp_free_multiple_value_param_list(s_offset, s_offset_num);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		for (i = 0; i < s_offset_num; ++i)
+			offset[i] = (double) strtod(s_offset[i], NULL);
+		oph_tp_free_multiple_value_param_list(s_offset, s_offset_num);
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_DIMENSIONS);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_DIMENSIONS);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SUBSET_DIMENSIONS);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_NONE_FILTER, OPH_TP_TASKLEN)) {
+		issubset = 1;
+		if (oph_tp_parse_multiple_value_param
+		    (value, &((OPH_FS_operator_handle *) handle->operator_handle)->sub_dims, &((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_dims)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_FILTER);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_FILTER);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SUBSET_FILTER);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_ALL_FILTER, OPH_TP_TASKLEN)) {
+		isfilter = 1;
+		if (oph_tp_parse_multiple_value_param
+		    (value, &((OPH_FS_operator_handle *) handle->operator_handle)->sub_filters, &((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_filters)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+	}
+
+	if ((issubset && !isfilter) || (!issubset && isfilter)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_dims != ((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_filters) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_FILTER_TYPE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (oph_tp_parse_multiple_value_param(value, &((OPH_FS_operator_handle *) handle->operator_handle)->sub_types, &((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_types)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_dims
+	    && (((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_types > ((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_dims)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -747,9 +848,6 @@ int task_execute(oph_operator_struct * handle)
 										continue;
 									if (_oph_check_nc_measure(filename, ((OPH_FS_operator_handle *) handle->operator_handle)->measure))
 										continue;
-
-									pmesg(LOG_ERROR, __FILE__, __LINE__, "Found '%s'\n", filename);
-
 								}
 #endif
 								if (((OPH_FS_operator_handle *) handle->operator_handle)->realpath) {
@@ -993,6 +1091,23 @@ int env_unset(oph_operator_struct * handle)
 		oph_tp_free_multiple_value_param_list(((OPH_FS_operator_handle *) handle->operator_handle)->objkeys, ((OPH_FS_operator_handle *) handle->operator_handle)->objkeys_num);
 		((OPH_FS_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	}
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->sub_types) {
+		oph_tp_free_multiple_value_param_list(((OPH_FS_operator_handle *) handle->operator_handle)->sub_types, ((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_types);
+		((OPH_FS_operator_handle *) handle->operator_handle)->sub_types = NULL;
+	}
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->sub_dims) {
+		oph_tp_free_multiple_value_param_list(((OPH_FS_operator_handle *) handle->operator_handle)->sub_dims, ((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_dims);
+		((OPH_FS_operator_handle *) handle->operator_handle)->sub_dims = NULL;
+	}
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->sub_filters) {
+		oph_tp_free_multiple_value_param_list(((OPH_FS_operator_handle *) handle->operator_handle)->sub_filters, ((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_filters);
+		((OPH_FS_operator_handle *) handle->operator_handle)->sub_filters = NULL;
+	}
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->offset) {
+		free(((OPH_FS_operator_handle *) handle->operator_handle)->offset);
+		((OPH_FS_operator_handle *) handle->operator_handle)->offset = NULL;
+	}
+
 	free((OPH_FS_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
 

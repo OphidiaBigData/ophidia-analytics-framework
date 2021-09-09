@@ -867,12 +867,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		oph_tp_free_multiple_value_param_list(s_offset, s_offset_num);
 	}
 
-	char **sub_dims = 0;
-	char **sub_filters = 0;
+	char **sub_dims = NULL;
+	char **sub_filters = NULL;
 	char **sub_types = NULL;
 	int number_of_sub_dims = 0;
 	int number_of_sub_filters = 0;
 	int number_of_sub_types = 0;
+	char issubset = 0, isfilter = 0;
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_DIMENSIONS);
 	if (!value) {
@@ -882,8 +883,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			free(offset);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-
-	short int issubset = 0;
 	if (strncmp(value, OPH_COMMON_NONE_FILTER, OPH_TP_TASKLEN)) {
 		issubset = 1;
 		if (oph_tp_parse_multiple_value_param(value, &sub_dims, &number_of_sub_dims)) {
@@ -905,9 +904,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			free(offset);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-
-	short int isfilter = 0;
-
 	if (strncmp(value, OPH_COMMON_ALL_FILTER, OPH_TP_TASKLEN)) {
 		isfilter = 1;
 		if (oph_tp_parse_multiple_value_param(value, &sub_filters, &number_of_sub_filters)) {
