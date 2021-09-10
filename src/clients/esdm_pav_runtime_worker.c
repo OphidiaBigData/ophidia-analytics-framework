@@ -43,8 +43,6 @@ int total_used_ncores = 0;
 pthread_cond_t cond_var;
 pthread_mutex_t ncores_mutex;
 
-pthread_mutex_t framework_mutex;
-
 #ifdef UPDATE_CANCELLATION_SUPPORT
 int *shared_ids_array = NULL;
 pid_t *PID_array = NULL;
@@ -191,8 +189,6 @@ void release_main()
 	if (delete_queue_from_rabbitmq)
 		free(delete_queue_from_rabbitmq);
 
-	for (ii = 0; ii < thread_number; ii++)
-		pthread_rwlock_destroy(&thread_lock_list[ii]);
 	pthread_rwlock_destroy(&struct_size_lock);
 	pthread_rwlock_destroy(&canc_struct_lock);
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "All locks have been destroyed\n");
@@ -204,8 +200,10 @@ void release_main()
 	close_rabbitmq_connection(consume_updater_conn, default_channel);
 	close_rabbitmq_connection(consume_delete_conn, default_channel);
 
-	for (ii = 0; ii < thread_number; ii++)
+	for (ii = 0; ii < thread_number; ii++) {
+		pthread_rwlock_destroy(&thread_lock_list[ii]);
 		close_rabbitmq_connection(conn_thread_publish_list[ii], (amqp_channel_t) (ii + 1));
+	}
 
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "All RabbitMQ connections for cancellation system have been closed (%d connections)\n", ii + 6);
 #endif
@@ -236,10 +234,12 @@ void release_main()
 
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "All memory allocations have been released\n");
 
-	pthread_mutex_destroy(&global_flag);
-	pthread_mutex_destroy(&ncores_mutex);
-	pthread_mutex_destroy(&framework_mutex);
-	pthread_cond_destroy(&cond_var);
+	if (pthread_mutex_destroy(&global_flag) != 0)
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error on mutex destroy\n");
+	if (pthread_mutex_destroy(&ncores_mutex) != 0)
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error on mutex destroy\n");
+	if (pthread_cond_destroy(&cond_var) != 0)
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error on condition variable destroy\n");
 
 	exit(0);
 }
@@ -543,7 +543,6 @@ void *update_pthread_function()
 	rabbitmq_consume_connection(&consume_updater_conn, default_channel, hostname, port, username, password, update_queue_name, rabbitmq_direct_mode, 1);
 	rabbitmq_publish_connection(&publish_db_conn, default_channel, master_hostname, master_port, username, password, db_manager_queue_name);
 
-
 	while (consume_updater_conn) {
 		amqp_maybe_release_buffers_on_channel(consume_updater_conn, default_channel);
 
@@ -551,9 +550,6 @@ void *update_pthread_function()
 		// CONN, POINTER TO MESSAGE, TIMEOUT = NULL = BLOCKING, UNUSED FLAG
 
 		if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
-			//pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error on consume message - Updater thread\n");
-
-			// exit(0);
 			amqp_destroy_envelope(&envelope);
 			continue;
 		} else
@@ -561,7 +557,6 @@ void *update_pthread_function()
 
 		char *message = (char *) malloc(envelope.message.body.len + 1);
 		snprintf(message, envelope.message.body.len + 1, "%s", (char *) envelope.message.body.bytes);
-		message[envelope.message.body.len] = 0;
 
 		// SEND MESSAGE TO DB MANAGER QUEUE
 		status = amqp_basic_publish(publish_db_conn, default_channel, amqp_cstring_bytes(""), amqp_cstring_bytes(db_manager_queue_name), 0,	// mandatory (message must be routed to a queue)
@@ -771,9 +766,6 @@ void *delete_pthread_function()
 		// CONN, POINTER TO MESSAGE, TIMEOUT = NULL = BLOCKING, UNUSED FLAG
 
 		if (reply.reply_type != AMQP_RESPONSE_NORMAL) {
-			//pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error on consume message - Deleter thread\n");
-
-			// exit(0);
 			amqp_destroy_envelope(&envelope);
 			continue;
 		} else
@@ -989,7 +981,10 @@ int main(int argc, char const *const *argv)
 		}
 	}
 
-	pthread_mutex_init(&global_flag, NULL);
+	if (pthread_mutex_init(&global_flag, NULL) != 0) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error on mutex init\n");
+		exit(0);
+	}
 
 	set_debug_level(msglevel);
 	pmesg_safe(&global_flag, LOG_INFO, __FILE__, __LINE__, "Selected log level %d\n", msglevel);
@@ -1201,8 +1196,6 @@ int main(int argc, char const *const *argv)
 #endif
 
 	if (pthread_mutex_init(&ncores_mutex, NULL) != 0)
-		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error on mutex init\n");
-	if (pthread_mutex_init(&framework_mutex, NULL) != 0)
 		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error on mutex init\n");
 	if (pthread_cond_init(&cond_var, NULL) != 0)
 		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Error on condition variable init\n");

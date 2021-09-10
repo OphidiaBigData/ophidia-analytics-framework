@@ -212,7 +212,7 @@ int oph_odb_fs_path_parsing(char *inpath, char *cwd, int *folder_id, char **outp
 		// retrieve folder id
 		int k;
 		for (k = 0; k < i; k++) {
-			if (oph_odb_fs_insert_into_folder_table(oDB, *folder_id, list[k], *folder_id)) {
+			if (oph_odb_fs_insert_into_folder_table(oDB, *folder_id, list[k], folder_id)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find id of folder %s\n", list[k]);
 				return OPH_ODB_ERROR;
 			}
