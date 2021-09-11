@@ -24,6 +24,10 @@
 #include "oph_datacube_library.h"
 #include "oph_ioserver_library.h"
 
+#ifndef OPH_ESDM_PREFIX
+#define OPH_ESDM_PREFIX		"esdm://"
+#endif
+
 #define OPH_NC_BYTE_TYPE	OPH_COMMON_BYTE_TYPE
 #define OPH_NC_SHORT_TYPE	OPH_COMMON_SHORT_TYPE
 #define OPH_NC_INT_TYPE		OPH_COMMON_INT_TYPE

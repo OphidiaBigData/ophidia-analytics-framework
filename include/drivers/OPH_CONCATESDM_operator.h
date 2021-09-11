@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OPH_IMPORTESDM2_OPERATOR_H
-#define __OPH_IMPORTESDM2_OPERATOR_H
+#ifndef __OPH_CONCATESDM_OPERATOR_H
+#define __OPH_CONCATESDM_OPERATOR_H
 
 //Operator specific headers
 #include "oph_common.h"
@@ -25,107 +25,77 @@
 #include "oph_ioserver_library.h"
 #include "oph_esdm_library.h"
 
-#define OPH_IMPORTESDM2_SUBSET_INDEX	    "index"
-#define OPH_IMPORTESDM2_SUBSET_COORD	    "coord"
-#define OPH_IMPORTESDM2_DIMENSION_DEFAULT	"auto"
+#define OPH_CONCATESDM_SUBSET_INDEX	"index"
+#define OPH_CONCATESDM_SUBSET_COORD	"coord"
+#define OPH_CONCATESDM_DIMENSION_DEFAULT	"auto"
 
 //Only import of measured variables is supported
 
 /**
- * \brief Structure of parameters needed by the operator OPH_IMPORTESDM2. It creates a new datacube filling it with data taken from nc file
+ * \brief Structure of parameters needed by the operator OPH_CONCATNC. It creates a new datacube concatenating data taken from nc file to a cube
  *
  * \param oDB Contains the parameters and the connection to OphidiaDB
- * \param container_input Name of the input container used
- * \param create_container Flag indicating if the container has to be created
- * \param cwd Absolute path where the container is
- * \param run Simulate the run of operator to compute distribution parameters
+ * \param id_input_datacube ID of the input datacube used
  * \param nc_file_path Path of the nc file to import
  * \param nc_file_path_orig Original value of nc_file_path
- * \param partition_input Name of the host partition used to store data
  * \param grid_name Name of the grid used to specify dimensions
- * \param ioserver_type Type of I/O server used
  * \param id_output_datacube ID of the output datacube created
  * \param id_input_container ID of the output container used/created
- * \param import_metadata Flag to indicate if metadata has to be imported with data
- * \param check_compliance Flag to indicate if compliance with reference vocabulary has to be checked
  * \param schedule_algo Number of the distribution algorithm to use
+ * \param fragment_ids Contains the string of fragment relative index
  * \param fragment_number Number of fragments that a process has to manage
  * \param fragment_id_start_position First fragment in the relative index set to work on
- * \param host_number Number of host to work on
- * \param fragxdb_number Number of fragments for each database (upper bound)
- * \param tuplexfrag_number Number of tuples for each fragment (upper bound)
- * \param array_length Number of elements to store into a row
+ * \param ncid ID of the netcdf file read
  * \param user Name of the user calling the import operation
  * \param measure Measure name
- * \param measure_type Type of data for the given measure
+ * \param compressed If the data array stored is compressed (1) or not (0)
+ * \param check_exp_dim If explicit dimensions of cube and nc file have to be compared (1) or not (0)
  * \param objkeys OPH_JSON objkeys to be included in output JSON file.
  * \param objkeys_num Number of objkeys.
  * \param server Pointer to I/O server handler
  * \param sessionid SessionID
- * \param id_vocabulary ID of the vocabulary used for metadata
- * \param id_dimension_hierarchy Array of id concept hierarchies of dimensions
- * \param base_time Base time in case of time dimension
- * \param units Units of dimension time
- * \param calendar Calendar associated to a time dimension
- * \param month_lengths Month lengths of each year
- * \param leap_year Value of the first leap year
- * \param leap_month Value of the leap month
+ * \param id_user ID of submitter
  * \param memory_size Maximum amount of memory available
  * \param description Free description to be associated with output cube
  * \param time_filter Flag used in case time filters are expressed as dates
- * \param id_job ID of the job related to the task
+ * \param dim_offset Offset to be added to dimension values of imported data
+ * \param dim_continue If enabled the last value of implicit dimension of input cube is used to evaluate the new values of the dimension.
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
- * \param policy Rule to select hosts where data will be distributed
  */
-struct _OPH_IMPORTESDM2_operator_handle {
+struct _OPH_CONCATESDM_operator_handle {
 	ophidiadb oDB;
-	char *container_input;
-	int create_container;
-	char *cwd;
-	int run;
 	char *nc_file_path;
 	char *nc_file_path_orig;
-	char *partition_input;
 	char *grid_name;
-	char check_grid;
-	char *ioserver_type;
+	int id_input_datacube;
 	int id_output_datacube;
 	int id_input_container;
-	int import_metadata;
-	int check_compliance;
 	int schedule_algo;
 	int fragment_number;
-	int fragment_first_id;
-	int host_number;
-	int fragxdb_number;
-	int tuplexfrag_number;
-	int array_length;
+	int fragment_id_start_position;
 	int total_frag_number;
-	int number_unven_frag;
-	int int_dim_product;
 	char *user;
-	ESDM_var measure;
+	int ncid;
 	int compressed;
+	int id_job;
+	char *fragment_ids;
+	int check_exp_dim;
+	ESDM_var measure;
 	char **objkeys;
 	int objkeys_num;
 	oph_ioserver_handler *server;
 	char *sessionid;
-	int id_vocabulary;
-	int *id_dimension_hierarchy;
-	char *base_time;
-	char *units;
-	char *calendar;
-	char *month_lengths;
-	int leap_year;
-	int leap_month;
+	int id_user;
 	long long memory_size;
 	char *description;
 	int time_filter;
-	int id_job;
-	int nthread;
+	double *dim_offset;
+	char dim_continue;
 	short int execute_error;
-	char policy;
+	char *operation;
+	char **args;
+	int args_num;
 };
-typedef struct _OPH_IMPORTESDM2_operator_handle OPH_IMPORTESDM2_operator_handle;
+typedef struct _OPH_CONCATESDM_operator_handle OPH_CONCATESDM_operator_handle;
 
-#endif				//__OPH_IMPORTESDM2_OPERATOR_H
+#endif				//__OPH_CONCATESDM_OPERATOR_H

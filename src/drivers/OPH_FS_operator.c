@@ -26,8 +26,12 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
+#ifdef OPH_NETCDF
+#include "oph_nc_library.h"
+#endif
+
 #ifdef OPH_ESDM
-#include <esdm.h>
+#include "oph_esdm_library.h"
 #endif
 
 #include "drivers/OPH_FS_operator.h"
@@ -48,6 +52,29 @@
 
 #define OPH_FS_HPREFIX '.'
 #define OPH_SEPARATOR_PARAM ";"
+
+#ifdef OPH_NETCDF
+int _oph_check_nc_measure(const char *file, const char *measure)
+{
+	int ncid, varidp;
+
+	if (!file || !measure) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing parameter\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Missing parameter\n");
+		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
+	}
+
+	if (nc_open(file, NC_NOWRITE, &ncid))
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+
+	if (nc_inq_varid(ncid, measure, &varidp))
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+
+	nc_close(ncid);
+
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+}
+#endif
 
 int cmpfunc(const void *a, const void *b)
 {
@@ -241,11 +268,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_FS_operator_handle *) handle->operator_handle)->path = NULL;
 	((OPH_FS_operator_handle *) handle->operator_handle)->path_num = -1;
 	((OPH_FS_operator_handle *) handle->operator_handle)->file = NULL;
+	((OPH_FS_operator_handle *) handle->operator_handle)->measure = NULL;
 	((OPH_FS_operator_handle *) handle->operator_handle)->recursive = 0;
 	((OPH_FS_operator_handle *) handle->operator_handle)->depth = 0;
 	((OPH_FS_operator_handle *) handle->operator_handle)->realpath = 0;
 	((OPH_FS_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_FS_operator_handle *) handle->operator_handle)->objkeys_num = -1;
+	((OPH_FS_operator_handle *) handle->operator_handle)->time_filter = 1;
+	((OPH_FS_operator_handle *) handle->operator_handle)->sub_dims = NULL;
+	((OPH_FS_operator_handle *) handle->operator_handle)->sub_filters = NULL;
+	((OPH_FS_operator_handle *) handle->operator_handle)->sub_types = NULL;
+	((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_dims = 0;
+	((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_filters = 0;
+	((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_types = 0;
+	((OPH_FS_operator_handle *) handle->operator_handle)->offset = NULL;
 
 	//Only master process has to continue
 	if (handle->proc_rank != 0)
@@ -309,6 +345,18 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!(((OPH_FS_operator_handle *) handle->operator_handle)->file = (char *) strdup(value))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_MEASURE_NAME);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_MEASURE_NAME);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_MEASURE_NAME);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!(((OPH_FS_operator_handle *) handle->operator_handle)->measure = (char *) strdup(value))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
@@ -379,6 +427,99 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_TIME_FILTER);
+	if (value && !strcmp(value, OPH_COMMON_NO_VALUE))
+		((OPH_FS_operator_handle *) handle->operator_handle)->time_filter = 0;
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OFFSET);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OFFSET);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OFFSET);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	char **s_offset = NULL, issubset = 0, isfilter = 0;
+	int i, s_offset_num = 0;
+	if (oph_tp_parse_multiple_value_param(value, &s_offset, &s_offset_num)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING);
+		oph_tp_free_multiple_value_param_list(s_offset, s_offset_num);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (s_offset_num > 0) {
+		double *offset = ((OPH_FS_operator_handle *) handle->operator_handle)->offset = (double *) calloc(s_offset_num, sizeof(double));
+		if (!offset) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MEMORY_ERROR_INPUT, OPH_IN_PARAM_OFFSET);
+			oph_tp_free_multiple_value_param_list(s_offset, s_offset_num);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		for (i = 0; i < s_offset_num; ++i)
+			offset[i] = (double) strtod(s_offset[i], NULL);
+		oph_tp_free_multiple_value_param_list(s_offset, s_offset_num);
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_DIMENSIONS);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_DIMENSIONS);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SUBSET_DIMENSIONS);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_NONE_FILTER, OPH_TP_TASKLEN)) {
+		issubset = 1;
+		if (oph_tp_parse_multiple_value_param
+		    (value, &((OPH_FS_operator_handle *) handle->operator_handle)->sub_dims, &((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_dims)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_FILTER);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_FILTER);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SUBSET_FILTER);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_ALL_FILTER, OPH_TP_TASKLEN)) {
+		isfilter = 1;
+		if (oph_tp_parse_multiple_value_param
+		    (value, &((OPH_FS_operator_handle *) handle->operator_handle)->sub_filters, &((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_filters)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+	}
+
+	if ((issubset && !isfilter) || (!issubset && isfilter)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_dims != ((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_filters) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SUBSET_FILTER_TYPE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SUBSET_FILTER_TYPE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (oph_tp_parse_multiple_value_param(value, &((OPH_FS_operator_handle *) handle->operator_handle)->sub_types, &((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_types)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_dims
+	    && (((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_types > ((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_dims)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -427,12 +568,12 @@ int task_execute(oph_operator_struct * handle)
 	size_t len = 0;
 	char *rel_path = NULL, *dest_path = NULL, *url = NULL;
 	char is_valid = strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->path[0], OPH_FRAMEWORK_FS_DEFAULT_PATH);
-	char file_is_valid = strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->file, OPH_FRAMEWORK_FS_DEFAULT_PATH);
+	char file_is_valid = ((OPH_FS_operator_handle *) handle->operator_handle)->file && strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->file, OPH_FRAMEWORK_FS_DEFAULT_PATH);
 	char path[OPH_COMMON_BUFFER_LEN];
 
 #ifdef OPH_ESDM
 	if (file_is_valid) {
-		url = strstr(((OPH_FS_operator_handle *) handle->operator_handle)->file, "esdm://");
+		url = strstr(((OPH_FS_operator_handle *) handle->operator_handle)->file, OPH_ESDM_PREFIX);
 		if (url && (((OPH_FS_operator_handle *) handle->operator_handle)->mode != OPH_FS_MODE_LS)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse '%s' to perform this operation\n", ((OPH_FS_operator_handle *) handle->operator_handle)->file);
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_PATH_PARSING_ERROR);
@@ -639,6 +780,15 @@ int task_execute(oph_operator_struct * handle)
 								break;
 							lstat(real_path, &file_stat);
 							if (S_ISREG(file_stat.st_mode) || S_ISLNK(file_stat.st_mode) || S_ISDIR(file_stat.st_mode)) {
+#ifdef OPH_NETCDF
+								if (((OPH_FS_operator_handle *) handle->operator_handle)->measure
+								    && strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->measure, OPH_FRAMEWORK_FS_DEFAULT_PATH)) {
+									if (!S_ISREG(file_stat.st_mode))
+										continue;
+									if (_oph_check_nc_measure(real_path, ((OPH_FS_operator_handle *) handle->operator_handle)->measure))
+										continue;
+								}
+#endif
 								if (((OPH_FS_operator_handle *) handle->operator_handle)->realpath) {
 									_real_path = real_path;
 									if (strlen(abs_path) > 1)
@@ -687,16 +837,26 @@ int task_execute(oph_operator_struct * handle)
 							}
 
 							char filenames[jj][OPH_COMMON_BUFFER_LEN], *start = tbuffer, *save_pointer = NULL;
-							for (ii = 0; ii < jj; ++ii, start = NULL) {
+							int jjc = jj;
+							for (ii = jj = 0; ii < jjc; ++ii, start = NULL) {
 								filename = strtok_r(start, OPH_SEPARATOR_PARAM, &save_pointer);
 								lstat(filename, &file_stat);
+#ifdef OPH_NETCDF
+								if (((OPH_FS_operator_handle *) handle->operator_handle)->measure
+								    && strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->measure, OPH_FRAMEWORK_FS_DEFAULT_PATH)) {
+									if (!S_ISREG(file_stat.st_mode))
+										continue;
+									if (_oph_check_nc_measure(filename, ((OPH_FS_operator_handle *) handle->operator_handle)->measure))
+										continue;
+								}
+#endif
 								if (((OPH_FS_operator_handle *) handle->operator_handle)->realpath) {
 									if (nn)
 										for (iii = 0; filename && *filename && (*filename == abs_path[iii]); iii++, filename++);
 								} else
 									for (ni = 0; ni < nn; ++ni)
 										filename = strchr(filename, '/') + 1;
-								snprintf(filenames[ii], OPH_COMMON_BUFFER_LEN, "%s%s", filename, S_ISDIR(file_stat.st_mode) ? "/" : "");
+								snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s%s", filename, S_ISDIR(file_stat.st_mode) ? "/" : "");
 							}
 							result = write_json(filenames, jj, handle->operator_json, num_fields);
 						}
@@ -717,7 +877,12 @@ int task_execute(oph_operator_struct * handle)
 						break;
 					}
 
-					if (esdm_container_probe(path + 7))	// Skip protocol name
+					if (((OPH_FS_operator_handle *) handle->operator_handle)->measure
+					    && strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->measure, OPH_FRAMEWORK_FS_DEFAULT_PATH))
+						result = esdm_dataset_probe(path + 7, ((OPH_FS_operator_handle *) handle->operator_handle)->measure);
+					else
+						result = esdm_container_probe(path + 7);
+					if (result)	// Skip protocol name
 						snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s", path);
 
 					esdm_finalize();
@@ -910,6 +1075,10 @@ int env_unset(oph_operator_struct * handle)
 		free((char *) ((OPH_FS_operator_handle *) handle->operator_handle)->file);
 		((OPH_FS_operator_handle *) handle->operator_handle)->file = NULL;
 	}
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->measure) {
+		free((char *) ((OPH_FS_operator_handle *) handle->operator_handle)->measure);
+		((OPH_FS_operator_handle *) handle->operator_handle)->measure = NULL;
+	}
 	if (((OPH_FS_operator_handle *) handle->operator_handle)->cwd) {
 		free((char *) ((OPH_FS_operator_handle *) handle->operator_handle)->cwd);
 		((OPH_FS_operator_handle *) handle->operator_handle)->cwd = NULL;
@@ -922,8 +1091,29 @@ int env_unset(oph_operator_struct * handle)
 		oph_tp_free_multiple_value_param_list(((OPH_FS_operator_handle *) handle->operator_handle)->objkeys, ((OPH_FS_operator_handle *) handle->operator_handle)->objkeys_num);
 		((OPH_FS_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	}
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->sub_types) {
+		oph_tp_free_multiple_value_param_list(((OPH_FS_operator_handle *) handle->operator_handle)->sub_types, ((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_types);
+		((OPH_FS_operator_handle *) handle->operator_handle)->sub_types = NULL;
+	}
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->sub_dims) {
+		oph_tp_free_multiple_value_param_list(((OPH_FS_operator_handle *) handle->operator_handle)->sub_dims, ((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_dims);
+		((OPH_FS_operator_handle *) handle->operator_handle)->sub_dims = NULL;
+	}
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->sub_filters) {
+		oph_tp_free_multiple_value_param_list(((OPH_FS_operator_handle *) handle->operator_handle)->sub_filters, ((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_filters);
+		((OPH_FS_operator_handle *) handle->operator_handle)->sub_filters = NULL;
+	}
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->offset) {
+		free(((OPH_FS_operator_handle *) handle->operator_handle)->offset);
+		((OPH_FS_operator_handle *) handle->operator_handle)->offset = NULL;
+	}
+
 	free((OPH_FS_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
+
+#ifdef OPH_ESDM
+	handle->dlh = NULL;
+#endif
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

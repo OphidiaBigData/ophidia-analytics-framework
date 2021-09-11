@@ -1075,10 +1075,7 @@ int task_init(oph_operator_struct * handle)
 				goto __OPH_EXIT_1;
 			}
 
-			if (measure->dims_start_index[i] == measure->dims_end_index[i])
-				tmp_var.varsize = 1;
-			else
-				tmp_var.varsize = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
+			tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
 
 			if (cubedims[l].explicit_dim) {
 				if (tmp_var.varsize != cubedims[l].size) {
