@@ -931,7 +931,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			if (!strcmp(dimname, measure->dims_name[j]))
 				break;
 		if (j == ndims) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s' in in nc file\n", dimname, measure->varname);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s' of ESDM object\n", dimname, measure->varname);
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname, measure->varname);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
@@ -1127,8 +1127,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				char buffer[packet_size];
 
 				if (handle->proc_rank == 0) {
-					ophidiadb *oDB = &((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->oDB;
-
 					if (oph_esdm_update_dim_with_esdm_metadata
 					    (oDB, time_dim, ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->id_vocabulary, OPH_GENERIC_CONTAINER_ID, measure))
 						time_dim->id_dimension = 0;
