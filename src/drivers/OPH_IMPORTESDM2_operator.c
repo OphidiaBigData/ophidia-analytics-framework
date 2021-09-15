@@ -4285,20 +4285,20 @@ int env_unset(oph_operator_struct * handle)
 		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->description = NULL;
 	}
 
-	int i;
-	for (i = 0; i < ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.ndims; ++i) {
-		if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dspace) {
-			free(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dspace);
-			((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dspace = NULL;
-		}
-		if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset) {
+	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dspace) {
+		free(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dspace);
+		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dspace = NULL;
+	}
+	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset) {
+		int i;
+		for (i = 0; i < ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.ndims; ++i) {
 			if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset[i]) {
 				esdm_dataset_close(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset[i]);
 				((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset[i] = NULL;
 			}
-			free(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset);
-			((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset = NULL;
 		}
+		free(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset);
+		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset = NULL;
 	}
 
 	esdm_dataset_close(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dataset);

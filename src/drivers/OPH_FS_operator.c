@@ -894,14 +894,22 @@ int task_execute(oph_operator_struct * handle)
 						int number_of_sub_dims = ((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_dims;
 						int number_of_sub_types = ((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_types;
 						double *offset = ((OPH_FS_operator_handle *) handle->operator_handle)->offset;
-						int s_offset_num = ((OPH_FS_operator_handle *) handle->operator_handle)->s_offset_num;
+						int i, s_offset_num = ((OPH_FS_operator_handle *) handle->operator_handle)->s_offset_num;
 						esdm_container_t *container = NULL;
 						esdm_dataset_t *dataset = NULL;
 						esdm_dataspace_t *dspace = NULL;
+						int64_t *start = NULL, *count = NULL;
+
+						ESDM_var measure;
+						measure.ndims = 0;
+						measure.dim_dataset = NULL;
+						measure.dim_dspace = NULL;
+						measure.dims_start_index = NULL;
+						measure.dims_end_index = NULL;
 
 						do {
 
-							if (esdm_container_open(path, ESDM_MODE_FLAG_READ, &container))
+							if (esdm_container_open(path + 7, ESDM_MODE_FLAG_READ, &container))
 								break;
 							if (esdm_dataset_open(container, varname, ESDM_MODE_FLAG_READ, &dataset))
 								break;
@@ -910,7 +918,7 @@ int task_execute(oph_operator_struct * handle)
 							if (esdm_dataset_get_name_dims(dataset, &dims_name))
 								break;
 
-							int i, j, ndims = dspace->dims, tf = -1;	// Id of time filter
+							int j, ndims = dspace->dims, tf = -1;	// Id of time filter
 
 							//Check dimension names
 							for (i = 0; i < number_of_sub_dims; i++) {
@@ -952,8 +960,8 @@ int task_execute(oph_operator_struct * handle)
 							if (tf >= 0) {
 
 								// TODO
-								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subset of time dimension is not supported yet\n", sub_filters[tf]);
-								logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subsetting of time dimension is not fully supported yet\n");
+								logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Subsetting of time dimension is not fully supported yet\n");
 /*
 								oph_odb_dimension dim, *time_dim = &dim;
 
@@ -982,20 +990,23 @@ int task_execute(oph_operator_struct * handle)
 							}
 							is_index[number_of_sub_dims] = 0;
 
+							int64_t const *size = esdm_dataset_get_actual_size(dataset);
 							size_t dims_length[ndims];
 							int dims_start_index[ndims];
 							int dims_end_index[ndims];
-							ESDM_var measure;
 							measure.container = container;
 							measure.dataset = dataset;
 							measure.dims_name = dims_name;
 							measure.ndims = ndims;
-							measure.dim_dataset = (esdm_dataset_t **) calloc(measure.ndims, sizeof(esdm_dataset_t *));	// TODO: to be freed
-							measure.dim_dspace = (esdm_dataspace_t **) calloc(measure.ndims, sizeof(esdm_dataspace_t *));	// TODO: to be freed
+							measure.dim_dataset = (esdm_dataset_t **) calloc(measure.ndims, sizeof(esdm_dataset_t *));
+							measure.dim_dspace = (esdm_dataspace_t **) calloc(measure.ndims, sizeof(esdm_dataspace_t *));
 							measure.dims_start_index = dims_start_index;
 							measure.dims_end_index = dims_end_index;
 
 							for (i = 0; i < ndims; i++) {
+								dims_length[i] = dspace->size[i] ? dspace->size[i] : size[i];
+								dims_start_index[i] = 0;
+								dims_end_index[i] = (int) dims_length[i] - 1;
 								curfilter = NULL;
 								for (j = 0; j < number_of_sub_dims; j++) {
 									if (!strcmp(sub_dims[j], dims_name[i])) {
@@ -1010,8 +1021,8 @@ int task_execute(oph_operator_struct * handle)
 									break;
 								} else if (dims_start_index[i] < 0 || dims_end_index[i] < 0 || dims_start_index[i] > dims_end_index[i]
 									   || dims_start_index[i] >= (int) dims_length[i] || dims_end_index[i] >= (int) dims_length[i]) {
-									pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
-									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
+									pmesg(LOG_WARNING, __FILE__, __LINE__, "Invalid subset\n");
+									logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Invalid subset\n");
 									result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 									break;
 								}
@@ -1019,29 +1030,58 @@ int task_execute(oph_operator_struct * handle)
 							if (result)
 								break;
 
-							// TODO
+							start = (int64_t *) malloc(ndims * sizeof(int64_t));
+							count = (int64_t *) malloc(ndims * sizeof(int64_t));
+							for (i = 0; i < ndims; i++) {
+								start[i] = dims_start_index[i];
+								count[i] = 1 + dims_end_index[i] - dims_start_index[i];
+							}
+
+							if (esdm_dataspace_create_full(ndims, count, start, dspace->type, &point)) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create data space\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to create data space\n");
+								result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+								break;
+							}
 
 						} while (0);
+
+						if (measure.dim_dspace)
+							free(measure.dim_dspace);
+						if (measure.dim_dataset) {
+							for (i = 0; i < measure.ndims; ++i)
+								if (measure.dim_dataset[i])
+									esdm_dataset_close(measure.dim_dataset[i]);
+							free(measure.dim_dataset);
+						}
 
 						if (dataset)
 							esdm_dataset_close(dataset);
 						if (container)
 							esdm_container_close(container);
+
+						if (start)
+							free(start);
+						if (count)
+							free(count);
 					}
 
-					if (result)
-						break;
+					if (!result) {
 
-					if (((OPH_FS_operator_handle *) handle->operator_handle)->measure
-					    && strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->measure, OPH_FRAMEWORK_FS_DEFAULT_PATH)) {
-						if (point)
-							result = esdm_dataset_probe_region(path + 7, ((OPH_FS_operator_handle *) handle->operator_handle)->measure, point);
-						else
-							result = esdm_dataset_probe(path + 7, ((OPH_FS_operator_handle *) handle->operator_handle)->measure);
-					} else
-						result = esdm_container_probe(path + 7);
-					if (result)	// Skip protocol name
-						snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s", path);
+						if (((OPH_FS_operator_handle *) handle->operator_handle)->measure
+						    && strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->measure, OPH_FRAMEWORK_FS_DEFAULT_PATH)) {
+							if (point)
+								result = esdm_dataset_probe_region(path + 7, ((OPH_FS_operator_handle *) handle->operator_handle)->measure, point);
+							else
+								result = esdm_dataset_probe(path + 7, ((OPH_FS_operator_handle *) handle->operator_handle)->measure);
+						} else
+							result = esdm_container_probe(path + 7);
+						if (result)
+							snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s", path);
+					}
+
+					if (point)
+						esdm_dataspace_destroy(point);
 
 					esdm_finalize();
 
