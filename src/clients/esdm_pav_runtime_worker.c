@@ -384,7 +384,7 @@ int process_message(amqp_envelope_t full_message)
 		exit(0);
 	}
 	if (exec_pid == 0) {
-		if (oph_af_execute_framework(submission_string, 1, 0))
+		if (oph_af_execute_framework(submission_string, 1, 0) != 0)
 			exit(1);
 		else
 			exit(0);
@@ -396,7 +396,7 @@ int process_message(amqp_envelope_t full_message)
 		if (WEXITSTATUS(pid_status) == 0)
 			pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Framework execution successful!\n");
 		else
-		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Framework execution failed! Error on processing task\n");
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Framework execution failed! Error on processing task\n");
 	} else
 		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Framework execution failed! Child process crashed\n");
 
@@ -1069,9 +1069,6 @@ int main(int argc, char const *const *argv)
 	}
 
 	ptr_list[16] = update_queue_name;
-	if (update_queue)
-		free(update_queue);
-
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM UPDATE_QUEUE_NAME: %s\n", update_queue_name);
 
 	if (!delete_queue_name) {
@@ -1093,9 +1090,6 @@ int main(int argc, char const *const *argv)
 	}
 
 	ptr_list[17] = delete_queue_name;
-	if (delete_queue)
-		free(delete_queue);
-
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM DELETE_QUEUE_NAME: %s\n", delete_queue_name);
 #endif
 

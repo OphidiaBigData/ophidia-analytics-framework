@@ -43,12 +43,25 @@ AC_PROG_CXX
 OPH_ANALYTICS_LOCATION=$prefix
 AC_SUBST(OPH_ANALYTICS_LOCATION)
 
+MPI_DISABLE_SUPPORT=
+AC_ARG_ENABLE(mpi, [  --disable-mpi     Disable MPI support. (Enabled by default)], [ mpi="no" ], [ mpi="yes" ])
+if test "x$mpi" = "xyes"; then
+	AC_MSG_NOTICE(MPI enabled)
+else
+	AC_MSG_NOTICE(MPI disabled)
+fi
+AM_CONDITIONAL([MPI_DISABLE], [test "x$mpi" = "xyes"])
+MPI_DISABLE_SUPPORT=$mpi
+AC_SUBST(MPI_DISABLE_SUPPORT)
+
+if test "x$mpi" = "xyes"; then
 if test -z "$CC" && test -n "$MPICC"; then
    CC="$MPICC"
 fi
 AX_MPI(AC_MSG_NOTICE([MPI library found!]),AC_MSG_ERROR([MPI library not found! Aborting configure!]))
 CC="$MPICC"
 LIBS="$MPILIBS $LIBS"
+fi
 
 AM_CONDITIONAL([HAVE_MPI], [test -n "$MPILIBS"])
 
@@ -93,17 +106,6 @@ else
 	AC_MSG_ERROR([MySQL libraries not found! Aborting configure!])
 fi
 fi
-
-MPI_DISABLE_SUPPORT=
-AC_ARG_ENABLE(mpi, [  --disable-mpi     Disable MPI support. (Enabled by default)], [ mpi="no" ], [ mpi="yes" ])
-if test "x$mpi" = "xyes"; then
-	AC_MSG_NOTICE(MPI enabled)
-else
-	AC_MSG_NOTICE(MPI disabled)
-fi
-AM_CONDITIONAL([MPI_DISABLE], [test "x$mpi" = "xyes"])
-MPI_DISABLE_SUPPORT=$mpi
-AC_SUBST(MPI_DISABLE_SUPPORT)
 
 UPDATE_CANCELLATION_SUPPORT=
 AC_ARG_ENABLE(update_cancellation, [ --enable-update_cancellation  Enable update and cancellation support. (Disabled by default)], [ update_cancellation="yes" ], [ update_cancellation="no" ])
@@ -558,14 +560,14 @@ fi
 AC_SUBST(VOMS_INCLUDE)
 
 # Set servers default listening port number
-number_port=11732
-AC_ARG_WITH(listening_port,
-	   [  --with-plugin-default-port=NUMBER     Set servers default listening  port number (default: 11732)],
+ws_port=11732
+AC_ARG_WITH(ws-port,
+	   [  --with-ws-port=NUMBER     Set servers default listening  port number (default: 11732)],
 	   [
-	    number_port="$withval"
+	    ws_port="$withval"
            ]
            )
-PLUGIN_DEFAULT_PORT=$number_port
+PLUGIN_DEFAULT_PORT=$ws_port
 AC_SUBST(PLUGIN_DEFAULT_PORT)
 
 plugin_host_path="no"

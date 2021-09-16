@@ -840,7 +840,6 @@ int oph_odb_fs_insert_into_folder_table(ophidiadb * oDB, int parent_folder_id, c
 	}
 
 	MYSQL_RES *res;
-	MYSQL_ROW row;
 	res = mysql_store_result(oDB->conn);
 	int num_rows = mysql_num_rows(res);
 	if (num_rows == 0) {
