@@ -977,6 +977,8 @@ int task_execute(oph_operator_struct * handle)
 							measure.dataset = dataset;
 							measure.dims_name = dims_name;
 							measure.ndims = ndims;
+							measure.dim_dataset = (esdm_dataset_t **) calloc(measure.ndims, sizeof(esdm_dataset_t *));
+							measure.dim_dspace = (esdm_dataspace_t **) calloc(measure.ndims, sizeof(esdm_dataspace_t *));
 
 							// Time dimension
 							if (tf >= 0) {
@@ -1007,11 +1009,33 @@ int task_execute(oph_operator_struct * handle)
 									break;
 								}
 
+								if (!measure.dim_dataset[tf])
+									if (esdm_dataset_open(measure.container, measure.dims_name[tf], ESDM_MODE_FLAG_READ, measure.dim_dataset + tf)) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING, "");
+										result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+										break;
+									}
+								if (!measure.dim_dspace[tf])
+									if (esdm_dataset_get_dataspace(measure.dim_dataset[tf], measure.dim_dspace + tf)) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING, "");
+										result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+										break;
+									}
+
 								oph_odb_dimension dim, *time_dim = &dim;
+								if (oph_esdm_set_esdm_type(dim.dimension_type, measure.dim_dspace[tf]->type)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in loading time data type\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error in loading time data type\n");
+									result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									break;
+								}
+
 								if (oph_esdm_update_dim_with_esdm_metadata(oDB, time_dim, id_vocabulary, OPH_GENERIC_CONTAINER_ID, &measure)) {
 									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in loading time metadata\n");
 									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error in loading time metadata\n");
-									result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+									result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 									break;
 								}
 
@@ -1046,8 +1070,6 @@ int task_execute(oph_operator_struct * handle)
 
 							measure.dims_start_index = dims_start_index;
 							measure.dims_end_index = dims_end_index;
-							measure.dim_dataset = (esdm_dataset_t **) calloc(measure.ndims, sizeof(esdm_dataset_t *));
-							measure.dim_dspace = (esdm_dataspace_t **) calloc(measure.ndims, sizeof(esdm_dataspace_t *));
 
 							for (i = 0; i < ndims; i++) {
 								dims_length[i] = dspace->size[i] ? dspace->size[i] : size[i];

@@ -2923,7 +2923,8 @@ int task_init(oph_operator_struct * handle)
 						}
 					case SMD_TYPE_STRING:
 					case SMD_TYPE_ARRAY:
-						strncpy(svalue, (char *) smd_attr_get_value(current), current->type->size < OPH_COMMON_BUFFER_LEN ? current->type->size : OPH_COMMON_BUFFER_LEN);
+						strncpy(svalue, (char *) smd_attr_get_value(current),
+							1 + current->type->size < OPH_COMMON_BUFFER_LEN ? current->type->size : OPH_COMMON_BUFFER_LEN - 1);
 						break;
 					default:;
 				}

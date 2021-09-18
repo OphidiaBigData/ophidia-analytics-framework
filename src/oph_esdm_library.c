@@ -187,6 +187,7 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * 
 		char *key, *variable, *template;
 		char value[OPH_COMMON_BUFFER_LEN], svalue[OPH_COMMON_BUFFER_LEN];
 		smd_basic_type_t xtype;
+		esdm_dataset_t *dataset = NULL;
 
 		char **keys = (char **) calloc(num_rows, sizeof(char *));
 		if (!keys) {
@@ -215,13 +216,13 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * 
 
 				memset(value, 0, OPH_COMMON_BUFFER_LEN);
 				memset(svalue, 0, OPH_COMMON_BUFFER_LEN);
+				dataset = NULL;
 				attribute = NULL;
 				xtype = SMD_TYPE_UNKNOWN;
 
 				pmesg(LOG_DEBUG, __FILE__, __LINE__, "Try to load '%s:%s'\n", variable ? variable : "", key);
 
 				if (variable) {
-					esdm_dataset_t *dataset = NULL;
 					if (esdm_dataset_open(measure->container, variable, ESDM_MODE_FLAG_READ, &dataset)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering metadata of variable '%s'\n", variable);
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_ATTRIBUTE_ERROR);
@@ -233,62 +234,106 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * 
 						esdm_dataset_close(dataset);
 						break;
 					}
-					if ((attribute = smd_attr_get_child_by_name(md, key))) {
+					if ((attribute = smd_attr_get_child_by_name(md, key)))
 						xtype = smd_attr_get_type(attribute);
-						if (!xtype)
-							strcpy(value, smd_attr_get_value(attribute));
-					}
-					esdm_dataset_close(dataset);
 				} else {
 					if (esdm_container_get_attributes(measure->container, &md)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering metadata of the container\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_ATTRIBUTE_ERROR);
 						break;
 					}
-					if ((attribute = smd_attr_get_child_by_name(md, key))) {
+					if ((attribute = smd_attr_get_child_by_name(md, key)))
 						xtype = smd_attr_get_type(attribute);
-						if (!xtype)
-							strcpy(value, smd_attr_get_value(attribute));
-					}
 				}
 
-				if (!attribute)
+				if (!attribute) {
+					if (dataset)
+						esdm_dataset_close(dataset);
 					continue;
+				}
+
+				memset(svalue, 0, OPH_COMMON_BUFFER_LEN);
 
 				switch (xtype) {
-					case SMD_TYPE_INT8:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((char *) value));
+					case SMD_TYPE_CHAR:{
+							char value;
+							smd_attr_copy_value(attribute, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%c", value);
+							break;
+						}
+					case SMD_TYPE_INT8:{
+							int8_t value;
+							smd_attr_copy_value(attribute, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_UINT8:{
+							uint8_t value;
+							smd_attr_copy_value(attribute, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_INT16:{
+							int16_t value;
+							smd_attr_copy_value(attribute, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_UINT16:{
+							uint16_t value;
+							smd_attr_copy_value(attribute, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_INT32:{
+							int32_t value;
+							smd_attr_copy_value(attribute, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_UINT32:{
+							uint32_t value;
+							smd_attr_copy_value(attribute, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", value);
+							break;
+						}
+					case SMD_TYPE_INT64:{
+							int64_t value;
+							smd_attr_copy_value(attribute, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", (long long) value);
+							break;
+						}
+					case SMD_TYPE_UINT64:{
+							uint64_t value;
+							smd_attr_copy_value(attribute, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", (unsigned long long) value);
+							break;
+						}
+					case SMD_TYPE_FLOAT:{
+							float value;
+							smd_attr_copy_value(attribute, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", value);
+							break;
+						}
+					case SMD_TYPE_DOUBLE:{
+							double value;
+							smd_attr_copy_value(attribute, &value);
+							snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", value);
+							break;
+						}
+					case SMD_TYPE_STRING:
+					case SMD_TYPE_ARRAY:
+						strncpy(svalue, (char *) smd_attr_get_value(attribute),
+							1 + attribute->type->size < OPH_COMMON_BUFFER_LEN ? attribute->type->size : OPH_COMMON_BUFFER_LEN - 1);
 						break;
-					case SMD_TYPE_UINT8:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned char *) value));
-						break;
-					case SMD_TYPE_INT16:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((short *) value));
-						break;
-					case SMD_TYPE_UINT16:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned short *) value));
-						break;
-					case SMD_TYPE_INT32:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((int *) value));
-						break;
-					case SMD_TYPE_UINT32:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%d", *((unsigned int *) value));
-						break;
-					case SMD_TYPE_INT64:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", *((long long *) value));
-						break;
-					case SMD_TYPE_UINT64:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%lld", *((unsigned long long *) value));
-						break;
-					case SMD_TYPE_FLOAT:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", *((float *) value));
-						break;
-					case SMD_TYPE_DOUBLE:
-						snprintf(svalue, OPH_COMMON_BUFFER_LEN, "%f", *((double *) value));
-						break;
-					default:
-						strcpy(svalue, value);
+					default:;
 				}
+
+				if (dataset)
+					esdm_dataset_close(dataset);
+
+				if (!strlen(svalue))
+					continue;
 
 				keys[num_attr] = strdup(template);
 				values[num_attr++] = strdup(svalue);
