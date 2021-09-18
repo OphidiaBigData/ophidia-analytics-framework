@@ -921,6 +921,7 @@ int task_execute(oph_operator_struct * handle)
 						measure.ndims = 0;
 						measure.dim_dataset = NULL;
 						measure.dim_dspace = NULL;
+						measure.dims_length = NULL;
 						measure.dims_start_index = NULL;
 						measure.dims_end_index = NULL;
 
@@ -1070,6 +1071,7 @@ int task_execute(oph_operator_struct * handle)
 
 							measure.dims_start_index = dims_start_index;
 							measure.dims_end_index = dims_end_index;
+							measure.dims_length = dims_length;
 
 							for (i = 0; i < ndims; i++) {
 								dims_length[i] = dspace->size[i] ? dspace->size[i] : size[i];
@@ -1083,7 +1085,7 @@ int task_execute(oph_operator_struct * handle)
 									}
 								}
 								if (!curfilter)
-									break;
+									continue;
 								if (oph_esdm_check_subset_string(curfilter, i, &measure, is_index[j], j < s_offset_num ? offset[j] : 0.0)) {
 									result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 									break;
