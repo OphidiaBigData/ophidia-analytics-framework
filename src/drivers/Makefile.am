@@ -206,7 +206,7 @@ liboph_fsoperator_la_LIBADD += $(NETCDF_LIBS) -L.. -loph_nc
 endif
 if HAVE_ESDM
 liboph_fsoperator_la_CFLAGS += $(ESDM_CFLAGS)
-liboph_fsoperator_la_LIBADD += $(ESDM_LIBS) -L.. -loph_esdm
+liboph_fsoperator_la_LIBADD += $(ESDM_LIBS) -L.. -loph_esdm -loph_dimension
 endif
 
 liboph_hierarchyoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)

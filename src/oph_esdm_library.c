@@ -215,6 +215,10 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * 
 
 				memset(value, 0, OPH_COMMON_BUFFER_LEN);
 				memset(svalue, 0, OPH_COMMON_BUFFER_LEN);
+				attribute = NULL;
+				xtype = SMD_TYPE_UNKNOWN;
+
+				pmesg(LOG_DEBUG, __FILE__, __LINE__, "Try to load '%s:%s'\n", variable ? variable : "", key);
 
 				if (variable) {
 					esdm_dataset_t *dataset = NULL;
@@ -229,10 +233,11 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * 
 						esdm_dataset_close(dataset);
 						break;
 					}
-					attribute = smd_attr_get_child_by_name(md, key);
-					xtype = smd_attr_get_type(attribute);
-					if (!xtype)
-						strcpy(value, smd_attr_get_value(attribute));
+					if ((attribute = smd_attr_get_child_by_name(md, key))) {
+						xtype = smd_attr_get_type(attribute);
+						if (!xtype)
+							strcpy(value, smd_attr_get_value(attribute));
+					}
 					esdm_dataset_close(dataset);
 				} else {
 					if (esdm_container_get_attributes(measure->container, &md)) {
@@ -240,13 +245,14 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * 
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_ATTRIBUTE_ERROR);
 						break;
 					}
-					attribute = smd_attr_get_child_by_name(md, key);
-					xtype = smd_attr_get_type(attribute);
-					if (!xtype)
-						strcpy(value, smd_attr_get_value(attribute));
+					if ((attribute = smd_attr_get_child_by_name(md, key))) {
+						xtype = smd_attr_get_type(attribute);
+						if (!xtype)
+							strcpy(value, smd_attr_get_value(attribute));
+					}
 				}
 
-				if (!xtype)
+				if (!attribute)
 					continue;
 
 				switch (xtype) {

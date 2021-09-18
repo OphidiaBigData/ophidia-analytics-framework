@@ -286,6 +286,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_types = 0;
 	((OPH_FS_operator_handle *) handle->operator_handle)->offset = NULL;
 	((OPH_FS_operator_handle *) handle->operator_handle)->s_offset_num = 0;
+	((OPH_FS_operator_handle *) handle->operator_handle)->vocabulary = NULL;
+
+	oph_odb_init_ophidiadb(&((OPH_FS_operator_handle *) handle->operator_handle)->oDB);
 
 	//Only master process has to continue
 	if (handle->proc_rank != 0)
@@ -523,6 +526,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_VOCABULARY);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_VOCABULARY);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_VOCABULARY);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
+		if (!(((OPH_FS_operator_handle *) handle->operator_handle)->vocabulary = (char *) strdup(value))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MEMORY_ERROR_INPUT, OPH_IN_PARAM_VOCABULARY);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -956,16 +973,47 @@ int task_execute(oph_operator_struct * handle)
 							if (result)
 								break;
 
+							measure.container = container;
+							measure.dataset = dataset;
+							measure.dims_name = dims_name;
+							measure.ndims = ndims;
+
 							// Time dimension
 							if (tf >= 0) {
 
-								// TODO
-								pmesg(LOG_WARNING, __FILE__, __LINE__, "Subsetting of time dimension is not fully supported yet\n");
-								logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Subsetting of time dimension is not fully supported yet\n");
-/*
+								// Open OphidiaDB (note: if it served for other aims, it should be opened in set_env or init task!!!)
+								ophidiadb *oDB = &((OPH_FS_operator_handle *) handle->operator_handle)->oDB;
+
+								if (oph_odb_read_ophidiadb_config_file(oDB)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_OPHIDIADB_CONFIGURATION_FILE, "");
+									result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									break;
+								}
+
+								if (oph_odb_connect_to_ophidiadb(oDB)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_OPHIDIADB_CONNECTION_ERROR, "");
+									result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+									break;
+								}
+
+								int id_vocabulary;
+								if (oph_odb_meta_retrieve_vocabulary_id(oDB, ((OPH_FS_operator_handle *) handle->operator_handle)->vocabulary, &id_vocabulary)
+								    || !id_vocabulary) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input vocabulary\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unknown input vocabulary\n");
+									result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+									break;
+								}
+
 								oph_odb_dimension dim, *time_dim = &dim;
-
-
+								if (oph_esdm_update_dim_with_esdm_metadata(oDB, time_dim, id_vocabulary, OPH_GENERIC_CONTAINER_ID, &measure)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in loading time metadata\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error in loading time metadata\n");
+									result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+									break;
+								}
 
 								long long max_size = QUERY_BUFLEN;
 								oph_pid_get_buffer_size(&max_size);
@@ -978,7 +1026,8 @@ int task_execute(oph_operator_struct * handle)
 								}
 								free(sub_filters[tf]);
 								((OPH_FS_operator_handle *) handle->operator_handle)->sub_filters[tf] = sub_filters[tf] = strdup(temp);
-*/
+
+								pmesg(LOG_DEBUG, __FILE__, __LINE__, "Time subset converted to '%s'\n", sub_filters[tf]);
 							}
 
 							char is_index[1 + number_of_sub_dims];
@@ -994,14 +1043,11 @@ int task_execute(oph_operator_struct * handle)
 							size_t dims_length[ndims];
 							int dims_start_index[ndims];
 							int dims_end_index[ndims];
-							measure.container = container;
-							measure.dataset = dataset;
-							measure.dims_name = dims_name;
-							measure.ndims = ndims;
-							measure.dim_dataset = (esdm_dataset_t **) calloc(measure.ndims, sizeof(esdm_dataset_t *));
-							measure.dim_dspace = (esdm_dataspace_t **) calloc(measure.ndims, sizeof(esdm_dataspace_t *));
+
 							measure.dims_start_index = dims_start_index;
 							measure.dims_end_index = dims_end_index;
+							measure.dim_dataset = (esdm_dataset_t **) calloc(measure.ndims, sizeof(esdm_dataset_t *));
+							measure.dim_dspace = (esdm_dataspace_t **) calloc(measure.ndims, sizeof(esdm_dataspace_t *));
 
 							for (i = 0; i < ndims; i++) {
 								dims_length[i] = dspace->size[i] ? dspace->size[i] : size[i];
@@ -1305,6 +1351,11 @@ int env_unset(oph_operator_struct * handle)
 		free(((OPH_FS_operator_handle *) handle->operator_handle)->offset);
 		((OPH_FS_operator_handle *) handle->operator_handle)->offset = NULL;
 	}
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->vocabulary) {
+		free(((OPH_FS_operator_handle *) handle->operator_handle)->vocabulary);
+		((OPH_FS_operator_handle *) handle->operator_handle)->vocabulary = NULL;
+	}
+	oph_odb_free_ophidiadb(&((OPH_FS_operator_handle *) handle->operator_handle)->oDB);
 
 	free((OPH_FS_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
