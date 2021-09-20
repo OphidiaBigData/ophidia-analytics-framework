@@ -491,7 +491,8 @@ int oph_esdm_get_dim_array(int id_container, esdm_dataset_t * dataset, int dim_i
 	return 0;
 }
 
-int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, esdm_type_t dim_type, int dim_size, char *value, int want_start, double offset, int *valorder, int *coord_index)
+int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, esdm_type_t dim_type, int dim_size, char *value, int want_start, double offset, int *valorder, int *coord_index,
+			    char out_of_bound)
 {
 	if (!dim_size || !value || !coord_index || !valorder) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -503,7 +504,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 	//I need to evaluate the order of the dimension values: ascending or descending
 	int order = 1;		//Default is ascending
 	int exact_value = 0;	//If I find the exact value
-	int i;
+	int i, end_dim_size = dim_size - 1;
 
 	if (dim_type == SMD_DTYPE_INT8)
 		binary_dim = (void *) malloc(sizeof(char) * dim_size);
@@ -526,6 +527,11 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 		return -1;
 	}
 
+	int64_t const *size = esdm_dataset_get_actual_size(measure->dim_dataset[dim_id]);
+	for (i = 0; i < measure->dim_dspace[dim_id]->dims; i++)
+		if (!measure->dim_dspace[dim_id]->size[i])
+			measure->dim_dspace[dim_id]->size[i] = size[i];
+
 	if (esdm_read(measure->dim_dataset[dim_id], binary_dim, measure->dim_dspace[dim_id])) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, "");
@@ -539,8 +545,18 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 		if (offset)
 			value_ += (char) (want_start ? -offset : offset);
 		//Check order of dimension values
-		if (array_val[0] > array_val[dim_size - 1])	//Descending
+		if (array_val[0] > array_val[end_dim_size]) {	//Descending
 			order = 0;
+			if (out_of_bound && (value_ <= array_val[0]) && (value_ >= array_val[end_dim_size]))
+				out_of_bound = 0;
+		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
+			out_of_bound = 0;
+		if (out_of_bound) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
+			free(binary_dim);
+			return -2;
+		}
 		if (order) {
 			//Ascending
 			for (i = 0; i < dim_size; i++) {
@@ -550,10 +566,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 					break;
 				}
 			}
-			if (exact_value) {
-				// Nothing to do
-				// i is the index I need
-			} else {
+			if (!exact_value) {
 				if (nearest_point) {
 					if ((i > 0) && ((i == dim_size) || (value_ - array_val[i - 1] < array_val[i] - value_)))
 						i--;
@@ -573,10 +586,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 					break;
 				}
 			}
-			if (exact_value) {
-				// Nothing to do
-				// i is the index I need
-			} else {
+			if (!exact_value) {
 				if (nearest_point) {
 					if ((i < dim_size - 1) && ((i < 0) || (value_ - array_val[i + 1] < array_val[i] - value_)))
 						i++;
@@ -594,8 +604,18 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 		if (offset)
 			value_ += (short) (want_start ? -offset : offset);
 		//Check order of dimension values
-		if (array_val[0] > array_val[dim_size - 1])	//Descending
+		if (array_val[0] > array_val[end_dim_size]) {	//Descending
 			order = 0;
+			if (out_of_bound && (value_ <= array_val[0]) && (value_ >= array_val[end_dim_size]))
+				out_of_bound = 0;
+		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
+			out_of_bound = 0;
+		if (out_of_bound) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
+			free(binary_dim);
+			return -2;
+		}
 		if (order) {
 			//Ascending
 			for (i = 0; i < dim_size; i++) {
@@ -605,10 +625,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 					break;
 				}
 			}
-			if (exact_value) {
-				// Nothing to do
-				// i is the index I need
-			} else {
+			if (!exact_value) {
 				if (nearest_point) {
 					if ((i > 0) && ((i == dim_size) || (value_ - array_val[i - 1] < array_val[i] - value_)))
 						i--;
@@ -628,10 +645,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 					break;
 				}
 			}
-			if (exact_value) {
-				// Nothing to do
-				// i is the index I need
-			} else {
+			if (!exact_value) {
 				if (nearest_point) {
 					if ((i < dim_size - 1) && ((i < 0) || (value_ - array_val[i + 1] < array_val[i] - value_)))
 						i++;
@@ -649,8 +663,18 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 		if (offset)
 			value_ += (int) (want_start ? -offset : offset);
 		//Check order of dimension values
-		if (array_val[0] > array_val[dim_size - 1])	//Descending
+		if (array_val[0] > array_val[end_dim_size]) {	//Descending
 			order = 0;
+			if (out_of_bound && (value_ <= array_val[0]) && (value_ >= array_val[end_dim_size]))
+				out_of_bound = 0;
+		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
+			out_of_bound = 0;
+		if (out_of_bound) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
+			free(binary_dim);
+			return -2;
+		}
 		if (order) {
 			//Ascending
 			for (i = 0; i < dim_size; i++) {
@@ -660,10 +684,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 					break;
 				}
 			}
-			if (exact_value) {
-				// Nothing to do
-				// i is the index I need
-			} else {
+			if (!exact_value) {
 				if (nearest_point) {
 					if ((i > 0) && ((i == dim_size) || (value_ - array_val[i - 1] < array_val[i] - value_)))
 						i--;
@@ -683,10 +704,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 					break;
 				}
 			}
-			if (exact_value) {
-				// Nothing to do
-				// i is the index I need
-			} else {
+			if (!exact_value) {
 				if (nearest_point) {
 					if ((i < dim_size - 1) && ((i < 0) || (value_ - array_val[i + 1] < array_val[i] - value_)))
 						i++;
@@ -704,8 +722,18 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 		if (offset)
 			value_ += (long long) (want_start ? -offset : offset);
 		//Check order of dimension values
-		if (array_val[0] > array_val[dim_size - 1])	//Descending
+		if (array_val[0] > array_val[end_dim_size]) {	//Descending
 			order = 0;
+			if (out_of_bound && (value_ <= array_val[0]) && (value_ >= array_val[end_dim_size]))
+				out_of_bound = 0;
+		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
+			out_of_bound = 0;
+		if (out_of_bound) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
+			free(binary_dim);
+			return -2;
+		}
 		if (order) {
 			//Ascending
 			for (i = 0; i < dim_size; i++) {
@@ -715,8 +743,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 					break;
 				}
 			}
-			if (exact_value) {
-			} else {
+			if (!exact_value) {
 				if (nearest_point) {
 					if ((i > 0) && ((i == dim_size) || (value_ - array_val[i - 1] < array_val[i] - value_)))
 						i--;
@@ -736,8 +763,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 					break;
 				}
 			}
-			if (exact_value) {
-			} else {
+			if (!exact_value) {
 				if (nearest_point) {
 					if ((i < dim_size - 1) && ((i < 0) || (value_ - array_val[i + 1] < array_val[i] - value_)))
 						i++;
@@ -755,8 +781,18 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 		if (offset)
 			value_ += (float) (want_start ? -offset : offset);
 		//Check order of dimension values
-		if (array_val[0] > array_val[dim_size - 1])	//Descending
+		if (array_val[0] > array_val[end_dim_size]) {	//Descending
 			order = 0;
+			if (out_of_bound && (value_ <= array_val[0]) && (value_ >= array_val[end_dim_size]))
+				out_of_bound = 0;
+		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
+			out_of_bound = 0;
+		if (out_of_bound) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
+			free(binary_dim);
+			return -2;
+		}
 		if (order) {
 			//Ascending
 			for (i = 0; i < dim_size; i++) {
@@ -766,8 +802,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 					break;
 				}
 			}
-			if (exact_value) {
-			} else {
+			if (!exact_value) {
 				if (nearest_point) {
 					if ((i > 0) && ((i == dim_size) || (value_ - array_val[i - 1] < array_val[i] - value_)))
 						i--;
@@ -787,8 +822,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 					break;
 				}
 			}
-			if (exact_value) {
-			} else {
+			if (!exact_value) {
 				if (nearest_point) {
 					if ((i < dim_size - 1) && ((i < 0) || (value_ - array_val[i + 1] < array_val[i] - value_)))
 						i++;
@@ -806,8 +840,18 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 		if (offset)
 			value_ += want_start ? -offset : offset;
 		//Check order of dimension values
-		if (array_val[0] > array_val[dim_size - 1])	//Descending
+		if (array_val[0] > array_val[end_dim_size]) {	//Descending
 			order = 0;
+			if (out_of_bound && (value_ <= array_val[0]) && (value_ >= array_val[end_dim_size]))
+				out_of_bound = 0;
+		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
+			out_of_bound = 0;
+		if (out_of_bound) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
+			free(binary_dim);
+			return -2;
+		}
 		if (order) {
 			//Ascending
 			for (i = 0; i < dim_size; i++) {
@@ -818,8 +862,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 					break;
 				}
 			}
-			if (exact_value) {
-			} else {
+			if (!exact_value) {
 				if (nearest_point) {
 					if ((i > 0) && ((i == dim_size) || (value_ - array_val[i - 1] < array_val[i] - value_)))
 						i--;
@@ -839,8 +882,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 					break;
 				}
 			}
-			if (exact_value) {
-			} else {
+			if (!exact_value) {
 				if (nearest_point) {
 					if ((i < dim_size - 1) && ((i < 0) || (value_ - array_val[i + 1] < array_val[i] - value_)))
 						i++;
@@ -865,7 +907,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 	return 0;
 }
 
-int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int is_index, double offset)
+int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int is_index, double offset, char out_of_bound)
 {
 	int ii;
 	char *endfilter = strchr(curfilter, OPH_DIM_SUBSET_SEPARATOR2);
@@ -930,7 +972,8 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 			int want_start = 1;	//Single point, it is the same
 			int order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 			//Extract index of the point given the dimension value
-			if (oph_esdm_index_by_value(OPH_GENERIC_CONTAINER_ID, measure, i, measure->dim_dspace[i]->type, measure->dims_length[i], curfilter, want_start, 0, &order, &coord_index)) {
+			if (oph_esdm_index_by_value
+			    (OPH_GENERIC_CONTAINER_ID, measure, i, measure->dim_dspace[i]->type, measure->dims_length[i], curfilter, want_start, 0, &order, &coord_index, out_of_bound)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING, "");
 				return -1;
@@ -1035,7 +1078,8 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 			int want_start = -1;
 			int order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 			//Extract index of the point given the dimension value
-			if (oph_esdm_index_by_value(OPH_GENERIC_CONTAINER_ID, measure, i, measure->dim_dspace[i]->type, measure->dims_length[i], startfilter, want_start, offset, &order, &coord_index)) {
+			if (oph_esdm_index_by_value
+			    (OPH_GENERIC_CONTAINER_ID, measure, i, measure->dim_dspace[i]->type, measure->dims_length[i], startfilter, want_start, offset, &order, &coord_index, out_of_bound)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING, "");
 				return -1;
@@ -1052,7 +1096,8 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 			want_start = 0;
 			order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 			//Extract index of the point given the dimension value
-			if (oph_esdm_index_by_value(OPH_GENERIC_CONTAINER_ID, measure, i, measure->dim_dspace[i]->type, measure->dims_length[i], endfilter, want_start, offset, &order, &coord_index)) {
+			if (oph_esdm_index_by_value
+			    (OPH_GENERIC_CONTAINER_ID, measure, i, measure->dim_dspace[i]->type, measure->dims_length[i], endfilter, want_start, offset, &order, &coord_index, out_of_bound)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 				return -1;

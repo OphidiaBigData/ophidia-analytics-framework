@@ -93,9 +93,10 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * 
 int oph_esdm_get_dim_array(int id_container, esdm_dataset_t * dataset, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, int start_index, int end_index,
 			   char **dim_array);
 
-int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, esdm_type_t dim_type, int dim_size, char *value, int want_start, double offset, int *valorder, int *coord_index);
+int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, esdm_type_t dim_type, int dim_size, char *value, int want_start, double offset, int *valorder, int *coord_index,
+			    char out_of_bound);
 
-int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int is_index, double offset);
+int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int is_index, double offset, char out_of_bound);
 
 int oph_esdm_cache_to_buffer(short int tot_dim_number, unsigned int *counters, unsigned int *limits, unsigned int *products, char *binary_cache, char *binary_insert, size_t sizeof_var);
 

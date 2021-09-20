@@ -1309,7 +1309,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			measure->dims_end_index[i] = measure->dims_length[i] - 1;
 		} else {
 			int ii;
-			if ((ii = oph_esdm_check_subset_string(curfilter, i, measure, is_index[j], j < s_offset_num ? offset[j] : 0.0))) {
+			if ((ii = oph_esdm_check_subset_string(curfilter, i, measure, is_index[j], j < s_offset_num ? offset[j] : 0.0, 0))) {
 				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 				if (offset)

@@ -1086,7 +1086,7 @@ int task_execute(oph_operator_struct * handle)
 								}
 								if (!curfilter)
 									continue;
-								if (oph_esdm_check_subset_string(curfilter, i, &measure, is_index[j], j < s_offset_num ? offset[j] : 0.0)) {
+								if (oph_esdm_check_subset_string(curfilter, i, &measure, is_index[j], j < s_offset_num ? offset[j] : 0.0, 1)) {
 									result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 									break;
 								} else if (dims_start_index[i] < 0 || dims_end_index[i] < 0 || dims_start_index[i] > dims_end_index[i]
