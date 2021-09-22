@@ -123,7 +123,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DATACUBE_INPUT);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTESDM_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DATACUBE_INPUT);
-
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	//For error checking
@@ -235,11 +234,19 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	char session_code[OPH_COMMON_BUFFER_LEN];
 	oph_pid_get_session_code(hashtbl_get(task_tbl, OPH_ARG_SESSIONID), session_code);
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_NAME);
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT);
 	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_NAME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTESDM_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_NAME);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTESDM_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strlen(value)) {
+		value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_NAME);
+		if (!value) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_NAME);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTESDM_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_NAME);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
 	}
 	if (strcmp(value, OPH_EXPORTESDM_DEFAULT_OUTPUT)) {
 		if (strncmp(value, OPH_ESDM_PREFIX, 7)) {

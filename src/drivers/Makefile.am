@@ -141,11 +141,17 @@ liboph_cdooperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTIC
 liboph_cdooperator_la_SOURCES = OPH_CDO_operator.c
 liboph_cdooperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_cdooperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_directory
+if HAVE_ESDM
+liboph_cdooperator_la_CFLAGS += $(ESDM_CFLAGS)
+endif
 
 liboph_genericoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" -I../oph_gsoap
 liboph_genericoperator_la_SOURCES = OPH_GENERIC_operator.c
 liboph_genericoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_genericoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_directory
+if HAVE_ESDM
+liboph_genericoperator_la_CFLAGS += $(ESDM_CFLAGS)
+endif
 
 liboph_containerschemaoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_containerschemaoperator_la_SOURCES = OPH_CONTAINERSCHEMA_operator.c
