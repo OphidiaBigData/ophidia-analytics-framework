@@ -166,7 +166,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (base_src_path) {
 			value = value2 = strdup(value);
 			for (i = 0; i < ((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs_num; i++) {
-				if (((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i] && strlen(((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i])) {
+				if (((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i] && strlen(((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i])
+				    && strncmp(((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i], "esdm://", 7)) {
 					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", base_src_path ? base_src_path : "",
 						 *((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i] != '/' ? "/" : "",
 						 ((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i]);
