@@ -29,12 +29,11 @@ while those considered as implicit dimensions must not overlap with those in the
                 Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
                 Must be the same number of &quot;subset_filter&quot; 
 - subset_filter : enumeration of comma-separated elementary filters (1 series of filters for each dimension). Possible forms are:
-                  -- start_value : single value specifying the start index of the subset
-                  -- start_value:stop_value : select elements from start_index to stop_index
-                  Values should be numbers. Example:
-                     subset_dims=lat|lon;subset_filter=35:45|15:20;
-                  Multiple-value field: list of filters separated by &quot;|&quot; can be provided  
-                  Must be the same number of &quot;subset_dims&quot;
+                  -- start_value : single value specifying the start index of the subset (from 0 to size - 1)
+                  -- start_value:stop_value : select elements from start_index to stop_index (from 0 to size - 1)
+                  Values should be numbers, for example: subset_dims=lat|lon;subset_filter=35:45|15:20;
+                  Multiple-value field: list of filters separated by &quot;|&quot; can be provided.
+                  Must be the same number of &quot;subset_dims&quot;.
 - subset_type : if set to &quot;index&quot; (default), the subset_filter is considered on dimension index. 
                 With &quot;coord&quot;, filter is considered on dimension values.
 - time_filter : enable filters using dates for time dimensions; enabled by default.

@@ -34,7 +34,7 @@ Support is provided only for images fits files.
             Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
             It implicitly defines explicit dimension number and level (order). 
             Allowed values are NAXIS1, NAXIS2, ..., NAXISn.
-            If default value &quot;auto&quot; is specified, then the first n-1 dimension of the measure in the fits file will be used as explicit dimensions.
+            If default value &quot;auto&quot; is specified, then the first n - 1 dimensions of the measure will be used as explicit dimensions.
 - imp_dim : names of implicit dimensions (axis).
             Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided 
             It implicitly defines implicit dimension number and level (order).  
@@ -45,12 +45,11 @@ Support is provided only for images fits files.
 				Must be the same number of &quot;subset_filter&quot; 
                 Allowed values are NAXIS1, NAXIS2, ..., NAXISn.
 - subset_filter : enumeration of comma-separated elementary filters (1 series of filters for each dimension). Possible forms are:
-                  -- start_value : single value specifying the start index of the subset
-                  -- start_value:stop_value : select elements from start_index to stop_index
-                  Values should be numbers.
-				  Multiple-value field: list of filters separated by &quot;|&quot; can be provided  
-				  Must be the same number of &quot;subset_dims&quot;. Example:
-                    subset_dims=NAXIS1|NAXIS2;subset_filter=101:200|1001:1100;
+                  -- start_value : single value specifying the start index of the subset (from 0 to size - 1)
+                  -- start_value:stop_value : select elements from start_index to stop_index (from 0 to size - 1)
+                  Values should be numbers, for example: subset_dims=lat|lon;subset_filter=35:45|15:20;
+                  Multiple-value field: list of filters separated by &quot;|&quot; can be provided.
+                  Must be the same number of &quot;subset_dims&quot;, for example: subset_dims=NAXIS1|NAXIS2;subset_filter=101:200|1001:1100;
 - compressed: save compressed data with &quot;yes&quot; or original data with &quot;no&quot; (default).
 - description : additional description to be associated with the output cube.
 - policy : rule to select how data are distribuited over hosts:
