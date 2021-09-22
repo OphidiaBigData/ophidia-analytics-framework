@@ -126,7 +126,7 @@ SUBMISSION STRING: &quot;operator=oph_importesdm;cwd=/session-code1;container=co
 		<argument type="int" mandatory="no" minvalue="0" default="0">nfrag</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
 		<argument type="string" mandatory="yes">measure</argument>
-		<argument type="string" mandatory="no" multivalue="yes">src_path</argument>
+		<argument type="string" mandatory="no" default="" multivalue="yes">src_path</argument>
 		<argument type="string" mandatory="no" default="">input</argument>
 		<argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="auto" multivalue="yes">exp_dim</argument>
