@@ -34,6 +34,20 @@ The task can be unlocked by means of the command &quot;OPH_INPUT&quot;.
 - output : alias for the pair &quot;filename&quot;; the value of this argument will be overwritten.
 - message : this user-defined message is appended to response in order to notify the waiting reason.
 - run : set to yes (default) to wait effectively
+- subset_dims : dimension names used to select a subset of target.
+                Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
+                Must be the same number of &quot;subset_filter&quot; 
+- subset_filter : enumeration of comma-separated elementary filters (1 series of filters for each dimension). Possible forms are:
+                  -- start_value : single value specifying the start index of the subset (from 0 to size - 1)
+                  -- start_value:stop_value : select elements from start_index to stop_index (from 0 to size - 1)
+                  Values should be numbers, for example: subset_dims=lat|lon;subset_filter=35:45|15:20;
+                  Multiple-value field: list of filters separated by &quot;|&quot; can be provided.
+                  Must be the same number of &quot;subset_dims&quot;.
+- subset_type : if set to &quot;index&quot; (default), the subset_filter is considered on dimension index. 
+                With &quot;coord&quot;, filter is considered on dimension values.
+                In case of single value, that value is used for all the dimensions.
+- time_filter : enable filters using dates for time dimensions; enabled by default.
+- offset : it is added to the bounds of subset intervals defined with &quot;subset_filter&quot; in case of &quot;coord&quot; filter type is used.
 
 [System parameters]
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -63,5 +77,10 @@ SUBMISSION STRING: &quot;operator=oph_wait;timeout=200;&quot;</abstract>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>
 		<argument type="string" mandatory="no" default="sync" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
+		<argument type="string" mandatory="no" default="none" multivalue="yes">subset_dims</argument>
+		<argument type="string" mandatory="no" default="index" values="index|coord" multivalue="yes">subset_type</argument>
+		<argument type="string" mandatory="no" default="all" multivalue="yes">subset_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">time_filter</argument>
+		<argument type="real" mandatory="no" default="0" multivalue="yes">offset</argument>
     </args>
 </operator>
