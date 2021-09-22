@@ -424,7 +424,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	int s;
 	output_name = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name;
-	if (output_name && strncmp(output_name, "esdm://", 7)) {
+	if (output_name && strncmp(output_name, OPH_ESDM_PREFIX, 7)) {
 		for (s = 0; s < (int) strlen(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name); s++) {
 			if ((((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] == '/') || (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] == ':')) {
 				((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] = '_';
@@ -1103,7 +1103,7 @@ int task_execute(oph_operator_struct * handle)
 				if (frags.value[k].db_instance != &(dbs.value[j]))
 					continue;
 
-				if (strncmp(file, "esdm://", 7)) {
+				if (strncmp(file, OPH_ESDM_PREFIX, 7)) {
 
 					if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
 						n = snprintf(file_name, sizeof(file_name), OPH_EXPORTNC_OUTPUT_PATH_SINGLE_FILE, path, file,
@@ -1672,7 +1672,7 @@ int task_execute(oph_operator_struct * handle)
 		char jsonbuf[OPH_COMMON_BUFFER_LEN];
 		int type = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1;
 
-		if (!strncmp(file, "esdm://", 7)) {
+		if (!strncmp(file, OPH_ESDM_PREFIX, 7)) {
 
 			// ADD OUTPUT PID TO JSON AS TEXT
 			if (oph_json_is_objkey_printable
@@ -1847,6 +1847,10 @@ int env_unset(oph_operator_struct * handle)
 	}
 	free((OPH_EXPORTNC_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
+
+#ifdef OPH_ESDM
+	handle->dlh = NULL;
+#endif
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

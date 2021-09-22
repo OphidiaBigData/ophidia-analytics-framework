@@ -66,6 +66,12 @@ if HAVE_PARALLEL_NETCDF
 OPERATOR_XML+=etc/operators_xml/OPH_EXPORTNC2_operator_1.0.xml
 endif
 endif
+if HAVE_ESDM
+OPERATOR_XML+=etc/operators_xml/OPH_IMPORTESDM_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_IMPORTESDM2_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_EXPORTESDM_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_CONCATESDM_operator_1.0.xml
+endif
 OPERATOR_XML+=etc/operators_xml/OPH_FOLDER_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_FS_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_FOR_operator_1.0.xml
