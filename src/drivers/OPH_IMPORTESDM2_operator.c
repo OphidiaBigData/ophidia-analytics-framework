@@ -943,7 +943,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			if (!strcmp(dimname, measure->dims_name[j]))
 				break;
 		if (j == ndims) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s' in in nc file\n", dimname, measure->varname);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s' of ESDM object\n", dimname, measure->varname);
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname, measure->varname);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
@@ -1139,8 +1139,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				char buffer[packet_size];
 
 				if (handle->proc_rank == 0) {
-					ophidiadb *oDB = &((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->oDB;
-
 					if (oph_esdm_update_dim_with_esdm_metadata
 					    (oDB, time_dim, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_vocabulary, OPH_GENERIC_CONTAINER_ID, measure))
 						time_dim->id_dimension = 0;
@@ -1323,7 +1321,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			measure->dims_end_index[i] = measure->dims_length[i] - 1;
 		} else {
 			int ii;
-			if ((ii = oph_esdm_check_subset_string(curfilter, i, measure, is_index[j], j < s_offset_num ? offset[j] : 0.0))) {
+			if ((ii = oph_esdm_check_subset_string(curfilter, i, measure, is_index[j], j < s_offset_num ? offset[j] : 0.0, 0))) {
 				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 				if (offset)
@@ -2925,7 +2923,8 @@ int task_init(oph_operator_struct * handle)
 						}
 					case SMD_TYPE_STRING:
 					case SMD_TYPE_ARRAY:
-						strncpy(svalue, (char *) smd_attr_get_value(current), current->type->size < OPH_COMMON_BUFFER_LEN ? current->type->size : OPH_COMMON_BUFFER_LEN);
+						strncpy(svalue, (char *) smd_attr_get_value(current),
+							1 + current->type->size < OPH_COMMON_BUFFER_LEN ? current->type->size : OPH_COMMON_BUFFER_LEN - 1);
 						break;
 					default:;
 				}
@@ -4287,20 +4286,20 @@ int env_unset(oph_operator_struct * handle)
 		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->description = NULL;
 	}
 
-	int i;
-	for (i = 0; i < ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.ndims; ++i) {
-		if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dspace) {
-			free(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dspace);
-			((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dspace = NULL;
-		}
-		if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset) {
+	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dspace) {
+		free(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dspace);
+		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dspace = NULL;
+	}
+	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset) {
+		int i;
+		for (i = 0; i < ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.ndims; ++i) {
 			if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset[i]) {
 				esdm_dataset_close(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset[i]);
 				((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset[i] = NULL;
 			}
-			free(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset);
-			((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset = NULL;
 		}
+		free(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset);
+		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dataset = NULL;
 	}
 
 	esdm_dataset_close(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dataset);

@@ -72,6 +72,9 @@ typedef struct _OPH_FS_operator_handle {
 	int number_of_sub_filters;
 	int number_of_sub_types;
 	double *offset;
+	int s_offset_num;
+	char *vocabulary;
+	ophidiadb oDB;
 } OPH_FS_operator_handle;
 
 

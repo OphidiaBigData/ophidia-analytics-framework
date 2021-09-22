@@ -82,6 +82,9 @@ int main(int argc, char *argv[])
 		set_log_prefix(log_prefix);
 		pmesg(LOG_DEBUG, __FILE__, __LINE__, "Set logging directory to '%s'\n", log_prefix);
 #endif
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2)
+		msglevel = LOG_DEBUG_T;
+#endif
 
 		if (!myrank)
 			gettimeofday(&start_time, NULL);

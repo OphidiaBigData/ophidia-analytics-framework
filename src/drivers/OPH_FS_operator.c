@@ -50,6 +50,9 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
+#include "oph_dimension_library.h"
+
+#define OPH_FS_SUBSET_COORD	    "coord"
 #define OPH_FS_HPREFIX '.'
 #define OPH_SEPARATOR_PARAM ";"
 
@@ -282,6 +285,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_filters = 0;
 	((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_types = 0;
 	((OPH_FS_operator_handle *) handle->operator_handle)->offset = NULL;
+	((OPH_FS_operator_handle *) handle->operator_handle)->s_offset_num = 0;
+	((OPH_FS_operator_handle *) handle->operator_handle)->vocabulary = NULL;
+
+	oph_odb_init_ophidiadb(&((OPH_FS_operator_handle *) handle->operator_handle)->oDB);
 
 	//Only master process has to continue
 	if (handle->proc_rank != 0)
@@ -456,6 +463,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		for (i = 0; i < s_offset_num; ++i)
 			offset[i] = (double) strtod(s_offset[i], NULL);
 		oph_tp_free_multiple_value_param_list(s_offset, s_offset_num);
+		((OPH_FS_operator_handle *) handle->operator_handle)->s_offset_num = s_offset_num;
 	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_DIMENSIONS);
@@ -518,6 +526,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Number of multidimensional parameters not corresponding\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MULTIVARIABLE_NUMBER_NOT_CORRESPONDING);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_VOCABULARY);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_VOCABULARY);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_VOCABULARY);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
+		if (!(((OPH_FS_operator_handle *) handle->operator_handle)->vocabulary = (char *) strdup(value))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_MEMORY_ERROR_INPUT, OPH_IN_PARAM_VOCABULARY);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -877,13 +899,259 @@ int task_execute(oph_operator_struct * handle)
 						break;
 					}
 
-					if (((OPH_FS_operator_handle *) handle->operator_handle)->measure
-					    && strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->measure, OPH_FRAMEWORK_FS_DEFAULT_PATH))
-						result = esdm_dataset_probe(path + 7, ((OPH_FS_operator_handle *) handle->operator_handle)->measure);
-					else
-						result = esdm_container_probe(path + 7);
-					if (result)	// Skip protocol name
-						snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s", path);
+					esdm_dataspace_t *point = NULL;
+					if (((OPH_FS_operator_handle *) handle->operator_handle)->measure && ((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_dims) {
+
+						// Build the dataspace
+						char *varname = ((OPH_FS_operator_handle *) handle->operator_handle)->measure, *curfilter;
+						char const *const *dims_name;
+						char **sub_dims = ((OPH_FS_operator_handle *) handle->operator_handle)->sub_dims;
+						char **sub_filters = ((OPH_FS_operator_handle *) handle->operator_handle)->sub_filters;
+						char **sub_types = ((OPH_FS_operator_handle *) handle->operator_handle)->sub_types;
+						int number_of_sub_dims = ((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_dims;
+						int number_of_sub_types = ((OPH_FS_operator_handle *) handle->operator_handle)->number_of_sub_types;
+						double *offset = ((OPH_FS_operator_handle *) handle->operator_handle)->offset;
+						int i, s_offset_num = ((OPH_FS_operator_handle *) handle->operator_handle)->s_offset_num;
+						esdm_container_t *container = NULL;
+						esdm_dataset_t *dataset = NULL;
+						esdm_dataspace_t *dspace = NULL;
+						int64_t *start = NULL, *count = NULL;
+
+						ESDM_var measure;
+						measure.ndims = 0;
+						measure.dim_dataset = NULL;
+						measure.dim_dspace = NULL;
+						measure.dims_length = NULL;
+						measure.dims_start_index = NULL;
+						measure.dims_end_index = NULL;
+
+						do {
+
+							if (esdm_container_open(path + 7, ESDM_MODE_FLAG_READ, &container))
+								break;
+							if (esdm_dataset_open(container, varname, ESDM_MODE_FLAG_READ, &dataset))
+								break;
+							if (esdm_dataset_get_dataspace(dataset, &dspace))
+								break;
+							if (esdm_dataset_get_name_dims(dataset, &dims_name))
+								break;
+
+							int j, ndims = dspace->dims, tf = -1;	// Id of time filter
+
+							//Check dimension names
+							for (i = 0; i < number_of_sub_dims; i++) {
+								for (j = 0; j < ndims; j++)
+									if (!strcmp(sub_dims[i], dims_name[j]))
+										break;
+								if (j == ndims) {
+									pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s'\n", sub_dims[i], varname);
+									logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to find dimension '%s' related to variable '%s'\n",
+										sub_dims[i], varname);
+									break;
+								}
+							}
+
+							//Check the sub_filters strings
+							for (i = 0; i < number_of_sub_dims; i++) {
+								if (((OPH_FS_operator_handle *) handle->operator_handle)->time_filter && strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR[1])) {
+									if (tf >= 0) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Not more than one time dimension can be considered\n");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
+										result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+										break;
+									}
+									tf = i;
+									for (j = 0; j < ndims; j++)
+										if (!strcmp(sub_dims[i], dims_name[j]))
+											break;
+								} else if (strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2) != strrchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Strided range are not supported\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
+									result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									break;
+								}
+							}
+							if (result)
+								break;
+
+							measure.container = container;
+							measure.dataset = dataset;
+							measure.dims_name = dims_name;
+							measure.ndims = ndims;
+							measure.dim_dataset = (esdm_dataset_t **) calloc(measure.ndims, sizeof(esdm_dataset_t *));
+							measure.dim_dspace = (esdm_dataspace_t **) calloc(measure.ndims, sizeof(esdm_dataspace_t *));
+
+							// Time dimension
+							if (tf >= 0) {
+
+								// Open OphidiaDB (note: if it served for other aims, it should be opened in set_env or init task!!!)
+								ophidiadb *oDB = &((OPH_FS_operator_handle *) handle->operator_handle)->oDB;
+
+								if (oph_odb_read_ophidiadb_config_file(oDB)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_OPHIDIADB_CONFIGURATION_FILE, "");
+									result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									break;
+								}
+
+								if (oph_odb_connect_to_ophidiadb(oDB)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_OPHIDIADB_CONNECTION_ERROR, "");
+									result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+									break;
+								}
+
+								int id_vocabulary;
+								if (oph_odb_meta_retrieve_vocabulary_id(oDB, ((OPH_FS_operator_handle *) handle->operator_handle)->vocabulary, &id_vocabulary)
+								    || !id_vocabulary) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input vocabulary\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unknown input vocabulary\n");
+									result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+									break;
+								}
+
+								if (!measure.dim_dataset[tf])
+									if (esdm_dataset_open(measure.container, measure.dims_name[tf], ESDM_MODE_FLAG_READ, measure.dim_dataset + tf)) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING, "");
+										result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+										break;
+									}
+								if (!measure.dim_dspace[tf])
+									if (esdm_dataset_get_dataspace(measure.dim_dataset[tf], measure.dim_dspace + tf)) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_FS_INVALID_INPUT_STRING, "");
+										result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+										break;
+									}
+
+								oph_odb_dimension dim, *time_dim = &dim;
+								if (oph_esdm_set_esdm_type(dim.dimension_type, measure.dim_dspace[tf]->type)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in loading time data type\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error in loading time data type\n");
+									result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									break;
+								}
+
+								if (oph_esdm_update_dim_with_esdm_metadata(oDB, time_dim, id_vocabulary, OPH_GENERIC_CONTAINER_ID, &measure)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in loading time metadata\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error in loading time metadata\n");
+									result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									break;
+								}
+
+								long long max_size = QUERY_BUFLEN;
+								oph_pid_get_buffer_size(&max_size);
+								char temp[max_size];
+								if (oph_dim_parse_time_subset(sub_filters[tf], time_dim, temp)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing time values '%s'\n", sub_filters[tf]);
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
+									result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+									break;
+								}
+								free(sub_filters[tf]);
+								((OPH_FS_operator_handle *) handle->operator_handle)->sub_filters[tf] = sub_filters[tf] = strdup(temp);
+
+								pmesg(LOG_DEBUG, __FILE__, __LINE__, "Time subset converted to '%s'\n", sub_filters[tf]);
+							}
+
+							char is_index[1 + number_of_sub_dims];
+							if (number_of_sub_dims) {
+								for (i = 0; i < number_of_sub_types; ++i)
+									is_index[i] = strncmp(sub_types[i], OPH_FS_SUBSET_COORD, OPH_TP_TASKLEN);
+								for (; i < number_of_sub_dims; ++i)
+									is_index[i] = number_of_sub_types == 1 ? is_index[0] : 1;
+							}
+							is_index[number_of_sub_dims] = 0;
+
+							int64_t const *size = esdm_dataset_get_actual_size(dataset);
+							size_t dims_length[ndims];
+							int dims_start_index[ndims];
+							int dims_end_index[ndims];
+
+							measure.dims_start_index = dims_start_index;
+							measure.dims_end_index = dims_end_index;
+							measure.dims_length = dims_length;
+
+							for (i = 0; i < ndims; i++) {
+								dims_length[i] = dspace->size[i] ? dspace->size[i] : size[i];
+								dims_start_index[i] = 0;
+								dims_end_index[i] = (int) dims_length[i] - 1;
+								curfilter = NULL;
+								for (j = 0; j < number_of_sub_dims; j++) {
+									if (!strcmp(sub_dims[j], dims_name[i])) {
+										curfilter = sub_filters[j];
+										break;
+									}
+								}
+								if (!curfilter)
+									continue;
+								if (oph_esdm_check_subset_string(curfilter, i, &measure, is_index[j], j < s_offset_num ? offset[j] : 0.0, 1)) {
+									result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+									break;
+								} else if (dims_start_index[i] < 0 || dims_end_index[i] < 0 || dims_start_index[i] > dims_end_index[i]
+									   || dims_start_index[i] >= (int) dims_length[i] || dims_end_index[i] >= (int) dims_length[i]) {
+									pmesg(LOG_WARNING, __FILE__, __LINE__, "Invalid subset\n");
+									logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Invalid subset\n");
+									result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+									break;
+								}
+							}
+							if (result)
+								break;
+
+							start = (int64_t *) malloc(ndims * sizeof(int64_t));
+							count = (int64_t *) malloc(ndims * sizeof(int64_t));
+							for (i = 0; i < ndims; i++) {
+								start[i] = dims_start_index[i];
+								count[i] = 1 + dims_end_index[i] - dims_start_index[i];
+							}
+
+							if (esdm_dataspace_create_full(ndims, count, start, dspace->type, &point)) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create data space\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to create data space\n");
+								result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+								break;
+							}
+
+						} while (0);
+
+						if (measure.dim_dspace)
+							free(measure.dim_dspace);
+						if (measure.dim_dataset) {
+							for (i = 0; i < measure.ndims; ++i)
+								if (measure.dim_dataset[i])
+									esdm_dataset_close(measure.dim_dataset[i]);
+							free(measure.dim_dataset);
+						}
+
+						if (dataset)
+							esdm_dataset_close(dataset);
+						if (container)
+							esdm_container_close(container);
+
+						if (start)
+							free(start);
+						if (count)
+							free(count);
+					}
+
+					if (!result) {
+
+						if (((OPH_FS_operator_handle *) handle->operator_handle)->measure
+						    && strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->measure, OPH_FRAMEWORK_FS_DEFAULT_PATH)) {
+							if (point)
+								result = esdm_dataset_probe_region(path + 7, ((OPH_FS_operator_handle *) handle->operator_handle)->measure, point);
+							else
+								result = esdm_dataset_probe(path + 7, ((OPH_FS_operator_handle *) handle->operator_handle)->measure);
+						} else
+							result = esdm_container_probe(path + 7);
+						if (result)
+							snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s", path);
+					}
+
+					if (point)
+						esdm_dataspace_destroy(point);
 
 					esdm_finalize();
 
@@ -1107,6 +1375,11 @@ int env_unset(oph_operator_struct * handle)
 		free(((OPH_FS_operator_handle *) handle->operator_handle)->offset);
 		((OPH_FS_operator_handle *) handle->operator_handle)->offset = NULL;
 	}
+	if (((OPH_FS_operator_handle *) handle->operator_handle)->vocabulary) {
+		free(((OPH_FS_operator_handle *) handle->operator_handle)->vocabulary);
+		((OPH_FS_operator_handle *) handle->operator_handle)->vocabulary = NULL;
+	}
+	oph_odb_free_ophidiadb(&((OPH_FS_operator_handle *) handle->operator_handle)->oDB);
 
 	free((OPH_FS_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
