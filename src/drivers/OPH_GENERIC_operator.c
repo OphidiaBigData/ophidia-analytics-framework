@@ -397,7 +397,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_GENERIC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_NAME);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (process_file && strcmp(value, OPH_GENERIC_DEFAULT_OUTPUT_PATH)) {
+	if (strcmp(value, OPH_GENERIC_DEFAULT_OUTPUT_PATH)) {
 		if (!(((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name = (char *) strdup(value))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_GENERIC_MEMORY_ERROR_INPUT, "output name");
