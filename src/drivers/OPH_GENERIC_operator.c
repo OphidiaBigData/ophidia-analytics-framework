@@ -42,6 +42,10 @@
 #include "oph_directory_library.h"
 #include "oph_soap.h"
 
+#ifdef OPH_ESDM
+#include "oph_esdm_library.h"
+#endif
+
 #define MAX_OUT_LEN 500*1024
 #define OPH_GENERIC_MARKER '\''
 #define OPH_GENERIC_MARKER2 '\\'
@@ -164,7 +168,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (base_src_path) {
 			value = value2 = strdup(value);
 			for (i = 0; i < ((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs_num; i++) {
-				if (((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i] && strlen(((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i])) {
+				if (((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i] && strlen(((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i])
+				    && strncmp(((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i], "esdm://", 7)) {
 					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", base_src_path ? base_src_path : "",
 						 *((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i] != '/' ? "/" : "",
 						 ((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i]);
@@ -292,10 +297,19 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	char *output_path = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
 	char *output_name = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_NAME);
 	char *output = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT);
+	char process_file = 1;
+
+#ifdef OPH_ESDM
+	if (output && !strncmp(output, OPH_ESDM_PREFIX, 7))
+		output_name = output;
+	if (output_name && !strncmp(output_name, OPH_ESDM_PREFIX, 7))
+		process_file = 0;
+#endif
+
 	char home[2];
 	home[0] = '/';
 	home[1] = 0;
-	if (output && ((size = strlen(output)))) {
+	if (process_file && output && ((size = strlen(output)))) {
 		char *pointer = output + size;
 		while ((pointer >= output) && (*pointer != '/'))
 			pointer--;
@@ -389,7 +403,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 	}
 	size_t s;
-	if (((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name) {
+	if (process_file && ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name) {
 		for (s = 0; s < strlen(((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name); s++) {
 			if ((((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name[s] == '/')
 			    || (((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name[s] == ':')) {
@@ -429,37 +443,41 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_GENERIC_DIR_CREATION_ERROR, path);
 		}
 	}
-	//Create a random name
-	if (!((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name) {
-		char tmp[20];
-		snprintf(tmp, 20, "%d", rand());
-		((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name = strdup(tmp);
-	}
-	//Check if file exists
-	char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' };
-	snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_GENERIC_OUTPUT_PATH_SINGLE_FILE, path, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name);
-	if (stat(file_name, &st)) {
-		if (errno == EACCES) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_GENERIC_PERMISSION_ERROR, file_name);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_GENERIC_PERMISSION_ERROR, file_name);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		} else if (errno != ENOENT) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_GENERIC_FILE_STAT_ERROR, file_name);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_GENERIC_FILE_STAT_ERROR, file_name);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+
+	if (process_file) {
+		//Create a random name
+		if (!((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name) {
+			char tmp[20];
+			srand(time(NULL));
+			snprintf(tmp, 20, "%d", rand());
+			((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name = strdup(tmp);
 		}
-	}
-	//File exists
-	else {
-		//If it is not a regular file
-		if (!S_ISREG(st.st_mode)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_GENERIC_OVERWRITE_FOLDER_ERROR, file_name);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_GENERIC_OVERWRITE_FOLDER_ERROR, file_name);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		//Check if file exists
+		char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' };
+		snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_GENERIC_OUTPUT_PATH_SINGLE_FILE, path, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name);
+		if (stat(file_name, &st)) {
+			if (errno == EACCES) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_GENERIC_PERMISSION_ERROR, file_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_GENERIC_PERMISSION_ERROR, file_name);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			} else if (errno != ENOENT) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_GENERIC_FILE_STAT_ERROR, file_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_GENERIC_FILE_STAT_ERROR, file_name);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
 		}
-		if (!((OPH_GENERIC_operator_handle *) handle->operator_handle)->force) {
-			pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_GENERIC_FILE_EXISTS, file_name);
-			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_GENERIC_FILE_EXISTS, file_name);
+		//File exists
+		else {
+			//If it is not a regular file
+			if (!S_ISREG(st.st_mode)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_GENERIC_OVERWRITE_FOLDER_ERROR, file_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_GENERIC_OVERWRITE_FOLDER_ERROR, file_name);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			if (!((OPH_GENERIC_operator_handle *) handle->operator_handle)->force) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_GENERIC_FILE_EXISTS, file_name);
+				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_GENERIC_FILE_EXISTS, file_name);
+			}
 		}
 	}
 
@@ -578,8 +596,13 @@ int task_execute(oph_operator_struct * handle)
 
 	// Output file
 	char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' };
-	snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_GENERIC_OUTPUT_PATH_SINGLE_FILE, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_path,
-		 ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name);
+#ifdef OPH_ESDM
+	if (!strncmp(((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name, OPH_ESDM_PREFIX, 7))
+		strcpy(file_name, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name);
+	else
+#endif
+		snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_GENERIC_OUTPUT_PATH_SINGLE_FILE, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_path,
+			 ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name);
 	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "'%s' ", file_name);
 
 	if (strcmp(((OPH_GENERIC_operator_handle *) handle->operator_handle)->out_redir, "stdout")) {
@@ -635,6 +658,13 @@ int task_execute(oph_operator_struct * handle)
 
 	char jsonbuf[OPH_COMMON_BUFFER_LEN];
 	*jsonbuf = 0;
+#ifdef OPH_ESDM
+	if (!strncmp(((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name, OPH_ESDM_PREFIX, 7)) {
+		if (oph_json_is_objkey_printable
+		    (((OPH_GENERIC_operator_handle *) handle->operator_handle)->objkeys, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_CDO_OUTPUT))
+			snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s", ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name);
+	} else
+#endif
 	if (((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_path_user) {
 		char *output_path_file = ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_path_user;
 		size_t size = strlen(output_path_file);

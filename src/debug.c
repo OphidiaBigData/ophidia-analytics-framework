@@ -25,7 +25,9 @@
 #include <sys/types.h>
 
 #include "oph_common.h"
+
 #define MAX_LOG_LINE OPH_COMMON_BUFFER_LEN
+#define CTIME_BUF 32
 
 int msglevel = LOG_INFO;	/* the higher, the more messages... */
 char *prefix = NULL;
@@ -69,7 +71,8 @@ void pmesg(int level, const char *source, long int line_number, const char *form
 	char log_line[MAX_LOG_LINE];
 	if (msglevel > 10) {
 		time_t t1 = time(NULL);
-		char *s = ctime(&t1);
+		char s[CTIME_BUF];
+		ctime_r(&t1, s);
 		s[strlen(s) - 1] = 0;	// remove \n
 		snprintf(log_line, MAX_LOG_LINE, LOG_OUTPUT_FORMAT1, s, log_type, source, line_number);
 	} else {
@@ -209,7 +212,8 @@ void logging(int level, const char *source, long int line_number, int container_
 
 		if (msglevel > 10) {
 			time_t t1 = time(NULL);
-			char *s = ctime(&t1);
+			char s[CTIME_BUF];
+			ctime_r(&t1, s);
 			s[strlen(s) - 1] = 0;	// remove \n
 			snprintf(log_line, MAX_LOG_LINE, LOG_OUTPUT_FORMAT1, s, log_type, source, line_number);
 		} else {
@@ -294,7 +298,8 @@ void logging_server(int level, const char *source, long int line_number, const c
 
 		if (msglevel > 10) {
 			time_t t1 = time(NULL);
-			char *s = ctime(&t1);
+			char s[CTIME_BUF];
+			ctime_r(&t1, s);
 			s[strlen(s) - 1] = 0;	// remove \n
 			snprintf(log_line, MAX_LOG_LINE, LOG_OUTPUT_FORMAT1, s, log_type, source, line_number);
 		} else {
