@@ -23,6 +23,10 @@
 #define RABBITMQ_FAILURE -1
 #define RABBITMQ_SUCCESS 1
 
+#define INSERT_JOB_MODE 0
+#define REMOVE_JOB_MODE 1
+#define START_MODE 2
+#define SHUTDOWN_MODE 3
 
 /**
  * \brief			            Function to prepare RabbitMQ connection to consume messages
@@ -73,4 +77,4 @@ int close_rabbitmq_connection(amqp_connection_state_t conn, amqp_channel_t chann
  */
 int get_number_queued_messages(char *hostname, char *port, char *username, char *password, char *queue_name);
 
-void create_update_message(char *ip_address, char *port, int thread_number, char *workflow_id, char *job_id, char *delete_queue_name, char **update_message);
+void create_update_message(char *ip_address, char *port, char *workflow_id, char *job_id, char *delete_queue_name, int mode, char **update_message);

@@ -59,29 +59,17 @@ char *config_file = 0;
 char *rabbitmq_direct_mode = "amq.direct";
 char *db_location = 0;
 char *global_ip_address = 0;
+int worker_id = -1;
 
 int neededSize = 0;
-
-int isPresent = 0;
 
 void release_main()
 {
 	sqlite3_close(db);
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "Sqlite connection has been closed\n");
 
-	neededSize = snprintf(NULL, 0, "rm -rf %s", db_location);
-	char *delete_database = (char *) malloc(neededSize + 1);
-	snprintf(delete_database, neededSize + 1, "rm -rf %s", db_location);
-
-	int systemRes = system(delete_database);
-	if (systemRes != -1)
-		pmesg(LOG_DEBUG, __FILE__, __LINE__, "Sqlite database located in %s has been deleted\n", db_location);
-
-	if (delete_database)
-		free(delete_database);
-
-	close_rabbitmq_connection(conn, channel);
-	pmesg(LOG_DEBUG, __FILE__, __LINE__, "RabbitMQ connection for consume on %s has been closed\n", db_manager_queue_name);
+	if (close_rabbitmq_connection(conn, channel) != RABBITMQ_FAILURE)
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "RabbitMQ connection for consume on %s has been closed\n", db_manager_queue_name);
 
 	if (oph_server_conf_unload(&hashtbl) != 0)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error on oph_server_conf_unload\n");
@@ -102,21 +90,16 @@ int select_where_callback(void *NotUsed, int argc, char **argv, char **azColName
 	UNUSED(NotUsed);
 	UNUSED(azColName);
 
-	int ii = 0;
-	for (ii = 0; ii < argc; ii++) {
-		if (argv[ii]) {
-			isPresent = 1;
-			return 0;
-		}
-	}
+	if(argv[0])
+		worker_id = atoi(argv[0]);
+	else
+		worker_id = -1;
 
-	return 1;
+	return 0;
 }
 
 int update_database(amqp_envelope_t full_message)
 {
-	char *select_sql = 0;
-	char *select_insert_sql = 0;
 
 	char *message = (char *) malloc(full_message.message.body.len + 1);
 	strncpy(message, (char *) full_message.message.body.bytes, full_message.message.body.len);
@@ -126,113 +109,132 @@ int update_database(amqp_envelope_t full_message)
 	char *ip_address = strtok_r(message, "***", &ptr);
 	if (!ip_address) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Fail to read ip_address parameter\n");
-		return 0;
+		return 1;
 	}
 	char *port = strtok_r(NULL, "***", &ptr);
 	if (!port) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Fail to read port parameter\n");
-		return 0;
-	}
-	char *thread_number = strtok_r(NULL, "***", &ptr);
-	if (!thread_number) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Fail to read thread_number parameter\n");
-		return 0;
+		return 1;
 	}
 	char *workflow_id = strtok_r(NULL, "***", &ptr);
 	if (!workflow_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Fail to read workflow_id parameter\n");
-		return 0;
+		return 1;
 	}
 	char *job_id = strtok_r(NULL, "***", &ptr);
 	if (!job_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Fail to read job_id parameter\n");
-		return 0;
+		return 1;
 	}
 	char *delete_queue_name = strtok_r(NULL, "***", &ptr);
 	if (!delete_queue_name) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Fail to read delete_queue_name parameter\n");
-		return 0;
+		return 1;
 	}
-
-	if (strcmp(workflow_id, "-1") == 0 && strcmp(job_id, "-1") == 0) {	// REMOVE PROCESS/THREADS ENTRIES FROM CENTRALIZED DB
-		neededSize = snprintf(NULL, 0, "DELETE FROM job_table WHERE ip_address = \"%s\" and port = \"%s\" and " "delete_queue_name = \"%s\";", ip_address, port, delete_queue_name);
-		char *delete_sql = (char *) malloc(neededSize + 1);
-		snprintf(delete_sql, neededSize + 1, "DELETE FROM job_table WHERE ip_address = \"%s\" and port = \"%s\" and " "delete_queue_name = \"%s\";", ip_address, port, delete_queue_name);
-
-		if (sqlite3_exec(db, delete_sql, 0, 0, &err_msg) != SQLITE_OK) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on delete query: %s\n", err_msg);
-
-			sqlite3_free(err_msg);
-			sqlite3_close(db);
-
-			return 0;
-		} else
-			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Entries have been deleted for IP_ADDRESS: %s - PORT: %s - DELETE_QUEUE_NAME: %s\n", ip_address, port, delete_queue_name);
-
-		if (delete_sql)
-			free(delete_sql);
-		if (message)
-			free(message);
-
+	char *mode = strtok_r(NULL, "***", &ptr);
+	if (!mode) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Fail to read mode parameter\n");
 		return 1;
 	}
 
-	neededSize = snprintf(NULL, 0, "SELECT * FROM job_table WHERE ip_address = \"%s\" and port = \"%s\" and thread_number = %s and "
-			      "delete_queue_name =  \"%s\";", ip_address, port, thread_number, delete_queue_name);
-	select_sql = (char *) malloc(neededSize + 1);
-	snprintf(select_sql, neededSize + 1, "SELECT * FROM job_table WHERE ip_address = \"%s\" and port = \"%s\" and thread_number = %s and "
-		 "delete_queue_name =  \"%s\";", ip_address, port, thread_number, delete_queue_name);
+	int mode_value = atoi(mode);
 
-	if (sqlite3_exec(db, select_sql, select_where_callback, 0, &err_msg) != SQLITE_OK) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on select query: %s\n", err_msg);
+	switch (mode_value) {
+		case INSERT_JOB_MODE: {	// INSERT NEW JOB ENTRY IN JOB TABLE
+			neededSize = snprintf(NULL, 0, "SELECT id_worker FROM worker WHERE ip_address=\"%s\" and port=\"%s\" and "
+				"delete_queue_name=\"%s\";", ip_address, port, delete_queue_name);
+			char *get_id_worker_sql = (char *) malloc(neededSize + 1);
+			snprintf(get_id_worker_sql, neededSize + 1, "SELECT id_worker FROM worker WHERE ip_address=\"%s\" and port=\"%s\" and "
+				"delete_queue_name=\"%s\";", ip_address, port, delete_queue_name);
 
-		sqlite3_free(err_msg);
-		sqlite3_close(db);
+			while (sqlite3_exec(db, get_id_worker_sql, select_where_callback, 0, &err_msg) != SQLITE_OK)
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on select query: %s\n", err_msg);
+			free(get_id_worker_sql);
 
-		if (message)
-			free(message);
-		if (select_sql)
-			free(select_sql);
+			if(worker_id != -1) {
+				neededSize = snprintf(NULL, 0, "INSERT INTO job (workflow_id, job_id, id_worker) VALUES(\"%s\", \"%s\", \"%d\");", 
+					workflow_id, job_id, worker_id);
+				char *insert_into_sql = (char *) malloc(neededSize + 1);
+				snprintf(insert_into_sql, neededSize + 1, "INSERT INTO job (workflow_id, job_id, id_worker) VALUES(\"%s\", \"%s\", \"%d\");", 
+					workflow_id, job_id, worker_id);
 
-		exit(0);
+				while (sqlite3_exec(db, insert_into_sql, 0, 0, &err_msg) != SQLITE_OK)
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on select query: %s\n", err_msg);
+				free(insert_into_sql);
+
+				worker_id = -1;
+
+				pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: inserted job in job table. WORKFLOW_ID: %s - JOB ID: %s\n", workflow_id, job_id);
+			}
+
+			break;
+		}
+		case REMOVE_JOB_MODE: {	// REMOVE JOB ENTRY FROM JOB TABLE
+			neededSize = snprintf(NULL, 0, "DELETE FROM job WHERE workflow_id=\"%s\" and job_id=\"%s\";", workflow_id, job_id);
+			char *delete_from_sql = (char *) malloc(neededSize + 1);
+			snprintf(delete_from_sql, neededSize + 1, "DELETE FROM job WHERE workflow_id=\"%s\" and job_id=\"%s\";", workflow_id, job_id);
+
+			while (sqlite3_exec(db, delete_from_sql, 0, 0, &err_msg) != SQLITE_OK)
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on select query: %s\n", err_msg);
+			free(delete_from_sql);
+
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: removed job WORKFLOW_ID: %s - JOB ID: %s from job table\n", workflow_id, job_id);
+
+			break;
+		}
+		case START_MODE: { // SET WORKER STATUS TO UP
+			neededSize = snprintf(NULL, 0, "UPDATE worker SET status=\"up\" WHERE ip_address = \"%s\" and port = \"%s\" and "
+				"delete_queue_name = \"%s\";", ip_address, port, delete_queue_name);
+			char *set_up_status_sql = (char *) malloc(neededSize + 1);
+			snprintf(set_up_status_sql, neededSize + 1, "UPDATE worker SET status=\"up\" WHERE ip_address = \"%s\" and port = \"%s\" and "
+				"delete_queue_name = \"%s\";", ip_address, port, delete_queue_name);
+
+			while (sqlite3_exec(db, set_up_status_sql, 0, 0, &err_msg) != SQLITE_OK)
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on select query: %s\n", err_msg);
+			free(set_up_status_sql);
+
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: set up status for worker IP_ADDRESS: %s - PORT: %s - "
+				"DELETE_QUEUE: %s", ip_address, port, delete_queue_name);
+
+			break;
+		}
+		case SHUTDOWN_MODE: { // REMOVE ALL WORKER JOB ENTRIES FROM JOB_TABLE AND SET WORKER STATUS=DOWN
+			neededSize = snprintf(NULL, 0, "DELETE FROM job WHERE id_worker in (SELECT id_worker from worker WHERE "
+				"ip_address = \"%s\" and port = \"%s\" and delete_queue_name = \"%s\");", ip_address, port, delete_queue_name);
+			char *delete_sql = (char *) malloc(neededSize + 1);
+			snprintf(delete_sql, neededSize + 1, "DELETE FROM job WHERE id_worker in (SELECT id_worker from worker WHERE "
+				"ip_address = \"%s\" and port = \"%s\" and delete_queue_name = \"%s\");", ip_address, port, delete_queue_name);
+
+			while (sqlite3_exec(db, delete_sql, 0, 0, &err_msg) != SQLITE_OK)
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on delete query: %s\n", err_msg);
+
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Job entries for worker IP_ADDRESS: %s - PORT: %s - DELETE_QUEUE_NAME: %s\n has been removed", ip_address, port, delete_queue_name);
+
+			free(delete_sql);
+
+			neededSize = snprintf(NULL, 0, "UPDATE worker SET status=\"down\" WHERE ip_address = \"%s\" and port = \"%s\" and "
+				"delete_queue_name = \"%s\";", ip_address, port, delete_queue_name);
+			char *set_down_status_sql = (char *) malloc(neededSize + 1);
+			snprintf(set_down_status_sql, neededSize + 1, "UPDATE worker SET status=\"down\" WHERE ip_address = \"%s\" and port = \"%s\" and "
+				"delete_queue_name = \"%s\";", ip_address, port, delete_queue_name);
+
+			while (sqlite3_exec(db, set_down_status_sql, 0, 0, &err_msg) != SQLITE_OK)
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on delete query: %s\n", err_msg);
+			free(set_down_status_sql);
+
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Worker with IP_ADDRESS: %s - PORT: %s - DELETE_QUEUE_NAME: %s has been set \"down\"\n", ip_address, port, delete_queue_name);	
+
+			break;
+		}
+		default: {
+			break;
+		}
 	}
 
-	if (isPresent == 0) {
-		neededSize = snprintf(NULL, 0, "INSERT INTO job_table (ip_address, port, thread_number, workflow_id, job_id, "
-				      "delete_queue_name) VALUES(\"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\");", ip_address, port, thread_number, workflow_id, job_id, delete_queue_name);
-		select_insert_sql = (char *) malloc(neededSize + 1);
-		snprintf(select_insert_sql, neededSize + 1, "INSERT INTO job_table (ip_address, port, thread_number, workflow_id, job_id, "
-			 "delete_queue_name) VALUES(\"%s\", \"%s\", \"%s\", \"%s\", \"%s\", \"%s\");", ip_address, port, thread_number, workflow_id, job_id, delete_queue_name);
-	} else {
-		neededSize = snprintf(NULL, 0, "UPDATE job_table SET workflow_id = \"%s\", job_id = \"%s\" WHERE ip_address = \"%s\" and "
-				      "port = \"%s\" and thread_number = \"%s\" and delete_queue_name = \"%s\";", workflow_id, job_id, ip_address, port, thread_number, delete_queue_name);
-		select_insert_sql = (char *) malloc(neededSize + 1);
-		snprintf(select_insert_sql, neededSize + 1, "UPDATE job_table SET workflow_id = \"%s\", job_id = \"%s\" WHERE ip_address = \"%s\" and "
-			 "port = \"%s\" and thread_number = \"%s\" and delete_queue_name = \"%s\";", workflow_id, job_id, ip_address, port, thread_number, delete_queue_name);
-
-		isPresent = 0;
-	}
-
-	while (sqlite3_exec(db, select_insert_sql, 0, 0, &err_msg) != SQLITE_OK) {
-		pmesg(LOG_DEBUG, __FILE__, __LINE__, "SQL error on select/insert query: %s\n", err_msg);
-
-		/*sqlite3_free(err_msg);
-		   sqlite3_close(db);
-
-		   exit (0); */
-	}
-
-	pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated. IP_ADDRESS: %s - PORT: %s - THREAD_NUMBER: %s - "
-	      "WORKFLOW_ID: %s - JOB ID: %s - DELETE_QUEUE_NAME: %s\n", ip_address, port, thread_number, workflow_id, job_id, delete_queue_name);
-
-	if (select_sql)
-		free(select_sql);
-	if (select_insert_sql)
-		free(select_insert_sql);
 	if (message)
 		free(message);
 
-	return 1;
+	return 0;
 }
 
 int main(int argc, char const *const *argv)
@@ -425,12 +427,24 @@ int main(int argc, char const *const *argv)
 		exit(0);
 	}
 
-	char *init_sql = "CREATE TABLE IF NOT EXISTS job_table (id_task INTEGER PRIMARY KEY AUTOINCREMENT, "
-	    "ip_address VARCHAR(15) NOT NULL, port VARCHAR(4) NOT NULL, thread_number INTEGER NOT NULL, "
-	    "workflow_id INTEGER NOT NULL, job_id INTEGER NOT NULL, delete_queue_name VARCHAR(40) NOT NULL)";
+	char *init_worker_sql = "CREATE TABLE IF NOT EXISTS worker (id_worker INTEGER PRIMARY KEY AUTOINCREMENT, "
+	    "ip_address VARCHAR(15) NOT NULL, port VARCHAR(4) NOT NULL, delete_queue_name VARCHAR(40) NOT NULL, "
+		"status VARCHAR(4) DEFAULT \"down\" NOT NULL)";
 
-	if (sqlite3_exec(db, init_sql, 0, 0, &err_msg) != SQLITE_OK) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on init query: %s\n", sqlite3_errmsg(db));
+	if (sqlite3_exec(db, init_worker_sql, 0, 0, &err_msg) != SQLITE_OK) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on init_worker_sql query: %s\n", sqlite3_errmsg(db));
+
+		sqlite3_free(err_msg);
+		sqlite3_close(db);
+
+		exit(0);
+	}
+
+	char *init_job_sql = "CREATE TABLE IF NOT EXISTS job (id_task INTEGER PRIMARY KEY AUTOINCREMENT, workflow_id INTEGER NOT NULL, "
+		"job_id INTEGER NOT NULL, id_worker INTEGER NOT NULL, FOREIGN KEY (id_worker) REFERENCES worker (id_worker))";
+
+	if (sqlite3_exec(db, init_job_sql, 0, 0, &err_msg) != SQLITE_OK) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on init_job_sql query: %s\n", sqlite3_errmsg(db));
 
 		sqlite3_free(err_msg);
 		sqlite3_close(db);
@@ -451,7 +465,7 @@ int main(int argc, char const *const *argv)
 		} else
 			pmesg(LOG_DEBUG, __FILE__, __LINE__, "A message has been consumed\n");
 
-		if (update_database(envelope) == 1) {
+		if (!update_database(envelope)) {
 			// ACKNOWLEDGE MESSAGE
 			ack_res = amqp_basic_ack(conn, channel, envelope.delivery_tag, 0);	// last param: if true, ack all messages up to this delivery tag, if false ack only this delivery tag
 			if (ack_res != 0) {

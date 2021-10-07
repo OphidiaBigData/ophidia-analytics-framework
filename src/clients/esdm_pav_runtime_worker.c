@@ -154,7 +154,7 @@ void release_main()
 	rabbitmq_publish_connection(&publish_remove_entries_conn, default_channel, master_hostname, master_port, username, password, db_manager_queue_name);
 
 	char *delete_message = 0;
-	create_update_message(global_ip_address, port, 0, "-1", "-1", delete_queue_name, &delete_message);
+	create_update_message(global_ip_address, port, "0", "0", delete_queue_name, SHUTDOWN_MODE, &delete_message);
 
 	// SEND MESSAGE TO DB MANAGER QUEUE
 	int status = amqp_basic_publish(publish_remove_entries_conn,
@@ -306,7 +306,7 @@ int process_message(amqp_envelope_t full_message)
 
 	// WRITE ON UPDATE_QUEUE AND SHARED ARRAY
 	char *update_message = 0;
-	create_update_message(global_ip_address, port, thread_param, workflow_id, job_id, delete_queue_name, &update_message);
+	create_update_message(global_ip_address, port, workflow_id, job_id, delete_queue_name, INSERT_JOB_MODE, &update_message);
 	pthread_rwlock_rdlock(&thread_lock_list[thread_param]);
 	shared_ids_array[thread_param] = atoi(workflow_id);
 	pthread_rwlock_unlock(&thread_lock_list[thread_param]);
@@ -334,16 +334,21 @@ int process_message(amqp_envelope_t full_message)
 		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "This consumer process does not support job processing that require more than %s cores\n", max_ncores);
 
 #ifdef UPDATE_CANCELLATION_SUPPORT
+
 		char *update_message_2 = 0;
-		create_update_message(global_ip_address, port, thread_param, "0", "0", delete_queue_name, &update_message_2);
+		create_update_message(global_ip_address, port, workflow_id, job_id, delete_queue_name, REMOVE_JOB_MODE, &update_message_2);
 		pthread_rwlock_rdlock(&thread_lock_list[thread_param]);
 		shared_ids_array[thread_param] = 0;
 		pthread_rwlock_unlock(&thread_lock_list[thread_param]);
 
-		status = amqp_basic_publish(conn_thread_publish_list[thread_param], channel, amqp_cstring_bytes(""), amqp_cstring_bytes(update_queue_name), 0,	// mandatory (message must be routed to a queue)
-					    0,	// immediate (message must be delivered to a consumer immediately)
-					    &props,	// properties
-					    amqp_cstring_bytes(update_message_2));
+		status = amqp_basic_publish(conn_thread_publish_list[thread_param],
+						channel,
+						amqp_cstring_bytes(""),
+						amqp_cstring_bytes(update_queue_name),
+						0,	// mandatory (message must be routed to a queue)
+						0,	// immediate (message must be delivered to a consumer immediately)
+						&props,	// properties
+						amqp_cstring_bytes(update_message_2));
 
 		if (status == AMQP_STATUS_OK)
 			pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Message has been sent on %s: %s\n", update_queue_name, update_message_2);
@@ -408,16 +413,20 @@ int process_message(amqp_envelope_t full_message)
 #ifdef UPDATE_CANCELLATION_SUPPORT
 	// WRITE ON UPDATE_QUEUE AND SHARED ARRAY
 	char *update_message_3 = 0;
-	create_update_message(global_ip_address, port, thread_param, "0", "0", delete_queue_name, &update_message_3);
+	create_update_message(global_ip_address, port, workflow_id, job_id, delete_queue_name, REMOVE_JOB_MODE, &update_message_3);
 	pthread_rwlock_rdlock(&thread_lock_list[thread_param]);
 	shared_ids_array[thread_param] = 0;
 	PID_array[thread_param] = 0;
 	pthread_rwlock_unlock(&thread_lock_list[thread_param]);
 
-	status = amqp_basic_publish(conn_thread_publish_list[thread_param], channel, amqp_cstring_bytes(""), amqp_cstring_bytes(update_message_3), 0,	// mandatory (message must be routed to a queue)
-				    0,	// immediate (message must be delivered to a consumer immediately)
-				    &props,	// properties
-				    amqp_cstring_bytes(update_message_3));
+	status = status = amqp_basic_publish(conn_thread_publish_list[thread_param],
+						channel,
+						amqp_cstring_bytes(""),
+						amqp_cstring_bytes(update_queue_name),
+						0,	// mandatory (message must be routed to a queue)
+						0,	// immediate (message must be delivered to a consumer immediately)
+						&props,	// properties
+						amqp_cstring_bytes(update_message_3));
 
 	if (status == AMQP_STATUS_OK)
 		pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Message has been sent on %s: %s\n", update_queue_name, update_message_3);
@@ -559,10 +568,14 @@ void *update_pthread_function()
 		snprintf(message, envelope.message.body.len + 1, "%s", (char *) envelope.message.body.bytes);
 
 		// SEND MESSAGE TO DB MANAGER QUEUE
-		status = amqp_basic_publish(publish_db_conn, default_channel, amqp_cstring_bytes(""), amqp_cstring_bytes(db_manager_queue_name), 0,	// mandatory (message must be routed to a queue)
-					    0,	// immediate (message must be delivered to a consumer immediately)
-					    &props,	// properties
-					    amqp_cstring_bytes(message));
+		status = amqp_basic_publish(publish_db_conn,
+						default_channel,
+						amqp_cstring_bytes(""),
+						amqp_cstring_bytes(db_manager_queue_name),
+						0,	// mandatory (message must be routed to a queue)
+						0,	// immediate (message must be delivered to a consumer immediately)
+						&props,	// properties
+						amqp_cstring_bytes(message));
 
 		if (status == AMQP_STATUS_OK)
 			pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Message has been sent on %s: %s\n", db_manager_queue_name, message);
@@ -1207,7 +1220,7 @@ int main(int argc, char const *const *argv)
 	shared_ids_array = (int *) malloc(sizeof(int) * thread_number);
 	PID_array = (pid_t *) malloc(sizeof(pid_t) * thread_number);
 	thread_lock_list = (pthread_rwlock_t *) malloc(sizeof(pthread_rwlock_t) * thread_number);
-	conn_thread_publish_list = (amqp_connection_state_t *) malloc(sizeof(amqp_connection_state_t) * thread_number);
+	conn_thread_publish_list = (amqp_connection_state_t *) malloc(sizeof(amqp_connection_state_t) * (thread_number + 1));
 	canc_struct_list = (cancellation_struct *) malloc(sizeof(cancellation_struct) * max_cancellation_struct_size);
 #endif
 
@@ -1251,6 +1264,31 @@ int main(int argc, char const *const *argv)
 	}
 
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "%s worker threads have been started\n", thread_number_str);
+
+	// WRITE ON UPDATE_QUEUE AND SHARED ARRAY --> SET STATUS UP ON JOB DB
+	rabbitmq_publish_connection(&conn_thread_publish_list[thread_number], (amqp_channel_t) (thread_number + 1), hostname, port, username, password, update_queue_name);
+
+	char *update_message = 0;
+	create_update_message(global_ip_address, port, "0", "0", delete_queue_name, START_MODE, &update_message);
+
+	int status = amqp_basic_publish(conn_thread_publish_list[thread_number],
+					(amqp_channel_t) thread_number+1,
+					amqp_cstring_bytes(""),
+					amqp_cstring_bytes(update_queue_name),
+					0,	// mandatory (message must be routed to a queue)
+					0,	// immediate (message must be delivered to a consumer immediately)
+					&props,	// properties
+					amqp_cstring_bytes(update_message));
+
+	if (status == AMQP_STATUS_OK)
+		pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Message has been sent on %s: %s\n", update_queue_name, update_message);
+	else
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Cannot send message to %s\n", update_queue_name);
+
+	if (update_message)
+		free(update_message);
+
+	close_rabbitmq_connection(conn_thread_publish_list[thread_number], (amqp_channel_t) (thread_number+1));
 
 	struct sigaction new_act, old_act;
 
