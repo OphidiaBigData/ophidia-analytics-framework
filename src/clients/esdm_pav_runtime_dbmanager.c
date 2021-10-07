@@ -178,7 +178,7 @@ int update_database(amqp_envelope_t full_message)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on select query: %s\n", err_msg);
 			free(delete_from_sql);
 
-			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: removed job WORKFLOW_ID: %s - JOB ID: %s from job table\n", workflow_id, job_id);
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: removed job from job table. WORKFLOW_ID: %s - JOB ID: %s\n", workflow_id, job_id);
 
 			break;
 		}
@@ -193,8 +193,8 @@ int update_database(amqp_envelope_t full_message)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on select query: %s\n", err_msg);
 			free(set_up_status_sql);
 
-			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: set up status for worker IP_ADDRESS: %s - PORT: %s - "
-				"DELETE_QUEUE: %s", ip_address, port, delete_queue_name);
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: set status \"up\" for worker IP_ADDRESS: %s - PORT: %s - "
+				"DELETE_QUEUE: %s\n", ip_address, port, delete_queue_name);
 
 			break;
 		}
@@ -208,7 +208,8 @@ int update_database(amqp_envelope_t full_message)
 			while (sqlite3_exec(db, delete_sql, 0, 0, &err_msg) != SQLITE_OK)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on delete query: %s\n", err_msg);
 
-			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Job entries for worker IP_ADDRESS: %s - PORT: %s - DELETE_QUEUE_NAME: %s\n has been removed", ip_address, port, delete_queue_name);
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: job entries has been removed for worker IP_ADDRESS: %s - PORT: %s "
+				"- DELETE_QUEUE: %s\n", ip_address, port, delete_queue_name);
 
 			free(delete_sql);
 
@@ -222,7 +223,8 @@ int update_database(amqp_envelope_t full_message)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on delete query: %s\n", err_msg);
 			free(set_down_status_sql);
 
-			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Worker with IP_ADDRESS: %s - PORT: %s - DELETE_QUEUE_NAME: %s has been set \"down\"\n", ip_address, port, delete_queue_name);	
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: set status \"down\" for worker IP_ADDRESS: %s - PORT: %s - "
+				"DELETE_QUEUE: %s\n", ip_address, port, delete_queue_name);
 
 			break;
 		}
