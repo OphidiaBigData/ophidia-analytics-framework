@@ -1265,6 +1265,7 @@ int main(int argc, char const *const *argv)
 
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "%s worker threads have been started\n", thread_number_str);
 
+#ifdef UPDATE_CANCELLATION_SUPPORT
 	// WRITE ON UPDATE_QUEUE AND SHARED ARRAY --> SET STATUS UP ON JOB DB
 	rabbitmq_publish_connection(&conn_thread_publish_list[thread_number], (amqp_channel_t) (thread_number + 1), hostname, port, username, password, update_queue_name);
 
@@ -1289,6 +1290,7 @@ int main(int argc, char const *const *argv)
 		free(update_message);
 
 	close_rabbitmq_connection(conn_thread_publish_list[thread_number], (amqp_channel_t) (thread_number+1));
+#endif
 
 	struct sigaction new_act, old_act;
 
