@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_PAV_WORKER" version="1.0">
+    <info>
+        <abstract>[Type]
+Management.
+
+[Behaviour]
+Start, stop and get information about workers.
+
+[Parameters]
+- action : use one of the following types:
+	&quot;info&quot;: get information about workers deployed by the user (default);
+	&quot;info_workers&quot;: get information about all the workers (reserved to administrators);
+	&quot;deploy&quot;: try to starts workers;
+	&quot;undeploy&quot;: stop workers.
+- number : number of workers to be started.
+- user_filter : filter on username in case action &quot;info_workers&quot; is selected (reserved to administrators).
+
+[System parameters]
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output):
+                  workers_summary : show workers status;
+                  workers_list : show workers list;
+                  workers_list_summary : show workers list summary;
+                  workers_user : show workers user list (reserved to administrators);
+                  workers_user_summary : show workers user list summary (reserved to administrators).
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
+
+[Examples]       
+Start 3 workers:
+OPH_TERM: oph_pav_worker action=deploy;number=3;
+SUBMISSION STRING: &quot;operator=oph_pav_worker;action=deploy;number=3;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <category>Administration</category>
+        <creationdate>30/09/2021</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <permission>read</permission>
+    </info>
+    <args>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="info" values="info|info_workers|deploy|undeploy">action</argument>
+    <argument type="int" mandatory="no" minvalue="1" default="1">number</argument>
+		<argument type="string" mandatory="no" default="all">user_filter</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|workers_summary|workers_list|workers_list_summary|workers_user|workers_user_summary">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
+    </args>
+</operator>
