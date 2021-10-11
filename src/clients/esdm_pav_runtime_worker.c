@@ -72,8 +72,8 @@ int thread_number;
 pthread_t *thread_cont_list = NULL;
 int *pthread_create_arg = NULL;
 
-int ptr_list_size = 18;
-char *ptr_list[18];
+int ptr_list_size = 17;
+char *ptr_list[17];
 
 amqp_connection_state_t *conn_thread_consume_list = NULL;
 amqp_channel_t default_channel = 1;
@@ -91,10 +91,11 @@ char *password = 0;
 char *config_file = 0;
 char *rabbitmq_direct_mode = "amq.direct";
 char *max_ncores = 0;
-char *global_ip_address = 0;
 char *master_hostname = 0;
 char *master_port = 0;
 char *thread_number_str = 0;
+
+char nodename[1024];
 
 pthread_mutex_t global_flag;
 
@@ -154,7 +155,7 @@ void release_main()
 	rabbitmq_publish_connection(&publish_remove_entries_conn, default_channel, master_hostname, master_port, username, password, db_manager_queue_name);
 
 	char *delete_message = 0;
-	create_update_message(global_ip_address, port, "0", "0", delete_queue_name, SHUTDOWN_MODE, &delete_message);
+	create_update_message(nodename, port, "0", "0", delete_queue_name, SHUTDOWN_MODE, &delete_message);
 
 	// SEND MESSAGE TO DB MANAGER QUEUE
 	int status = amqp_basic_publish(publish_remove_entries_conn,
@@ -177,10 +178,10 @@ void release_main()
 
 	char *delete_queue_from_rabbitmq = 0;
 
-	int neededSize = snprintf(NULL, 0, "rabbitmqctl list_queues | awk '{ print $1 }' | grep \"%s_%s\" | " "xargs -L1 rabbitmqctl delete_queue > /dev/null", global_ip_address, port);
+	int neededSize = snprintf(NULL, 0, "rabbitmqctl list_queues | awk '{ print $1 }' | grep \"%s_%s\" | " "xargs -L1 rabbitmqctl delete_queue > /dev/null", nodename, port);
 	delete_queue_from_rabbitmq = (char *) malloc(neededSize + 1);
 	snprintf(delete_queue_from_rabbitmq, neededSize + 1, "rabbitmqctl list_queues | awk '{ print $1 }' | grep \"%s_%s\" | "
-		 "xargs -L1 rabbitmqctl delete_queue > /dev/null", global_ip_address, port);
+		 "xargs -L1 rabbitmqctl delete_queue > /dev/null", nodename, port);
 
 	int systemRes = system(delete_queue_from_rabbitmq);
 	if (systemRes != -1)
@@ -306,7 +307,7 @@ int process_message(amqp_envelope_t full_message)
 
 	// WRITE ON UPDATE_QUEUE AND SHARED ARRAY
 	char *update_message = 0;
-	create_update_message(global_ip_address, port, workflow_id, job_id, delete_queue_name, INSERT_JOB_MODE, &update_message);
+	create_update_message(nodename, port, workflow_id, job_id, delete_queue_name, INSERT_JOB_MODE, &update_message);
 	pthread_rwlock_rdlock(&thread_lock_list[thread_param]);
 	shared_ids_array[thread_param] = atoi(workflow_id);
 	pthread_rwlock_unlock(&thread_lock_list[thread_param]);
@@ -336,7 +337,7 @@ int process_message(amqp_envelope_t full_message)
 #ifdef UPDATE_CANCELLATION_SUPPORT
 
 		char *update_message_2 = 0;
-		create_update_message(global_ip_address, port, workflow_id, job_id, delete_queue_name, REMOVE_JOB_MODE, &update_message_2);
+		create_update_message(nodename, port, workflow_id, job_id, delete_queue_name, REMOVE_JOB_MODE, &update_message_2);
 		pthread_rwlock_rdlock(&thread_lock_list[thread_param]);
 		shared_ids_array[thread_param] = 0;
 		pthread_rwlock_unlock(&thread_lock_list[thread_param]);
@@ -413,7 +414,7 @@ int process_message(amqp_envelope_t full_message)
 #ifdef UPDATE_CANCELLATION_SUPPORT
 	// WRITE ON UPDATE_QUEUE AND SHARED ARRAY
 	char *update_message_3 = 0;
-	create_update_message(global_ip_address, port, workflow_id, job_id, delete_queue_name, REMOVE_JOB_MODE, &update_message_3);
+	create_update_message(nodename, port, workflow_id, job_id, delete_queue_name, REMOVE_JOB_MODE, &update_message_3);
 	pthread_rwlock_rdlock(&thread_lock_list[thread_param]);
 	shared_ids_array[thread_param] = 0;
 	PID_array[thread_param] = 0;
@@ -1002,21 +1003,8 @@ int main(int argc, char const *const *argv)
 	set_debug_level(msglevel);
 	pmesg_safe(&global_flag, LOG_INFO, __FILE__, __LINE__, "Selected log level %d\n", msglevel);
 
-	FILE *fp;
-	fp = popen("hostname -I | awk '{print $1}'", "r");
-	if (fp == NULL)
-		exit(1);
-
-	global_ip_address = (char *) malloc(16);
-	if (fgets(global_ip_address, 16, fp) == NULL) {
-		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Unable to get ip address\n");
-		release_main();
-
-		exit(0);
-	}
-	pclose(fp);
-	global_ip_address[strcspn(global_ip_address, "\n")] = 0;
-	ptr_list[15] = global_ip_address;
+	gethostname(nodename, 1024);
+	printf("hostname: %s\n", nodename);
 
 	short unsigned int instance = 0;
 
@@ -1069,14 +1057,14 @@ int main(int argc, char const *const *argv)
 			oph_server_conf_unload(&hashtbl);
 			exit(0);
 		} else {
-			neededSize = snprintf(NULL, 0, "%s_%s_%s", update_queue, global_ip_address, port);
+			neededSize = snprintf(NULL, 0, "%s_%s_%s", update_queue, nodename, port);
 			update_queue_name = (char *) malloc(neededSize + 1);
-			snprintf(update_queue_name, neededSize + 1, "%s_%s_%s", update_queue, global_ip_address, port);
+			snprintf(update_queue_name, neededSize + 1, "%s_%s_%s", update_queue, nodename, port);
 		}
 	} else {
-		neededSize = snprintf(NULL, 0, "%s_%s_%s", update_queue_name, global_ip_address, port);
+		neededSize = snprintf(NULL, 0, "%s_%s_%s", update_queue_name, nodename, port);
 		update_queue = (char *) malloc(neededSize + 1);
-		snprintf(update_queue, neededSize + 1, "%s_%s_%s", update_queue_name, global_ip_address, port);
+		snprintf(update_queue, neededSize + 1, "%s_%s_%s", update_queue_name, nodename, port);
 
 		strcpy(update_queue_name, update_queue);
 	}
@@ -1090,14 +1078,14 @@ int main(int argc, char const *const *argv)
 			oph_server_conf_unload(&hashtbl);
 			exit(0);
 		} else {
-			neededSize = snprintf(NULL, 0, "%s_%s_%s", delete_queue, global_ip_address, port);
+			neededSize = snprintf(NULL, 0, "%s_%s_%s", delete_queue, nodename, port);
 			delete_queue_name = (char *) malloc(neededSize + 1);
-			snprintf(delete_queue_name, neededSize + 1, "%s_%s_%s", delete_queue, global_ip_address, port);
+			snprintf(delete_queue_name, neededSize + 1, "%s_%s_%s", delete_queue, nodename, port);
 		}
 	} else {
-		neededSize = snprintf(NULL, 0, "%s_%s_%s", delete_queue_name, global_ip_address, port);
+		neededSize = snprintf(NULL, 0, "%s_%s_%s", delete_queue_name, nodename, port);
 		delete_queue = (char *) malloc(neededSize + 1);
-		snprintf(delete_queue, neededSize + 1, "%s_%s_%s", delete_queue_name, global_ip_address, port);
+		snprintf(delete_queue, neededSize + 1, "%s_%s_%s", delete_queue_name, nodename, port);
 
 		strcpy(delete_queue_name, delete_queue);
 	}
@@ -1270,7 +1258,7 @@ int main(int argc, char const *const *argv)
 	rabbitmq_publish_connection(&conn_thread_publish_list[thread_number], (amqp_channel_t) (thread_number + 1), hostname, port, username, password, update_queue_name);
 
 	char *update_message = 0;
-	create_update_message(global_ip_address, port, "0", "0", delete_queue_name, START_MODE, &update_message);
+	create_update_message(nodename, port, "0", "0", delete_queue_name, START_MODE, &update_message);
 
 	int status = amqp_basic_publish(conn_thread_publish_list[thread_number],
 					(amqp_channel_t) thread_number+1,

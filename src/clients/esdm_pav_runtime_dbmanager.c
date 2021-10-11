@@ -193,7 +193,7 @@ int update_database(amqp_envelope_t full_message)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on select query: %s\n", err_msg);
 			free(set_up_status_sql);
 
-			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: set status \"up\" for worker IP_ADDRESS: %s - PORT: %s - "
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: set status \"up\" for worker NODENAME: %s - PORT: %s - "
 				"DELETE_QUEUE: %s\n", ip_address, port, delete_queue_name);
 
 			break;
@@ -208,7 +208,7 @@ int update_database(amqp_envelope_t full_message)
 			while (sqlite3_exec(db, delete_sql, 0, 0, &err_msg) != SQLITE_OK)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on delete query: %s\n", err_msg);
 
-			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: job entries has been removed for worker IP_ADDRESS: %s - PORT: %s "
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: job entries has been removed for worker NODENAME: %s - PORT: %s "
 				"- DELETE_QUEUE: %s\n", ip_address, port, delete_queue_name);
 
 			free(delete_sql);
@@ -223,7 +223,7 @@ int update_database(amqp_envelope_t full_message)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on delete query: %s\n", err_msg);
 			free(set_down_status_sql);
 
-			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: set status \"down\" for worker IP_ADDRESS: %s - PORT: %s - "
+			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: set status \"down\" for worker NODENAME: %s - PORT: %s - "
 				"DELETE_QUEUE: %s\n", ip_address, port, delete_queue_name);
 
 			break;
@@ -440,7 +440,8 @@ int main(int argc, char const *const *argv)
 		sqlite3_close(db);
 
 		exit(0);
-	}
+	} else
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"worker\" table has set correctly: %s\n", init_worker_sql);
 
 	char *init_job_sql = "CREATE TABLE IF NOT EXISTS job (id_task INTEGER PRIMARY KEY AUTOINCREMENT, workflow_id INTEGER NOT NULL, "
 		"job_id INTEGER NOT NULL, id_worker INTEGER NOT NULL, FOREIGN KEY (id_worker) REFERENCES worker (id_worker))";
@@ -452,7 +453,8 @@ int main(int argc, char const *const *argv)
 		sqlite3_close(db);
 
 		exit(0);
-	}
+	} else
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"job\" table has set correctly: %s\n", init_job_sql);
 
 	for (;;) {
 		amqp_maybe_release_buffers_on_channel(conn, channel);
