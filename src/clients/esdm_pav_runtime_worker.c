@@ -1069,7 +1069,7 @@ int main(int argc, char const *const *argv)
 		strcpy(update_queue_name, update_queue);
 	}
 
-	ptr_list[16] = update_queue_name;
+	ptr_list[15] = update_queue_name;
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM UPDATE_QUEUE_NAME: %s\n", update_queue_name);
 
 	if (!delete_queue_name) {
@@ -1090,7 +1090,7 @@ int main(int argc, char const *const *argv)
 		strcpy(delete_queue_name, delete_queue);
 	}
 
-	ptr_list[17] = delete_queue_name;
+	ptr_list[16] = delete_queue_name;
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM DELETE_QUEUE_NAME: %s\n", delete_queue_name);
 #endif
 
