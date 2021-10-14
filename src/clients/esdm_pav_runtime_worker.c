@@ -68,6 +68,7 @@ amqp_connection_state_t consume_updater_conn, publish_db_conn, consume_delete_co
 #endif
 
 int thread_number;
+int process_pid = -1;
 
 pthread_t *thread_cont_list = NULL;
 int *pthread_create_arg = NULL;
@@ -155,7 +156,7 @@ void release_main()
 	rabbitmq_publish_connection(&publish_remove_entries_conn, default_channel, master_hostname, master_port, username, password, db_manager_queue_name);
 
 	char *delete_message = 0;
-	create_update_message(nodename, port, "0", "0", delete_queue_name, SHUTDOWN_MODE, &delete_message);
+	create_update_message(nodename, port, "0", "0", delete_queue_name, process_pid, SHUTDOWN_MODE, &delete_message);
 
 	// SEND MESSAGE TO DB MANAGER QUEUE
 	int status = amqp_basic_publish(publish_remove_entries_conn,
@@ -307,7 +308,7 @@ int process_message(amqp_envelope_t full_message)
 
 	// WRITE ON UPDATE_QUEUE AND SHARED ARRAY
 	char *update_message = 0;
-	create_update_message(nodename, port, workflow_id, job_id, delete_queue_name, INSERT_JOB_MODE, &update_message);
+	create_update_message(nodename, port, workflow_id, job_id, delete_queue_name, process_pid, INSERT_JOB_MODE, &update_message);
 	pthread_rwlock_rdlock(&thread_lock_list[thread_param]);
 	shared_ids_array[thread_param] = atoi(workflow_id);
 	pthread_rwlock_unlock(&thread_lock_list[thread_param]);
@@ -337,7 +338,7 @@ int process_message(amqp_envelope_t full_message)
 #ifdef UPDATE_CANCELLATION_SUPPORT
 
 		char *update_message_2 = 0;
-		create_update_message(nodename, port, workflow_id, job_id, delete_queue_name, REMOVE_JOB_MODE, &update_message_2);
+		create_update_message(nodename, port, workflow_id, job_id, delete_queue_name, process_pid, REMOVE_JOB_MODE, &update_message_2);
 		pthread_rwlock_rdlock(&thread_lock_list[thread_param]);
 		shared_ids_array[thread_param] = 0;
 		pthread_rwlock_unlock(&thread_lock_list[thread_param]);
@@ -414,7 +415,7 @@ int process_message(amqp_envelope_t full_message)
 #ifdef UPDATE_CANCELLATION_SUPPORT
 	// WRITE ON UPDATE_QUEUE AND SHARED ARRAY
 	char *update_message_3 = 0;
-	create_update_message(nodename, port, workflow_id, job_id, delete_queue_name, REMOVE_JOB_MODE, &update_message_3);
+	create_update_message(nodename, port, workflow_id, job_id, delete_queue_name, process_pid, REMOVE_JOB_MODE, &update_message_3);
 	pthread_rwlock_rdlock(&thread_lock_list[thread_param]);
 	shared_ids_array[thread_param] = 0;
 	PID_array[thread_param] = 0;
@@ -1254,11 +1255,13 @@ int main(int argc, char const *const *argv)
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "%s worker threads have been started\n", thread_number_str);
 
 #ifdef UPDATE_CANCELLATION_SUPPORT
+	process_pid = (int) getpid();
+
 	// WRITE ON UPDATE_QUEUE AND SHARED ARRAY --> SET STATUS UP ON JOB DB
 	rabbitmq_publish_connection(&conn_thread_publish_list[thread_number], (amqp_channel_t) (thread_number + 1), hostname, port, username, password, update_queue_name);
 
 	char *update_message = 0;
-	create_update_message(nodename, port, "0", "0", delete_queue_name, START_MODE, &update_message);
+	create_update_message(nodename, port, "0", "0", delete_queue_name, process_pid, START_MODE, &update_message);
 
 	int status = amqp_basic_publish(conn_thread_publish_list[thread_number],
 					(amqp_channel_t) thread_number+1,
