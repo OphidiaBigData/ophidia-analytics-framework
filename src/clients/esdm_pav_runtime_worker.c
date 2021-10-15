@@ -1005,7 +1005,6 @@ int main(int argc, char const *const *argv)
 	pmesg_safe(&global_flag, LOG_INFO, __FILE__, __LINE__, "Selected log level %d\n", msglevel);
 
 	gethostname(nodename, 1024);
-	printf("hostname: %s\n", nodename);
 
 	short unsigned int instance = 0;
 
