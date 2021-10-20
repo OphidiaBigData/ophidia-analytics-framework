@@ -451,7 +451,7 @@ int main(int argc, char const *const *argv)
 
 		exit(0);
 	} else
-		pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"worker\" table has set correctly: %s\n", init_worker_sql);
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"worker\" table has set correctly\n");
 
 	char *init_job_sql = "CREATE TABLE IF NOT EXISTS job (id_task INTEGER PRIMARY KEY AUTOINCREMENT, workflow_id INTEGER NOT NULL, "
 		"job_id INTEGER NOT NULL, id_worker INTEGER NOT NULL, FOREIGN KEY (id_worker) REFERENCES worker (id_worker))";
@@ -464,7 +464,19 @@ int main(int argc, char const *const *argv)
 
 		exit(0);
 	} else
-		pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"job\" table has set correctly: %s\n", init_job_sql);
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"job\" table has set correctly\n");
+
+	char *reset_worker_table_sql = "UPDATE worker SET pid=0, count=0, status=\"down\";";
+
+	if (sqlite3_exec(db, reset_worker_table_sql, 0, 0, &err_msg) != SQLITE_OK) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on reset_worker_table_sql query: %s\n", sqlite3_errmsg(db));
+
+		sqlite3_free(err_msg);
+		sqlite3_close(db);
+
+		exit(0);
+	} else
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"worker\" table has been reset correctly\n");
 
 	for (;;) {
 		amqp_maybe_release_buffers_on_channel(conn, channel);
