@@ -442,41 +442,20 @@ int main(int argc, char const *const *argv)
 	char *init_worker_sql = "CREATE TABLE IF NOT EXISTS worker (id_worker INTEGER PRIMARY KEY AUTOINCREMENT, "
 	    "ip_address VARCHAR(15) NOT NULL, port VARCHAR(4) NOT NULL, delete_queue_name VARCHAR(40) NOT NULL, "
 		"status VARCHAR(4) DEFAULT \"down\" NOT NULL, pid INTEGER DEFAULT 0, count INTEGER DEFAULT 0)";
-
-	if (sqlite3_exec(db, init_worker_sql, 0, 0, &err_msg) != SQLITE_OK) {
+	while (sqlite3_exec(db, init_worker_sql, 0, 0, &err_msg) != SQLITE_OK)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on init_worker_sql query: %s\n", sqlite3_errmsg(db));
-
-		sqlite3_free(err_msg);
-		sqlite3_close(db);
-
-		exit(0);
-	} else
-		pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"worker\" table has set correctly\n");
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"worker\" table has set correctly\n");
 
 	char *init_job_sql = "CREATE TABLE IF NOT EXISTS job (id_task INTEGER PRIMARY KEY AUTOINCREMENT, workflow_id INTEGER NOT NULL, "
 		"job_id INTEGER NOT NULL, id_worker INTEGER NOT NULL, FOREIGN KEY (id_worker) REFERENCES worker (id_worker))";
-
-	if (sqlite3_exec(db, init_job_sql, 0, 0, &err_msg) != SQLITE_OK) {
+	if (sqlite3_exec(db, init_job_sql, 0, 0, &err_msg) != SQLITE_OK)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on init_job_sql query: %s\n", sqlite3_errmsg(db));
-
-		sqlite3_free(err_msg);
-		sqlite3_close(db);
-
-		exit(0);
-	} else
-		pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"job\" table has set correctly\n");
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"job\" table has set correctly\n");
 
 	char *reset_worker_table_sql = "UPDATE worker SET pid=0, count=0, status=\"down\";";
-
-	if (sqlite3_exec(db, reset_worker_table_sql, 0, 0, &err_msg) != SQLITE_OK) {
+	if (sqlite3_exec(db, reset_worker_table_sql, 0, 0, &err_msg) != SQLITE_OK)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on reset_worker_table_sql query: %s\n", sqlite3_errmsg(db));
-
-		sqlite3_free(err_msg);
-		sqlite3_close(db);
-
-		exit(0);
-	} else
-		pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"worker\" table has been reset correctly\n");
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"worker\" table has been reset correctly\n");
 
 	for (;;) {
 		amqp_maybe_release_buffers_on_channel(conn, channel);
