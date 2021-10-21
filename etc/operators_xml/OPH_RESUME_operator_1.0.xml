@@ -30,6 +30,13 @@ Request the list of the commands submitted within a session or the output of a c
 		- xxxxxx1x : return references to jobs whose status is OPH_STATUS_ABORTED
 		- xxxxxxx1 : return references to jobs whose status is OPH_STATUS_UNSELECTED
 		- 11111111 : default bitmap.
+- execute : in case the command is used to retrieve the request for a specified workflow or a sub-workflow associated with a checkpoint,
+            set this parameter to &quot;yes&quot; to execute it.
+- checkpoint: in case the command is used to retrieve the request for a specified workflow,
+              use this parameter to refer to the sub-workflow associated with a checkpoint as follows:
+              - set it to &quot;all&quot; to retrieve the workflow with al the tasks (default);
+              - set it to &quot;last&quot; to retrieve the sub-workflow associated with the last checkpoint passed successfully;
+              - set it to the value of a checkpoint to the sub-workflow associated with the checkpoint if passed successfully.
 
 [System parameters]
 - sessionid : session identifier used server-side to manage sessions and jobs.
@@ -61,6 +68,8 @@ SUBMISSION STRING: &quot;operator=oph_resume;id=1;&quot;</abstract>
 		<argument type="string" mandatory="no" default="">user</argument>
 		<argument type="string" mandatory="no" default="11111111">status_filter</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">save</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">execute</argument>
+		<argument type="string" mandatory="no" default="all">checkpoint</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|resume">objkey_filter</argument>
     </args>
