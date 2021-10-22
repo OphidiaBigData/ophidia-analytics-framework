@@ -98,6 +98,18 @@ int select_where_callback(void *NotUsed, int argc, char **argv, char **azColName
 	return 0;
 }
 
+int check_ifpresent_callback(void *result, int argc, char **argv, char **azColName)
+{
+	UNUSED(azColName);
+
+	int *res = (int *) result;
+
+	if(argv[0])
+		*res = atoi(argv[0]);
+
+	return 0;
+}
+
 int update_database(amqp_envelope_t full_message)
 {
 
@@ -192,19 +204,45 @@ int update_database(amqp_envelope_t full_message)
 
 			break;
 		}
-		case START_MODE: { // SET WORKER STATUS TO UP
-			neededSize = snprintf(NULL, 0, "UPDATE worker SET status=\"up\", pid=%d, count=%d WHERE ip_address = \"%s\" and port = \"%s\" and "
-				"delete_queue_name = \"%s\";", atoi(worker_pid), atoi(worker_count), ip_address, port, delete_queue_name);
-			char *set_up_status_sql = (char *) malloc(neededSize + 1);
-			snprintf(set_up_status_sql, neededSize + 1, "UPDATE worker SET status=\"up\", pid=%d, count=%d WHERE ip_address = \"%s\" and port = \"%s\" and "
-				"delete_queue_name = \"%s\";", atoi(worker_pid), atoi(worker_count), ip_address, port, delete_queue_name);
+		case START_MODE: { // SET WORKER STATUS TO UP OR ADD NEW WORKER IF NOT EXISTS
+			int isPresent;
 
-			while (sqlite3_exec(db, set_up_status_sql, 0, 0, &err_msg) != SQLITE_OK)
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on select query: %s\n", err_msg);
-			free(set_up_status_sql);
+			neededSize = snprintf(NULL, 0, "SELECT COUNT(id_worker) FROM worker WHERE ip_address = \"%s\" and port = \"%s\" and "
+				"delete_queue_name = \"%s\";", ip_address, port, delete_queue_name);
+			char *check_ifpresent_sql = (char *) malloc(neededSize + 1);
+			snprintf(check_ifpresent_sql, neededSize + 1, "SELECT COUNT(id_worker) FROM worker WHERE ip_address = \"%s\" and port = "
+				"\"%s\" and delete_queue_name = \"%s\";", ip_address, port, delete_queue_name);
 
-			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: set status \"up\", pid=%d and count=%d for worker NODENAME: %s - PORT: %s - "
-				"DELETE_QUEUE: %s\n", atoi(worker_pid), atoi(worker_count), ip_address, port, delete_queue_name);
+			while (sqlite3_exec(db, check_ifpresent_sql, check_ifpresent_callback, &isPresent, &err_msg) != SQLITE_OK)
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on delete query: %s\n", err_msg);
+
+			if(isPresent) {
+				neededSize = snprintf(NULL, 0, "UPDATE worker SET status=\"up\", pid=%d, count=%d WHERE ip_address = \"%s\" and port = \"%s\" and "
+					"delete_queue_name = \"%s\";", atoi(worker_pid), atoi(worker_count), ip_address, port, delete_queue_name);
+				char *update_existing_worker_sql = (char *) malloc(neededSize + 1);
+				snprintf(update_existing_worker_sql, neededSize + 1, "UPDATE worker SET status=\"up\", pid=%d, count=%d WHERE ip_address = \"%s\" and port = \"%s\" and "
+					"delete_queue_name = \"%s\";", atoi(worker_pid), atoi(worker_count), ip_address, port, delete_queue_name);
+
+				while (sqlite3_exec(db, update_existing_worker_sql, 0, 0, &err_msg) != SQLITE_OK)
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on select query: %s\n", err_msg);
+				free(update_existing_worker_sql);
+
+				pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: set status \"up\" for worker. NODENAME: %s - PORT: %s "
+					"- DELETE_QUEUE: %s\n", ip_address, port, delete_queue_name);
+			} else {
+				neededSize = snprintf(NULL, 0, "INSERT INTO worker (ip_address, port, delete_queue_name, status, pid, "
+					"count) VALUES (\"%s\", \"%s\", \"%s\", \"up\", %d, %d);", ip_address, port, delete_queue_name, atoi(worker_pid), atoi(worker_count));
+				char *insert_new_worker_sql = (char *) malloc(neededSize + 1);
+				snprintf(insert_new_worker_sql, neededSize + 1, "INSERT INTO worker (ip_address, port, delete_queue_name, status, pid, "
+					"count) VALUES (\"%s\", \"%s\", \"%s\", \"up\", %d, %d);", ip_address, port, delete_queue_name, atoi(worker_pid), atoi(worker_count));
+
+				while (sqlite3_exec(db, insert_new_worker_sql, 0, 0, &err_msg) != SQLITE_OK)
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on select query: %s\n", err_msg);
+				free(insert_new_worker_sql);
+
+				pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: a new worker has been added. NODENAME: %s - PORT: %s "
+					"- DELETE_QUEUE: %s\n", ip_address, port, delete_queue_name);
+			}
 
 			break;
 		}
