@@ -73,8 +73,8 @@ int process_pid = -1;
 pthread_t *thread_cont_list = NULL;
 int *pthread_create_arg = NULL;
 
-int ptr_list_size = 18;
-char *ptr_list[18];
+int ptr_list_size = 19;
+char *ptr_list[19];
 
 amqp_connection_state_t *conn_thread_consume_list = NULL;
 amqp_channel_t default_channel = 1;
@@ -1190,6 +1190,7 @@ int main(int argc, char const *const *argv)
 		worker_count = (char *) malloc(2);
 		snprintf(worker_count, 2, "0");
 	}
+	ptr_list[18] = worker_count;
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM WORKER_COUNT: %s\n", worker_count);
 #endif
 

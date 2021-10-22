@@ -215,6 +215,7 @@ int update_database(amqp_envelope_t full_message)
 
 			while (sqlite3_exec(db, check_ifpresent_sql, check_ifpresent_callback, &isPresent, &err_msg) != SQLITE_OK)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on delete query: %s\n", err_msg);
+			free(check_ifpresent_sql);
 
 			if(isPresent) {
 				neededSize = snprintf(NULL, 0, "UPDATE worker SET status=\"up\", pid=%d, count=%d WHERE ip_address = \"%s\" and port = \"%s\" and "
@@ -255,11 +256,10 @@ int update_database(amqp_envelope_t full_message)
 
 			while (sqlite3_exec(db, delete_sql, 0, 0, &err_msg) != SQLITE_OK)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on delete query: %s\n", err_msg);
+			free(delete_sql);
 
 			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: job entries has been removed for worker NODENAME: %s - PORT: %s "
 				"- DELETE_QUEUE: %s\n", ip_address, port, delete_queue_name);
-
-			free(delete_sql);
 
 			neededSize = snprintf(NULL, 0, "UPDATE worker SET status=\"down\", pid=0, count=0 WHERE ip_address = \"%s\" and port = \"%s\" and "
 				"delete_queue_name = \"%s\";", ip_address, port, delete_queue_name);
