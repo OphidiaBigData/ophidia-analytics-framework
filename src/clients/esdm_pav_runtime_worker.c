@@ -1189,8 +1189,8 @@ int main(int argc, char const *const *argv)
 	if (!worker_count) {
 		worker_count = (char *) malloc(2);
 		snprintf(worker_count, 2, "0");
+		ptr_list[18] = worker_count;
 	}
-	ptr_list[18] = worker_count;
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM WORKER_COUNT: %s\n", worker_count);
 #endif
 
