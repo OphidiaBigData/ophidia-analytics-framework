@@ -1146,8 +1146,10 @@ int task_execute(oph_operator_struct * handle)
 								result = esdm_dataset_probe(path + 7, ((OPH_FS_operator_handle *) handle->operator_handle)->measure);
 						} else
 							result = esdm_container_probe(path + 7);
-						if (result)
+						if (result) {
 							snprintf(filenames[jj++], OPH_COMMON_BUFFER_LEN, "%s", path);
+							result = 0;
+						}
 					}
 
 					if (point)
