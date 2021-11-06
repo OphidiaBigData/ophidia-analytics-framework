@@ -1091,8 +1091,10 @@ int task_execute(oph_operator_struct * handle)
 									break;
 								} else if (dims_start_index[i] < 0 || dims_end_index[i] < 0 || dims_start_index[i] > dims_end_index[i]
 									   || dims_start_index[i] >= (int) dims_length[i] || dims_end_index[i] >= (int) dims_length[i]) {
-									pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subset\n");
-									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Invalid subset\n");
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subset: %d:%d (end %d)\n", dims_start_index[i], dims_end_index[i],
+									      dims_length[i]);
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Invalid subset: %d:%d (end %d)\n", dims_start_index[i],
+										dims_end_index[i], dims_length[i]);
 									result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 									break;
 								}
