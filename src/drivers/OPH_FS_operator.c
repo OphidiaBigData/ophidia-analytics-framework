@@ -1096,7 +1096,7 @@ int task_execute(oph_operator_struct * handle)
 
 							//Check the sub_filters strings
 							for (i = 0; i < number_of_sub_dims; i++) {
-								if (((OPH_FS_operator_handle *) handle->operator_handle)->time_filter && strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR[1])) {
+								if (((OPH_FS_operator_handle *) handle->operator_handle)->time_filter) {
 									if (tf >= 0) {
 										pmesg(LOG_ERROR, __FILE__, __LINE__, "Not more than one time dimension can be considered\n");
 										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
@@ -1234,8 +1234,10 @@ int task_execute(oph_operator_struct * handle)
 									break;
 								} else if (dims_start_index[i] < 0 || dims_end_index[i] < 0 || dims_start_index[i] > dims_end_index[i]
 									   || dims_start_index[i] >= (int) dims_length[i] || dims_end_index[i] >= (int) dims_length[i]) {
-									pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subset\n");
-									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Invalid subset\n");
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subset: %d:%d (end %d)\n", dims_start_index[i], dims_end_index[i],
+									      dims_length[i]);
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Invalid subset: %d:%d (end %d)\n", dims_start_index[i],
+										dims_end_index[i], dims_length[i]);
 									result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 									break;
 								}
