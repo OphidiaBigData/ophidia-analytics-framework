@@ -46,7 +46,7 @@ int _oph_esdm_get_dimension_id(unsigned long residual, unsigned long total, unsi
 		_oph_esdm_get_dimension_id(residual, tmp, sizemax, id, i + 1, n);
 	} else
 		*(id[i]) = (int64_t) (residual + 1);
-	return 0;
+	return OPH_ESDM_SUCCESS;
 }
 
 int oph_esdm_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n, int64_t ** id)
@@ -58,7 +58,7 @@ int oph_esdm_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n
 			total *= sizemax[i];
 		_oph_esdm_get_dimension_id(ID - 1, total, sizemax, id, 0, n);
 	}
-	return 0;
+	return OPH_ESDM_SUCCESS;
 }
 
 int _oph_esdm_get_next_id(int64_t * id, int64_t * sizemax, int i, int n)
@@ -70,7 +70,7 @@ int _oph_esdm_get_next_id(int64_t * id, int64_t * sizemax, int i, int n)
 		id[i] = 0;
 		return _oph_esdm_get_next_id(id, sizemax, i - 1, n);
 	}
-	return 0;
+	return OPH_ESDM_SUCCESS;
 }
 
 int oph_esdm_get_next_id(int64_t * id, int64_t * sizemax, int n)
@@ -82,34 +82,34 @@ int oph_esdm_get_esdm_type(char *in_c_type, esdm_type_t * type_nc)
 {
 	if (!strcasecmp(in_c_type, OPH_COMMON_BYTE_TYPE)) {
 		*type_nc = SMD_DTYPE_INT8;
-		return 0;
+		return OPH_ESDM_SUCCESS;
 	}
 	if (!strcasecmp(in_c_type, OPH_COMMON_SHORT_TYPE)) {
 		*type_nc = SMD_DTYPE_INT16;
-		return 0;
+		return OPH_ESDM_SUCCESS;
 	}
 	if (!strcasecmp(in_c_type, OPH_COMMON_INT_TYPE)) {
 		*type_nc = SMD_DTYPE_INT32;
-		return 0;
+		return OPH_ESDM_SUCCESS;
 	}
 	if (!strcasecmp(in_c_type, OPH_COMMON_LONG_TYPE)) {
 		*type_nc = SMD_DTYPE_INT64;
-		return 0;
+		return OPH_ESDM_SUCCESS;
 	}
 	if (!strcasecmp(in_c_type, OPH_COMMON_FLOAT_TYPE)) {
 		*type_nc = SMD_DTYPE_FLOAT;
-		return 0;
+		return OPH_ESDM_SUCCESS;
 	}
 	if (!strcasecmp(in_c_type, OPH_COMMON_DOUBLE_TYPE)) {
 		*type_nc = SMD_DTYPE_DOUBLE;
-		return 0;
+		return OPH_ESDM_SUCCESS;
 	}
 	if (!strcasecmp(in_c_type, OPH_COMMON_BIT_TYPE)) {
 		*type_nc = SMD_DTYPE_INT8;
-		return 0;
+		return OPH_ESDM_SUCCESS;
 	}
 	pmesg(LOG_ERROR, __FILE__, __LINE__, "Data type '%s' not supported\n", in_c_type);
-	return -1;
+	return OPH_ESDM_ERROR;
 }
 
 int oph_esdm_set_esdm_type(char *out_c_type, esdm_type_t type_nc)
@@ -128,42 +128,42 @@ int oph_esdm_set_esdm_type(char *out_c_type, esdm_type_t type_nc)
 		strcpy(out_c_type, OPH_COMMON_DOUBLE_TYPE);
 	else {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Data type not supported\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
-	return 0;
+	return OPH_ESDM_SUCCESS;
 }
 
 int oph_esdm_compare_types(int id_container, esdm_type_t var_type, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE])
 {
 	if (!var_type || !dim_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 	if (var_type == SMD_DTYPE_INT8) {
 		if (strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			return -1;
+			return OPH_ESDM_ERROR;
 	} else if (var_type == SMD_DTYPE_INT16) {
 		if (strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			return -1;
+			return OPH_ESDM_ERROR;
 	} else if (var_type == SMD_DTYPE_INT32) {
 		if (strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			return -1;
+			return OPH_ESDM_ERROR;
 	} else if (var_type == SMD_DTYPE_INT64) {
 		if (strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			return -1;
+			return OPH_ESDM_ERROR;
 	} else if (var_type == SMD_DTYPE_FLOAT) {
 		if (strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			return -1;
+			return OPH_ESDM_ERROR;
 	} else if (var_type == SMD_DTYPE_DOUBLE) {
 		if (strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			return -1;
+			return OPH_ESDM_ERROR;
 	} else {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
-	return 0;
+	return OPH_ESDM_SUCCESS;
 }
 
 int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, ESDM_var * measure)
@@ -177,7 +177,7 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * 
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_READ_KEY_LIST);
 		if (key_list)
 			mysql_free_result(key_list);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 	num_rows = mysql_num_rows(key_list);
 
@@ -194,7 +194,7 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * 
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to allocate key list\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_READ_KEY_LIST);
 			mysql_free_result(key_list);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 		char **values = (char **) calloc(num_rows, sizeof(char *));
 		if (!values) {
@@ -202,7 +202,7 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * 
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_READ_KEY_LIST);
 			mysql_free_result(key_list);
 			free(keys);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 
 		smd_attr_t *md = NULL, *attribute = NULL;
@@ -349,7 +349,7 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * 
 			}
 			free(keys);
 			free(values);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 
 		if (oph_odb_dim_update_time_dimension(time_dim, keys, values, num_attr)) {
@@ -364,7 +364,7 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * 
 			}
 			free(keys);
 			free(values);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 
 		for (i = 0; i < num_attr; ++i) {
@@ -379,14 +379,14 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * 
 
 	mysql_free_result(key_list);
 
-	return 0;
+	return OPH_ESDM_SUCCESS;
 }
 
 int oph_esdm_get_dim_array(int id_container, esdm_dataset_t * dataset, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, int start_index, int end_index, char **dim_array)
 {
 	if (!dataset || !dim_type || !dim_size || !dim_array) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 	*dim_array = NULL;
 
@@ -399,7 +399,7 @@ int oph_esdm_get_dim_array(int id_container, esdm_dataset_t * dataset, int dim_i
 		count[0] = 1 + end_index - start_index;
 	else if (start_index > end_index) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unsupported order for indexes\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	void *binary_dim = NULL;
@@ -418,12 +418,12 @@ int oph_esdm_get_dim_array(int id_container, esdm_dataset_t * dataset, int dim_i
 	else {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 	if (!binary_dim) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Memory error\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Memory error\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	if (dim_id >= 0) {
@@ -433,7 +433,7 @@ int oph_esdm_get_dim_array(int id_container, esdm_dataset_t * dataset, int dim_i
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, "");
 			free(binary_dim);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 
 		esdm_dataspace_t *subspace = NULL;
@@ -441,14 +441,14 @@ int oph_esdm_get_dim_array(int id_container, esdm_dataset_t * dataset, int dim_i
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, "");
 			free(binary_dim);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 
 		if ((esdm_read(dataset, binary_dim, subspace))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, "");
 			free(binary_dim);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 
 	} else {
@@ -481,14 +481,14 @@ int oph_esdm_get_dim_array(int id_container, esdm_dataset_t * dataset, int dim_i
 		} else {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 
 	}
 
 	*dim_array = (char *) binary_dim;
 
-	return 0;
+	return OPH_ESDM_SUCCESS;
 }
 
 int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, esdm_type_t dim_type, int dim_size, char *value, int want_start, double offset, int *valorder, int *coord_index,
@@ -496,7 +496,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 {
 	if (!dim_size || !value || !coord_index || !valorder) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	void *binary_dim = NULL;
@@ -520,11 +520,11 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 		binary_dim = (void *) malloc(sizeof(double) * dim_size);
 	else {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Data type not supported\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 	if (!binary_dim) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Memory error\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	int64_t const *size = esdm_dataset_get_actual_size(measure->dim_dataset[dim_id]);
@@ -536,7 +536,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, "");
 		free(binary_dim);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	if (dim_type == SMD_DTYPE_INT8) {
@@ -555,7 +555,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
 			free(binary_dim);
-			return -2;
+			return OPH_ESDM_BOUND_ERROR;
 		}
 		if (order) {
 			//Ascending
@@ -614,7 +614,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
 			free(binary_dim);
-			return -2;
+			return OPH_ESDM_BOUND_ERROR;
 		}
 		if (order) {
 			//Ascending
@@ -673,7 +673,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
 			free(binary_dim);
-			return -2;
+			return OPH_ESDM_BOUND_ERROR;
 		}
 		if (order) {
 			//Ascending
@@ -732,7 +732,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
 			free(binary_dim);
-			return -2;
+			return OPH_ESDM_BOUND_ERROR;
 		}
 		if (order) {
 			//Ascending
@@ -791,7 +791,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
 			free(binary_dim);
-			return -2;
+			return OPH_ESDM_BOUND_ERROR;
 		}
 		if (order) {
 			//Ascending
@@ -850,7 +850,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
 			free(binary_dim);
-			return -2;
+			return OPH_ESDM_BOUND_ERROR;
 		}
 		if (order) {
 			//Ascending
@@ -898,18 +898,18 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
 		free(binary_dim);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	free(binary_dim);
 	*coord_index = i;
 	*valorder = order;
-	return 0;
+	return OPH_ESDM_SUCCESS;
 }
 
 int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int is_index, double offset, char out_of_bound)
 {
-	int ii;
+	int ii, error = 0;
 	char *endfilter = strchr(curfilter, OPH_DIM_SUBSET_SEPARATOR2);
 	if (!endfilter && !offset) {
 		//Only single point
@@ -917,7 +917,7 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 		if (strlen(curfilter) < 1) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 		if (is_index) {
 			//Input filter is index
@@ -925,7 +925,7 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 				if (!isdigit(curfilter[ii])) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter (only integer values allowed)\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-					return -1;
+					return OPH_ESDM_ERROR;
 				}
 			}
 			measure->dims_start_index[i] = (int) (strtol(curfilter, (char **) NULL, 10));
@@ -937,13 +937,13 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 					if (!isdigit(curfilter[ii]) && curfilter[ii] != '-') {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter: %s\n", curfilter);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-						return -1;
+						return OPH_ESDM_ERROR;
 					}
 				} else {
 					if (!isdigit(curfilter[ii]) && curfilter[ii] != '.') {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter: %s\n", curfilter);
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-						return -1;
+						return OPH_ESDM_ERROR;
 					}
 				}
 			}
@@ -954,35 +954,35 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 				if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING, "");
-					return -1;
+					return OPH_ESDM_ERROR;
 				}
 			if (!measure->dim_dspace[i])
 				if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING, "");
-					return -1;
+					return OPH_ESDM_ERROR;
 				}
 			if (measure->dim_dspace[i]->dims != 1) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-				return -1;
+				return OPH_ESDM_ERROR;
 			}
 
 			int coord_index = -1;
 			int want_start = 1;	//Single point, it is the same
 			int order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 			//Extract index of the point given the dimension value
-			if (oph_esdm_index_by_value
-			    (OPH_GENERIC_CONTAINER_ID, measure, i, measure->dim_dspace[i]->type, measure->dims_length[i], curfilter, want_start, 0, &order, &coord_index, out_of_bound)) {
+			if ((error = oph_esdm_index_by_value
+			     (OPH_GENERIC_CONTAINER_ID, measure, i, measure->dim_dspace[i]->type, measure->dims_length[i], curfilter, want_start, 0, &order, &coord_index, out_of_bound))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING, "");
-				return -1;
+				return error;
 			}
 			//Value not found
 			if (coord_index >= (int) measure->dims_length[i]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-				return -1;
+				return OPH_ESDM_BOUND_ERROR;
 			}
 
 			measure->dims_start_index[i] = coord_index;
@@ -1000,7 +1000,7 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 		if (strlen(startfilter) < 1 || strlen(endfilter) < 1) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 		if (is_index) {
 			//Input filter is index         
@@ -1008,7 +1008,7 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 				if (!isdigit(startfilter[ii])) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter (only integer value allowed)\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-					return -1;
+					return OPH_ESDM_ERROR;
 				}
 			}
 
@@ -1016,7 +1016,7 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 				if (!isdigit(endfilter[ii])) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter (only integer value allowed)\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-					return -1;
+					return OPH_ESDM_ERROR;
 				}
 			}
 			measure->dims_start_index[i] = (int) (strtol(startfilter, (char **) NULL, 10));
@@ -1028,13 +1028,13 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 					if (!isdigit(startfilter[ii]) && startfilter[ii] != '-') {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-						return -1;
+						return OPH_ESDM_ERROR;
 					}
 				} else {
 					if (!isdigit(startfilter[ii]) && startfilter[ii] != '.') {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-						return -1;
+						return OPH_ESDM_ERROR;
 					}
 				}
 			}
@@ -1043,13 +1043,13 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 					if (!isdigit(endfilter[ii]) && endfilter[ii] != '-') {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-						return -1;
+						return OPH_ESDM_ERROR;
 					}
 				} else {
 					if (!isdigit(endfilter[ii]) && endfilter[ii] != '.') {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-						return -1;
+						return OPH_ESDM_ERROR;
 					}
 				}
 			}
@@ -1060,35 +1060,35 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 				if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING, "");
-					return -1;
+					return OPH_ESDM_ERROR;
 				}
 			if (!measure->dim_dspace[i])
 				if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", "");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING, "");
-					return -1;
+					return OPH_ESDM_ERROR;
 				}
 			if (measure->dim_dspace[i]->dims != 1) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-				return -1;
+				return OPH_ESDM_ERROR;
 			}
 
 			int coord_index = -1;
 			int want_start = -1;
 			int order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 			//Extract index of the point given the dimension value
-			if (oph_esdm_index_by_value
-			    (OPH_GENERIC_CONTAINER_ID, measure, i, measure->dim_dspace[i]->type, measure->dims_length[i], startfilter, want_start, offset, &order, &coord_index, out_of_bound)) {
+			if ((error = oph_esdm_index_by_value
+			     (OPH_GENERIC_CONTAINER_ID, measure, i, measure->dim_dspace[i]->type, measure->dims_length[i], startfilter, want_start, offset, &order, &coord_index, out_of_bound))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING, "");
-				return -1;
+				return error;
 			}
 			//Value too big
 			if (coord_index >= (int) measure->dims_length[i]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Values exceed dimensions bound\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-				return -1;
+				return OPH_ESDM_BOUND_ERROR;
 			}
 			measure->dims_start_index[i] = coord_index;
 
@@ -1096,16 +1096,16 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 			want_start = 0;
 			order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 			//Extract index of the point given the dimension value
-			if (oph_esdm_index_by_value
-			    (OPH_GENERIC_CONTAINER_ID, measure, i, measure->dim_dspace[i]->type, measure->dims_length[i], endfilter, want_start, offset, &order, &coord_index, out_of_bound)) {
+			if ((error = oph_esdm_index_by_value
+			     (OPH_GENERIC_CONTAINER_ID, measure, i, measure->dim_dspace[i]->type, measure->dims_length[i], endfilter, want_start, offset, &order, &coord_index, out_of_bound))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-				return -1;
+				return error;
 			}
 			if (coord_index >= (int) measure->dims_length[i]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-				return -1;
+				return OPH_ESDM_BOUND_ERROR;
 			}
 			//oph_esdm_index_by value returns the index I need considering the order of the dimension values (ascending/descending)
 			measure->dims_end_index[i] = coord_index;
@@ -1119,7 +1119,7 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 		}
 	}
 
-	return 0;
+	return OPH_ESDM_SUCCESS;
 }
 
 int _oph_esdm_cache_to_buffer(short int tot_dim_number, short int curr_dim, unsigned int *counters, unsigned int *limits, unsigned int *products, long long *index, char *binary_cache,
@@ -1136,7 +1136,7 @@ int _oph_esdm_cache_to_buffer(short int tot_dim_number, short int curr_dim, unsi
 			_oph_esdm_cache_to_buffer(tot_dim_number, curr_dim + 1, counters, limits, products, index, binary_cache, binary_insert, sizeof_var);
 			counters[curr_dim]++;
 		}
-		return 0;
+		return OPH_ESDM_SUCCESS;
 	}
 
 	if (tot_dim_number == curr_dim) {
@@ -1147,10 +1147,10 @@ int _oph_esdm_cache_to_buffer(short int tot_dim_number, short int curr_dim, unsi
 
 		memcpy(binary_insert + (*index) * sizeof_var, binary_cache + addr * sizeof_var, sizeof_var);
 		(*index)++;
-		return 0;
+		return OPH_ESDM_SUCCESS;
 	}
 
-	return 0;
+	return OPH_ESDM_SUCCESS;
 }
 
 int oph_esdm_cache_to_buffer(short int tot_dim_number, unsigned int *counters, unsigned int *limits, unsigned int *products, char *binary_cache, char *binary_insert, size_t sizeof_var)
@@ -1163,12 +1163,12 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 {
 	if (!frag || !tuplexfrag_number || !array_length || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	if (oph_dc_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	char type_flag = '\0';
@@ -1225,7 +1225,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 	char *query_string = (char *) malloc(query_size * sizeof(char));
 	if (!(query_string)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	int n = snprintf(query_string, query_size, insert_query, frag->fragment_name) - 1;
@@ -1253,7 +1253,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 	if (!(idDim)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		free(query_string);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 	//Create binary array
 	char *binary = 0;
@@ -1278,7 +1278,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 		free(binary);
 		free(query_string);
 		free(idDim);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	unsigned long long c_arg = regular_rows * 2, ii;
@@ -1289,7 +1289,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 		free(query_string);
 		free(binary);
 		free(idDim);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	for (ii = 0; ii < c_arg; ii++) {
@@ -1303,7 +1303,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				if (args[ii])
 					free(args[ii]);
 			free(args);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 	}
 	args[c_arg] = NULL;
@@ -1327,7 +1327,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 			if (args[ii])
 				free(args[ii]);
 		free(args);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 	//idDim controls the start array
 	//start and count array must be sorted in base of the real order of dimensions in the nc file
@@ -1374,7 +1374,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 		free(count);
 		free(start_pointer);
 		free(sizemax);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	short int flag = 0;
@@ -1408,7 +1408,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 			free(count);
 			free(start_pointer);
 			free(sizemax);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 	}
 
@@ -1467,7 +1467,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 			free(count);
 			free(start_pointer);
 			free(sizemax);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 		//Prepare structures for buffer insert update
 		tmp_index = 0;
@@ -1521,7 +1521,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 					free(file_indexes);
 					free(products);
 					free(limits);
-					return -1;
+					return OPH_ESDM_ERROR;
 				}
 			}
 		}
@@ -1555,7 +1555,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 			free(products);
 		if (limits)
 			free(limits);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	for (l = 0; l < regular_times; l++) {
@@ -1596,7 +1596,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 					free(products);
 				if (limits)
 					free(limits);
-				return -1;
+				return OPH_ESDM_ERROR;
 			}
 
 			if (measure->operation) {
@@ -1632,7 +1632,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 						free(products);
 					if (limits)
 						free(limits);
-					return -1;
+					return OPH_ESDM_ERROR;
 				}
 
 			} else if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
@@ -1657,7 +1657,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 					free(products);
 				if (limits)
 					free(limits);
-				return -1;
+				return OPH_ESDM_ERROR;
 			}
 
 			if (!imp_dim_ordered) {
@@ -1691,7 +1691,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				free(products);
 			if (limits)
 				free(limits);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 		//Increase idDim
 		for (ii = 0; ii < regular_rows; ii++) {
@@ -1727,7 +1727,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				free(products);
 			if (limits)
 				free(limits);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 
 		query = NULL;
@@ -1780,7 +1780,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				free(products);
 			if (limits)
 				free(limits);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 		//Build binary rows
 		for (jj = 0; jj < remainder_rows; jj++) {
@@ -1817,7 +1817,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 					free(products);
 				if (limits)
 					free(limits);
-				return -1;
+				return OPH_ESDM_ERROR;
 			}
 
 			if (measure->operation) {
@@ -1853,7 +1853,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 						free(products);
 					if (limits)
 						free(limits);
-					return -1;
+					return OPH_ESDM_ERROR;
 				}
 
 			} else if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
@@ -1878,7 +1878,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 					free(products);
 				if (limits)
 					free(limits);
-				return -1;
+				return OPH_ESDM_ERROR;
 			}
 
 			if (!imp_dim_ordered) {
@@ -1912,7 +1912,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				free(products);
 			if (limits)
 				free(limits);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 
 		oph_ioserver_free_query(server, query);
@@ -1937,19 +1937,19 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 		free(products);
 	if (limits)
 		free(limits);
-	return 0;
+	return OPH_ESDM_SUCCESS;
 }
 
 int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment * frag, int tuplexfrag_number, int array_length, int compressed, ESDM_var * measure, long long memory_size)
 {
 	if (!frag || !tuplexfrag_number || !array_length || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	if (oph_dc_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	char type_flag = '\0';
@@ -2048,7 +2048,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 	char *query_string = (char *) malloc(query_size * sizeof(char));
 	if (!(query_string)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 
@@ -2077,7 +2077,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 	if (!(idDim)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		free(query_string);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 	//Create binary array
 	char *binary_cache = 0;
@@ -2103,7 +2103,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 		free(binary_cache);
 		free(query_string);
 		free(idDim);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 	//Create array for rows to be insert
 	char *binary_insert = 0;
@@ -2128,7 +2128,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 		free(binary_insert);
 		free(query_string);
 		free(idDim);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	unsigned long long c_arg = regular_rows * 2, ii;
@@ -2140,7 +2140,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 		free(binary_cache);
 		free(binary_insert);
 		free(idDim);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	for (ii = 0; ii < c_arg; ii++) {
@@ -2155,7 +2155,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 				if (args[ii])
 					free(args[ii]);
 			free(args);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 	}
 	args[c_arg] = NULL;
@@ -2180,7 +2180,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 			if (args[ii])
 				free(args[ii]);
 		free(args);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 	//idDim controls the start array
 	//start and count array must be sorted in base of the real order of dimensions in the nc file
@@ -2227,7 +2227,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 		free(count);
 		free(start_pointer);
 		free(sizemax);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	short int flag = 0;
@@ -2262,7 +2262,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 			free(count);
 			free(start_pointer);
 			free(sizemax);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 	}
 
@@ -2310,7 +2310,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 		free(count);
 		free(start_pointer);
 		free(sizemax);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	if ((esdm_read(measure->dataset, binary_cache, subspace))) {
@@ -2328,7 +2328,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 		free(count);
 		free(start_pointer);
 		free(sizemax);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	gettimeofday(&end_read_time, NULL);
@@ -2393,7 +2393,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 				free(file_indexes);
 				free(products);
 				free(limits);
-				return -1;
+				return OPH_ESDM_ERROR;
 			}
 		}
 	}
@@ -2436,7 +2436,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 			free(counters);
 			free(products);
 			free(limits);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_write_time, NULL);
@@ -2469,7 +2469,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 			free(counters);
 			free(products);
 			free(limits);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 
 		query = NULL;
@@ -2514,7 +2514,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 			free(counters);
 			free(products);
 			free(limits);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 		//Update counters and limit for explicit internal dimension
 		memset(counters, 0, measure->nimp + 1);
@@ -2547,7 +2547,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 			free(counters);
 			free(products);
 			free(limits);
-			return -1;
+			return OPH_ESDM_ERROR;
 		}
 #if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_write_time, NULL);
@@ -2575,19 +2575,19 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 	free(products);
 	free(limits);
 
-	return 0;
+	return OPH_ESDM_SUCCESS;
 }
 
 int oph_esdm_populate_fragment5(oph_ioserver_handler * server, oph_odb_fragment * frag, char *nc_file_path, int tuplexfrag_number, int compressed, ESDM_var * measure)
 {
 	if (!frag || !nc_file_path || !tuplexfrag_number || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	if (oph_dc_check_connection_to_db(server, frag->db_instance->dbms_instance, frag->db_instance, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 	//Flag set to 1 if dimension are in the order specified in the file
 	int i;
@@ -2649,7 +2649,7 @@ int oph_esdm_populate_fragment5(oph_ioserver_handler * server, oph_odb_fragment 
 	if (!whole_explicit) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create fragment: internal explicit dimensions are fragmented\n");
 		free(index);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 	//Alloc query String
 	int n1 = 0, n2 = 0, n3 = 0, n4 = 0;
@@ -2676,7 +2676,7 @@ int oph_esdm_populate_fragment5(oph_ioserver_handler * server, oph_odb_fragment 
 	if (!(query_string)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		free(index);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	char *dims_type_string = (char *) malloc(n1 * sizeof(char));
@@ -2684,7 +2684,7 @@ int oph_esdm_populate_fragment5(oph_ioserver_handler * server, oph_odb_fragment 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		free(query_string);
 		free(index);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 	char *dims_index_string = (char *) malloc(n2 * sizeof(char));
 	if (!(dims_index_string)) {
@@ -2692,7 +2692,7 @@ int oph_esdm_populate_fragment5(oph_ioserver_handler * server, oph_odb_fragment 
 		free(query_string);
 		free(dims_type_string);
 		free(index);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 	char *dims_start_string = (char *) malloc(n3 * sizeof(char));
 	if (!(dims_start_string)) {
@@ -2701,7 +2701,7 @@ int oph_esdm_populate_fragment5(oph_ioserver_handler * server, oph_odb_fragment 
 		free(dims_type_string);
 		free(dims_index_string);
 		free(index);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 	char *dims_end_string = (char *) malloc(n4 * sizeof(char));
 	if (!(dims_end_string)) {
@@ -2711,7 +2711,7 @@ int oph_esdm_populate_fragment5(oph_ioserver_handler * server, oph_odb_fragment 
 		free(dims_index_string);
 		free(dims_start_string);
 		free(index);
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 	//Set values into strings
 	int m1 = 0, m2 = 0, m3 = 0, m4 = 0;
@@ -2737,7 +2737,7 @@ int oph_esdm_populate_fragment5(oph_ioserver_handler * server, oph_odb_fragment 
 	}
 	if (n >= query_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return -1;
+		return OPH_ESDM_ERROR;
 	}
 
 	free(dims_type_string);
@@ -2762,5 +2762,5 @@ int oph_esdm_populate_fragment5(oph_ioserver_handler * server, oph_odb_fragment 
 	oph_ioserver_free_query(server, query);
 	free(query_string);
 
-	return 0;
+	return OPH_ESDM_SUCCESS;
 }
