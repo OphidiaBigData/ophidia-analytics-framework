@@ -888,7 +888,7 @@ int task_execute(oph_operator_struct * handle)
 #ifdef OPH_ESDM
 				} else {	// ESDM Container
 
-					int jj = 0;
+					int error = OPH_ESDM_SUCCESS, jj = 0;
 					char filenames[1][OPH_COMMON_BUFFER_LEN];	// TODO: consider only one ESDM Container in this implementation
 
 					esdm_status ret = esdm_init();
@@ -1086,8 +1086,9 @@ int task_execute(oph_operator_struct * handle)
 								}
 								if (!curfilter)
 									continue;
-								if (oph_esdm_check_subset_string(curfilter, i, &measure, is_index[j], j < s_offset_num ? offset[j] : 0.0, 1)) {
-									result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+								if ((error = oph_esdm_check_subset_string(curfilter, i, &measure, is_index[j], j < s_offset_num ? offset[j] : 0.0, 1))) {
+									if (error == OPH_ESDM_ERROR)
+										result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 									break;
 								} else if (dims_start_index[i] < 0 || dims_end_index[i] < 0 || dims_start_index[i] > dims_end_index[i]
 									   || dims_start_index[i] >= (int) dims_length[i] || dims_end_index[i] >= (int) dims_length[i]) {
@@ -1097,7 +1098,7 @@ int task_execute(oph_operator_struct * handle)
 									break;
 								}
 							}
-							if (result)
+							if (result || error)
 								break;
 
 							start = (int64_t *) malloc(ndims * sizeof(int64_t));
@@ -1136,7 +1137,7 @@ int task_execute(oph_operator_struct * handle)
 							free(count);
 					}
 
-					if (!result) {
+					if (!result && !error) {
 
 						if (((OPH_FS_operator_handle *) handle->operator_handle)->measure
 						    && strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->measure, OPH_FRAMEWORK_FS_DEFAULT_PATH)) {
@@ -1157,7 +1158,7 @@ int task_execute(oph_operator_struct * handle)
 
 					esdm_finalize();
 
-					if (!result)
+					if (!result && !error)
 						result = write_json(filenames, jj, handle->operator_json, num_fields);
 #endif
 				}
