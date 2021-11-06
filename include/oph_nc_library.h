@@ -46,8 +46,9 @@
 #define OPH_NC_ERRCODE		2
 #define OPH_NC_ERR(e)		{printf("Error: %s\n", nc_strerror(e));}
 
-#define OPH_NC_ERROR		1
 #define OPH_NC_SUCCESS		0
+#define OPH_NC_ERROR		1
+#define OPH_NC_BOUND_ERROR	2
 
 #define OPH_NC_SKIP_ATTRIBUTES
 #define OPH_NC_BOUNDS		"bounds"

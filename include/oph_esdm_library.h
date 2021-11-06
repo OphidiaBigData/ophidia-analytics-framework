@@ -40,6 +40,10 @@
 #define OPH_ESDM_BLOCK_SIZE		524288	// Maximum size that could be transfered
 #define OPH_ESDM_BLOCK_ROWS		1000	// Maximum number of lines that could be transfered
 
+#define OPH_ESDM_SUCCESS		0
+#define OPH_ESDM_ERROR			1
+#define OPH_ESDM_BOUND_ERROR	2
+
 #define OPH_ESDM_SKIP_ATTRIBUTES
 #define _NC_BOUNDS				"bounds"
 #define _NC_PROPERTIES			"_NCProperties"
