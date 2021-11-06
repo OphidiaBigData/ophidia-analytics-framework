@@ -953,7 +953,7 @@ int task_execute(oph_operator_struct * handle)
 
 							//Check the sub_filters strings
 							for (i = 0; i < number_of_sub_dims; i++) {
-								if (((OPH_FS_operator_handle *) handle->operator_handle)->time_filter && strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR[1])) {
+								if (((OPH_FS_operator_handle *) handle->operator_handle)->time_filter) {
 									if (tf >= 0) {
 										pmesg(LOG_ERROR, __FILE__, __LINE__, "Not more than one time dimension can be considered\n");
 										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
