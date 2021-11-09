@@ -44,7 +44,7 @@ OPH_ANALYTICS_LOCATION=$prefix
 AC_SUBST(OPH_ANALYTICS_LOCATION)
 
 MPI_DISABLE_SUPPORT=
-AC_ARG_ENABLE(mpi, [  --disable-mpi     Disable MPI support. (Enabled by default)], [ mpi="no" ], [ mpi="yes" ])
+AC_ARG_ENABLE(mpi, [  --enable-mpi     Enable MPI support. (Disabled by default)], [ mpi="yes" ], [ mpi="no" ])
 if test "x$mpi" = "xyes"; then
 	AC_MSG_NOTICE(MPI enabled)
 else
