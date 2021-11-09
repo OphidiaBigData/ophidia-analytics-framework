@@ -1043,10 +1043,9 @@ int task_execute(oph_operator_struct * handle)
 								long long max_size = QUERY_BUFLEN;
 								oph_pid_get_buffer_size(&max_size);
 								char temp[max_size];
-								if (oph_dim_parse_time_subset(sub_filters[tf], time_dim, temp)) {
-									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing time values '%s'\n", sub_filters[tf]);
-									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-									result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+								if ((error = oph_dim_parse_time_subset(sub_filters[tf], time_dim, temp))) {
+									if (error != OPH_DIM_TIME_PARSING_ERROR)
+										result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 									break;
 								}
 								free(sub_filters[tf]);
