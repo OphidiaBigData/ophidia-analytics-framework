@@ -576,6 +576,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	//Check dimension names
+	int sub_to_dims[number_of_sub_dims];
 	for (i = 0; i < number_of_sub_dims; i++) {
 		dimname = sub_dims[i];
 		for (j = 0; j < ndims; j++)
@@ -590,34 +591,36 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				free(offset);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
+		sub_to_dims[i] = j;
 	}
 
 	//Check the sub_filters strings
-	int tf = -1;		// Id of time filter
+	int idp, tf = -1;	// Id of time filter
 	for (i = 0; i < number_of_sub_dims; i++) {
 		if (((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->time_filter) {
 			if (tf >= 0) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Not more than one time dimension can be considered\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_INVALID_INPUT_STRING);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
 				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 				if (offset)
 					free(offset);
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
-			tf = i;
-			dimname = sub_dims[i];
-			for (j = 0; j < ndims; j++)
-				if (!strcmp(dimname, measure->dims_name[j]))
-					break;
-		} else if (strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2) != strrchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Strided range are not supported\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_INVALID_INPUT_STRING);
-			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-			if (offset)
-				free(offset);
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			// Let us assume that OPH_IN_PARAM_CALENDAR is only for time dimensions
+			if (nc_inq_attid(ncid, measure->dims_id[sub_to_dims[i]], OPH_IN_PARAM_CALENDAR, &idp))
+				tf = i;
+		}
+		if (!tf && !strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR[1])) {
+			if (strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2) != strrchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Strided range are not supported\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
+				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+				if (offset)
+					free(offset);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
 		}
 	}
 
