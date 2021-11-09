@@ -108,7 +108,7 @@ fi
 fi
 
 UPDATE_CANCELLATION_SUPPORT=
-AC_ARG_ENABLE(update_cancellation, [ --enable-update_cancellation  Enable update and cancellation support. (Disabled by default)], [ update_cancellation="yes" ], [ update_cancellation="no" ])
+AC_ARG_ENABLE(update_cancellation, [ --disable-update_cancellation  Disable update and cancellation support. (Enabled by default)], [ update_cancellation="no" ], [ update_cancellation="yes" ])
 if test "x$update_cancellation" = "xyes"; then
 	AC_MSG_NOTICE(UPDATE_CANCELLATION enabled)
 else
@@ -603,15 +603,8 @@ if  test "$plugin_host_path" = "no"; then
 fi
 AC_SUBST(PLUGIN_DEFAULT_HOSTNAME)
 
-OPH_DB_SUPPORT=
-AC_ARG_ENABLE(db, [  --disable-db	Disable Ophidia DB support. (Enabled by default)], [ db="no" ], [ db="yes" ])
-if test "x$db" = "xyes"; then
-	AC_MSG_NOTICE(Ophidia DB enabled)
-else
-	AC_MSG_NOTICE(Ophidia DB disabled)
-fi
-AM_CONDITIONAL([DB_SUPPORT], [test "x$db" = "xyes"])
-OPH_DB_SUPPORT=$db
+OPH_DB_SUPPORT=no
+AM_CONDITIONAL([DB_SUPPORT], false)
 AC_SUBST(OPH_DB_SUPPORT)
 
 if test "x$mpi" = "xno"; then
