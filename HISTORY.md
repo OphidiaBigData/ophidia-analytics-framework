@@ -1,4 +1,10 @@
 
+## Next release
+
+### Fixed:
+
+- Detection of time dimension in case of subsetting for OPH_IMPORTNC and OPH_CONCATNC
+
 ## v1.6.1 - 2021-08-03
 
 ### Fixed:
