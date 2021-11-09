@@ -991,10 +991,12 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
 			// Let us assume that OPH_IN_PARAM_CALENDAR is only for time dimensions
-			if (nc_inq_attid(ncid, measure->dims_id[sub_to_dims[i]], OPH_IN_PARAM_CALENDAR, &idp))
+			if (nc_inq_attid(ncid, measure->dims_id[sub_to_dims[i]], OPH_IN_PARAM_CALENDAR, &idp)) {
 				tf = i;
+				break;
+			}
 		}
-		if (!tf && !strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR[1])) {
+		if ((tf != i) || !strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR[1])) {
 			if (strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2) != strrchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Strided range are not supported\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
