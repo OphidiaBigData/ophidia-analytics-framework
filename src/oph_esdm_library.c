@@ -552,8 +552,8 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
 			out_of_bound = 0;
 		if (out_of_bound) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value %d out of the boundaries [%d, %d]\n", value_, array_val[0], array_val[end_dim_size]);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value %d out of the boundaries [%d, %d]\n", value_, array_val[0], array_val[end_dim_size]);
 			free(binary_dim);
 			return OPH_ESDM_BOUND_ERROR;
 		}
@@ -611,8 +611,8 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
 			out_of_bound = 0;
 		if (out_of_bound) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value %d out of the boundaries [%d, %d]\n", value_, array_val[0], array_val[end_dim_size]);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value %d out of the boundaries [%d, %d]\n", value_, array_val[0], array_val[end_dim_size]);
 			free(binary_dim);
 			return OPH_ESDM_BOUND_ERROR;
 		}
@@ -670,8 +670,8 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
 			out_of_bound = 0;
 		if (out_of_bound) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value %d out of the boundaries [%d, %d]\n", value_, array_val[0], array_val[end_dim_size]);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value %d out of the boundaries [%d, %d]\n", value_, array_val[0], array_val[end_dim_size]);
 			free(binary_dim);
 			return OPH_ESDM_BOUND_ERROR;
 		}
@@ -729,8 +729,8 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
 			out_of_bound = 0;
 		if (out_of_bound) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value %lld out of the boundaries [%lld, %lld]\n", value_, array_val[0], array_val[end_dim_size]);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value %lld out of the boundaries [%lld, %lld]\n", value_, array_val[0], array_val[end_dim_size]);
 			free(binary_dim);
 			return OPH_ESDM_BOUND_ERROR;
 		}
@@ -788,8 +788,8 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
 			out_of_bound = 0;
 		if (out_of_bound) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value %f out of the boundaries [%f, %f]\n", value_, array_val[0], array_val[end_dim_size]);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value %f out of the boundaries [%f, %f]\n", value_, array_val[0], array_val[end_dim_size]);
 			free(binary_dim);
 			return OPH_ESDM_BOUND_ERROR;
 		}
@@ -847,8 +847,8 @@ int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, es
 		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
 			out_of_bound = 0;
 		if (out_of_bound) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value %f out of the boundaries [%f, %f]\n", value_, array_val[0], array_val[end_dim_size]);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value %f out of the boundaries [%f, %f]\n", value_, array_val[0], array_val[end_dim_size]);
 			free(binary_dim);
 			return OPH_ESDM_BOUND_ERROR;
 		}
