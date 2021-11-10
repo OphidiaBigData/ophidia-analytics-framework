@@ -862,6 +862,7 @@ int main(int argc, char const *const *argv)
 {
 	int msglevel = LOG_INFO;
 	set_debug_level(msglevel);
+	set_log_prefix(OPH_ANALYTICS_LOCATION);
 
 	(void) argv;
 
