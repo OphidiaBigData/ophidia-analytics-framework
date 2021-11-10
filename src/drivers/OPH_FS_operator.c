@@ -1056,7 +1056,7 @@ int task_execute(oph_operator_struct * handle)
 						double *offset = ((OPH_FS_operator_handle *) handle->operator_handle)->offset;
 						int i, s_offset_num = ((OPH_FS_operator_handle *) handle->operator_handle)->s_offset_num;
 						esdm_container_t *container = NULL;
-						esdm_dataset_t *dataset = NULL;
+						esdm_dataset_t *dataset = NULL, *dim_dataset = NULL;
 						esdm_dataspace_t *dspace = NULL;
 						int64_t *start = NULL, *count = NULL;
 
@@ -1079,9 +1079,11 @@ int task_execute(oph_operator_struct * handle)
 							if (esdm_dataset_get_name_dims(dataset, &dims_name))
 								break;
 
-							int j, ndims = dspace->dims, tf = -1;	// Id of time filter
+							int j, ndims = dspace->dims, natts = 0, tf = -1;	// Id of time filter
+							smd_attr_t *md, *current;
 
 							//Check dimension names
+							int sub_to_dims[number_of_sub_dims];
 							for (i = 0; i < number_of_sub_dims; i++) {
 								for (j = 0; j < ndims; j++)
 									if (!strcmp(sub_dims[i], dims_name[j]))
@@ -1092,26 +1094,44 @@ int task_execute(oph_operator_struct * handle)
 										sub_dims[i], varname);
 									break;
 								}
+								sub_to_dims[i] = j;
 							}
 
 							//Check the sub_filters strings
 							for (i = 0; i < number_of_sub_dims; i++) {
-								if (((OPH_FS_operator_handle *) handle->operator_handle)->time_filter) {
-									if (tf >= 0) {
-										pmesg(LOG_ERROR, __FILE__, __LINE__, "Not more than one time dimension can be considered\n");
-										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
+								if (((OPH_FS_operator_handle *) handle->operator_handle)->time_filter && (tf < 0)) {
+									// Let us assume that OPH_IN_PARAM_CALENDAR is only for time dimensions
+									if ((esdm_dataset_open(container, dims_name[sub_to_dims[i]], ESDM_MODE_FLAG_READ, &dim_dataset))) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID,
+											"Unable to read dimension information: type cannot be converted\n");
 										result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 										break;
 									}
-									tf = i;
-									for (j = 0; j < ndims; j++)
-										if (!strcmp(sub_dims[i], dims_name[j]))
+									if ((esdm_dataset_get_attributes(dim_dataset, &md))) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering number of global attributes\n");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error recovering number of global attributes\n");
+										esdm_dataset_close(dim_dataset);
+										result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+										break;
+									}
+									natts = md->children;
+									for (j = 0; j < natts; j++) {
+										current = smd_attr_get_child(md, j);
+										if (!strcmp(current->name, OPH_IN_PARAM_CALENDAR)) {
+											tf = i;
 											break;
-								} else if (strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2) != strrchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2)) {
-									pmesg(LOG_ERROR, __FILE__, __LINE__, "Strided range are not supported\n");
-									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-									result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-									break;
+										}
+									}
+									esdm_dataset_close(dim_dataset);
+								}
+								if ((tf != i) || !strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR[1])) {
+									if (strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2) != strrchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2)) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Strided range are not supported\n");
+										logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Strided range are not supported\n");
+										result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+										break;
+									}
 								}
 							}
 							if (result)
@@ -1186,10 +1206,9 @@ int task_execute(oph_operator_struct * handle)
 								long long max_size = QUERY_BUFLEN;
 								oph_pid_get_buffer_size(&max_size);
 								char temp[max_size];
-								if (oph_dim_parse_time_subset(sub_filters[tf], time_dim, temp)) {
-									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing time values '%s'\n", sub_filters[tf]);
-									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
-									result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+								if ((error = oph_dim_parse_time_subset(sub_filters[tf], time_dim, temp))) {
+									if (error != OPH_DIM_TIME_PARSING_ERROR)
+										result = OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 									break;
 								}
 								free(sub_filters[tf]);

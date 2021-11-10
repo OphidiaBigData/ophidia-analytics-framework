@@ -1006,11 +1006,6 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 			strptime(pch, "%Y-%m-%dT%H:%M:%S", &tm_value);
 		else
 			strptime(pch, "%Y-%m-%d %H:%M:%S", &tm_value);
-		if (tm_value.tm_year < 0) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Year cannot be negative\n");
-			return OPH_DIM_TIME_PARSING_ERROR;
-		}
-
 		tm_value.tm_year += 1900;
 		tm_value.tm_mon++;
 		if (!n && !tm_value.tm_mday)
