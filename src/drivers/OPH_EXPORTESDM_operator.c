@@ -1777,6 +1777,14 @@ int task_execute(oph_operator_struct * handle)
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
 		}
+		// ADD FILE TO NOTIFICATION STRING
+		char tmp_string[OPH_COMMON_BUFFER_LEN];
+		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s%s;", OPH_IN_PARAM_FILE, OPH_ESDM_PREFIX, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->output_name);
+		if (handle->output_string) {
+			strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
+			free(handle->output_string);
+		}
+		handle->output_string = strdup(tmp_string);
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
