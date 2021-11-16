@@ -24,3 +24,4 @@
 <!ATTLIST argument values CDATA #IMPLIED>
 <!ATTLIST argument mandatory (yes|no) "yes">
 <!ATTLIST argument multivalue (yes|no) "no">
+<!ATTLIST argument allownot (yes|no) "no">
