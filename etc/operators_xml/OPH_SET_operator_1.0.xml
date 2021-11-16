@@ -10,6 +10,8 @@ Set parameters in a workflow environment.
       
 [Parameters]
 - key : name of the parameter. It should comply with IEEE Std 1003.1-2001 conventions, unless brackets {} are adopted to refer it.
+        In case &quot;value&quot; has more values, &quot;key&quot; is the array name: use &quot;keys&quot; to list the key to be associated with each value.
+- keys : similar to &quot;key&quot;, but it allows to associate a different key to each value in case of multivalues.
 - value : value of the parameter. By default it will se to 1. It can be accessed with @key or @{key}.
 - subset_filter : set to &quot;yes&quot; in case &quot;value&quot; is an index array and subset strings have to be stored on behalf of the list of numbers.
                   Use &quot;real&quot; in case &quot;value&quot; contains real numbers.
@@ -30,7 +32,8 @@ SUBMISSION STRING: &quot;operator=oph_set;key=var;value=10;&quot;</abstract>
         <permission>write</permission>
     </info>
     <args>
-		<argument type="string" mandatory="yes" multivalue="yes">key</argument>
+		<argument type="string" mandatory="no" default="-" multivalue="yes">key</argument>
+		<argument type="string" mandatory="no" default="-" multivalue="yes">keys</argument>
 		<argument type="string" mandatory="no" default="-" multivalue="yes">value</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no|real">subset_filter</argument>
 		<argument type="real" mandatory="no" default="1" minvalue="0">offset</argument>
