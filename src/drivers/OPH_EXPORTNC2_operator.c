@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 #include <mpi.h>
 #endif
 
@@ -236,7 +236,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			free(uri);
 		uri = NULL;
 	}
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(id_datacube_in, 2, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -638,7 +638,7 @@ int task_init(oph_operator_struct * handle)
 	}
       __OPH_EXIT_1:
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the fragment relative index 
 	MPI_Bcast(id_string, 5 * OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
 
@@ -683,7 +683,7 @@ int task_init(oph_operator_struct * handle)
 		}
 		memset(stream_broad, 0, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->num_of_dims * OPH_DIM_STREAM_ELEMENTS * OPH_DIM_STREAM_LENGTH * sizeof(char));
 	}
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	MPI_Bcast(stream_broad, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->num_of_dims * OPH_DIM_STREAM_ELEMENTS * OPH_DIM_STREAM_LENGTH, MPI_CHAR, 0, MPI_COMM_WORLD);
 #endif
 
@@ -825,13 +825,13 @@ int task_execute(oph_operator_struct * handle)
 	int result = OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	//I need to split the communicator to select task with no frags 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	MPI_Comm scomm;
 #endif
 	int color = 0;
 	if (handle->proc_rank && (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0))
 		color = MPI_UNDEFINED;
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	if (MPI_Comm_split(MPI_COMM_WORLD, color, handle->proc_rank, &scomm) != MPI_SUCCESS) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create parallel nc communicator\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, "Unable to create parallel nc communicator\n");
@@ -1276,13 +1276,13 @@ int task_execute(oph_operator_struct * handle)
 			if (handle->proc_rank)	// Slave
 			{
 				while (1) {
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 					MPI_Bcast(&mbuffer, 1, MPI_INT, 0, scomm);	// Buffer size
 					if (!mbuffer)
 						break;
 #endif
 					buffer = (char *) malloc(mbuffer);
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 					MPI_Bcast(buffer, mbuffer, MPI_CHAR, 0, scomm);	// Buffer
 #endif
 					if (!retval)	// Discard new data in case of errors
@@ -1360,7 +1360,7 @@ int task_execute(oph_operator_struct * handle)
 					memcpy(buffer + mbuffer, mvalue, msize);
 					mbuffer += msize;
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 					MPI_Bcast(&mbuffer, 1, MPI_INT, 0, scomm);	// Buffer size
 					MPI_Bcast(buffer, mbuffer, MPI_CHAR, 0, scomm);	// Buffer
 #endif
@@ -1399,7 +1399,7 @@ int task_execute(oph_operator_struct * handle)
 				mysql_free_result(read_result);
 
 				mbuffer = 0;
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 				MPI_Bcast(&mbuffer, 1, MPI_INT, 0, scomm);	// Null buffer size => end transmission
 #endif
 			}
@@ -2040,7 +2040,7 @@ int task_execute(oph_operator_struct * handle)
 
       __OPH_EXIT_2:
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	if (MPI_Comm_free(&scomm) != MPI_SUCCESS) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to destroy parallel nc communicator\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, "Unable to destroy parallel nc communicator\n");
@@ -2062,7 +2062,7 @@ int task_reduce(oph_operator_struct * handle)
 	if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->cached_flag)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata < 0)
 		MPI_Barrier(MPI_COMM_WORLD);
 #endif

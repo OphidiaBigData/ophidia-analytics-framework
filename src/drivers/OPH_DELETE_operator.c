@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 #include <mpi.h>
 #endif
 
@@ -185,7 +185,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			free(uri);
 		uri = NULL;
 	}
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(id_datacube_in, 2, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -268,7 +268,7 @@ int task_init(oph_operator_struct * handle)
 			}
 		}
 	}
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
 
@@ -405,7 +405,7 @@ int task_destroy(oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_NULL_OPERATOR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	//For error checking
 	int result = OPH_ANALYTICS_OPERATOR_SUCCESS;
 

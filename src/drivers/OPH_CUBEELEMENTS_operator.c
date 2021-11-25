@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <strings.h>
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 #include <mpi.h>
 #endif
 
@@ -391,7 +391,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	free(tmp_username);
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(result, 3, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -467,7 +467,7 @@ int task_init(oph_operator_struct * handle)
 		oph_odb_cube_free_datacube(&cube);
 
 	}
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(id_string, 3 * OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
 
@@ -720,7 +720,7 @@ int task_reduce(oph_operator_struct * handle)
 
 	long long final_result = 0;
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	long long partial_result = ((OPH_CUBEELEMENTS_operator_handle *) handle->operator_handle)->partial_count;
 	//Reduce results
 	MPI_Reduce(&partial_result, &final_result, 1, MPI_LONG_LONG_INT, MPI_SUM, 0, MPI_COMM_WORLD);

@@ -60,7 +60,7 @@ if HAVE_ESDM
 LIBRARY+= liboph_esdm.la
 endif
 
-if !MPI_DISABLE
+if MULTI_NODE
 LIBRARY+= liboph_server_conf.la
 LIBRARY+= librabbitmq_utils.la
 endif
@@ -132,8 +132,8 @@ liboph_analytics_framework_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include -
 liboph_analytics_framework_la_LIBADD = ${MYSQL_LDFLAGS} @LIBLTDL@ -Loph_gsoap -loph_soap -L. ${OPHIDIADB} -loph_analytics_operator -loph_json -loph_task_parser
 endif
 liboph_analytics_framework_la_LDFLAGS = -static $(LIB_OPERATOR)
-if !MPI_DISABLE
-liboph_analytics_framework_la_CFLAGS += -DMPI_DISABLE_SUPPORT
+if MULTI_NODE
+liboph_analytics_framework_la_CFLAGS += -DMULTI_NODE_SUPPORT
 endif
 
 liboph_json_la_SOURCES = oph_json/oph_json_common.c oph_json/oph_json_graph.c oph_json/oph_json_grid.c  oph_json/oph_json_multigrid.c oph_json/oph_json_text.c oph_json/oph_json_tree.c
@@ -216,7 +216,7 @@ liboph_fits_la_LDFLAGS = -static
 liboph_fits_la_LIBADD = -lz -lm ${LIBCFITSIO_LIB} -lpthread @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube
 endif
 
-if !MPI_DISABLE
+if MULTI_NODE
 liboph_server_conf_la_SOURCES = oph_server_confs.c
 liboph_server_conf_la_CFLAGS = -prefer-pic -I../include @INCLTDL@ $(RABBITMQ_INCLUDE)
 liboph_server_conf_la_LDFLAGS = -static

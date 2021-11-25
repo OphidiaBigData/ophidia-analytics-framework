@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 #include <mpi.h>
 #endif
 
@@ -1008,7 +1008,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		free(uri);
 	uri = NULL;
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the fragment relative index
 	MPI_Bcast(id_datacube_in, 3, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -1504,7 +1504,7 @@ int task_init(oph_operator_struct * handle)
 	}
       __OPH_EXIT_1:
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the fragment relative index
 	MPI_Bcast(stream, stream_max_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 	if (*stream == 0) {
@@ -1541,14 +1541,14 @@ int task_init(oph_operator_struct * handle)
 		free(((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation);
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation = (char *) malloc(((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation_length);
 	}
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	MPI_Bcast(((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation, ((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation_length, MPI_CHAR, 0,
 		  MPI_COMM_WORLD);
 #endif
 	if (((OPH_APPLY_operator_handle *) handle->operator_handle)->num_reference_to_dim && ((OPH_APPLY_operator_handle *) handle->operator_handle)->array_length) {
 		if (handle->proc_rank)
 			((OPH_APPLY_operator_handle *) handle->operator_handle)->array_values = (char *) malloc(((OPH_APPLY_operator_handle *) handle->operator_handle)->array_length);
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 		MPI_Bcast(((OPH_APPLY_operator_handle *) handle->operator_handle)->array_values, ((OPH_APPLY_operator_handle *) handle->operator_handle)->array_length, MPI_CHAR, 0, MPI_COMM_WORLD);
 #endif
 	}
@@ -2276,7 +2276,7 @@ int task_destroy(oph_operator_struct * handle)
 	int id_datacube = oper_handle->id_output_datacube;
 	short int global_error = 0;
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	short int proc_error = oper_handle->execute_error;
 	//Reduce results
 	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
@@ -2332,7 +2332,7 @@ int task_destroy(oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}
 		}
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 		if (handle->output_code)
 			proc_error = (short int) handle->output_code;
 		else

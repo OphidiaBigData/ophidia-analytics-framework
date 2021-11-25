@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 #include <mpi.h>
 #endif
 
@@ -2323,7 +2323,7 @@ int task_init(oph_operator_struct * handle)
 	if (!((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->run)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the result
 	MPI_Bcast(id_datacube, 6, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -2607,7 +2607,7 @@ int task_destroy(oph_operator_struct * handle)
 	int id_datacube = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->id_output_datacube;
 	short int global_error = 0;
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	//Reduce results
 	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
 #endif
@@ -2674,7 +2674,7 @@ int task_destroy(oph_operator_struct * handle)
 			}
 			oph_odb_cube_free_datacube(&cube);
 		}
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 		//Broadcast to all other processes the fragment relative index        
 		MPI_Bcast(id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
 
@@ -2713,7 +2713,7 @@ int task_destroy(oph_operator_struct * handle)
 					}
 				}
 			}
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 		}
 #endif
 
@@ -2721,7 +2721,7 @@ int task_destroy(oph_operator_struct * handle)
 			proc_error = (short int) handle->output_code;
 		else
 			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
 #endif
 		handle->output_code = global_error;

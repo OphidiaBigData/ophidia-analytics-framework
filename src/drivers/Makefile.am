@@ -36,8 +36,8 @@ if HAVE_ESDM
 driver_CFLAGS += -DOPH_ESDM
 endif
 
-if !MPI_DISABLE
-driver_CFLAGS += -DMPI_DISABLE_SUPPORT
+if MULTI_NODE
+driver_CFLAGS += -DMULTI_NODE_SUPPORT
 endif
 
 #define set of libraries commonly called together

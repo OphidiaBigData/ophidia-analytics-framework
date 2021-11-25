@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 #include <mpi.h>
 #endif
 
@@ -222,7 +222,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			free(uri);
 		uri = NULL;
 	}
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(id_datacube_in, 2, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -536,7 +536,7 @@ int task_init(oph_operator_struct * handle)
 	}
       __OPH_EXIT_1:
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	MPI_Bcast(&flag, 1, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
 
@@ -544,7 +544,7 @@ int task_init(oph_operator_struct * handle)
 		((OPH_PUBLISH_operator_handle *) handle->operator_handle)->cached_flag = 1;
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 	}
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	MPI_Bcast(id_string, 4 * OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
 
 	//Check if sequential part has been completed
@@ -588,7 +588,7 @@ int task_init(oph_operator_struct * handle)
 			}
 			((OPH_PUBLISH_operator_handle *) handle->operator_handle)->compressed = (int) strtol(id_string[3], NULL, 10);
 		}
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 		MPI_Bcast(dimension_array, 7 * OPH_PUBLISH_MAX_DIMENSION, MPI_INT, 0, MPI_COMM_WORLD);
 
 		if (!dimension_array[0][0]) {

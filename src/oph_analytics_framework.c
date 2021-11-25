@@ -33,7 +33,7 @@
 
 #include "debug.h"
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 #include <mpi.h>
 #endif
 
@@ -1039,7 +1039,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		handle->operator_json = oper_json;
 
 #ifdef OPH_TIME_DEBUG_1
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 	if (task_rank == 0) {
@@ -1115,7 +1115,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	hashtbl_destroy(task_tbl);
 
 #ifdef OPH_TIME_DEBUG_1
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 	if (task_rank == 0) {
@@ -1189,7 +1189,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 #ifdef OPH_TIME_DEBUG_1
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 	if (task_rank == 0) {
@@ -1263,7 +1263,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 #ifdef OPH_TIME_DEBUG_1
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 	if (task_rank == 0) {
@@ -1337,7 +1337,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 #ifdef OPH_TIME_DEBUG_1
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 	if (task_rank == 0) {
@@ -1411,7 +1411,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 #ifdef OPH_TIME_DEBUG_1
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 	if (task_rank == 0) {
@@ -1484,7 +1484,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 #ifdef OPH_TIME_DEBUG_1
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 	if (task_rank == 0) {
@@ -1554,7 +1554,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 #ifdef OPH_TIME_DEBUG_1
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 	if (task_rank == 0) {
@@ -1611,7 +1611,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	}
 #ifndef OPH_STANDALONE_MODE
 /* gSOAP notification start */
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);	//Barrier synchronization before successful notification
 #endif
 	if (!task_rank && have_soap) {
@@ -1660,7 +1660,7 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 
 #ifdef OPH_TIME_DEBUG_1
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 	if (task_rank == 0) {

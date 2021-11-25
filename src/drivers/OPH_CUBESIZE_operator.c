@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 #include <mpi.h>
 #endif
 
@@ -526,7 +526,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	free(tmp_username);
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(result, 3, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -597,7 +597,7 @@ int task_distribute(oph_operator_struct * handle)
 			result = number_dbms;
 		}
 	}
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(&result, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -859,7 +859,7 @@ int task_reduce(oph_operator_struct * handle)
 
 	long long final_result = 0;
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	long long partial_result = ((OPH_CUBESIZE_operator_handle *) handle->operator_handle)->partial_size;
 	//Reduce results
 	MPI_Reduce(&partial_result, &final_result, 1, MPI_LONG_LONG_INT, MPI_SUM, 0, MPI_COMM_WORLD);

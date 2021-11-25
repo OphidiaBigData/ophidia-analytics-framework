@@ -43,18 +43,18 @@ AC_PROG_CXX
 OPH_ANALYTICS_LOCATION=$prefix
 AC_SUBST(OPH_ANALYTICS_LOCATION)
 
-MPI_DISABLE_SUPPORT=
-AC_ARG_ENABLE(mpi, [  --enable-mpi     Enable MPI support. (Disabled by default)], [ mpi="yes" ], [ mpi="no" ])
-if test "x$mpi" = "xyes"; then
-	AC_MSG_NOTICE(MPI enabled)
+MULTI_NODE_SUPPORT=
+AC_ARG_ENABLE(multi_node, [ --disable-multi_node	Disable multi node support. (Enabled by default)], [ multi_node="no" ], [ multi_node="yes" ])
+if test "x$multi_node" = "xyes"; then
+	AC_MSG_NOTICE(MULTI_NODE enabled)
 else
-	AC_MSG_NOTICE(MPI disabled)
+	AC_MSG_NOTICE(MULTI_NODE disabled)
 fi
-AM_CONDITIONAL([MPI_DISABLE], [test "x$mpi" = "xyes"])
-MPI_DISABLE_SUPPORT=$mpi
-AC_SUBST(MPI_DISABLE_SUPPORT)
+AM_CONDITIONAL([MULTI_NODE], [test "x$multi_node" = "xyes"])
+MULTI_NODE_SUPPORT=$multi_node
+AC_SUBST(MULTI_NODE_SUPPORT)
 
-if test "x$mpi" = "xyes"; then
+if test "x$multi_node" = "xno"; then
 if test -z "$CC" && test -n "$MPICC"; then
    CC="$MPICC"
 fi
@@ -607,7 +607,7 @@ OPH_DB_SUPPORT=no
 AM_CONDITIONAL([DB_SUPPORT], false)
 AC_SUBST(OPH_DB_SUPPORT)
 
-if test "x$mpi" = "xno"; then
+if test "x$multi_node" = "xyes"; then
 PKG_CHECK_MODULES(LIBRABBITMQ, librabbitmq >= 0.10.0)
 AC_ARG_WITH(librabbitmq_header_path,
 		[ --with-librabbitmq-header-path=PATH Location of librabbitmq include directory],

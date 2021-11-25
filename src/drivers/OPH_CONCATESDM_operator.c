@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 #include <mpi.h>
 #endif
 
@@ -229,7 +229,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		break;
 	}
 	//Broadcast to all other processes the fragment relative index
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	//MPI_Barrier(MPI_COMM_WORLD);
 	MPI_Bcast(stream, stream_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
@@ -628,11 +628,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				time_dim->id_dimension = 0;
 
 			memcpy(buffer, time_dim, packet_size);
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 			MPI_Bcast(buffer, packet_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 #endif
 		} else {
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 			MPI_Bcast(buffer, packet_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 #endif
 			memcpy(time_dim, buffer, packet_size);
@@ -1665,7 +1665,7 @@ int task_init(oph_operator_struct * handle)
 
 	}
 	//Broadcast to all other processes the result
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	//MPI_Barrier(MPI_COMM_WORLD);
 	MPI_Bcast(stream, stream_max_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
@@ -1696,7 +1696,7 @@ int task_init(oph_operator_struct * handle)
 		measure_stream = (int *) malloc((3 + 3 * ndim) * sizeof(int));
 	}
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	MPI_Bcast(measure_stream, 3 + 3 * ndim, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
 
@@ -1990,7 +1990,7 @@ int task_destroy(oph_operator_struct * handle)
 	int id_datacube = ((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->id_output_datacube;
 	short int global_error = 0;
 
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 	short int proc_error = ((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->execute_error;
 	//Reduce results
 	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
@@ -2053,7 +2053,7 @@ int task_destroy(oph_operator_struct * handle)
 			proc_error = (short int) handle->output_code;
 		else
 			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
 #endif
 		handle->output_code = global_error;

@@ -238,7 +238,7 @@ int oph_unset_env(oph_operator_struct * handle)
 		free(handle->lib);
 		handle->lib = NULL;
 	}
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 #ifndef OPH_WITH_VALGRIND
 	if (handle->dlh && (lt_dlclose(handle->dlh))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "lt_dlclose error: %s\n", lt_dlerror());
@@ -251,7 +251,7 @@ int oph_unset_env(oph_operator_struct * handle)
 
 int oph_exit_task()
 {
-#ifndef MPI_DISABLE_SUPPORT
+#ifndef MULTI_NODE_SUPPORT
 #ifndef OPH_WITH_VALGRIND
 	if (lt_dlexit()) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while executing lt_dlexit\n");
