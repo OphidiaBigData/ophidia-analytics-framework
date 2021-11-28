@@ -22,8 +22,9 @@
 #include "oph_common.h"
 
 #define OPH_CDO_NOP ":"
-#define OPH_CDO_OUTPUT_PATH "%s/"
-#define OPH_CDO_OUTPUT_PATH_SINGLE_FILE OPH_CDO_OUTPUT_PATH"%s.nc"
+#define OPH_CDO_OUTPUT_PATH						"%s/"
+#define OPH_CDO_OUTPUT_PATH_SINGLE_FILE			OPH_CDO_OUTPUT_PATH"%s.nc"
+#define OPH_CDO_OUTPUT_PATH_SINGLE_FILE_EXT		OPH_CDO_OUTPUT_PATH"%s"
 
 /**
  * \brief Structure of parameters needed by the operator OPH_CDO. It executes a script
@@ -59,10 +60,14 @@ struct _OPH_CDO_operator_handle {
 	char *output_path;
 	char *output_path_user;
 	char *output_name;
-	int force;
+	char force;
 	int nthread;
+	char skip;
+	char multiple_output;
 	char **inputs;
 	int inputs_num;
+	char **outputs;
+	int outputs_num;
 };
 typedef struct _OPH_CDO_operator_handle OPH_CDO_operator_handle;
 
