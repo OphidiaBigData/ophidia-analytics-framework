@@ -422,6 +422,54 @@ int oph_odb_meta_retrieve_metadatatype_id(ophidiadb * oDB, char *metadatatype_na
 	return OPH_ODB_SUCCESS;
 }
 
+int oph_odb_meta_retrieve_metadatainstance_id(ophidiadb * oDB, char *key_label, char *key_variable, int id_datacube, int *id_metadatainstance)
+{
+	if (!oDB || !key_label || !id_datacube || !id_metadatainstance) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	*id_metadatainstance = 0;
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char selectQuery[MYSQL_BUFLEN];
+	int n;
+	if (key_variable)
+		n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_RETRIEVE_METADATAINSTANCE_ID1, key_label, key_variable, id_datacube);
+	else
+		n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_RETRIEVE_METADATAINSTANCE_ID2, key_label, id_datacube);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, selectQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res = mysql_store_result(oDB->conn);
+	if (mysql_num_rows(res) != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+	if (mysql_field_count(oDB->conn) != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	MYSQL_ROW row;
+	if ((row = mysql_fetch_row(res)) != NULL)
+		*id_metadatainstance = (int) strtol(row[0], NULL, 10);
+
+	return OPH_ODB_SUCCESS;
+}
+
 int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_datacube, int id_metadatakey, int id_metadatatype, char *metadata_key, char *metadata_variable, char *metadata_value,
 						    int *last_insertd_id)
 {
