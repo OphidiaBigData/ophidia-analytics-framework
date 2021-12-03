@@ -21,6 +21,8 @@
 
 #define MYSQL_QUERY_META_RETRIEVE_METADATAKEY_LIST 		"SELECT idkey, label, variable, required, template FROM metadatakey WHERE idvocabulary=%d ORDER BY idkey ASC;"
 #define MYSQL_QUERY_META_RETRIEVE_METADATAINSTANCE		"SELECT idmetadatainstance FROM metadatainstance WHERE idmetadatainstance = %d AND iddatacube = %d;"
+#define MYSQL_QUERY_META_RETRIEVE_METADATAINSTANCE_ID1	"SELECT idmetadatainstance FROM metadatainstance WHERE label LIKE '%s' AND variable LIKE '%s' AND iddatacube = %d;"
+#define MYSQL_QUERY_META_RETRIEVE_METADATAINSTANCE_ID2	"SELECT idmetadatainstance FROM metadatainstance WHERE label LIKE '%s' AND variable IS NULL AND iddatacube = %d;"
 #define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1 	"INSERT INTO `metadatainstance` (`iddatacube`, `idtype`, `value`, `label`, `variable`) VALUES (%d, %d, '%s', '%s', '%s');"
 #define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2 	"INSERT INTO `metadatainstance` (`iddatacube`, `idtype`, `value`, `label`) VALUES (%d, %d, '%s', '%s');"
 #define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE3 	"INSERT INTO `metadatainstance` (`iddatacube`, `idkey`, `idtype`, `value`, `label`, `variable`) VALUES (%d, %d, %d, '%s', '%s', '%s');"
