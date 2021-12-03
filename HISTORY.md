@@ -5,6 +5,10 @@
 
 - Detection of time dimension in case of subsetting for OPH_IMPORTNC and OPH_CONCATNC
 
+### Changed:
+
+- OPH_METADATA to update metadata "by key" besides "by id"
+
 ## v1.6.1 - 2021-08-03
 
 ### Fixed:
@@ -18,7 +22,7 @@
 
 ### Changed:
 
--'missingvalue' argument to read the related metadata value by default [#101](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/101)
+- 'missingvalue' argument to read the related metadata value by default [#101](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/101)
 - Operators XML descriptions with argument 'save' for saving the JSON response [#100](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/100)
 
 ## v1.6.0 - 2021-03-05
