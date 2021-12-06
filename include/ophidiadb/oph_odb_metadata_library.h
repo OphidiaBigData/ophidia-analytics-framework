@@ -111,6 +111,17 @@ int oph_odb_meta_retrieve_metadatakey_id(ophidiadb * oDB, char *key_label, char 
 int oph_odb_meta_retrieve_metadatatype_id(ophidiadb * oDB, char *metadatatype_name, int *id_metadatatype);
 
 /**
+ * \brief Function to retrive id of a metadata instance
+ * \param oDB Pointer to OphidiaDB
+ * \param key_label Key to be found
+ * \param key_variable Variable the key refers to (lat,lon,time,t2m...)
+ * \param id_datacube Id of the container of the instance to be found
+ * \param id_metadatainstance Id of the metadata instance to be found, 0 if not found
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_meta_retrieve_metadatainstance_id(ophidiadb * oDB, char *key_label, char *key_variable, int id_datacube, int *id_metadatainstance);
+
+/**
  * \brief Function to insert a metedata instance
  * \param oDB Pointer to OphidiaDB
  * \param id_datacube Id of the container related to the instance
