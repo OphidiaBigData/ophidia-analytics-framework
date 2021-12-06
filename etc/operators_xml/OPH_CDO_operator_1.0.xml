@@ -23,13 +23,14 @@ The script can eventually process some environmental variables passed by the ope
 - args : list of pipe-separated arguments to be passed to the command.
 - space : set to &quot;yes&quot; in case white spaces belong to arguments;
           set to &quot;no&quot; in case white spaces are separators like &quot;|&quot; (default).
-- output_path : absolute path of the output file. By default the file will be saved in current directory on data repository (see &quot;cdd&quot;).
-- output_name : filename of the output file. A random value is set by default.
-- input : additional argument appended to &quot;args&quot;.
-- output : alias for the pair &quot;output_path&quot; and &quot;output_name&quot;; the values of these arguments will be overwritten.
+- input : list of input files; it is an additional argument appended to &quot;args&quot;.
+- output : list of output files; it is an additional argument appended to &quot;input&quot;.
 - cdd : absolute path corresponding to the current directory on data repository.
 - force : flag used to force file creation. An existant file is overwritten with &quot;yes&quot; whereas
           the file is created only if it does not exist with &quot;no&quot; (default).
+- skip_output : set this flag to &quot;yes&quot; in case no output file has to be created (disabled by default).
+- multiple_output : set this flag to &quot;yes&quot; in case more than one output file has to be created (disabled by default);
+                    if enabled, output file names are discovered by listing output folder.
 - stdout : file where stdout will be redirected (appended) or &quot;stdout&quot; for no redirection.
 - stderr : file where stderr will be redirected (appended) or &quot;stderr&quot; for no redirection.
 
@@ -60,10 +61,10 @@ SUBMISSION STRING: &quot;operator=oph_cdo;command=-selname,tas;args=infile|outfi
 		<argument type="string" mandatory="yes">command</argument>
 		<argument type="string" mandatory="no" default="" multivalue="yes">args</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">space</argument>
-		<argument type="string" mandatory="no" default="default">output_path</argument>
-		<argument type="string" mandatory="no" default="default">output_name</argument>
-		<argument type="string" mandatory="no" default="">input</argument>
-		<argument type="string" mandatory="no" default="">output</argument>
+		<argument type="string" mandatory="no" default="none" multivalue="yes">input</argument>
+		<argument type="string" mandatory="no" default="none" multivalue="yes">output</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">skip_output</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">multiple_output</argument>
 		<argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
 		<argument type="string" mandatory="no" default="stdout">stdout</argument>

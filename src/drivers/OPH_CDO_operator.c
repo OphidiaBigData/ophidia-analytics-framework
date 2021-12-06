@@ -29,6 +29,7 @@
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <dirent.h>
 #include <mpi.h>
 
 #include "oph_analytics_operator_library.h"
@@ -53,9 +54,42 @@
 #define OPH_CDO_MARKER2 '\\'
 #define OPH_CDO_MARKER3 ' '
 
-#define OPH_CDO_DEFAULT_OUTPUT_PATH "default"
+#define OPH_CDO_DEFAULT_OUTPUT "none"
 
 #define OPH_CDO_BEGIN_PARAMETER "%"
+
+#define OPH_CDO_VALUE_SEPARATOR "|"
+
+typedef struct _oph_cdo_output {
+	char *name;
+	struct _oph_cdo_output *next;
+} oph_cdo_output;
+
+void oph_cdo_output_append(oph_cdo_output ** head, oph_cdo_output ** tail, const char *name)
+{
+	if (!head || !tail || !name)
+		return;
+	oph_cdo_output *item = (oph_cdo_output *) malloc(sizeof(oph_cdo_output));
+	item->name = strdup(name);
+	item->next = NULL;
+	if (!*head)
+		*head = item;
+	else
+		(*tail)->next = item;
+	*tail = item;
+}
+
+void oph_cdo_output_free(oph_cdo_output * list)
+{
+	oph_cdo_output *next;
+	while (list) {
+		next = list->next;
+		if (list->name)
+			free(list->name);
+		free(list);
+		list = next;
+	}
+}
 
 int _is_ended(char pointer)
 {
@@ -95,6 +129,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_CDO_operator_handle *) handle->operator_handle)->command = NULL;
 	((OPH_CDO_operator_handle *) handle->operator_handle)->inputs = NULL;
 	((OPH_CDO_operator_handle *) handle->operator_handle)->inputs_num = 0;
+	((OPH_CDO_operator_handle *) handle->operator_handle)->outputs = NULL;
+	((OPH_CDO_operator_handle *) handle->operator_handle)->outputs_num = 0;
+	((OPH_CDO_operator_handle *) handle->operator_handle)->output_path = NULL;
+	((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user = NULL;
+	((OPH_CDO_operator_handle *) handle->operator_handle)->output_name = NULL;
 	((OPH_CDO_operator_handle *) handle->operator_handle)->args = NULL;
 	((OPH_CDO_operator_handle *) handle->operator_handle)->args_num = -1;
 	((OPH_CDO_operator_handle *) handle->operator_handle)->out_redir = NULL;
@@ -106,16 +145,16 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_CDO_operator_handle *) handle->operator_handle)->workflow_id = NULL;
 	((OPH_CDO_operator_handle *) handle->operator_handle)->marker_id = NULL;
 	((OPH_CDO_operator_handle *) handle->operator_handle)->space = 0;
-	((OPH_CDO_operator_handle *) handle->operator_handle)->output_path = NULL;
-	((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user = NULL;
-	((OPH_CDO_operator_handle *) handle->operator_handle)->output_name = NULL;
 	((OPH_CDO_operator_handle *) handle->operator_handle)->force = 0;
 	((OPH_CDO_operator_handle *) handle->operator_handle)->nthread = 0;
+	((OPH_CDO_operator_handle *) handle->operator_handle)->skip = 0;
+	((OPH_CDO_operator_handle *) handle->operator_handle)->multiple_output = 0;
 
 	//3 - Fill struct with the correct data
 	char tmp[OPH_COMMON_BUFFER_LEN];
 	char *value, *value2 = NULL;
-	size_t size;
+	size_t size, old_size;
+	int i;
 
 	// retrieve objkeys
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OBJKEY_FILTER);
@@ -130,6 +169,66 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		oph_tp_free_multiple_value_param_list(((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys_num);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_FORCE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_FORCE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_FORCE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strcmp(value, OPH_COMMON_YES_VALUE))
+		((OPH_CDO_operator_handle *) handle->operator_handle)->force = 1;
+
+	value = hashtbl_get(task_tbl, OPH_ARG_NTHREAD);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_NTHREAD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MISSING_INPUT_PARAMETER, OPH_ARG_NTHREAD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_CDO_operator_handle *) handle->operator_handle)->nthread = (int) strtol(value, NULL, 10);
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SKIP_OUTPUT);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SKIP_OUTPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SKIP_OUTPUT);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strcmp(value, OPH_COMMON_YES_VALUE))
+		((OPH_CDO_operator_handle *) handle->operator_handle)->skip = 1;
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_MULTIPLE_OUTPUT);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_MULTIPLE_OUTPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_MULTIPLE_OUTPUT);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strcmp(value, OPH_COMMON_YES_VALUE))
+		((OPH_CDO_operator_handle *) handle->operator_handle)->multiple_output = 1;
+
+	char *cdd = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
+	if (!cdd) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_GENERIC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (*cdd != '/') {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if ((strlen(cdd) > 1) && strstr(cdd, "..")) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	char user_space, user_space_default = 0;
+	if (oph_pid_get_user_space(&user_space)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read user_space\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read user_space\n");
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+	if (user_space)
+		cdd = &user_space_default;
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_COMMAND);
 	if (!value) {
@@ -149,27 +248,56 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_INPUT);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (oph_tp_parse_multiple_value_param(value, &((OPH_CDO_operator_handle *) handle->operator_handle)->inputs, &((OPH_CDO_operator_handle *) handle->operator_handle)->inputs_num)) {
+	if (strcmp(value, OPH_COMMON_NONE_FILTER)
+	    && oph_tp_parse_multiple_value_param(value, &((OPH_CDO_operator_handle *) handle->operator_handle)->inputs, &((OPH_CDO_operator_handle *) handle->operator_handle)->inputs_num)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strcmp(value, OPH_COMMON_NONE_FILTER)
+	    && oph_tp_parse_multiple_value_param(value, &((OPH_CDO_operator_handle *) handle->operator_handle)->outputs, &((OPH_CDO_operator_handle *) handle->operator_handle)->outputs_num)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
+	char *base_src_path = NULL, *pointer = NULL;
+	if (oph_pid_get_base_src_path(&base_src_path)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base user_path\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base user path\n");
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_ARGS);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_ARGS);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_ARGS);
+		if (base_src_path)
+			free(base_src_path);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+
 	if (((OPH_CDO_operator_handle *) handle->operator_handle)->inputs && (((OPH_CDO_operator_handle *) handle->operator_handle)->inputs_num > 0)) {
-		int i;
-		char *base_src_path = NULL;
-		if (oph_pid_get_base_src_path(&base_src_path)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base user_path\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base user path\n");
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		for (i = 0; i < ((OPH_CDO_operator_handle *) handle->operator_handle)->inputs_num; i++) {
+			char *pointer = ((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i];
+			while (pointer && (*pointer == ' '))
+				pointer++;
+			if (pointer) {
+				if ((*pointer != '/') && (strlen(cdd) > 1)) {
+					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", cdd + 1, pointer);
+					free(((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i]);
+					((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i] = strdup(tmp);
+				}
+			}
 		}
 		if (base_src_path) {
-			value = value2 = strdup(value);
 			for (i = 0; i < ((OPH_CDO_operator_handle *) handle->operator_handle)->inputs_num; i++) {
 				if (((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i] && strlen(((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i])
 #ifdef OPH_ESDM
@@ -182,10 +310,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i] = strdup(tmp);
 				}
 			}
-			free(base_src_path);
 		}
 		if (!strstr(((OPH_CDO_operator_handle *) handle->operator_handle)->command, OPH_CDO_BEGIN_PARAMETER)) {
-			size_t old_size;
 			value = value2 = strdup(value);
 			for (i = 0; i < ((OPH_CDO_operator_handle *) handle->operator_handle)->inputs_num; i++) {
 				if (((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i] && strlen(((OPH_CDO_operator_handle *) handle->operator_handle)->inputs[i])) {
@@ -202,6 +328,324 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			}
 		}
 	}
+
+	char home[2];
+	home[0] = '/';
+	home[1] = 0;
+	char *output_path = NULL, *output_name = NULL, *pointer2 = NULL;
+	char file_name[OPH_COMMON_BUFFER_LEN];
+	struct stat st;
+#ifdef OPH_ESDM
+	char is_esdm[1 + ((OPH_CDO_operator_handle *) handle->operator_handle)->outputs_num];	// Neglect the last item (added only to avoid "zero" items)
+#endif
+
+	if (((OPH_CDO_operator_handle *) handle->operator_handle)->outputs && (((OPH_CDO_operator_handle *) handle->operator_handle)->outputs_num > 0)) {
+
+		for (i = 0; i < ((OPH_CDO_operator_handle *) handle->operator_handle)->outputs_num; i++) {
+
+#ifdef OPH_ESDM
+			is_esdm[i] = ((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i]
+			    && !strncmp(((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i], OPH_ESDM_PREFIX, 7);
+			if (is_esdm[i])
+				continue;
+#endif
+
+			pointer = ((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i];
+			while (pointer && (*pointer == ' '))
+				pointer++;
+
+			if (pointer && strstr(pointer, "..")) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+				if (base_src_path)
+					free(base_src_path);
+				if (value2)
+					free(value2);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+
+			if (pointer) {
+				if ((*pointer != '/') && (strlen(cdd) > 1)) {
+					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", cdd + 1, pointer);
+					free(((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i]);
+					((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i] = strdup(tmp);
+					pointer = ((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i];
+				}
+				if (!((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user)
+					((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user = strdup(pointer);
+			}
+		}
+
+		if (base_src_path) {
+			for (i = 0; i < ((OPH_CDO_operator_handle *) handle->operator_handle)->outputs_num; i++) {
+				if (((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i] && strlen(((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i])
+#ifdef OPH_ESDM
+				    && !is_esdm[i]
+#endif
+				    ) {
+					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", base_src_path ? base_src_path : "",
+						 *((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i] != '/' ? "/" : "",
+						 ((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i]);
+					free(((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i]);
+					((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i] = strdup(tmp);
+				}
+			}
+		}
+
+		for (i = 0; i < ((OPH_CDO_operator_handle *) handle->operator_handle)->outputs_num; i++) {
+
+			output_path = output_name = NULL;
+
+#ifdef OPH_ESDM
+			if (is_esdm[i]) {
+				if (!i)
+					((OPH_CDO_operator_handle *) handle->operator_handle)->output_name = strdup(((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i]);
+				continue;
+			}
+#endif
+			pointer = ((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i];
+			if (pointer && ((size = strlen(pointer)))) {
+				pointer2 = pointer + size;
+				while ((pointer2 >= pointer) && (*pointer2 != '/'))
+					pointer2--;
+				if (pointer2 < pointer) {
+					output_name = strdup(pointer);
+					size = strlen(output_name);
+					if ((output_name[size - 3] == '.') && (output_name[size - 2] == 'n') && (output_name[size - 1] == 'c'))
+						output_name[size - 3] = 0;
+				} else {
+					if (pointer2 == pointer)
+						output_path = strdup(home);
+					else {
+						output_path = strdup(pointer);
+						output_path[pointer2 - pointer] = 0;
+					}
+					pointer2++;
+					if (pointer2 && *pointer2) {
+						output_name = strdup(pointer2);
+						size = strlen(output_name);
+						if ((output_name[size - 3] == '.') && (output_name[size - 2] == 'n') && (output_name[size - 1] == 'c'))
+							output_name[size - 3] = 0;
+					}
+				}
+				if (output_path && ((size = strlen(output_path)))) {
+					if (output_path[--size] == '/')
+						output_path[size] = 0;
+				}
+				if (output_name) {
+					for (size = 0; size < strlen(output_name); size++)
+						if ((output_name[size] == '/') || (output_name[size] == ':'))
+							output_name[size] = '_';
+				} else {
+					char tmp[20];
+					srand(time(NULL));
+					snprintf(tmp, 20, "%d", rand());
+					output_name = strdup(tmp);
+				}
+
+				//Create dir if not exist
+				if (stat(output_path, &st)) {
+					if (errno == EACCES) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CDO_PERMISSION_ERROR, output_path);
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_PERMISSION_ERROR, output_path);
+						if (output_path)
+							free(output_path);
+						if (output_name)
+							free(output_name);
+						if (base_src_path)
+							free(base_src_path);
+						if (value2)
+							free(value2);
+						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					} else if ((errno != ENOENT) || oph_dir_r_mkdir(output_path)) {
+						pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_CDO_DIR_CREATION_ERROR, output_path);
+						logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_DIR_CREATION_ERROR, output_path);
+					}
+				}
+				//Check if file exists
+				snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_CDO_OUTPUT_PATH_SINGLE_FILE, output_path, output_name);
+				if (stat(file_name, &st)) {
+					if (errno == EACCES) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CDO_PERMISSION_ERROR, file_name);
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_PERMISSION_ERROR, file_name);
+						if (output_path)
+							free(output_path);
+						if (output_name)
+							free(output_name);
+						if (base_src_path)
+							free(base_src_path);
+						if (value2)
+							free(value2);
+						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					} else if (errno != ENOENT) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CDO_FILE_STAT_ERROR, file_name);
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_FILE_STAT_ERROR, file_name);
+						if (output_path)
+							free(output_path);
+						if (output_name)
+							free(output_name);
+						if (base_src_path)
+							free(base_src_path);
+						if (value2)
+							free(value2);
+						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					}
+				}
+				//File exists
+				else {
+					//If it is not a regular file
+					if (!S_ISREG(st.st_mode)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CDO_OVERWRITE_FOLDER_ERROR, file_name);
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_OVERWRITE_FOLDER_ERROR, file_name);
+						if (output_path)
+							free(output_path);
+						if (output_name)
+							free(output_name);
+						if (base_src_path)
+							free(base_src_path);
+						if (value2)
+							free(value2);
+						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					}
+					if (!((OPH_CDO_operator_handle *) handle->operator_handle)->force) {
+						pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_CDO_FILE_EXISTS, file_name);
+						logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_FILE_EXISTS, file_name);
+					}
+				}
+
+				if (i) {
+					if (output_path)
+						free(output_path);
+					if (output_name)
+						free(output_name);
+				} else {
+					((OPH_CDO_operator_handle *) handle->operator_handle)->output_path = output_path;
+					((OPH_CDO_operator_handle *) handle->operator_handle)->output_name = output_name;
+				}
+			}
+		}
+
+		value = value2 = strdup(value);
+		for (i = 0; i < ((OPH_CDO_operator_handle *) handle->operator_handle)->outputs_num; i++) {
+			if (((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i] && strlen(((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i])) {
+				size = strlen(((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i]);
+				old_size = strlen(value);
+				if (old_size) {
+					value2 = (char *) malloc((2 + old_size + size) * sizeof(char));
+					sprintf(value2, "%s|%s", value, ((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i]);
+				} else
+					value2 = strdup(((OPH_CDO_operator_handle *) handle->operator_handle)->outputs[i]);
+				free(value);
+				value = value2;
+			}
+		}
+
+	}
+
+	if (((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user) {
+		pointer = ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user;
+		size = strlen(pointer);
+		pointer2 = pointer + size;
+		while ((pointer2 >= pointer) && (*pointer2 != '/'))
+			pointer2--;
+		if (pointer2 <= pointer) {
+			free(((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user);
+			((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user = strdup(home);
+		} else
+			((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user[pointer2 - pointer] = 0;
+	}
+
+	if (!((OPH_CDO_operator_handle *) handle->operator_handle)->skip && !((OPH_CDO_operator_handle *) handle->operator_handle)->output_path) {
+
+		char tmp[2 + (base_src_path ? strlen(base_src_path) : 0) + strlen(cdd)];
+		sprintf(tmp, "%s%s", base_src_path ? base_src_path : "", cdd);
+		if (!strlen(tmp))
+			strcpy(tmp, home);
+		else if ((size = strlen(tmp))) {
+			if (tmp[--size] == '/')
+				tmp[size] = 0;
+		}
+		if (!((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user)
+			((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user = strdup(cdd);
+
+		//Create dir if not exist
+		if (stat(tmp, &st)) {
+			if (errno == EACCES) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CDO_PERMISSION_ERROR, tmp);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_PERMISSION_ERROR, tmp);
+				if (base_src_path)
+					free(base_src_path);
+				if (value2)
+					free(value2);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			} else if ((errno != ENOENT) || oph_dir_r_mkdir(tmp)) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_CDO_DIR_CREATION_ERROR, tmp);
+				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_DIR_CREATION_ERROR, tmp);
+			}
+		}
+
+		output_path = ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
+	} else
+		output_path = NULL;
+
+	if (base_src_path)
+		free(base_src_path);
+
+	if (!((OPH_CDO_operator_handle *) handle->operator_handle)->skip && !((OPH_CDO_operator_handle *) handle->operator_handle)->output_name) {
+		char tmp[20];
+		srand(time(NULL));
+		snprintf(tmp, 20, "%d", rand());
+		output_name = ((OPH_CDO_operator_handle *) handle->operator_handle)->output_name = strdup(tmp);
+	} else
+		output_name = NULL;
+
+	if (output_path && output_name) {
+
+		//Check if file exists
+		snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_CDO_OUTPUT_PATH_SINGLE_FILE, output_path, output_name);
+		if (stat(file_name, &st)) {
+			if (errno == EACCES) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CDO_PERMISSION_ERROR, file_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_PERMISSION_ERROR, file_name);
+				if (value2)
+					free(value2);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			} else if (errno != ENOENT) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CDO_FILE_STAT_ERROR, file_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_FILE_STAT_ERROR, file_name);
+				if (value2)
+					free(value2);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+		}
+		//File exists
+		else {
+			//If it is not a regular file
+			if (!S_ISREG(st.st_mode)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CDO_OVERWRITE_FOLDER_ERROR, file_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_OVERWRITE_FOLDER_ERROR, file_name);
+				if (value2)
+					free(value2);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			if (!((OPH_CDO_operator_handle *) handle->operator_handle)->force) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_CDO_FILE_EXISTS, file_name);
+				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_FILE_EXISTS, file_name);
+			}
+		}
+
+		value = value2 = strdup(value);
+		size = strlen(file_name);
+		old_size = strlen(value);
+		if (old_size) {
+			value2 = (char *) malloc((2 + old_size + size) * sizeof(char));
+			sprintf(value2, "%s|%s", value, file_name);
+		} else
+			value2 = strdup(file_name);
+		free(value);
+		value = value2;
+	}
+
 	if (oph_tp_parse_multiple_value_param(value, &((OPH_CDO_operator_handle *) handle->operator_handle)->args, &((OPH_CDO_operator_handle *) handle->operator_handle)->args_num)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
@@ -291,212 +735,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MEMORY_ERROR_INPUT, OPH_ARG_USERNAME);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
-	char user_space, user_space_default = 0;
-	if (oph_pid_get_user_space(&user_space)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read user_space\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read user_space\n");
-		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
-
-	char *output_path = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
-	char *output_name = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_NAME);
-	char *output = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT);
-	char process_file = 1;
-
-#ifdef OPH_ESDM
-	if (output && !strncmp(output, OPH_ESDM_PREFIX, 7))
-		output_name = output;
-	if (output_name && !strncmp(output_name, OPH_ESDM_PREFIX, 7))
-		process_file = 0;
-#endif
-
-	char home[2];
-	home[0] = '/';
-	home[1] = 0;
-	if (process_file && output && ((size = strlen(output)))) {
-		char *pointer = output + size;
-		while ((pointer >= output) && (*pointer != '/'))
-			pointer--;
-		if (pointer < output) {
-			output_name = output;
-			if ((output[size - 3] == '.') && (output[size - 2] == 'n') && (output[size - 1] == 'c'))
-				output[size - 3] = 0;
-		} else {
-			if (pointer == output)
-				output_path = home;
-			else
-				output_path = output;
-			*pointer = 0;
-			pointer++;
-			if (pointer && *pointer) {
-				output_name = pointer;
-				if ((output[size - 3] == '.') && (output[size - 2] == 'n') && (output[size - 1] == 'c'))
-					output[size - 3] = 0;
-			}
-		}
-	}
-
-	value = output_path;
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-
-	char *cdd = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
-	if (!cdd) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_GENERIC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (*cdd != '/') {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if ((strlen(cdd) > 1) && strstr(cdd, "..")) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-
-	if (!strcmp(value, OPH_CDO_DEFAULT_OUTPUT_PATH))
-		value = user_space ? &user_space_default : cdd;
-
-	if (!(((OPH_CDO_operator_handle *) handle->operator_handle)->output_path = (char *) strdup(value))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MEMORY_ERROR_INPUT, "output path");
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
-	if (strstr(((OPH_CDO_operator_handle *) handle->operator_handle)->output_path, "..")) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	char *pointer = ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path;
-	while (pointer && (*pointer == ' '))
-		pointer++;
-	if (pointer) {
-		if ((*pointer != '/') && (strlen(cdd) > 1)) {
-			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", cdd + 1, pointer);
-			((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user = strdup(tmp);
-			free(((OPH_CDO_operator_handle *) handle->operator_handle)->output_path);
-			((OPH_CDO_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
-			pointer = ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path;
-		}
-		if (!((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user)
-			((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user = strdup(pointer);
-		if (oph_pid_get_base_src_path(&value)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base user_path\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base user path\n");
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
-		snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
-		free(((OPH_CDO_operator_handle *) handle->operator_handle)->output_path);
-		((OPH_CDO_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
-		if (value)
-			free(value);
-	}
-
-	value = output_name;
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_NAME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_NAME);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (strcmp(value, OPH_CDO_DEFAULT_OUTPUT_PATH)) {
-		if (!(((OPH_CDO_operator_handle *) handle->operator_handle)->output_name = (char *) strdup(value))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MEMORY_ERROR_INPUT, "output name");
-			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-		}
-	}
-	size_t s;
-	if (process_file && ((OPH_CDO_operator_handle *) handle->operator_handle)->output_name) {
-		for (s = 0; s < strlen(((OPH_CDO_operator_handle *) handle->operator_handle)->output_name); s++) {
-			if ((((OPH_CDO_operator_handle *) handle->operator_handle)->output_name[s] == '/')
-			    || (((OPH_CDO_operator_handle *) handle->operator_handle)->output_name[s] == ':')) {
-				((OPH_CDO_operator_handle *) handle->operator_handle)->output_name[s] = '_';
-			}
-		}
-	}
-
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_FORCE);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_FORCE);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_FORCE);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (!strcmp(value, OPH_COMMON_YES_VALUE))
-		((OPH_CDO_operator_handle *) handle->operator_handle)->force = 1;
-
-	value = hashtbl_get(task_tbl, OPH_ARG_NTHREAD);
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_NTHREAD);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MISSING_INPUT_PARAMETER, OPH_ARG_NTHREAD);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	((OPH_CDO_operator_handle *) handle->operator_handle)->nthread = (int) strtol(value, NULL, 10);
-
-	char *path = ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path;
-	if (!path) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_MEMORY_ERROR_INPUT, "output_path");
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
-	size = strlen(path);
-	if (size && (path[size - 1] == '/'))
-		path[--size] = 0;
-
-	//Create dir if not exist
-	struct stat st;
-	if (stat(path, &st)) {
-		if (errno == EACCES) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CDO_PERMISSION_ERROR, path);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_PERMISSION_ERROR, path);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		} else if ((errno != ENOENT) || oph_dir_r_mkdir(path)) {
-			pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_CDO_DIR_CREATION_ERROR, path);
-			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_DIR_CREATION_ERROR, path);
-		}
-	}
-	//Create a random name
-	if (!((OPH_CDO_operator_handle *) handle->operator_handle)->output_name) {
-		char tmp[20];
-		srand(time(NULL));
-		snprintf(tmp, 20, "%d", rand());
-		((OPH_CDO_operator_handle *) handle->operator_handle)->output_name = strdup(tmp);
-	}
-
-	if (process_file) {
-		//Check if file exists
-		char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' };
-		snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_CDO_OUTPUT_PATH_SINGLE_FILE, path, ((OPH_CDO_operator_handle *) handle->operator_handle)->output_name);
-		if (stat(file_name, &st)) {
-			if (errno == EACCES) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CDO_PERMISSION_ERROR, file_name);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_PERMISSION_ERROR, file_name);
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-			} else if (errno != ENOENT) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CDO_FILE_STAT_ERROR, file_name);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_FILE_STAT_ERROR, file_name);
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-			}
-		}
-		//File exists
-		else {
-			//If it is not a regular file
-			if (!S_ISREG(st.st_mode)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CDO_OVERWRITE_FOLDER_ERROR, file_name);
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_OVERWRITE_FOLDER_ERROR, file_name);
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-			}
-			if (!((OPH_CDO_operator_handle *) handle->operator_handle)->force) {
-				pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_CDO_FILE_EXISTS, file_name);
-				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CDO_FILE_EXISTS, file_name);
-			}
-		}
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -624,17 +862,6 @@ int task_execute(oph_operator_struct * handle)
 		}
 	}
 
-	// Output file
-	char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' };
-#ifdef OPH_ESDM
-	if (!strncmp(((OPH_CDO_operator_handle *) handle->operator_handle)->output_name, OPH_ESDM_PREFIX, 7))
-		strcpy(file_name, ((OPH_CDO_operator_handle *) handle->operator_handle)->output_name);
-	else
-#endif
-		snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_CDO_OUTPUT_PATH_SINGLE_FILE, ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path,
-			 ((OPH_CDO_operator_handle *) handle->operator_handle)->output_name);
-	n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "'%s' ", file_name);
-
 	if (strcmp(((OPH_CDO_operator_handle *) handle->operator_handle)->out_redir, "stdout")) {
 		n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "1>>%s ", ((OPH_CDO_operator_handle *) handle->operator_handle)->out_redir);
 	}
@@ -686,30 +913,77 @@ int task_execute(oph_operator_struct * handle)
 		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
 	}
 
+	char *output_name = ((OPH_CDO_operator_handle *) handle->operator_handle)->output_name;
 	char jsonbuf[OPH_COMMON_BUFFER_LEN];
 	*jsonbuf = 0;
-#ifdef OPH_ESDM
-	if (!strncmp(((OPH_CDO_operator_handle *) handle->operator_handle)->output_name, OPH_ESDM_PREFIX, 7)) {
-		if (oph_json_is_objkey_printable
-		    (((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_CDO_OUTPUT))
-			snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s", ((OPH_CDO_operator_handle *) handle->operator_handle)->output_name);
-	} else
-#endif
-	if (((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user) {
-		char *output_path_file = ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user;
-		size_t size = strlen(output_path_file);
-		if (size && (output_path_file[size - 1] == '/'))
-			output_path_file[--size] = 0;
-		if (oph_json_is_objkey_printable
-		    (((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_CDO_OUTPUT)) {
-			snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s" OPH_CDO_OUTPUT_PATH_SINGLE_FILE, size
-				 && *output_path_file != '/' ? "/" : "", output_path_file, ((OPH_CDO_operator_handle *) handle->operator_handle)->output_name);
+
+	if (output_name) {
+		// Check for output files
+		DIR *dirp = NULL;
+		oph_cdo_output *list = NULL, *tail = NULL;
+		struct dirent *entry = NULL, save_entry;
+		if (((OPH_CDO_operator_handle *) handle->operator_handle)->multiple_output && ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path) {
+			dirp = opendir(((OPH_CDO_operator_handle *) handle->operator_handle)->output_path);	// Correct: output_path_user is the user point-of-view
+			if (!dirp) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "Output folder does not exist\n");
+				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Output folder does not exist\n");
+				free(((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user);
+				((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user = NULL;
+			}
 		}
+		if (dirp && ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user) {	// Correct: output_path_user is the user point-of-view
+
+			n = 0;
+			while (!readdir_r(dirp, &save_entry, &entry) && entry) {
+
+				if (!strstr(entry->d_name, output_name))
+					continue;
+				n++;
+				printf("Found output file %s in %s\n", entry->d_name, ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user);
+				oph_cdo_output_append(&list, &tail, entry->d_name);
+			}
+			if (n)
+				printf("Found %d output file%s in %s\n", n, n == 1 ? "" : "s", ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user);
+			else
+				printf("No output file found in %s\n", ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user);
+		}
+		if (dirp)
+			closedir(dirp);
+
+#ifdef OPH_ESDM
+		if (!strncmp(output_name, OPH_ESDM_PREFIX, 7)) {
+			if (oph_json_is_objkey_printable
+			    (((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_CDO_OUTPUT))
+				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s", output_name);
+		} else
+#endif
+		if (((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user) {
+			char *output_path_file = ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user;
+			size_t size = strlen(output_path_file);
+			if (size) {
+				if (output_path_file[--size] == '/')
+					output_path_file[size] = 0;
+			}
+			if (oph_json_is_objkey_printable
+			    (((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys, ((OPH_CDO_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_CDO_OUTPUT)) {
+				if (((OPH_CDO_operator_handle *) handle->operator_handle)->multiple_output) {
+					for (n = 0, tail = list; tail; tail = tail->next)
+						n += snprintf(jsonbuf + n, OPH_COMMON_BUFFER_LEN - n, "%s" OPH_CDO_OUTPUT_PATH_SINGLE_FILE_EXT "%s", size
+							      && *output_path_file != '/' ? "/" : "", output_path_file, tail->name, tail->next ? OPH_CDO_VALUE_SEPARATOR : "");
+				} else
+					snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s" OPH_CDO_OUTPUT_PATH_SINGLE_FILE, size && *output_path_file != '/' ? "/" : "", output_path_file, output_name);
+			}
+		}
+		oph_cdo_output_free(list);
 	}
 	// ADD OUTPUT TO NOTIFICATION STRING
-	if (((OPH_CDO_operator_handle *) handle->operator_handle)->session_url) {
+	if (((OPH_CDO_operator_handle *) handle->operator_handle)->session_url || (strlen(jsonbuf) > 0)) {
 		char tmp_string[OPH_COMMON_BUFFER_LEN];
-		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_LINK, ((OPH_CDO_operator_handle *) handle->operator_handle)->session_url, OPH_IN_PARAM_FILE, jsonbuf);
+		n = 0;
+		if (((OPH_CDO_operator_handle *) handle->operator_handle)->session_url)
+			n += snprintf(tmp_string + n, OPH_COMMON_BUFFER_LEN - n, "%s=%s;", OPH_IN_PARAM_LINK, ((OPH_CDO_operator_handle *) handle->operator_handle)->session_url);
+		if (strlen(jsonbuf) > 0)
+			n += snprintf(tmp_string + n, OPH_COMMON_BUFFER_LEN - n, "%s=%s;", OPH_IN_PARAM_FILE, jsonbuf);
 		if (handle->output_string) {
 			strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
 			free(handle->output_string);
@@ -761,6 +1035,18 @@ int env_unset(oph_operator_struct * handle)
 	if (!handle || !handle->operator_handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
+	if (((OPH_CDO_operator_handle *) handle->operator_handle)->inputs) {
+		oph_tp_free_multiple_value_param_list(((OPH_CDO_operator_handle *) handle->operator_handle)->inputs, ((OPH_CDO_operator_handle *) handle->operator_handle)->inputs_num);
+		((OPH_CDO_operator_handle *) handle->operator_handle)->inputs = NULL;
+	}
+	if (((OPH_CDO_operator_handle *) handle->operator_handle)->outputs) {
+		oph_tp_free_multiple_value_param_list(((OPH_CDO_operator_handle *) handle->operator_handle)->outputs, ((OPH_CDO_operator_handle *) handle->operator_handle)->outputs_num);
+		((OPH_CDO_operator_handle *) handle->operator_handle)->outputs = NULL;
+	}
+	if (((OPH_CDO_operator_handle *) handle->operator_handle)->args) {
+		oph_tp_free_multiple_value_param_list(((OPH_CDO_operator_handle *) handle->operator_handle)->args, ((OPH_CDO_operator_handle *) handle->operator_handle)->args_num);
+		((OPH_CDO_operator_handle *) handle->operator_handle)->args = NULL;
+	}
 	if (((OPH_CDO_operator_handle *) handle->operator_handle)->output_path) {
 		free((char *) ((OPH_CDO_operator_handle *) handle->operator_handle)->output_path);
 		((OPH_CDO_operator_handle *) handle->operator_handle)->output_path = NULL;
@@ -772,14 +1058,6 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_CDO_operator_handle *) handle->operator_handle)->output_name) {
 		free((char *) ((OPH_CDO_operator_handle *) handle->operator_handle)->output_name);
 		((OPH_CDO_operator_handle *) handle->operator_handle)->output_name = NULL;
-	}
-	if (((OPH_CDO_operator_handle *) handle->operator_handle)->inputs) {
-		oph_tp_free_multiple_value_param_list(((OPH_CDO_operator_handle *) handle->operator_handle)->inputs, ((OPH_CDO_operator_handle *) handle->operator_handle)->inputs_num);
-		((OPH_CDO_operator_handle *) handle->operator_handle)->inputs = NULL;
-	}
-	if (((OPH_CDO_operator_handle *) handle->operator_handle)->args) {
-		oph_tp_free_multiple_value_param_list(((OPH_CDO_operator_handle *) handle->operator_handle)->args, ((OPH_CDO_operator_handle *) handle->operator_handle)->args_num);
-		((OPH_CDO_operator_handle *) handle->operator_handle)->args = NULL;
 	}
 	if (((OPH_CDO_operator_handle *) handle->operator_handle)->err_redir) {
 		free((char *) ((OPH_CDO_operator_handle *) handle->operator_handle)->err_redir);
