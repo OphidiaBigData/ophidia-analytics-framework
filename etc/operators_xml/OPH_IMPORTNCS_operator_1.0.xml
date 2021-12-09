@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
-<operator name="OPH_IMPORTNCS2" version="1.0">
+<operator name="OPH_IMPORTNCS" version="1.0">
     <info>
         <abstract>[Type]
 Data Process.
