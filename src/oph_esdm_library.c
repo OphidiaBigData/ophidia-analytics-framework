@@ -36,6 +36,21 @@
 
 #include "oph_esdm_kernels.h"
 
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#include "clients/taketime.h"
+static int timeval_add(res, x, y)
+struct timeval *res, *x, *y;
+{
+	res->tv_sec = x->tv_sec + y->tv_sec;
+	res->tv_usec = x->tv_usec + y->tv_usec;
+	while (res->tv_usec > MILLION) {
+		res->tv_usec -= MILLION;
+		res->tv_sec++;
+	}
+	return 0;
+}
+#endif
+
 int _oph_esdm_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, int64_t ** id, int i, int n)
 {
 	if (i < n - 1) {
