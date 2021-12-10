@@ -87,7 +87,8 @@ struct _OPH_IMPORTNCS_operator_handle {
 	int create_container;
 	char *cwd;
 	int run;
-	char *nc_file_path;
+	char **nc_file_paths;
+	int nc_file_paths_num;
 	char *nc_file_path_orig;
 	char *partition_input;
 	char *grid_name;
@@ -108,7 +109,7 @@ struct _OPH_IMPORTNCS_operator_handle {
 	int number_unven_frag;
 	int int_dim_product;
 	char *user;
-	int ncid;
+	int *ncids;
 	NETCDF_var measure;
 	int compressed;
 	char **objkeys;

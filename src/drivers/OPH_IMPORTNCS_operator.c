@@ -79,7 +79,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->grid_name = NULL;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->check_grid = 0;
-	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path = NULL;
+	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths = NULL;
+	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num = 0;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = NULL;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->id_output_datacube = 0;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->id_input_container = 0;
@@ -118,7 +119,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->policy = 0;
-	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncid = 0;
+	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids = NULL;
 
 	char *value;
 
@@ -259,12 +260,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SRC_FILE_PATH);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (!(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
+	if (oph_tp_parse_multiple_value_param
+	    (value, &((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths, &((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, value, "nc file path");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
-	if (!(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = strdup(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path))) {
+	if (!(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = strdup(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[0]))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "nc file path");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
@@ -278,12 +280,12 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	if (!strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
 		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->create_container = 1;
-		char *pointer = strrchr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path, '/');
+		char *pointer = strrchr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[0], '/');
 		while (pointer && !strlen(pointer)) {
 			*pointer = 0;
-			pointer = strrchr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path, '/');
+			pointer = strrchr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[0], '/');
 		}
-		container_name = pointer ? pointer + 1 : ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path;
+		container_name = pointer ? pointer + 1 : ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[0];
 	} else
 		container_name = value;
 	if (!(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->container_input = (char *) strndup(container_name, OPH_TP_TASKLEN))) {
@@ -312,80 +314,101 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nthread = (int) strtol(value, NULL, 10);
 
-	int retval, j = 0;
-	if (strstr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path, "..")) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	char *tmp_base_path = NULL;
+	if (oph_pid_get_base_src_path(&tmp_base_path)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-	if (!strstr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path, "http://")
-	    && !strstr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path, "https://")) {
-		char *pointer = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path;
-		while (pointer && (*pointer == ' '))
-			pointer++;
-		if (pointer) {
-			char tmp[OPH_COMMON_BUFFER_LEN];
-			char *tmp_base_path = NULL;
-			if (*pointer != '/') {
-				value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
-				if (!value) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				if (*value != '/') {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", value);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", value);
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				if (strlen(value) > 1) {
-					if (strstr(value, "..")) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
-						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+
+	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids = (int *) calloc(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num, sizeof(int));
+
+	int retval, j;
+	char *cdd = NULL;
+	for (j = 0; j < ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num; ++j) {
+		if (strstr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j], "..")) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+			free(tmp_base_path);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		if (!strstr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j], "http://")
+		    && !strstr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j], "https://")) {
+			char *pointer = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j];
+			while (pointer && (*pointer == ' '))
+				pointer++;
+			if (pointer) {
+				char tmp[OPH_COMMON_BUFFER_LEN];
+				if (*pointer != '/') {
+					if (!cdd) {
+						cdd = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
+						if (!cdd) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
+							free(tmp_base_path);
+							return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+						}
+						if (*cdd != '/') {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", cdd);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", cdd);
+							free(tmp_base_path);
+							return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+						}
+						if (strlen(cdd) > 1) {
+							if (strstr(cdd, "..")) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+								free(tmp_base_path);
+								return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+							}
+						}
 					}
-					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value + 1, pointer);
-					free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path);
-					((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
-					pointer = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path;
+					if (strlen(cdd) > 1) {
+						snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", cdd + 1, pointer);
+						free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j]);
+						((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j] = strdup(tmp);
+						pointer = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j];
+					}
 				}
+				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", tmp_base_path ? tmp_base_path : "", *pointer != '/' ? "/" : "", pointer);
+				free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j]);
+				((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j] = strdup(tmp);
 			}
-			if (oph_pid_get_base_src_path(&tmp_base_path)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
+			//Open netcdf file
+			struct stat st;
+			if (stat(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j], &st) == 0) {
+				size_t size = (size_t) 2 * st.st_blksize;
+				if ((retval =
+				     nc__open(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j], NC_NOWRITE, &size,
+					      &(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids[j])))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j],
+					      nc_strerror(retval));
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_OPEN_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
+					free(tmp_base_path);
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
+			} else {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j],
+				      strerror(errno));
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_OPEN_ERROR_NO_CONTAINER, container_name, strerror(errno));
+				free(tmp_base_path);
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
-			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", tmp_base_path ? tmp_base_path : "", *pointer != '/' ? "/" : "", pointer);
-			free(tmp_base_path);
-			free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path);
-			((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
-		}
-		//Open netcdf file
-		struct stat st;
-		if (stat(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path, &st) == 0) {
-			size_t size = (size_t) 2 * st.st_blksize;
+
+		} else {
+			//Open netcdf file from URL
 			if ((retval =
-			     nc__open(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path, NC_NOWRITE, &size,
-				      &(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncid)))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path,
+			     nc_open(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j], NC_NOWRITE,
+				     &(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids[j])))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j],
 				      nc_strerror(retval));
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_OPEN_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
+				free(tmp_base_path);
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
-		} else {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path, strerror(errno));
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_OPEN_ERROR_NO_CONTAINER, container_name, strerror(errno));
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-		}
-
-	} else {
-		//Open netcdf file from URL
-		if ((retval = nc_open(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path, NC_NOWRITE, &(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncid)))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open netcdf file '%s': %s\n", ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path, nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_OPEN_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 	}
+	free(tmp_base_path);
 
 	if (oph_pid_get_memory_size(&(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->memory_size))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
@@ -462,7 +485,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	int imp_number_of_dim_clevels = 0;
 	int number_of_dim_clevels = 0;
 
-	int ncid = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncid;
+	int ncid = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids[0];
 	//Extract measured variable information
 	if ((retval = nc_inq_varid(ncid, measure->varname, &(measure->varid)))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
@@ -481,6 +504,37 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+	// Check the other files
+	int *ncids = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids;
+	int varid, ndims_other;
+	nc_type vartype;
+	for (j = 1; j < ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num; ++j) {
+		if ((retval = nc_inq_varid(ncids[j], measure->varname, &varid))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		if ((retval = nc_inq_vartype(ncids[j], varid, &vartype))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		if (vartype != measure->vartype) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong type of input file '%s'\n", ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j]);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Wrong input file '%s'\n", ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j]);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		if ((retval = nc_inq_varndims(ncids[j], varid, &ndims_other))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
+			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+		if (ndims_other != ndims) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong dimensions of input file '%s'\n", ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j]);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Wrong input file '%s'\n", ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j]);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
 	}
 
 	char *tmp_concept_levels = NULL;
@@ -1948,7 +2002,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 
-		int ncid = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncid;
+		int ncid = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids[0];
 		char *cwd = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->cwd;
 		char *user = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->user;
 		NETCDF_var tmp_var;
@@ -3989,7 +4043,7 @@ int task_execute(oph_operator_struct * handle)
 				strcpy(new_frag[current_frag_count + frag_count].fragment_name, fragment_name);
 				//Create  and populate fragment
 				if (oph_nc_populate_fragment_from_nc5
-				    (server, &(new_frag[current_frag_count + frag_count]), oper_handle->nc_file_path, actual_tuplexfrag_number, oper_handle->compressed,
+				    (server, &(new_frag[current_frag_count + frag_count]), oper_handle->nc_file_paths[0], actual_tuplexfrag_number, oper_handle->compressed,
 				     (NETCDF_var *) & (oper_handle->measure))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_FRAG_POPULATE_ERROR,
@@ -4266,17 +4320,19 @@ int env_unset(oph_operator_struct * handle)
 		free((char *) ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->grid_name);
 		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->grid_name = NULL;
 	}
-	if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path) {
-		free((char *) ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path);
-		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path = NULL;
+	if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths) {
+		oph_tp_free_multiple_value_param_list(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths,
+						      ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num);
+		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths = NULL;
 	}
 	if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig) {
 		free((char *) ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig);
 		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = NULL;
 	}
-	if ((retval = nc_close(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncid)))
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", nc_strerror(retval));
-
+	for (i = 0; i < ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num; ++i)
+		if ((retval = nc_close(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids[i])))
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", nc_strerror(retval));
+	free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids);
 
 	NETCDF_var *measure = ((NETCDF_var *) & (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->measure));
 
