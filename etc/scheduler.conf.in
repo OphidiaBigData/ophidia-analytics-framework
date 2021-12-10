@@ -17,4 +17,4 @@ CANCELLATION_MULTIPLICATION_FACTOR=20
 MAX_CANCELLATION_STRUCT_SIZE=100
 WORKER_THREAD_NUMBER=10
 LAUNCHER=auto
-FRAMEWORK_PATH=/usr/local/ophidia/oph-cluster/oph-analytics-framework/bin/esdm_pav_runtime_worker
+FRAMEWORK_PATH=/usr/local/ophidia/oph-cluster/oph-analytics-framework/bin/oph_analytics_framework
