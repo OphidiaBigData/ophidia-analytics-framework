@@ -73,8 +73,8 @@ int process_pid = -1;
 pthread_t *thread_cont_list = NULL;
 int *pthread_create_arg = NULL;
 
-int ptr_list_size = 19;
-char *ptr_list[19];
+int ptr_list_size = 21;
+char *ptr_list[21];
 
 amqp_connection_state_t *conn_thread_consume_list = NULL;
 amqp_channel_t default_channel = 1;
@@ -95,6 +95,8 @@ char *max_ncores = 0;
 char *master_hostname = 0;
 char *master_port = 0;
 char *thread_number_str = 0;
+char *worker_launcher = 0;
+char *framework_path = 0;
 
 char nodename[1024];
 
@@ -280,11 +282,6 @@ int process_message(amqp_envelope_t full_message)
 		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Fail to read ncores parameter\n");
 		return 0;
 	}
-	char *log_string = strtok_r(NULL, "***", &ptr);
-	if (!log_string) {
-		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Fail to read log_string parameter\n");
-		return 0;
-	}
 
 #ifdef UPDATE_CANCELLATION_SUPPORT
 	pthread_rwlock_rdlock(&struct_size_lock);
@@ -368,8 +365,16 @@ int process_message(amqp_envelope_t full_message)
 		return 0;
 	}
 
-	submission_string++;
-	submission_string[strlen(submission_string) - 1] = 0;
+	char *exec_string = 0;
+
+	if (strcmp(worker_launcher, "auto") != 0) {
+		int neededSize = snprintf(NULL, 0, "%s -n %s %s %s", worker_launcher, ncores, framework_path, submission_string);
+		exec_string = (char *) malloc(neededSize + 1);
+		snprintf(exec_string, neededSize + 1, "%s -n %s %s %s", worker_launcher, ncores, framework_path, submission_string);
+	} else {
+		submission_string++;
+		submission_string[strlen(submission_string) - 1] = 0;
+	}
 
 	pthread_mutex_lock(&ncores_mutex);
 	while (process_ncores + total_used_ncores > atoi(max_ncores))
@@ -392,10 +397,19 @@ int process_message(amqp_envelope_t full_message)
 		exit(0);
 	}
 	if (exec_pid == 0) {
-		if (oph_af_execute_framework(submission_string, 1, 0) != 0)
-			exit(1);
-		else
-			exit(0);
+		if (strcmp(worker_launcher, "auto") != 0) {
+			int systemRes = system(exec_string);
+			if (systemRes == -1) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error on system: %s\n", exec_string);
+				exit(0);
+			} else
+				exit(1);
+		} else {
+			if (oph_af_execute_framework(submission_string, 1, 0) != 0)
+				exit(1);
+			else
+				exit(0);
+		}
 	}
 
 	int pid_status;
@@ -442,6 +456,10 @@ int process_message(amqp_envelope_t full_message)
 
 	if (message)
 		free(message);
+
+	if (strcmp(worker_launcher, "auto") != 0)
+		if (exec_string)
+			free (exec_string);
 
 	return 1;
 }
@@ -873,15 +891,15 @@ int main(int argc, char const *const *argv)
 	    "[-P <RabbitMQ port>] [-Q <RabbitMQ task_queue>] [-U <RabbitMQ update_queue>] [-a <master hostname>] [-b <master port>] "
 	    "[-M <RabbitMQ db_manager_queue>] [-D <RabbitMQ delete_queue>] [-u <RabbitMQ username>] [-p <RabbitMQ password>] "
 	    "[-n <max_ncores>] [-m <cancellation_multiplication_factor>] [-s <cancellation_struct_size>] [-C <count>] "
-		"[-t <thread_number>] [-h <USAGE>]\n";
+		"[-t <thread_number>] [-l <worker_launcher>] [-f <framework_path>] [-h <USAGE>]\n";
 
-	while ((ch = getopt(argc, (char *const *) argv, ":c:H:P:Q:U:a:b:M:D:u:p:n:m:s:C:t:dhxz")) != -1) {
+	while ((ch = getopt(argc, (char *const *) argv, ":c:H:P:Q:U:a:b:M:D:u:p:n:m:s:C:t:l:f:dhxz")) != -1) {
 #else
 	static char *USAGE = "\nUSAGE:\nesdm_pav_runtime_worker [-d] [-c <config_file>] [-H <RabbitMQ hostname>] "
 	    "[-P <RabbitMQ port>] [-Q <RabbitMQ task_queue>] [-a <master hostname>] [-b <master port>] [-u <RabbitMQ username>] "
-	    "[-p <RabbitMQ password>] [-n <max_ncores>] [-t <thread_number>] [-h <USAGE>]\n";
+	    "[-p <RabbitMQ password>] [-n <max_ncores>] [-t <thread_number>] [-l <worker_launcher>] [-f <framework_path>] [-h <USAGE>]\n";
 
-	while ((ch = getopt(argc, (char *const *) argv, ":c:H:P:Q:a:b:u:p:n:t:dhxz")) != -1) {
+	while ((ch = getopt(argc, (char *const *) argv, ":c:H:P:Q:a:b:u:p:n:t:l:f:dhxz")) != -1) {
 #endif
 
 		switch (ch) {
@@ -987,6 +1005,18 @@ int main(int argc, char const *const *argv)
 				snprintf(thread_number_str, neededSize + 1, "%s", optarg);
 				ptr_list[15] = thread_number_str;
 				break;
+			case 'l':
+				neededSize = snprintf(NULL, 0, "%s", optarg);
+				worker_launcher = (char *) malloc(neededSize + 1);
+				snprintf(worker_launcher, neededSize + 1, "%s", optarg);
+				ptr_list[16] = worker_launcher;
+				break;
+			case 'f':
+				neededSize = snprintf(NULL, 0, "%s", optarg);
+				framework_path = (char *) malloc(neededSize + 1);
+				snprintf(framework_path, neededSize + 1, "%s", optarg);
+				ptr_list[17] = framework_path;
+				break;
 			case 'd':
 				msglevel = LOG_DEBUG;
 				break;
@@ -1078,7 +1108,7 @@ int main(int argc, char const *const *argv)
 		strcpy(update_queue_name, update_queue);
 	}
 
-	ptr_list[16] = update_queue_name;
+	ptr_list[18] = update_queue_name;
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM UPDATE_QUEUE_NAME: %s\n", update_queue_name);
 
 	if (!delete_queue_name) {
@@ -1099,7 +1129,7 @@ int main(int argc, char const *const *argv)
 		strcpy(delete_queue_name, delete_queue);
 	}
 
-	ptr_list[17] = delete_queue_name;
+	ptr_list[19] = delete_queue_name;
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM DELETE_QUEUE_NAME: %s\n", delete_queue_name);
 #endif
 
@@ -1168,6 +1198,26 @@ int main(int argc, char const *const *argv)
 	}
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM WORKER_THREAD_NUMBER: %s\n", thread_number_str);
 
+	if (!worker_launcher) {
+		if (oph_server_conf_get_param(hashtbl, "LAUNCHER", &worker_launcher)) {
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Unable to get WORKER_LAUNCHER param\n");
+			oph_server_conf_unload(&hashtbl);
+			exit(0);
+		}
+	}
+	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM WORKER_LAUNCHER: %s\n", worker_launcher);
+
+	if (strcmp(worker_launcher, "auto") != 0) {
+		if (!framework_path) {
+			if (oph_server_conf_get_param(hashtbl, "FRAMEWORK_PATH", &framework_path)) {
+				pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Unable to get FRAMEWORK_PATH param\n");
+				oph_server_conf_unload(&hashtbl);
+				exit(0);
+			}
+		}
+		pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM FRAMEWORK_PATH: %s\n", framework_path);
+	}
+
 #ifdef UPDATE_CANCELLATION_SUPPORT
 	if (!cancellation_multiplication_factor) {
 		if (oph_server_conf_get_param(hashtbl, "CANCELLATION_MULTIPLICATION_FACTOR", &cancellation_multiplication_factor)) {
@@ -1190,7 +1240,7 @@ int main(int argc, char const *const *argv)
 	if (!worker_count) {
 		worker_count = (char *) malloc(2);
 		snprintf(worker_count, 2, "0");
-		ptr_list[18] = worker_count;
+		ptr_list[20] = worker_count;
 	}
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM WORKER_COUNT: %s\n", worker_count);
 #endif
