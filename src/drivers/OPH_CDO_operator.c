@@ -22,7 +22,6 @@
 #include "drivers/OPH_CDO_operator.h"
 
 #include <errno.h>
-#include <errmsg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

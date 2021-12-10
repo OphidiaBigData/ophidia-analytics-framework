@@ -333,7 +333,11 @@ int oph_odb_stge_retrieve_fragment_list2(ophidiadb * oDB, int id_datacube, oph_o
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
+#ifdef OPH_MYSQL_SUPPORT
 int oph_odb_stge_find_datacube_fragmentation_list(ophidiadb * oDB, int level, int id_datacube, char *hostname, char *db_name, int id_dbms, MYSQL_RES ** information_list);
+#else
+int oph_odb_stge_find_datacube_fragmentation_list(ophidiadb * oDB, int level, int id_datacube, char *hostname, char *db_name, int id_dbms, void **information_list);
+#endif
 
 /**
  * \brief Function to retrieve list of hostname dbms instances information from OphidiaDB given optionally hostname
@@ -347,7 +351,11 @@ int oph_odb_stge_find_datacube_fragmentation_list(ophidiadb * oDB, int level, in
  * \param id_user Reference to user-defined host partitions
  * \return 0 if successfull, -1 otherwise
  */
+#ifdef OPH_MYSQL_SUPPORT
 int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *hostname, char *partition_name, char *ioserver_type, char *host_status, MYSQL_RES ** information_list, int id_user);
+#else
+int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *hostname, char *partition_name, char *ioserver_type, char *host_status, void **information_list, int id_user);
+#endif
 
 /**
  * \brief Function to retrieve list of fragments name related to datacube and id_dbms
@@ -359,7 +367,11 @@ int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *ho
  * \param fragment_name_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
+#ifdef OPH_MYSQL_SUPPORT
 int oph_odb_stge_find_fragment_name_list(ophidiadb * oDB, int id_datacube, int id_dbms, int start_position, int row_number, MYSQL_RES ** fragment_list);
+#else
+int oph_odb_stge_find_fragment_name_list(ophidiadb * oDB, int id_datacube, int id_dbms, int start_position, int row_number, void **fragment_list);
+#endif
 
 /**
  * \brief Function to retrieve fragment related metadata

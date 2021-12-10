@@ -72,11 +72,24 @@ CFLAGS=""
 CPPFLAGS=""
 CXXFLAGS=""
 
+OPH_MYSQL_SUPPORT=
+AC_ARG_ENABLE(mysql, [  --disable-mysql	Disable MySQL support. (Enabled by default)], [ mysql="no" ], [ mysql="yes" ])
+if test "x$mysql" = "xyes"; then
+	AC_MSG_NOTICE(MySQL enabled)
+else
+	AC_MSG_NOTICE(MySQL disabled)
+fi
+AM_CONDITIONAL([MYSQL_SUPPORT], [test "x$mysql" = "xyes"])
+OPH_MYSQL_SUPPORT=$mysql
+AC_SUBST(OPH_MYSQL_SUPPORT)
+
+if test "x$mysql" = "xyes"; then
 AX_LIB_MYSQL([5.6])
 if test -n $HAVE_MYSQL; then
-  AC_MSG_NOTICE([MySQL libraries available])
+	AC_MSG_NOTICE([MySQL libraries available])
 else
 	AC_MSG_ERROR([MySQL libraries not found! Aborting configure!])
+fi
 fi
 
 AC_CHECK_LIB(pthread, pthread_create)
@@ -565,7 +578,7 @@ fi
 AC_SUBST(PLUGIN_DEFAULT_HOSTNAME)
 
 OPH_DB_SUPPORT=
-AC_ARG_ENABLE(db, [ --disable-db	Disable Ophidia DB support. (Enabled by default)], [ db="no" ], [ db="yes" ])
+AC_ARG_ENABLE(db, [  --disable-db	Disable Ophidia DB support. (Enabled by default)], [ db="no" ], [ db="yes" ])
 if test "x$db" = "xyes"; then
 	AC_MSG_NOTICE(Ophidia DB enabled)
 else

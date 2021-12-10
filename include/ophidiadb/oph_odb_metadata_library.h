@@ -19,7 +19,9 @@
 #ifndef __OPH_ODB_META_H__
 #define __OPH_ODB_META_H__
 
+#ifdef OPH_MYSQL_SUPPORT
 #include <mysql.h>
+#endif
 
 /* Project headers */
 #include "oph_ophidiadb_library.h"
@@ -38,7 +40,11 @@
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
+#ifdef OPH_MYSQL_SUPPORT
 int oph_odb_meta_find_metadatakey_list(ophidiadb * oDB, int vocabulary_id, MYSQL_RES ** information_list);
+#else
+int oph_odb_meta_find_metadatakey_list(ophidiadb * oDB, int vocabulary_id, void **information_list);
+#endif
 
 /**
  * \brief Function that updates OphidiaDB adding the new metadata instance and new manage relations
@@ -153,8 +159,13 @@ int oph_odb_meta_insert_into_manage_table(ophidiadb * oDB, int id_metadatainstan
  * \param metadata_list MySQL result structure filled with results (it must be free'd outside the function)
  * \return 0 if successfull, -1 otherwise
  */
+#ifdef OPH_MYSQL_SUPPORT
 int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, char *id_metadatainstance, char *metadata_variable,
 					     char *metadata_type, char *metadata_value, MYSQL_RES ** metadata_list);
+#else
+int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, char *id_metadatainstance, char *metadata_variable,
+					     char *metadata_type, char *metadata_value, void **metadata_list);
+#endif
 
 /**
  * \brief Function to update the metadatainstance table

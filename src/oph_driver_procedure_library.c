@@ -68,7 +68,9 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_OPHIDIADB_CONNECTION_ERROR);
 		oph_odb_free_ophidiadb_thread(&oDB_slave);
+#ifdef OPH_MYSQL_SUPPORT
 		mysql_thread_end();
+#endif
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 
@@ -82,7 +84,9 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_CONNECTION_STRINGS_NOT_FOUND);
 				oph_odb_free_ophidiadb_thread(&oDB_slave);
+#ifdef OPH_MYSQL_SUPPORT
 				mysql_thread_end();
+#endif
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			} else {
 				no_frag = 1;
@@ -91,7 +95,9 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_CONNECTION_STRINGS_NOT_FOUND);
 			oph_odb_free_ophidiadb_thread(&oDB_slave);
+#ifdef OPH_MYSQL_SUPPORT
 			mysql_thread_end();
+#endif
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 	}
@@ -106,7 +112,9 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 				oph_odb_stge_free_db_list(&dbs);
 				oph_odb_stge_free_dbms_list(&dbmss);
 				oph_odb_free_ophidiadb_thread(&oDB_slave);
+#ifdef OPH_MYSQL_SUPPORT
 				mysql_thread_end();
+#endif
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			} else {
 				no_frag = 1;
@@ -117,7 +125,9 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 			oph_odb_stge_free_db_list(&dbs);
 			oph_odb_stge_free_dbms_list(&dbmss);
 			oph_odb_free_ophidiadb_thread(&oDB_slave);
+#ifdef OPH_MYSQL_SUPPORT
 			mysql_thread_end();
+#endif
 			return OPH_ANALYTICS_OPERATOR_SUCCESS;
 		}
 	}
@@ -149,7 +159,9 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 		oph_odb_stge_free_db_list(&dbs);
 		oph_odb_stge_free_dbms_list(&dbmss);
 		oph_odb_free_ophidiadb_thread(&oDB_slave);
+#ifdef OPH_MYSQL_SUPPORT
 		mysql_thread_end();
+#endif
 		free(datacubexdb_number);
 		free(id_dbs);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -189,7 +201,9 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 		if (oph_dc_setup_dbms_thread(&(server), (dbmss->value[0]).io_server_type)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_IOPLUGIN_SETUP_ERROR, (dbmss->value[0]).id_dbms);
+#ifdef OPH_MYSQL_SUPPORT
 			mysql_thread_end();
+#endif
 			res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 
@@ -210,7 +224,9 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 		if (first_frag >= frags->size) {
 			//Early termination
 			oph_dc_cleanup_dbms(server);
+#ifdef OPH_MYSQL_SUPPORT
 			mysql_thread_end();
+#endif
 			res = OPH_ANALYTICS_OPERATOR_SUCCESS;
 			int *ret_val = (int *) malloc(sizeof(int));
 			*ret_val = res;
@@ -308,13 +324,17 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 
 			if (res != OPH_ANALYTICS_OPERATOR_SUCCESS) {
 				oph_dc_cleanup_dbms(server);
+#ifdef OPH_MYSQL_SUPPORT
 				mysql_thread_end();
+#endif
 			}
 		}
 
 		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
 			oph_dc_cleanup_dbms(server);
+#ifdef OPH_MYSQL_SUPPORT
 			mysql_thread_end();
+#endif
 		}
 
 		int *ret_val = (int *) malloc(sizeof(int));
@@ -363,7 +383,9 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 	oph_odb_stge_free_dbms_list(&dbmss);
 	oph_odb_stge_free_fragment_list(&frags);
 	oph_odb_free_ophidiadb_thread(&oDB_slave);
+#ifdef OPH_MYSQL_SUPPORT
 	mysql_thread_end();
+#endif
 
 	for (l = 0; l < thread_number; l++) {
 		if (res[l] != OPH_ANALYTICS_OPERATOR_SUCCESS) {

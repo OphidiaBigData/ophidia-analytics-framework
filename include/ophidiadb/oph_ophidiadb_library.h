@@ -20,7 +20,9 @@
 #define __OPH_OPHIDIA_DB__
 
 /* Project headers */
+#ifdef OPH_MYSQL_SUPPORT
 #include <mysql.h>
+#endif
 
 #include "oph_framework_paths.h"
 #include "oph_common.h"
@@ -65,7 +67,11 @@ typedef struct {
 	int server_port;
 	char *username;
 	char *pwd;
+#ifdef OPH_MYSQL_SUPPORT
 	MYSQL *conn;
+#else
+	void *conn;
+#endif
 } ophidiadb;
 
 /**

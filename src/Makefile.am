@@ -42,7 +42,6 @@ LIBRARY+= liboph_directory.la
 LIBRARY+= liboph_render_output.la
 LIBRARY+= liboph_subset.la
 LIBRARY+= liboph_task_parser.la
-LIBRARY+= libophidiadb.la
 LIBRARY+= liboph_hierarchy.la
 LIBRARY+= liboph_dimension.la
 LIBRARY+= liboph_datacube.la
@@ -70,6 +69,14 @@ lib_CFLAGS =  -I. -I../include -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_
 else
 lib_CFLAGS =  -I. -I../include -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(OPT)
 endif
+endif
+
+if MYSQL_SUPPORT
+LIBRARY+= libophidiadb.la
+OPHIDIADB=-lophidiadb
+lib_CFLAGS += -DOPH_MYSQL_SUPPORT
+else
+OPHIDIADB=-loph_pid
 endif
 
 if DB_SUPPORT
@@ -114,10 +121,10 @@ liboph_idstring_la_LIBADD = -lz -lm @LIBLTDL@ -L. -ldebug
 liboph_analytics_framework_la_SOURCES = oph_analytics_framework.c
 if STANDALONE_MODE
 liboph_analytics_framework_la_CFLAGS= ${MYSQL_CFLAGS} -DOPH_STANDALONE_MODE -prefer-pic -I../include -Ioph_gsoap -Ioph_gsoap/$(INTERFACE_TYPE) @INCLTDL@ ${lib_CFLAGS}
-liboph_analytics_framework_la_LIBADD = ${MYSQL_LDFLAGS} @LIBLTDL@ -L. -lophidiadb -loph_analytics_operator -loph_json -loph_task_parser
+liboph_analytics_framework_la_LIBADD = ${MYSQL_LDFLAGS} @LIBLTDL@ -L. ${OPHIDIADB} -loph_analytics_operator -loph_json -loph_task_parser
 else
 liboph_analytics_framework_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include -Ioph_gsoap -Ioph_gsoap/$(INTERFACE_TYPE) @INCLTDL@ ${lib_CFLAGS}
-liboph_analytics_framework_la_LIBADD = ${MYSQL_LDFLAGS} @LIBLTDL@ -Loph_gsoap -loph_soap -L. -lophidiadb -loph_analytics_operator -loph_json -loph_task_parser
+liboph_analytics_framework_la_LIBADD = ${MYSQL_LDFLAGS} @LIBLTDL@ -Loph_gsoap -loph_soap -L. ${OPHIDIADB} -loph_analytics_operator -loph_json -loph_task_parser
 endif
 liboph_analytics_framework_la_LDFLAGS = -static $(LIB_OPERATOR)
 
@@ -165,10 +172,12 @@ liboph_hierarchy_la_CFLAGS= $(LIBXML_INCLUDE) -prefer-pic -I../include @INCLTDL@
 liboph_hierarchy_la_LDFLAGS = -static 
 liboph_hierarchy_la_LIBADD = -lz -lm $(LIBXML_LIB) @LIBLTDL@ -L. -ldebug
 
+if MYSQL_SUPPORT
 libophidiadb_la_SOURCES = ophidiadb/oph_ophidiadb_library.c ophidiadb/oph_odb_filesystem_library.c ophidiadb/oph_odb_job_library.c ophidiadb/oph_odb_metadata_library.c ophidiadb/oph_odb_storage_library.c ophidiadb/oph_odb_dimension_library.c ophidiadb/oph_odb_cube_library.c
 libophidiadb_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include -I../include/ophidiadb @INCLTDL@ ${lib_CFLAGS} $(LIBXML_INCLUDE)
 libophidiadb_la_LDFLAGS = -static $(LIB_OPERATOR)
 libophidiadb_la_LIBADD = -lz -lm ${MYSQL_LDFLAGS} @LIBLTDL@ -L. -ldebug -loph_pid -loph_hierarchy
+endif
 
 liboph_dimension_la_SOURCES = oph_dimension_library.c
 liboph_dimension_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include @INCLTDL@ ${lib_CFLAGS}
@@ -183,7 +192,7 @@ liboph_datacube_la_LIBADD = -lz -lm @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_
 liboph_driver_proc_la_SOURCES = oph_driver_procedure_library.c
 liboph_driver_proc_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
 liboph_driver_proc_la_LDFLAGS = -static
-liboph_driver_proc_la_LIBADD = -lz -lm @LIBLTDL@ -L. -lpthread -ldebug -lophidiadb -loph_datacube  
+liboph_driver_proc_la_LIBADD = -lz -lm @LIBLTDL@ -L. -lpthread -ldebug ${OPHIDIADB} -loph_datacube  
 
 if HAVE_NETCDF
 liboph_nc_la_SOURCES = oph_nc_library.c
@@ -203,6 +212,9 @@ if HAVE_ESDM
 liboph_esdm_la_SOURCES = oph_esdm_library.c
 liboph_esdm_la_CFLAGS= ${MYSQL_CFLAGS} $(ESDM_CFLAGS) -prefer-pic -I../include -I../include/oph_ioserver -I../include/esdm_kernels @INCLTDL@ ${lib_CFLAGS}
 liboph_esdm_la_LDFLAGS = -static
-liboph_esdm_la_LIBADD = -lz -lm $(ESDM_LIBS) @LIBLTDL@ -L. -L./esdm_kernels -ldebug -loph_binary_io -loph_ioserver -loph_datacube -loph_esdm_kernels -lophidiadb
+liboph_esdm_la_LIBADD = -lz -lm $(ESDM_LIBS) @LIBLTDL@ -L. -L./esdm_kernels -ldebug -loph_binary_io -loph_ioserver -loph_datacube -loph_esdm_kernels
+if MYSQL_SUPPORT
+liboph_esdm_la_LIBADD += -lophidiadb
+endif
 endif
 

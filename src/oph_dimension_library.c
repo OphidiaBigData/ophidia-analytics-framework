@@ -36,7 +36,10 @@
 #include "query/oph_datacube_query.h"
 
 #include <ctype.h>
+#ifdef OPH_MYSQL_SUPPORT
 #include <mysql.h>
+#endif
+
 #include "debug.h"
 
 extern int msglevel;
@@ -1168,11 +1171,15 @@ int oph_dim_create_db(oph_odb_db_instance * db)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
-
+#ifdef OPH_MYSQL_SUPPORT
 	if (mysql_query(db->dbms_instance->conn, db_creation_query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query execution error: %s\n", mysql_error(db->dbms_instance->conn));
 		return OPH_DIM_MYSQL_ERROR;
 	}
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+#endif
+
 	return OPH_DIM_SUCCESS;
 }
 
@@ -1202,11 +1209,14 @@ int oph_dim_delete_db(oph_odb_db_instance * db)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
-
+#ifdef OPH_MYSQL_SUPPORT
 	if (mysql_query(db->dbms_instance->conn, delete_query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL error: %s\n", mysql_error(db->dbms_instance->conn));
 		return OPH_DIM_MYSQL_ERROR;
 	}
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+#endif
 
 	return OPH_DIM_SUCCESS;
 }
@@ -1219,6 +1229,7 @@ int oph_dim_connect_to_dbms(oph_odb_dbms_instance * dbms, unsigned long flag)
 	}
 
 	dbms->conn = NULL;
+#ifdef OPH_MYSQL_SUPPORT
 	if (!(dbms->conn = mysql_init(NULL))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error: %s\n", mysql_error(dbms->conn));
 		oph_dim_disconnect_from_dbms(dbms);
@@ -1230,6 +1241,12 @@ int oph_dim_connect_to_dbms(oph_odb_dbms_instance * dbms, unsigned long flag)
 		oph_dim_disconnect_from_dbms(dbms);
 		return OPH_DIM_MYSQL_ERROR;
 	}
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+
+	UNUSED(flag);
+#endif
+
 	return OPH_DIM_SUCCESS;
 }
 
@@ -1239,7 +1256,7 @@ int oph_dim_use_db_of_dbms(oph_odb_dbms_instance * dbms, oph_odb_db_instance * d
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameters\n");
 		return OPH_DIM_NULL_PARAM;
 	}
-
+#ifdef OPH_MYSQL_SUPPORT
 	if (dbms->conn) {
 		if (mysql_select_db(dbms->conn, db->db_name)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL use DB error: %s\n", mysql_error(dbms->conn));
@@ -1250,6 +1267,9 @@ int oph_dim_use_db_of_dbms(oph_odb_dbms_instance * dbms, oph_odb_db_instance * d
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL connection not established\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+#endif
 	return OPH_DIM_SUCCESS;
 }
 
@@ -1264,7 +1284,7 @@ int oph_dim_check_connection_to_db(oph_odb_dbms_instance * dbms, oph_odb_db_inst
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Connection was somehow closed.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
-
+#ifdef OPH_MYSQL_SUPPORT
 	if (mysql_ping(dbms->conn)) {
 		pmesg(LOG_WARNING, __FILE__, __LINE__, "Connection was lost. Reconnecting...\n");
 		mysql_close(dbms->conn);	// Flush any data related to previuos connection
@@ -1283,6 +1303,12 @@ int oph_dim_check_connection_to_db(oph_odb_dbms_instance * dbms, oph_odb_db_inst
 			}
 		}
 	}
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+
+	UNUSED(db);
+	UNUSED(flag);
+#endif
 	return OPH_DIM_SUCCESS;
 }
 
@@ -1294,7 +1320,9 @@ int oph_dim_disconnect_from_dbms(oph_odb_dbms_instance * dbms)
 	}
 
 	if (dbms->conn) {
+#ifdef OPH_MYSQL_SUPPORT
 		mysql_close(dbms->conn);
+#endif
 		dbms->conn = NULL;
 	}
 	return OPH_DIM_SUCCESS;
@@ -1326,11 +1354,14 @@ int oph_dim_create_empty_table(oph_odb_db_instance * db, char *dimension_table_n
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
-
+#ifdef OPH_MYSQL_SUPPORT
 	if (mysql_query(db->dbms_instance->conn, create_query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL error: %s\n", mysql_error(db->dbms_instance->conn));
 		return OPH_DIM_MYSQL_ERROR;
 	}
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+#endif
 
 	return OPH_DIM_SUCCESS;
 }
@@ -1341,6 +1372,7 @@ int oph_dim_retrieve_dimension(oph_odb_db_instance * db, char *dimension_table_n
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DIM_NULL_PARAM;
 	}
+	*dim_row = NULL;
 
 	if (oph_dim_check_connection_to_db(db->dbms_instance, db, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
@@ -1361,7 +1393,7 @@ int oph_dim_retrieve_dimension(oph_odb_db_instance * db, char *dimension_table_n
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_DATA_ERROR;
 	}
-
+#ifdef OPH_MYSQL_SUPPORT
 	if (mysql_query(db->dbms_instance->conn, query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL error: %s\n", mysql_error(db->dbms_instance->conn));
 		return OPH_DIM_MYSQL_ERROR;
@@ -1394,6 +1426,9 @@ int oph_dim_retrieve_dimension(oph_odb_db_instance * db, char *dimension_table_n
 		}
 	}
 	mysql_free_result(res);
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+#endif
 
 	return OPH_DIM_SUCCESS;
 }
@@ -1422,6 +1457,7 @@ int oph_dim_compare_dimension2(oph_odb_db_instance * db, char *dimension_table_n
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 		return OPH_DIM_DATA_ERROR;
 	}
+#ifdef OPH_MYSQL_SUPPORT
 	//Insert into fragment
 	MYSQL_STMT *stmt = mysql_stmt_init(db->dbms_instance->conn);
 	if (!stmt) {
@@ -1539,6 +1575,13 @@ int oph_dim_compare_dimension2(oph_odb_db_instance * db, char *dimension_table_n
 	mysql_stmt_close(stmt);
 	free(bind);
 
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+
+	UNUSED(apply_clause);
+	UNUSED(dimension_id);
+#endif
+
 	return OPH_DIM_SUCCESS;
 }
 
@@ -1561,6 +1604,7 @@ int oph_dim_insert_into_dimension_table(oph_odb_db_instance * db, char *dimensio
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 		return OPH_DIM_DATA_ERROR;
 	}
+#ifdef OPH_MYSQL_SUPPORT
 	//Insert into fragment
 	MYSQL_STMT *stmt = mysql_stmt_init(db->dbms_instance->conn);
 	if (!stmt) {
@@ -1637,6 +1681,9 @@ int oph_dim_insert_into_dimension_table(oph_odb_db_instance * db, char *dimensio
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted datacube id\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+#endif
 
 	return OPH_DIM_SUCCESS;
 }
@@ -1660,6 +1707,7 @@ int oph_dim_insert_into_dimension_table_from_query(oph_odb_db_instance * db, cha
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 		return OPH_DIM_DATA_ERROR;
 	}
+#ifdef OPH_MYSQL_SUPPORT
 	//Insert into fragment
 	MYSQL_STMT *stmt = mysql_stmt_init(db->dbms_instance->conn);
 	if (!stmt) {
@@ -1760,6 +1808,11 @@ int oph_dim_insert_into_dimension_table_from_query(oph_odb_db_instance * db, cha
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted datacube id\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+
+	UNUSED(query);
+#endif
 
 	return OPH_DIM_SUCCESS;
 }
@@ -1792,7 +1845,7 @@ int oph_dim_check_if_dimension_table_exists(oph_odb_db_instance * db, char *dime
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_DATA_ERROR;
 	}
-
+#ifdef OPH_MYSQL_SUPPORT
 	if (mysql_query(db->dbms_instance->conn, selectQuery)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(db->dbms_instance->conn));
 		return OPH_DIM_MYSQL_ERROR;
@@ -1814,6 +1867,10 @@ int oph_dim_check_if_dimension_table_exists(oph_odb_db_instance * db, char *dime
 		*exist_flag = 1;
 
 	mysql_free_result(res);
+
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+#endif
 
 	return OPH_DIM_SUCCESS;
 }
@@ -1837,6 +1894,7 @@ int oph_dim_insert_into_dimension_table_rand_data(oph_odb_db_instance * db, char
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 		return OPH_DIM_DATA_ERROR;
 	}
+#ifdef OPH_MYSQL_SUPPORT
 	//Insert into fragment
 	MYSQL_STMT *stmt = mysql_stmt_init(db->dbms_instance->conn);
 	if (!stmt) {
@@ -1948,6 +2006,9 @@ int oph_dim_insert_into_dimension_table_rand_data(oph_odb_db_instance * db, char
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted datacube id\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+#endif
 
 	return OPH_DIM_SUCCESS;
 }
@@ -1990,7 +2051,7 @@ int oph_dim_read_dimension_data(oph_odb_db_instance * db, char *dimension_table_
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
-
+#ifdef OPH_MYSQL_SUPPORT
 	if (mysql_query(db->dbms_instance->conn, select_query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL error: %s\n", mysql_error(db->dbms_instance->conn));
 		return OPH_DIM_MYSQL_ERROR;
@@ -2025,6 +2086,10 @@ int oph_dim_read_dimension_data(oph_odb_db_instance * db, char *dimension_table_
 		*dim_row = 0;
 
 	mysql_free_result(result);
+
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+#endif
 
 	return OPH_DIM_SUCCESS;
 }
@@ -2072,7 +2137,7 @@ int oph_dim_read_dimension(oph_odb_db_instance * db, char *dimension_table_name,
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
-
+#ifdef OPH_MYSQL_SUPPORT
 	if (mysql_query(db->dbms_instance->conn, select_query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL error: %s\n", mysql_error(db->dbms_instance->conn));
 		return OPH_DIM_MYSQL_ERROR;
@@ -2106,6 +2171,10 @@ int oph_dim_read_dimension(oph_odb_db_instance * db, char *dimension_table_name,
 		*dim_row = 0;
 	mysql_free_result(result);
 
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+#endif
+
 	return OPH_DIM_SUCCESS;
 }
 
@@ -2126,6 +2195,7 @@ int oph_dim_read_dimension_filtered_data(oph_odb_db_instance * db, char *dimensi
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 		return OPH_DIM_DATA_ERROR;
 	}
+#ifdef OPH_MYSQL_SUPPORT
 	//Insert into fragment
 	MYSQL_STMT *stmt = mysql_stmt_init(db->dbms_instance->conn);
 	if (!stmt) {
@@ -2267,6 +2337,15 @@ int oph_dim_read_dimension_filtered_data(oph_odb_db_instance * db, char *dimensi
 	mysql_stmt_close(stmt);
 	free(bind);
 
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+
+	UNUSED(dimension_id);
+	UNUSED(array_clause);
+	UNUSED(compressed);
+	UNUSED(dim_size);
+#endif
+
 	return OPH_DIM_SUCCESS;
 }
 
@@ -2296,11 +2375,14 @@ int oph_dim_delete_table(oph_odb_db_instance * db, char *dimension_table_name)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
-
+#ifdef OPH_MYSQL_SUPPORT
 	if (mysql_query(db->dbms_instance->conn, delete_query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL error: %s\n", mysql_error(db->dbms_instance->conn));
 		return OPH_DIM_MYSQL_ERROR;
 	}
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+#endif
 
 	return OPH_DIM_SUCCESS;
 }
@@ -2341,7 +2423,7 @@ int oph_dim_copy_into_dimension_table(oph_odb_db_instance * db, char *from_dimen
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
-
+#ifdef OPH_MYSQL_SUPPORT
 	if (mysql_query(db->dbms_instance->conn, copy_query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL error: %s\n", mysql_error(db->dbms_instance->conn));
 		return OPH_DIM_MYSQL_ERROR;
@@ -2351,6 +2433,9 @@ int oph_dim_copy_into_dimension_table(oph_odb_db_instance * db, char *from_dimen
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted datacube id\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
+#else
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MySQL support disabled\n");
+#endif
 
 	return OPH_DIM_SUCCESS;
 }

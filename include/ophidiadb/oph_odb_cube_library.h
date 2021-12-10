@@ -223,7 +223,11 @@ int oph_odb_cube_find_datacube_additional_info(ophidiadb * oDB, int id_datacube,
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
+#ifdef OPH_MYSQL_SUPPORT
 int oph_odb_cube_find_datacube_hierarchy(ophidiadb * oDB, int direction, int id_datacube, MYSQL_RES ** information_list);
+#else
+int oph_odb_cube_find_datacube_hierarchy(ophidiadb * oDB, int direction, int id_datacube, void **information_list);
+#endif
 
 /**
  * \brief Function to retrieve list of all task filtered by one or more parameters
@@ -235,7 +239,11 @@ int oph_odb_cube_find_datacube_hierarchy(ophidiadb * oDB, int direction, int id_
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
+#ifdef OPH_MYSQL_SUPPORT
 int oph_odb_cube_find_task_list(ophidiadb * oDB, int folder_id, int datacube_id, char *operator, char *container_name, MYSQL_RES ** information_list);
+#else
+int oph_odb_cube_find_task_list(ophidiadb * oDB, int folder_id, int datacube_id, char *operator, char *container_name, void **information_list);
+#endif
 
 /**
  * \brief Function to delete datacube informations from OphidiaDB
@@ -331,7 +339,11 @@ int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb * oDB, oph_od
  * \param information_list Pointer to MYSQL_RES result set (it has to be freed with mysql_free_result)
  * \return 0 if successfull, -1 otherwise
  */
+#ifdef OPH_MYSQL_SUPPORT
 int oph_odb_cube_find_containers_datacubes(ophidiadb * oDB, int folder_id, int search_on, char *container_name, int id_datacube, MYSQL_RES ** information_list);
+#else
+int oph_odb_cube_find_containers_datacubes(ophidiadb * oDB, int folder_id, int search_on, char *container_name, int id_datacube, void **information_list);
+#endif
 
 /**
  * \brief Function to retrieve cubehasdim rows from OphidiaDB given the datacube id

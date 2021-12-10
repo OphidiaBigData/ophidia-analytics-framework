@@ -27,6 +27,7 @@
 #include <zlib.h>
 #include <math.h>
 #include <ctype.h>
+#include <sys/time.h>
 
 #include "oph_dimension_library.h"
 #include "oph-lib-binary-io.h"
@@ -35,6 +36,21 @@
 #include "oph_log_error_codes.h"
 
 #include "oph_esdm_kernels.h"
+
+#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#include "clients/taketime.h"
+static int timeval_add(res, x, y)
+struct timeval *res, *x, *y;
+{
+	res->tv_sec = x->tv_sec + y->tv_sec;
+	res->tv_usec = x->tv_usec + y->tv_usec;
+	while (res->tv_usec > MILLION) {
+		res->tv_usec -= MILLION;
+		res->tv_sec++;
+	}
+	return 0;
+}
+#endif
 
 int _oph_esdm_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, int64_t ** id, int i, int n)
 {
@@ -168,6 +184,9 @@ int oph_esdm_compare_types(int id_container, esdm_type_t var_type, const char di
 
 int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, ESDM_var * measure)
 {
+
+#ifdef OPH_MYSQL_SUPPORT
+
 	MYSQL_RES *key_list = NULL;
 	MYSQL_ROW row = NULL;
 
@@ -378,6 +397,16 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * 
 	}
 
 	mysql_free_result(key_list);
+
+#else
+
+	UNUSED(oDB);
+	UNUSED(time_dim);
+	UNUSED(id_vocabulary);
+	UNUSED(id_container_out);
+	UNUSED(measure);
+
+#endif
 
 	return OPH_ESDM_SUCCESS;
 }
