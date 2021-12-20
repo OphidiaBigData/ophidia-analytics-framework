@@ -184,8 +184,7 @@ void release_main()
 
 	int neededSize = snprintf(NULL, 0, "rabbitmqctl list_queues | awk '{ print $1 }' | grep \"%s_%s\" | " "xargs -L1 rabbitmqctl delete_queue > /dev/null", nodename, port);
 	delete_queue_from_rabbitmq = (char *) malloc(neededSize + 1);
-	snprintf(delete_queue_from_rabbitmq, neededSize + 1, "rabbitmqctl list_queues | awk '{ print $1 }' | grep \"%s_%s\" | "
-		 "xargs -L1 rabbitmqctl delete_queue > /dev/null", nodename, port);
+	snprintf(delete_queue_from_rabbitmq, neededSize + 1, "rabbitmqctl list_queues | awk '{ print $1 }' | grep \"%s_%s\" | " "xargs -L1 rabbitmqctl delete_queue > /dev/null", nodename, port);
 
 	int systemRes = system(delete_queue_from_rabbitmq);
 	if (systemRes != -1)
@@ -261,27 +260,32 @@ int process_message(amqp_envelope_t full_message)
 	strncpy(message, (char *) full_message.message.body.bytes, full_message.message.body.len);
 	message[full_message.message.body.len] = 0;
 
-	char *ptr = NULL;
-	char *submission_string = strtok_r(message, "***", &ptr);
-	if (!submission_string) {
-		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Fail to read submission_string parameter\n");
-		return 0;
-	}
-	char *workflow_id = strtok_r(NULL, "***", &ptr);
-	if (!workflow_id) {
-		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Fail to read workflow_id parameter\n");
-		return 0;
-	}
-	char *job_id = strtok_r(NULL, "***", &ptr);
-	if (!job_id) {
-		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Fail to read job_id parameter\n");
-		return 0;
-	}
-	char *ncores = strtok_r(NULL, "***", &ptr);
-	if (!ncores) {
-		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Fail to read ncores parameter\n");
-		return 0;
-	}
+	char *current = 0, *next = 0;
+
+	if (split_by_delimiter(message, '*', &current, &next) != 0)
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
+
+	int neededSize = snprintf(NULL, 0, "%s", current);
+	char *submission_string = (char *) malloc(neededSize + 1);
+	snprintf(submission_string, neededSize + 1, "%s", current);
+
+	if (split_by_delimiter(next, '*', &current, &next) != 0)
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
+
+	neededSize = snprintf(NULL, 0, "%s", current);
+	char *workflow_id = (char *) malloc(neededSize + 1);
+	snprintf(workflow_id, neededSize + 1, "%s", current);
+
+	if (split_by_delimiter(next, '*', &current, &next) != 0)
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
+
+	neededSize = snprintf(NULL, 0, "%s", current);
+	char *job_id = (char *) malloc(neededSize + 1);
+	snprintf(job_id, neededSize + 1, "%s", current);
+
+	neededSize = snprintf(NULL, 0, "%s", next);
+	char *ncores = (char *) malloc(neededSize + 1);
+	snprintf(ncores, neededSize + 1, "%s", next);
 
 #ifdef UPDATE_CANCELLATION_SUPPORT
 	pthread_rwlock_rdlock(&struct_size_lock);
@@ -299,6 +303,14 @@ int process_message(amqp_envelope_t full_message)
 
 			if (message)
 				free(message);
+			if (submission_string)
+				free(submission_string);
+			if (workflow_id)
+				free(workflow_id);
+			if (job_id)
+				free(job_id);
+			if (ncores)
+				free(ncores);
 
 			return 1;
 		}
@@ -341,14 +353,10 @@ int process_message(amqp_envelope_t full_message)
 		shared_ids_array[thread_param] = 0;
 		pthread_rwlock_unlock(&thread_lock_list[thread_param]);
 
-		status = amqp_basic_publish(conn_thread_publish_list[thread_param],
-						channel,
-						amqp_cstring_bytes(""),
-						amqp_cstring_bytes(update_queue_name),
-						0,	// mandatory (message must be routed to a queue)
-						0,	// immediate (message must be delivered to a consumer immediately)
-						&props,	// properties
-						amqp_cstring_bytes(update_message_2));
+		status = amqp_basic_publish(conn_thread_publish_list[thread_param], channel, amqp_cstring_bytes(""), amqp_cstring_bytes(update_queue_name), 0,	// mandatory (message must be routed to a queue)
+					    0,	// immediate (message must be delivered to a consumer immediately)
+					    &props,	// properties
+					    amqp_cstring_bytes(update_message_2));
 
 		if (status == AMQP_STATUS_OK)
 			pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Message has been sent on %s: %s\n", update_queue_name, update_message_2);
@@ -361,6 +369,14 @@ int process_message(amqp_envelope_t full_message)
 
 		if (message)
 			free(message);
+		if (submission_string)
+			free(submission_string);
+		if (workflow_id)
+			free(workflow_id);
+		if (job_id)
+			free(job_id);
+		if (ncores)
+			free(ncores);
 
 		return 0;
 	}
@@ -436,14 +452,10 @@ int process_message(amqp_envelope_t full_message)
 	PID_array[thread_param] = 0;
 	pthread_rwlock_unlock(&thread_lock_list[thread_param]);
 
-	status = status = amqp_basic_publish(conn_thread_publish_list[thread_param],
-						channel,
-						amqp_cstring_bytes(""),
-						amqp_cstring_bytes(update_queue_name),
-						0,	// mandatory (message must be routed to a queue)
-						0,	// immediate (message must be delivered to a consumer immediately)
-						&props,	// properties
-						amqp_cstring_bytes(update_message_3));
+	status = status = amqp_basic_publish(conn_thread_publish_list[thread_param], channel, amqp_cstring_bytes(""), amqp_cstring_bytes(update_queue_name), 0,	// mandatory (message must be routed to a queue)
+					     0,	// immediate (message must be delivered to a consumer immediately)
+					     &props,	// properties
+					     amqp_cstring_bytes(update_message_3));
 
 	if (status == AMQP_STATUS_OK)
 		pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Message has been sent on %s: %s\n", update_queue_name, update_message_3);
@@ -456,10 +468,22 @@ int process_message(amqp_envelope_t full_message)
 
 	if (message)
 		free(message);
+	if (workflow_id)
+		free(workflow_id);
+	if (job_id)
+		free(job_id);
+	if (ncores)
+		free(ncores);
 
-	if (strcmp(worker_launcher, "auto") != 0)
+	if (strcmp(worker_launcher, "auto") != 0) {
 		if (exec_string)
-			free (exec_string);
+			free(exec_string);
+		if (submission_string)
+			free(submission_string);
+	} else {
+		if (submission_string--)
+			free(submission_string--);
+	}
 
 	return 1;
 }
@@ -589,14 +613,10 @@ void *update_pthread_function()
 		snprintf(message, envelope.message.body.len + 1, "%s", (char *) envelope.message.body.bytes);
 
 		// SEND MESSAGE TO DB MANAGER QUEUE
-		status = amqp_basic_publish(publish_db_conn,
-						default_channel,
-						amqp_cstring_bytes(""),
-						amqp_cstring_bytes(db_manager_queue_name),
-						0,	// mandatory (message must be routed to a queue)
-						0,	// immediate (message must be delivered to a consumer immediately)
-						&props,	// properties
-						amqp_cstring_bytes(message));
+		status = amqp_basic_publish(publish_db_conn, default_channel, amqp_cstring_bytes(""), amqp_cstring_bytes(db_manager_queue_name), 0,	// mandatory (message must be routed to a queue)
+					    0,	// immediate (message must be delivered to a consumer immediately)
+					    &props,	// properties
+					    amqp_cstring_bytes(message));
 
 		if (status == AMQP_STATUS_OK)
 			pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Message has been sent on %s: %s\n", db_manager_queue_name, message);
@@ -891,7 +911,7 @@ int main(int argc, char const *const *argv)
 	    "[-P <RabbitMQ port>] [-Q <RabbitMQ task_queue>] [-U <RabbitMQ update_queue>] [-a <master hostname>] [-b <master port>] "
 	    "[-M <RabbitMQ db_manager_queue>] [-D <RabbitMQ delete_queue>] [-u <RabbitMQ username>] [-p <RabbitMQ password>] "
 	    "[-n <max_ncores>] [-m <cancellation_multiplication_factor>] [-s <cancellation_struct_size>] [-C <count>] "
-		"[-t <thread_number>] [-l <worker_launcher>] [-f <framework_path>] [-h <USAGE>]\n";
+	    "[-t <thread_number>] [-l <worker_launcher>] [-f <framework_path>] [-h <USAGE>]\n";
 
 	while ((ch = getopt(argc, (char *const *) argv, ":c:H:P:Q:U:a:b:M:D:u:p:n:m:s:C:t:l:f:dhxz")) != -1) {
 #else
@@ -1217,7 +1237,6 @@ int main(int argc, char const *const *argv)
 		}
 		pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM FRAMEWORK_PATH: %s\n", framework_path);
 	}
-
 #ifdef UPDATE_CANCELLATION_SUPPORT
 	if (!cancellation_multiplication_factor) {
 		if (oph_server_conf_get_param(hashtbl, "CANCELLATION_MULTIPLICATION_FACTOR", &cancellation_multiplication_factor)) {
@@ -1329,7 +1348,7 @@ int main(int argc, char const *const *argv)
 	create_update_message(nodename, port, "0", "0", delete_queue_name, process_pid, worker_count, START_MODE, &update_message);
 
 	int status = amqp_basic_publish(conn_thread_publish_list[thread_number],
-					(amqp_channel_t) thread_number+1,
+					(amqp_channel_t) thread_number + 1,
 					amqp_cstring_bytes(""),
 					amqp_cstring_bytes(update_queue_name),
 					0,	// mandatory (message must be routed to a queue)
@@ -1345,7 +1364,7 @@ int main(int argc, char const *const *argv)
 	if (update_message)
 		free(update_message);
 
-	close_rabbitmq_connection(conn_thread_publish_list[thread_number], (amqp_channel_t) (thread_number+1));
+	close_rabbitmq_connection(conn_thread_publish_list[thread_number], (amqp_channel_t) (thread_number + 1));
 #endif
 
 	struct sigaction new_act, old_act;

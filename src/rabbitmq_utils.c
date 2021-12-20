@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 pthread_mutex_t global_flag;
 
@@ -230,4 +231,21 @@ void create_update_message(char *ip_address, char *port, char *workflow_id, char
 	else
 		*update_message = (char *) malloc(neededSize + 1);
 	snprintf(*update_message, neededSize + 1, "%s***%s***%s***%s***%s***%d***%s***%d", ip_address, port, workflow_id, job_id, delete_queue_name, process_pid, worker_count, mode);
+}
+
+int split_by_delimiter(char *message, char delimiter, char **result1, char **result2)
+{
+	int len = strlen(message);
+	int ii;
+	for (ii = 0; ii <= len; ii++) {
+		if (message[ii] == delimiter && message[ii + 1] == delimiter && message[ii + 2] == delimiter) {
+			*result1 = message;
+			(*result1)[ii] = 0;
+			*result2 = message + ii + 3;
+
+			return 0;
+		}
+	}
+
+	return 1;
 }
