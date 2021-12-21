@@ -834,7 +834,7 @@ void *delete_pthread_function()
 		if (split_by_delimiter(message, '*', &current, &next) != 0)
 			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
 
-		int neededSize = snprintf(NULL, 0, "%s", current);
+		neededSize = snprintf(NULL, 0, "%s", current);
 		char *w_id = (char *) malloc(neededSize + 1);
 		snprintf(w_id, neededSize + 1, "%s", current);
 
