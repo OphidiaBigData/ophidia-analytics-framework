@@ -86,6 +86,9 @@ struct _NETCDF_var {
 	char *dims_unlim;
 	short int *dims_order;
 	int *oph_dims_id;
+	int dim_unlim;
+	int *order_src_path;
+	int number_src_path;
 };
 typedef struct _NETCDF_var NETCDF_var;
 
