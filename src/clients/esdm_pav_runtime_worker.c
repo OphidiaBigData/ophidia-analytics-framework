@@ -829,18 +829,18 @@ void *delete_pthread_function()
 		char *message = (char *) malloc(neededSize + 1);
 		snprintf(message, neededSize + 1, "%s", (char *) envelope.message.body.bytes);
 
-		char *ptr = NULL;
-		char *w_id = strtok_r(message, "***", &ptr);
-		if (!w_id) {
-			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Fail to read submission_string parameter\n");
-			return 0;
-		}
+		char *current = 0, *next = 0;
 
-		char *checks_todo = strtok_r(NULL, "***", &ptr);
-		if (!checks_todo) {
-			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Fail to read submission_string parameter\n");
-			return 0;
-		}
+		if (split_by_delimiter(message, '*', &current, &next) != 0)
+			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
+
+		int neededSize = snprintf(NULL, 0, "%s", current);
+		char *w_id = (char *) malloc(neededSize + 1);
+		snprintf(w_id, neededSize + 1, "%s", current);
+
+		neededSize = snprintf(NULL, 0, "%s", next);
+		char *checks_todo = (char *) malloc(neededSize + 1);
+		snprintf(checks_todo, neededSize + 1, "%s", next);
 
 		int ii, id;
 		for (ii = 0; ii < max_cancellation_struct_size; ii++) {
@@ -890,6 +890,10 @@ void *delete_pthread_function()
 
 		if (message)
 			free(message);
+		if (w_id)
+			free(w_id);
+		if (checks_todo)
+			free(checks_todo);
 	}
 
 	return (NULL);
