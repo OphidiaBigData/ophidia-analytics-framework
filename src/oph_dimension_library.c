@@ -407,7 +407,7 @@ int oph_dim_set_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 		return OPH_DIM_DATA_ERROR;
 	double _value = raw_value - base_time;
 
-	// Convert to "seconds"
+	// Convert from "seconds"
 	switch (dim->units[0]) {
 		case 'd':
 			_value /= 4.0;
