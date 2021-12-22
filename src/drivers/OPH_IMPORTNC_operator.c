@@ -1008,7 +1008,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
 			// Let us assume that OPH_IN_PARAM_CALENDAR is only for time dimensions
-			if (nc_inq_attid(ncid, measure->dims_id[sub_to_dims[i]], OPH_IN_PARAM_CALENDAR, &idp)) {
+			if (!nc_inq_attid(ncid, measure->dims_id[sub_to_dims[i]], OPH_IN_PARAM_CALENDAR, &idp)) {
 				tf = i;
 				break;
 			}
