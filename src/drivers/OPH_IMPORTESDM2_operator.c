@@ -4139,7 +4139,6 @@ int task_destroy(oph_operator_struct * handle)
 			}
 			oph_odb_cube_free_datacube(&cube);
 		}
-
 #ifndef MULTI_NODE_SUPPORT
 		//Broadcast to all other processes the fragment relative index        
 		MPI_Bcast(id_string, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);

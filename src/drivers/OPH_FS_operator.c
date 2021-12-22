@@ -194,7 +194,7 @@ int oph_odb_fs_path_parsing(char *inpath, char *cwd, int *folder_id, char **outp
 	}
 	if (list)
 		free(list);
-	
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 #endif

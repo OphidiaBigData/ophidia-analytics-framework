@@ -1695,7 +1695,6 @@ int task_init(oph_operator_struct * handle)
 		ndim = *((int *) id_string[3]);
 		measure_stream = (int *) malloc((3 + 3 * ndim) * sizeof(int));
 	}
-
 #ifndef MULTI_NODE_SUPPORT
 	MPI_Bcast(measure_stream, 3 + 3 * ndim, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
