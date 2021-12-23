@@ -2871,11 +2871,11 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fra
 	if (compressed == 1) {
 		query_size =
 		    snprintf(NULL, 0, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_YES, tuplexfrag_number, frag->key_start, "", "", "",
-			     "") + (n1 + n2 + n3 + n4 - 4) + 1;
+			     "", measure->dim_unlim) + (n1 + n2 + n3 + n4 - 4) + 1;
 	} else {
 		query_size =
 		    snprintf(NULL, 0, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, frag->key_start, "", "", "",
-			     "") + (n1 + n2 + n3 + n4 - 4) + 1;
+			     "", measure->dim_unlim) + (n1 + n2 + n3 + n4 - 4) + 1;
 	}
 
 	char *query_string = (char *) malloc(query_size * sizeof(char));
@@ -2936,10 +2936,10 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fra
 	int n = 0;
 	if (compressed == 1) {
 		n = snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_YES, tuplexfrag_number, frag->key_start, dims_type_string,
-			     dims_index_string, dims_start_string, dims_end_string);
+			     dims_index_string, dims_start_string, dims_end_string, measure->dim_unlim);
 	} else {
 		n = snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, frag->key_start, dims_type_string,
-			     dims_index_string, dims_start_string, dims_end_string);
+			     dims_index_string, dims_start_string, dims_end_string, measure->dim_unlim);
 	}
 	if (n >= query_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
