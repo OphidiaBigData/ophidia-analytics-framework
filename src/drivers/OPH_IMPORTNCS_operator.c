@@ -1254,6 +1254,20 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		MPI_Bcast(measure->dim_unlim_array, tot_size, MPI_CHAR, 0, MPI_COMM_WORLD);
 
 		measure->dims_length[measure->dim_unlim] = tot_size / data_size;	// Real length
+
+		if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig) {
+			free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig);
+			size_t orig_length = 0;
+			for (i = 0; i < measure->number_src_path; ++i)
+				orig_length += 1 + strlen(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[i]);
+			((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = (char *) malloc(orig_length + 1);
+			*((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = 0;
+			strcat(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig, ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[0]);
+			for (i = 1; i < measure->number_src_path; ++i) {
+				strcat(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig, "|");
+				strcat(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig, ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[i]);
+			}
+		}
 	}
 	//ADDED TO MANAGE SUBSETTED IMPORT
 
