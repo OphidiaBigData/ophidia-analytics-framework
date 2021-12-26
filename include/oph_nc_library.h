@@ -90,6 +90,7 @@ struct _NETCDF_var {
 	int *order_src_path;
 	int number_src_path;
 	char *dim_unlim_array;
+	char *base_time;
 };
 typedef struct _NETCDF_var NETCDF_var;
 

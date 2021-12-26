@@ -99,6 +99,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	nc_measure->dims_concept_level = NULL;
 	nc_measure->order_src_path = NULL;
 	nc_measure->dim_unlim_array = NULL;
+	nc_measure->base_time = NULL;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->cwd = NULL;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->run = 1;
@@ -1228,12 +1229,16 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	if (measure->order_src_path) {
 
+		// TODO: some of the following Bcast could be skipped: check
+
 		// Synchronize the file order
 		MPI_Bcast(measure->order_src_path, measure->number_src_path, MPI_INT, 0, MPI_COMM_WORLD);
 
 		// Synchronize the base time
 		MPI_Bcast(main_base_time, OPH_ODB_DIM_TIME_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
 		main_base_time[OPH_ODB_DIM_TIME_SIZE] = 0;
+		if (!handle->proc_rank)
+			measure->base_time = strdup(main_base_time);
 
 		// Synchronize the unlimited dimension size
 		int sizes[2];
@@ -3604,6 +3609,14 @@ int task_init(oph_operator_struct * handle)
 							strcpy(svalue, value);
 					}
 
+					// Update base_time if any
+					if (measure->base_time && (ii == measure->dim_unlim) && !strcmp(key, OPH_IN_PARAM_UNITS)) {
+						char *pch = strrchr(big_value ? big_value : svalue, ' ');
+						if (pch) {
+							pch++;
+							strcpy(pch, measure->base_time);
+						}
+					}
 					//Insert metadata instance (also manage relation)
 					if (oph_odb_meta_insert_into_metadatainstance_manage_tables
 					    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->dims_name[ii], sid_key_type, id_user, big_value ? big_value : svalue,
@@ -4674,6 +4687,9 @@ int env_unset(oph_operator_struct * handle)
 
 	if (measure->dim_unlim_array)
 		free(measure->dim_unlim_array);
+
+	if (measure->base_time)
+		free(measure->base_time);
 
 	if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->partition_input) {
 		free((char *) ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->partition_input);
