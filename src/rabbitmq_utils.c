@@ -233,15 +233,33 @@ void create_update_message(char *ip_address, char *port, char *workflow_id, char
 	snprintf(*update_message, neededSize + 1, "%s***%s***%s***%s***%s***%d***%s***%d", ip_address, port, workflow_id, job_id, delete_queue_name, process_pid, worker_count, mode);
 }
 
-int split_by_delimiter(char *message, char delimiter, char **result1, char **result2)
+int split_by_delimiter(char *message, char delimiter, int n_chars, char **result1, char **result2)
 {
+	if (!message) {
+		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Message to split is empty\n");
+		return 1;
+	}
+
+	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Splitting message: %s\n", message);
+
+	while (*message == delimiter)
+		message += 1;
+
 	int len = strlen(message);
-	int ii;
-	for (ii = 0; ii <= len; ii++) {
-		if (message[ii] == delimiter && message[ii + 1] == delimiter && message[ii + 2] == delimiter) {
+	int ii, n_ch = 0;
+
+	for (ii = 0; ii < len; ii++) {
+		if (*(message+ii) == delimiter)
+			n_ch ++;
+		else {
+			n_ch = 0;
+			continue;
+		}
+
+		if (n_ch == n_chars) {
 			*result1 = message;
-			(*result1)[ii] = 0;
-			*result2 = message + ii + 3;
+			*(*result1 + ii - n_chars + 1) = 0;
+			*result2 = message + ii + 1;
 
 			return 0;
 		}

@@ -262,30 +262,44 @@ int process_message(amqp_envelope_t full_message)
 
 	char *current = 0, *next = 0;
 
-	if (split_by_delimiter(message, '*', &current, &next) != 0)
+	if (split_by_delimiter(message, '*', 3, &current, &next) != 0) {
 		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
+		return 1;
+	}
 
 	int neededSize = snprintf(NULL, 0, "%s", current);
 	char *submission_string = (char *) malloc(neededSize + 1);
 	snprintf(submission_string, neededSize + 1, "%s", current);
 
-	if (split_by_delimiter(next, '*', &current, &next) != 0)
+	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "SUBMISSION_STRING: %s\n", submission_string);
+
+	if (split_by_delimiter(next, '*', 3, &current, &next) != 0) {
 		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
+		return 1;
+	}
 
 	neededSize = snprintf(NULL, 0, "%s", current);
 	char *workflow_id = (char *) malloc(neededSize + 1);
 	snprintf(workflow_id, neededSize + 1, "%s", current);
 
-	if (split_by_delimiter(next, '*', &current, &next) != 0)
+	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "WORKFLOW_ID: %s\n", workflow_id);
+
+	if (split_by_delimiter(next, '*', 3, &current, &next) != 0) {
 		pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
+		return 1;
+	}
 
 	neededSize = snprintf(NULL, 0, "%s", current);
 	char *job_id = (char *) malloc(neededSize + 1);
 	snprintf(job_id, neededSize + 1, "%s", current);
 
+	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "JOB_ID: %s\n", job_id);
+
 	neededSize = snprintf(NULL, 0, "%s", next);
 	char *ncores = (char *) malloc(neededSize + 1);
 	snprintf(ncores, neededSize + 1, "%s", next);
+
+	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "NCORES: %s\n", ncores);
 
 #ifdef UPDATE_CANCELLATION_SUPPORT
 	pthread_rwlock_rdlock(&struct_size_lock);
@@ -831,16 +845,22 @@ void *delete_pthread_function()
 
 		char *current = 0, *next = 0;
 
-		if (split_by_delimiter(message, '*', &current, &next) != 0)
+		if (split_by_delimiter(message, '*', 3, &current, &next) != 0) {
 			pmesg_safe(&global_flag, LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
+			continue;
+		}
 
 		neededSize = snprintf(NULL, 0, "%s", current);
 		char *w_id = (char *) malloc(neededSize + 1);
 		snprintf(w_id, neededSize + 1, "%s", current);
 
+		pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "WORKFLOW_ID: %s\n", w_id);
+
 		neededSize = snprintf(NULL, 0, "%s", next);
 		char *checks_todo = (char *) malloc(neededSize + 1);
 		snprintf(checks_todo, neededSize + 1, "%s", next);
+
+		pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "CHECKS_TODO: %s\n", checks_todo);
 
 		int ii, id;
 		for (ii = 0; ii < max_cancellation_struct_size; ii++) {

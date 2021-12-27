@@ -79,4 +79,4 @@ int get_number_queued_messages(char *hostname, char *port, char *username, char 
 
 void create_update_message(char *ip_address, char *port, char *workflow_id, char *job_id, char *delete_queue_name, int process_pid, char *worker_count, int mode, char **update_message);
 
-int split_by_delimiter (char *message, char delimiter, char **result1, char **result2);
+int split_by_delimiter (char *message, char delimiter, int n_chars, char **result1, char **result2);

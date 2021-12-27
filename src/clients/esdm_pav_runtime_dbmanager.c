@@ -119,58 +119,88 @@ int update_database(amqp_envelope_t full_message)
 
 	char *current = 0, *next = 0;
 
-	if (split_by_delimiter(message, '*', &current, &next) != 0)
+	if (split_by_delimiter(message, '*', 3, &current, &next) != 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
+		return 1;
+	}
 
 	int neededSize = snprintf(NULL, 0, "%s", current);
 	char *ip_address = (char *) malloc(neededSize + 1);
 	snprintf(ip_address, neededSize + 1, "%s", current);
 
-	if (split_by_delimiter(next, '*', &current, &next) != 0)
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "IP_ADDRESS: %s\n", ip_address);
+
+	if (split_by_delimiter(next, '*', 3, &current, &next) != 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
+		return 1;
+	}
 
 	neededSize = snprintf(NULL, 0, "%s", current);
 	char *port = (char *) malloc(neededSize + 1);
 	snprintf(port, neededSize + 1, "%s", current);
 
-	if (split_by_delimiter(next, '*', &current, &next) != 0)
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "PORT: %s\n", port);
+
+	if (split_by_delimiter(next, '*', 3, &current, &next) != 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
+		return 1;
+	}
 
 	neededSize = snprintf(NULL, 0, "%s", current);
 	char *workflow_id = (char *) malloc(neededSize + 1);
 	snprintf(workflow_id, neededSize + 1, "%s", current);
 
-	if (split_by_delimiter(next, '*', &current, &next) != 0)
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "WORKFLOW_ID: %s\n", workflow_id);
+
+	if (split_by_delimiter(next, '*', 3, &current, &next) != 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
+		return 1;
+	}
 
 	neededSize = snprintf(NULL, 0, "%s", current);
 	char *job_id = (char *) malloc(neededSize + 1);
 	snprintf(job_id, neededSize + 1, "%s", current);
 
-	if (split_by_delimiter(next, '*', &current, &next) != 0)
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "JOB_ID: %s\n", job_id);
+
+	if (split_by_delimiter(next, '*', 3, &current, &next) != 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
+		return 1;
+	}
 
 	neededSize = snprintf(NULL, 0, "%s", current);
 	char *delete_queue_name = (char *) malloc(neededSize + 1);
 	snprintf(delete_queue_name, neededSize + 1, "%s", current);
 
-	if (split_by_delimiter(next, '*', &current, &next) != 0)
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "DELETE_QUEUE_NAME: %s\n", delete_queue_name);
+
+	if (split_by_delimiter(next, '*', 3, &current, &next) != 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
+		return 1;
+	}
 
 	neededSize = snprintf(NULL, 0, "%s", current);
 	char *worker_pid = (char *) malloc(neededSize + 1);
 	snprintf(worker_pid, neededSize + 1, "%s", current);
 
-	if (split_by_delimiter(next, '*', &current, &next) != 0)
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "WORKER_PID: %s\n", worker_pid);
+
+	if (split_by_delimiter(next, '*', 3, &current, &next) != 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
+		return 1;
+	}
 
 	neededSize = snprintf(NULL, 0, "%s", current);
 	char *worker_count = (char *) malloc(neededSize + 1);
 	snprintf(worker_count, neededSize + 1, "%s", current);
 
-	neededSize = snprintf(NULL, 0, "%s", current);
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "WORKER_COUNT: %s\n", worker_count);
+
+	neededSize = snprintf(NULL, 0, "%s", next);
 	char *mode = (char *) malloc(neededSize + 1);
-	snprintf(mode, neededSize + 1, "%s", current);
+	snprintf(mode, neededSize + 1, "%s", next);
+
+	pmesg(LOG_DEBUG, __FILE__, __LINE__, "MODE: %s\n", mode);
 
 	int mode_value = atoi(mode);
 
