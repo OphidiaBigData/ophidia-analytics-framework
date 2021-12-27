@@ -27,6 +27,9 @@
 #include <unistd.h>
 #include <string.h>
 
+#define SINGLE_QUOTE '\''
+#define DOUBLE_QUOTE '"'
+
 pthread_mutex_t global_flag;
 
 int set_rabbitmq_connection(amqp_connection_state_t ** conn, amqp_channel_t channel, char *hostname, char *port, char *username, char *password, char *queue_name, amqp_bytes_t * queuename)
@@ -242,6 +245,9 @@ int split_by_delimiter(char *message, char delimiter, int n_chars, char **result
 
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Splitting message: %s\n", message);
 
+	int singleQuotes_count = 0;
+	int doubleQuotes_count = 0;
+
 	while (*message == delimiter)
 		message += 1;
 
@@ -249,6 +255,21 @@ int split_by_delimiter(char *message, char delimiter, int n_chars, char **result
 	int ii, n_ch = 0;
 
 	for (ii = 0; ii < len; ii++) {
+		if (*(message+ii) == DOUBLE_QUOTE) {
+			if (doubleQuotes_count > 0)
+				doubleQuotes_count --;
+			else
+				doubleQuotes_count ++;
+		} else if (*(message+ii) == SINGLE_QUOTE) {
+			if (singleQuotes_count > 0)
+				singleQuotes_count --;
+			else
+				singleQuotes_count ++;
+		}
+
+		if (singleQuotes_count || doubleQuotes_count)
+			continue;
+
 		if (*(message+ii) == delimiter)
 			n_ch ++;
 		else {
