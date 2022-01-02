@@ -32,6 +32,8 @@
 #include "oph_odb_metadata_library.h"
 #include "oph_hierarchy_library.h"
 
+#define OPH_ODB_DIM_BASETIME_FORMAT_CHECK '%'
+
 extern int msglevel;
 
 int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensioninst, oph_odb_dimension * dim, oph_odb_dimension_instance * dim_inst, oph_odb_dimension_grid * dim_grid,
@@ -182,7 +184,12 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensionin
 				    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS))) {
 					strncpy(dim->units, value, ll);
 					dim->units[ll] = 0;
-					strcpy(dim->base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR) + 2);
+					if (!strncmp(value + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR)))
+						strcpy(dim->base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR) + 2);
+					else if (!strncmp(value + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2)))
+						strcpy(dim->base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2) + 2);
+					else
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", value);
 				} else {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 					return OPH_ODB_MYSQL_ERROR;
@@ -320,7 +327,12 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 			    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS))) {
 				strncpy(dim->units, value, ll);
 				dim->units[ll] = 0;
-				strcpy(dim->base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR) + 2);
+				if (!strncmp(value + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR)))
+					strcpy(dim->base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR) + 2);
+				else if (!strncmp(value + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2)))
+					strcpy(dim->base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2) + 2);
+				else
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", value);
 			} else {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 				return OPH_ODB_MYSQL_ERROR;
@@ -1214,7 +1226,10 @@ int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension *
 		}
 		if (ll) {
 			char value[OPH_ODB_DIM_TIME_SIZE];
-			snprintf(value, OPH_ODB_DIM_TIME_SIZE, "%s %s %s", dim->units, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, dim->base_time);
+			if (dim->base_time && strchr(dim->base_time, OPH_ODB_DIM_BASETIME_FORMAT_CHECK))
+				snprintf(value, OPH_ODB_DIM_TIME_SIZE, "%s %s %s", dim->units, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2, dim->base_time);
+			else
+				snprintf(value, OPH_ODB_DIM_TIME_SIZE, "%s %s %s", dim->units, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, dim->base_time);
 			if (oph_odb_meta_put(oDB, id_datacube, dim->dimension_name, OPH_ODB_TIME_UNITS, 0, value)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 				return OPH_ODB_MYSQL_ERROR;
@@ -1633,7 +1648,12 @@ int oph_odb_dim_set_time_dimension(ophidiadb * oDB, int id_datacube, char *dimen
 		    !strncasecmp(value, OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS)) || !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS))) {
 			strncpy(dim.units, value, ll);
 			dim.units[ll] = 0;
-			strcpy(dim.base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR) + 2);
+			if (!strncmp(value + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR)))
+				strcpy(dim.base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR) + 2);
+			else if (!strncmp(value + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2)))
+				strcpy(dim.base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2) + 2);
+			else
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", value);
 		} else {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 			return OPH_ODB_MYSQL_ERROR;
@@ -1709,7 +1729,12 @@ int oph_odb_dim_update_time_dimension(oph_odb_dimension * dim, char **templates,
 			    !strncasecmp(values[i], OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS))) {
 				strncpy(dim->units, values[i], ll);
 				dim->units[ll] = 0;
-				strcpy(dim->base_time, values[i] + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR) + 2);
+				if (!strncmp(values[i] + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR)))
+					strcpy(dim->base_time, values[i] + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR) + 2);
+				else if (!strncmp(values[i] + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2)))
+					strcpy(dim->base_time, values[i] + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2) + 2);
+				else
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", values[i]);
 			}
 		} else if (!strcmp(templates[i], OPH_ODB_TIME_CALENDAR)) {
 			strcpy(dim->calendar, values[i]);
