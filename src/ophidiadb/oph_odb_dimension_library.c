@@ -181,7 +181,10 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensionin
 			if (value) {
 				if (!strncasecmp(value, OPH_DIM_TIME_UNITS_SECONDS, ll = strlen(OPH_DIM_TIME_UNITS_SECONDS)) ||
 				    !strncasecmp(value, OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS)) ||
-				    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS))) {
+				    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS)) ||
+				    !strncasecmp(value, OPH_DIM_TIME_UNITS_SECONDS, ll = strlen(OPH_DIM_TIME_UNITS_SECONDS) - 1) ||
+				    !strncasecmp(value, OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS) - 1) ||
+				    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS) - 1)) {
 					strncpy(dim->units, value, ll);
 					dim->units[ll] = 0;
 					if (!strncmp(value + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR)))
@@ -305,8 +308,9 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 
 	// Metadata support to get correct values of time metadata
 	if (id_datacube) {
-		if (strcmp(hierarchy_name, OPH_COMMON_TIME_HIERARCHY))	// Override hierarchy name!!! This should be done even in ophidiaDB, cretaing a new dimension with the same dimensioninstance
-		{
+
+		// Override hierarchy name!!! This should be done even in ophidiaDB, creating a new dimension with the same dimensioninstance
+		if (strcmp(hierarchy_name, OPH_COMMON_TIME_HIERARCHY)) {
 			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Override hierarchy name\n");
 			if (oph_odb_dim_retrieve_hierarchy_id(oDB, OPH_COMMON_TIME_HIERARCHY, &dim->id_hierarchy)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
@@ -315,7 +319,7 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 
 		}
 
-		char *value;
+		char *value = NULL;
 		if (oph_odb_meta_get(oDB, id_datacube, dim->dimension_name, OPH_ODB_TIME_UNITS, NULL, &value)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 			return OPH_ODB_MYSQL_ERROR;
@@ -324,7 +328,10 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 			int ll;
 			if (!strncasecmp(value, OPH_DIM_TIME_UNITS_SECONDS, ll = strlen(OPH_DIM_TIME_UNITS_SECONDS)) ||
 			    !strncasecmp(value, OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS)) ||
-			    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS))) {
+			    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS)) ||
+			    !strncasecmp(value, OPH_DIM_TIME_UNITS_SECONDS, ll = strlen(OPH_DIM_TIME_UNITS_SECONDS) - 1) ||
+			    !strncasecmp(value, OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS) - 1) ||
+			    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS) - 1)) {
 				strncpy(dim->units, value, ll);
 				dim->units[ll] = 0;
 				if (!strncmp(value + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR)))
@@ -334,7 +341,7 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 				else
 					pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", value);
 			} else {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", value);
 				return OPH_ODB_MYSQL_ERROR;
 			}
 			free(value);
@@ -1645,7 +1652,11 @@ int oph_odb_dim_set_time_dimension(ophidiadb * oDB, int id_datacube, char *dimen
 	}
 	if (value) {
 		if (!strncasecmp(value, OPH_DIM_TIME_UNITS_SECONDS, ll = strlen(OPH_DIM_TIME_UNITS_SECONDS)) ||
-		    !strncasecmp(value, OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS)) || !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS))) {
+		    !strncasecmp(value, OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS)) ||
+		    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS)) ||
+		    !strncasecmp(value, OPH_DIM_TIME_UNITS_SECONDS, ll = strlen(OPH_DIM_TIME_UNITS_SECONDS) - 1) ||
+		    !strncasecmp(value, OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS) - 1) ||
+		    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS) - 1)) {
 			strncpy(dim.units, value, ll);
 			dim.units[ll] = 0;
 			if (!strncmp(value + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR)))
@@ -1726,7 +1737,10 @@ int oph_odb_dim_update_time_dimension(oph_odb_dimension * dim, char **templates,
 		if (!strcmp(templates[i], OPH_ODB_TIME_UNITS)) {
 			if (!strncasecmp(values[i], OPH_DIM_TIME_UNITS_SECONDS, ll = strlen(OPH_DIM_TIME_UNITS_SECONDS)) ||
 			    !strncasecmp(values[i], OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS)) ||
-			    !strncasecmp(values[i], OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS))) {
+			    !strncasecmp(values[i], OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS)) ||
+			    !strncasecmp(values[i], OPH_DIM_TIME_UNITS_SECONDS, ll = strlen(OPH_DIM_TIME_UNITS_SECONDS) - 1) ||
+			    !strncasecmp(values[i], OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS) - 1) ||
+			    !strncasecmp(values[i], OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS) - 1)) {
 				strncpy(dim->units, values[i], ll);
 				dim->units[ll] = 0;
 				if (!strncmp(values[i] + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR)))
