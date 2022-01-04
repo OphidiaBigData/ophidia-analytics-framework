@@ -40,7 +40,7 @@ SUBMISSION STRING: &quot;operator=oph_pav_worker;action=deploy;number=3;&quot;</
     </info>
     <args>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-		<argument type="string" mandatory="no" default="info" values="info|info_workers|deploy|undeploy">action</argument>
+		<argument type="string" mandatory="no" default="info" values="info|deploy|undeploy">action</argument>
     <argument type="int" mandatory="no" minvalue="1" default="1">number</argument>
 		<argument type="string" mandatory="no" default="all">user_filter</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|workers_summary|workers_list|workers_list_summary|workers_user|workers_user_summary">objkey_filter</argument>
