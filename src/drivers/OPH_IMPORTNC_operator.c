@@ -2177,6 +2177,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 
+		char not_exists = 0;
 		int id_grid = 0, time_dimension = -1;
 		oph_odb_dimension_instance *dim_inst = NULL;
 		int dim_inst_num = 0;
@@ -2432,10 +2433,11 @@ int task_init(oph_operator_struct * handle)
 					free(dimvar_ids);
 					goto __OPH_EXIT_1;
 				}
+				if ((time_dimension < 0) && !strcmp(hier.hierarchy_name, OPH_COMMON_TIME_HIERARCHY))
+					time_dimension = i;
 				if (!exists) {
-					if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->import_metadata && (time_dimension < 0)
-					    && !strcmp(hier.hierarchy_name, OPH_COMMON_TIME_HIERARCHY))
-						time_dimension = i;
+					if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->import_metadata && !strcmp(hier.hierarchy_name, OPH_COMMON_TIME_HIERARCHY))
+						not_exists = 1;
 					else {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c': check container specifications\n", measure->dims_concept_level[i]);
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_BAD2_PARAMETER, measure->dims_concept_level[i]);
@@ -2560,6 +2562,19 @@ int task_init(oph_operator_struct * handle)
 					free(tot_dims);
 					free(dims);
 					free(dim_inst);
+					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db_dimension);
+					free(dimvar_ids);
+					goto __OPH_EXIT_1;
+				}
+
+				if ((j == time_dimension) && !strlen(tot_dims[j].base_time) && oph_dim_convert_data(tot_dims[j].dimension_type, tmp_var.varsize, dim_array)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to convert data for dimension %s\n", tot_dims[j].dimension_name);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to convert data for dimension %s\n", tot_dims[j].dimension_name);
+					free(tot_dims);
+					free(dims);
+					free(dim_inst);
+					free(dim_array);
 					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 					oph_dim_unload_dim_dbinstance(db_dimension);
 					free(dimvar_ids);
@@ -3506,7 +3521,7 @@ int task_init(oph_operator_struct * handle)
 						goto __OPH_EXIT_1;
 					}
 				}
-			} else if ((time_dimension >= 0) && oph_odb_dim_set_time_dimension(oDB, id_datacube_out, measure->dims_name[time_dimension])) {
+			} else if (not_exists && oph_odb_dim_set_time_dimension(oDB, id_datacube_out, measure->dims_name[time_dimension])) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_SET_TIME_ERROR);
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_SET_TIME_ERROR);
 				goto __OPH_EXIT_1;

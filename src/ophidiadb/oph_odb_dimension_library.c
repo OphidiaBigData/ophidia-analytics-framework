@@ -194,7 +194,7 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensionin
 					else
 						pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", value);
 				} else {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", value);
 					return OPH_ODB_MYSQL_ERROR;
 				}
 				free(value);
@@ -316,7 +316,6 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 				return OPH_ODB_MYSQL_ERROR;
 			}
-
 		}
 
 		char *value = NULL;
@@ -1666,7 +1665,7 @@ int oph_odb_dim_set_time_dimension(ophidiadb * oDB, int id_datacube, char *dimen
 			else
 				pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", value);
 		} else {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", value);
 			return OPH_ODB_MYSQL_ERROR;
 		}
 		free(value);

@@ -2360,3 +2360,16 @@ int oph_dim_copy_into_dimension_table(oph_odb_db_instance * db, char *from_dimen
 
 	return OPH_DIM_SUCCESS;
 }
+
+int oph_dim_convert_data(char *dimension_type, int size, char dim_array)
+{
+	if (!dimension_type || !size || !dim_array) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_DIM_NULL_PARAM;
+	}
+
+	char type_flag = oph_dim_typeof(dimension_type);
+	size_t array_size = oph_dim_sizeof(type_flag);
+
+	return OPH_DIM_SUCCESS;
+}
