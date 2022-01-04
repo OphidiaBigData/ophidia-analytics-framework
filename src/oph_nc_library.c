@@ -6159,15 +6159,9 @@ int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE
 	var->varid = -1;
 	int retval = 0;
 
-	short int coord_var = 0;
-
 	//Get id from dimension name
-	if ((retval = nc_inq_varid(ncid, var_name, &(var->varid))))
-		coord_var = 0;
-	else
-		coord_var = 1;
+	if ((retval = nc_inq_varid(ncid, var_name, &(var->varid)))) {
 
-	if (!coord_var){
 		//Assume no coordinate variable is defined for the dimension
 		var->varid = -1;
 		var->vartype = NC_LONG;
@@ -6180,6 +6174,7 @@ int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE
 		}
 
 	} else {
+
 		//Get information from id
 		if ((retval = nc_inq_vartype(ncid, var->varid, &(var->vartype)))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
