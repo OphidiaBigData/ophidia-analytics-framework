@@ -2407,15 +2407,267 @@ int oph_dim_copy_into_dimension_table(oph_odb_db_instance * db, char *from_dimen
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_convert_data(char *dimension_type, int size, char *dim_array)
+int oph_dim_convert_data(oph_odb_dimension * dim, int size, char *dim_array)
 {
-	if (!dimension_type || !size || !dim_array) {
+	if (!dim || !size || !dim_array) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DIM_NULL_PARAM;
 	}
+	if (!dim->base_time || !strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK1))
+		return OPH_DIM_SUCCESS;
 
-	char type_flag = oph_dim_typeof(dimension_type);
-	size_t item_size = oph_dim_sizeof(type_flag);
+	int i;
+	char tmp[OPH_COMMON_MAX_DOUBLE_LENGHT], type_flag = oph_dim_typeof(dim->dimension_type), *pch = NULL, *pch2;
+	struct tm _tm_base, *tm_base = &_tm_base;
+	long long value;
+	char *format = strdup(dim->base_time);
+	if ((pch = strchr(format, '.'))) {
+		*pch = 0;
+		pch++;
+	}
+
+	switch (type_flag) {
+		case OPH_DIM_BYTE_FLAG:
+			for (i = 0; i < size; i++) {
+				snprintf(tmp, OPH_COMMON_MAX_BYTE_LENGHT, "%d\n", *((char *) dim_array + i));
+				memset(tm_base, 0, sizeof(struct tm));
+				strptime(tmp, format, tm_base);
+				tm_base->tm_year += 1900;
+				tm_base->tm_mon++;
+				if (oph_date_to_day(tm_base->tm_year, tm_base->tm_mon, tm_base->tm_mday, &value, dim)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
+					free(format);
+					return OPH_DIM_DATA_ERROR;
+				}
+				value = tm_base->tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base->tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base->tm_hour + OPH_ODB_DIM_HOUR_NUMBER * value));
+				switch (dim->units[0]) {
+					case 'd':
+						value /= 4.0;
+					case '6':
+						value /= 2.0;
+					case '3':
+						value /= 3.0;
+					case 'h':
+						value /= 4.0;
+					case 'Q':
+						value /= 3.0;
+					case 'v':
+						value /= 5.0;
+					case 'm':
+						value /= 60.0;
+					case 's':
+						break;
+					default:
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "Unrecognized or unsupported units\n");
+				}
+				*((char *) dim_array + i) = (char) value;
+			}
+			break;
+		case OPH_DIM_SHORT_FLAG:
+			for (i = 0; i < size; i++) {
+				snprintf(tmp, OPH_COMMON_MAX_SHORT_LENGHT, "%d\n", *((short *) dim_array + i));
+				memset(tm_base, 0, sizeof(struct tm));
+				strptime(tmp, format, tm_base);
+				tm_base->tm_year += 1900;
+				tm_base->tm_mon++;
+				if (oph_date_to_day(tm_base->tm_year, tm_base->tm_mon, tm_base->tm_mday, &value, dim)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
+					free(format);
+					return OPH_DIM_DATA_ERROR;
+				}
+				value = tm_base->tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base->tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base->tm_hour + OPH_ODB_DIM_HOUR_NUMBER * value));
+				switch (dim->units[0]) {
+					case 'd':
+						value /= 4.0;
+					case '6':
+						value /= 2.0;
+					case '3':
+						value /= 3.0;
+					case 'h':
+						value /= 4.0;
+					case 'Q':
+						value /= 3.0;
+					case 'v':
+						value /= 5.0;
+					case 'm':
+						value /= 60.0;
+					case 's':
+						break;
+					default:
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "Unrecognized or unsupported units\n");
+				}
+				*((short *) dim_array + i) = (short) value;
+			}
+			break;
+		case OPH_DIM_INT_FLAG:
+			for (i = 0; i < size; i++) {
+				snprintf(tmp, OPH_COMMON_MAX_INT_LENGHT, "%d\n", *((int *) dim_array + i));
+				memset(tm_base, 0, sizeof(struct tm));
+				strptime(tmp, format, tm_base);
+				tm_base->tm_year += 1900;
+				tm_base->tm_mon++;
+				if (oph_date_to_day(tm_base->tm_year, tm_base->tm_mon, tm_base->tm_mday, &value, dim)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
+					free(format);
+					return OPH_DIM_DATA_ERROR;
+				}
+				value = tm_base->tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base->tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base->tm_hour + OPH_ODB_DIM_HOUR_NUMBER * value));
+				switch (dim->units[0]) {
+					case 'd':
+						value /= 4.0;
+					case '6':
+						value /= 2.0;
+					case '3':
+						value /= 3.0;
+					case 'h':
+						value /= 4.0;
+					case 'Q':
+						value /= 3.0;
+					case 'v':
+						value /= 5.0;
+					case 'm':
+						value /= 60.0;
+					case 's':
+						break;
+					default:
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "Unrecognized or unsupported units\n");
+				}
+				*((int *) dim_array + i) = (int) value;
+			}
+			break;
+		case OPH_DIM_LONG_FLAG:
+			for (i = 0; i < size; i++) {
+				snprintf(tmp, OPH_COMMON_MAX_LONG_LENGHT, "%lld\n", *((long long *) dim_array + i));
+				memset(tm_base, 0, sizeof(struct tm));
+				strptime(tmp, format, tm_base);
+				tm_base->tm_year += 1900;
+				tm_base->tm_mon++;
+				if (oph_date_to_day(tm_base->tm_year, tm_base->tm_mon, tm_base->tm_mday, &value, dim)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
+					free(format);
+					return OPH_DIM_DATA_ERROR;
+				}
+				value = tm_base->tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base->tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base->tm_hour + OPH_ODB_DIM_HOUR_NUMBER * value));
+				switch (dim->units[0]) {
+					case 'd':
+						value /= 4.0;
+					case '6':
+						value /= 2.0;
+					case '3':
+						value /= 3.0;
+					case 'h':
+						value /= 4.0;
+					case 'Q':
+						value /= 3.0;
+					case 'v':
+						value /= 5.0;
+					case 'm':
+						value /= 60.0;
+					case 's':
+						break;
+					default:
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "Unrecognized or unsupported units\n");
+				}
+				*((long long *) dim_array + i) = (long long) value;
+			}
+			break;
+		case OPH_DIM_FLOAT_FLAG:
+			for (i = 0; i < size; i++) {
+				snprintf(tmp, OPH_COMMON_MAX_FLOAT_LENGHT, "%f\n", *((float *) dim_array + i));
+				if (pch) {
+					pch2 = strchr(tmp, '.');
+					if (pch2) {
+						*pch2 = 0;
+						pch2++;
+						*((float *) dim_array + i) -= (long long) (*((float *) dim_array + i));
+					}
+				}
+				memset(tm_base, 0, sizeof(struct tm));
+				strptime(tmp, format, tm_base);
+				tm_base->tm_year += 1900;
+				tm_base->tm_mon++;
+				if (oph_date_to_day(tm_base->tm_year, tm_base->tm_mon, tm_base->tm_mday, &value, dim)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
+					free(format);
+					return OPH_DIM_DATA_ERROR;
+				}
+				value = tm_base->tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base->tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base->tm_hour + OPH_ODB_DIM_HOUR_NUMBER * value));
+				switch (dim->units[0]) {
+					case 'd':
+						value /= 4.0;
+					case '6':
+						value /= 2.0;
+					case '3':
+						value /= 3.0;
+					case 'h':
+						value /= 4.0;
+					case 'Q':
+						value /= 3.0;
+					case 'v':
+						value /= 5.0;
+					case 'm':
+						value /= 60.0;
+					case 's':
+						break;
+					default:
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "Unrecognized or unsupported units\n");
+				}
+				if (pch2)
+					*((float *) dim_array + i) += (float) value;
+				else
+					*((float *) dim_array + i) = (float) value;
+			}
+			break;
+		case OPH_DIM_DOUBLE_FLAG:
+			for (i = 0; i < size; i++) {
+				snprintf(tmp, OPH_COMMON_MAX_DOUBLE_LENGHT, "%f\n", *((double *) dim_array + i));
+				if (pch) {
+					pch2 = strchr(tmp, '.');
+					if (pch2) {
+						*pch2 = 0;
+						pch2++;
+						*((double *) dim_array + i) -= (long long) (*((double *) dim_array + i));
+					}
+				}
+				memset(tm_base, 0, sizeof(struct tm));
+				strptime(tmp, format, tm_base);
+				tm_base->tm_year += 1900;
+				tm_base->tm_mon++;
+				if (oph_date_to_day(tm_base->tm_year, tm_base->tm_mon, tm_base->tm_mday, &value, dim)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
+					free(format);
+					return OPH_DIM_DATA_ERROR;
+				}
+				value = tm_base->tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base->tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base->tm_hour + OPH_ODB_DIM_HOUR_NUMBER * value));
+				switch (dim->units[0]) {
+					case 'd':
+						value /= 4.0;
+					case '6':
+						value /= 2.0;
+					case '3':
+						value /= 3.0;
+					case 'h':
+						value /= 4.0;
+					case 'Q':
+						value /= 3.0;
+					case 'v':
+						value /= 5.0;
+					case 'm':
+						value /= 60.0;
+					case 's':
+						break;
+					default:
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "Unrecognized or unsupported units\n");
+				}
+				if (pch2)
+					*((double *) dim_array + i) += (double) value;
+				else
+					*((double *) dim_array + i) = (double) value;
+			}
+			break;
+		default:;
+	}
+	free(format);
 
 	return OPH_DIM_SUCCESS;
 }
