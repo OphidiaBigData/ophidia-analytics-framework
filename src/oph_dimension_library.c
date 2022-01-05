@@ -350,12 +350,8 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 	if (!dim->calendar || !strlen(dim->calendar))
 		return OPH_DIM_TIME_PARSING_ERROR;
 
-	memset(tm_base, 0, sizeof(struct tm));
-	long long _base_time, *base_time_ = base_time ? base_time : &_base_time;
-	*base_time_ = 0;
-
-	double _value;
 	// Read the offset
+	double _value;
 	if (oph_dim_get_double_value_of(dim_row, kk, dim->dimension_type, &_value))
 		return OPH_DIM_DATA_ERROR;
 
@@ -378,19 +374,10 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 	}
 
 	// Add the base
-	if (dim->base_time && strlen(dim->base_time) && !strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK1)) {
-		if (strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK2))
-			strptime(dim->base_time, OPH_DIM_DATA_FORMAT1, tm_base);
-		else
-			strptime(dim->base_time, OPH_DIM_DATA_FORMAT2, tm_base);
-		tm_base->tm_year += 1900;
-		tm_base->tm_mon++;
-		if (oph_date_to_day(tm_base->tm_year, tm_base->tm_mon, tm_base->tm_mday, base_time_, dim)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
-			return OPH_DIM_DATA_ERROR;
-		}
-		*base_time_ = tm_base->tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base->tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base->tm_hour + OPH_ODB_DIM_HOUR_NUMBER * (*base_time_)));
-	}
+	long long _base_time = 0, *base_time_ = base_time ? base_time : &_base_time;
+	if (oph_dim_get_base_time(dim, base_time_))
+		return OPH_DIM_DATA_ERROR;
+
 	// Convert to "date"
 	memset(tm_base, 0, sizeof(struct tm));
 	long long value = (long long) _value + (*base_time_);
@@ -421,24 +408,11 @@ int oph_dim_set_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 
 	// Remove the base
 	long long base_time = 0;
-	if (dim->base_time && strlen(dim->base_time) && !strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK1)) {
-		struct tm tm_base;
-		memset(&tm_base, 0, sizeof(struct tm));
-		if (strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK2))
-			strptime(dim->base_time, OPH_DIM_DATA_FORMAT1, &tm_base);
-		else
-			strptime(dim->base_time, OPH_DIM_DATA_FORMAT2, &tm_base);
-		tm_base.tm_year += 1900;
-		tm_base.tm_mon++;
-		if (oph_date_to_day(tm_base.tm_year, tm_base.tm_mon, tm_base.tm_mday, &base_time, dim)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
-			return OPH_DIM_DATA_ERROR;
-		}
-		base_time = tm_base.tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base.tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base.tm_hour + OPH_ODB_DIM_HOUR_NUMBER * base_time));
-	}
+	if (oph_dim_get_base_time(dim, &base_time))
+		return OPH_DIM_DATA_ERROR;
 	double _value = raw_value - base_time;
 
-	// Convert to "seconds"
+	// Convert from "seconds"
 	switch (dim->units[0]) {
 		case 'd':
 			_value /= 4.0;
@@ -804,7 +778,7 @@ int oph_dim_update_value(char *dim_row, const char *dimension_type, unsigned int
 	return OPH_DIM_SUCCESS;
 }
 
-int _oph_dim_get_base_time(oph_odb_dimension * dim, long long *base_time)
+int oph_dim_get_base_time(oph_odb_dimension * dim, long long *base_time)
 {
 	if (!dim || !base_time) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -881,7 +855,7 @@ int oph_dim_parse_season_subset(const char *subset_string, oph_odb_dimension * d
 		return OPH_DIM_DATA_ERROR;
 	if (oph_dim_get_double_value_of(data, data_size - 1, dim->dimension_type, &max))
 		return OPH_DIM_DATA_ERROR;
-	if (_oph_dim_get_base_time(dim, &base_time))
+	if (oph_dim_get_base_time(dim, &base_time))
 		return OPH_DIM_DATA_ERROR;
 	if (_oph_dim_get_scaling_factor(dim, &scaling_factor))
 		return OPH_DIM_DATA_ERROR;
@@ -992,7 +966,7 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 	struct tm tm_value;
 	long long base_time = 0, value_time;
 	double scaling_factor, _value;
-	if (_oph_dim_get_base_time(dim, &base_time))
+	if (oph_dim_get_base_time(dim, &base_time))
 		return OPH_DIM_DATA_ERROR;
 	if (_oph_dim_get_scaling_factor(dim, &scaling_factor))
 		return OPH_DIM_DATA_ERROR;
@@ -2361,7 +2335,7 @@ int oph_dim_copy_into_dimension_table(oph_odb_db_instance * db, char *from_dimen
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_convert_data(char *dimension_type, int size, char dim_array)
+int oph_dim_convert_data(char *dimension_type, int size, char *dim_array)
 {
 	if (!dimension_type || !size || !dim_array) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

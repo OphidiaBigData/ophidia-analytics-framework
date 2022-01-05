@@ -116,6 +116,7 @@
 #define OPH_JSON_OBJKEY_FIND_SUMMARY					"find_summary"
 #define OPH_JSON_OBJKEY_IMPORTNC					"importnc"
 #define OPH_JSON_OBJKEY_IMPORTNC2					"importnc2"
+#define OPH_JSON_OBJKEY_IMPORTNCS					"importncs"
 #define OPH_JSON_OBJKEY_IMPORTFITS					"importfits"
 #define OPH_JSON_OBJKEY_IMPORTFITS_SUMMARY			"importfits_summary"
 #define OPH_JSON_OBJKEY_EXPORTNC					"exportnc"
