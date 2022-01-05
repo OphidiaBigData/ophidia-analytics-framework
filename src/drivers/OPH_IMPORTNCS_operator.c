@@ -2804,8 +2804,22 @@ int task_init(oph_operator_struct * handle)
 					free(dimvar_ids);
 					goto __OPH_EXIT_1;
 				}
-				if ((time_dimension < 0) && !strcmp(hier.hierarchy_name, OPH_COMMON_TIME_HIERARCHY))
+				if ((time_dimension < 0) && !strcmp(hier.hierarchy_name, OPH_COMMON_TIME_HIERARCHY)) {
 					time_dimension = i;
+					int idp;
+					size_t xlen = 0;
+					if (!nc_inq_varid(ncid, measure->dims_name[i], &idp) && !nc_inq_attlen(ncid, idp, OPH_IN_PARAM_UNITS, &xlen)) {
+						char tmp[1 + xlen];
+						if (!nc_get_att_text(ncid, measure->dims_id[i], OPH_IN_PARAM_UNITS, tmp)) {
+							tmp[xlen] = 0;
+							char *pch = strchr(tmp, ' ');
+							if (pch && (pch = strchr(pch + 1, ' '))) {
+								strcpy(tot_dims[j].base_time, pch + 1);
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Update base time to '%s'\n", tot_dims[j].base_time);
+							}
+						}
+					}
+				}
 				if (!exists) {
 					if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->import_metadata && !strcmp(hier.hierarchy_name, OPH_COMMON_TIME_HIERARCHY))
 						not_exists = 1;
@@ -2941,7 +2955,7 @@ int task_init(oph_operator_struct * handle)
 					goto __OPH_EXIT_1;
 				}
 
-				if ((j == time_dimension) && !strlen(tot_dims[j].base_time) && oph_dim_convert_data(tot_dims[j].dimension_type, tmp_var.varsize, dim_array)) {
+				if ((j == time_dimension) && strchr(tot_dims[j].base_time, '%') && oph_dim_convert_data(tot_dims[j].dimension_type, tmp_var.varsize, dim_array)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to convert data for dimension %s\n", tot_dims[j].dimension_name);
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to convert data for dimension %s\n", tot_dims[j].dimension_name);
 					free(tot_dims);
