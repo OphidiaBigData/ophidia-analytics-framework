@@ -364,7 +364,11 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 		case '3':
 			_value *= 3.0;
 		case 'h':
-			_value *= 60.0;
+			_value *= 4.0;
+		case 'Q':
+			_value *= 3.0;
+		case 'v':
+			_value *= 5.0;
 		case 'm':
 			_value *= 60.0;
 		case 's':
@@ -421,7 +425,11 @@ int oph_dim_set_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 		case '3':
 			_value /= 3.0;
 		case 'h':
-			_value /= 60.0;
+			_value /= 4.0;
+		case 'Q':
+			_value /= 3.0;
+		case 'v':
+			_value /= 5.0;
 		case 'm':
 			_value /= 60.0;
 		case 's':
@@ -486,7 +494,11 @@ int oph_set_centroid(char *dim_row, unsigned int kk, oph_odb_dimension * dim, st
 		case '3':
 			_value /= 3.0;
 		case 'h':
-			_value /= 60.0;
+			_value /= 4.0;
+		case 'Q':
+			_value /= 3.0;
+		case 'v':
+			_value /= 5.0;
 		case 'm':
 			_value /= 60.0;
 		case 's':
@@ -595,6 +607,36 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 			}
 			if (first_element || (midnight && (tm_prev->tm_min == tm_base.tm_min) && !tm_prev->tm_sec)
 			    || ((tm_prev->tm_min != tm_base.tm_min) && (!midnight || ((tm_prev->tm_min + 1) % 60 != tm_base.tm_min) || tm_base.tm_sec)))
+				break;
+		case 'v':
+			if (centroid) {
+				tm_centroid.tm_min = 2 + 5 * (tm_centroid.tm_min / 5);
+				tm_centroid.tm_sec = 30;
+				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
+					return OPH_DIM_DATA_ERROR;
+				}
+				centroid = 0;
+			}
+			semi_prev = tm_prev->tm_min / 5;
+			semi_base = tm_base.tm_min / 5;
+			if (first_element || (midnight && (semi_prev == semi_base) && !(tm_prev->tm_min % 5) && !tm_prev->tm_sec)
+			    || ((semi_prev != semi_base) && (!midnight || ((semi_prev + 1) % 12 != semi_base) || tm_base.tm_sec || (tm_base.tm_min % 5))))
+				break;
+		case 'Q':
+			if (centroid) {
+				tm_centroid.tm_min = 7 + 15 * (tm_centroid.tm_min / 15);
+				tm_centroid.tm_sec = 30;
+				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
+					return OPH_DIM_DATA_ERROR;
+				}
+				centroid = 0;
+			}
+			semi_prev = tm_prev->tm_min / 15;
+			semi_base = tm_base.tm_min / 15;
+			if (first_element || (midnight && (semi_prev == semi_base) && !(tm_prev->tm_min % 15) && !tm_prev->tm_sec)
+			    || ((semi_prev != semi_base) && (!midnight || ((semi_prev + 1) % 4 != semi_base) || tm_base.tm_sec || (tm_base.tm_min % 15))))
 				break;
 		case 'h':
 			if (centroid) {
@@ -821,7 +863,11 @@ int _oph_dim_get_scaling_factor(oph_odb_dimension * dim, double *scaling_factor)
 		case '3':
 			*scaling_factor *= 3.0;
 		case 'h':
-			*scaling_factor *= 60.0;
+			*scaling_factor *= 4.0;
+		case 'Q':
+			*scaling_factor *= 3.0;
+		case 'v':
+			*scaling_factor *= 5.0;
 		case 'm':
 			*scaling_factor *= 60.0;
 		case 's':
@@ -2343,7 +2389,7 @@ int oph_dim_convert_data(char *dimension_type, int size, char *dim_array)
 	}
 
 	char type_flag = oph_dim_typeof(dimension_type);
-	size_t array_size = oph_dim_sizeof(type_flag);
+	size_t item_size = oph_dim_sizeof(type_flag);
 
 	return OPH_DIM_SUCCESS;
 }

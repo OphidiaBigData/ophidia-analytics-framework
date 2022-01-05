@@ -1015,38 +1015,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		sub_to_dims[i] = j;
 	}
 
-	//Check the sub_filters strings
-	int idp, tf = -1;	// Id of time filter
-	for (i = 0; i < number_of_sub_dims; i++) {
-		if (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->time_filter) {
-			if (tf >= 0) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Not more than one time dimension can be considered\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-				if (offset)
-					free(offset);
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-			// Let us assume that OPH_IN_PARAM_CALENDAR is only for time dimensions
-			if (!nc_inq_attid(ncid, measure->dims_id[sub_to_dims[i]], OPH_IN_PARAM_CALENDAR, &idp)) {
-				tf = i;
-				break;
-			}
-		}
-		if ((tf != i) || !strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR[1])) {
-			if (strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2) != strrchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Strided range are not supported\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
-				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-				if (offset)
-					free(offset);
-				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-			}
-		}
-	}
-
 	if (handle->proc_rank == 0) {
 		//Only master process has to initialize and open connection to management OphidiaDB
 		ophidiadb *oDB = &((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->oDB;
@@ -1087,6 +1055,36 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			if ((oph_odb_meta_retrieve_vocabulary_id(oDB, value, &((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->id_vocabulary))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unknown input vocabulary\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NO_VOCABULARY_NO_CONTAINER, container_name, value);
+				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+				if (offset)
+					free(offset);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+		}
+	}
+	// Find time dimension. Let us assume that OPH_IN_PARAM_CALENDAR is only for time dimensions
+	int idp, td = -1;	// Id of time dimension using NetCDF indexing
+	for (i = 0; i < measure->ndims; i++) {
+		if (!nc_inq_varid(ncid, measure->dims_name[i], &idp) && !nc_inq_attid(ncid, idp, OPH_IN_PARAM_CALENDAR, NULL)) {
+			td = i;
+			break;
+		}
+	}
+
+	//Check the sub_filters strings
+	int tf = -1;		// Id of time filter
+	for (i = 0; i < number_of_sub_dims; i++) {
+		if (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->time_filter) {
+			if (sub_to_dims[i] == td) {
+				tf = i;
+				break;
+			}
+		}
+		if ((tf != i) || !strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR[1])) {
+			if (strchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2) != strrchr(sub_filters[i], OPH_DIM_SUBSET_SEPARATOR2)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Strided range are not supported\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
 				oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 				oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 				if (offset)
@@ -2466,8 +2464,22 @@ int task_init(oph_operator_struct * handle)
 					free(dimvar_ids);
 					goto __OPH_EXIT_1;
 				}
-				if ((time_dimension < 0) && !strcmp(hier.hierarchy_name, OPH_COMMON_TIME_HIERARCHY))
+				if ((time_dimension < 0) && !strcmp(hier.hierarchy_name, OPH_COMMON_TIME_HIERARCHY)) {
 					time_dimension = i;
+					int idp;
+					size_t xlen = 0;
+					if (!nc_inq_varid(ncid, measure->dims_name[i], &idp) && !nc_inq_attlen(ncid, idp, OPH_IN_PARAM_UNITS, &xlen)) {
+						char tmp[1 + xlen];
+						if (!nc_get_att_text(ncid, measure->dims_id[i], OPH_IN_PARAM_UNITS, tmp)) {
+							tmp[xlen] = 0;
+							char *pch = strchr(tmp, ' ');
+							if (pch && (pch = strchr(pch + 1, ' '))) {
+								strcpy(tot_dims[j].base_time, pch + 1);
+								pmesg(LOG_WARNING, __FILE__, __LINE__, "Update base time to '%s'\n", tot_dims[j].base_time);
+							}
+						}
+					}
+				}
 				if (!exists) {
 					if (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->import_metadata && !strcmp(hier.hierarchy_name, OPH_COMMON_TIME_HIERARCHY))
 						not_exists = 1;
@@ -2601,7 +2613,7 @@ int task_init(oph_operator_struct * handle)
 					goto __OPH_EXIT_1;
 				}
 
-				if ((j == time_dimension) && !strlen(tot_dims[j].base_time) && oph_dim_convert_data(tot_dims[j].dimension_type, tmp_var.varsize, dim_array)) {
+				if ((i == time_dimension) && strchr(tot_dims[j].base_time, '%') && oph_dim_convert_data(tot_dims[j].dimension_type, tmp_var.varsize, dim_array)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to convert data for dimension %s\n", tot_dims[j].dimension_name);
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to convert data for dimension %s\n", tot_dims[j].dimension_name);
 					free(tot_dims);
