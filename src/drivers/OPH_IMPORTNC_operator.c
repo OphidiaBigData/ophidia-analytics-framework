@@ -2440,10 +2440,8 @@ int task_init(oph_operator_struct * handle)
 						if (!nc_get_att_text(ncid, measure->dims_id[i], OPH_IN_PARAM_UNITS, tmp)) {
 							tmp[xlen] = 0;
 							char *pch = strchr(tmp, ' ');
-							if (pch && (pch = strchr(pch + 1, ' '))) {
+							if (pch && (pch = strchr(pch + 1, ' ')))
 								strcpy(tot_dims[j].base_time, pch + 1);
-								pmesg(LOG_WARNING, __FILE__, __LINE__, "Update base time to '%s'\n", tot_dims[j].base_time);
-							}
 						}
 					}
 				}
@@ -2579,8 +2577,8 @@ int task_init(oph_operator_struct * handle)
 					free(dimvar_ids);
 					goto __OPH_EXIT_1;
 				}
-
-				if ((i == time_dimension) && strchr(tot_dims[j].base_time, '%') && oph_dim_convert_data(tot_dims[j].dimension_type, tmp_var.varsize, dim_array)) {
+#ifdef OPH_BASE_TIME_CONVERSION
+				if ((i == time_dimension) && strchr(tot_dims[j].base_time, '%') && oph_dim_convert_data(tot_dims + j, tmp_var.varsize, dim_array)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to convert data for dimension %s\n", tot_dims[j].dimension_name);
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to convert data for dimension %s\n", tot_dims[j].dimension_name);
 					free(tot_dims);
@@ -2592,7 +2590,7 @@ int task_init(oph_operator_struct * handle)
 					free(dimvar_ids);
 					goto __OPH_EXIT_1;
 				}
-
+#endif
 				if (oph_dim_insert_into_dimension_table(db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, tmp_var.varsize, dim_array, &dimension_array_id)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_ROW_ERROR, tot_dims[j].dimension_name);
