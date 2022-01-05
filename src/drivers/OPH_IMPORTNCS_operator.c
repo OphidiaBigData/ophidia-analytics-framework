@@ -988,7 +988,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	// Find time dimension. Let us assume that OPH_IN_PARAM_CALENDAR is only for time dimensions
 	int idp, td = -1;	// Id of time dimension using NetCDF indexing
 	for (i = 0; i < measure->ndims; i++) {
-		if (!nc_inq_attid(ncid, measure->dims_id[i], OPH_IN_PARAM_CALENDAR, &idp)) {
+		if (!nc_inq_varid(ncid, measure->dims_name[i], &idp) && !nc_inq_attid(ncid, idp, OPH_IN_PARAM_CALENDAR, NULL)) {
 			td = i;
 			break;
 		}
