@@ -41,7 +41,7 @@
 
 #define OPH_DIM_DATA_FORMAT1 "%Y-%m-%dT%H:%M:%S"
 #define OPH_DIM_DATA_FORMAT2 "%Y-%m-%d %H:%M:%S"
-#define OPH_DIM_DATA_FORMAT_CHECK1 '%'
+#define OPH_DIM_DATA_FORMAT_CHECK1 OPH_DIM_DATA_FORMAT_CHECK
 #define OPH_DIM_DATA_FORMAT_CHECK2 'T'
 
 extern int msglevel;

@@ -2208,7 +2208,7 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 
-		char not_exists = 0;
+		char not_exists = 0, base_time_conversion = 0;
 		int id_grid = 0, time_dimension = -1;
 		oph_odb_dimension_instance *dim_inst = NULL;
 		int dim_inst_num = 0;
@@ -2611,17 +2611,20 @@ int task_init(oph_operator_struct * handle)
 					goto __OPH_EXIT_1;
 				}
 
-				if ((i == time_dimension) && strchr(tot_dims[j].base_time, '%') && oph_dim_convert_data(tot_dims + j, tmp_var.varsize, dim_array)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to convert data for dimension %s\n", tot_dims[j].dimension_name);
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to convert data for dimension %s\n", tot_dims[j].dimension_name);
-					free(tot_dims);
-					free(dims);
-					free(dim_inst);
-					free(dim_array);
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					free(dimvar_ids);
-					goto __OPH_EXIT_1;
+				if ((i == time_dimension) && strchr(tot_dims[j].base_time, OPH_DIM_DATA_FORMAT_CHECK)) {
+					if (oph_dim_convert_data(tot_dims + j, tmp_var.varsize, dim_array)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to convert data for dimension %s\n", tot_dims[j].dimension_name);
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to convert data for dimension %s\n", tot_dims[j].dimension_name);
+						free(tot_dims);
+						free(dims);
+						free(dim_inst);
+						free(dim_array);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						free(dimvar_ids);
+						goto __OPH_EXIT_1;
+					}
+					base_time_conversion = 1;
 				}
 
 				if (oph_dim_insert_into_dimension_table(db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, tmp_var.varsize, dim_array, &dimension_array_id)) {
@@ -3226,6 +3229,7 @@ int task_init(oph_operator_struct * handle)
 									free(keydup);
 								goto __OPH_EXIT_1;
 							}
+							big_value[att_len] = 0;
 
 						} else {
 
@@ -3293,6 +3297,11 @@ int task_init(oph_operator_struct * handle)
 							strcpy(svalue, value);
 					}
 
+					if (base_time_conversion && (ii == time_dimension) && strchr(svalue, OPH_DIM_DATA_FORMAT_CHECK)) {
+						char *pch = strchr(svalue, ' ');
+						if (pch)
+							snprintf(pch, OPH_COMMON_BUFFER_LEN - strlen(pch), "s %s %s", OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, OPH_DIM_DATA_DEFAULT);
+					}
 					//Insert metadata instance (also manage relation)
 					if (oph_odb_meta_insert_into_metadatainstance_manage_tables
 					    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->dims_name[ii], sid_key_type, id_user, big_value ? big_value : svalue,
