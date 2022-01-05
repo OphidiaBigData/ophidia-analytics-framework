@@ -2361,7 +2361,7 @@ int oph_dim_copy_into_dimension_table(oph_odb_db_instance * db, char *from_dimen
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_convert_data(char *dimension_type, int size, char dim_array)
+int oph_dim_convert_data(char *dimension_type, int size, char *dim_array)
 {
 	if (!dimension_type || !size || !dim_array) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
