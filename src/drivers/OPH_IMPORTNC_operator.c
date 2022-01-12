@@ -741,8 +741,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	//Extract dimensions information and check names provided by task string
 	char *dimname;
 	short int flag = 0;
+	measure->dim_unlim = -1;
 	for (i = 0; i < ndims; i++) {
 		measure->dims_unlim[i] = measure->dims_id[i] == unlimdimid;
+		if (measure->dims_unlim[i] && (measure->dim_unlim < 0))
+			measure->dim_unlim = i;
 		measure->dims_name[i] = (char *) malloc((NC_MAX_NAME + 1) * sizeof(char));
 		if ((retval = nc_inq_dim(ncid, measure->dims_id[i], measure->dims_name[i], &measure->dims_length[i]))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
