@@ -499,15 +499,47 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				exp_dim_names = NULL;
 				exp_number_of_dim_names = 0;
 			}
-			measure->ndims = measure->nexp + measure->nimp;
+
 		} else {
+
 			//Implicit dimension is auto, import as NetCDF file order
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "One dimension will be considered implicit\n");
 			measure->nimp = 1;
 			measure->nexp = ndims - 1;
-			measure->ndims = ndims;
-			exp_dim_names = imp_dim_names = NULL;
-			exp_number_of_dim_names = imp_number_of_dim_names = 0;
+			imp_dim_names = NULL;
+			imp_number_of_dim_names = 0;
+
+			value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
+			if (!value) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_EXPLICIT_DIMENSION_NAME);
+				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+
+			if (strncmp(value, OPH_IMPORTNC_DIMENSION_DEFAULT, strlen(value)) || strncmp(value, OPH_IMPORTNC_DIMENSION_DEFAULT, strlen(OPH_IMPORTNC_DIMENSION_DEFAULT))) {
+				//Explicit is not auto, use standard approach
+				if (oph_tp_parse_multiple_value_param(value, &exp_dim_names, &exp_number_of_dim_names)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
+					oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+					oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if (measure->nexp != exp_number_of_dim_names) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong number of explicit dimensions: set %d dimensions\n", measure->nexp);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
+					oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+					oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+			} else {
+				//Use optimized approach with drilldown
+				exp_dim_names = NULL;
+				exp_number_of_dim_names = 0;
+			}
 		}
+		measure->ndims = measure->nexp + measure->nimp;
 
 		value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXPLICIT_DIMENSION_CONCEPT_LEVEL);
 		if (!value) {
@@ -761,7 +793,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	int level = 1;
 	int m2u[measure->ndims ? measure->ndims : 1];
 	m2u[0] = 0;
-	if (exp_dim_names != NULL) {
+	if (exp_dim_names) {
 		for (i = 0; i < measure->nexp; i++) {
 			flag = 0;
 			dimname = exp_dim_names[i];
@@ -786,7 +818,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			measure->dims_concept_level[j] = tmp_concept_levels[i];
 		}
 	} else {
-		if (imp_dim_names != NULL) {
+		if (imp_dim_names) {
 			int k = 0;
 			for (i = 0; i < measure->ndims; i++) {
 				flag = 1;
@@ -810,7 +842,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			//Use order in nc file
 			for (i = 0; i < measure->nexp; i++) {
 				m2u[i] = i;
-
 				measure->dims_oph_level[i] = level++;
 				measure->dims_type[i] = 1;
 				measure->dims_concept_level[i] = tmp_concept_levels[i];
@@ -819,7 +850,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 
 	level = 1;
-	if (imp_dim_names != NULL) {
+	if (imp_dim_names) {
 		for (i = measure->nexp; i < measure->ndims; i++) {
 			flag = 0;
 			dimname = imp_dim_names[i - measure->nexp];
@@ -832,6 +863,32 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			}
 			if (!flag) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension %s related to variable %s in in nc file\n", dimname, measure->varname);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname, measure->varname);
+				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
+				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
+				if (tmp_concept_levels)
+					free(tmp_concept_levels);
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			measure->dims_concept_level[j] = tmp_concept_levels[i];
+			measure->dims_type[j] = 0;
+			measure->dims_oph_level[j] = level++;
+		}
+	} else if (exp_dim_names) {
+		int k;
+		j = 0;
+		for (i = measure->nexp; i < measure->ndims; i++, j++) {
+			for (; j < ndims; j++) {
+				for (k = 0; k < exp_number_of_dim_names; ++k)
+					if (!strcmp(exp_dim_names[k], measure->dims_name[j]))
+						break;
+				if (k >= exp_number_of_dim_names) {
+					m2u[i] = j;
+					break;
+				}
+			}
+			if (j >= ndims) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find next implicit dimension in nc file\n", measure->varname);
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname, measure->varname);
 				oph_tp_free_multiple_value_param_list(exp_dim_names, exp_number_of_dim_names);
 				oph_tp_free_multiple_value_param_list(imp_dim_names, imp_number_of_dim_names);
@@ -1368,7 +1425,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (offset)
 		free(offset);
 
-	//Check explicit dimension oph levels (all values in interval [1 - nexp] should be supplied)
+	//Check explicit dimension oph levels (all values in interval [1, nexp] should be supplied)
 	int curr_lev;
 	int level_ok;
 	for (curr_lev = 1; curr_lev <= measure->nexp; curr_lev++) {
