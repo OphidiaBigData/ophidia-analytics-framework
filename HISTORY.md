@@ -7,6 +7,7 @@
 
 ### Changed:
 
+- Parsing of the parameter 'base_time' from NetCDF attirbutes
 - OPH_METADATA to update metadata "by key" besides "by id"
 
 ## v1.6.1 - 2021-08-03

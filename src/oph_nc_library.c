@@ -6197,38 +6197,49 @@ int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE
 
 	//Get id from dimension name
 	if ((retval = nc_inq_varid(ncid, var_name, &(var->varid)))) {
-		pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-		logging(LOG_WARNING, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-		return OPH_NC_ERROR;
-	}
-	//Get information from id
-	if ((retval = nc_inq_vartype(ncid, var->varid, &(var->vartype)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-		return OPH_NC_ERROR;
-	}
-	if ((retval = nc_inq_varndims(ncid, var->varid, &(var->ndims)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-		return OPH_NC_ERROR;
-	}
 
-	if (var->ndims != max_ndims) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_NOT_ALLOWED);
-		return OPH_NC_ERROR;
-	}
+		//Assume no coordinate variable is defined for the dimension
+		var->varid = -1;
+		var->vartype = NC_LONG;
+		var->ndims = 1;
+		var->dims_id = malloc(var->ndims * sizeof(int));
+		if ((retval = nc_inq_dimid(ncid, var_name, &(var->dims_id[0])))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+			return OPH_NC_ERROR;
+		}
 
-	var->dims_id = malloc(var->ndims * sizeof(int));
-	if (!(var->dims_id)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions nc ids");
-		return OPH_NC_ERROR;
-	}
-	if ((retval = nc_inq_vardimid(ncid, var->varid, var->dims_id))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-		return OPH_NC_ERROR;
+	} else {
+
+		//Get information from id
+		if ((retval = nc_inq_vartype(ncid, var->varid, &(var->vartype)))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+			return OPH_NC_ERROR;
+		}
+		if ((retval = nc_inq_varndims(ncid, var->varid, &(var->ndims)))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+			return OPH_NC_ERROR;
+		}
+
+		if (var->ndims != max_ndims) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_NOT_ALLOWED);
+			return OPH_NC_ERROR;
+		}
+
+		var->dims_id = malloc(var->ndims * sizeof(int));
+		if (!(var->dims_id)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions nc ids");
+			return OPH_NC_ERROR;
+		}
+		if ((retval = nc_inq_vardimid(ncid, var->varid, var->dims_id))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+			return OPH_NC_ERROR;
+		}
 	}
 
 	var->dims_length = malloc(var->ndims * sizeof(size_t));
