@@ -509,7 +509,7 @@ void *worker_pthread_function(void *param)
 
 	struct sigaction thread_new_act, thread_old_act;
 
-	thread_new_act.sa_handler = release_thread;
+	thread_new_act.sa_handler = &release_thread;
 	sigemptyset(&thread_new_act.sa_mask);
 	thread_new_act.sa_flags = 0;
 
@@ -592,7 +592,7 @@ void *update_pthread_function()
 	pthread_sigmask(SIG_UNBLOCK, &signal_set, NULL);
 	struct sigaction thread_new_act, thread_old_act;
 
-	thread_new_act.sa_handler = release_thread;
+	thread_new_act.sa_handler = &release_thread;
 	sigemptyset(&thread_new_act.sa_mask);
 	thread_new_act.sa_flags = 0;
 
@@ -807,7 +807,7 @@ void *delete_pthread_function()
 	pthread_sigmask(SIG_UNBLOCK, &signal_set, NULL);
 	struct sigaction thread_new_act, thread_old_act;
 
-	thread_new_act.sa_handler = release_thread;
+	thread_new_act.sa_handler = &release_thread;
 	sigemptyset(&thread_new_act.sa_mask);
 	thread_new_act.sa_flags = 0;
 
@@ -1379,7 +1379,7 @@ int main(int argc, char const *const *argv)
 
 	struct sigaction new_act, old_act;
 
-	new_act.sa_handler = kill_threads;
+	new_act.sa_handler = &kill_threads;
 	sigemptyset(&new_act.sa_mask);
 	new_act.sa_flags = 0;
 

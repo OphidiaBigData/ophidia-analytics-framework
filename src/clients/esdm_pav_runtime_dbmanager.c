@@ -501,7 +501,7 @@ int main(int argc, char const *const *argv)
 
 	struct sigaction new_act, old_act;
 
-	new_act.sa_handler = release_main;
+	new_act.sa_handler = &release_main;
 	sigemptyset(&new_act.sa_mask);
 	new_act.sa_flags = 0;
 
