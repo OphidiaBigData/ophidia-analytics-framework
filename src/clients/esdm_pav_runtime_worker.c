@@ -73,8 +73,8 @@ int process_pid = -1;
 pthread_t *thread_cont_list = NULL;
 int *pthread_create_arg = NULL;
 
-int ptr_list_size = 21;
-char *ptr_list[21];
+int ptr_list_size = 19;
+char *ptr_list[19];
 
 amqp_connection_state_t *conn_thread_consume_list = NULL;
 amqp_channel_t default_channel = 1;
@@ -109,7 +109,6 @@ char *delete_queue_name = 0;
 char *cancellation_multiplication_factor = 0;
 char *max_cancellation_struct_size_str = 0;
 int max_cancellation_struct_size;
-char *worker_count = 0;
 #endif
 
 void kill_threads()
@@ -159,7 +158,7 @@ void release_main()
 	rabbitmq_publish_connection(&publish_remove_entries_conn, default_channel, master_hostname, master_port, username, password, db_manager_queue_name);
 
 	char *delete_message = 0;
-	create_update_message(nodename, port, "0", "0", delete_queue_name, process_pid, worker_count, SHUTDOWN_MODE, &delete_message);
+	create_update_message(nodename, port, "0", "0", delete_queue_name, process_pid, SHUTDOWN_MODE, &delete_message);
 
 	// SEND MESSAGE TO DB MANAGER QUEUE
 	int status = amqp_basic_publish(publish_remove_entries_conn,
@@ -332,7 +331,7 @@ int process_message(amqp_envelope_t full_message)
 
 	// WRITE ON UPDATE_QUEUE AND SHARED ARRAY
 	char *update_message = 0;
-	create_update_message(nodename, port, workflow_id, job_id, delete_queue_name, process_pid, worker_count, INSERT_JOB_MODE, &update_message);
+	create_update_message(nodename, port, workflow_id, job_id, delete_queue_name, process_pid, INSERT_JOB_MODE, &update_message);
 	pthread_rwlock_rdlock(&thread_lock_list[thread_param]);
 	shared_ids_array[thread_param] = atoi(workflow_id);
 	pthread_rwlock_unlock(&thread_lock_list[thread_param]);
@@ -362,7 +361,7 @@ int process_message(amqp_envelope_t full_message)
 #ifdef UPDATE_CANCELLATION_SUPPORT
 
 		char *update_message_2 = 0;
-		create_update_message(nodename, port, workflow_id, job_id, delete_queue_name, process_pid, worker_count, REMOVE_JOB_MODE, &update_message_2);
+		create_update_message(nodename, port, workflow_id, job_id, delete_queue_name, process_pid, REMOVE_JOB_MODE, &update_message_2);
 		pthread_rwlock_rdlock(&thread_lock_list[thread_param]);
 		shared_ids_array[thread_param] = 0;
 		pthread_rwlock_unlock(&thread_lock_list[thread_param]);
@@ -460,7 +459,7 @@ int process_message(amqp_envelope_t full_message)
 #ifdef UPDATE_CANCELLATION_SUPPORT
 	// WRITE ON UPDATE_QUEUE AND SHARED ARRAY
 	char *update_message_3 = 0;
-	create_update_message(nodename, port, workflow_id, job_id, delete_queue_name, process_pid, worker_count, REMOVE_JOB_MODE, &update_message_3);
+	create_update_message(nodename, port, workflow_id, job_id, delete_queue_name, process_pid, REMOVE_JOB_MODE, &update_message_3);
 	pthread_rwlock_rdlock(&thread_lock_list[thread_param]);
 	shared_ids_array[thread_param] = 0;
 	PID_array[thread_param] = 0;
@@ -934,7 +933,7 @@ int main(int argc, char const *const *argv)
 	static char *USAGE = "\nUSAGE:\nesdm_pav_runtime_worker [-d] [-c <config_file>] [-H <RabbitMQ hostname>] "
 	    "[-P <RabbitMQ port>] [-Q <RabbitMQ task_queue>] [-U <RabbitMQ update_queue>] [-a <master hostname>] [-b <master port>] "
 	    "[-M <RabbitMQ db_manager_queue>] [-D <RabbitMQ delete_queue>] [-u <RabbitMQ username>] [-p <RabbitMQ password>] "
-	    "[-n <max_ncores>] [-m <cancellation_multiplication_factor>] [-s <cancellation_struct_size>] [-C <count>] "
+	    "[-n <max_ncores>] [-m <cancellation_multiplication_factor>] [-s <cancellation_struct_size>] "
 	    "[-t <thread_number>] [-l <worker_launcher>] [-f <framework_path>] [-h <USAGE>]\n";
 
 	while ((ch = getopt(argc, (char *const *) argv, ":c:H:P:Q:U:a:b:M:D:u:p:n:m:s:C:t:l:f:dhxz")) != -1) {
@@ -1036,30 +1035,24 @@ int main(int argc, char const *const *argv)
 				snprintf(max_cancellation_struct_size_str, neededSize + 1, "%s", optarg);
 				ptr_list[13] = max_cancellation_struct_size_str;
 				break;
-			case 'C':
-				neededSize = snprintf(NULL, 0, "%s", optarg);
-				worker_count = (char *) malloc(neededSize + 1);
-				snprintf(worker_count, neededSize + 1, "%s", optarg);
-				ptr_list[14] = worker_count;
-				break;
 #endif
 			case 't':
 				neededSize = snprintf(NULL, 0, "%s", optarg);
 				thread_number_str = (char *) malloc(neededSize + 1);
 				snprintf(thread_number_str, neededSize + 1, "%s", optarg);
-				ptr_list[15] = thread_number_str;
+				ptr_list[14] = thread_number_str;
 				break;
 			case 'l':
 				neededSize = snprintf(NULL, 0, "%s", optarg);
 				worker_launcher = (char *) malloc(neededSize + 1);
 				snprintf(worker_launcher, neededSize + 1, "%s", optarg);
-				ptr_list[16] = worker_launcher;
+				ptr_list[15] = worker_launcher;
 				break;
 			case 'f':
 				neededSize = snprintf(NULL, 0, "%s", optarg);
 				framework_path = (char *) malloc(neededSize + 1);
 				snprintf(framework_path, neededSize + 1, "%s", optarg);
-				ptr_list[17] = framework_path;
+				ptr_list[16] = framework_path;
 				break;
 			case 'd':
 				msglevel = LOG_DEBUG;
@@ -1152,7 +1145,7 @@ int main(int argc, char const *const *argv)
 		strcpy(update_queue_name, update_queue);
 	}
 
-	ptr_list[18] = update_queue_name;
+	ptr_list[17] = update_queue_name;
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM UPDATE_QUEUE_NAME: %s\n", update_queue_name);
 
 	if (!delete_queue_name) {
@@ -1173,7 +1166,7 @@ int main(int argc, char const *const *argv)
 		strcpy(delete_queue_name, delete_queue);
 	}
 
-	ptr_list[19] = delete_queue_name;
+	ptr_list[18] = delete_queue_name;
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM DELETE_QUEUE_NAME: %s\n", delete_queue_name);
 #endif
 
@@ -1279,13 +1272,6 @@ int main(int argc, char const *const *argv)
 		}
 	}
 	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM MAX_CANCELLATION_STRUCT_SIZE: %s\n", max_cancellation_struct_size_str);
-
-	if (!worker_count) {
-		worker_count = (char *) malloc(2);
-		snprintf(worker_count, 2, "0");
-		ptr_list[20] = worker_count;
-	}
-	pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "LOADED PARAM WORKER_COUNT: %s\n", worker_count);
 #endif
 
 	props._flags = AMQP_BASIC_CONTENT_TYPE_FLAG | AMQP_BASIC_DELIVERY_MODE_FLAG;
@@ -1369,7 +1355,7 @@ int main(int argc, char const *const *argv)
 	rabbitmq_publish_connection(&conn_thread_publish_list[thread_number], (amqp_channel_t) (thread_number + 1), hostname, port, username, password, update_queue_name);
 
 	char *update_message = 0;
-	create_update_message(nodename, port, "0", "0", delete_queue_name, process_pid, worker_count, START_MODE, &update_message);
+	create_update_message(nodename, port, "0", "0", delete_queue_name, process_pid, START_MODE, &update_message);
 
 	int status = amqp_basic_publish(conn_thread_publish_list[thread_number],
 					(amqp_channel_t) thread_number + 1,

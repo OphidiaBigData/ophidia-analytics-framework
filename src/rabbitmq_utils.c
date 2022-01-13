@@ -224,16 +224,16 @@ int get_number_queued_messages(char *hostname, char *port, char *username, char 
 		return messages;
 }
 
-void create_update_message(char *ip_address, char *port, char *workflow_id, char *job_id, char *delete_queue_name, int process_pid, char *worker_count, int mode, char **update_message)
+void create_update_message(char *ip_address, char *port, char *workflow_id, char *job_id, char *delete_queue_name, int process_pid, int mode, char **update_message)
 {
-	int neededSize = snprintf(NULL, 0, "%s***%s***%s***%s***%s***%d***%s***%d", ip_address, port, workflow_id, job_id, delete_queue_name, process_pid, worker_count, mode);
+	int neededSize = snprintf(NULL, 0, "%s***%s***%s***%s***%s***%d***%d", ip_address, port, workflow_id, job_id, delete_queue_name, process_pid, mode);
 	int len = snprintf(NULL, 0, "%s", *update_message);
 
 	if (len > 0 && neededSize > len)
 		*update_message = (char *) realloc(*update_message, neededSize + 1);
 	else
 		*update_message = (char *) malloc(neededSize + 1);
-	snprintf(*update_message, neededSize + 1, "%s***%s***%s***%s***%s***%d***%s***%d", ip_address, port, workflow_id, job_id, delete_queue_name, process_pid, worker_count, mode);
+	snprintf(*update_message, neededSize + 1, "%s***%s***%s***%s***%s***%d***%d", ip_address, port, workflow_id, job_id, delete_queue_name, process_pid, mode);
 }
 
 int split_by_delimiter(char *message, char delimiter, int n_chars, char **result1, char **result2)

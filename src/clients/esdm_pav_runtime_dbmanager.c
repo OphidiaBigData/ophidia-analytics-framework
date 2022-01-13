@@ -185,17 +185,6 @@ int update_database(amqp_envelope_t full_message)
 
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "WORKER_PID: %s\n", worker_pid);
 
-	if (split_by_delimiter(next, '*', 3, &current, &next) != 0) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Failed to split by delimiter\n");
-		return 1;
-	}
-
-	neededSize = snprintf(NULL, 0, "%s", current);
-	char *worker_count = (char *) malloc(neededSize + 1);
-	snprintf(worker_count, neededSize + 1, "%s", current);
-
-	pmesg(LOG_DEBUG, __FILE__, __LINE__, "WORKER_COUNT: %s\n", worker_count);
-
 	neededSize = snprintf(NULL, 0, "%s", next);
 	char *mode = (char *) malloc(neededSize + 1);
 	snprintf(mode, neededSize + 1, "%s", next);
@@ -262,11 +251,11 @@ int update_database(amqp_envelope_t full_message)
 				free(check_ifpresent_sql);
 
 				if (isPresent) {
-					neededSize = snprintf(NULL, 0, "UPDATE worker SET status=\"up\", pid=%d, count=%d WHERE ip_address = \"%s\" and port = \"%s\" and "
-							      "delete_queue_name = \"%s\";", atoi(worker_pid), atoi(worker_count), ip_address, port, delete_queue_name);
+					neededSize = snprintf(NULL, 0, "UPDATE worker SET status=\"up\", pid=%d WHERE ip_address = \"%s\" and port = \"%s\" and "
+							      "delete_queue_name = \"%s\";", atoi(worker_pid), ip_address, port, delete_queue_name);
 					char *update_existing_worker_sql = (char *) malloc(neededSize + 1);
-					snprintf(update_existing_worker_sql, neededSize + 1, "UPDATE worker SET status=\"up\", pid=%d, count=%d WHERE ip_address = \"%s\" and port = \"%s\" and "
-						 "delete_queue_name = \"%s\";", atoi(worker_pid), atoi(worker_count), ip_address, port, delete_queue_name);
+					snprintf(update_existing_worker_sql, neededSize + 1, "UPDATE worker SET status=\"up\", pid=%d WHERE ip_address = \"%s\" and port = \"%s\" and "
+						 "delete_queue_name = \"%s\";", atoi(worker_pid), ip_address, port, delete_queue_name);
 
 					while (sqlite3_exec(db, update_existing_worker_sql, 0, 0, &err_msg) != SQLITE_OK)
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on select query: %s\n", err_msg);
@@ -275,11 +264,11 @@ int update_database(amqp_envelope_t full_message)
 					pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: set status \"up\" for worker. NODENAME: %s - PORT: %s "
 					      "- DELETE_QUEUE: %s\n", ip_address, port, delete_queue_name);
 				} else {
-					neededSize = snprintf(NULL, 0, "INSERT INTO worker (ip_address, port, delete_queue_name, status, pid, "
-							      "count) VALUES (\"%s\", \"%s\", \"%s\", \"up\", %d, %d);", ip_address, port, delete_queue_name, atoi(worker_pid), atoi(worker_count));
+					neededSize = snprintf(NULL, 0, "INSERT INTO worker (ip_address, port, delete_queue_name, status, pid) "
+						"VALUES (\"%s\", \"%s\", \"%s\", \"up\", %d);", ip_address, port, delete_queue_name, atoi(worker_pid));
 					char *insert_new_worker_sql = (char *) malloc(neededSize + 1);
-					snprintf(insert_new_worker_sql, neededSize + 1, "INSERT INTO worker (ip_address, port, delete_queue_name, status, pid, "
-						 "count) VALUES (\"%s\", \"%s\", \"%s\", \"up\", %d, %d);", ip_address, port, delete_queue_name, atoi(worker_pid), atoi(worker_count));
+					snprintf(insert_new_worker_sql, neededSize + 1, "INSERT INTO worker (ip_address, port, delete_queue_name, status, pid) "
+						"VALUES (\"%s\", \"%s\", \"%s\", \"up\", %d);", ip_address, port, delete_queue_name, atoi(worker_pid));
 
 					while (sqlite3_exec(db, insert_new_worker_sql, 0, 0, &err_msg) != SQLITE_OK)
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on select query: %s\n", err_msg);
@@ -306,10 +295,10 @@ int update_database(amqp_envelope_t full_message)
 				pmesg(LOG_DEBUG, __FILE__, __LINE__, "Database updated: job entries has been removed for worker NODENAME: %s - PORT: %s "
 				      "- DELETE_QUEUE: %s\n", ip_address, port, delete_queue_name);
 
-				neededSize = snprintf(NULL, 0, "UPDATE worker SET status=\"down\", pid=0, count=0 WHERE ip_address = \"%s\" and port = \"%s\" and "
+				neededSize = snprintf(NULL, 0, "UPDATE worker SET status=\"down\", pid=0 WHERE ip_address = \"%s\" and port = \"%s\" and "
 						      "delete_queue_name = \"%s\";", ip_address, port, delete_queue_name);
 				char *set_down_status_sql = (char *) malloc(neededSize + 1);
-				snprintf(set_down_status_sql, neededSize + 1, "UPDATE worker SET status=\"down\", pid=0, count=0 WHERE ip_address = \"%s\" and port = \"%s\" and "
+				snprintf(set_down_status_sql, neededSize + 1, "UPDATE worker SET status=\"down\", pid=0 WHERE ip_address = \"%s\" and port = \"%s\" and "
 					 "delete_queue_name = \"%s\";", ip_address, port, delete_queue_name);
 
 				while (sqlite3_exec(db, set_down_status_sql, 0, 0, &err_msg) != SQLITE_OK)
@@ -340,8 +329,6 @@ int update_database(amqp_envelope_t full_message)
 		free(delete_queue_name);
 	if (worker_pid)
 		free(worker_pid);
-	if (worker_count)
-		free(worker_count);
 	if (mode)
 		free(mode);
 
@@ -540,7 +527,7 @@ int main(int argc, char const *const *argv)
 
 	char *init_worker_sql = "CREATE TABLE IF NOT EXISTS worker (id_worker INTEGER PRIMARY KEY AUTOINCREMENT, "
 	    "ip_address VARCHAR(15) NOT NULL, port VARCHAR(4) NOT NULL, delete_queue_name VARCHAR(40) NOT NULL, "
-	    "status VARCHAR(4) DEFAULT \"down\" NOT NULL, pid INTEGER DEFAULT 0, count INTEGER DEFAULT 0)";
+	    "status VARCHAR(4) DEFAULT \"down\" NOT NULL, pid INTEGER DEFAULT 0)";
 	while (sqlite3_exec(db, init_worker_sql, 0, 0, &err_msg) != SQLITE_OK)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on init_worker_sql query: %s\n", sqlite3_errmsg(db));
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"worker\" table has set correctly\n");
@@ -551,7 +538,7 @@ int main(int argc, char const *const *argv)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on init_job_sql query: %s\n", sqlite3_errmsg(db));
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"job\" table has set correctly\n");
 
-	char *reset_worker_table_sql = "UPDATE worker SET pid=0, count=0, status=\"down\";";
+	char *reset_worker_table_sql = "UPDATE worker SET pid=0, status=\"down\";";
 	if (sqlite3_exec(db, reset_worker_table_sql, 0, 0, &err_msg) != SQLITE_OK)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on reset_worker_table_sql query: %s\n", sqlite3_errmsg(db));
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"worker\" table has been reset correctly\n");

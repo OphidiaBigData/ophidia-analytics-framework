@@ -77,6 +77,6 @@ int close_rabbitmq_connection(amqp_connection_state_t conn, amqp_channel_t chann
  */
 int get_number_queued_messages(char *hostname, char *port, char *username, char *password, char *queue_name);
 
-void create_update_message(char *ip_address, char *port, char *workflow_id, char *job_id, char *delete_queue_name, int process_pid, char *worker_count, int mode, char **update_message);
+void create_update_message(char *ip_address, char *port, char *workflow_id, char *job_id, char *delete_queue_name, int process_pid, int mode, char **update_message);
 
 int split_by_delimiter (char *message, char delimiter, int n_chars, char **result1, char **result2);
