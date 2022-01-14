@@ -28,6 +28,8 @@
 #define START_MODE 2
 #define SHUTDOWN_MODE 3
 
+#define WORKER_SHUTDOWN_MESSAGE "0***0"
+
 /**
  * \brief			            Function to prepare RabbitMQ connection to consume messages
  * \param conn                  Connection

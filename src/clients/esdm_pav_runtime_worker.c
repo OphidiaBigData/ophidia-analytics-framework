@@ -838,9 +838,20 @@ void *delete_pthread_function()
 		} else
 			pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "A message has been consumed - Deleter thread\n");
 
-		int neededSize = snprintf(NULL, 0, "%s", (char *) envelope.message.body.bytes);
-		char *message = (char *) malloc(neededSize + 1);
-		snprintf(message, neededSize + 1, "%s", (char *) envelope.message.body.bytes);
+		char *message = (char *) malloc(envelope.message.body.len + 1);
+		strncpy(message, (char *) envelope.message.body.bytes, envelope.message.body.len);
+		message[envelope.message.body.len] = 0;
+
+		if (!strcmp(message, WORKER_SHUTDOWN_MESSAGE)) {
+			pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Received a shutdown signal...\n");
+
+			amqp_destroy_envelope(&envelope);
+
+			if (message)
+				free(message);
+
+			kill_threads();
+		}
 
 		char *current = 0, *next = 0;
 
@@ -849,7 +860,7 @@ void *delete_pthread_function()
 			continue;
 		}
 
-		neededSize = snprintf(NULL, 0, "%s", current);
+		int neededSize = snprintf(NULL, 0, "%s", current);
 		char *w_id = (char *) malloc(neededSize + 1);
 		snprintf(w_id, neededSize + 1, "%s", current);
 
