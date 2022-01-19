@@ -1135,7 +1135,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 	}
 	// Load the starting point of each input file
-	size_t data_size, tot_size = 0;
+	size_t data_size = 0, tot_size = 0;
 	if (measure->order_src_path) {
 		char **dim_array = (char **) calloc(measure->number_src_path, sizeof(char *));
 		if (!dim_array) {
