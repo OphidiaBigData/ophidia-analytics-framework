@@ -864,7 +864,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	//Extract dimensions information and check names provided by task string
-	char *dimname;
+	char *dimname = NULL;
 	short int flag = 0;
 	measure->dim_unlim = -1;
 	for (i = 0; i < ndims; i++) {

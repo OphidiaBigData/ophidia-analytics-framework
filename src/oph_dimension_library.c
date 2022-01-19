@@ -2502,7 +2502,8 @@ int oph_dim_convert_data(oph_odb_dimension * dim, int size, char *dim_array)
 						pch2++;
 						*((float *) current) -= (long long) (*((float *) current));
 					}
-				}
+				} else
+					pch2 = NULL;
 				if (_oph_dim_convert_data(dim, tmp, format, tm_base, &value)) {
 					free(format);
 					return OPH_DIM_DATA_ERROR;
@@ -2524,7 +2525,8 @@ int oph_dim_convert_data(oph_odb_dimension * dim, int size, char *dim_array)
 						pch2++;
 						*((double *) current) -= (long long) (*((double *) current));
 					}
-				}
+				} else
+					pch2 = NULL;
 				if (_oph_dim_convert_data(dim, tmp, format, tm_base, &value)) {
 					free(format);
 					return OPH_DIM_DATA_ERROR;
