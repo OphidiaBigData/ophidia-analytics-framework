@@ -5602,9 +5602,22 @@ int oph_nc_get_dim_array_and_size(int id_container, int ncid, int dim_id, const 
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension size cannot be loaded\n");
 			return OPH_NC_ERROR;
 		}
+		int retval = 0, tmp = 0;
+		if ((retval = nc_inq_varndims(ncid, dim_id, &tmp))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number od dimension of variable identified by %d cannot be loaded: %s\n", dim_id, nc_strerror(retval));
+			return OPH_NC_ERROR;
+		}
+		if (tmp != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Identifier %d is not a dimension\n", dim_id);
+			return OPH_NC_ERROR;
+		}
+		if ((retval = nc_inq_vardimid(ncid, dim_id, &tmp))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension size cannot be loaded: %s\n", nc_strerror(retval));
+			return OPH_NC_ERROR;
+		}
 		size_t lenp;
-		if (nc_inq_dimlen(ncid, dim_id, &lenp)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension size cannot be loaded\n");
+		if ((retval = nc_inq_dimlen(ncid, tmp, &lenp))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension size cannot be loaded: %s\n", nc_strerror(retval));
 			return OPH_NC_ERROR;
 		}
 		dim_size = lenp;
@@ -6298,10 +6311,10 @@ int update_dim_with_nc_metadata2(ophidiadb * oDB, oph_odb_dimension * time_dim, 
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_NC_ATTRIBUTE_ERROR);
 						break;
 					}
+					if (dim_id)
+						*dim_id = varid;
 				} else
 					varid = NC_GLOBAL;
-				if (dim_id)
-					*dim_id = varid;
 
 				if (nc_inq_atttype(ncid, varid, key, &xtype)) {
 					continue;

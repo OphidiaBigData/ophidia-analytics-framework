@@ -1082,15 +1082,18 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	// Load data regarding more files
 	int time_dim_id[((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num];
+	for (i = 0; i < measure->number_src_path; ++i)
+		time_dim_id[i] = NC_GLOBAL;
 	if (time_dims) {
 		ophidiadb *oDB = &((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->oDB;
-		for (i = 0; i < measure->number_src_path; ++i)
-			if (update_dim_with_nc_metadata2
-			    (oDB, time_dims + i, ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->id_vocabulary, OPH_GENERIC_CONTAINER_ID, ncids[i], time_dim_id + i))
+		int id_vocabulary = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->id_vocabulary;
+		for (i = 0; i < measure->number_src_path; ++i) {
+			if (update_dim_with_nc_metadata2(oDB, time_dims + i, id_vocabulary, OPH_GENERIC_CONTAINER_ID, ncids[i], time_dim_id + i) || (time_dim_id[i] < 0))
 				break;
+		}
 		if (i < measure->number_src_path) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "This behaivior is forbidden\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "This behaivior is forbidden\n");
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in detecting time dimension\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Error in detecting time dimension\n");
 			free(time_dims);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
