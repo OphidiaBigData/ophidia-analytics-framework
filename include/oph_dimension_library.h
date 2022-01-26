@@ -62,6 +62,9 @@
 #define OPH_DIM_SUBSET_SEPARATOR	OPH_DIM_SUBSET_SEPARATOR1"_"
 #define OPH_DIM_SUBSET_SEPARATOR2	':'
 
+#define OPH_DIM_DATA_FORMAT_CHECK	'%'
+#define OPH_DIM_DATA_DEFAULT		"1900-01-01 00:00:00"
+
 /**
  * \brief Function to read dimension info from configuration file
  * \param db Pointer to allocated db_instance structure
@@ -350,5 +353,7 @@ int oph_dim_get_time_string_of(char *dim_row, unsigned int kk, oph_odb_dimension
  * \return 0 if successfull, -1 otherwise
  */
 int oph_dim_copy_into_dimension_table(oph_odb_db_instance * db, char *from_dimension_table_name, char *to_dimension_table_name, int *dimension_id);
+
+int oph_dim_convert_data(oph_odb_dimension * dim, int size, char *dim_array);
 
 #endif
