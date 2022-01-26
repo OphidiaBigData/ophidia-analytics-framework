@@ -399,10 +399,12 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * 
 
 int oph_esdm_get_dim_array(int id_container, esdm_dataset_t * dataset, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, int start_index, int end_index, char **dim_array)
 {
-	if (!dataset || !dim_type || !dim_size || !dim_array) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+	if (!dim_type || !dim_size || !dim_array) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter %d\n", dim_id);
 		return OPH_ESDM_ERROR;
 	}
+	if (!dataset)
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "Return an array of integers\n");
 	*dim_array = NULL;
 
 	//Assume that the coordinate variable related to a dimension depends by one dimension only (Ex. lat(lat) not lat(x,y))  
@@ -441,7 +443,7 @@ int oph_esdm_get_dim_array(int id_container, esdm_dataset_t * dataset, int dim_i
 		return OPH_ESDM_ERROR;
 	}
 
-	if (dim_id >= 0) {
+	if (dataset && (dim_id >= 0)) {
 
 		esdm_type_t type_nc = SMD_DTYPE_UNKNOWN;
 		if (oph_esdm_get_esdm_type((char *) dim_type, &type_nc)) {
