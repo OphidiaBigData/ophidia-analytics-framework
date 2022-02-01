@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -150,7 +150,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!strcmp(value, OPH_COMMON_YES_VALUE))
 		((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->export_metadata = 1;
 
-	if (handle->proc_rank == 0) {
+	if (!handle->proc_rank) {
 		//Only master process has to initialize and open connection to management OphidiaDB
 		ophidiadb *oDB = &((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->oDB;
 		oph_odb_init_ophidiadb(oDB);
@@ -302,7 +302,7 @@ int task_init(oph_operator_struct * handle)
 	id_string[0][0] = 0;
 
 	char *stream_broad = 0;
-	if (handle->proc_rank == 0) {
+	if (!handle->proc_rank) {
 
 		MYSQL_RES *dim_rows = NULL;
 		MYSQL_ROW row;
@@ -390,7 +390,7 @@ int task_init(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 	}
 
-	if (handle->proc_rank != 0) {
+	if (handle->proc_rank) {
 		if (!(((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->fragment_ids = (char *) strndup(id_string[0], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTESDM_MEMORY_ERROR_INPUT,
@@ -521,7 +521,7 @@ int task_distribute(oph_operator_struct * handle)
 			((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->fragment_id_start_position = -1;
 	}
 
-	if (((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0)
+	if (handle->proc_rank && (((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0))
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	//Partition fragment relative index string
@@ -552,7 +552,7 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
-	if (((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0 && handle->proc_rank != 0)
+	if (handle->proc_rank && (((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0))
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	if (((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->cached_flag)
@@ -1828,7 +1828,7 @@ int env_unset(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	//Only master process has to close and release connection to management OphidiaDB
-	if (handle->proc_rank == 0) {
+	if (!handle->proc_rank) {
 		oph_odb_disconnect_from_ophidiadb(&((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->oDB);
 		oph_odb_free_ophidiadb(&((OPH_EXPORTESDM_operator_handle *) handle->operator_handle)->oDB);
 	}
