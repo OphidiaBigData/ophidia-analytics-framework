@@ -1773,7 +1773,7 @@ int task_execute(oph_operator_struct * handle)
 						count[inc] = 1;
 					}
 					//Implicit dimensions: the entire array from the beginning
-					for (inc = nexp; inc < num_of_dims; inc++) {
+					for (; inc < num_of_dims; inc++) {
 						start[inc] = 0;
 						count[inc] = dims[inc].dimsize;
 					}
