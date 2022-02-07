@@ -78,7 +78,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->compressed = 0;
 	((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->check_exp_dim = 0;
 	((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->fragment_ids = NULL;
-	((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->ncid = 0;
 	((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->id_job = 0;
 	((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->objkeys_num = -1;
@@ -423,9 +422,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 	// TODO: use order in nc file, but OPH_IMPORTNC exploits user data
 	level = 1;
-	for (i = measure->nexp; i < measure->ndims; i++) {
-		measure->dims_type[i] = 0;
+	for (; i < measure->ndims; i++) {
 		measure->dims_oph_level[i] = level++;
+		measure->dims_type[i] = 0;
 	}
 
 //ADDED TO MANAGE SUBSETTED IMPORT
@@ -482,7 +481,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
-	short int issubset = 0;
+	char issubset = 0;
 	if (strncmp(value, OPH_COMMON_NONE_FILTER, OPH_TP_TASKLEN)) {
 		issubset = 1;
 		if (oph_tp_parse_multiple_value_param(value, &sub_dims, &number_of_sub_dims)) {
@@ -505,8 +504,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
-	short int isfilter = 0;
-
+	char isfilter = 0;
 	if (strncmp(value, OPH_COMMON_ALL_FILTER, OPH_TP_TASKLEN)) {
 		isfilter = 1;
 		if (oph_tp_parse_multiple_value_param(value, &sub_filters, &number_of_sub_filters)) {
@@ -588,7 +586,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (tf >= 0) {
 		oph_odb_dimension dim;
 		oph_odb_dimension *time_dim = &dim, *tot_dims = NULL;
-
 
 		size_t packet_size = sizeof(oph_odb_dimension);
 		char buffer[packet_size];
@@ -864,7 +861,6 @@ int task_init(oph_operator_struct * handle)
 
 		int id_container_in = ((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->id_input_container;
 		int last_insertd_id = 0;
-		int ncid = ((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->ncid;
 		int i;
 		int imp_ndim = 0;
 
@@ -892,8 +888,14 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 
+		if (measure->ndims != number_of_dimensions) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "NetCDF dimension number doesn't match with specified datacube dimension number\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_INPUT_DIMENSION_MISMATCH, "number");
+			goto __OPH_EXIT_1;
+		}
+
 		ndim = number_of_dimensions;
-		measure_stream = (int *) malloc((3 + 3 * ndim) * sizeof(int));
+		measure_stream = (int *) malloc((3 * ndim) * sizeof(int));
 		if (!measure_stream) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_MEMORY_ERROR_INPUT, "measure structure");
@@ -909,11 +911,10 @@ int task_init(oph_operator_struct * handle)
 			//Count number of implicit dimensions
 			if (!cubedims[i].explicit_dim)
 				imp_ndim++;
-			measure_stream[3 + i] = cubedims[i].level;
-			measure_stream[3 + i + number_of_dimensions] = cubedims[i].size;
-			measure_stream[3 + i + 2 * number_of_dimensions] = cubedims[i].explicit_dim;
+			measure_stream[i] = cubedims[i].level;
+			measure_stream[i + number_of_dimensions] = cubedims[i].size;
+			measure_stream[i + 2 * number_of_dimensions] = cubedims[i].explicit_dim;
 		}
-		measure_stream[2] = number_of_dimensions - imp_ndim;
 
 		//Load dimension table database infos and connect
 		oph_odb_db_instance db_;
@@ -1051,8 +1052,6 @@ int task_init(oph_operator_struct * handle)
 		//Read cube - dimension relation rows
 		for (l = 0; l < number_of_dimensions; l++) {
 
-			tmp_dims_id[l] = l;	// TODO: to be checked
-
 			//Modified to allow subsetting
 			for (i = 0; i < measure->ndims; i++)
 				if (!strncmp(dim[l].dimension_name, measure->dims_name[i], OPH_ODB_DIM_DIMENSION_SIZE))
@@ -1064,6 +1063,7 @@ int task_init(oph_operator_struct * handle)
 				oph_dim_unload_dim_dbinstance(db_dimension);
 				goto __OPH_EXIT_1;
 			}
+			tmp_dims_id[l] = i;	// TODO: to be checked
 
 			tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
 
@@ -1077,7 +1077,7 @@ int task_init(oph_operator_struct * handle)
 					goto __OPH_EXIT_1;
 				}
 			} else
-				measure_stream[3 + number_of_dimensions + l] = tmp_var.varsize;
+				measure_stream[number_of_dimensions + l] = tmp_var.varsize;
 
 			if (!measure->dim_dataset[l])
 				if ((ret = esdm_dataset_open(measure->container, measure->dims_name[l], ESDM_MODE_FLAG_READ, measure->dim_dataset + l))) {
@@ -1360,55 +1360,8 @@ int task_init(oph_operator_struct * handle)
 			oph_dim_unload_dim_dbinstance(db_dimension);
 			goto __OPH_EXIT_1;
 		}
-		//retrieve measure id
-		if ((retval = nc_inq_varid(ncid, cube.measure, &(tmp_var.varid)))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", "");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_DIM_READ_ERROR, "");
-			oph_odb_cube_free_datacube(&cube);
-			oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-			oph_dim_unload_dim_dbinstance(db_dimension);
-			goto __OPH_EXIT_1;
-		}
-		measure_stream[0] = tmp_var.varid;
-		nc_type tmp_nc;
-		oph_nc_get_nc_type(cube.measure_type, &tmp_nc);
-		measure_stream[1] = (short int) tmp_nc;
-
-		if ((retval = nc_inq_varndims(ncid, tmp_var.varid, &(tmp_var.ndims)))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", "");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_DIM_READ_ERROR, "");
-			oph_odb_cube_free_datacube(&cube);
-			oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-			oph_dim_unload_dim_dbinstance(db_dimension);
-			goto __OPH_EXIT_1;
-		}
-		if (tmp_var.ndims != number_of_dimensions) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "NetCDF dimension number doesn't match with specified datacube dimension number\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_INPUT_DIMENSION_MISMATCH, "number");
-			oph_odb_cube_free_datacube(&cube);
-			oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-			oph_dim_unload_dim_dbinstance(db_dimension);
-			goto __OPH_EXIT_1;
-		}
-		tmp_var.dims_id = malloc(tmp_var.ndims * sizeof(int));
-		if (!(tmp_var.dims_id)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "NetCDF dimension number doesn't match with specified datacube dimension number\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_INPUT_DIMENSION_MISMATCH, "number");
-			oph_odb_cube_free_datacube(&cube);
-			oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-			oph_dim_unload_dim_dbinstance(db_dimension);
-			goto __OPH_EXIT_1;
-		}
-		if ((retval = nc_inq_vardimid(ncid, tmp_var.varid, tmp_var.dims_id))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "NetCDF dimension number doesn't match with specified datacube dimension number\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_INPUT_DIMENSION_MISMATCH, "number");
-			oph_odb_cube_free_datacube(&cube);
-			oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-			oph_dim_unload_dim_dbinstance(db_dimension);
-			goto __OPH_EXIT_1;
-		}
 		//Reorder measure_stream to match nc file order
-		int j, p;
+		int j;
 		int *swap_value = (int *) malloc((3 * ndim) * sizeof(int));
 		if (!swap_value) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -1420,22 +1373,16 @@ int task_init(oph_operator_struct * handle)
 		}
 
 		for (j = 0; j < number_of_dimensions; j++) {
-			for (p = 0; p < number_of_dimensions; p++) {
-				if (tmp_dims_id[j] == tmp_var.dims_id[p]) {
-					swap_value[p] = (int) measure_stream[3 + j];
-					swap_value[p + number_of_dimensions] = (int) measure_stream[3 + j + number_of_dimensions];
-					swap_value[p + 2 * number_of_dimensions] = (int) measure_stream[3 + j + 2 * number_of_dimensions];
-				}
-			}
+			swap_value[tmp_dims_id[j]] = (int) measure_stream[j];
+			swap_value[tmp_dims_id[j] + number_of_dimensions] = (int) measure_stream[j + number_of_dimensions];
+			swap_value[tmp_dims_id[j] + 2 * number_of_dimensions] = (int) measure_stream[j + 2 * number_of_dimensions];
 		}
 		for (j = 0; j < number_of_dimensions; j++) {
-			measure_stream[3 + j] = (int) swap_value[j];
-			measure_stream[3 + j + number_of_dimensions] = (int) swap_value[j + number_of_dimensions];
-			measure_stream[3 + j + 2 * number_of_dimensions] = (int) swap_value[j + 2 * number_of_dimensions];
+			measure_stream[j] = (int) swap_value[j];
+			measure_stream[j + number_of_dimensions] = (int) swap_value[j + number_of_dimensions];
+			measure_stream[j + 2 * number_of_dimensions] = (int) swap_value[j + 2 * number_of_dimensions];
 		}
 		free(swap_value);
-		free(tmp_var.dims_id);
-		tmp_var.dims_id = NULL;
 		free(tmp_dims_id);
 		tmp_dims_id = NULL;
 		//INSERT of implicit dimensions
@@ -1683,10 +1630,10 @@ int task_init(oph_operator_struct * handle)
 		((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->id_output_datacube = *((int *) id_string[1]);
 		((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->compressed = *((int *) id_string[2]);
 		ndim = *((int *) id_string[3]);
-		measure_stream = (int *) malloc((3 + 3 * ndim) * sizeof(int));
+		measure_stream = (int *) malloc((3 * ndim) * sizeof(int));
 	}
 
-	MPI_Bcast(measure_stream, 3 + 3 * ndim, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(measure_stream, 3 * ndim, MPI_INT, 0, MPI_COMM_WORLD);
 
 	// Previous data are not considered
 	if (measure->dims_length)
@@ -1725,14 +1672,10 @@ int task_init(oph_operator_struct * handle)
 
 	int l;
 	for (l = 0; l < ndim; l++) {
-		measure->dims_length[l] = (size_t) measure_stream[3 + ndim + l];
-		measure->dims_type[l] = (short int) measure_stream[3 + 2 * ndim + l];
-		measure->dims_oph_level[l] = (short int) measure_stream[3 + l];
+		measure->dims_oph_level[l] = (short int) measure_stream[l];
+		measure->dims_length[l] = (size_t) measure_stream[ndim + l];
+		measure->dims_type[l] = (short int) measure_stream[2 * ndim + l];
 	}
-	measure->varid = measure_stream[0];
-	measure->vartype = measure_stream[1];
-	measure->nexp = measure_stream[2];
-	measure->ndims = ndim;
 
 	if (measure_stream)
 		free(measure_stream);
@@ -1920,8 +1863,8 @@ int task_execute(oph_operator_struct * handle)
 					break;
 				}
 				//Append fragment
-				if (oph_nc_append_fragment_from_nc2
-				    (oper_handle->server, &(frags.value[k]), &tmp_frag, oper_handle->ncid, oper_handle->compressed, (ESDM_var *) & (oper_handle->measure), oper_handle->memory_size)) {
+				if (oph_esdm_append_fragment_from_esdm2
+				    (oper_handle->server, &(frags.value[k]), &tmp_frag, oper_handle->compressed, (ESDM_var *) & (oper_handle->measure), oper_handle->memory_size)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATESDM_FRAG_POPULATE_ERROR, tmp_frag.fragment_name, "");
 					result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
