@@ -1079,8 +1079,8 @@ int task_init(oph_operator_struct * handle)
 			} else
 				measure_stream[number_of_dimensions + l] = tmp_var.varsize;
 
-			if (!measure->dim_dataset[l])
-				if ((ret = esdm_dataset_open(measure->container, measure->dims_name[l], ESDM_MODE_FLAG_READ, measure->dim_dataset + l))) {
+			if (!measure->dim_dataset[i])
+				if ((ret = esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -1088,8 +1088,8 @@ int task_init(oph_operator_struct * handle)
 					goto __OPH_EXIT_1;
 				}
 
-			if (!measure->dim_dspace[l])
-				if ((ret = esdm_dataset_get_dataspace(measure->dim_dataset[l], measure->dim_dspace + l))) {
+			if (!measure->dim_dspace[i])
+				if ((ret = esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -1097,7 +1097,7 @@ int task_init(oph_operator_struct * handle)
 					goto __OPH_EXIT_1;
 				}
 
-			if (oph_esdm_compare_types(id_container_in, measure->dim_dspace[l]->type, dim[l].dimension_type)) {
+			if (oph_esdm_compare_types(id_container_in, measure->dim_dspace[i]->type, dim[l].dimension_type)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension type in NC file does not correspond to the one stored in OphidiaDB\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_DIM_TYPE_MISMATCH_ERROR, dim[l].dimension_name);
 				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -1143,7 +1143,7 @@ int task_init(oph_operator_struct * handle)
 
 				char *dim_array = NULL;
 				if (oph_esdm_get_dim_array
-				    (id_container_in, measure->dim_dataset[l], l, dim[l].dimension_type, tmp_var.varsize, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index), &dim_array)) {
+				    (id_container_in, measure->dim_dataset[i], l, dim[l].dimension_type, tmp_var.varsize, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index), &dim_array)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", "");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_DIM_READ_ERROR, "");
 					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -1324,14 +1324,13 @@ int task_init(oph_operator_struct * handle)
 				char *dim_array = NULL;
 
 				if (oph_esdm_get_dim_array
-				    (id_container_in, measure->dim_dataset[l], l, dim[l].dimension_type, dim_inst[l].size, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index), &dim_array)) {
+				    (id_container_in, measure->dim_dataset[i], l, dim[l].dimension_type, dim_inst[l].size, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index), &dim_array)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations: %s\n", "");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_DIM_READ_ERROR, "");
 					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 					oph_dim_unload_dim_dbinstance(db_dimension);
 					goto __OPH_EXIT_1;
 				}
-
 				if (oph_dim_compare_dimension(db_dimension, label_dimension_table_name, dim[l].dimension_type, dim_inst[l].size, dim_array, dim_inst[l].fk_id_dimension_label, &match)
 				    || match) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Input dimension '%s' doesn't match with specified container/grid dimensions\n", dim[l].dimension_name);
