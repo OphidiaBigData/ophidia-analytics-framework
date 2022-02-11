@@ -37,10 +37,15 @@
 #define OPH_ESDM_FUNCTION_MUL_SCALAR "mul_scalar"
 
 #define OPH_ESDM_FUNCTION_ABS "abs"
+#define OPH_ESDM_FUNCTION_SQR "sqr"
 #define OPH_ESDM_FUNCTION_SQRT "sqrt"
 #define OPH_ESDM_FUNCTION_CEIL "ceil"
 #define OPH_ESDM_FUNCTION_FLOOR "floor"
+#define OPH_ESDM_FUNCTION_ROUND "round"
+#define OPH_ESDM_FUNCTION_INT "int"
+#define OPH_ESDM_FUNCTION_NINT "nint"
 
+#define OPH_ESDM_FUNCTION_POW "pow"
 #define OPH_ESDM_FUNCTION_EXP "exp"
 #define OPH_ESDM_FUNCTION_LOG "log"
 #define OPH_ESDM_FUNCTION_LOG10 "log10"
@@ -54,6 +59,9 @@
 #define OPH_ESDM_FUNCTION_SINH "sinh"
 #define OPH_ESDM_FUNCTION_COSH "cosh"
 #define OPH_ESDM_FUNCTION_TANH "tanh"
+
+#define OPH_ESDM_FUNCTION_RECI "reci"
+#define OPH_ESDM_FUNCTION_NOT "not"
 
 typedef struct _oph_esdm_stream_data_t {
 	char *operation;
