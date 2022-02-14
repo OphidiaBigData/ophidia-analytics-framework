@@ -88,6 +88,7 @@ void release_main()
 int select_where_callback(void *NotUsed, int argc, char **argv, char **azColName)
 {
 	UNUSED(NotUsed);
+	UNUSED(argc);
 	UNUSED(azColName);
 
 	if (argv[0])
@@ -100,6 +101,7 @@ int select_where_callback(void *NotUsed, int argc, char **argv, char **azColName
 
 int check_ifpresent_callback(void *result, int argc, char **argv, char **azColName)
 {
+	UNUSED(argc);
 	UNUSED(azColName);
 
 	int *res = (int *) result;

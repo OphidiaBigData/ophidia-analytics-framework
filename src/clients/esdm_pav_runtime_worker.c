@@ -465,7 +465,7 @@ int process_message(amqp_envelope_t full_message)
 	PID_array[thread_param] = 0;
 	pthread_rwlock_unlock(&thread_lock_list[thread_param]);
 
-	status = status = amqp_basic_publish(conn_thread_publish_list[thread_param], channel, amqp_cstring_bytes(""), amqp_cstring_bytes(update_queue_name), 0,	// mandatory (message must be routed to a queue)
+	status = amqp_basic_publish(conn_thread_publish_list[thread_param], channel, amqp_cstring_bytes(""), amqp_cstring_bytes(update_queue_name), 0,	// mandatory (message must be routed to a queue)
 					     0,	// immediate (message must be delivered to a consumer immediately)
 					     &props,	// properties
 					     amqp_cstring_bytes(update_message_3));
