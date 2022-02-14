@@ -85,6 +85,9 @@ LIB     @MYSQL_LDFLAGS@
 [OPH_IMPORTNC2]
 @DRIVER_PATH@/liboph_importnc2operator.so
 LIB     @MYSQL_LDFLAGS@
+[OPH_IMPORTNCS]
+@DRIVER_PATH@/liboph_importncsoperator.so
+LIB     @MYSQL_LDFLAGS@
 [OPH_CONCATNC]
 @DRIVER_PATH@/liboph_concatncoperator.so
 LIB     @MYSQL_LDFLAGS@

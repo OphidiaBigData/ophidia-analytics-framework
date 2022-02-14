@@ -91,6 +91,11 @@ struct _NETCDF_var {
 	char *dims_unlim;
 	short int *dims_order;
 	int *oph_dims_id;
+	int dim_unlim;
+	int *order_src_path;
+	int number_src_path;
+	char *dim_unlim_array;
+	char *base_time;
 };
 typedef struct _NETCDF_var NETCDF_var;
 
@@ -284,6 +289,7 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragm
  * \return 0 if successfull
  */
 int oph_nc_get_dim_array(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array);
+int oph_nc_get_dim_array_and_size(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array, size_t * size);
 
 /**
  * \brief Retrieve a dimension coordinated variable data from a NetCDF file allowing subsetting
@@ -313,7 +319,7 @@ int oph_nc_get_dim_array2(int id_container, int ncid, int dim_id, const char dim
  * \param coord_index Index of the first value greater than "value"
  * \return 0 if successfull
  */
-int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_type, int dim_size, char *value, int want_start, double offset, int *order, int *coord_index, char out_of_bound);
+int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_type, int dim_size, char *value, int want_start, double offset, int *valorder, int *coord_index);
 
 /**
  * \brief Compare nc type with c type
@@ -346,7 +352,8 @@ int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE
  */
 int oph_nc_get_row_from_nc(int ncid, int array_length, NETCDF_var * measure, unsigned long idDim, char **row);
 
-int oph_nc_update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid);
+int update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid);
+int update_dim_with_nc_metadata2(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid, int *dim_id);
 
 int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var * measure, int is_index, int ncid, double offset, char out_of_bound);
 

@@ -80,6 +80,7 @@
 #define OPH_IOSERVER_SQ_ARG_DIM_INDEX   "dim_index"
 #define OPH_IOSERVER_SQ_ARG_DIM_START   "dim_start"
 #define OPH_IOSERVER_SQ_ARG_DIM_END     "dim_end"
+#define OPH_IOSERVER_SQ_ARG_DIM_UNLIM   "dim_unlim"
 #define OPH_IOSERVER_SQ_ARG_MEASURE_TYPE    "measure_type"
 #define OPH_IOSERVER_SQ_ARG_ARRAY_LEN 	"array_len"
 #define OPH_IOSERVER_SQ_ARG_ALGORITHM 	"algorithm"

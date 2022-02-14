@@ -2871,11 +2871,11 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fra
 	if (compressed == 1) {
 		query_size =
 		    snprintf(NULL, 0, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_YES, tuplexfrag_number, frag->key_start, "", "", "",
-			     "") + (n1 + n2 + n3 + n4 - 4) + 1;
+			     "", measure->dim_unlim) + (n1 + n2 + n3 + n4 - 4) + 1;
 	} else {
 		query_size =
 		    snprintf(NULL, 0, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, frag->key_start, "", "", "",
-			     "") + (n1 + n2 + n3 + n4 - 4) + 1;
+			     "", measure->dim_unlim) + (n1 + n2 + n3 + n4 - 4) + 1;
 	}
 
 	char *query_string = (char *) malloc(query_size * sizeof(char));
@@ -2936,10 +2936,10 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fra
 	int n = 0;
 	if (compressed == 1) {
 		n = snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_YES, tuplexfrag_number, frag->key_start, dims_type_string,
-			     dims_index_string, dims_start_string, dims_end_string);
+			     dims_index_string, dims_start_string, dims_end_string, measure->dim_unlim);
 	} else {
 		n = snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, frag->key_start, dims_type_string,
-			     dims_index_string, dims_start_string, dims_end_string);
+			     dims_index_string, dims_start_string, dims_end_string, measure->dim_unlim);
 	}
 	if (n >= query_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
@@ -5589,37 +5589,66 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragm
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_get_dim_array(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array)
+int oph_nc_get_dim_array_and_size(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array, size_t * size)
 {
-	if (!ncid || !dim_type || !dim_size || !dim_array) {
+	if (!ncid || !dim_type || !dim_array) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_NC_ERROR;
 	}
 	*dim_array = NULL;
 
-	void *binary_dim = NULL;
+	if (!dim_size) {
+		if (dim_id < 0) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension size cannot be loaded\n");
+			return OPH_NC_ERROR;
+		}
+		int retval = 0, tmp = 0;
+		if ((retval = nc_inq_varndims(ncid, dim_id, &tmp))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number od dimension of variable identified by %d cannot be loaded: %s\n", dim_id, nc_strerror(retval));
+			return OPH_NC_ERROR;
+		}
+		if (tmp != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Identifier %d is not a dimension\n", dim_id);
+			return OPH_NC_ERROR;
+		}
+		if ((retval = nc_inq_vardimid(ncid, dim_id, &tmp))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension size cannot be loaded: %s\n", nc_strerror(retval));
+			return OPH_NC_ERROR;
+		}
+		size_t lenp;
+		if ((retval = nc_inq_dimlen(ncid, tmp, &lenp))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension size cannot be loaded: %s\n", nc_strerror(retval));
+			return OPH_NC_ERROR;
+		}
+		dim_size = lenp;
+	}
+
+	size_t _size;
 	if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-		binary_dim = (void *) malloc(dim_size * sizeof(char));
+		_size = dim_size * sizeof(char);
 	else if (!strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-		binary_dim = (void *) malloc(dim_size * sizeof(short));
+		_size = dim_size * sizeof(short);
 	else if (!strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-		binary_dim = (void *) malloc(dim_size * sizeof(int));
+		_size = dim_size * sizeof(int);
 	else if (!strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-		binary_dim = (void *) malloc(dim_size * sizeof(float));
+		_size = dim_size * sizeof(float);
 	else if (!strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-		binary_dim = (void *) malloc(dim_size * sizeof(double));
+		_size = dim_size * sizeof(double);
 	else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-		binary_dim = (void *) malloc(dim_size * sizeof(long long));
+		_size = dim_size * sizeof(long long);
 	else {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
 		return OPH_NC_ERROR;
 	}
+	void *binary_dim = (void *) malloc(_size);
 	if (!binary_dim) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Memory error\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Memory error\n");
 		return OPH_NC_ERROR;
 	}
+	if (size)
+		*size = _size;
 
 	if (dim_id >= 0) {
 
@@ -5712,11 +5741,16 @@ int oph_nc_get_dim_array(int id_container, int ncid, int dim_id, const char dim_
 	return OPH_NC_SUCCESS;
 }
 
+int oph_nc_get_dim_array(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array)
+{
+	return oph_nc_get_dim_array_and_size(id_container, ncid, dim_id, dim_type, dim_size, dim_array, NULL);
+}
+
 /*
 Original meaning of want_start was different: 0 for the end index, <>0 for the start index.
 Now it means: 0 for the end index, <0 for the start index, >0 for the nearest index.
 */
-int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_type, int dim_size, char *value, int want_start, double offset, int *valorder, int *coord_index, char out_of_bound)
+int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_type, int dim_size, char *value, int want_start, double offset, int *valorder, int *coord_index)
 {
 	if (!ncid || !dim_size || !value || !coord_index || !valorder) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -5728,7 +5762,7 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 	//I need to evaluate the order of the dimension values: ascending or descending
 	int order = 1;		//Default is ascending
 	int exact_value = 0;	//If I find the exact value
-	int i, end_dim_size = dim_size - 1;
+	int i;
 
 	if (dim_type == NC_INT) {
 		binary_dim = (void *) malloc(sizeof(int) * dim_size);
@@ -5743,18 +5777,8 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 		if (offset)
 			value_ += (int) (want_start ? -offset : offset);
 		//Check order of dimension values
-		if (array_val[0] > array_val[end_dim_size]) {	//Descending
+		if (array_val[0] > array_val[dim_size - 1])	//Descending
 			order = 0;
-			if (out_of_bound && (value_ <= array_val[0]) && (value_ >= array_val[end_dim_size]))
-				out_of_bound = 0;
-		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
-			out_of_bound = 0;
-		if (out_of_bound) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
-			free(binary_dim);
-			return OPH_NC_BOUND_ERROR;
-		}
 		if (order) {
 			//Ascending
 			for (i = 0; i < dim_size; i++) {
@@ -5764,7 +5788,10 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 					break;
 				}
 			}
-			if (!exact_value) {
+			if (exact_value) {
+				// Nothing to do
+				// i is the index I need
+			} else {
 				if (nearest_point) {
 					if ((i > 0) && ((i == dim_size) || (value_ - array_val[i - 1] < array_val[i] - value_)))
 						i--;
@@ -5784,7 +5811,10 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 					break;
 				}
 			}
-			if (!exact_value) {
+			if (exact_value) {
+				// Nothing to do
+				// i is the index I need
+			} else {
 				if (nearest_point) {
 					if ((i < dim_size - 1) && ((i < 0) || (value_ - array_val[i + 1] < array_val[i] - value_)))
 						i++;
@@ -5809,18 +5839,8 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 		if (offset)
 			value_ += (char) (want_start ? -offset : offset);
 		//Check order of dimension values
-		if (array_val[0] > array_val[end_dim_size]) {	//Descending
+		if (array_val[0] > array_val[dim_size - 1])	//Descending
 			order = 0;
-			if (out_of_bound && (value_ <= array_val[0]) && (value_ >= array_val[end_dim_size]))
-				out_of_bound = 0;
-		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
-			out_of_bound = 0;
-		if (out_of_bound) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
-			free(binary_dim);
-			return OPH_NC_BOUND_ERROR;
-		}
 		if (order) {
 			//Ascending
 			for (i = 0; i < dim_size; i++) {
@@ -5830,7 +5850,10 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 					break;
 				}
 			}
-			if (!exact_value) {
+			if (exact_value) {
+				// Nothing to do
+				// i is the index I need
+			} else {
 				if (nearest_point) {
 					if ((i > 0) && ((i == dim_size) || (value_ - array_val[i - 1] < array_val[i] - value_)))
 						i--;
@@ -5850,7 +5873,10 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 					break;
 				}
 			}
-			if (!exact_value) {
+			if (exact_value) {
+				// Nothing to do
+				// i is the index I need
+			} else {
 				if (nearest_point) {
 					if ((i < dim_size - 1) && ((i < 0) || (value_ - array_val[i + 1] < array_val[i] - value_)))
 						i++;
@@ -5875,18 +5901,8 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 		if (offset)
 			value_ += (short) (want_start ? -offset : offset);
 		//Check order of dimension values
-		if (array_val[0] > array_val[end_dim_size]) {	//Descending
+		if (array_val[0] > array_val[dim_size - 1])	//Descending
 			order = 0;
-			if (out_of_bound && (value_ <= array_val[0]) && (value_ >= array_val[end_dim_size]))
-				out_of_bound = 0;
-		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
-			out_of_bound = 0;
-		if (out_of_bound) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
-			free(binary_dim);
-			return OPH_NC_BOUND_ERROR;
-		}
 		if (order) {
 			//Ascending
 			for (i = 0; i < dim_size; i++) {
@@ -5896,7 +5912,10 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 					break;
 				}
 			}
-			if (!exact_value) {
+			if (exact_value) {
+				// Nothing to do
+				// i is the index I need
+			} else {
 				if (nearest_point) {
 					if ((i > 0) && ((i == dim_size) || (value_ - array_val[i - 1] < array_val[i] - value_)))
 						i--;
@@ -5916,7 +5935,10 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 					break;
 				}
 			}
-			if (!exact_value) {
+			if (exact_value) {
+				// Nothing to do
+				// i is the index I need
+			} else {
 				if (nearest_point) {
 					if ((i < dim_size - 1) && ((i < 0) || (value_ - array_val[i + 1] < array_val[i] - value_)))
 						i++;
@@ -5941,18 +5963,8 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 		if (offset)
 			value_ += (float) (want_start ? -offset : offset);
 		//Check order of dimension values
-		if (array_val[0] > array_val[end_dim_size]) {	//Descending
+		if (array_val[0] > array_val[dim_size - 1])	//Descending
 			order = 0;
-			if (out_of_bound && (value_ <= array_val[0]) && (value_ >= array_val[end_dim_size]))
-				out_of_bound = 0;
-		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
-			out_of_bound = 0;
-		if (out_of_bound) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
-			free(binary_dim);
-			return OPH_NC_BOUND_ERROR;
-		}
 		if (order) {
 			//Ascending
 			for (i = 0; i < dim_size; i++) {
@@ -5962,7 +5974,8 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 					break;
 				}
 			}
-			if (!exact_value) {
+			if (exact_value) {
+			} else {
 				if (nearest_point) {
 					if ((i > 0) && ((i == dim_size) || (value_ - array_val[i - 1] < array_val[i] - value_)))
 						i--;
@@ -5982,7 +5995,8 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 					break;
 				}
 			}
-			if (!exact_value) {
+			if (exact_value) {
+			} else {
 				if (nearest_point) {
 					if ((i < dim_size - 1) && ((i < 0) || (value_ - array_val[i + 1] < array_val[i] - value_)))
 						i++;
@@ -6007,18 +6021,8 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 		if (offset)
 			value_ += want_start ? -offset : offset;
 		//Check order of dimension values
-		if (array_val[0] > array_val[end_dim_size]) {	//Descending
+		if (array_val[0] > array_val[dim_size - 1])	//Descending
 			order = 0;
-			if (out_of_bound && (value_ <= array_val[0]) && (value_ >= array_val[end_dim_size]))
-				out_of_bound = 0;
-		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
-			out_of_bound = 0;
-		if (out_of_bound) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
-			free(binary_dim);
-			return OPH_NC_BOUND_ERROR;
-		}
 		if (order) {
 			//Ascending
 			for (i = 0; i < dim_size; i++) {
@@ -6029,7 +6033,8 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 					break;
 				}
 			}
-			if (!exact_value) {
+			if (exact_value) {
+			} else {
 				if (nearest_point) {
 					if ((i > 0) && ((i == dim_size) || (value_ - array_val[i - 1] < array_val[i] - value_)))
 						i--;
@@ -6049,7 +6054,8 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 					break;
 				}
 			}
-			if (!exact_value) {
+			if (exact_value) {
+			} else {
 				if (nearest_point) {
 					if ((i < dim_size - 1) && ((i < 0) || (value_ - array_val[i + 1] < array_val[i] - value_)))
 						i++;
@@ -6074,18 +6080,8 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 		if (offset)
 			value_ += (long long) (want_start ? -offset : offset);
 		//Check order of dimension values
-		if (array_val[0] > array_val[end_dim_size]) {	//Descending
+		if (array_val[0] > array_val[dim_size - 1])	//Descending
 			order = 0;
-			if (out_of_bound && (value_ <= array_val[0]) && (value_ >= array_val[end_dim_size]))
-				out_of_bound = 0;
-		} else if (out_of_bound && (value_ >= array_val[0]) && (value_ <= array_val[end_dim_size]))
-			out_of_bound = 0;
-		if (out_of_bound) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Value out of the boundaries\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Value out of the boundaries\n");
-			free(binary_dim);
-			return OPH_NC_BOUND_ERROR;
-		}
 		if (order) {
 			//Ascending
 			for (i = 0; i < dim_size; i++) {
@@ -6095,7 +6091,8 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 					break;
 				}
 			}
-			if (!exact_value) {
+			if (exact_value) {
+			} else {
 				if (nearest_point) {
 					if ((i > 0) && ((i == dim_size) || (value_ - array_val[i - 1] < array_val[i] - value_)))
 						i--;
@@ -6115,7 +6112,8 @@ int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_ty
 					break;
 				}
 			}
-			if (!exact_value) {
+			if (exact_value) {
+			} else {
 				if (nearest_point) {
 					if ((i < dim_size - 1) && ((i < 0) || (value_ - array_val[i + 1] < array_val[i] - value_)))
 						i++;
@@ -6259,11 +6257,10 @@ int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid)
-{
-
 #ifdef OPH_MYSQL_SUPPORT
 
+int update_dim_with_nc_metadata2(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid, int *dim_id)
+{
 	MYSQL_RES *key_list = NULL;
 	MYSQL_ROW row = NULL;
 
@@ -6316,6 +6313,8 @@ int oph_nc_update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_NC_ATTRIBUTE_ERROR);
 						break;
 					}
+					if (dim_id)
+						*dim_id = varid;
 				} else
 					varid = NC_GLOBAL;
 
@@ -6419,7 +6418,12 @@ int oph_nc_update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var * measure, int is_index, int ncid, double offset, char out_of_bound)
+int update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid)
+{
+	return update_dim_with_nc_metadata2(oDB, time_dim, id_vocabulary, id_container_out, ncid, NULL);
+}
+
+int check_subset_string(char *curfilter, int i, NETCDF_var * measure, int is_index, int ncid, double offset)
 {
 	NETCDF_var tmp_var;
 	int ii, retval, dims_id[NC_MAX_VAR_DIMS], error = 0;
@@ -6486,7 +6490,7 @@ int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var * measure, int
 			int order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 			//Extract index of the point given the dimension value
 			if ((error = oph_nc_index_by_value
-			     (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], curfilter, want_start, 0, &order, &coord_index, out_of_bound))) {
+			     (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], curfilter, want_start, 0, &order, &coord_index))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
 				return error;
@@ -6592,7 +6596,7 @@ int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var * measure, int
 			int order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 			//Extract index of the point given the dimension value
 			if ((error = oph_nc_index_by_value
-			     (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], startfilter, want_start, offset, &order, &coord_index, out_of_bound))) {
+			     (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], startfilter, want_start, offset, &order, &coord_index))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING, nc_strerror(retval));
 				return error;
@@ -6610,7 +6614,7 @@ int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var * measure, int
 			order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 			//Extract index of the point given the dimension value
 			if ((error = oph_nc_index_by_value
-			     (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], endfilter, want_start, offset, &order, &coord_index, out_of_bound))) {
+			     (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], endfilter, want_start, offset, &order, &coord_index))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
 				return error;
