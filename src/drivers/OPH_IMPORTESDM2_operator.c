@@ -971,13 +971,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			// Let us assume that OPH_IN_PARAM_CALENDAR is only for time dimensions
 			if (!measure->dim_dataset[sub_to_dims[i]])
 				if ((esdm_dataset_open(measure->container, measure->dims_name[sub_to_dims[i]], ESDM_MODE_FLAG_READ, measure->dim_dataset + sub_to_dims[i]))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-					oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					if (offset)
-						free(offset);
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to read dimension information: dataset '%s' cannot be opened\n", measure->dims_name[i]);
+					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read dimension information: dataset '%s' cannot be opened\n",
+						measure->dims_name[i]);
+					continue;
 				}
 			if ((esdm_dataset_get_attributes(measure->dim_dataset[sub_to_dims[i]], &md))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering number of global attributes\n");
@@ -1116,8 +1113,27 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				dim.leap_year = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->leap_year;
 				dim.leap_month = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->leap_month;
 
-				if (!measure->dim_dataset[j])
-					if ((ret = esdm_dataset_open(measure->container, measure->dims_name[j], ESDM_MODE_FLAG_READ, measure->dim_dataset + j))) {
+				do {
+
+					if (!measure->dim_dataset[j])
+						if ((ret = esdm_dataset_open(measure->container, measure->dims_name[j], ESDM_MODE_FLAG_READ, measure->dim_dataset + j))) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: dataset '%s' cannot be opened\n", measure->dims_name[i]);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read dimension information: dataset '%s' cannot be opened\n",
+								measure->dims_name[i]);
+							strcpy(dim.dimension_type, OPH_DIM_INDEX_DATA_TYPE);
+							break;
+						}
+					if (!measure->dim_dspace[j])
+						if ((ret = esdm_dataset_get_dataspace(measure->dim_dataset[j], measure->dim_dspace + j))) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: data space cannot be created\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "data space cannot be created");
+							oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+							oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+							if (offset)
+								free(offset);
+							return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+						}
+					if (oph_esdm_set_esdm_type(dim.dimension_type, measure->dim_dspace[j]->type)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 						oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -1127,26 +1143,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 					}
 
-				if (!measure->dim_dspace[j])
-					if ((ret = esdm_dataset_get_dataspace(measure->dim_dataset[j], measure->dim_dspace + j))) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
-						oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-						oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-						if (offset)
-							free(offset);
-						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-					}
-
-				if (oph_esdm_set_esdm_type(dim.dimension_type, measure->dim_dspace[j]->type)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-					oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					if (offset)
-						free(offset);
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
+				} while (0);
 
 				j = 0;
 				strncpy(dim.units, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->units, OPH_ODB_DIM_TIME_SIZE);
@@ -2017,25 +2014,30 @@ int task_init(oph_operator_struct * handle)
 
 			for (i = 0; i < measure->ndims; i++) {
 
-				if (!measure->dim_dataset[i])
-					if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
+				do {
+
+					if (!measure->dim_dataset[i])
+						if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to read dimension information: dataset '%s' cannot be opened\n", measure->dims_name[i]);
+							logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read dimension information: dataset '%s' cannot be opened\n",
+								measure->dims_name[i]);
+							strcpy(dim.dimension_type, OPH_DIM_INDEX_DATA_TYPE);
+							break;
+						}
+					if (!measure->dim_dspace[i])
+						if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: data space cannot be converted\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "data space cannot be converted");
+							goto __OPH_EXIT_1;
+						}
+					if (oph_esdm_set_esdm_type(dim.dimension_type, measure->dim_dspace[i]->type)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 						goto __OPH_EXIT_1;
 					}
 
-				if (!measure->dim_dspace[i])
-					if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
-						goto __OPH_EXIT_1;
-					}
+				} while (0);
 
-				if (oph_esdm_set_esdm_type(dim.dimension_type, measure->dim_dspace[i]->type)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
-					goto __OPH_EXIT_1;
-				}
 				// Load dimension names
 				strncpy(dim.dimension_name, measure->dims_name[i], OPH_ODB_DIM_DIMENSION_SIZE);
 				dim.dimension_name[OPH_ODB_DIM_DIMENSION_SIZE] = 0;
@@ -2260,36 +2262,37 @@ int task_init(oph_operator_struct * handle)
 							curdimlength = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
 						if (dim_inst[j].size == curdimlength && dim_inst[j].concept_level == measure->dims_concept_level[i]) {
 
-							if (!measure->dim_dataset[i])
-								if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
-									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-									logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
-									oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-									oph_dim_unload_dim_dbinstance(db_dimension);
-									free(dims);
-									free(dim_inst);
-									free(dimvar_ids);
-									goto __OPH_EXIT_1;
-								}
-							if (!measure->dim_dspace[i])
-								if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
-									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-									logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
-									oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-									oph_dim_unload_dim_dbinstance(db_dimension);
-									free(dims);
-									free(dim_inst);
-									free(dimvar_ids);
-									goto __OPH_EXIT_1;
-								}
+							do {
+
+								if (!measure->dim_dataset[i])
+									if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
+										pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
+										logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
+										break;
+									}
+								if (!measure->dim_dspace[i])
+									if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
+										logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
+										oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+										oph_dim_unload_dim_dbinstance(db_dimension);
+										free(dims);
+										free(dim_inst);
+										free(dimvar_ids);
+										goto __OPH_EXIT_1;
+									}
+
+							} while (0);
 
 							dimvar_ids[i] = i;
-							if ( /*(dimvar_ids[i] >= 0) && */ oph_esdm_compare_types(id_container_out, measure->dim_dspace[i]->type, dims[j].dimension_type)) {
+							if (	/*(dimvar_ids[i] >= 0) && */
+								   oph_esdm_compare_types(id_container_out, measure->dim_dataset[i] ? measure->dim_dspace[i]->type : OPH_DIM_INDEX_DATA_TYPE,
+											  dims[j].dimension_type)) {
 								pmesg(LOG_WARNING, __FILE__, __LINE__, "Dimension type in NC file doesn't correspond to the one stored in OphidiaDB\n");
 								logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
 							}
 
-							if (measure->dim_dspace[i]->dims != 1) {
+							if (measure->dim_dspace[i] && (measure->dim_dspace[i]->dims != 1)) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
 								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_NOT_ALLOWED);
 								oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -2483,29 +2486,17 @@ int task_init(oph_operator_struct * handle)
 				varid = i;
 				if (!measure->dim_dataset[i])
 					if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
-						if (create_container) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
-							free(tot_dims);
-							free(dims);
-							free(dim_inst);
-							oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-							oph_dim_unload_dim_dbinstance(db_dimension);
-							free(dimvar_ids);
-							goto __OPH_EXIT_1;
-						} else {
-							varid = -1;
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Fill dimension '%s' with integers\n", measure->dims_name[i]);
-							logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, "Fill dimension '%s' with integers\n", measure->dims_name[i]);
-						}
+						varid = -1;
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "Fill dimension '%s' with integers\n", measure->dims_name[i]);
+						logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, "Fill dimension '%s' with integers\n", measure->dims_name[i]);
 					}
 				dimvar_ids[i] = varid;
 
 				if (varid >= 0) {
 					if (!measure->dim_dspace[i])
 						if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: data space cannot be created\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "data space cannot be created");
 							free(tot_dims);
 							free(dims);
 							free(dim_inst);
@@ -2979,12 +2970,10 @@ int task_init(oph_operator_struct * handle)
 
 				if (!measure->dim_dataset[ii])
 					if ((esdm_dataset_open(measure->container, measure->dims_name[ii], ESDM_MODE_FLAG_READ, measure->dim_dataset + ii))) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
-						hashtbl_destroy(key_tbl);
-						hashtbl_destroy(required_tbl);
-						free(dimvar_ids);
-						goto __OPH_EXIT_1;
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: dataset '%s' cannot be opened\n", measure->dims_name[i]);
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read dimension information: dataset '%s' cannot be opened\n",
+							measure->dims_name[i]);
+						continue;
 					}
 				if ((esdm_dataset_get_attributes(measure->dim_dataset[ii], &md))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering number of global attributes\n");
