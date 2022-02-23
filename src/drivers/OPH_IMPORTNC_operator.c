@@ -250,6 +250,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SRC_FILE_PATH);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	char *input = hashtbl_get(task_tbl, OPH_IN_PARAM_INPUT);
+	if (input && strlen(input))
+		value = input;
+	else if (!strlen(value)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "The param '%s' is mandatory; at least the param '%s' needs to be set\n", OPH_IN_PARAM_SRC_FILE_PATH, OPH_IN_PARAM_INPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_SRC_FILE_PATH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
 	if (!(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, value, "nc file path");
@@ -301,7 +309,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!strstr(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, "http://")
-	    && !strstr(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, "https://")) {
+	    && !strstr(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, "https://")
+	    && !strstr(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, OPH_ESDM_PREFIX)) {
 		char *pointer = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path;
 		while (pointer && (*pointer == ' '))
 			pointer++;
@@ -760,7 +769,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			free(tmp_concept_levels);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-	int unlimdimid;
+	int unlimdimid = -1;
 	if ((retval = nc_inq_unlimdim(ncid, &unlimdimid))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read variable information: %s\n", nc_strerror(retval));
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_NC_INC_VAR_ERROR_NO_CONTAINER, container_name, nc_strerror(retval));
@@ -1224,7 +1233,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				if (handle->proc_rank == 0) {
 					ophidiadb *oDB = &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB;
 
-					if (update_dim_with_nc_metadata(oDB, time_dim, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_vocabulary, OPH_GENERIC_CONTAINER_ID, ncid))
+					if (oph_nc_update_dim_with_nc_metadata
+					    (oDB, time_dim, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_vocabulary, OPH_GENERIC_CONTAINER_ID, ncid))
 						time_dim->id_dimension = 0;
 					else
 						time_dim->id_dimension = -1;
@@ -1284,7 +1294,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 							break;
 						}
 
-						if (update_dim_with_nc_metadata(oDB, time_dim, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_vocabulary, id_container_out, ncid))
+						if (oph_nc_update_dim_with_nc_metadata
+						    (oDB, time_dim, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_vocabulary, id_container_out, ncid))
 							break;
 					}
 
@@ -1402,7 +1413,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			//Dimension will not be subsetted
 			measure->dims_start_index[i] = 0;
 			measure->dims_end_index[i] = measure->dims_length[i] - 1;
-		} else if ((ii = check_subset_string(curfilter, i, measure, is_index[j], ncid, j < s_offset_num ? offset[j] : 0.0))) {
+		} else if ((ii = oph_nc_check_subset_string(curfilter, i, measure, is_index[j], ncid, j < s_offset_num ? offset[j] : 0.0, 0))) {
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)
@@ -2509,7 +2520,8 @@ int task_init(oph_operator_struct * handle)
 					if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->import_metadata && !strcmp(hier.hierarchy_name, OPH_COMMON_TIME_HIERARCHY))
 						not_exists = 1;
 					else {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c': check container specifications\n", measure->dims_concept_level[i]);
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c' from '%s': check container specifications\n", measure->dims_concept_level[i],
+						      filename);
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_BAD2_PARAMETER, measure->dims_concept_level[i]);
 						free(tot_dims);
 						free(dims);
@@ -2945,27 +2957,19 @@ int task_init(oph_operator_struct * handle)
 				if (xtype != NC_CHAR) {
 					switch (xtype) {
 						case NC_BYTE:
-							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
-							break;
 						case NC_UBYTE:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
 							break;
 						case NC_SHORT:
-							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_SHORT_TYPE);
-							break;
 						case NC_USHORT:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_SHORT_TYPE);
 							break;
 						case NC_INT:
-							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_INT_TYPE);
-							break;
 						case NC_UINT:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_INT_TYPE);
 							break;
-						case NC_UINT64:
-							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_LONG_TYPE);
-							break;
 						case NC_INT64:
+						case NC_UINT64:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_LONG_TYPE);
 							break;
 						case NC_FLOAT:
@@ -3165,27 +3169,19 @@ int task_init(oph_operator_struct * handle)
 					if (xtype != NC_CHAR) {
 						switch (xtype) {
 							case NC_BYTE:
-								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
-								break;
 							case NC_UBYTE:
 								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
 								break;
 							case NC_SHORT:
-								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_SHORT_TYPE);
-								break;
 							case NC_USHORT:
 								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_SHORT_TYPE);
 								break;
 							case NC_INT:
-								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_INT_TYPE);
-								break;
 							case NC_UINT:
 								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_INT_TYPE);
 								break;
-							case NC_UINT64:
-								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_LONG_TYPE);
-								break;
 							case NC_INT64:
+							case NC_UINT64:
 								snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_LONG_TYPE);
 								break;
 							case NC_FLOAT:
@@ -3385,27 +3381,19 @@ int task_init(oph_operator_struct * handle)
 				if (xtype != NC_CHAR) {
 					switch (xtype) {
 						case NC_BYTE:
-							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
-							break;
 						case NC_UBYTE:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_BYTE_TYPE);
 							break;
 						case NC_SHORT:
-							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_SHORT_TYPE);
-							break;
 						case NC_USHORT:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_SHORT_TYPE);
 							break;
 						case NC_INT:
-							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_INT_TYPE);
-							break;
 						case NC_UINT:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_INT_TYPE);
 							break;
-						case NC_UINT64:
-							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_LONG_TYPE);
-							break;
 						case NC_INT64:
+						case NC_UINT64:
 							snprintf(key_type, OPH_COMMON_TYPE_SIZE, OPH_COMMON_LONG_TYPE);
 							break;
 						case NC_FLOAT:
@@ -4334,6 +4322,10 @@ int env_unset(oph_operator_struct * handle)
 
 	free((OPH_IMPORTNC_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
+
+#ifdef OPH_ESDM
+	handle->dlh = NULL;
+#endif
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

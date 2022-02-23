@@ -31,8 +31,9 @@
 #define OPH_PID_BUFFER				"IO_BUFFER"
 #define OPH_PID_BASE_SRC_PATH		"BASE_SRC_PATH"
 #define OPH_PID_BASE_USER_PATH		"BASE_USER_PATH"
-#define OPH_PID_USER_SPACE		"USER_SPACE"
-#define OPH_PID_B2DROP_WEBDAV	"B2DROP_WEBDAV"
+#define OPH_PID_USER_SPACE			"USER_SPACE"
+#define OPH_PID_B2DROP_WEBDAV		"B2DROP_WEBDAV"
+#define OPH_PID_CDO_PATH			"CDO_PATH"
 #define OPH_PID_ENABLE_UNREGISTERED_SCRIPT "ENABLE_UNREGISTERED_SCRIPT"
 
 #define OPH_PID_SLASH				"/"
@@ -73,6 +74,13 @@ int oph_pid_get_buffer_size(long long *buffer_size);
  * \return 0 if successfull, N otherwise
  */
 int oph_pid_get_base_src_path(char **base_src_path);
+
+/** 
+ * \brief Function to load configuration data
+ * \brief cdo_path Pointer to the memory area where cdo_path will be written; it has to be freed
+ * \return 0 if successfull, N otherwise
+ */
+int oph_pid_get_cdo_path(char **cdo_path);
 
 /** 
  * \brief Function to load configuration data

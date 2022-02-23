@@ -982,8 +982,10 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DIM_NULL_PARAM;
 	}
-	if (!dim->calendar || !strlen(dim->calendar))
+	if (!dim->calendar || !strlen(dim->calendar)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Calendar is not set\n");
 		return OPH_DIM_TIME_PARSING_ERROR;
+	}
 	*output_string = 0;
 
 	long long max_size = QUERY_BUFLEN;

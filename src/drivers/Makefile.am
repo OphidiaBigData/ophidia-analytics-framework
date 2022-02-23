@@ -28,6 +28,14 @@ driver_CFLAGS = -I../../include -I../../include/oph_ioserver $(OPT)
 endif
 endif
 
+if HAVE_NETCDF
+driver_CFLAGS += -DOPH_NETCDF
+endif
+
+if HAVE_ESDM
+driver_CFLAGS += -DOPH_ESDM
+endif
+
 #define set of libraries commonly called together
 BASIC_LIB = -L.. -lophidiadb -loph_task_parser -loph_idstring -loph_json -ldebug -lhashtbl -loph_pid
 
@@ -92,11 +100,19 @@ DRIVER+=liboph_hierarchyoperator.la
 DRIVER+=liboph_movecontaineroperator.la
 DRIVER+=liboph_showgridoperator.la
 DRIVER+=liboph_scriptoperator.la
+DRIVER+=liboph_cdooperator.la
+DRIVER+=liboph_genericoperator.la
 if HAVE_CURL
 DRIVER+=liboph_b2dropoperator.la
 endif
 if HAVE_CFITSIO
 DRIVER+=liboph_importfitsoperator.la
+endif
+if HAVE_ESDM
+DRIVER+=liboph_importesdmoperator.la
+DRIVER+=liboph_importesdm2operator.la
+DRIVER+=liboph_exportesdmoperator.la
+DRIVER+=liboph_concatesdmoperator.la
 endif
 
 driver_LTLIBRARIES = $(DRIVER)
@@ -121,6 +137,22 @@ liboph_b2dropoperator_la_CFLAGS =  ${MYSQL_CFLAGS} $(LIBCURL_INCLUDE) ${driver_C
 liboph_b2dropoperator_la_SOURCES = OPH_B2DROP_operator.c
 liboph_b2dropoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_b2dropoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(LIBCURL_LIB) $(BASIC_LIB) -loph_directory
+endif
+
+liboph_cdooperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" -I../oph_gsoap
+liboph_cdooperator_la_SOURCES = OPH_CDO_operator.c
+liboph_cdooperator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_cdooperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_directory
+if HAVE_ESDM
+liboph_cdooperator_la_CFLAGS += $(ESDM_CFLAGS)
+endif
+
+liboph_genericoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" -I../oph_gsoap
+liboph_genericoperator_la_SOURCES = OPH_GENERIC_operator.c
+liboph_genericoperator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_genericoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_directory
+if HAVE_ESDM
+liboph_genericoperator_la_CFLAGS += $(ESDM_CFLAGS)
 endif
 
 liboph_containerschemaoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
@@ -183,10 +215,18 @@ liboph_folderoperator_la_SOURCES = OPH_FOLDER_operator.c
 liboph_folderoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_folderoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
 
-liboph_fsoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
+liboph_fsoperator_la_CFLAGS  =  ${MYSQL_CFLAGS} ${driver_CFLAGS}
 liboph_fsoperator_la_SOURCES = OPH_FS_operator.c
 liboph_fsoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_fsoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB)
+if HAVE_NETCDF
+liboph_fsoperator_la_CFLAGS += $(NETCDF_CFLAGS)
+liboph_fsoperator_la_LIBADD += $(NETCDF_LIBS) -L.. -loph_nc
+endif
+if HAVE_ESDM
+liboph_fsoperator_la_CFLAGS += $(ESDM_CFLAGS)
+liboph_fsoperator_la_LIBADD += $(ESDM_LIBS) -L.. -loph_esdm -loph_dimension
+endif
 
 liboph_hierarchyoperator_la_CFLAGS  =  ${MYSQL_CFLAGS}  ${driver_CFLAGS} -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
 liboph_hierarchyoperator_la_SOURCES = OPH_HIERARCHY_operator.c
@@ -377,3 +417,26 @@ liboph_importfitsoperator_la_SOURCES = OPH_IMPORTFITS_operator.c
 liboph_importfitsoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_importfitsoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} ${LIBCFITSIO_LIB} -lpthread -loph_fits $(BASIC_LIB) -loph_dimension -loph_hierarchy  -loph_datacube -loph_ioserver -loph_binary_io -loph_driver_proc
 endif
+
+if HAVE_ESDM
+liboph_importesdmoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} $(ESDM_CFLAGS) -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE) -I../../include/esdm_kernels
+liboph_importesdmoperator_la_SOURCES = OPH_IMPORTESDM_operator.c
+liboph_importesdmoperator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_importesdmoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(ESDM_LIBS) $(BASIC_LIB) -loph_dimension -loph_hierarchy -loph_datacube -loph_ioserver -loph_binary_io -loph_driver_proc -loph_esdm -L../esdm_kernels -loph_esdm_kernels
+
+liboph_importesdm2operator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} $(ESDM_CFLAGS) -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE)
+liboph_importesdm2operator_la_SOURCES = OPH_IMPORTESDM2_operator.c
+liboph_importesdm2operator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_importesdm2operator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(ESDM_LIBS) $(BASIC_LIB) -loph_dimension -loph_hierarchy -loph_datacube -loph_ioserver -loph_binary_io -loph_driver_proc -loph_esdm
+
+liboph_exportesdmoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} $(ESDM_CFLAGS) -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"
+liboph_exportesdmoperator_la_SOURCES = OPH_EXPORTESDM_operator.c
+liboph_exportesdmoperator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_exportesdmoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(ESDM_LIBS) $(BASIC_LIB) -loph_directory -loph_dimension -loph_datacube -loph_ioserver -loph_esdm
+
+liboph_concatesdmoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} $(ESDM_CFLAGS) -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\" $(LIBXML_INCLUDE) -I../../include/esdm_kernels
+liboph_concatesdmoperator_la_SOURCES = OPH_CONCATESDM_operator.c
+liboph_concatesdmoperator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_concatesdmoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(ESDM_LIBS) $(BASIC_LIB) -loph_dimension -loph_hierarchy -loph_datacube -loph_ioserver -loph_binary_io -loph_driver_proc -loph_esdm -L../esdm_kernels -loph_esdm_kernels
+endif
+

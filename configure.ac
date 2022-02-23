@@ -293,13 +293,32 @@ if test "x${have_netcdf}" = "xyes"; then
 	if test "x${NETCDF_LIBS}" != "x"; then
 		AC_SUBST(NETCDF_CFLAGS)
 		AC_SUBST(NETCDF_LIBS)
-		AC_MSG_NOTICE([Enabled NetCDF support.])
+		AC_MSG_NOTICE([NetCDF support enabled])
 	else
 		AC_MSG_WARN([NetCDF not found! NetCDF support automatically disabled!])
 		have_netcdf=no
 	fi
 fi
 AM_CONDITIONAL([HAVE_NETCDF], [test "x$have_netcdf" = "xyes"])
+
+have_esdm=no
+ESDM_CFLAGS=
+ESDM_LIBS=
+AC_ARG_WITH(esdm_path,
+           [  --with-esdm-path=PATH  Set the esdm root dir],
+           [
+				have_esdm=yes
+				ESDM_CFLAGS="-I$withval/include"
+				ESDM_LIBS="-L$withval/lib -lesdm -lesdmmpi -Wl,-rpath -Wl,$withval/lib"
+				AC_SUBST(ESDM_CFLAGS)
+				AC_SUBST(ESDM_LIBS)
+				AC_MSG_NOTICE([ESDM support enabled])
+           ],
+           [
+				have_esdm=no
+           ]
+           )
+AM_CONDITIONAL([HAVE_ESDM], [test "x$have_esdm" = "xyes"])
 
 #Check if parallel netcdf is installed
 parallel_netcdf="no"
@@ -605,4 +624,4 @@ AC_SUBST(REENTRANT)
 
 AM_CONDITIONAL(VOMS, test $voms_enable = 1)
 
-AC_OUTPUT([Makefile etc/oph_configuration src/Makefile src/oph_gsoap/Makefile src/clients/Makefile src/ioservers/Makefile src/drivers/Makefile etc/oph_analytics_driver etc/oph_io_server])
+AC_OUTPUT([Makefile etc/oph_configuration src/Makefile src/oph_gsoap/Makefile src/clients/Makefile src/ioservers/Makefile src/esdm_kernels/Makefile src/drivers/Makefile etc/oph_analytics_driver etc/oph_io_server])

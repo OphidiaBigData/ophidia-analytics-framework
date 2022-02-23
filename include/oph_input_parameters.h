@@ -29,7 +29,6 @@
 #define OPH_IN_PARAM_COMPRESSION				"compressed"
 #define OPH_IN_PARAM_SLEEP_TIME					"time"
 #define OPH_IN_PARAM_PRINTF_TEXT				"text"
-#define OPH_IN_PARAM_SYSTEM_COMMAND				"command"
 #define OPH_IN_PARAM_APPLY_QUERY				"query"
 #define OPH_IN_PARAM_APPLY_DIM_QUERY				"dim_query"
 #define OPH_IN_PARAM_HOST_NUMBER				"nhost"
@@ -179,12 +178,18 @@
 #define OPH_IN_PARAM_ON_REDUCE					"on_reduce"
 #define OPH_IN_PARAM_ACTION					"action"
 #define OPH_IN_PARAM_POLICY					"policy"
+#define OPH_IN_PARAM_COMMAND				"command"
+
+#define OPH_IN_PARAM_INPUT					"input"
+#define OPH_IN_PARAM_OUTPUT					"output"
 
 #define OPH_IN_PARAM_SCRIPT					"script"
 #define OPH_IN_PARAM_ARGS					"args"
 #define OPH_IN_PARAM_STDOUT					"stdout"
 #define OPH_IN_PARAM_STDERR					"stderr"
 #define OPH_IN_PARAM_SPACE					"space"
+#define OPH_IN_PARAM_SKIP_OUTPUT			"skip_output"
+#define OPH_IN_PARAM_MULTIPLE_OUTPUT		"multiple_output"
 
 #define OPH_ARG_NTHREAD						"nthreads"
 #define OPH_ARG_USERNAME					"username"
