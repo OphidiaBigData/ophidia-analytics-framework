@@ -334,7 +334,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pointer++;
 		if (pointer) {
 			char tmp[OPH_COMMON_BUFFER_LEN];
-			char *tmp_base_path = NULL;
 			if (*pointer != '/') {
 				value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
 				if (!value) {
@@ -359,15 +358,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					pointer = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path;
 				}
 			}
-			if (oph_pid_get_base_src_path(&tmp_base_path)) {
+			if (oph_pid_get_base_src_path(&value)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
-			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", tmp_base_path ? tmp_base_path : "", *pointer != '/' ? "/" : "", pointer);
-			free(tmp_base_path);
+			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
 			free(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path);
 			((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
+			free(value);
 		}
 		//Open netcdf file
 		struct stat st;
@@ -1950,8 +1949,6 @@ int task_init(oph_operator_struct * handle)
 			} else {
 				*host_number = nhost;
 				*fragxdb_number = (int) ceilf((float) admissible_frag_number / (*host_number));
-				//if (((int) handle->proc_number / nhost) >= 1)
-				//      *fragxdb_number = (((int) handle->proc_number / nhost) < *fragxdb_number ? ((int) handle->proc_number / nhost) : *fragxdb_number);
 			}
 		}
 
@@ -3615,7 +3612,8 @@ int task_init(oph_operator_struct * handle)
 					ii = oph_odb_dim_set_time_dimension(oDB, id_datacube_out, measure->dims_name[i]);
 					if (!ii)
 						break;
-					else if (ii != OPH_ODB_NO_ROW_FOUND) {
+					else if (ii != OPH_ODB_NO_ROW_FOUND)	// Time dimension cannot be set
+					{
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_UPDATE_TIME_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_UPDATE_TIME_ERROR);
 						goto __OPH_EXIT_1;
@@ -4359,9 +4357,7 @@ int env_unset(oph_operator_struct * handle)
 	if ((retval = nc_close(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->ncid)))
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", nc_strerror(retval));
 
-
 	NETCDF_var *measure = ((NETCDF_var *) & (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->measure));
-
 	if (measure->dims_name) {
 		for (i = 0; i < measure->ndims; i++) {
 			if (measure->dims_name[i]) {
@@ -4372,42 +4368,34 @@ int env_unset(oph_operator_struct * handle)
 		free(measure->dims_name);
 		measure->dims_name = NULL;
 	}
-
 	if (measure->dims_id) {
 		free((int *) measure->dims_id);
 		measure->dims_id = NULL;
 	}
-
 	if (measure->dims_unlim) {
 		free((char *) measure->dims_unlim);
 		measure->dims_unlim = NULL;
 	}
-
 	if (measure->dims_length) {
 		free((size_t *) measure->dims_length);
 		measure->dims_length = NULL;
 	}
-
 	if (measure->dims_type) {
 		free((short int *) measure->dims_type);
 		measure->dims_type = NULL;
 	}
-
 	if (measure->dims_oph_level) {
 		free((short int *) measure->dims_oph_level);
 		measure->dims_oph_level = NULL;
 	}
-
 	if (measure->dims_start_index) {
 		free((int *) measure->dims_start_index);
 		measure->dims_start_index = NULL;
 	}
-
 	if (measure->dims_end_index) {
 		free((int *) measure->dims_end_index);
 		measure->dims_end_index = NULL;
 	}
-
 	if (measure->dims_concept_level) {
 		free((char *) measure->dims_concept_level);
 		measure->dims_concept_level = NULL;

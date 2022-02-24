@@ -1117,8 +1117,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 					if (!measure->dim_dataset[j])
 						if ((ret = esdm_dataset_open(measure->container, measure->dims_name[j], ESDM_MODE_FLAG_READ, measure->dim_dataset + j))) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: dataset '%s' cannot be opened\n", measure->dims_name[i]);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read dimension information: dataset '%s' cannot be opened\n",
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to read dimension information: dataset '%s' cannot be opened\n", measure->dims_name[i]);
+							logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read dimension information: dataset '%s' cannot be opened\n",
 								measure->dims_name[i]);
 							strcpy(dim.dimension_type, OPH_DIM_INDEX_DATA_TYPE);
 							break;
@@ -2026,8 +2026,8 @@ int task_init(oph_operator_struct * handle)
 						}
 					if (!measure->dim_dspace[i])
 						if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: data space cannot be converted\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "data space cannot be converted");
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: data space cannot be created\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "data space cannot be created");
 							goto __OPH_EXIT_1;
 						}
 					if (oph_esdm_set_esdm_type(dim.dimension_type, measure->dim_dspace[i]->type)) {
@@ -2285,9 +2285,7 @@ int task_init(oph_operator_struct * handle)
 							} while (0);
 
 							dimvar_ids[i] = i;
-							if (	/*(dimvar_ids[i] >= 0) && */
-								   oph_esdm_compare_types(id_container_out, measure->dim_dataset[i] ? measure->dim_dspace[i]->type : OPH_DIM_INDEX_DATA_TYPE,
-											  dims[j].dimension_type)) {
+							if (oph_esdm_compare_types(id_container_out, measure->dim_dataset[i] ? measure->dim_dspace[i]->type : SMD_DTYPE_INT64, dims[j].dimension_type)) {
 								pmesg(LOG_WARNING, __FILE__, __LINE__, "Dimension type in NC file doesn't correspond to the one stored in OphidiaDB\n");
 								logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
 							}
@@ -2970,8 +2968,8 @@ int task_init(oph_operator_struct * handle)
 
 				if (!measure->dim_dataset[ii])
 					if ((esdm_dataset_open(measure->container, measure->dims_name[ii], ESDM_MODE_FLAG_READ, measure->dim_dataset + ii))) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: dataset '%s' cannot be opened\n", measure->dims_name[i]);
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read dimension information: dataset '%s' cannot be opened\n",
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to read dimension information: dataset '%s' cannot be opened\n", measure->dims_name[i]);
+						logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read dimension information: dataset '%s' cannot be opened\n",
 							measure->dims_name[i]);
 						continue;
 					}
@@ -4040,11 +4038,11 @@ int task_destroy(oph_operator_struct * handle)
 
 	OPH_IMPORTESDM2_operator_handle *oper_handle = (OPH_IMPORTESDM2_operator_handle *) handle->operator_handle;
 
-	if (!((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->run)
+	if (!oper_handle->run)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	short int proc_error = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->execute_error;
-	int id_datacube = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_output_datacube;
+	short int proc_error = oper_handle->execute_error;
+	int id_datacube = oper_handle->id_output_datacube;
 	short int global_error = 0;
 
 	//Reduce results
@@ -4055,24 +4053,21 @@ int task_destroy(oph_operator_struct * handle)
 		char *tmp_uri = NULL;
 		if (oph_pid_get_uri(&tmp_uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve web server URI.\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_PID_URI_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_PID_URI_ERROR);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-		if (oph_pid_show_pid
-		    (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_output_datacube, tmp_uri)) {
+		if (oph_pid_show_pid(oper_handle->id_input_container, oper_handle->id_output_datacube, tmp_uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to print PID string\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_PID_SHOW_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_PID_SHOW_ERROR);
 			free(tmp_uri);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 		char jsonbuf[OPH_COMMON_BUFFER_LEN];
 		memset(jsonbuf, 0, OPH_COMMON_BUFFER_LEN);
-		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container,
-			 ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_output_datacube);
+		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, oper_handle->id_input_container, oper_handle->id_output_datacube);
 
 		// ADD OUTPUT PID TO JSON AS TEXT
-		if (oph_json_is_objkey_printable
-		    (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->objkeys, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_IMPORTESDM2)) {
+		if (oph_json_is_objkey_printable(oper_handle->objkeys, oper_handle->objkeys_num, OPH_JSON_OBJKEY_IMPORTESDM2)) {
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_IMPORTESDM2, "Output Cube", jsonbuf)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
@@ -4098,14 +4093,14 @@ int task_destroy(oph_operator_struct * handle)
 		memset(id_string, 0, sizeof(id_string));
 
 		if (handle->proc_rank == 0) {
-			ophidiadb *oDB = &((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->oDB;
+			ophidiadb *oDB = &oper_handle->oDB;
 			oph_odb_datacube cube;
 			oph_odb_cube_init_datacube(&cube);
 
 			//retrieve input datacube
 			if (oph_odb_cube_retrieve_datacube(oDB, id_datacube, &cube)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_DATACUBE_READ_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_DATACUBE_READ_ERROR);
 			} else {
 				//Copy fragment id relative index set 
 				strncpy(id_string, cube.frag_relative_index_set, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
@@ -4118,36 +4113,27 @@ int task_destroy(oph_operator_struct * handle)
 		//Check if sequential part has been completed
 		if (id_string[0] == 0) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_MASTER_TASK_INIT_FAILED);
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_MASTER_TASK_INIT_FAILED);
 		} else {
-			if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragment_first_id >= 0 || handle->proc_rank == 0) {
+			if (oper_handle->fragment_first_id >= 0 || handle->proc_rank == 0) {
 				//Partition fragment relative index string
 				char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
 				char *new_ptr = new_id_string;
-				if (oph_ids_get_substring_from_string
-				    (id_string, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragment_first_id,
-				     ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragment_number, &new_ptr)) {
+				if (oph_ids_get_substring_from_string(id_string, oper_handle->fragment_first_id, oper_handle->fragment_number, &new_ptr)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to split IDs fragment string\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_IMPORTESDM_ID_STRING_SPLIT_ERROR);
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_ID_STRING_SPLIT_ERROR);
 				} else {
 					//Delete fragments
 					int num_threads = (oper_handle->nthread <= oper_handle->fragment_number ? oper_handle->nthread : oper_handle->fragment_number);
 
-					int start_position =
-					    (int) floor((double) ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragment_first_id /
-							((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragxdb_number);
+					int start_position = (int) floor((double) oper_handle->fragment_first_id / oper_handle->fragxdb_number);
 					int row_number = (int)
 					    ceil((double)
-						 (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragment_first_id +
-						  ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragment_number) /
-						 ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragxdb_number) - start_position;
+						 (oper_handle->fragment_first_id + oper_handle->fragment_number) / oper_handle->fragxdb_number) - start_position;
 
-					if (oph_dproc_delete_data
-					    (id_datacube, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number, num_threads)) {
+					if (oph_dproc_delete_data(id_datacube, oper_handle->id_input_container, new_id_string, start_position, row_number, num_threads)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container,
-							OPH_LOG_OPH_DELETE_DB_READ_ERROR);
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 					}
 				}
 			}
@@ -4162,12 +4148,11 @@ int task_destroy(oph_operator_struct * handle)
 
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
-			oph_dproc_clean_odb(&((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->oDB, id_datacube,
-					    ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container);
+			oph_dproc_clean_odb(&oper_handle->oDB, id_datacube, oper_handle->id_input_container);
 		}
 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
 
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}

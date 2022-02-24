@@ -676,6 +676,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				tmp_concept_levels[i] = OPH_COMMON_BASE_CONCEPT_LEVEL;
 		}
 
+
 		if (ndims != measure->ndims) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong number of dimensions provided in task string\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_WRONG_DIM_NUMBER_NO_CONTAINER, container_name, ndims);
@@ -924,7 +925,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (tmp_concept_levels)
 		free(tmp_concept_levels);
 
-//ADDED TO MANAGE SUBSETTED IMPORT
+
+	//ADDED TO MANAGE SUBSETTED IMPORT
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OFFSET);
 	if (!value) {
@@ -1637,51 +1639,50 @@ int task_init(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 	//For error checking
-	int id_datacube[6] = { 0, 0, 0, 0, 0, 0 };
+	int id_datacube[7] = { 0, 0, 0, 0, 0, 0, 0 };
 
-	int i, retval = 0, flush = 1, id_datacube_out = 0, id_container_out = 0;
+	int i, j, retval = 0, flush = 1, id_datacube_out = 0, id_container_out = 0;
 
-	//Access data in the netcdf file
 	NETCDF_var *measure = &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->measure;
 
-	//Find the last explicit dimension checking oph_value
-	short int max_lev = 0;
-	short int last_dimid = 0;
-	for (i = 0; i < measure->ndims; i++) {
-		//Consider only explicit dimensions
-		if (measure->dims_type[i]) {
-			if (measure->dims_oph_level[i] > max_lev) {
-				last_dimid = measure->dims_id[i];
-				max_lev = measure->dims_oph_level[i];
-				if (measure->dims_end_index[i] == measure->dims_start_index[i])
-					((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
-				else
-					((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
+	//Find the first explicit dimension checking oph_value
+	short int min_lev = 1;
+	//Find most external dimension with size bigger than 1
+	for (i = 0; i < measure->nexp; i++) {
+		for (j = 0; j < measure->ndims; j++) {
+			//Consider only explicit dimensions
+			if (measure->dims_type[j] && measure->dims_oph_level[j] == (i + 1)) {
+				break;
 			}
 		}
-	}
 
-	//Compute total fragment as the number of values of the explicit dimensions excluding the last one
-	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number = 1;
-	for (i = 0; i < measure->ndims; i++) {
-		//Consider only explicit dimensions
-		if (measure->dims_type[i] && measure->dims_id[i] != last_dimid) {
-			if (measure->dims_end_index[i] == measure->dims_start_index[i])
-				continue;
-			((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
+		if ((measure->dims_end_index[j] - measure->dims_start_index[j]) > 0) {
+			min_lev = measure->dims_oph_level[j];
+			break;
 		}
 	}
 
-	// Compute array length
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number = 1;
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->array_length = 1;
 	for (i = 0; i < measure->ndims; i++) {
-		//Consider only implicit dimensions
-		if (!measure->dims_type[i]) {
-			if (measure->dims_end_index[i] == measure->dims_start_index[i])
-				continue;
+		if (measure->dims_type[i]) {
+			//Consider only explicit dimensions
+			if (measure->dims_oph_level[i] == min_lev) {
+				//Compute total fragment as the number of values of the most external explicit dimensions excluding those with size 1
+				((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
+			} else if (measure->dims_oph_level[i] > min_lev) {
+				//Compute tuple per fragment as the number of values of most inernal explicit dimension (excluding the first one bigger than 1)
+				((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
+			}
+		} else {
+			//Consider only implicit dimensions
 			((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->array_length *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 		}
 	}
+
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->number_unven_frag = 0;
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->int_dim_product = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 
 	int container_exists = 0;
 	char *container_name = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->container_input;
@@ -1723,17 +1724,17 @@ int task_init(oph_operator_struct * handle)
 		int id_host_partition = 0;
 		char hidden = 0;
 
-		//If default values are used: select partition
+		//If default values are used: select filesystem and partition
 		if (!strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(host_partition))
 		    && !strncmp(host_partition, OPH_COMMON_HOSTPARTITION_DEFAULT, strlen(OPH_COMMON_HOSTPARTITION_DEFAULT))) {
 			if (oph_odb_stge_get_default_host_partition_fs(oDB, ioserver_type, id_user, &id_host_partition, *host_number > 0 ? *host_number : 1) || !id_host_partition) {
 				if (run) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts or dbms per host is too big or server type and partition are not available!\n");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT_FAILED_NO_CONTAINER, container_name,
 						((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->host_number, host_partition);
 					goto __OPH_EXIT_1;
 				} else {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts or dbms per host is too big or server type and partition are not available!\n");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Requested number of hosts is too big or server type and partition are not available!\n");
 					frag_param_error = 1;
 				}
 			}
@@ -1798,30 +1799,19 @@ int task_init(oph_operator_struct * handle)
 							frag_param_error = 1;
 						}
 					} else {
-						if (final_frag_number % user_arg_prod != 0) {
-							if (run) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-								goto __OPH_EXIT_1;
-							} else {
-								frag_param_error = 1;
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-							}
+						admissible_frag_number = final_frag_number / user_arg_prod;
+						if (admissible_frag_number <= nhost) {
+							*host_number = admissible_frag_number;
+							*fragxdb_number = 1;
 						} else {
-							admissible_frag_number = final_frag_number / user_arg_prod;
-							if (admissible_frag_number <= nhost) {
-								*host_number = admissible_frag_number;
-								*fragxdb_number = 1;
-							} else {
-								//Get highest divisor for host_number
-								int ii = 0;
-								for (ii = nhost; ii > 0; ii--) {
-									if (admissible_frag_number % ii == 0)
-										break;
-								}
-								*host_number = ii;
-								*fragxdb_number = (int) admissible_frag_number / (*host_number);
+							//Get highest divisor for host_number
+							int ii = 0;
+							for (ii = nhost; ii > 0; ii--) {
+								if (admissible_frag_number % ii == 0)
+									break;
 							}
+							*host_number = ii;
+							*fragxdb_number = (int) admissible_frag_number / (*host_number);
 						}
 					}
 				} else {
@@ -1863,6 +1853,7 @@ int task_init(oph_operator_struct * handle)
 								//Since fragxdb is fixed recompute tuplexfrag
 								((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number =
 								    (int) ceilf((float) max_frag_number / ((*host_number) * user_arg_prod));
+								((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->number_unven_frag = max_frag_number % ((*host_number) * user_arg_prod);
 								((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*fragxdb_number));
 							}
 						}
@@ -1888,31 +1879,22 @@ int task_init(oph_operator_struct * handle)
 				} else {
 					//User has set all parameters - in this case allow further fragmentation
 					user_arg_prod = ((*host_number) * (*fragxdb_number));
-					if (max_frag_number < user_arg_prod) {
+					if (final_frag_number < user_arg_prod) {
 						//If import is executed then return error, else simply return a message
 						if (run) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, max_frag_number);
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name,
-								max_frag_number);
+								final_frag_number);
 							goto __OPH_EXIT_1;
 						} else {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, max_frag_number);
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
 							frag_param_error = 1;
 						}
 					} else {
-						if (max_frag_number % user_arg_prod != 0) {
-							if (run) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-								goto __OPH_EXIT_1;
-							} else {
-								frag_param_error = 1;
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-							}
-						} else {
-							((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number = (int) ceilf((float) max_frag_number / user_arg_prod);
-							((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*fragxdb_number));
-						}
+						//Since fragxdb is fixed recompute tuplexfrag
+						((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (int) ceilf((float) final_frag_number / user_arg_prod);
+						((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->number_unven_frag = final_frag_number % (user_arg_prod);
+						((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*fragxdb_number));
 					}
 				}
 			}
@@ -2040,6 +2022,7 @@ int task_init(oph_operator_struct * handle)
 			cont.id_folder = folder_id;
 			cont.operation[0] = 0;
 			cont.id_vocabulary = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_vocabulary;
+			cont.description[0] = 0;
 
 			if (oph_odb_fs_insert_into_container_table(oDB, &cont, &id_container_out)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update container table\n");
@@ -2931,7 +2914,6 @@ int task_init(oph_operator_struct * handle)
 
 			//For each global attribute find the corresponding key
 			for (i = 0; i < natts; i++) {
-
 				memset(key, 0, OPH_COMMON_BUFFER_LEN);
 				if (nc_inq_attname(ncid, NC_GLOBAL, i, keyptr)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering a global attribute\n");
@@ -3000,6 +2982,7 @@ int task_init(oph_operator_struct * handle)
 
 				//Insert key value into OphidiaDB
 				keydup = strdup(key);
+
 				if (xtype == NC_CHAR || xtype == NC_STRING) {
 					//Check attribute length
 					if (nc_inq_attlen(ncid, NC_GLOBAL, (const char *) key, &att_len)) {
@@ -3056,6 +3039,7 @@ int task_init(oph_operator_struct * handle)
 						value[att_len] = 0;
 					}
 				} else {
+
 					if (!keydup || nc_get_att(ncid, NC_GLOBAL, (const char *) key, (void *) &value)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
@@ -3143,7 +3127,6 @@ int task_init(oph_operator_struct * handle)
 				}
 				//For each local attribute find the corresponding key
 				for (i = 0; i < natts; i++) {
-
 					memset(key, 0, OPH_COMMON_BUFFER_LEN);
 					if (nc_inq_attname(ncid, dimvar_ids[ii], i, keyptr)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering a local attribute\n");
@@ -3268,7 +3251,9 @@ int task_init(oph_operator_struct * handle)
 							}
 							value[att_len] = 0;
 						}
+
 					} else {
+
 						if (!keydup || nc_get_att(ncid, dimvar_ids[ii], (const char *) key, (void *) &value)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, "Unable to get attribute value from file\n");
@@ -3361,7 +3346,6 @@ int task_init(oph_operator_struct * handle)
 			}
 			//For each local attribute find the corresponding key
 			for (i = 0; i < natts; i++) {
-
 				memset(key, 0, OPH_COMMON_BUFFER_LEN);
 				if (nc_inq_attname(ncid, measure->varid, i, keyptr)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering a local attribute\n");
@@ -3424,7 +3408,6 @@ int task_init(oph_operator_struct * handle)
 				//Insert key value into OphidiaDB
 				keydup = strdup(key);
 				if (xtype == NC_CHAR || xtype == NC_STRING) {
-
 					//Check attribute length
 					if (nc_inq_attlen(ncid, measure->varid, (const char *) key, &att_len)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute length from file\n");
@@ -3475,6 +3458,7 @@ int task_init(oph_operator_struct * handle)
 						}
 						value[att_len] = 0;
 					}
+
 				} else {
 
 					if (!keydup || nc_get_att(ncid, measure->varid, (const char *) key, (void *) &value)) {
@@ -3594,6 +3578,10 @@ int task_init(oph_operator_struct * handle)
 				goto __OPH_EXIT_1;
 			}
 		}
+		if (dimvar_ids) {
+			free(dimvar_ids);
+			dimvar_ids = NULL;
+		}
 	  /********************************
 	   *    METADATA IMPORT - END     *
 	   ********************************/
@@ -3621,6 +3609,7 @@ int task_init(oph_operator_struct * handle)
 		char db_name[OPH_ODB_STGE_DB_NAME_SIZE];
 
 		for (j = 0; j < dbmss_length; j++) {
+
 			db.id_dbms = id_dbmss[j];
 			//Retreive DBMS params
 			if (oph_odb_stge_retrieve_dbmsinstance(oDB, db.id_dbms, &dbms)) {
@@ -3711,6 +3700,7 @@ int task_init(oph_operator_struct * handle)
 		id_datacube[3] = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number;
 		id_datacube[4] = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 		id_datacube[5] = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number;
+		id_datacube[6] = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->number_unven_frag;
 
 		flush = 0;
 	}
@@ -3785,7 +3775,7 @@ int task_init(oph_operator_struct * handle)
 		oph_odb_cube_delete_from_datacube_table(&((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB, id_datacube_out);
 	}
 	//Broadcast to all other processes the result
-	MPI_Bcast(id_datacube, 6, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(id_datacube, 7, MPI_INT, 0, MPI_COMM_WORLD);
 
 	//Check if sequential part has been completed
 	if (!id_datacube[0] || !id_datacube[1]) {
@@ -3800,6 +3790,7 @@ int task_init(oph_operator_struct * handle)
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number = id_datacube[3];
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number = id_datacube[4];
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number = id_datacube[5];
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->number_unven_frag = id_datacube[6];
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -3858,25 +3849,24 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
-	if (!((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->run)
+	OPH_IMPORTNC_operator_handle *oper_handle = (OPH_IMPORTNC_operator_handle *) handle->operator_handle;
+
+	if (!oper_handle->run)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id < 0 && handle->proc_rank != 0)
+	if (oper_handle->fragment_first_id < 0 && handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->execute_error = 1;
+	oper_handle->execute_error = 1;
 
 	int i, j, k;
-	int id_datacube_out = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_output_datacube;
+	int id_datacube_out = oper_handle->id_output_datacube;
 	oph_odb_db_instance_list dbs;
 	oph_odb_dbms_instance_list dbmss;
 
 	//Compute DB list starting position and number of rows
-	int start_position =
-	    (int) floor((double) ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id / ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number);
-	int row_number =
-	    (int) ceil((double) (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id + ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_number) /
-		       ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number) - start_position;
+	int start_position = (int) floor((double) oper_handle->fragment_first_id / oper_handle->fragxdb_number);
+	int row_number = (int) ceil((double) (oper_handle->fragment_first_id + oper_handle->fragment_number) / oper_handle->fragxdb_number) - start_position;
 
 	//Each process has to be connected to a slave ophidiadb
 	ophidiadb oDB_slave;
@@ -3884,23 +3874,21 @@ int task_execute(oph_operator_struct * handle)
 
 	if (oph_odb_read_ophidiadb_config_file(&oDB_slave)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONFIGURATION_FILE,
-			((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->container_input);
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONFIGURATION_FILE, oper_handle->container_input);
 
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
 	if (oph_odb_connect_to_ophidiadb(&oDB_slave)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONNECTION_ERROR,
-			((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->container_input);
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_OPHIDIADB_CONNECTION_ERROR, oper_handle->container_input);
 		oph_odb_free_ophidiadb(&oDB_slave);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 	//retrieve connection string
 	if (oph_odb_stge_fetch_db_connection_string(&oDB_slave, id_datacube_out, start_position, row_number, &dbs, &dbmss)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive connection strings\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_CONNECTION_STRINGS_NOT_FOUND);
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_CONNECTION_STRINGS_NOT_FOUND);
 		oph_odb_free_ophidiadb(&oDB_slave);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -3911,11 +3899,10 @@ int task_execute(oph_operator_struct * handle)
 	int frag_to_insert = 0;
 	int frag_count = 0;
 
-	if (!((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server) {
-		if (oph_dc_setup_dbms(&(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server), dbmss.value[0].io_server_type)) {
+	if (!oper_handle->server) {
+		if (oph_dc_setup_dbms(&(oper_handle->server), dbmss.value[0].io_server_type)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_IOPLUGIN_SETUP_ERROR,
-				dbmss.value[0].id_dbms);
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_IOPLUGIN_SETUP_ERROR, dbmss.value[0].id_dbms);
 			oph_odb_stge_free_db_list(&dbs);
 			oph_odb_stge_free_dbms_list(&dbmss);
 			oph_odb_free_ophidiadb(&oDB_slave);
@@ -3925,11 +3912,10 @@ int task_execute(oph_operator_struct * handle)
 	//For each DBMS
 	for (i = 0; i < dbmss.size; i++) {
 
-		if (oph_dc_connect_to_dbms(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), 0)) {
+		if (oph_dc_connect_to_dbms(oper_handle->server, &(dbmss.value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_DBMS_CONNECTION_ERROR,
-				(dbmss.value[i]).id_dbms);
-			oph_dc_disconnect_from_dbms(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_DBMS_CONNECTION_ERROR, (dbmss.value[i]).id_dbms);
+			oph_dc_disconnect_from_dbms(oper_handle->server, &(dbmss.value[i]));
 			oph_odb_stge_free_db_list(&dbs);
 			oph_odb_stge_free_dbms_list(&dbmss);
 			oph_odb_free_ophidiadb(&oDB_slave);
@@ -3941,20 +3927,17 @@ int task_execute(oph_operator_struct * handle)
 			if (dbs.value[j].dbms_instance != &(dbmss.value[i]))
 				continue;
 
-			if (oph_dc_use_db_of_dbms(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]), &(dbs.value[j]))) {
+			if (oph_dc_use_db_of_dbms(oper_handle->server, &(dbmss.value[i]), &(dbs.value[j]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_DB_SELECTION_ERROR,
-					(dbs.value[j]).db_name);
-				oph_dc_disconnect_from_dbms(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_DB_SELECTION_ERROR, (dbs.value[j]).db_name);
+				oph_dc_disconnect_from_dbms(oper_handle->server, &(dbmss.value[i]));
 				oph_odb_stge_free_db_list(&dbs);
 				oph_odb_stge_free_dbms_list(&dbmss);
 				oph_odb_free_ophidiadb(&oDB_slave);
 				return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 			}
 			//Compute number of fragments to insert in DB
-			frag_to_insert =
-			    ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number - (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id + frag_count -
-													  start_position * ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number);
+			frag_to_insert = oper_handle->fragxdb_number - (oper_handle->fragment_first_id + frag_count - start_position * oper_handle->fragxdb_number);
 
 			//For each fragment
 			for (k = 0; k < frag_to_insert; k++) {
@@ -3962,21 +3945,15 @@ int task_execute(oph_operator_struct * handle)
 				//Set new fragment
 				new_frag.id_datacube = id_datacube_out;
 				new_frag.id_db = dbs.value[j].id_db;
-				new_frag.frag_relative_index = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id + frag_count + 1;
-				new_frag.key_start =
-				    ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id * ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number +
-				    frag_count * ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number + 1;
-				new_frag.key_end =
-				    ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id * ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number +
-				    frag_count * ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number +
-				    ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number;
+				new_frag.frag_relative_index = oper_handle->fragment_first_id + frag_count + 1;
+				new_frag.key_start = oper_handle->fragment_first_id * oper_handle->tuplexfrag_number + frag_count * oper_handle->tuplexfrag_number + 1;
+				new_frag.key_end = oper_handle->fragment_first_id * oper_handle->tuplexfrag_number + frag_count * oper_handle->tuplexfrag_number + oper_handle->tuplexfrag_number;
 				new_frag.db_instance = &(dbs.value[j]);
 
 				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, handle->proc_rank, (frag_count + 1), &fragment_name)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag  name exceed limit.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_IMPORTNC_STRING_BUFFER_OVERFLOW, "fragment name", fragment_name);
-					oph_dc_disconnect_from_dbms(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_STRING_BUFFER_OVERFLOW, "fragment name", fragment_name);
+					oph_dc_disconnect_from_dbms(oper_handle->server, &(dbmss.value[i]));
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
@@ -3984,11 +3961,10 @@ int task_execute(oph_operator_struct * handle)
 				}
 				strcpy(new_frag.fragment_name, fragment_name);
 				//Create Empty fragment
-				if (oph_dc_create_empty_fragment(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server, &new_frag)) {
+				if (oph_dc_create_empty_fragment(oper_handle->server, &new_frag)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating fragment.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_IMPORTNC_FRAGMENT_CREATION_ERROR, new_frag.fragment_name);
-					oph_dc_disconnect_from_dbms(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_FRAGMENT_CREATION_ERROR, new_frag.fragment_name);
+					oph_dc_disconnect_from_dbms(oper_handle->server, &(dbmss.value[i]));
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
@@ -3996,14 +3972,11 @@ int task_execute(oph_operator_struct * handle)
 				}
 				//Populate fragment
 				if (oph_nc_populate_fragment_from_nc3
-				    (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server, &new_frag, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->ncid,
-				     ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->array_length,
-				     ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->compressed, (NETCDF_var *) & (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->measure),
-				     ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->memory_size)) {
+				    (oper_handle->server, &new_frag, oper_handle->ncid,
+				     oper_handle->tuplexfrag_number, oper_handle->array_length, oper_handle->compressed, (NETCDF_var *) & (oper_handle->measure), oper_handle->memory_size)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_IMPORTNC_FRAG_POPULATE_ERROR, new_frag.fragment_name, "");
-					oph_dc_disconnect_from_dbms(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_FRAG_POPULATE_ERROR, new_frag.fragment_name, "");
+					oph_dc_disconnect_from_dbms(oper_handle->server, &(dbmss.value[i]));
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
@@ -4012,29 +3985,27 @@ int task_execute(oph_operator_struct * handle)
 				//Insert new fragment
 				if (oph_odb_stge_insert_into_fragment_table(&oDB_slave, &new_frag)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update fragment table.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_IMPORTNC_FRAGMENT_INSERT_ERROR, new_frag.fragment_name);
-					oph_dc_disconnect_from_dbms(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_FRAGMENT_INSERT_ERROR, new_frag.fragment_name);
+					oph_dc_disconnect_from_dbms(oper_handle->server, &(dbmss.value[i]));
 					oph_odb_stge_free_db_list(&dbs);
 					oph_odb_stge_free_dbms_list(&dbmss);
 					oph_odb_free_ophidiadb(&oDB_slave);
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 				frag_count++;
-				if (frag_count == ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_number)
+				if (frag_count == oper_handle->fragment_number)
 					break;
 			}
 			start_position++;
 		}
-		oph_dc_disconnect_from_dbms(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->server, &(dbmss.value[i]));
+		oph_dc_disconnect_from_dbms(oper_handle->server, &(dbmss.value[i]));
 
 	}
 	oph_odb_stge_free_db_list(&dbs);
 	oph_odb_stge_free_dbms_list(&dbmss);
 	oph_odb_free_ophidiadb(&oDB_slave);
 
-	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->execute_error = 0;
-
+	oper_handle->execute_error = 0;
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -4057,11 +4028,13 @@ int task_destroy(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 
-	if (!((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->run)
+	OPH_IMPORTNC_operator_handle *oper_handle = (OPH_IMPORTNC_operator_handle *) handle->operator_handle;
+
+	if (!oper_handle->run)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	short int proc_error = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->execute_error;
-	int id_datacube = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_output_datacube;
+	short int proc_error = oper_handle->execute_error;
+	int id_datacube = oper_handle->id_output_datacube;
 	short int global_error = 0;
 
 	//Reduce results
@@ -4072,24 +4045,21 @@ int task_destroy(oph_operator_struct * handle)
 		char *tmp_uri = NULL;
 		if (oph_pid_get_uri(&tmp_uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve web server URI.\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_PID_URI_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_PID_URI_ERROR);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-		if (oph_pid_show_pid
-		    (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_output_datacube, tmp_uri)) {
+		if (oph_pid_show_pid(oper_handle->id_input_container, oper_handle->id_output_datacube, tmp_uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to print PID string\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_PID_SHOW_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_PID_SHOW_ERROR);
 			free(tmp_uri);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 		char jsonbuf[OPH_COMMON_BUFFER_LEN];
 		memset(jsonbuf, 0, OPH_COMMON_BUFFER_LEN);
-		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
-			 ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_output_datacube);
+		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, oper_handle->id_input_container, oper_handle->id_output_datacube);
 
 		// ADD OUTPUT PID TO JSON AS TEXT
-		if (oph_json_is_objkey_printable
-		    (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->objkeys, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_IMPORTNC)) {
+		if (oph_json_is_objkey_printable(oper_handle->objkeys, oper_handle->objkeys_num, OPH_JSON_OBJKEY_IMPORTNC)) {
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_IMPORTNC, "Output Cube", jsonbuf)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
@@ -4115,14 +4085,14 @@ int task_destroy(oph_operator_struct * handle)
 		memset(id_string, 0, sizeof(id_string));
 
 		if (handle->proc_rank == 0) {
-			ophidiadb *oDB = &((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB;
+			ophidiadb *oDB = &(oper_handle->oDB);
 			oph_odb_datacube cube;
 			oph_odb_cube_init_datacube(&cube);
 
 			//retrieve input datacube
 			if (oph_odb_cube_retrieve_datacube(oDB, id_datacube, &cube)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_DATACUBE_READ_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_DATACUBE_READ_ERROR);
 			} else {
 				//Copy fragment id relative index set 
 				strncpy(id_string, cube.frag_relative_index_set, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
@@ -4135,34 +4105,25 @@ int task_destroy(oph_operator_struct * handle)
 		//Check if sequential part has been completed
 		if (id_string[0] == 0) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTNC_MASTER_TASK_INIT_FAILED);
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_MASTER_TASK_INIT_FAILED);
 		} else {
-			if (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id >= 0 || handle->proc_rank == 0) {
+			if (oper_handle->fragment_first_id >= 0 || handle->proc_rank == 0) {
 				//Partition fragment relative index string
 				char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
 				char *new_ptr = new_id_string;
-				if (oph_ids_get_substring_from_string
-				    (id_string, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id,
-				     ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_number, &new_ptr)) {
+				if (oph_ids_get_substring_from_string(id_string, oper_handle->fragment_first_id, oper_handle->fragment_number, &new_ptr)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to split IDs fragment string\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_IMPORTNC_ID_STRING_SPLIT_ERROR);
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_ID_STRING_SPLIT_ERROR);
 				} else {
 					//Delete fragments
-					int start_position =
-					    (int) floor((double) ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id /
-							((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number);
+					int start_position = (int) floor((double) oper_handle->fragment_first_id / oper_handle->fragxdb_number);
 					int row_number = (int)
 					    ceil((double)
-						 (((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_first_id +
-						  ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragment_number) /
-						 ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number) - start_position;
+						 (oper_handle->fragment_first_id + oper_handle->fragment_number) / oper_handle->fragxdb_number) - start_position;
 
-					if (oph_dproc_delete_data
-					    (id_datacube, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number, 1)) {
+					if (oph_dproc_delete_data(id_datacube, oper_handle->id_input_container, new_id_string, start_position, row_number, 1)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
-							OPH_LOG_OPH_DELETE_DB_READ_ERROR);
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 					}
 				}
 			}
@@ -4177,12 +4138,11 @@ int task_destroy(oph_operator_struct * handle)
 
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
-			oph_dproc_clean_odb(&((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB, id_datacube,
-					    ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container);
+			oph_dproc_clean_odb(&oper_handle->oDB, id_datacube, oper_handle->id_input_container);
 		}
 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
 
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}

@@ -127,9 +127,9 @@ struct _OPH_IMPORTNC2_operator_handle {
 	char *description;
 	int time_filter;
 	int id_job;
-	int nthread;
 	short int execute_error;
 	char policy;
+	int nthread;
 };
 typedef struct _OPH_IMPORTNC2_operator_handle OPH_IMPORTNC2_operator_handle;
 
