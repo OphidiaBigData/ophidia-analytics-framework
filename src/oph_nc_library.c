@@ -2926,9 +2926,8 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fra
 	dims_end_string[m4 - 1] = 0;
 	free(index);
 
-	int n =
-	    snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, compressed ? OPH_IOSERVER_SQ_VAL_YES : OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number,
-		     frag->key_start, dims_type_string, dims_index_string, dims_start_string, dims_end_string, measure->dim_unlim);
+	int n = snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, compressed ? OPH_IOSERVER_SQ_VAL_YES : OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number,
+			 frag->key_start, dims_type_string, dims_index_string, dims_start_string, dims_end_string, measure->dim_unlim);
 	if (n >= query_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_NC_ERROR;

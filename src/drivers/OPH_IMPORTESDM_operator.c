@@ -2544,7 +2544,7 @@ int task_init(oph_operator_struct * handle)
 				else
 					tmp_var.varsize = 1;
 				dim_inst[i].size = tmp_var.varsize;
-				dim_inst[i].concept_level = measure->dims_concept_level[i];	// TODO: see next note
+				dim_inst[i].concept_level = measure->dims_concept_level[i];
 				dim_inst[i].unlimited = measure->dims_unlim[i] ? 1 : 0;
 
 				if ((varid >= 0) && oph_esdm_compare_types(id_container_out, xtype, tot_dims[j].dimension_type)) {

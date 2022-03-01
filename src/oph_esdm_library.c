@@ -2746,7 +2746,8 @@ int oph_esdm_populate_fragment5(oph_ioserver_handler * server, oph_odb_fragment 
 	char *insert_query = OPH_DC_SQ_CREATE_FRAG_FROM_ESDM;
 	int query_size =
 	    snprintf(NULL, 0, insert_query, frag->fragment_name, nc_file_path, measure->varname, compressed ? OPH_IOSERVER_SQ_VAL_YES : OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, frag->key_start, "",
-		     "", "", "", measure->dim_unlim, measure->operation ? measure->operation : OPH_COMMON_NONE_FILTER, measure->args ? measure->args : "") + (n1 + n2 + n3 + n4 - 4) + 1;
+		     "", "", "", measure->dim_unlim, measure->operation ? measure->operation : OPH_COMMON_NONE_FILTER,
+		     measure->args ? measure->args : OPH_COMMON_NONE_FILTER) + (n1 + n2 + n3 + n4 - 4) + 1;
 
 	char *query_string = (char *) malloc(query_size * sizeof(char));
 	if (!(query_string)) {
@@ -2803,10 +2804,9 @@ int oph_esdm_populate_fragment5(oph_ioserver_handler * server, oph_odb_fragment 
 	dims_end_string[m4 - 1] = 0;
 	free(index);
 
-	int n =
-	    snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, compressed ? OPH_IOSERVER_SQ_VAL_YES : OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number,
-		     frag->key_start, dims_type_string, dims_index_string, dims_start_string, dims_end_string, measure->dim_unlim, measure->operation ? measure->operation : OPH_COMMON_NONE_FILTER,
-		     measure->args ? measure->args : "");
+	int n = snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, compressed ? OPH_IOSERVER_SQ_VAL_YES : OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number,
+			 frag->key_start, dims_type_string, dims_index_string, dims_start_string, dims_end_string, measure->dim_unlim, measure->operation ? measure->operation : OPH_COMMON_NONE_FILTER,
+			 measure->args ? measure->args : OPH_COMMON_NONE_FILTER);
 	if (n >= query_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ESDM_ERROR;
