@@ -32,20 +32,20 @@ typedef struct _oph_esdm_stream_data_out_t {
 int oph_esdm_is_a_reduce_func(const char *operation)
 {
 	if (!operation)
-		return -1;
+		return 0;
 
 	if (!strcmp(operation, OPH_ESDM_FUNCTION_MAX))
 		return 1;
 	if (!strcmp(operation, OPH_ESDM_FUNCTION_MIN))
-		return 1;
+		return 2;
 	if (!strcmp(operation, OPH_ESDM_FUNCTION_AVG))
-		return 1;
+		return 3;
 	if (!strcmp(operation, OPH_ESDM_FUNCTION_SUM))
-		return 1;
+		return 4;
 	if (!strcmp(operation, OPH_ESDM_FUNCTION_STD))
-		return 1;
+		return 5;
 	if (!strcmp(operation, OPH_ESDM_FUNCTION_VAR))
-		return 1;
+		return 6;
 
 	return 0;
 }

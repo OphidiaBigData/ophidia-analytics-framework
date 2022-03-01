@@ -1387,9 +1387,11 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 	}
 	//Check
 	int total = 1;
-	for (i = 0; i < measure->ndims; i++)
-		if (!measure->dims_type[i] && (!measure->operation || !oph_esdm_is_a_reduce_func(measure->operation)))
-			total *= count[i];
+	if (!oph_esdm_is_a_reduce_func(measure->operation)) {
+		for (i = 0; i < measure->ndims; i++)
+			if (!measure->dims_type[i])
+				total *= count[i];
+	}
 
 	if (total != array_length) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "ARRAY_LENGTH = %d, TOTAL = %d\n", array_length, total);
@@ -2239,10 +2241,10 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 		}
 	}
 	//Check
-	char check_for_reduce_func = measure->operation && oph_esdm_is_a_reduce_func(measure->operation);
+	char check_for_reduce_func = !oph_esdm_is_a_reduce_func(measure->operation);
 	int total = 1;
 	for (i = 0; i < measure->ndims; i++)
-		if (measure->dims_type[i] || !check_for_reduce_func)
+		if (measure->dims_type[i] || check_for_reduce_func)
 			total *= count[i];
 
 	if (total != array_length * tuplexfrag_number) {
@@ -2875,7 +2877,7 @@ int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fr
 		}
 	}
 	int array_length = 1;
-	if (!measure->operation || !oph_esdm_is_a_reduce_func(measure->operation)) {	// TODO: to be checked
+	if (!oph_esdm_is_a_reduce_func(measure->operation)) {
 		for (i = 0; i < measure->ndims; i++)
 			if (!measure->dims_type[i])
 				array_length *= count[i];
@@ -3868,10 +3870,10 @@ int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_f
 	}
 
 	//Check
-	char check_for_reduce_func = measure->operation && oph_esdm_is_a_reduce_func(measure->operation);
+	char check_for_reduce_func = !oph_esdm_is_a_reduce_func(measure->operation);
 	int total = 1;
 	for (i = 0; i < measure->ndims; i++)
-		if (measure->dims_type[i] || !check_for_reduce_func)
+		if (measure->dims_type[i] || check_for_reduce_func)
 			total *= count[i];
 
 	if (total != array_length * tuplexfrag_number) {
