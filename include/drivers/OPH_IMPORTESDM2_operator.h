@@ -124,6 +124,9 @@ struct _OPH_IMPORTESDM2_operator_handle {
 	int id_job;
 	short int execute_error;
 	char policy;
+	char *operation;
+	char **args;
+	int args_num;
 	int nthread;
 };
 typedef struct _OPH_IMPORTESDM2_operator_handle OPH_IMPORTESDM2_operator_handle;

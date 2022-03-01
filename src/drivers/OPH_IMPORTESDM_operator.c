@@ -724,8 +724,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	//Extract dimensions information and check names provided by task string
 	char *dimname = NULL;
 	short int flag = 0;
+	measure->dim_unlim = -1;
 	for (i = 0; i < ndims; i++) {
 		measure->dims_unlim[i] = !dspace->size[i];
+		if (measure->dims_unlim[i] && (measure->dim_unlim < 0))
+			measure->dim_unlim = i;
 		//measure->dims_name[i] = (char *) malloc((OPH_ODB_DIM_DIMENSION_SIZE + 1) * sizeof(char));
 		measure->dims_length[i] = dspace->size[i] ? dspace->size[i] : size[i];
 	}

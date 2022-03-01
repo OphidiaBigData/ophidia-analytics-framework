@@ -44,6 +44,8 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
+#include "oph_esdm_kernels.h"
+
 #ifdef OPH_OPENMP
 #include <omp.h>
 #else
@@ -124,6 +126,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->policy = 0;
+	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation = NULL;
+	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args = NULL;
+	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args_num = -1;
 
 	char *value;
 
@@ -736,8 +741,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	//Extract dimensions information and check names provided by task string
 	char *dimname = NULL;
 	short int flag = 0;
+	measure->dim_unlim = -1;
 	for (i = 0; i < ndims; i++) {
 		measure->dims_unlim[i] = !dspace->size[i];
+		if (measure->dims_unlim[i] && (measure->dim_unlim < 0))
+			measure->dim_unlim = i;
 		//measure->dims_name[i] = (char *) malloc((OPH_ODB_DIM_DIMENSION_SIZE + 1) * sizeof(char));
 		measure->dims_length[i] = dspace->size[i] ? dspace->size[i] : size[i];
 	}
@@ -1566,6 +1574,45 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	else
 		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_job = (int) strtol(value, NULL, 10);
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_REDUCTION_OPERATION);
+	if (value) {
+		if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation = (char *) strndup(value, OPH_TP_TASKLEN))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT, OPH_IN_PARAM_REDUCTION_OPERATION);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		if (!strcmp(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation, OPH_COMMON_NONE_FILTER)) {
+			free(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation);
+			((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation = NULL;
+		}
+		measure->operation = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_ARGS);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_ARGS);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_ARGS);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_NONE_FILTER, OPH_TP_TASKLEN)) {
+		if (oph_tp_parse_multiple_value_param
+		    (value, &((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args, &((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args_num)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
+			oph_tp_free_multiple_value_param_list(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args,
+							      ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args_num);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+	} else
+		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args_num = 0;
+
+	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args_num > 1) {
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Only the first argument of '%s' will be considered\n", value);
+		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Only the first argument of '%s' will be considered\n", value);
+	}
+	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args_num > 0)
+		measure->args = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args[0];
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -1615,7 +1662,8 @@ int task_init(oph_operator_struct * handle)
 				//Compute tuple per fragment as the number of values of most inernal explicit dimension (excluding the first one bigger than 1)
 				((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 			}
-		} else {
+		} else if (!((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation
+			   || !oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation)) {
 			//Consider only implicit dimensions
 			((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->array_length *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 		}
@@ -2361,7 +2409,7 @@ int task_init(oph_operator_struct * handle)
 			}
 
 			int dimension_array_id = 0;
-			char *dim_array = NULL;
+			char *dim_array = NULL, collapsed = 0;
 			int exists = 0;
 			char filename[2 * OPH_TP_BUFLEN];
 			oph_odb_hierarchy hier;
@@ -2521,9 +2569,13 @@ int task_init(oph_operator_struct * handle)
 				dim_inst[i].id_grid = id_grid;
 				dim_inst[i].id_dimensioninst = 0;
 				//Modified to allow subsetting
-				tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
+				if (measure->dims_type[i] || !((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation
+				    || !oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation))
+					tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
+				else
+					tmp_var.varsize = 1;
 				dim_inst[i].size = tmp_var.varsize;
-				dim_inst[i].concept_level = measure->dims_concept_level[i];
+				dim_inst[i].concept_level = measure->dims_concept_level[i];	// TODO: see next note
 				dim_inst[i].unlimited = measure->dims_unlim[i] ? 1 : 0;
 
 				if ((varid >= 0) && oph_esdm_compare_types(id_container_out, xtype, tot_dims[j].dimension_type)) {
@@ -2531,39 +2583,58 @@ int task_init(oph_operator_struct * handle)
 					logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
 				}
 
-				if (oph_esdm_get_dim_array
-				    (id_container_out, measure->dim_dataset[i], varid, tot_dims[j].dimension_type, tmp_var.varsize, measure->dims_start_index[i], measure->dims_end_index[i],
-				     &dim_array)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
-					free(tot_dims);
-					free(dims);
-					free(dim_inst);
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					free(dimvar_ids);
-					goto __OPH_EXIT_1;
+				collapsed = 0;
+				if (measure->dims_type[i] || !((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation
+				    || !oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation)) {
+					if (oph_esdm_get_dim_array
+					    (id_container_out, measure->dim_dataset[i], varid, tot_dims[j].dimension_type, tmp_var.varsize, measure->dims_start_index[i], measure->dims_end_index[i],
+					     &dim_array)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
+						free(tot_dims);
+						free(dims);
+						free(dim_inst);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						free(dimvar_ids);
+						goto __OPH_EXIT_1;
+					}
+				} else {
+					collapsed = 1;
+					dim_inst[i].size = 0;
+					dim_inst[i].concept_level = OPH_COMMON_ALL_CONCEPT_LEVEL;
+					dim_array = NULL;
 				}
 
-				if (oph_dim_insert_into_dimension_table(db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, tmp_var.varsize, dim_array, &dimension_array_id)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_ROW_ERROR, tot_dims[j].dimension_name);
-					free(tot_dims);
-					free(dims);
-					free(dim_inst);
+				if (!collapsed) {
+					if (!collapsed
+					    && oph_dim_insert_into_dimension_table(db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, tmp_var.varsize, dim_array,
+										   &dimension_array_id)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_ROW_ERROR, tot_dims[j].dimension_name);
+						free(tot_dims);
+						free(dims);
+						free(dim_inst);
+						free(dim_array);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						free(dimvar_ids);
+						goto __OPH_EXIT_1;
+					}
 					free(dim_array);
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					free(dimvar_ids);
-					goto __OPH_EXIT_1;
-				}
-				free(dim_array);
+				} else
+					dimension_array_id = 0;
 				dim_inst[i].fk_id_dimension_label = dimension_array_id;	// Real dimension
 
-				index_array = (long long *) malloc(tmp_var.varsize * sizeof(long long));
-				for (kk = 0; kk < tmp_var.varsize; ++kk)
-					index_array[kk] = 1 + kk;	// Non 'C'-like indexing
-				if (oph_dim_insert_into_dimension_table(db_dimension, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, tmp_var.varsize, (char *) index_array, &dimension_array_id)) {
+				if (!collapsed) {
+					index_array = (long long *) malloc(tmp_var.varsize * sizeof(long long));
+					for (kk = 0; kk < tmp_var.varsize; ++kk)
+						index_array[kk] = 1 + kk;	// Non 'C'-like indexing
+				} else
+					index_array = NULL;
+				if (oph_dim_insert_into_dimension_table
+				    (db_dimension, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, collapsed ? 0 : tmp_var.varsize, collapsed ? NULL : (char *) index_array,
+				     &dimension_array_id)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_ROW_ERROR, tot_dims[j].dimension_name);
 					free(tot_dims);
@@ -2575,7 +2646,8 @@ int task_init(oph_operator_struct * handle)
 					free(dimvar_ids);
 					goto __OPH_EXIT_1;
 				}
-				free(index_array);
+				if (index_array)
+					free(index_array);
 				dim_inst[i].fk_id_dimension_index = dimension_array_id;	// Indexes
 
 				if (oph_odb_dim_insert_into_dimensioninstance_table(oDB, &(dim_inst[i]), &dimension_array_id, 0, NULL, NULL)) {
@@ -4286,6 +4358,14 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->description);
 		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->description = NULL;
+	}
+	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation) {
+		free((char *) ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation);
+		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation = NULL;
+	}
+	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args) {
+		oph_tp_free_multiple_value_param_list(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args_num);
+		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args = NULL;
 	}
 
 	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dspace) {
