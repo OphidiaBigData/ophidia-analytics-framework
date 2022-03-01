@@ -1386,8 +1386,9 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 		}
 	}
 	//Check
+	char check_for_reduce_func = !oph_esdm_is_a_reduce_func(measure->operation);
 	int total = 1;
-	if (!oph_esdm_is_a_reduce_func(measure->operation)) {
+	if (check_for_reduce_func) {
 		for (i = 0; i < measure->ndims; i++)
 			if (!measure->dims_type[i])
 				total *= count[i];
@@ -1518,7 +1519,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 				tmp_index = measure->dims_oph_level[i] - 1;	//Start from 0
 				counters[tmp_index] = 0;
 				products[tmp_index] = 1;
-				limits[tmp_index] = count[i];
+				limits[tmp_index] = check_for_reduce_func ? count[i] : 1;
 				file_indexes[tmp_index] = k++;
 			}
 		}
@@ -2446,7 +2447,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 			}
 			counters[tmp_index] = 0;
 			products[tmp_index] = 1;
-			limits[tmp_index] = check_for_reduce_func ? 1 : count[i];
+			limits[tmp_index] = check_for_reduce_func ? count[i] : 1;
 			file_indexes[tmp_index] = k++;
 		}
 	}
@@ -2876,8 +2877,9 @@ int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fr
 			start[i] = measure->dims_start_index[i];
 		}
 	}
+	char check_for_reduce_func = !oph_esdm_is_a_reduce_func(measure->operation);
 	int array_length = 1;
-	if (!oph_esdm_is_a_reduce_func(measure->operation)) {
+	if (check_for_reduce_func) {
 		for (i = 0; i < measure->ndims; i++)
 			if (!measure->dims_type[i])
 				array_length *= count[i];
@@ -3152,7 +3154,7 @@ int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fr
 				tmp_index = measure->dims_oph_level[i] - 1;	//Start from 0
 				counters[tmp_index] = 0;
 				products[tmp_index] = 1;
-				limits[tmp_index] = count[i];
+				limits[tmp_index] = check_for_reduce_func ? count[i] : 1;
 				file_indexes[tmp_index] = k++;
 			}
 		}
@@ -4041,7 +4043,7 @@ int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_f
 			}
 			counters[tmp_index] = 0;
 			products[tmp_index] = 1;
-			limits[tmp_index] = check_for_reduce_func ? 1 : count[i];
+			limits[tmp_index] = check_for_reduce_func ? count[i] : 1;
 			file_indexes[tmp_index] = k++;
 		}
 	}
