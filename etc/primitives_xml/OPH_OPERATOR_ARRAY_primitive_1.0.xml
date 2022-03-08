@@ -3,10 +3,10 @@
 <primitive name="oph_operator_array" version="1.0">
     <info>
         <abstract>[Behaviour]
-Applies an operation between the value of measure array b and the value in the same position in measure array a.
+Applies an operation between the values of input measures in the same position.
         
 [Parameters]
-- input measure type : Ophidia typing. Supported types are pairs of:
+- input measure type : Ophidia typing. Supported types are a list of:
 					&apos;oph_double&apos;;
 					&apos;oph_float&apos;;
 					&apos;oph_long&apos;;
@@ -23,25 +23,24 @@ Applies an operation between the value of measure array b and the value in the s
 - measure a : first input measure.
 - measure b : second input measure.
 - operation name : type of operation
-                    -- &apos;oph_max&apos; : compute the maximum (as oph_max_array);
-                    -- &apos;oph_min&apos; : compute the minimum (as oph_min_array);
-                    -- &apos;oph_sum&apos; : compute the sum (as oph_sum_array);
-                    -- &apos;oph_sub&apos; : compute the difference (as oph_sum_array);
-                    -- &apos;oph_mul&apos; : compute the product (as oph_mul_array);
-                    -- &apos;oph_div&apos; : compute the division (as oph_div_array);
-                    -- &apos;oph_abs&apos; : compute the modulus (as oph_abs_array);
-                    -- &apos;oph_arg&apos; : compute the phase (as oph_arg_array);
-                    -- &apos;oph_mask&apos; : use measure b as a mask for measure a (as oph_mask_array).
-- missingvalue : value to be considered as missing value; by default it is NAN (for &apos;oph_double&apos; and &apos;oph_float&apos;).
+                    -- &apos;oph_sum&apos; : compute the sum of the elements;
+                    -- &apos;oph_avg&apos; : compute the average of the elements;
+                    -- &apos;oph_mul&apos; : compute the product of the elements;
+                    -- &apos;oph_max&apos; : compute the maximum of the elements;
+                    -- &apos;oph_min&apos; : compute the minimum of the elements;
+                    -- &apos;oph_arg_max&apos; : return the index of the maximum of the elements;
+                    -- &apos;oph_arg_min&apos; : return the index of the minimum of the elements.
+- missingvalue : value to be considered as missing value (set it to NULL if not given);
+                 by default it is NAN (for &apos;oph_double&apos; and &apos;oph_float&apos;).
 
 [Return type]
 Binary-array.
         
 [Examples]
-oph_operator_array(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure_a,measure_b,&apos;OPH_MAX&apos;)</abstract>
+oph_operator_array(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure_a,measure_b,&apos;OPH_MAX&apos;,NULL)</abstract>
         <author>CMCC Foundation</author>
         <category>Arithmetic</category>
-        <creationdate>29/09/2014</creationdate>
+        <creationdate>08/03/2022</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <return type="binary-array" />
         <operation type="simple"/>
@@ -49,9 +48,8 @@ oph_operator_array(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,meas
     <args>
 		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'" multivalue="yes">input measure type</argument>
 		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
-		<argument type="binary-array" mandatory="yes">measure a</argument>
-		<argument type="binary-array" mandatory="yes">measure b</argument>
-		<argument type="oph_operator" mandatory="yes" values="'oph_max'|'oph_min'|'oph_sum'|'oph_sub'|'oph_mul'|'oph_div'|'oph_abs'|'oph_arg'|'oph_mask'">operator name</argument>
-		<argument type="double" mandatory="no" default="NAN">missingvalue</argument>
+		<multi-argument type="binary-array" mandatory="yes" mintimes="1">measure</multi-argument>
+		<argument type="oph_operator" mandatory="yes" values="'oph_sum'|'oph_avg'|'oph_mul'|'oph_max'|'oph_min'|'oph_arg_max'|'oph_arg_min'">operator name</argument>
+		<argument type="double" mandatory="yes" default="NAN">missingvalue</argument>
     </args>
 </primitive>
