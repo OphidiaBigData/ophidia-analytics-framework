@@ -11,9 +11,9 @@ returns a new datacube as result of the specified operation applied element by e
 
 [Parameters]
 - cubes : list of input cubes. The name must be in PID format.
-- operation : type of inter-cube operation among these (default is sub):
+- operation : type of inter-cube operation among:
+              -- avg : evaluate the averages one by one (default);
               -- sum : sum correspondent elements one by one;
-              -- avg : evaluate the averages one by one;
               -- mul : multiply correspondent elements one by one;
               -- max: return the maximum value between the corresponding elements one by one;
               -- min: return the minimum value between the corresponding elements one by one;
@@ -53,7 +53,7 @@ SUBMISSION STRING: &quot;operator=oph_intercube2;cubes=http://www.example.com/1/
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" multivalue="yes" default="-">cubes</argument>
-		<argument type="string" mandatory="no" default="sub" values="sum|avg|mul|max|min|arg_max|arg_min">operation</argument>
+		<argument type="string" mandatory="no" default="avg" values="avg|sum|mul|max|min|arg_max|arg_min">operation</argument>
 		<argument type="real" mandatory="no" default="-">missingvalue</argument>
 		<argument type="string" mandatory="no" default="null">measure</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>

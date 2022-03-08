@@ -22,8 +22,8 @@ Computes an operation between the values in the same position of multiple input 
 					&apos;oph_byte&apos;.
 - measure : input measure. This argument can be specified multiple times.
 - operation name: type of operation
-                    -- &apos;oph_sum&apos; : compute the sum of the elements;
                     -- &apos;oph_avg&apos; : compute the average of the elements;
+                    -- &apos;oph_sum&apos; : compute the sum of the elements;
                     -- &apos;oph_mul&apos; : compute the product of the elements;
                     -- &apos;oph_max&apos; : compute the maximum of the elements;
                     -- &apos;oph_min&apos; : compute the minimum of the elements;
@@ -48,7 +48,7 @@ oph_operation_array(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,a.m
 		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'" multivalue="yes">input measure type</argument>
 		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
 		<multi-argument type="binary-array" mandatory="yes" mintimes="1">measure</multi-argument>
-		<argument type="oph_operator" mandatory="yes" values="'oph_sum'|'oph_avg'|'oph_mul'|'oph_max'|'oph_min'|'oph_arg_max'|'oph_arg_min'">operator name</argument>
+		<argument type="oph_operator" mandatory="yes" values="'oph_avg'|'oph_sum'|'oph_mul'|'oph_max'|'oph_min'|'oph_arg_max'|'oph_arg_min'">operator name</argument>
 		<argument type="double" mandatory="yes" default="NAN">missingvalue</argument>
     </args>
 </primitive>
