@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_operation_array" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Computes an operation between the values in the same position of multiple input measures. 
+        
+[Parameters]
+- input measure type : Ophidia typing. Supported types are pairs of:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+
+- measure : input measure. This argument can be specified multiple times.
+- oph_operation: type of operation
+		-- &apos;sum&apos; : compute the sum;
+		-- &apos;avg&apos; : compute the average;
+		-- &apos;mul&apos; : compute the product;
+		-- &apos;max&apos; : compute the maximum;
+		-- &apos;min&apos; : compute the minimum;
+		-- &apos;arg_max&apos; : return the index of the position associated with the maximum value;
+		-- &apos;arg_min&apos; : return the index of the position associated with the minimum value;
+
+- missingvalue : value to be considered as missing value; by default it is NAN (for &apos;oph_double&apos; and &apos;oph_float&apos;).
+
+[Return type]
+Binary-array.
+        
+[Examples]
+oph_operation_array(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,oph_operation, a.measure,b.measure,c.measure,missingvalue)</abstract>
+        <author>CMCC Foundation</author>
+        <category>Arithmetic</category>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+        <operation type="simple"/>
+    </info>
+    <args>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'" multivalue="yes">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<multi-argument type="binary-array" mandatory="yes" mintimes="1">measure</multi-argument>
+		<argument type="string" mandatory="yes" values="'sum'|'avg'|'mul'|'max'|'min'|'arg_max'|'arg_min'">oph_operation</argument>
+		<argument type="double" mandatory="yes" default="NAN">missingvalue</argument>
+    </args>
+</primitive>
