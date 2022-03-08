@@ -42,6 +42,7 @@ DRIVER+=liboph_reduce2operator.la
 DRIVER+=liboph_aggregateoperator.la
 DRIVER+=liboph_aggregate2operator.la
 DRIVER+=liboph_intercubeoperator.la
+DRIVER+=liboph_intercube2operator.la
 DRIVER+=liboph_drilldownoperator.la
 DRIVER+=liboph_rollupoperator.la
 DRIVER+=liboph_duplicateoperator.la
@@ -201,6 +202,11 @@ liboph_intercubeoperator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
 liboph_intercubeoperator_la_SOURCES = OPH_INTERCUBE_operator.c
 liboph_intercubeoperator_la_LDFLAGS = -module -avoid-version -no-undefined
 liboph_intercubeoperator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_driver_proc
+
+liboph_intercube2operator_la_CFLAGS =  ${MYSQL_CFLAGS}  ${driver_CFLAGS}
+liboph_intercube2operator_la_SOURCES = OPH_INTERCUBE2_operator.c
+liboph_intercube2operator_la_LDFLAGS = -module -avoid-version -no-undefined
+liboph_intercube2operator_la_LIBADD = -lz ${MYSQL_LDFLAGS} $(BASIC_LIB) -loph_datacube -loph_ioserver -loph_dimension -loph_hierarchy -loph_driver_proc
 
 if HAVE_NETCDF
 liboph_exportncoperator_la_CFLAGS =  ${MYSQL_CFLAGS} ${driver_CFLAGS} $(NETCDF_CFLAGS) -DOPH_ANALYTICS_LOCATION=\"${prefix}\" -DOPH_WEB_SERVER=\"@OPH_WEB_SERVER@\" -DOPH_WEB_SERVER_LOCATION=\"@OPH_WEB_SERVER_LOCATION@\"

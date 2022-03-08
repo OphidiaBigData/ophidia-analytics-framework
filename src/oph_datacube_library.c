@@ -2057,10 +2057,10 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_ioserver_handler * second_server, unsigned long long tot_rows, oph_odb_fragment * old_frag1, oph_odb_fragment * old_frag2,
-				     const char *frag_name, int compressed, const char *operation, const char *measure_type)
+int oph_dc_copy_and_process_fragment2(int cubes_num, oph_ioserver_handler ** servers, unsigned long long tot_rows, oph_odb_fragment ** old_frags, const char *frag_name, int compressed,
+				      const char *operation, const char *measure_type)
 {
-	if (!old_frag1 || !old_frag2 || !frag_name || !first_server || !second_server || !operation || !measure_type) {
+	if (!cubes_num || !old_frags || !frag_name || !servers || !operation || !measure_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DC_NULL_PARAM;
 	}
@@ -2068,120 +2068,81 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 	unsigned long long sizeof_var = 0;
 
 	// Init res 
-	oph_ioserver_result *old_result1 = NULL;
-	oph_ioserver_result *old_result2 = NULL;
+	oph_ioserver_result *old_result[cubes_num];
 
-	//Check if connection to input fragments are set
-	if (oph_dc_check_connection_to_db(first_server, old_frag1->db_instance->dbms_instance, old_frag1->db_instance, 0)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
-		return OPH_DC_SERVER_ERROR;
-	}
-
-	int query_buflen = 1 + snprintf(NULL, 0, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag1->fragment_name);
 	long long max_size = QUERY_BUFLEN;
 	oph_pid_get_buffer_size(&max_size);
-	if (query_buflen >= max_size) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
-		return OPH_ODB_STR_BUFF_OVERFLOW;
-	}
-	//Read input fragment
-	char read_query[query_buflen];
-	int n = snprintf(read_query, query_buflen, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag1->fragment_name);
-	if (n >= query_buflen) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		return OPH_ODB_STR_BUFF_OVERFLOW;
-	}
 
+	int ll, query_buflen, n;
 	oph_ioserver_query *query = NULL;
-	if (oph_ioserver_setup_query(first_server, read_query, 1, NULL, &query)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
-		return OPH_DC_SERVER_ERROR;
-	}
 
-	if (oph_ioserver_execute_query(first_server, query)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
-		oph_ioserver_free_query(first_server, query);
-		return OPH_DC_SERVER_ERROR;
-	}
-	oph_ioserver_free_query(first_server, query);
+	for (ll = 0; ll < cubes_num; ll++) {
+		old_result[ll] = NULL;
 
-	if (oph_ioserver_get_result(first_server, &old_result1)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store result.\n");
-		oph_ioserver_free_result(first_server, old_result1);
-		return OPH_DC_SERVER_ERROR;
-	}
-	if (old_result1->num_fields != 2) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
-		oph_ioserver_free_result(first_server, old_result1);
-		return OPH_DC_SERVER_ERROR;
-	}
+		//Check if connection to input fragments are set
+		if (oph_dc_check_connection_to_db(servers[ll], old_frags[ll]->db_instance->dbms_instance, old_frags[ll]->db_instance, 0)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
+			return OPH_DC_SERVER_ERROR;
+		}
 
-	unsigned long long l, rows = old_result1->num_rows;
-	sizeof_var = old_result1->max_field_length[old_result1->num_fields - 1];
-	//Get max row length of input table
-	if (!sizeof_var) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Fragment is empty\n");
-		oph_ioserver_free_result(first_server, old_result1);
-		return OPH_DC_SERVER_ERROR;
-	}
+		query_buflen = 1 + snprintf(NULL, 0, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frags[ll]->fragment_name);
+		if (query_buflen >= max_size) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
+			return OPH_ODB_STR_BUFF_OVERFLOW;
+		}
+		//Read input fragment
+		char read_query[query_buflen];
+		n = snprintf(read_query, query_buflen, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frags[ll]->fragment_name);
+		if (n >= query_buflen) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+			return OPH_ODB_STR_BUFF_OVERFLOW;
+		}
 
-	if (oph_dc_check_connection_to_db(second_server, old_frag2->db_instance->dbms_instance, old_frag2->db_instance, 0)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
-		oph_ioserver_free_result(first_server, old_result1);
-		return OPH_DC_SERVER_ERROR;
-	}
+		if (oph_ioserver_setup_query(servers[ll], read_query, 1, NULL, &query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
+			return OPH_DC_SERVER_ERROR;
+		}
 
-	query_buflen = 1 + snprintf(NULL, 0, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag2->fragment_name);
-	if (query_buflen >= max_size) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
-		return OPH_ODB_STR_BUFF_OVERFLOW;
-	}
-	//Read input fragment
-	char read_query2[query_buflen];
-	n = snprintf(read_query2, query_buflen, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag2->fragment_name);
-	if (n >= query_buflen) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		oph_ioserver_free_result(first_server, old_result1);
-		return OPH_DC_SERVER_ERROR;
-	}
+		if (oph_ioserver_execute_query(servers[ll], query)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
+			oph_ioserver_free_query(servers[ll], query);
+			return OPH_DC_SERVER_ERROR;
+		}
+		oph_ioserver_free_query(servers[ll], query);
 
-	query = NULL;
-	if (oph_ioserver_setup_query(second_server, read_query2, 1, NULL, &query)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
-		oph_ioserver_free_result(first_server, old_result1);
-		return OPH_DC_SERVER_ERROR;
-	}
+		if (oph_ioserver_get_result(servers[ll], &old_result[ll])) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store result.\n");
+			for (; ll >= 0; ll--)
+				oph_ioserver_free_result(servers[ll], old_result[ll]);
+			return OPH_DC_SERVER_ERROR;
+		}
+		if (old_result[ll]->num_fields != 2) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+			for (; ll >= 0; ll--)
+				oph_ioserver_free_result(servers[ll], old_result[ll]);
+			return OPH_DC_SERVER_ERROR;
+		}
 
-	if (oph_ioserver_execute_query(second_server, query)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
-		oph_ioserver_free_result(first_server, old_result1);
-		oph_ioserver_free_query(second_server, query);
-		return OPH_DC_SERVER_ERROR;
-	}
-	oph_ioserver_free_query(second_server, query);
-
-	if (oph_ioserver_get_result(second_server, &old_result2)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to store result.\n");
-		oph_ioserver_free_result(first_server, old_result1);
-		oph_ioserver_free_result(second_server, old_result2);
-		return OPH_DC_SERVER_ERROR;
-	}
-	if (old_result2->num_fields != 2) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
-		oph_ioserver_free_result(first_server, old_result1);
-		oph_ioserver_free_result(second_server, old_result2);
-		return OPH_DC_SERVER_ERROR;
-	}
-
-	if (sizeof_var != old_result2->max_field_length[old_result2->num_fields - 1]) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Fragments are not comparable\n");
-		oph_ioserver_free_result(first_server, old_result1);
-		oph_ioserver_free_result(second_server, old_result2);
-		return OPH_DC_SERVER_ERROR;
+		if (!ll) {
+			sizeof_var = old_result[0]->max_field_length[old_result[0]->num_fields - 1];
+			//Get max row length of input table
+			if (!sizeof_var) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Fragment is empty\n");
+				oph_ioserver_free_result(servers[0], old_result[0]);
+				return OPH_DC_SERVER_ERROR;
+			}
+		} else {
+			if (sizeof_var != old_result[ll]->max_field_length[old_result[ll]->num_fields - 1]) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Fragments are not comparable\n");
+				for (; ll >= 0; ll--)
+					oph_ioserver_free_result(servers[ll], old_result[ll]);
+				return OPH_DC_SERVER_ERROR;
+			}
+		}
 	}
 
 	unsigned long long actual_size = 0;
-	int c_arg = 3, ii;
+	int c_arg = 1 + cubes_num, ii;
 
 	query_buflen = 1 + snprintf(NULL, 0, compressed ? OPH_DC_SQ_INSERT_COMPRESSED_FRAG2 : OPH_DC_SQ_INSERT_FRAG2, frag_name, operation, measure_type, measure_type, measure_type);
 	if (query_buflen >= max_size) {
@@ -2193,45 +2154,42 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 	n = snprintf(insert_query, query_buflen, compressed ? OPH_DC_SQ_INSERT_COMPRESSED_FRAG2 : OPH_DC_SQ_INSERT_FRAG2, frag_name, operation, measure_type, measure_type, measure_type);
 	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
-		oph_ioserver_free_result(first_server, old_result1);
-		oph_ioserver_free_result(second_server, old_result2);
+		for (ll = 0; ll < cubes_num; ll++)
+			oph_ioserver_free_result(servers[ll], old_result[ll]);
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	char *binary1 = (char *) calloc(sizeof_var, sizeof(char));
-	if (!binary1) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate data buffers\n");
-		oph_ioserver_free_result(first_server, old_result1);
-		oph_ioserver_free_result(second_server, old_result2);
-		return OPH_DC_DATA_ERROR;
-	}
-	char *binary2 = (char *) calloc(sizeof_var, sizeof(char));
-	if (!binary2) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate data buffers\n");
-		free(binary1);
-		oph_ioserver_free_result(first_server, old_result1);
-		oph_ioserver_free_result(second_server, old_result2);
-		return OPH_DC_DATA_ERROR;
+	char *binary[cubes_num];
+	for (ll = 0; ll < cubes_num; ll++) {
+		binary[ll] = (char *) calloc(sizeof_var, sizeof(char));
+		if (!binary[ll]) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate data buffers\n");
+			for (ll--; ll >= 0; ll--)
+				free(binary[ll]);
+			for (ll = 0; ll < cubes_num; ll++)
+				oph_ioserver_free_result(servers[ll], old_result[ll]);
+			return OPH_DC_DATA_ERROR;
+		}
 	}
 
 	unsigned long long *id_dim = (unsigned long long *) calloc(1, sizeof(unsigned long long));
 	if (!id_dim) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate data buffers\n");
-		free(binary1);
-		free(binary2);
-		oph_ioserver_free_result(first_server, old_result1);
-		oph_ioserver_free_result(second_server, old_result2);
+		for (ll = 0; ll < cubes_num; ll++)
+			free(binary[ll]);
+		for (ll = 0; ll < cubes_num; ll++)
+			oph_ioserver_free_result(servers[ll], old_result[ll]);
 		return OPH_DC_DATA_ERROR;
 	}
 
 	query = NULL;
 	oph_ioserver_query_arg **args = (oph_ioserver_query_arg **) calloc(1 + c_arg, sizeof(oph_ioserver_query_arg *));
 	if (!(args)) {
-		free(binary1);
-		free(binary2);
+		for (ll = 0; ll < cubes_num; ll++)
+			free(binary[ll]);
 		free(id_dim);
-		oph_ioserver_free_result(first_server, old_result1);
-		oph_ioserver_free_result(second_server, old_result2);
+		for (ll = 0; ll < cubes_num; ll++)
+			oph_ioserver_free_result(servers[ll], old_result[ll]);
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		return OPH_DC_DATA_ERROR;
 	}
@@ -2240,11 +2198,11 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 		args[ii] = (oph_ioserver_query_arg *) calloc(1, sizeof(oph_ioserver_query_arg));
 		if (!args[ii]) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot allocate input arguments\n");
-			free(binary1);
-			free(binary2);
+			for (ll = 0; ll < cubes_num; ll++)
+				free(binary[ll]);
 			free(id_dim);
-			oph_ioserver_free_result(first_server, old_result1);
-			oph_ioserver_free_result(second_server, old_result2);
+			for (ll = 0; ll < cubes_num; ll++)
+				oph_ioserver_free_result(servers[ll], old_result[ll]);
 			for (ii = 0; ii < c_arg; ii++)
 				if (args[ii])
 					free(args[ii]);
@@ -2259,20 +2217,19 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 	args[0]->arg_is_null = 0;
 	args[0]->arg = (unsigned long long *) (id_dim);
 
-	args[1]->arg_length = sizeof_var;
-	args[1]->arg_type = OPH_IOSERVER_TYPE_BLOB;
-	args[1]->arg_is_null = 0;
-	args[1]->arg = (char *) (binary1);
+	for (ll = 1; ll <= cubes_num; ll++) {
+		args[ll]->arg_length = sizeof_var;
+		args[ll]->arg_type = OPH_IOSERVER_TYPE_BLOB;
+		args[ll]->arg_is_null = 0;
+		args[ll]->arg = binary[ll - 1];
+	}
 
-	args[2]->arg_length = sizeof_var;
-	args[2]->arg_type = OPH_IOSERVER_TYPE_BLOB;
-	args[2]->arg_is_null = 0;
-	args[2]->arg = (char *) (binary2);
+	oph_ioserver_handler *first_server = servers[0];
 
 	if (oph_ioserver_setup_query(first_server, insert_query, tot_rows, args, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
-		oph_ioserver_free_result(first_server, old_result1);
-		oph_ioserver_free_result(second_server, old_result2);
+		for (ll = 0; ll < cubes_num; ll++)
+			oph_ioserver_free_result(servers[ll], old_result[ll]);
 		for (ii = 0; ii < c_arg; ii++) {
 			if (args[ii]) {
 				if (args[ii]->arg)
@@ -2284,55 +2241,42 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	oph_ioserver_row *curr_row1 = NULL;
-	oph_ioserver_row *curr_row2 = NULL;
+	oph_ioserver_row *curr_row[cubes_num];
+
+	unsigned long long l, rows = old_result[0]->num_rows;
 	for (l = 0; l < rows; l++) {
+
 		//Read data
-		if (oph_ioserver_fetch_row(first_server, old_result1, &curr_row1)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
-			oph_ioserver_free_result(first_server, old_result1);
-			oph_ioserver_free_result(second_server, old_result2);
-			oph_ioserver_free_query(first_server, query);
-			for (ii = 0; ii < c_arg; ii++) {
-				if (args[ii]) {
-					if (args[ii]->arg)
-						free(args[ii]->arg);
-					free(args[ii]);
+		for (ll = 0; ll < cubes_num; ll++) {
+			curr_row[ll] = NULL;
+			if (oph_ioserver_fetch_row(servers[ll], old_result[ll], curr_row + ll)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
+				for (ll = 0; ll < cubes_num; ll++)
+					oph_ioserver_free_result(servers[ll], old_result[ll]);
+				oph_ioserver_free_query(first_server, query);
+				for (ii = 0; ii < c_arg; ii++) {
+					if (args[ii]) {
+						if (args[ii]->arg)
+							free(args[ii]->arg);
+						free(args[ii]);
+					}
 				}
+				free(args);
+				return OPH_DC_SERVER_ERROR;
 			}
-			free(args);
-			return OPH_DC_SERVER_ERROR;
-		}
-		if (oph_ioserver_fetch_row(second_server, old_result2, &curr_row2)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to fetch row\n");
-			oph_ioserver_free_result(first_server, old_result1);
-			oph_ioserver_free_result(second_server, old_result2);
-			oph_ioserver_free_query(first_server, query);
-			for (ii = 0; ii < c_arg; ii++) {
-				if (args[ii]) {
-					if (args[ii]->arg)
-						free(args[ii]->arg);
-					free(args[ii]);
-				}
-			}
-			free(args);
-			return OPH_DC_SERVER_ERROR;
 		}
 
-		*id_dim = (unsigned long long) strtoll(curr_row1->row[0], NULL, 10);
-
-		actual_size = curr_row1->field_lengths[1];
-		memset(binary1, 0, sizeof_var);
-		memcpy(binary1, curr_row1->row[1], actual_size);
-
-		actual_size = curr_row2->field_lengths[1];
-		memset(binary2, 0, sizeof_var);
-		memcpy(binary2, curr_row2->row[1], actual_size);
+		*id_dim = (unsigned long long) strtoll(curr_row[0]->row[0], NULL, 10);
+		for (ll = 0; ll < cubes_num; ll++) {
+			actual_size = curr_row[ll]->field_lengths[1];
+			memset(binary[ll], 0, sizeof_var);
+			memcpy(binary[ll], curr_row[ll]->row[1], actual_size);
+		}
 
 		if (oph_ioserver_execute_query(first_server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
-			oph_ioserver_free_result(first_server, old_result1);
-			oph_ioserver_free_result(second_server, old_result2);
+			for (ll = 0; ll < cubes_num; ll++)
+				oph_ioserver_free_result(servers[ll], old_result[ll]);
 			oph_ioserver_free_query(first_server, query);
 			for (ii = 0; ii < c_arg; ii++) {
 				if (args[ii]) {
@@ -2346,8 +2290,8 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 		}
 	}
 
-	oph_ioserver_free_result(first_server, old_result1);
-	oph_ioserver_free_result(second_server, old_result2);
+	for (ll = 0; ll < cubes_num; ll++)
+		oph_ioserver_free_result(servers[ll], old_result[ll]);
 
 	//If last or only one - clean 
 	for (ii = 0; ii < c_arg; ii++) {
@@ -2361,6 +2305,25 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_io
 	oph_ioserver_free_query(first_server, query);
 
 	return OPH_DC_SUCCESS;
+}
+
+int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_ioserver_handler * second_server, unsigned long long tot_rows, oph_odb_fragment * old_frag1, oph_odb_fragment * old_frag2,
+				     const char *frag_name, int compressed, const char *operation, const char *measure_type)
+{
+	if (!old_frag1 || !old_frag2 || !frag_name || !first_server || !second_server || !operation || !measure_type) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_DC_NULL_PARAM;
+	}
+
+	oph_ioserver_handler *servers[2];
+	servers[0] = first_server;
+	servers[1] = second_server;
+
+	oph_odb_fragment *old_frags[2];
+	old_frags[0] = old_frag1;
+	old_frags[1] = old_frag2;
+
+	return oph_dc_copy_and_process_fragment2(2, servers, tot_rows, old_frags, frag_name, compressed, operation, measure_type);
 }
 
 int oph_dc_read_fragment_data(oph_ioserver_handler * server, oph_odb_fragment * frag, char *data_type, int compressed, char *id_clause, char *array_clause, char *where_clause, int limit,

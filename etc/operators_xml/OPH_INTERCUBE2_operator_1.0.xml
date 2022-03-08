@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_INTERCUBE2" version="1.0">
+    <info>
+        <abstract>[Type]
+Data Process.
+
+[Behaviour]
+It executes an operation between two datacubes with the same fragmentation structure and
+returns a new datacube as result of the specified operation applied element by element.
+
+[Parameters]
+- cubes : list of input cubes. The name must be in PID format.
+- operation : type of inter-cube operation among these (default is sub):
+              -- sum : sum correspondent elements one by one;
+              -- mul : multiply correspondent elements one by one;
+              -- corr: compute the Pearson correlation coefficient row by row;
+              -- max: return the maximum value between the corresponding elements one by one;
+              -- min: return the minimum value between the corresponding elements one by one;
+              -- arg_max: return the index of the cube correspending to the maximum value;
+              -- arg_min: return the index of the cube correspending to the minimum value.
+- missingvalue : value to be considered as missing value;
+                 by default the internal value is considered, if set, otherwise it is NAN (for float and double).
+- measure : name of the new measure resulting from the specified operation
+- schedule : scheduling algorithm. The only possible value is 0,
+		     for a static linear block distribution of resources.
+- container : name of the container to be used to store the output cube; by default it is the container of the first cube.
+- description : additional description to be associated with the output cube.
+        
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  intercube : show operator's output PID as text.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
+        
+[Examples]       
+Sum the datacubes identified by the PIDs &quot;http://www.example.com/1/1&quot; and &quot;http://www.example.com/1/2&quot; :
+OPH_TERM: oph_intercube2 cubes=http://www.example.com/1/1|http://www.example.com/1/2;operation=sum;output_measure=new_pressure;
+SUBMISSION STRING: &quot;operator=oph_intercube2;cubes=http://www.example.com/1/1|http://www.example.com/1/2;operation=sum;output_measure=new_pressure;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <category>Data Analysis</category>
+        <creationdate>02/03/2022</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <permission>write</permission>
+    </info>
+    <args>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" multivalue="yes" default="-">cubes</argument>
+		<argument type="string" mandatory="no" default="sub" values="sum|mul|corr|max|min|arg_max|arg_min">operation</argument>
+		<argument type="real" mandatory="no" default="-">missingvalue</argument>
+		<argument type="string" mandatory="no" default="null">measure</argument>
+		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
+		<argument type="string" mandatory="no" default="-">container</argument>
+		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|intercube">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
+    </args>
+</operator>
