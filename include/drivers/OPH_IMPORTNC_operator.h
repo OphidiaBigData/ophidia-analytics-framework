@@ -101,6 +101,8 @@ struct _OPH_IMPORTNC_operator_handle {
 	int tuplexfrag_number;
 	int array_length;
 	int total_frag_number;
+	int number_unven_frag;
+	int int_dim_product;
 	char *user;
 	int ncid;
 	NETCDF_var measure;

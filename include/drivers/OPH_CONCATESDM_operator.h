@@ -45,7 +45,6 @@
  * \param fragment_ids Contains the string of fragment relative index
  * \param fragment_number Number of fragments that a process has to manage
  * \param fragment_id_start_position First fragment in the relative index set to work on
- * \param ncid ID of the netcdf file read
  * \param user Name of the user calling the import operation
  * \param measure Measure name
  * \param compressed If the data array stored is compressed (1) or not (0)
@@ -75,7 +74,6 @@ struct _OPH_CONCATESDM_operator_handle {
 	int fragment_id_start_position;
 	int total_frag_number;
 	char *user;
-	int ncid;
 	int compressed;
 	int id_job;
 	char *fragment_ids;

@@ -466,9 +466,9 @@ int process_message(amqp_envelope_t full_message)
 	pthread_rwlock_unlock(&thread_lock_list[thread_param]);
 
 	status = amqp_basic_publish(conn_thread_publish_list[thread_param], channel, amqp_cstring_bytes(""), amqp_cstring_bytes(update_queue_name), 0,	// mandatory (message must be routed to a queue)
-					     0,	// immediate (message must be delivered to a consumer immediately)
-					     &props,	// properties
-					     amqp_cstring_bytes(update_message_3));
+				    0,	// immediate (message must be delivered to a consumer immediately)
+				    &props,	// properties
+				    amqp_cstring_bytes(update_message_3));
 
 	if (status == AMQP_STATUS_OK)
 		pmesg_safe(&global_flag, LOG_DEBUG, __FILE__, __LINE__, "Message has been sent on %s: %s\n", update_queue_name, update_message_3);
@@ -944,8 +944,7 @@ int main(int argc, char const *const *argv)
 	static char *USAGE = "\nUSAGE:\nesdm_pav_runtime_worker [-d] [-c <config_file>] [-H <RabbitMQ hostname>] "
 	    "[-P <RabbitMQ port>] [-Q <RabbitMQ task_queue>] [-U <RabbitMQ update_queue>] [-a <master hostname>] [-b <master port>] "
 	    "[-M <RabbitMQ db_manager_queue>] [-D <RabbitMQ delete_queue>] [-u <RabbitMQ username>] [-p <RabbitMQ password>] "
-	    "[-n <max_ncores>] [-m <cancellation_multiplication_factor>] [-s <cancellation_struct_size>] "
-	    "[-t <thread_number>] [-l <worker_launcher>] [-f <framework_path>] [-h <USAGE>]\n";
+	    "[-n <max_ncores>] [-m <cancellation_multiplication_factor>] [-s <cancellation_struct_size>] " "[-t <thread_number>] [-l <worker_launcher>] [-f <framework_path>] [-h <USAGE>]\n";
 
 	while ((ch = getopt(argc, (char *const *) argv, ":c:H:P:Q:U:a:b:M:D:u:p:n:m:s:C:t:l:f:dhxz")) != -1) {
 #else

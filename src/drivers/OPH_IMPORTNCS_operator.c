@@ -1133,7 +1133,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		ophidiadb *oDB = &((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->oDB;
 		int id_vocabulary = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->id_vocabulary;
 		for (i = 0; i < measure->number_src_path; ++i) {
-			if (update_dim_with_nc_metadata2(oDB, time_dims + i, id_vocabulary, OPH_GENERIC_CONTAINER_ID, ncids[i], time_dim_id + i) || (time_dim_id[i] < 0))
+			if (oph_nc_update_dim_with_nc_metadata2(oDB, time_dims + i, id_vocabulary, OPH_GENERIC_CONTAINER_ID, ncids[i], time_dim_id + i) || (time_dim_id[i] < 0))
 				break;
 		}
 		if (i < measure->number_src_path) {
@@ -1651,7 +1651,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				if (handle->proc_rank == 0) {
 					ophidiadb *oDB = &((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->oDB;
 
-					if (update_dim_with_nc_metadata(oDB, time_dim, ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->id_vocabulary, id_container_out, ncid))
+					if (oph_nc_update_dim_with_nc_metadata(oDB, time_dim, ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->id_vocabulary, id_container_out, ncid))
 						time_dim->id_dimension = 0;
 					else
 						time_dim->id_dimension = -1;
@@ -1715,7 +1715,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 							break;
 						}
 
-						if (update_dim_with_nc_metadata(oDB, time_dim, ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->id_vocabulary, id_container_out, ncid))
+						if (oph_nc_update_dim_with_nc_metadata
+						    (oDB, time_dim, ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->id_vocabulary, id_container_out, ncid))
 							break;
 					}
 
@@ -1840,7 +1841,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			//Dimension will not be subsetted
 			measure->dims_start_index[i] = 0;
 			measure->dims_end_index[i] = measure->dims_length[i] - 1;
-		} else if ((ii = check_subset_string(curfilter, i, measure, is_index[j], ncid, j < s_offset_num ? offset[j] : 0.0))) {
+		} else if ((ii = oph_nc_check_subset_string(curfilter, i, measure, is_index[j], ncid, j < s_offset_num ? offset[j] : 0.0, 0))) {
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)

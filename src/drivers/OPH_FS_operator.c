@@ -1002,7 +1002,7 @@ int task_execute(oph_operator_struct * handle)
 							}
 
 							char filenames[jj][OPH_COMMON_BUFFER_LEN], *start = tbuffer, *save_pointer = NULL;
-							int jjc = jj;
+							size_t jjc = jj;
 							for (ii = jj = 0; ii < jjc; ++ii, start = NULL) {
 								filename = strtok_r(start, OPH_SEPARATOR_PARAM, &save_pointer);
 								lstat(filename, &file_stat);

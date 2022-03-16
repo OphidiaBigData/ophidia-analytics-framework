@@ -267,10 +267,10 @@ int update_database(amqp_envelope_t full_message)
 					      "- DELETE_QUEUE: %s\n", ip_address, port, delete_queue_name);
 				} else {
 					neededSize = snprintf(NULL, 0, "INSERT INTO worker (ip_address, port, delete_queue_name, status, pid) "
-						"VALUES (\"%s\", \"%s\", \"%s\", \"up\", %d);", ip_address, port, delete_queue_name, atoi(worker_pid));
+							      "VALUES (\"%s\", \"%s\", \"%s\", \"up\", %d);", ip_address, port, delete_queue_name, atoi(worker_pid));
 					char *insert_new_worker_sql = (char *) malloc(neededSize + 1);
 					snprintf(insert_new_worker_sql, neededSize + 1, "INSERT INTO worker (ip_address, port, delete_queue_name, status, pid) "
-						"VALUES (\"%s\", \"%s\", \"%s\", \"up\", %d);", ip_address, port, delete_queue_name, atoi(worker_pid));
+						 "VALUES (\"%s\", \"%s\", \"%s\", \"up\", %d);", ip_address, port, delete_queue_name, atoi(worker_pid));
 
 					while (sqlite3_exec(db, insert_new_worker_sql, 0, 0, &err_msg) != SQLITE_OK)
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on select query: %s\n", err_msg);
@@ -528,8 +528,7 @@ int main(int argc, char const *const *argv)
 	}
 
 	char *init_worker_sql = "CREATE TABLE IF NOT EXISTS worker (id_worker INTEGER PRIMARY KEY AUTOINCREMENT, "
-	    "ip_address VARCHAR(15) NOT NULL, port VARCHAR(4) NOT NULL, delete_queue_name VARCHAR(40) NOT NULL, "
-	    "status VARCHAR(4) DEFAULT \"down\" NOT NULL, pid INTEGER DEFAULT 0)";
+	    "ip_address VARCHAR(15) NOT NULL, port VARCHAR(4) NOT NULL, delete_queue_name VARCHAR(40) NOT NULL, " "status VARCHAR(4) DEFAULT \"down\" NOT NULL, pid INTEGER DEFAULT 0)";
 	while (sqlite3_exec(db, init_worker_sql, 0, 0, &err_msg) != SQLITE_OK)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "SQL error on init_worker_sql query: %s\n", sqlite3_errmsg(db));
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "The \"worker\" table has set correctly\n");
