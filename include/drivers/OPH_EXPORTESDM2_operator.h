@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OPH_EXPORTESDM_OPERATOR_H
-#define __OPH_EXPORTESDM_OPERATOR_H
+#ifndef __OPH_EXPORTESDM2_OPERATOR_H
+#define __OPH_EXPORTESDM2_OPERATOR_H
 
 //Operator specific headers
 #include "oph_common.h"
@@ -57,7 +57,7 @@ typedef struct _ESDM_dim ESDM_dim;
  * \param server Pointer to I/O server handler
  * \param sessionid SessionID
  */
-struct _OPH_EXPORTESDM_operator_handle {
+struct _OPH_EXPORTESDM2_operator_handle {
 	ophidiadb oDB;
 	char *datacube_input;
 	int id_input_datacube;
@@ -78,7 +78,6 @@ struct _OPH_EXPORTESDM_operator_handle {
 	oph_ioserver_handler *server;
 	char *sessionid;
 };
-typedef struct _OPH_EXPORTESDM_operator_handle OPH_EXPORTESDM_operator_handle;
+typedef struct _OPH_EXPORTESDM2_operator_handle OPH_EXPORTESDM2_operator_handle;
 
-#endif				//__OPH_EXPORTESDM_OPERATOR_H
-
+#endif				//__OPH_EXPORTESDM2_OPERATOR_H
