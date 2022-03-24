@@ -179,6 +179,8 @@
 #define OPH_IN_PARAM_ON_REDUCE					"on_reduce"
 #define OPH_IN_PARAM_ACTION					"action"
 #define OPH_IN_PARAM_POLICY					"policy"
+#define OPH_IN_PARAM_SHUFFLE					"shuffle"
+#define OPH_IN_PARAM_DEFLATE					"deflate"
 
 #define OPH_IN_PARAM_SCRIPT					"script"
 #define OPH_IN_PARAM_ARGS					"args"

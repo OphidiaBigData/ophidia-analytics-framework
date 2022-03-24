@@ -24,6 +24,8 @@ It exports data of a datacube into a sinlge NetCDF files.
 - export_metadata: exports also metadata with &quot;yes&quot; (default) or only data with &quot;no&quot;;
                    with &quot;postpone&quot; metadata are also saved, but only after all the data are written.
                    Special metadata &quot;_FillValue&quot; cannot be saved with &quot;postpone&quot;.
+- shuffle: flag to activate shuffle filter to better compress output file; disabled by default.
+- deflate: deflate level (from 1 to 9) for zlib compression; set to 0 in case of no compression (default).
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -54,6 +56,8 @@ SUBMISSION STRING: &quot;operator=oph_exportnc2;cube=http://www.example.com/1/1;
 		<argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no|postpone">export_metadata</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">shuffle</argument>
+		<argument type="string" mandatory="no" default="0" values="0|1|2|3|4|5|6|7|8|9">deflate</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
