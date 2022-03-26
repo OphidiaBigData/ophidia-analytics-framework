@@ -1262,7 +1262,7 @@ int task_execute(oph_operator_struct * handle)
 			char shuffle = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->shuffle;
 			char deflate = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->deflate;
 			if ((retval = nc_def_var_deflate(ncid, varid, shuffle ? NC_SHUFFLE : NC_NOSHUFFLE, deflate ? 1 : 0, (int) deflate))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set compression configuration for the variable: %s %d %d\n", nc_strerror(retval), shuffle, deflate);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set compression configuration for the variable: %s\n", nc_strerror(retval));
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_NC_DEFINE_VAR_ERROR,
 					nc_strerror(retval));
 				oph_odb_stge_free_fragment_list(&frags);
