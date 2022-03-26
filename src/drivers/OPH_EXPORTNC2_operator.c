@@ -1828,10 +1828,12 @@ int task_execute(oph_operator_struct * handle)
 							result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 							goto __OPH_EXIT_2;
 						}
-						fetch = 1;
 						if (curr_row->row)
 							current_length++;
+						else if (fetch)
+							break;
 
+						fetch = 1;
 						if (memory_size_mb) {
 							inc = nexp - 1;
 							if (curr_row->row && (current_size + block_size < memory_size_mb)) {
@@ -1844,11 +1846,8 @@ int task_execute(oph_operator_struct * handle)
 								// else avoid to buffer more than one value of outer explicit dimensions
 							} else
 								fetch = 0;
-						} else {
-							if (!curr_row->row)
-								break;
+						} else
 							raw_data = curr_row->row[1];
-						}
 
 						retval = 1;
 						switch (type_nc) {

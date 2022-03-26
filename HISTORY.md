@@ -3,6 +3,7 @@
 
 ### Fixed:
 
+- Optimization to write output data by OPH_EXPORTNC2
 - Detection of time dimension in case of subsetting for OPH_IMPORTNC and OPH_CONCATNC
 
 ### Changed:
