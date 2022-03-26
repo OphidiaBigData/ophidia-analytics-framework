@@ -118,9 +118,9 @@ endif
 liboph_analytics_framework_la_LDFLAGS = -static $(LIB_OPERATOR)
 
 liboph_json_la_SOURCES = oph_json/oph_json_common.c oph_json/oph_json_graph.c oph_json/oph_json_grid.c  oph_json/oph_json_multigrid.c oph_json/oph_json_text.c oph_json/oph_json_tree.c
-liboph_json_la_CFLAGS= -prefer-pic -I../include -I../include/oph_json @INCLTDL@ $(JANSSON_CFLAGS) ${lib_CFLAGS}
+liboph_json_la_CFLAGS= -prefer-pic -I../include -I../include/oph_json @INCLTDL@ $(JANSSON_INCLUDE) ${lib_CFLAGS}
 liboph_json_la_LDFLAGS = -static -Wl,-rpath -Wl,$(JANSSON_LIBDIR)
-liboph_json_la_LIBADD = -lz -lm @LIBLTDL@ $(JANSSON_LIBS) -L. -ldebug
+liboph_json_la_LIBADD = -lz -lm @LIBLTDL@ $(JANSSON_LIB) -L. -ldebug
 
 liboph_task_parser_la_SOURCES = oph_task_parser_library.c 
 liboph_task_parser_la_CFLAGS= $(LIBXML_INCLUDE) -prefer-pic -I../include @INCLTDL@ ${lib_CFLAGS}
