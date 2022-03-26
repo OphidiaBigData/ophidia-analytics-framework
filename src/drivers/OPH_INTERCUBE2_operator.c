@@ -806,7 +806,10 @@ int task_init(oph_operator_struct * handle)
 		snprintf(intercube2_operation, OPH_COMMON_BUFFER_LEN, "fact_in1.%s|%soph_operation_array('%s','oph_%s',%s,'oph_%s',%s)%s", MYSQL_FRAG_ID, compressed ? "oph_compress('',''," : "",
 			 intercube2_datatypes, ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->measure_type, intercube2_operands,
 			 ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->operation, _ms, compressed ? ")" : "");
-		snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_INTERCUBE2_QUERY, intercube2_operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, intercube2_froms, intercube2_wheres);
+		if (*intercube2_wheres)
+			snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_INTERCUBE2_QUERY, intercube2_operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, intercube2_froms, intercube2_wheres);
+		else
+			snprintf(new_task.query, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_INTERCUBE2_QUERY_WW, intercube2_operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, intercube2_froms);
 
 		new_task.input_cube_number = cubes_num;
 		if (!(new_task.id_inputcube = (int *) malloc(new_task.input_cube_number * sizeof(int)))) {
@@ -1249,8 +1252,12 @@ int task_execute(oph_operator_struct * handle)
 					snprintf(intercube2_operation, OPH_COMMON_BUFFER_LEN, "frag1.%s|%soph_operation_array('%s','oph_%s',%s,'oph_%s',%s)%s", MYSQL_FRAG_ID,
 						 compressed ? "oph_compress('',''," : "", intercube2_datatypes, ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->measure_type,
 						 intercube2_operands, ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->operation, _ms, compressed ? ")" : "");
-					n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE2_QUERY2, frag_name_out, intercube2_operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, intercube2_froms,
-						     intercube2_aliass, intercube2_wheres);
+					if (*intercube2_wheres)
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE2_QUERY2, frag_name_out, intercube2_operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
+							     intercube2_froms, intercube2_aliass, intercube2_wheres);
+					else
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE2_QUERY2_WW, frag_name_out, intercube2_operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
+							     intercube2_froms, intercube2_aliass);
 					if (n >= OPH_COMMON_BUFFER_LEN) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name",
