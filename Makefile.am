@@ -81,6 +81,7 @@ OPERATOR_XML+=etc/operators_xml/OPH_IF_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INPUT_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INSTANCES_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INTERCUBE_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_INTERCUBE2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_LIST_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_LOGGINGBK_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_LOG_INFO_operator_1.0.xml
