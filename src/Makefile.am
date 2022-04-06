@@ -16,11 +16,18 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-if STANDALONE_MODE
-SUBDIRS= . clients ioservers drivers
-else
-SUBDIRS= oph_gsoap . clients ioservers drivers
+SUBDIRS=
+
+if HAVE_ESDM
+SUBDIRS+= esdm_kernels
 endif
+
+if STANDALONE_MODE
+else
+SUBDIRS+= oph_gsoap
+endif
+
+SUBDIRS+= . clients ioservers drivers
 
 LIBRARY=
 
@@ -40,15 +47,18 @@ LIBRARY+= liboph_hierarchy.la
 LIBRARY+= liboph_dimension.la
 LIBRARY+= liboph_datacube.la
 LIBRARY+= liboph_driver_proc.la
-if HAVE_NETCDF
-LIBRARY+= liboph_nc.la
-endif
 LIBRARY+= liboph_analytics_operator.la
 LIBRARY+= liboph_ioserver_parser.la
 LIBRARY+= liboph_ioserver.la
 LIBRARY+= liboph_analytics_framework.la
+if HAVE_NETCDF
+LIBRARY+= liboph_nc.la
+endif
 if HAVE_CFITSIO
 LIBRARY+= liboph_fits.la
+endif
+if HAVE_ESDM
+LIBRARY+= liboph_esdm.la
 endif
 
 lib_LTLIBRARIES = $(LIBRARY)
@@ -184,3 +194,11 @@ liboph_fits_la_CFLAGS= ${MYSQL_CFLAGS} ${LIBCFITSIO_INCLUDE} -prefer-pic -I../in
 liboph_fits_la_LDFLAGS = -static
 liboph_fits_la_LIBADD = -lz -lm ${LIBCFITSIO_LIB} -lpthread @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube
 endif
+
+if HAVE_ESDM
+liboph_esdm_la_SOURCES = oph_esdm_library.c
+liboph_esdm_la_CFLAGS= ${MYSQL_CFLAGS} $(ESDM_CFLAGS) -prefer-pic -I../include -I../include/oph_ioserver -I../include/esdm_kernels @INCLTDL@ ${lib_CFLAGS}
+liboph_esdm_la_LDFLAGS = -static
+liboph_esdm_la_LIBADD = -lz -lm $(ESDM_LIBS) @LIBLTDL@ -L. -L./esdm_kernels -ldebug -loph_binary_io -loph_ioserver -loph_datacube -loph_esdm_kernels -lophidiadb
+endif
+

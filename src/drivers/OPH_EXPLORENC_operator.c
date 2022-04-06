@@ -499,6 +499,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MISSING_INPUT_PARAMETER, "", OPH_IN_PARAM_SRC_FILE_PATH);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	char *input = hashtbl_get(task_tbl, OPH_IN_PARAM_INPUT);
+	if (input && strlen(input))
+		value = input;
+	else if (!strlen(value)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "The param '%s' is mandatory; at least the param '%s' needs to be set\n", OPH_IN_PARAM_SRC_FILE_PATH, OPH_IN_PARAM_INPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_SRC_FILE_PATH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
 	if (!(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT_NO_CONTAINER, value, "nc file path");
@@ -511,7 +519,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!strstr(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path, "http://")
-	    && !strstr(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path, "https://")) {
+	    && !strstr(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path, "https://")
+	    && !strstr(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path, OPH_ESDM_PREFIX)) {
 		char *pointer = ((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path;
 		while (pointer && (*pointer == ' '))
 			pointer++;
@@ -1034,7 +1043,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 						int order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 						//Extract index of the point given the dimension value
 						if (oph_nc_index_by_value
-						    (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], curfilter, want_start, 0, &order, &coord_index)) {
+						    (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], curfilter, want_start, 0, &order, &coord_index, 0)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_INVALID_INPUT_STRING, nc_strerror(retval));
 							oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -1172,7 +1181,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 						int order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 						//Extract index of the point given the dimension value
 						if (oph_nc_index_by_value
-						    (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], startfilter, want_start, 0, &order, &coord_index)) {
+						    (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], startfilter, want_start, 0, &order, &coord_index, 0)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_INVALID_INPUT_STRING, nc_strerror(retval));
 							oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -1196,7 +1205,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 						order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 						//Extract index of the point given the dimension value
 						if (oph_nc_index_by_value
-						    (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], endfilter, want_start, 0, &order, &coord_index)) {
+						    (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], endfilter, want_start, 0, &order, &coord_index, 0)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_INVALID_INPUT_STRING);
 							oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -7199,6 +7208,10 @@ int env_unset(oph_operator_struct * handle)
 	}
 	free((OPH_EXPLORENC_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
+
+#ifdef OPH_ESDM
+	handle->dlh = NULL;
+#endif
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

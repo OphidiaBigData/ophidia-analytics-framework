@@ -1,25 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
-<operator name="OPH_CONCATNC" version="1.0">
+<operator name="OPH_CONCATESDM" version="1.0">
     <info>
         <abstract>[Type]
 Data Process.
 
 [Behaviour]
-It creates a new datacube concatenating a NetCDF file to an existing datacube (both measure and dimensions).
-WARNING: It imports only mono-dimensional coordinate variables. The dimensions within the NetCDF file that will be
+It creates a new datacube concatenating a ESDM dataset to an existing datacube (both measure and dimensions).
+WARNING: It imports only mono-dimensional coordinate variables. The dimensions within the input dataset that will be
 considered as explicit dimensions must have the same domain of those in the data cube, 
 while those considered as implicit dimensions must not overlap with those in the data cube.
 
 [Parameters]
 - cube : name of the input datacube. The name must be in PID format.
-- check_exp_dim : if set to &quot;yes&quot; (default) explicit dimensions of the two sources (NetCDF file and datacube) 
+- check_exp_dim : if set to &quot;yes&quot; (default) explicit dimensions of the two sources (ESDM container and datacube) 
                   will be compared to assure they have the same values, if set to &quot;no&quot; the check will not 
                   be performed.
 - schedule : scheduling algorithm. The only possible value is 0,
              for a static linear block distribution of resources.
-- src_path : path of the NetCDF file.
-- input : alias for &quot;src_path&quot;; the value of this argument will be overwritten.
+- src_path : path of the ESDM dataset.
 - cdd : absolute path corresponding to the current directory on data repository.
 - grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
         or the one to be created (if the grid has a new name). If it isn't specified, no grid will be used.
@@ -48,13 +47,13 @@ while those considered as implicit dimensions must not overlap with those in the
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
-                  concatnc : show operator's output PID as text.
+                  concatesdm : show operator's output PID as text.
 - save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples] 
-Concat a NetCDF file excluding metadata into the datacube &quot;http://www.example.com/1/1&quot; :
-OPH_TERM:: oph_concatnc src_path=/path/of/ncfile.nc;cube=http://www.example.com/1/1;
-SUBMISSION STRING: &quot;operator=oph_concatnc;src_path=/path/of/ncfile.nc;cube=http://www.example.com/1/1;&quot;</abstract>
+Concat an ESDM dataset excluding metadata into the datacube &quot;http://www.example.com/1/1&quot; :
+OPH_TERM:: oph_concatesdm src_path=esdm://path/to/dataset;cube=http://www.example.com/1/1;
+SUBMISSION STRING: &quot;operator=oph_concatesdm;src_path=esdm://path/to/dataset;cube=http://www.example.com/1/1;&quot;</abstract>
         <author>CMCC</author>
         <category>Data Import/Export</category>
         <creationdate>24/01/2017</creationdate>
@@ -66,8 +65,7 @@ SUBMISSION STRING: &quot;operator=oph_concatnc;src_path=/path/of/ncfile.nc;cube=
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
-		<argument type="string" mandatory="no" default="" multivalue="yes">src_path</argument>
-		<argument type="string" mandatory="no" default="">input</argument>
+		<argument type="string" mandatory="yes" multivalue="yes">src_path</argument>
 		<argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="real" mandatory="no" default="-">dim_offset</argument>
@@ -80,7 +78,7 @@ SUBMISSION STRING: &quot;operator=oph_concatnc;src_path=/path/of/ncfile.nc;cube=
 		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">check_exp_dim</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
-		<argument type="string" mandatory="no" default="all" values="all|none|concatnc">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|concatesdm">objkey_filter</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

@@ -257,7 +257,37 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!strcmp(value, OPH_COMMON_YES_VALUE))
 		((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->misc = 1;
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	char *output_path = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	char *output_name = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_NAME);
+	char *output = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT);
+	char home[2];
+	home[0] = '/';
+	home[1] = 0;
+	size_t size;
+	if (output && ((size = strlen(output)))) {
+		char *pointer = output + size;
+		while ((pointer >= output) && (*pointer != '/'))
+			pointer--;
+		if (pointer < output) {
+			output_name = output;
+			if ((output[size - 3] == '.') && (output[size - 2] == 'n') && (output[size - 1] == 'c'))
+				output[size - 3] = 0;
+		} else {
+			if (pointer == output)
+				output_path = home;
+			else
+				output_path = output;
+			*pointer = 0;
+			pointer++;
+			if (pointer && *pointer) {
+				output_name = pointer;
+				if ((output[size - 3] == '.') && (output[size - 2] == 'n') && (output[size - 1] == 'c'))
+					output[size - 3] = 0;
+			}
+		}
+	}
+
+	value = output_path;
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
@@ -381,7 +411,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user_defined = 1;
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_NAME);
+	value = output_name;
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_NAME);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_NAME);
@@ -395,7 +425,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 	}
 	int s;
-	if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name) {
+	output_name = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name;
+	if (output_name && strncmp(output_name, OPH_ESDM_PREFIX, 7)) {
 		for (s = 0; s < (int) strlen(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name); s++) {
 			if ((((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] == '/') || (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] == ':')) {
 				((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] = '_';
@@ -735,6 +766,9 @@ int task_execute(oph_operator_struct * handle)
 	int compressed = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->compressed;
 	int num_of_dims = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->num_of_dims;
 	NETCDF_dim *dims = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->dims;
+
+	if (!file)
+		file = measure_name;
 
 	// I need an array of dimensions size and I need to know the number of explicit dimensions
 	unsigned int dims_size[num_of_dims];
@@ -1088,12 +1122,24 @@ int task_execute(oph_operator_struct * handle)
 				if (frags.value[k].db_instance != &(dbs.value[j]))
 					continue;
 
-				if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
-					n = snprintf(file_name, sizeof(file_name), OPH_EXPORTNC_OUTPUT_PATH_SINGLE_FILE, path, file,
-						     strstr(file, OPH_EXPORTNC_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC_OUTPUT_FILE_EXT);
-				else
-					n = snprintf(file_name, sizeof(file_name), OPH_EXPORTNC_OUTPUT_PATH_MORE_FILES, path, file,
-						     ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->fragment_id_start_position + frag_count);
+				if (strncmp(file, OPH_ESDM_PREFIX, 7)) {
+
+					if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
+						n = snprintf(file_name, sizeof(file_name), OPH_EXPORTNC_OUTPUT_PATH_SINGLE_FILE, path, file,
+							     strstr(file, OPH_EXPORTNC_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC_OUTPUT_FILE_EXT);
+					else
+						n = snprintf(file_name, sizeof(file_name), OPH_EXPORTNC_OUTPUT_PATH_MORE_FILES, path, file,
+							     ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->fragment_id_start_position + frag_count);
+
+				} else {
+
+					if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
+						n = snprintf(file_name, sizeof(file_name), "%s", file);
+					else
+						n = snprintf(file_name, sizeof(file_name), "%s_%d", file,
+							     ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->fragment_id_start_position + frag_count);
+
+				}
 
 				if (n >= (int) sizeof(file_name)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of path exceeded limit.\n");
@@ -1695,7 +1741,28 @@ int task_execute(oph_operator_struct * handle)
 		char jsonbuf[OPH_COMMON_BUFFER_LEN];
 		int type = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1;
 
-		if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link) {
+		if (!strncmp(file, OPH_ESDM_PREFIX, 7)) {
+
+			// ADD OUTPUT PID TO JSON AS TEXT
+			if (oph_json_is_objkey_printable
+			    (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_EXPORTNC)) {
+				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_EXPORTNC2, "Output File", file)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
+			}
+			// ADD FILE TO NOTIFICATION STRING
+			char tmp_string[OPH_COMMON_BUFFER_LEN];
+			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_LINK, file, OPH_IN_PARAM_FILE, file);
+			if (handle->output_string) {
+				strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
+				free(handle->output_string);
+			}
+			handle->output_string = strdup(tmp_string);
+
+		} else if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link) {
+
 			if (type)
 				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC_OUTPUT_PATH_SINGLE_FILE, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link, file,
 					 strstr(file, OPH_EXPORTNC_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC_OUTPUT_FILE_EXT);
@@ -1729,7 +1796,7 @@ int task_execute(oph_operator_struct * handle)
 			}
 			// ADD OUTPUT PID TO NOTIFICATION STRING
 			char tmp_string[OPH_COMMON_BUFFER_LEN];
-			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_LINK, jsonbuf);
+			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_LINK, jsonbuf, OPH_IN_PARAM_FILE, jsonbuf);
 			if (handle->output_string) {
 				strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
 				free(handle->output_string);
@@ -1756,6 +1823,14 @@ int task_execute(oph_operator_struct * handle)
 					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 				}
 			}
+			// ADD FILE TO NOTIFICATION STRING
+			char tmp_string[OPH_COMMON_BUFFER_LEN];
+			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_FILE, jsonbuf);
+			if (handle->output_string) {
+				strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
+				free(handle->output_string);
+			}
+			handle->output_string = strdup(tmp_string);
 		}
 	}
 
@@ -1841,6 +1916,10 @@ int env_unset(oph_operator_struct * handle)
 	}
 	free((OPH_EXPORTNC_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
+
+#ifdef OPH_ESDM
+	handle->dlh = NULL;
+#endif
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

@@ -14,6 +14,7 @@ WARNING: It handles only mono-dimensional coordinate variables.
 		     for a static linear block distribution of resources.
 - measure : name of the measure related to the NetCDF file.
 - src_path : path or OPeNDAP URL of the NetCDF file.
+- input : alias for &quot;src_path&quot;; the value of this argument will be overwritten.
 - cdd : absolute path corresponding to the current directory on data repository.
 - exp_dim : names of explicit dimensions.
 				 Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
@@ -119,7 +120,8 @@ SUBMISSION STRING: &quot;operator=oph_explorenc;measure=pressure;src_path=/path/
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="-">measure</argument>
-		<argument type="string" mandatory="yes" multivalue="yes">src_path</argument>
+		<argument type="string" mandatory="no" default="" multivalue="yes">src_path</argument>
+		<argument type="string" mandatory="no" default="">input</argument>
 		<argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="-" multivalue="yes">exp_dim</argument>
 		<argument type="string" mandatory="no" default="-" multivalue="yes">imp_dim</argument>

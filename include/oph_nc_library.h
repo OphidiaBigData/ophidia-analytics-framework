@@ -24,6 +24,10 @@
 #include "oph_datacube_library.h"
 #include "oph_ioserver_library.h"
 
+#ifndef OPH_ESDM_PREFIX
+#define OPH_ESDM_PREFIX		"esdm://"
+#endif
+
 #define OPH_NC_BYTE_TYPE	OPH_COMMON_BYTE_TYPE
 #define OPH_NC_SHORT_TYPE	OPH_COMMON_SHORT_TYPE
 #define OPH_NC_INT_TYPE		OPH_COMMON_INT_TYPE
@@ -42,8 +46,9 @@
 #define OPH_NC_ERRCODE		2
 #define OPH_NC_ERR(e)		{printf("Error: %s\n", nc_strerror(e));}
 
-#define OPH_NC_ERROR		1
 #define OPH_NC_SUCCESS		0
+#define OPH_NC_ERROR		1
+#define OPH_NC_BOUND_ERROR	2
 
 #define OPH_NC_SKIP_ATTRIBUTES
 #define OPH_NC_BOUNDS		"bounds"
@@ -308,7 +313,7 @@ int oph_nc_get_dim_array2(int id_container, int ncid, int dim_id, const char dim
  * \param coord_index Index of the first value greater than "value"
  * \return 0 if successfull
  */
-int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_type, int dim_size, char *value, int want_start, double offset, int *order, int *coord_index);
+int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_type, int dim_size, char *value, int want_start, double offset, int *order, int *coord_index, char out_of_bound);
 
 /**
  * \brief Compare nc type with c type
@@ -341,8 +346,8 @@ int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE
  */
 int oph_nc_get_row_from_nc(int ncid, int array_length, NETCDF_var * measure, unsigned long idDim, char **row);
 
-int update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid);
+int oph_nc_update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid);
 
-int check_subset_string(char *curfilter, int i, NETCDF_var * measure, int is_index, int ncid, double offset);
+int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var * measure, int is_index, int ncid, double offset, char out_of_bound);
 
 #endif				//__OPH_NC_UTILITY_H

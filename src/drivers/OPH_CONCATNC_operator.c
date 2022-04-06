@@ -269,6 +269,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_SRC_FILE_PATH);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	char *input = hashtbl_get(task_tbl, OPH_IN_PARAM_INPUT);
+	if (input && strlen(input))
+		value = input;
+	else if (!strlen(value)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "The param '%s' is mandatory; at least the param '%s' needs to be set\n", OPH_IN_PARAM_SRC_FILE_PATH, OPH_IN_PARAM_INPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_SRC_FILE_PATH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
 	if (!(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->nc_file_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_INPUT_NO_CONTAINER, value, "nc file path");
@@ -721,7 +729,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			//Dimension will not be subsetted
 			measure->dims_start_index[i] = 0;
 			measure->dims_end_index[i] = measure->dims_length[i] - 1;
-		} else if ((ii = check_subset_string(curfilter, i, measure, is_index, ncid, j < s_offset_num ? offset[j] : 0.0))) {
+		} else if ((ii = oph_nc_check_subset_string(curfilter, i, measure, is_index, ncid, j < s_offset_num ? offset[j] : 0.0, 0))) {
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)
@@ -1072,10 +1080,7 @@ int task_init(oph_operator_struct * handle)
 				goto __OPH_EXIT_1;
 			}
 
-			if (measure->dims_start_index[i] == measure->dims_end_index[i])
-				tmp_var.varsize = 1;
-			else
-				tmp_var.varsize = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
+			tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
 
 			if (cubedims[l].explicit_dim) {
 				if (tmp_var.varsize != cubedims[l].size) {
@@ -2147,6 +2152,10 @@ int env_unset(oph_operator_struct * handle)
 
 	free((OPH_CONCATNC_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
+
+#ifdef OPH_ESDM
+	handle->dlh = NULL;
+#endif
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
