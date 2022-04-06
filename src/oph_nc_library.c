@@ -2866,17 +2866,10 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fra
 		n4 += snprintf(NULL, 0, "%d|", measure->dims_end_index[j]);
 	}
 
-	long long query_size = 0;
 	char *insert_query = OPH_DC_SQ_CREATE_FRAG_FROM_FILE;
-	if (compressed == 1) {
-		query_size =
-		    snprintf(NULL, 0, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_YES, tuplexfrag_number, frag->key_start, "", "", "",
-			     "") + (n1 + n2 + n3 + n4 - 4) + 1;
-	} else {
-		query_size =
-		    snprintf(NULL, 0, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, frag->key_start, "", "", "",
-			     "") + (n1 + n2 + n3 + n4 - 4) + 1;
-	}
+	int query_size =
+	    snprintf(NULL, 0, insert_query, frag->fragment_name, nc_file_path, measure->varname, compressed ? OPH_IOSERVER_SQ_VAL_YES : OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, frag->key_start, "",
+		     "", "", "", measure->dim_unlim) + (n1 + n2 + n3 + n4 - 4) + 1;
 
 	char *query_string = (char *) malloc(query_size * sizeof(char));
 	if (!(query_string)) {
@@ -2933,14 +2926,8 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fra
 	dims_end_string[m4 - 1] = 0;
 	free(index);
 
-	int n = 0;
-	if (compressed == 1) {
-		n = snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_YES, tuplexfrag_number, frag->key_start, dims_type_string,
-			     dims_index_string, dims_start_string, dims_end_string);
-	} else {
-		n = snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, frag->key_start, dims_type_string,
-			     dims_index_string, dims_start_string, dims_end_string);
-	}
+	int n = snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, compressed ? OPH_IOSERVER_SQ_VAL_YES : OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number,
+			 frag->key_start, dims_type_string, dims_index_string, dims_start_string, dims_end_string, measure->dim_unlim);
 	if (n >= query_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_NC_ERROR;
@@ -5589,37 +5576,66 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragm
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_get_dim_array(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array)
+int oph_nc_get_dim_array_and_size(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array, size_t * size)
 {
-	if (!ncid || !dim_type || !dim_size || !dim_array) {
+	if (!ncid || !dim_type || !dim_array) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_NC_ERROR;
 	}
 	*dim_array = NULL;
 
-	void *binary_dim = NULL;
+	if (!dim_size) {
+		if (dim_id < 0) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension size cannot be loaded\n");
+			return OPH_NC_ERROR;
+		}
+		int retval = 0, tmp = 0;
+		if ((retval = nc_inq_varndims(ncid, dim_id, &tmp))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Number od dimension of variable identified by %d cannot be loaded: %s\n", dim_id, nc_strerror(retval));
+			return OPH_NC_ERROR;
+		}
+		if (tmp != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Identifier %d is not a dimension\n", dim_id);
+			return OPH_NC_ERROR;
+		}
+		if ((retval = nc_inq_vardimid(ncid, dim_id, &tmp))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension size cannot be loaded: %s\n", nc_strerror(retval));
+			return OPH_NC_ERROR;
+		}
+		size_t lenp;
+		if ((retval = nc_inq_dimlen(ncid, tmp, &lenp))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension size cannot be loaded: %s\n", nc_strerror(retval));
+			return OPH_NC_ERROR;
+		}
+		dim_size = lenp;
+	}
+
+	size_t _size;
 	if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-		binary_dim = (void *) malloc(dim_size * sizeof(char));
+		_size = dim_size * sizeof(char);
 	else if (!strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-		binary_dim = (void *) malloc(dim_size * sizeof(short));
+		_size = dim_size * sizeof(short);
 	else if (!strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-		binary_dim = (void *) malloc(dim_size * sizeof(int));
+		_size = dim_size * sizeof(int);
 	else if (!strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-		binary_dim = (void *) malloc(dim_size * sizeof(float));
+		_size = dim_size * sizeof(float);
 	else if (!strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-		binary_dim = (void *) malloc(dim_size * sizeof(double));
+		_size = dim_size * sizeof(double);
 	else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-		binary_dim = (void *) malloc(dim_size * sizeof(long long));
+		_size = dim_size * sizeof(long long);
 	else {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Variable type not supported\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_VAR_TYPE_NOT_SUPPORTED, dim_type);
 		return OPH_NC_ERROR;
 	}
+	void *binary_dim = (void *) malloc(_size);
 	if (!binary_dim) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Memory error\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Memory error\n");
 		return OPH_NC_ERROR;
 	}
+	if (size)
+		*size = _size;
 
 	if (dim_id >= 0) {
 
@@ -5710,6 +5726,11 @@ int oph_nc_get_dim_array(int id_container, int ncid, int dim_id, const char dim_
 	*dim_array = (char *) binary_dim;
 
 	return OPH_NC_SUCCESS;
+}
+
+int oph_nc_get_dim_array(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array)
+{
+	return oph_nc_get_dim_array_and_size(id_container, ncid, dim_id, dim_type, dim_size, dim_array, NULL);
 }
 
 /*
@@ -6197,38 +6218,49 @@ int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE
 
 	//Get id from dimension name
 	if ((retval = nc_inq_varid(ncid, var_name, &(var->varid)))) {
-		pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-		logging(LOG_WARNING, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-		return OPH_NC_ERROR;
-	}
-	//Get information from id
-	if ((retval = nc_inq_vartype(ncid, var->varid, &(var->vartype)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-		return OPH_NC_ERROR;
-	}
-	if ((retval = nc_inq_varndims(ncid, var->varid, &(var->ndims)))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-		return OPH_NC_ERROR;
-	}
 
-	if (var->ndims != max_ndims) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_NOT_ALLOWED);
-		return OPH_NC_ERROR;
-	}
+		//Assume no coordinate variable is defined for the dimension
+		var->varid = -1;
+		var->vartype = NC_LONG;
+		var->ndims = 1;
+		var->dims_id = malloc(var->ndims * sizeof(int));
+		if ((retval = nc_inq_dimid(ncid, var_name, &(var->dims_id[0])))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+			return OPH_NC_ERROR;
+		}
 
-	var->dims_id = malloc(var->ndims * sizeof(int));
-	if (!(var->dims_id)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions nc ids");
-		return OPH_NC_ERROR;
-	}
-	if ((retval = nc_inq_vardimid(ncid, var->varid, var->dims_id))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
-		return OPH_NC_ERROR;
+	} else {
+
+		//Get information from id
+		if ((retval = nc_inq_vartype(ncid, var->varid, &(var->vartype)))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+			return OPH_NC_ERROR;
+		}
+		if ((retval = nc_inq_varndims(ncid, var->varid, &(var->ndims)))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+			return OPH_NC_ERROR;
+		}
+
+		if (var->ndims != max_ndims) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_NOT_ALLOWED);
+			return OPH_NC_ERROR;
+		}
+
+		var->dims_id = malloc(var->ndims * sizeof(int));
+		if (!(var->dims_id)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_MEMORY_ERROR_INPUT, "dimensions nc ids");
+			return OPH_NC_ERROR;
+		}
+		if ((retval = nc_inq_vardimid(ncid, var->varid, var->dims_id))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_GENERIC_DIM_READ_ERROR, nc_strerror(retval));
+			return OPH_NC_ERROR;
+		}
 	}
 
 	var->dims_length = malloc(var->ndims * sizeof(size_t));
@@ -6248,9 +6280,8 @@ int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid)
+int oph_nc_update_dim_with_nc_metadata2(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid, int *dim_id)
 {
-
 	MYSQL_RES *key_list = NULL;
 	MYSQL_ROW row = NULL;
 
@@ -6303,6 +6334,8 @@ int oph_nc_update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_NC_ATTRIBUTE_ERROR);
 						break;
 					}
+					if (dim_id)
+						*dim_id = varid;
 				} else
 					varid = NC_GLOBAL;
 
@@ -6394,6 +6427,11 @@ int oph_nc_update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time
 	mysql_free_result(key_list);
 
 	return OPH_NC_SUCCESS;
+}
+
+int oph_nc_update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid)
+{
+	return oph_nc_update_dim_with_nc_metadata2(oDB, time_dim, id_vocabulary, id_container_out, ncid, NULL);
 }
 
 int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var * measure, int is_index, int ncid, double offset, char out_of_bound)

@@ -41,7 +41,7 @@
 
 #define OPH_DIM_DATA_FORMAT1 "%Y-%m-%dT%H:%M:%S"
 #define OPH_DIM_DATA_FORMAT2 "%Y-%m-%d %H:%M:%S"
-#define OPH_DIM_DATA_FORMAT_CHECK1 '%'
+#define OPH_DIM_DATA_FORMAT_CHECK1 OPH_DIM_DATA_FORMAT_CHECK
 #define OPH_DIM_DATA_FORMAT_CHECK2 'T'
 
 extern int msglevel;
@@ -350,12 +350,8 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 	if (!dim->calendar || !strlen(dim->calendar))
 		return OPH_DIM_TIME_PARSING_ERROR;
 
-	memset(tm_base, 0, sizeof(struct tm));
-	long long _base_time, *base_time_ = base_time ? base_time : &_base_time;
-	*base_time_ = 0;
-
-	double _value;
 	// Read the offset
+	double _value;
 	if (oph_dim_get_double_value_of(dim_row, kk, dim->dimension_type, &_value))
 		return OPH_DIM_DATA_ERROR;
 
@@ -368,7 +364,11 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 		case '3':
 			_value *= 3.0;
 		case 'h':
-			_value *= 60.0;
+			_value *= 4.0;
+		case 'Q':
+			_value *= 3.0;
+		case 'v':
+			_value *= 5.0;
 		case 'm':
 			_value *= 60.0;
 		case 's':
@@ -378,19 +378,11 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 	}
 
 	// Add the base
-	if (dim->base_time && strlen(dim->base_time) && !strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK1)) {
-		if (strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK2))
-			strptime(dim->base_time, OPH_DIM_DATA_FORMAT1, tm_base);
-		else
-			strptime(dim->base_time, OPH_DIM_DATA_FORMAT2, tm_base);
-		tm_base->tm_year += 1900;
-		tm_base->tm_mon++;
-		if (oph_date_to_day(tm_base->tm_year, tm_base->tm_mon, tm_base->tm_mday, base_time_, dim)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
-			return OPH_DIM_DATA_ERROR;
-		}
-		*base_time_ = tm_base->tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base->tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base->tm_hour + OPH_ODB_DIM_HOUR_NUMBER * (*base_time_)));
-	}
+	long long _base_time = 0, *base_time_ = base_time ? base_time : &_base_time;
+	if (oph_dim_get_base_time(dim, base_time_))
+		return OPH_DIM_DATA_ERROR;
+
+
 	// Convert to "date"
 	memset(tm_base, 0, sizeof(struct tm));
 	long long value = (long long) _value + (*base_time_);
@@ -421,24 +413,11 @@ int oph_dim_set_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 
 	// Remove the base
 	long long base_time = 0;
-	if (dim->base_time && strlen(dim->base_time) && !strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK1)) {
-		struct tm tm_base;
-		memset(&tm_base, 0, sizeof(struct tm));
-		if (strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK2))
-			strptime(dim->base_time, OPH_DIM_DATA_FORMAT1, &tm_base);
-		else
-			strptime(dim->base_time, OPH_DIM_DATA_FORMAT2, &tm_base);
-		tm_base.tm_year += 1900;
-		tm_base.tm_mon++;
-		if (oph_date_to_day(tm_base.tm_year, tm_base.tm_mon, tm_base.tm_mday, &base_time, dim)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
-			return OPH_DIM_DATA_ERROR;
-		}
-		base_time = tm_base.tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base.tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base.tm_hour + OPH_ODB_DIM_HOUR_NUMBER * base_time));
-	}
+	if (oph_dim_get_base_time(dim, &base_time))
+		return OPH_DIM_DATA_ERROR;
 	double _value = raw_value - base_time;
 
-	// Convert to "seconds"
+	// Convert from "seconds"
 	switch (dim->units[0]) {
 		case 'd':
 			_value /= 4.0;
@@ -447,7 +426,11 @@ int oph_dim_set_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 		case '3':
 			_value /= 3.0;
 		case 'h':
-			_value /= 60.0;
+			_value /= 4.0;
+		case 'Q':
+			_value /= 3.0;
+		case 'v':
+			_value /= 5.0;
 		case 'm':
 			_value /= 60.0;
 		case 's':
@@ -512,7 +495,11 @@ int oph_set_centroid(char *dim_row, unsigned int kk, oph_odb_dimension * dim, st
 		case '3':
 			_value /= 3.0;
 		case 'h':
-			_value /= 60.0;
+			_value /= 4.0;
+		case 'Q':
+			_value /= 3.0;
+		case 'v':
+			_value /= 5.0;
 		case 'm':
 			_value /= 60.0;
 		case 's':
@@ -621,6 +608,36 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 			}
 			if (first_element || (midnight && (tm_prev->tm_min == tm_base.tm_min) && !tm_prev->tm_sec)
 			    || ((tm_prev->tm_min != tm_base.tm_min) && (!midnight || ((tm_prev->tm_min + 1) % 60 != tm_base.tm_min) || tm_base.tm_sec)))
+				break;
+		case 'v':
+			if (centroid) {
+				tm_centroid.tm_min = 2 + 5 * (tm_centroid.tm_min / 5);
+				tm_centroid.tm_sec = 30;
+				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
+					return OPH_DIM_DATA_ERROR;
+				}
+				centroid = 0;
+			}
+			semi_prev = tm_prev->tm_min / 5;
+			semi_base = tm_base.tm_min / 5;
+			if (first_element || (midnight && (semi_prev == semi_base) && !(tm_prev->tm_min % 5) && !tm_prev->tm_sec)
+			    || ((semi_prev != semi_base) && (!midnight || ((semi_prev + 1) % 12 != semi_base) || tm_base.tm_sec || (tm_base.tm_min % 5))))
+				break;
+		case 'Q':
+			if (centroid) {
+				tm_centroid.tm_min = 7 + 15 * (tm_centroid.tm_min / 15);
+				tm_centroid.tm_sec = 30;
+				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
+					return OPH_DIM_DATA_ERROR;
+				}
+				centroid = 0;
+			}
+			semi_prev = tm_prev->tm_min / 15;
+			semi_base = tm_base.tm_min / 15;
+			if (first_element || (midnight && (semi_prev == semi_base) && !(tm_prev->tm_min % 15) && !tm_prev->tm_sec)
+			    || ((semi_prev != semi_base) && (!midnight || ((semi_prev + 1) % 4 != semi_base) || tm_base.tm_sec || (tm_base.tm_min % 15))))
 				break;
 		case 'h':
 			if (centroid) {
@@ -804,7 +821,7 @@ int oph_dim_update_value(char *dim_row, const char *dimension_type, unsigned int
 	return OPH_DIM_SUCCESS;
 }
 
-int _oph_dim_get_base_time(oph_odb_dimension * dim, long long *base_time)
+int oph_dim_get_base_time(oph_odb_dimension * dim, long long *base_time)
 {
 	if (!dim || !base_time) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -847,7 +864,11 @@ int _oph_dim_get_scaling_factor(oph_odb_dimension * dim, double *scaling_factor)
 		case '3':
 			*scaling_factor *= 3.0;
 		case 'h':
-			*scaling_factor *= 60.0;
+			*scaling_factor *= 4.0;
+		case 'Q':
+			*scaling_factor *= 3.0;
+		case 'v':
+			*scaling_factor *= 5.0;
 		case 'm':
 			*scaling_factor *= 60.0;
 		case 's':
@@ -881,7 +902,7 @@ int oph_dim_parse_season_subset(const char *subset_string, oph_odb_dimension * d
 		return OPH_DIM_DATA_ERROR;
 	if (oph_dim_get_double_value_of(data, data_size - 1, dim->dimension_type, &max))
 		return OPH_DIM_DATA_ERROR;
-	if (_oph_dim_get_base_time(dim, &base_time))
+	if (oph_dim_get_base_time(dim, &base_time))
 		return OPH_DIM_DATA_ERROR;
 	if (_oph_dim_get_scaling_factor(dim, &scaling_factor))
 		return OPH_DIM_DATA_ERROR;
@@ -994,7 +1015,7 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 	struct tm tm_value;
 	long long base_time = 0, value_time;
 	double scaling_factor, _value;
-	if (_oph_dim_get_base_time(dim, &base_time))
+	if (oph_dim_get_base_time(dim, &base_time))
 		return OPH_DIM_DATA_ERROR;
 	if (_oph_dim_get_scaling_factor(dim, &scaling_factor))
 		return OPH_DIM_DATA_ERROR;
@@ -2359,6 +2380,170 @@ int oph_dim_copy_into_dimension_table(oph_odb_db_instance * db, char *from_dimen
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted datacube id\n");
 		return OPH_DIM_MYSQL_ERROR;
 	}
+
+	return OPH_DIM_SUCCESS;
+}
+
+int _oph_dim_convert_data(oph_odb_dimension * dim, char *tmp, char *format, struct tm *tm_base, long long *value)
+{
+	if (!dim || !tmp || !format || !tm_base || !value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_DIM_NULL_PARAM;
+	}
+	memset(tm_base, 0, sizeof(struct tm));
+	*value = 0;
+	if (!strptime(tmp, format, tm_base)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Format error\n");
+		return OPH_DIM_DATA_ERROR;
+	}
+	tm_base->tm_year += 1900;
+	tm_base->tm_mon++;
+	if (oph_date_to_day(tm_base->tm_year, tm_base->tm_mon, tm_base->tm_mday, value, dim)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
+		return OPH_DIM_DATA_ERROR;
+	}
+	return OPH_DIM_SUCCESS;
+}
+
+int oph_dim_convert_data(oph_odb_dimension * dim, int size, char *dim_array)
+{
+	if (!dim || !size || !dim_array) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_DIM_NULL_PARAM;
+	}
+	if (!dim->base_time || !strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK1))
+		return OPH_DIM_SUCCESS;
+
+	int i;
+	char tmp[OPH_COMMON_MAX_DOUBLE_LENGHT], type_flag = oph_dim_typeof(dim->dimension_type), *pch = NULL, *pch2, *current;
+	size_t item_size = oph_dim_sizeof(type_flag);
+	if (!item_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in evaluation item size of the dimension array\n");
+		return OPH_DIM_DATA_ERROR;
+	}
+	struct tm _tm_base, *tm_base = &_tm_base;
+	long long value, offset = 1;
+	char *format = strdup(dim->base_time);
+	if ((pch = strchr(format, '.'))) {
+		*pch = 0;
+		pch++;
+	}
+
+	switch (dim->units[0]) {
+		case 'd':
+			offset *= 4;
+		case '6':
+			offset *= 2;
+		case '3':
+			offset *= 3;
+		case 'h':
+			offset *= 4;
+		case 'Q':
+			offset *= 3;
+		case 'v':
+			offset *= 5;
+		case 'm':
+			offset *= 60;
+		case 's':
+			break;
+		default:
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unrecognized or unsupported units\n");
+	}
+
+	switch (type_flag) {
+		case OPH_DIM_BYTE_FLAG:
+			for (i = 0, current = dim_array; i < size; i++, current += item_size) {
+				snprintf(tmp, OPH_COMMON_MAX_BYTE_LENGHT, "%d\n", *((char *) current));
+				if (_oph_dim_convert_data(dim, tmp, format, tm_base, &value)) {
+					free(format);
+					return OPH_DIM_DATA_ERROR;
+				}
+				value = tm_base->tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base->tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base->tm_hour + OPH_ODB_DIM_HOUR_NUMBER * value)) / offset;
+				*((char *) current) = (char) value;
+			}
+			break;
+		case OPH_DIM_SHORT_FLAG:
+			for (i = 0, current = dim_array; i < size; i++, current += item_size) {
+				snprintf(tmp, OPH_COMMON_MAX_SHORT_LENGHT, "%d\n", *((short *) current));
+				if (_oph_dim_convert_data(dim, tmp, format, tm_base, &value)) {
+					free(format);
+					return OPH_DIM_DATA_ERROR;
+				}
+				value = tm_base->tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base->tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base->tm_hour + OPH_ODB_DIM_HOUR_NUMBER * value)) / offset;
+				*((short *) current) = (short) value;
+			}
+			break;
+		case OPH_DIM_INT_FLAG:
+			for (i = 0, current = dim_array; i < size; i++, current += item_size) {
+				snprintf(tmp, OPH_COMMON_MAX_INT_LENGHT, "%d\n", *((int *) current));
+				if (_oph_dim_convert_data(dim, tmp, format, tm_base, &value)) {
+					free(format);
+					return OPH_DIM_DATA_ERROR;
+				}
+				value = tm_base->tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base->tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base->tm_hour + OPH_ODB_DIM_HOUR_NUMBER * value)) / offset;
+				*((int *) current) = (int) value;
+			}
+			break;
+		case OPH_DIM_LONG_FLAG:
+			for (i = 0, current = dim_array; i < size; i++, current += item_size) {
+				snprintf(tmp, OPH_COMMON_MAX_LONG_LENGHT, "%lld\n", *((long long *) current));
+				if (_oph_dim_convert_data(dim, tmp, format, tm_base, &value)) {
+					free(format);
+					return OPH_DIM_DATA_ERROR;
+				}
+				value = tm_base->tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base->tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base->tm_hour + OPH_ODB_DIM_HOUR_NUMBER * value)) / offset;
+				*((long long *) current) = (long long) value;
+			}
+			break;
+		case OPH_DIM_FLOAT_FLAG:
+			for (i = 0, current = dim_array; i < size; i++, current += item_size) {
+				snprintf(tmp, OPH_COMMON_MAX_FLOAT_LENGHT, "%f\n", *((float *) current));
+				if (pch) {
+					pch2 = strchr(tmp, '.');
+					if (pch2) {
+						*pch2 = 0;
+						pch2++;
+						*((float *) current) -= (long long) (*((float *) current));
+					}
+				} else
+					pch2 = NULL;
+				if (_oph_dim_convert_data(dim, tmp, format, tm_base, &value)) {
+					free(format);
+					return OPH_DIM_DATA_ERROR;
+				}
+				value = tm_base->tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base->tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base->tm_hour + OPH_ODB_DIM_HOUR_NUMBER * value)) / offset;
+				if (pch2)
+					*((float *) current) += (float) value;
+				else
+					*((float *) current) = (float) value;
+			}
+			break;
+		case OPH_DIM_DOUBLE_FLAG:
+			for (i = 0, current = dim_array; i < size; i++, current += item_size) {
+				snprintf(tmp, OPH_COMMON_MAX_DOUBLE_LENGHT, "%f\n", *((double *) current));
+				if (pch) {
+					pch2 = strchr(tmp, '.');
+					if (pch2) {
+						*pch2 = 0;
+						pch2++;
+						*((double *) current) -= (long long) (*((double *) current));
+					}
+				} else
+					pch2 = NULL;
+				if (_oph_dim_convert_data(dim, tmp, format, tm_base, &value)) {
+					free(format);
+					return OPH_DIM_DATA_ERROR;
+				}
+				value = tm_base->tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_base->tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_base->tm_hour + OPH_ODB_DIM_HOUR_NUMBER * value)) / offset;
+				if (pch2)
+					*((double *) current) += (double) value;
+				else
+					*((double *) current) = (double) value;
+			}
+			break;
+		default:;
+	}
+	free(format);
 
 	return OPH_DIM_SUCCESS;
 }

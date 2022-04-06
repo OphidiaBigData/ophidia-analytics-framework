@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_EXPORTESDM2" version="1.0">
+    <info>
+        <abstract>[Type]
+Data Process.
+
+[Behaviour]
+It exports data of a datacube into an ESDM object.
+
+[Parameters]
+- cube : name of the input datacube. The name must be in PID format.
+- output_name : name of the ESDM object; the default value is the measure name of input datacube.
+- output : alias for &quot;output&quot;; the value of this argument will be overwritten.
+- cdd : absolute path corresponding to the current directory on data repository.
+- export_metadata: imports also metadata with &quot;yes&quot; (default)
+                   or only data with &quot;no&quot;.
+
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  exportesdm : no output.
+        
+[Examples] 
+Export data of the datacube identified by the PID &quot;http://www.example.com/1/1&quot; :
+OPH_TERM: oph_exportesdm2 cube=http://www.example.com/1/1;
+SUBMISSION STRING: &quot;operator=oph_exportesdm2;cube=http://www.example.com/1/1;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <category>Data Import/Export</category>
+        <creationdate>02/02/2022</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <permission>write</permission>
+    </info>
+    <args>
+		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
+		<argument type="string" mandatory="no" default="default">output_name</argument>
+		<argument type="string" mandatory="no" default="">output</argument>
+		<argument type="string" mandatory="no" default="/">cdd</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">export_metadata</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|exportesdm">objkey_filter</argument>
+    </args>
+</operator>

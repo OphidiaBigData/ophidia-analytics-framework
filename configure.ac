@@ -309,7 +309,7 @@ AC_ARG_WITH(esdm_path,
            [
 				have_esdm=yes
 				ESDM_CFLAGS="-I$withval/include"
-				ESDM_LIBS="-L$withval/lib -lesdm -Wl,-rpath -Wl,$withval/lib"
+				ESDM_LIBS="-L$withval/lib -lesdm -lesdmmpi -Wl,-rpath -Wl,$withval/lib"
 				AC_SUBST(ESDM_CFLAGS)
 				AC_SUBST(ESDM_LIBS)
 				AC_MSG_NOTICE([ESDM support enabled])
@@ -331,6 +331,18 @@ AC_ARG_ENABLE(parallel_netcdf,
             AC_MSG_WARN("Parallel NetCDF support disabled")]
         )
 AM_CONDITIONAL([HAVE_PARALLEL_NETCDF], [test "x$parallel_netcdf" = "xyes"])
+
+#Check if parallel esdm is installed
+parallel_esdm="no"
+AC_ARG_ENABLE(parallel_esdm,
+        [  --enable-parallel-esdm          
+            Turn on parallel ESDM flags],
+        [parallel_esdm="yes" 
+            AC_MSG_NOTICE("Parallel ESDM support enabled")],
+        [parallel_esdm="no" 
+            AC_MSG_WARN("Parallel ESDM support disabled")]
+        )
+AM_CONDITIONAL([HAVE_PARALLEL_ESDM], [test "x$parallel_esdm" = "xyes"])
 
 #Check if cfitsio is installed
 cfitsio="no"
