@@ -1204,17 +1204,17 @@ int task_execute(oph_operator_struct * handle)
 	else
 		snprintf(_ms, OPH_COMMON_MAX_DOUBLE_LENGHT, "%f", oper_handle->ms);
 
-	oph_ioserver_handler *second_server = NULL;
-	oph_ioserver_handler *first_server = oper_handle->server;
-
+	oph_ioserver_handler *first_server = NULL;
 	if (oph_dc_setup_dbms(&(first_server), (dbmss.value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
-	if ((result == OPH_ANALYTICS_OPERATOR_SUCCESS) && multi_host && oph_dc_setup_dbms(&(second_server), (dbmss.value[0]).io_server_type)) {
+
+	oph_ioserver_handler *second_server = NULL;
+	if ((result == OPH_ANALYTICS_OPERATOR_SUCCESS) && multi_host && oph_dc_setup_dbms(&(second_server), (dbmss2.value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_IOPLUGIN_SETUP_ERROR, (dbmss.value[0]).id_dbms);
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_IOPLUGIN_SETUP_ERROR, (dbmss2.value[0]).id_dbms);
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 	// This implementation assume a perfect correspondence between datacube structures
@@ -1225,9 +1225,11 @@ int task_execute(oph_operator_struct * handle)
 		if (dbmss.value[i].id_dbms != dbmss2.value[i].id_dbms) {
 			// Find the correct dbms
 			k = i * dbs.size * frags.size;
-			for (i2 = 0; i2 < dbmss.size; ++i2)
-				if (frags.value[k].frag_relative_index == frags2.value[i2 * dbs2.size * frags2.size].frag_relative_index)
+			for (i2 = 0; i2 < dbmss.size; ++i2) {
+				k2 = i2 * dbs2.size * frags2.size;
+				if (frags.value[k].frag_relative_index == frags2.value[k2].frag_relative_index)
 					break;
+			}
 			if (i2 >= dbmss.size) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot compare this datacube because of the different fragmentation structure.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DIFFERENT_DBMS_ERROR);
@@ -1280,7 +1282,7 @@ int task_execute(oph_operator_struct * handle)
 				}
 				if (oph_dc_use_db_of_dbms(second_server, &(dbmss2.value[i2]), &(dbs2.value[j2]))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DB_SELECTION_ERROR, (dbs2.value[j]).db_name);
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DB_SELECTION_ERROR, (dbs2.value[j2]).db_name);
 					result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 					break;
 				}
@@ -1842,7 +1844,7 @@ int task_execute(oph_operator_struct * handle)
 	}
 	if (multi_host && oph_dc_cleanup_dbms(second_server)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_IOPLUGIN_CLEANUP_ERROR, (dbmss.value[0]).id_dbms);
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_IOPLUGIN_CLEANUP_ERROR, (dbmss2.value[0]).id_dbms);
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 

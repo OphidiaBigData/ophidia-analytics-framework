@@ -382,6 +382,7 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 	if (oph_dim_get_base_time(dim, base_time_))
 		return OPH_DIM_DATA_ERROR;
 
+
 	// Convert to "date"
 	memset(tm_base, 0, sizeof(struct tm));
 	long long value = (long long) _value + (*base_time_);

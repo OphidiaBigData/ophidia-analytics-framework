@@ -86,6 +86,8 @@ struct _OPH_EXPORTNC_operator_handle {
 	char *sessionid;
 	int force;
 	int misc;
+	char shuffle;
+	char deflate;
 };
 typedef struct _OPH_EXPORTNC_operator_handle OPH_EXPORTNC_operator_handle;
 

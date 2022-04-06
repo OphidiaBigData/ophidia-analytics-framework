@@ -148,6 +148,9 @@ LIB     @MYSQL_LDFLAGS@
 [OPH_INTERCUBE]
 @DRIVER_PATH@/liboph_intercubeoperator.so
 LIB @MYSQL_LDFLAGS@
+[OPH_INTERCUBE2]
+@DRIVER_PATH@/liboph_intercube2operator.so
+LIB @MYSQL_LDFLAGS@
 [OPH_MERGECUBES]
 @DRIVER_PATH@/liboph_mergecubesoperator.so
 LIB @MYSQL_LDFLAGS@
