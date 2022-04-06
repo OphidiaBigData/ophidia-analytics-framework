@@ -1758,8 +1758,6 @@ int task_init(oph_operator_struct * handle)
 		int frag_param_error = 0;
 		int final_frag_number = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->total_frag_number;
 
-		int max_frag_number = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->total_frag_number * ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->tuplexfrag_number;
-
 		int admissible_frag_number = 0;
 		int user_arg_prod = 0;
 		int id_host_partition = 0;
@@ -1855,52 +1853,10 @@ int task_init(oph_operator_struct * handle)
 							*fragxdb_number = (int) admissible_frag_number / (*host_number);
 						}
 					}
-				} else {
-					//If user specified fragxdb_number then check if frag number is lower than product of parameters                       
-					user_arg_prod = (1 * (*fragxdb_number));
-					if (final_frag_number < user_arg_prod) {
-						//If import is executed then return error, else simply return a message
-						if (run) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name,
-								final_frag_number);
-							goto __OPH_EXIT_1;
-						} else {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-							frag_param_error = 1;
-						}
-					} else {
-						if (final_frag_number % user_arg_prod != 0) {
-							if (run) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-								goto __OPH_EXIT_1;
-							} else {
-								frag_param_error = 1;
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_FRAGMENTATION_ERROR);
-							}
-						} else {
-							admissible_frag_number = final_frag_number / user_arg_prod;
-							if (admissible_frag_number <= nhost) {
-								*host_number = admissible_frag_number;
-							} else {
-								//Get highest divisor for host_number
-								int ii = 0;
-								for (ii = nhost; ii > 0; ii--) {
-									if (admissible_frag_number % ii == 0)
-										break;
-								}
-								*host_number = ii;
-								//Since fragxdb is fixed recompute tuplexfrag
-								((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->tuplexfrag_number =
-								    (int) ceilf((float) max_frag_number / ((*host_number) * user_arg_prod));
-								((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->number_unven_frag = max_frag_number % ((*host_number) * user_arg_prod);
-								((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*fragxdb_number));
-							}
-						}
-					}
-				}
-			} else {
+				} else
+					*host_number = nhost;
+			}
+			if (*host_number > 0) {
 				if (*fragxdb_number <= 0) {
 					user_arg_prod = ((*host_number) * 1);
 					if (final_frag_number < user_arg_prod) {
