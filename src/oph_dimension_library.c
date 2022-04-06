@@ -39,6 +39,11 @@
 #include <mysql.h>
 #include "debug.h"
 
+#define OPH_DIM_DATA_FORMAT1 "%Y-%m-%dT%H:%M:%S"
+#define OPH_DIM_DATA_FORMAT2 "%Y-%m-%d %H:%M:%S"
+#define OPH_DIM_DATA_FORMAT_CHECK1 '%'
+#define OPH_DIM_DATA_FORMAT_CHECK2 'T'
+
 extern int msglevel;
 
 char oph_dim_typeof(char *dimension_type)
@@ -373,11 +378,11 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 	}
 
 	// Add the base
-	if (dim->base_time && strlen(dim->base_time)) {
-		if (strchr(dim->base_time, 'T'))
-			strptime(dim->base_time, "%Y-%m-%dT%H:%M:%S", tm_base);
+	if (dim->base_time && strlen(dim->base_time) && !strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK1)) {
+		if (strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK2))
+			strptime(dim->base_time, OPH_DIM_DATA_FORMAT1, tm_base);
 		else
-			strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", tm_base);
+			strptime(dim->base_time, OPH_DIM_DATA_FORMAT2, tm_base);
 		tm_base->tm_year += 1900;
 		tm_base->tm_mon++;
 		if (oph_date_to_day(tm_base->tm_year, tm_base->tm_mon, tm_base->tm_mday, base_time_, dim)) {
@@ -416,13 +421,13 @@ int oph_dim_set_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 
 	// Remove the base
 	long long base_time = 0;
-	if (dim->base_time && strlen(dim->base_time)) {
+	if (dim->base_time && strlen(dim->base_time) && !strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK1)) {
 		struct tm tm_base;
 		memset(&tm_base, 0, sizeof(struct tm));
-		if (strchr(dim->base_time, 'T'))
-			strptime(dim->base_time, "%Y-%m-%dT%H:%M:%S", &tm_base);
+		if (strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK2))
+			strptime(dim->base_time, OPH_DIM_DATA_FORMAT1, &tm_base);
 		else
-			strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", &tm_base);
+			strptime(dim->base_time, OPH_DIM_DATA_FORMAT2, &tm_base);
 		tm_base.tm_year += 1900;
 		tm_base.tm_mon++;
 		if (oph_date_to_day(tm_base.tm_year, tm_base.tm_mon, tm_base.tm_mday, &base_time, dim)) {
@@ -807,13 +812,13 @@ int _oph_dim_get_base_time(oph_odb_dimension * dim, long long *base_time)
 	}
 	*base_time = 0;
 
-	struct tm tm_value;
-	memset(&tm_value, 0, sizeof(struct tm));
-	if (dim->base_time && strlen(dim->base_time)) {
-		if (strchr(dim->base_time, 'T'))
-			strptime(dim->base_time, "%Y-%m-%dT%H:%M:%S", &tm_value);
+	if (dim->base_time && strlen(dim->base_time) && !strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK1)) {
+		struct tm tm_value;
+		memset(&tm_value, 0, sizeof(struct tm));
+		if (strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK2))
+			strptime(dim->base_time, OPH_DIM_DATA_FORMAT1, &tm_value);
 		else
-			strptime(dim->base_time, "%Y-%m-%d %H:%M:%S", &tm_value);
+			strptime(dim->base_time, OPH_DIM_DATA_FORMAT2, &tm_value);
 		tm_value.tm_year += 1900;
 		tm_value.tm_mon++;
 		if (oph_date_to_day(tm_value.tm_year, tm_value.tm_mon, tm_value.tm_mday, base_time, dim)) {
@@ -999,10 +1004,13 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 		memset(&tm_value, 0, sizeof(struct tm));
 
 		tm_value.tm_year = -1;
-		if (strchr(pch, 'T'))
-			strptime(pch, "%Y-%m-%dT%H:%M:%S", &tm_value);
+		if (strchr(pch, OPH_DIM_DATA_FORMAT_CHECK2))
+			strptime(pch, OPH_DIM_DATA_FORMAT1, &tm_value);
 		else
-			strptime(pch, "%Y-%m-%d %H:%M:%S", &tm_value);
+			strptime(pch, OPH_DIM_DATA_FORMAT2, &tm_value);
+		if (tm_value.tm_year < 0)
+			return OPH_DIM_TIME_PARSING_ERROR;
+
 		tm_value.tm_year += 1900;
 		tm_value.tm_mon++;
 		if (!n && !tm_value.tm_mday)
