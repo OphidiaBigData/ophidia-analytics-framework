@@ -51,7 +51,7 @@
 #define _NC_SIZES				"_nc_sizes"
 
 #define OPH_IOSERVER_SQ_OP_ESDM_IMPORT 	"esdm_import"
-#define OPH_DC_SQ_CREATE_FRAG_FROM_ESDM OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_ESDM_IMPORT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_COLUMN_NAME, "id_dim|measure") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_COLUMN_TYPE, "long|blob") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_PATH, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_MEASURE, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_COMPRESSED, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_NROW, "%d") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_ROW_START, "%d") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_DIM_TYPE, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_DIM_INDEX, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_DIM_START, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_DIM_END, "%s")
+#define OPH_DC_SQ_CREATE_FRAG_FROM_ESDM OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_ESDM_IMPORT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_COLUMN_NAME, "id_dim|measure") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_COLUMN_TYPE, "long|blob") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_PATH, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_MEASURE, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_COMPRESSED, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_NROW, "%d") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_ROW_START, "%d") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_DIM_TYPE, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_DIM_INDEX, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_DIM_START, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_DIM_END, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_DIM_UNLIM, "%d") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_OPERATION, "%s") OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_ARGS, "%s")
 
 struct _ESDM_var {
 	esdm_container_t *container;
@@ -77,6 +77,11 @@ struct _ESDM_var {
 	char *dims_unlim;
 	short int *dims_order;
 	int *oph_dims_id;
+	int dim_unlim;
+	int *order_src_path;
+	int number_src_path;
+	char *dim_unlim_array;
+	char *base_time;
 	char *operation;
 	char *args;
 };
@@ -109,5 +114,9 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment * frag, int tuplexfrag_number, int array_length, int compressed, ESDM_var * measure, long long memory_size);
 
 int oph_esdm_populate_fragment5(oph_ioserver_handler * server, oph_odb_fragment * frag, char *nc_file_path, int tuplexfrag_number, int compressed, ESDM_var * measure);
+
+int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int compressed, ESDM_var * measure);
+
+int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int compressed, ESDM_var * measure, long long memory_size);
 
 #endif				//__OPH_ESDM_UTILITY_H

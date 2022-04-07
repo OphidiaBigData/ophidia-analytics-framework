@@ -88,6 +88,8 @@ struct _OPH_EXPORTNC2_operator_handle {
 	char *sessionid;
 	int force;
 	int misc;
+	char shuffle;
+	char deflate;
 	long long memory_size;
 	char *nc_file_path;
 };

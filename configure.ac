@@ -207,7 +207,7 @@ PKG_CHECK_MODULES(GSL,[gsl >= 1.8])
 AC_ARG_WITH(gsl_header_path,
        [  --with-gsl-header-path=PATH        Location of GSL includes directory],
        [
-        gsl_header_path="$withval"
+        gsl_header_path="-I$withval"
        ],
      [
     gsl_header_path="$GSL_CFLAGS"
@@ -215,15 +215,15 @@ AC_ARG_WITH(gsl_header_path,
 AC_ARG_WITH(gsl_lib_path,
        [  --with-gsl-lib-path=PATH       Location of GSL lib],
        [
-        gsl_lib_path="$withval"
+        gsl_lib_path="-L$withval"
        ],
      [
    gsl_lib_path="$GSL_LIBS"
      ])
-GSL_CFLAGS="$gsl_header_path"
-AC_SUBST(GSL_CFLAGS)
-GSL_LIBS="$gsl_lib_path"
-AC_SUBST(GSL_LIBS)
+GSL_INCLUDE="$gsl_header_path"
+AC_SUBST(GSL_INCLUDE)
+GSL_LIB="$gsl_lib_path"
+AC_SUBST(GSL_LIB)
 
 GSL_SUPPORT=
 AC_ARG_ENABLE(gsl_lib,
@@ -242,7 +242,7 @@ PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.4)
 AC_ARG_WITH(libxml_header_path,
 	   [  --with-libxml-header-path=PATH 		Location of libxml2 includes directory],
 	   [
-		libxml_header_path="$withval"
+		libxml_header_path="-I$withval"
 	   ],
      [
     libxml_header_path="$XML_CFLAGS"
@@ -250,7 +250,7 @@ AC_ARG_WITH(libxml_header_path,
 AC_ARG_WITH(libxml_lib_path,
 	   [  --with-libxml-lib-path=PATH 		Location of libxml2.a],
 	   [
-		libxml_lib_path="$withval"
+		libxml_lib_path="-L$withval"
 	   ],
      [
     libxml_lib_path="$XML_LIBS"
@@ -266,7 +266,7 @@ PKG_CHECK_MODULES(OPENSSL, openssl >= 1.0.0)
 AC_ARG_WITH(libopenssl_header_path,
 	   [  --with-libopenssl-header-path=PATH 		Location of openssl includes directory],
 	   [
-		libopenssl_header_path="$withval"
+		libopenssl_header_path="-I$withval"
 	   ],
      [
     libopenssl_header_path="$OPENSSL_CFLAGS"
@@ -274,7 +274,7 @@ AC_ARG_WITH(libopenssl_header_path,
 AC_ARG_WITH(libopenssl_lib_path,
 	   [  --with-libopenssl-lib-path=PATH 		Location of openssl],
 	   [
-		libopenssl_lib_path="$withval"
+		libopenssl_lib_path="-L$withval"
 	   ],
      [
     libopenssl_lib_path="$OPENSSL_LIBS"
@@ -322,7 +322,7 @@ AC_ARG_WITH(esdm_path,
            [
 				have_esdm=yes
 				ESDM_CFLAGS="-I$withval/include"
-				ESDM_LIBS="-L$withval/lib -lesdm -Wl,-rpath -Wl,$withval/lib"
+				ESDM_LIBS="-L$withval/lib -lesdm -lesdmmpi -Wl,-rpath -Wl,$withval/lib"
 				AC_SUBST(ESDM_CFLAGS)
 				AC_SUBST(ESDM_LIBS)
 				AC_MSG_NOTICE([ESDM support enabled])
@@ -345,6 +345,18 @@ AC_ARG_ENABLE(parallel_netcdf,
         )
 AM_CONDITIONAL([HAVE_PARALLEL_NETCDF], [test "x$parallel_netcdf" = "xyes"])
 
+#Check if parallel esdm is installed
+parallel_esdm="no"
+AC_ARG_ENABLE(parallel_esdm,
+        [  --enable-parallel-esdm          
+            Turn on parallel ESDM flags],
+        [parallel_esdm="yes" 
+            AC_MSG_NOTICE("Parallel ESDM support enabled")],
+        [parallel_esdm="no" 
+            AC_MSG_WARN("Parallel ESDM support disabled")]
+        )
+AM_CONDITIONAL([HAVE_PARALLEL_ESDM], [test "x$parallel_esdm" = "xyes"])
+
 #Check if cfitsio is installed
 cfitsio="no"
 AC_ARG_ENABLE(cfitsio,
@@ -363,7 +375,7 @@ if test "x${cfitsio}" = "xyes"; then
         AC_ARG_WITH(libcfitsio_header_path,
                 [  --with-libcfitsio-header-path=PATH            Location of libcfitsio includes directory],
                 [
-                        libcfitsio_header_path="$withval"
+                        libcfitsio_header_path="-I$withval"
                 ],
                 [
                         libcfitsio_header_path="$CFITSIO_CFLAGS"
@@ -371,7 +383,7 @@ if test "x${cfitsio}" = "xyes"; then
         AC_ARG_WITH(libcfitsio_lib_path,
                 [  --with-libcfitsio-lib-path=PATH               Location of libcfitsio],
                 [
-                        libcfitsio_lib_path="$withval"
+                        libcfitsio_lib_path="-L$withval"
                 ],
                 [
                         libcfitsio_lib_path="$CFITSIO_LIBS"
@@ -399,12 +411,12 @@ if test "x${curl}" = "xyes"; then
 	PKG_CHECK_MODULES(CURL, libcurl >= 7.19)
 	AC_ARG_WITH(libcurl_header_path,
 		   [  --with-libcurl-header-path=PATH 		Location of libcurl includes directory],
-		   [ libcurl_header_path="$withval" ],
+		   [ libcurl_header_path="-I$withval" ],
 		   [ libcurl_header_path="$CURL_CFLAGS"]
 		  )
 	AC_ARG_WITH(libcurl_lib_path,
 		   [  --with-libcurl-lib-path=PATH 		Location of libcurl.a],
-		   [ libcurl_lib_path="$withval" ],
+		   [ libcurl_lib_path="-L$withval" ],
 		   [ libcurl_lib_path="$CURL_LIBS"]
 		  )
 
@@ -430,7 +442,7 @@ PKG_CHECK_MODULES(JANSSON, jansson >= 2.3)
 AC_ARG_WITH(jansson_header_path,
        [  --with-jansson-header-path=PATH        Location of Jansson includes directory],
        [
-        jansson_header_path="$withval"
+        jansson_header_path="-I$withval"
        ],
      [
     jansson_header_path="$JANSSON_CFLAGS"
@@ -438,15 +450,15 @@ AC_ARG_WITH(jansson_header_path,
 AC_ARG_WITH(jansson_lib_path,
        [  --with-jansson-lib-path=PATH       Location of jansson lib],
        [
-        jansson_lib_path="$withval"
+        jansson_lib_path="-L$withval"
        ],
      [
     jansson_lib_path="$JANSSON_LIBS"
      ])
-JANSON_CFLAGS="$jansson_header_path"
-AC_SUBST(JANSON_CFLAGS)
-JANSON_LIBS="$jansson_lib_path"
-AC_SUBST(JANSON_LIBS)
+JANSSON_INCLUDE="$jansson_header_path"
+AC_SUBST(JANSSON_INCLUDE)
+JANSSON_LIB="$jansson_lib_path"
+AC_SUBST(JANSSON_LIB)
 JANSSON_LIBDIR=`pkg-config --variable=libdir jansson`
 AC_SUBST(JANSSON_LIBDIR)
 

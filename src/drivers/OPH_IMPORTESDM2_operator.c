@@ -44,6 +44,8 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
+#include "oph_esdm_kernels.h"
+
 #ifdef OPH_OPENMP
 #include <omp.h>
 #else
@@ -124,6 +126,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->policy = 0;
+	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation = NULL;
+	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args = NULL;
+	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args_num = -1;
 
 	char *value;
 
@@ -744,8 +749,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	//Extract dimensions information and check names provided by task string
 	char *dimname = NULL;
 	short int flag = 0;
+	measure->dim_unlim = -1;
 	for (i = 0; i < ndims; i++) {
 		measure->dims_unlim[i] = !dspace->size[i];
+		if (measure->dims_unlim[i] && (measure->dim_unlim < 0))
+			measure->dim_unlim = i;
 		//measure->dims_name[i] = (char *) malloc((OPH_ODB_DIM_DIMENSION_SIZE + 1) * sizeof(char));
 		measure->dims_length[i] = dspace->size[i] ? dspace->size[i] : size[i];
 	}
@@ -979,13 +987,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			// Let us assume that OPH_IN_PARAM_CALENDAR is only for time dimensions
 			if (!measure->dim_dataset[sub_to_dims[i]])
 				if ((esdm_dataset_open(measure->container, measure->dims_name[sub_to_dims[i]], ESDM_MODE_FLAG_READ, measure->dim_dataset + sub_to_dims[i]))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-					oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					if (offset)
-						free(offset);
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to read dimension information: dataset '%s' cannot be opened\n", measure->dims_name[i]);
+					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read dimension information: dataset '%s' cannot be opened\n",
+						measure->dims_name[i]);
+					continue;
 				}
 			if ((esdm_dataset_get_attributes(measure->dim_dataset[sub_to_dims[i]], &md))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering number of global attributes\n");
@@ -1124,8 +1129,27 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				dim.leap_year = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->leap_year;
 				dim.leap_month = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->leap_month;
 
-				if (!measure->dim_dataset[j])
-					if ((ret = esdm_dataset_open(measure->container, measure->dims_name[j], ESDM_MODE_FLAG_READ, measure->dim_dataset + j))) {
+				do {
+
+					if (!measure->dim_dataset[j])
+						if ((ret = esdm_dataset_open(measure->container, measure->dims_name[j], ESDM_MODE_FLAG_READ, measure->dim_dataset + j))) {
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to read dimension information: dataset '%s' cannot be opened\n", measure->dims_name[i]);
+							logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read dimension information: dataset '%s' cannot be opened\n",
+								measure->dims_name[i]);
+							strcpy(dim.dimension_type, OPH_DIM_INDEX_DATA_TYPE);
+							break;
+						}
+					if (!measure->dim_dspace[j])
+						if ((ret = esdm_dataset_get_dataspace(measure->dim_dataset[j], measure->dim_dspace + j))) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: data space cannot be created\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "data space cannot be created");
+							oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
+							oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
+							if (offset)
+								free(offset);
+							return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+						}
+					if (oph_esdm_set_esdm_type(dim.dimension_type, measure->dim_dspace[j]->type)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 						oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -1135,26 +1159,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 					}
 
-				if (!measure->dim_dspace[j])
-					if ((ret = esdm_dataset_get_dataspace(measure->dim_dataset[j], measure->dim_dspace + j))) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
-						oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-						oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-						if (offset)
-							free(offset);
-						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-					}
-
-				if (oph_esdm_set_esdm_type(dim.dimension_type, measure->dim_dspace[j]->type)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
-					oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-					oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-					if (offset)
-						free(offset);
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
+				} while (0);
 
 				j = 0;
 				strncpy(dim.units, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->units, OPH_ODB_DIM_TIME_SIZE);
@@ -1577,6 +1582,45 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	else
 		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_job = (int) strtol(value, NULL, 10);
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_REDUCTION_OPERATION);
+	if (value) {
+		if (!(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation = (char *) strndup(value, OPH_TP_TASKLEN))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT, OPH_IN_PARAM_REDUCTION_OPERATION);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		if (!strcmp(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation, OPH_COMMON_NONE_FILTER)) {
+			free(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation);
+			((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation = NULL;
+		}
+		measure->operation = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_ARGS);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_ARGS);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_ARGS);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_NONE_FILTER, OPH_TP_TASKLEN)) {
+		if (oph_tp_parse_multiple_value_param
+		    (value, &((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args, &((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args_num)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
+			oph_tp_free_multiple_value_param_list(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args,
+							      ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args_num);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+	} else
+		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args_num = 0;
+
+	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args_num > 1) {
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Only the first argument of '%s' will be considered\n", value);
+		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Only the first argument of '%s' will be considered\n", value);
+	}
+	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args_num > 0)
+		measure->args = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args[0];
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -1626,7 +1670,7 @@ int task_init(oph_operator_struct * handle)
 				//Compute tuple per fragment as the number of values of most inernal explicit dimension (excluding the first one bigger than 1)
 				((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 			}
-		} else {
+		} else if (!oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation)) {
 			//Consider only implicit dimensions
 			((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->array_length *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 		}
@@ -1661,9 +1705,6 @@ int task_init(oph_operator_struct * handle)
 		int nhost = 0;
 		int frag_param_error = 0;
 		int final_frag_number = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->total_frag_number;
-
-		int max_frag_number =
-		    ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->total_frag_number * ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 
 		int admissible_frag_number = 0;
 		int user_arg_prod = 0;
@@ -1771,51 +1812,10 @@ int task_init(oph_operator_struct * handle)
 							}
 						}
 					}
-				} else {
-					//If user specified fragxdb_number then check if frag number is lower than product of parameters                       
-					user_arg_prod = (1 * (*fragxdb_number));
-					if (final_frag_number < user_arg_prod) {
-						//If import is executed then return error, else simply return a message
-						if (run) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER,
-								container_name, final_frag_number);
-							goto __OPH_EXIT_1;
-						} else {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-							frag_param_error = 1;
-						}
-					} else {
-						if (final_frag_number % user_arg_prod != 0) {
-							if (run) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
-								goto __OPH_EXIT_1;
-							} else {
-								frag_param_error = 1;
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
-							}
-						} else {
-							admissible_frag_number = final_frag_number / user_arg_prod;
-							if (admissible_frag_number <= nhost) {
-								*host_number = admissible_frag_number;
-							} else {
-								//Get highest divisor for host_number
-								int ii = 0;
-								for (ii = nhost; ii > 0; ii--) {
-									if (admissible_frag_number % ii == 0)
-										break;
-								}
-								*host_number = ii;
-								//Since fragxdb is fixed recompute tuplexfrag
-								((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->tuplexfrag_number =
-								    (int) ceilf((float) max_frag_number / ((*host_number) * user_arg_prod));
-								((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*fragxdb_number));
-							}
-						}
-					}
-				}
-			} else {
+				} else
+					*host_number = nhost;
+			}
+			if (*host_number > 0) {
 				if (*fragxdb_number <= 0) {
 					user_arg_prod = ((*host_number) * 1);
 					if (final_frag_number < user_arg_prod) {
@@ -1835,32 +1835,22 @@ int task_init(oph_operator_struct * handle)
 				} else {
 					//User has set all parameters - in this case allow further fragmentation
 					user_arg_prod = ((*host_number) * (*fragxdb_number));
-					if (max_frag_number < user_arg_prod) {
+					if (final_frag_number < user_arg_prod) {
 						//If import is executed then return error, else simply return a message
 						if (run) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, max_frag_number);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER,
-								container_name, max_frag_number);
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name,
+								final_frag_number);
 							goto __OPH_EXIT_1;
 						} else {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, max_frag_number);
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
 							frag_param_error = 1;
 						}
 					} else {
-						if (max_frag_number % user_arg_prod != 0) {
-							if (run) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
-								goto __OPH_EXIT_1;
-							} else {
-								frag_param_error = 1;
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
-							}
-						} else {
-							((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->tuplexfrag_number = (int) ceilf((float) max_frag_number / user_arg_prod);
-							((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->number_unven_frag = max_frag_number % (user_arg_prod);
-							((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*fragxdb_number));
-						}
+						//Since fragxdb is fixed recompute tuplexfrag
+						((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (int) ceilf((float) final_frag_number / user_arg_prod);
+						((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->number_unven_frag = final_frag_number % (user_arg_prod);
+						((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*fragxdb_number));
 					}
 				}
 			}
@@ -2019,25 +2009,30 @@ int task_init(oph_operator_struct * handle)
 
 			for (i = 0; i < measure->ndims; i++) {
 
-				if (!measure->dim_dataset[i])
-					if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
+				do {
+
+					if (!measure->dim_dataset[i])
+						if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to read dimension information: dataset '%s' cannot be opened\n", measure->dims_name[i]);
+							logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read dimension information: dataset '%s' cannot be opened\n",
+								measure->dims_name[i]);
+							strcpy(dim.dimension_type, OPH_DIM_INDEX_DATA_TYPE);
+							break;
+						}
+					if (!measure->dim_dspace[i])
+						if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: data space cannot be created\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "data space cannot be created");
+							goto __OPH_EXIT_1;
+						}
+					if (oph_esdm_set_esdm_type(dim.dimension_type, measure->dim_dspace[i]->type)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
 						goto __OPH_EXIT_1;
 					}
 
-				if (!measure->dim_dspace[i])
-					if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
-						goto __OPH_EXIT_1;
-					}
+				} while (0);
 
-				if (oph_esdm_set_esdm_type(dim.dimension_type, measure->dim_dspace[i]->type)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
-					goto __OPH_EXIT_1;
-				}
 				// Load dimension names
 				strncpy(dim.dimension_name, measure->dims_name[i], OPH_ODB_DIM_DIMENSION_SIZE);
 				dim.dimension_name[OPH_ODB_DIM_DIMENSION_SIZE] = 0;
@@ -2262,36 +2257,35 @@ int task_init(oph_operator_struct * handle)
 							curdimlength = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
 						if (dim_inst[j].size == curdimlength && dim_inst[j].concept_level == measure->dims_concept_level[i]) {
 
-							if (!measure->dim_dataset[i])
-								if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
-									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-									logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
-									oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-									oph_dim_unload_dim_dbinstance(db_dimension);
-									free(dims);
-									free(dim_inst);
-									free(dimvar_ids);
-									goto __OPH_EXIT_1;
-								}
-							if (!measure->dim_dspace[i])
-								if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
-									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-									logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
-									oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-									oph_dim_unload_dim_dbinstance(db_dimension);
-									free(dims);
-									free(dim_inst);
-									free(dimvar_ids);
-									goto __OPH_EXIT_1;
-								}
+							do {
+
+								if (!measure->dim_dataset[i])
+									if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
+										pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
+										logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
+										break;
+									}
+								if (!measure->dim_dspace[i])
+									if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
+										pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
+										logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
+										oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+										oph_dim_unload_dim_dbinstance(db_dimension);
+										free(dims);
+										free(dim_inst);
+										free(dimvar_ids);
+										goto __OPH_EXIT_1;
+									}
+
+							} while (0);
 
 							dimvar_ids[i] = i;
-							if ( /*(dimvar_ids[i] >= 0) && */ oph_esdm_compare_types(id_container_out, measure->dim_dspace[i]->type, dims[j].dimension_type)) {
+							if (oph_esdm_compare_types(id_container_out, measure->dim_dataset[i] ? measure->dim_dspace[i]->type : SMD_DTYPE_INT64, dims[j].dimension_type)) {
 								pmesg(LOG_WARNING, __FILE__, __LINE__, "Dimension type in NC file doesn't correspond to the one stored in OphidiaDB\n");
 								logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
 							}
 
-							if (measure->dim_dspace[i]->dims != 1) {
+							if (measure->dim_dspace[i] && (measure->dim_dspace[i]->dims != 1)) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension variable is multidimensional\n");
 								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_NOT_ALLOWED);
 								oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -2362,7 +2356,7 @@ int task_init(oph_operator_struct * handle)
 			}
 
 			int dimension_array_id = 0;
-			char *dim_array = NULL;
+			char *dim_array = NULL, collapsed = 0;
 			int exists = 0;
 			char filename[2 * OPH_TP_BUFLEN];
 			oph_odb_hierarchy hier;
@@ -2485,29 +2479,17 @@ int task_init(oph_operator_struct * handle)
 				varid = i;
 				if (!measure->dim_dataset[i])
 					if (esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i)) {
-						if (create_container) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
-							free(tot_dims);
-							free(dims);
-							free(dim_inst);
-							oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-							oph_dim_unload_dim_dbinstance(db_dimension);
-							free(dimvar_ids);
-							goto __OPH_EXIT_1;
-						} else {
-							varid = -1;
-							pmesg(LOG_WARNING, __FILE__, __LINE__, "Fill dimension '%s' with integers\n", measure->dims_name[i]);
-							logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, "Fill dimension '%s' with integers\n", measure->dims_name[i]);
-						}
+						varid = -1;
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "Fill dimension '%s' with integers\n", measure->dims_name[i]);
+						logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, "Fill dimension '%s' with integers\n", measure->dims_name[i]);
 					}
 				dimvar_ids[i] = varid;
 
 				if (varid >= 0) {
 					if (!measure->dim_dspace[i])
 						if (esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i)) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: data space cannot be created\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "data space cannot be created");
 							free(tot_dims);
 							free(dims);
 							free(dim_inst);
@@ -2534,7 +2516,10 @@ int task_init(oph_operator_struct * handle)
 				dim_inst[i].id_grid = id_grid;
 				dim_inst[i].id_dimensioninst = 0;
 				//Modified to allow subsetting
-				tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
+				if (measure->dims_type[i] || !oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation))
+					tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
+				else
+					tmp_var.varsize = 1;
 				dim_inst[i].size = tmp_var.varsize;
 				dim_inst[i].concept_level = measure->dims_concept_level[i];
 				dim_inst[i].unlimited = measure->dims_unlim[i] ? 1 : 0;
@@ -2544,39 +2529,57 @@ int task_init(oph_operator_struct * handle)
 					logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_TYPE_MISMATCH_ERROR, measure->dims_name[i]);
 				}
 
-				if (oph_esdm_get_dim_array
-				    (id_container_out, measure->dim_dataset[i], varid, tot_dims[j].dimension_type, tmp_var.varsize, measure->dims_start_index[i], measure->dims_end_index[i],
-				     &dim_array)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
-					free(tot_dims);
-					free(dims);
-					free(dim_inst);
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					free(dimvar_ids);
-					goto __OPH_EXIT_1;
+				collapsed = 0;
+				if (measure->dims_type[i] || !oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation)) {
+					if (oph_esdm_get_dim_array
+					    (id_container_out, measure->dim_dataset[i], varid, tot_dims[j].dimension_type, tmp_var.varsize, measure->dims_start_index[i], measure->dims_end_index[i],
+					     &dim_array)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", "");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "");
+						free(tot_dims);
+						free(dims);
+						free(dim_inst);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						free(dimvar_ids);
+						goto __OPH_EXIT_1;
+					}
+				} else {
+					collapsed = 1;
+					dim_inst[i].size = 0;
+					dim_inst[i].concept_level = OPH_COMMON_ALL_CONCEPT_LEVEL;
+					dim_array = NULL;
 				}
 
-				if (oph_dim_insert_into_dimension_table(db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, tmp_var.varsize, dim_array, &dimension_array_id)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_ROW_ERROR, tot_dims[j].dimension_name);
-					free(tot_dims);
-					free(dims);
-					free(dim_inst);
+				if (!collapsed) {
+					if (!collapsed
+					    && oph_dim_insert_into_dimension_table(db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, tmp_var.varsize, dim_array,
+										   &dimension_array_id)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_ROW_ERROR, tot_dims[j].dimension_name);
+						free(tot_dims);
+						free(dims);
+						free(dim_inst);
+						free(dim_array);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						free(dimvar_ids);
+						goto __OPH_EXIT_1;
+					}
 					free(dim_array);
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					free(dimvar_ids);
-					goto __OPH_EXIT_1;
-				}
-				free(dim_array);
+				} else
+					dimension_array_id = 0;
 				dim_inst[i].fk_id_dimension_label = dimension_array_id;	// Real dimension
 
-				index_array = (long long *) malloc(tmp_var.varsize * sizeof(long long));
-				for (kk = 0; kk < tmp_var.varsize; ++kk)
-					index_array[kk] = 1 + kk;	// Non 'C'-like indexing
-				if (oph_dim_insert_into_dimension_table(db_dimension, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, tmp_var.varsize, (char *) index_array, &dimension_array_id)) {
+				if (!collapsed) {
+					index_array = (long long *) malloc(tmp_var.varsize * sizeof(long long));
+					for (kk = 0; kk < tmp_var.varsize; ++kk)
+						index_array[kk] = 1 + kk;	// Non 'C'-like indexing
+				} else
+					index_array = NULL;
+				if (oph_dim_insert_into_dimension_table
+				    (db_dimension, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, collapsed ? 0 : tmp_var.varsize, collapsed ? NULL : (char *) index_array,
+				     &dimension_array_id)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_ROW_ERROR, tot_dims[j].dimension_name);
 					free(tot_dims);
@@ -2588,7 +2591,8 @@ int task_init(oph_operator_struct * handle)
 					free(dimvar_ids);
 					goto __OPH_EXIT_1;
 				}
-				free(index_array);
+				if (index_array)
+					free(index_array);
 				dim_inst[i].fk_id_dimension_index = dimension_array_id;	// Indexes
 
 				if (oph_odb_dim_insert_into_dimensioninstance_table(oDB, &(dim_inst[i]), &dimension_array_id, 0, NULL, NULL)) {
@@ -2981,12 +2985,10 @@ int task_init(oph_operator_struct * handle)
 
 				if (!measure->dim_dataset[ii])
 					if ((esdm_dataset_open(measure->container, measure->dims_name[ii], ESDM_MODE_FLAG_READ, measure->dim_dataset + ii))) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
-						hashtbl_destroy(key_tbl);
-						hashtbl_destroy(required_tbl);
-						free(dimvar_ids);
-						goto __OPH_EXIT_1;
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to read dimension information: dataset '%s' cannot be opened\n", measure->dims_name[i]);
+						logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read dimension information: dataset '%s' cannot be opened\n",
+							measure->dims_name[i]);
+						continue;
 					}
 				if ((esdm_dataset_get_attributes(measure->dim_dataset[ii], &md))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error recovering number of global attributes\n");
@@ -4053,11 +4055,11 @@ int task_destroy(oph_operator_struct * handle)
 
 	OPH_IMPORTESDM2_operator_handle *oper_handle = (OPH_IMPORTESDM2_operator_handle *) handle->operator_handle;
 
-	if (!((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->run)
+	if (!oper_handle->run)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-	short int proc_error = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->execute_error;
-	int id_datacube = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_output_datacube;
+	short int proc_error = oper_handle->execute_error;
+	int id_datacube = oper_handle->id_output_datacube;
 	short int global_error = 0;
 
 	//Reduce results
@@ -4068,24 +4070,21 @@ int task_destroy(oph_operator_struct * handle)
 		char *tmp_uri = NULL;
 		if (oph_pid_get_uri(&tmp_uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve web server URI.\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_PID_URI_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_PID_URI_ERROR);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
-		if (oph_pid_show_pid
-		    (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_output_datacube, tmp_uri)) {
+		if (oph_pid_show_pid(oper_handle->id_input_container, oper_handle->id_output_datacube, tmp_uri)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to print PID string\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_PID_SHOW_ERROR);
+			logging(LOG_WARNING, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_PID_SHOW_ERROR);
 			free(tmp_uri);
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 		char jsonbuf[OPH_COMMON_BUFFER_LEN];
 		memset(jsonbuf, 0, OPH_COMMON_BUFFER_LEN);
-		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container,
-			 ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_output_datacube);
+		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, oper_handle->id_input_container, oper_handle->id_output_datacube);
 
 		// ADD OUTPUT PID TO JSON AS TEXT
-		if (oph_json_is_objkey_printable
-		    (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->objkeys, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_IMPORTESDM2)) {
+		if (oph_json_is_objkey_printable(oper_handle->objkeys, oper_handle->objkeys_num, OPH_JSON_OBJKEY_IMPORTESDM2)) {
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_IMPORTESDM2, "Output Cube", jsonbuf)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
@@ -4111,14 +4110,14 @@ int task_destroy(oph_operator_struct * handle)
 		memset(id_string, 0, sizeof(id_string));
 
 		if (handle->proc_rank == 0) {
-			ophidiadb *oDB = &((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->oDB;
+			ophidiadb *oDB = &oper_handle->oDB;
 			oph_odb_datacube cube;
 			oph_odb_cube_init_datacube(&cube);
 
 			//retrieve input datacube
 			if (oph_odb_cube_retrieve_datacube(oDB, id_datacube, &cube)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_DATACUBE_READ_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_DATACUBE_READ_ERROR);
 			} else {
 				//Copy fragment id relative index set 
 				strncpy(id_string, cube.frag_relative_index_set, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
@@ -4131,36 +4130,27 @@ int task_destroy(oph_operator_struct * handle)
 		//Check if sequential part has been completed
 		if (id_string[0] == 0) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_IMPORTESDM_MASTER_TASK_INIT_FAILED);
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_MASTER_TASK_INIT_FAILED);
 		} else {
-			if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragment_first_id >= 0 || handle->proc_rank == 0) {
+			if (oper_handle->fragment_first_id >= 0 || handle->proc_rank == 0) {
 				//Partition fragment relative index string
 				char new_id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
 				char *new_ptr = new_id_string;
-				if (oph_ids_get_substring_from_string
-				    (id_string, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragment_first_id,
-				     ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragment_number, &new_ptr)) {
+				if (oph_ids_get_substring_from_string(id_string, oper_handle->fragment_first_id, oper_handle->fragment_number, &new_ptr)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to split IDs fragment string\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_IMPORTESDM_ID_STRING_SPLIT_ERROR);
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_ID_STRING_SPLIT_ERROR);
 				} else {
 					//Delete fragments
 					int num_threads = (oper_handle->nthread <= oper_handle->fragment_number ? oper_handle->nthread : oper_handle->fragment_number);
 
-					int start_position =
-					    (int) floor((double) ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragment_first_id /
-							((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragxdb_number);
+					int start_position = (int) floor((double) oper_handle->fragment_first_id / oper_handle->fragxdb_number);
 					int row_number = (int)
 					    ceil((double)
-						 (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragment_first_id +
-						  ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragment_number) /
-						 ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->fragxdb_number) - start_position;
+						 (oper_handle->fragment_first_id + oper_handle->fragment_number) / oper_handle->fragxdb_number) - start_position;
 
-					if (oph_dproc_delete_data
-					    (id_datacube, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, new_id_string, start_position, row_number, num_threads)) {
+					if (oph_dproc_delete_data(id_datacube, oper_handle->id_input_container, new_id_string, start_position, row_number, num_threads)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container,
-							OPH_LOG_OPH_DELETE_DB_READ_ERROR);
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 					}
 				}
 			}
@@ -4175,12 +4165,11 @@ int task_destroy(oph_operator_struct * handle)
 
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
-			oph_dproc_clean_odb(&((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->oDB, id_datacube,
-					    ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container);
+			oph_dproc_clean_odb(&oper_handle->oDB, id_datacube, oper_handle->id_input_container);
 		}
 
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
-		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
 
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
@@ -4314,6 +4303,14 @@ int env_unset(oph_operator_struct * handle)
 	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->description);
 		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->description = NULL;
+	}
+	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation) {
+		free((char *) ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation);
+		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation = NULL;
+	}
+	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args) {
+		oph_tp_free_multiple_value_param_list(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args, ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args_num);
+		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->args = NULL;
 	}
 
 	if (((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->measure.dim_dspace) {
