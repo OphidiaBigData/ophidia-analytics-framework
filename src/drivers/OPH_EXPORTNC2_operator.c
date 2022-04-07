@@ -112,6 +112,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->sessionid = NULL;
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->force = 0;
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->misc = 0;
+	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->shuffle = 0;
+	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->deflate = 0;
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->memory_size = 0;
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path = NULL;
 
@@ -467,6 +469,23 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	if (!strcmp(value, OPH_COMMON_YES_VALUE))
 		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->force = 1;
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SHUFFLE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SHUFFLE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SHUFFLE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strcmp(value, OPH_COMMON_YES_VALUE))
+		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->shuffle = 1;
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DEFLATE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DEFLATE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DEFLATE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->deflate = (char) strtol(value, NULL, 10);
 
 	if (oph_pid_get_memory_size(&(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->memory_size))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
@@ -1256,6 +1275,52 @@ int task_execute(oph_operator_struct * handle)
 			goto __OPH_EXIT_2;
 		}
 
+		if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->shuffle || ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->deflate) {
+			size_t chunksize[num_of_dims];
+			for (inc = 0; inc < nexp; inc++)
+				chunksize[inc] = 1;
+			for (inc = nexp; inc < num_of_dims; inc++)
+				chunksize[inc] = dims[inc].dimsize;
+			if ((retval = nc_def_var_chunking(ncid, varid, NC_CHUNKED, chunksize))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set chunking configuration for the variable: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_NC_DEFINE_VAR_ERROR,
+					nc_strerror(retval));
+				oph_odb_stge_free_fragment_list(&frags);
+				oph_odb_stge_free_db_list(&dbs);
+				oph_odb_stge_free_dbms_list(&dbmss);
+				nc_close(ncid);
+				for (l = 0; l < num_of_dims; l++) {
+					if (dim_rows[l]) {
+						free(dim_rows[l]);
+						dim_rows[l] = NULL;
+					}
+				}
+				free(dim_rows);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				goto __OPH_EXIT_2;
+			}
+			char shuffle = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->shuffle;
+			char deflate = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->deflate;
+			if ((retval = nc_def_var_deflate(ncid, varid, shuffle ? NC_SHUFFLE : NC_NOSHUFFLE, deflate ? 1 : 0, (int) deflate))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set compression configuration for the variable: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_NC_DEFINE_VAR_ERROR,
+					nc_strerror(retval));
+				oph_odb_stge_free_fragment_list(&frags);
+				oph_odb_stge_free_db_list(&dbs);
+				oph_odb_stge_free_dbms_list(&dbmss);
+				nc_close(ncid);
+				for (l = 0; l < num_of_dims; l++) {
+					if (dim_rows[l]) {
+						free(dim_rows[l]);
+						dim_rows[l] = NULL;
+					}
+				}
+				free(dim_rows);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				goto __OPH_EXIT_2;
+			}
+		}
+
 		if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata > 0) {
 
 			int varidp, msize, mbuffer;
@@ -1773,7 +1838,7 @@ int task_execute(oph_operator_struct * handle)
 						count[inc] = 1;
 					}
 					//Implicit dimensions: the entire array from the beginning
-					for (inc = nexp; inc < num_of_dims; inc++) {
+					for (; inc < num_of_dims; inc++) {
 						start[inc] = 0;
 						count[inc] = dims[inc].dimsize;
 					}
@@ -1803,10 +1868,12 @@ int task_execute(oph_operator_struct * handle)
 							result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 							goto __OPH_EXIT_2;
 						}
-						fetch = 1;
 						if (curr_row->row)
 							current_length++;
+						else if (fetch)
+							break;
 
+						fetch = 1;
 						if (memory_size_mb) {
 							inc = nexp - 1;
 							if (curr_row->row && (current_size + block_size < memory_size_mb)) {
@@ -1819,11 +1886,8 @@ int task_execute(oph_operator_struct * handle)
 								// else avoid to buffer more than one value of outer explicit dimensions
 							} else
 								fetch = 0;
-						} else {
-							if (!curr_row->row)
-								break;
+						} else
 							raw_data = curr_row->row[1];
-						}
 
 						retval = 1;
 						switch (type_nc) {

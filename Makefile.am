@@ -64,6 +64,7 @@ if HAVE_NETCDF
 OPERATOR_XML+=etc/operators_xml/OPH_EXPORTNC_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC2_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNCS_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CONCATNC_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CONCATNC2_operator_1.0.xml
 if GSL_SUPPORT
@@ -77,6 +78,9 @@ if HAVE_ESDM
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTESDM_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTESDM2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_EXPORTESDM_operator_1.0.xml
+if HAVE_PARALLEL_ESDM
+OPERATOR_XML+=etc/operators_xml/OPH_EXPORTESDM2_operator_1.0.xml
+endif
 OPERATOR_XML+=etc/operators_xml/OPH_CONCATESDM_operator_1.0.xml
 endif
 OPERATOR_XML+=etc/operators_xml/OPH_FOLDER_operator_1.0.xml
@@ -87,6 +91,7 @@ OPERATOR_XML+=etc/operators_xml/OPH_IF_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INPUT_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INSTANCES_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INTERCUBE_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_INTERCUBE2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_LIST_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_LOGGINGBK_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_LOG_INFO_operator_1.0.xml

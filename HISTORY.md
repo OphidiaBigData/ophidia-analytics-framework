@@ -3,10 +3,12 @@
 
 ### Fixed:
 
+- Optimization to write output data by OPH_EXPORTNC2
 - Detection of time dimension in case of subsetting for OPH_IMPORTNC and OPH_CONCATNC
 
 ### Changed:
 
+- Parsing of the parameter 'base_time' from NetCDF attirbutes
 - OPH_METADATA to update metadata "by key" besides "by id"
 
 ## v1.6.1 - 2021-08-03

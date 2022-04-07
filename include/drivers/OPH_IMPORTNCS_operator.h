@@ -16,23 +16,23 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OPH_IMPORTESDM2_OPERATOR_H
-#define __OPH_IMPORTESDM2_OPERATOR_H
+#ifndef __OPH_IMPORTNCS_OPERATOR_H
+#define __OPH_IMPORTNCS_OPERATOR_H
 
 //Operator specific headers
 #include "oph_common.h"
 #include "oph_ophidiadb_main.h"
+#include "oph_nc_library.h"
 #include "oph_ioserver_library.h"
-#include "oph_esdm_library.h"
 
-#define OPH_IMPORTESDM2_SUBSET_INDEX	    "index"
-#define OPH_IMPORTESDM2_SUBSET_COORD	    "coord"
-#define OPH_IMPORTESDM2_DIMENSION_DEFAULT	"auto"
+#define OPH_IMPORTNCS_SUBSET_INDEX	    "index"
+#define OPH_IMPORTNCS_SUBSET_COORD	    "coord"
+#define OPH_IMPORTNCS_DIMENSION_DEFAULT	"auto"
 
 //Only import of measured variables is supported
 
 /**
- * \brief Structure of parameters needed by the operator OPH_IMPORTESDM2. It creates a new datacube filling it with data taken from nc file
+ * \brief Structure of parameters needed by the operator OPH_IMPORTNCS. It creates a new datacube filling it with data taken from nc file
  *
  * \param oDB Contains the parameters and the connection to OphidiaDB
  * \param container_input Name of the input container used
@@ -55,6 +55,9 @@
  * \param fragxdb_number Number of fragments for each database (upper bound)
  * \param tuplexfrag_number Number of tuples for each fragment (upper bound)
  * \param array_length Number of elements to store into a row
+ * \param total_frag_number Total number of fragments created
+ * \param number_unven_frag Number of fragments with more rows
+ * \param int_dim_product Product of most internal dimension sizes
  * \param user Name of the user calling the import operation
  * \param measure Measure name
  * \param measure_type Type of data for the given measure
@@ -74,16 +77,18 @@
  * \param description Free description to be associated with output cube
  * \param time_filter Flag used in case time filters are expressed as dates
  * \param id_job ID of the job related to the task
+ * \param nthread Number of pthreads related to each MPI task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  * \param policy Rule to select hosts where data will be distributed
  */
-struct _OPH_IMPORTESDM2_operator_handle {
+struct _OPH_IMPORTNCS_operator_handle {
 	ophidiadb oDB;
 	char *container_input;
 	int create_container;
 	char *cwd;
 	int run;
-	char *nc_file_path;
+	char **nc_file_paths;
+	int nc_file_paths_num;
 	char *nc_file_path_orig;
 	char *partition_input;
 	char *grid_name;
@@ -104,7 +109,8 @@ struct _OPH_IMPORTESDM2_operator_handle {
 	int number_unven_frag;
 	int int_dim_product;
 	char *user;
-	ESDM_var measure;
+	int *ncids;
+	NETCDF_var measure;
 	int compressed;
 	char **objkeys;
 	int objkeys_num;
@@ -122,14 +128,10 @@ struct _OPH_IMPORTESDM2_operator_handle {
 	char *description;
 	int time_filter;
 	int id_job;
+	int nthread;
 	short int execute_error;
 	char policy;
-	char *operation;
-	char **args;
-	int args_num;
-	int nthread;
-	int id_user;
 };
-typedef struct _OPH_IMPORTESDM2_operator_handle OPH_IMPORTESDM2_operator_handle;
+typedef struct _OPH_IMPORTNCS_operator_handle OPH_IMPORTNCS_operator_handle;
 
-#endif				//__OPH_IMPORTESDM2_OPERATOR_H
+#endif				//__OPH_IMPORTNCS_OPERATOR_H
