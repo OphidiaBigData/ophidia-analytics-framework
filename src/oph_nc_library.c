@@ -1782,12 +1782,11 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 	} else {
 		res = nc_get_vara_double(ncid, measure->varid, start, count, (double *) (binary_cache));
 	}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	gettimeofday(&end_read_time, NULL);
 	timeval_subtract(&total_read_time, &end_read_time, &start_read_time);
 	printf("Fragment %s:  Total read :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_read_time.tv_sec, (int) total_read_time.tv_usec);
 #endif
-
 	if (res != 0) {
 		OPH_NC_ERR(res);
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
@@ -2028,11 +2027,10 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 
 		oph_ioserver_free_query(server, query);
 	}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	printf("Fragment %s:  Total transpose :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_transpose_time.tv_sec, (int) total_transpose_time.tv_usec);
 	printf("Fragment %s:  Total write :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_write_time.tv_sec, (int) total_write_time.tv_usec);
 #endif
-
 
 	free(query_string);
 	free(idDim);
@@ -2514,13 +2512,11 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			res = nc_get_vara_double(ncid, measure->varid, start, count, (double *) (binary_insert));
 		}
 	}
-
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	gettimeofday(&end_read_time, NULL);
 	timeval_subtract(&total_read_time, &end_read_time, &start_read_time);
 	printf("Fragment %s:  Total read :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_read_time.tv_sec, (int) total_read_time.tv_usec);
 #endif
-
 	if (res != 0) {
 		OPH_NC_ERR(res);
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
@@ -2605,12 +2601,14 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		gettimeofday(&start_transpose_time, NULL);
 #endif
 		oph_nc_cache_to_buffer2(measure->ndims, counters, limits, products, binary_cache, binary_insert, sizeof_type);
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_transpose_time, NULL);
 		timeval_subtract(&intermediate_transpose_time, &end_transpose_time, &start_transpose_time);
 		timeval_add(&total_transpose_time, &total_transpose_time, &intermediate_transpose_time);
 		printf("Fragment %s:  Total transpose :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_transpose_time.tv_sec, (int) total_transpose_time.tv_usec);
 #endif
+
 		free(counters);
 		free(products);
 		free(limits);
@@ -2766,7 +2764,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 
 		oph_ioserver_free_query(server, query);
 	}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	printf("Fragment %s:  Total write :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_write_time.tv_sec, (int) total_write_time.tv_usec);
 #endif
 

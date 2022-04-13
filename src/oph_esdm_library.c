@@ -2417,7 +2417,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 		free(sizemax);
 		return OPH_ESDM_ERROR;
 	}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	gettimeofday(&end_read_time, NULL);
 	timeval_subtract(&total_read_time, &end_read_time, &start_read_time);
 	printf("Fragment %s:  Total read :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_read_time.tv_sec, (int) total_read_time.tv_usec);
@@ -2643,11 +2643,10 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 
 		oph_ioserver_free_query(server, query);
 	}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	printf("Fragment %s:  Total transpose :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_transpose_time.tv_sec, (int) total_transpose_time.tv_usec);
 	printf("Fragment %s:  Total write :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_write_time.tv_sec, (int) total_write_time.tv_usec);
 #endif
-
 
 	free(query_string);
 	free(idDim);
