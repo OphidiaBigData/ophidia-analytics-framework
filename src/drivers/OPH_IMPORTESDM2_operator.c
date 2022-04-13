@@ -346,6 +346,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	char *tmp = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->nc_file_path;
 	value = strstr(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->nc_file_path, "//") + 2;
 	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->nc_file_path = strdup(value);
+	if (container_name == tmp)
+		container_name = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->nc_file_path;
 	free(tmp);
 
 	if (oph_pid_get_memory_size(&(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->memory_size))) {
@@ -1123,6 +1125,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 				do {
 
+					j = sub_to_dims[tf];
 					if (!measure->dim_dataset[j])
 						if ((ret = esdm_dataset_open(measure->container, measure->dims_name[j], ESDM_MODE_FLAG_READ, measure->dim_dataset + j))) {
 							pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to read dimension information: dataset '%s' cannot be opened\n", measure->dims_name[i]);
