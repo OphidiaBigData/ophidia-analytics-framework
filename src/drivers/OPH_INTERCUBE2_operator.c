@@ -178,6 +178,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	for (i = 0; i < cubes_num + 2; i++);
 	id_datacube_in[i] = 0;
 
+	value = hashtbl_get(task_tbl, OPH_ARG_USERID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERID);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INTERCUBE_MISSING_INPUT_PARAMETER, OPH_ARG_USERID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->id_user = (int) strtol(value, NULL, 10);
+
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
@@ -261,12 +269,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					id_datacube_in[cubes_num] = 0;
 				}
 			}
-		}
-
-		if (oph_odb_user_retrieve_user_id(oDB, username, &(((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->id_user))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to extract userid.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_USER_ID_ERROR);
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 	}
 	//Broadcast to all other processes the fragment relative index        
@@ -955,7 +957,7 @@ int task_execute(oph_operator_struct * handle)
 
 	oper_handle->execute_error = 1;
 
-	int l, i, j, k, kk;
+	int l, i, j, k, kk, ii;
 
 	int id_datacube_out = oper_handle->id_output_datacube;
 	int *id_datacube_in = oper_handle->id_input_datacube;
@@ -1231,20 +1233,20 @@ int task_execute(oph_operator_struct * handle)
 					char intercube2_alias[OPH_COMMON_BUFFER_LEN], intercube2_aliass[OPH_COMMON_BUFFER_LEN];
 					char intercube2_where[OPH_COMMON_BUFFER_LEN], intercube2_wheres[OPH_COMMON_BUFFER_LEN];
 					*intercube2_operands = *intercube2_datatypes = *intercube2_froms = *intercube2_aliass = *intercube2_wheres = 0;
-					for (i = 0; i < cubes_num; i++) {
-						snprintf(intercube2_operand, OPH_COMMON_BUFFER_LEN, "%s%sfrag%d.%s%s", i ? "," : "", compressed ? "oph_uncompress('',''," : "", i + 1,
+					for (ii = 0; ii < cubes_num; ii++) {
+						snprintf(intercube2_operand, OPH_COMMON_BUFFER_LEN, "%s%sfrag%d.%s%s", ii ? "," : "", compressed ? "oph_uncompress('',''," : "", ii + 1,
 							 MYSQL_FRAG_MEASURE, compressed ? ")" : "");
 						strncat(intercube2_operands, intercube2_operand, OPH_COMMON_BUFFER_LEN - strlen(intercube2_operands));
-						snprintf(intercube2_datatype, OPH_COMMON_BUFFER_LEN, "%soph_%s", i ? "|" : "",
+						snprintf(intercube2_datatype, OPH_COMMON_BUFFER_LEN, "%soph_%s", ii ? "|" : "",
 							 ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->measure_type);
 						strncat(intercube2_datatypes, intercube2_datatype, OPH_COMMON_BUFFER_LEN - strlen(intercube2_datatypes));
-						snprintf(intercube2_from, OPH_COMMON_BUFFER_LEN, "%s%s.%s", i ? "|" : "", frags[i].value[k2[i]].db_instance->db_name,
-							 frags[i].value[k2[i]].fragment_name);
+						snprintf(intercube2_from, OPH_COMMON_BUFFER_LEN, "%s%s.%s", ii ? "|" : "", frags[ii].value[k2[ii]].db_instance->db_name,
+							 frags[ii].value[k2[ii]].fragment_name);
 						strncat(intercube2_froms, intercube2_from, OPH_COMMON_BUFFER_LEN - strlen(intercube2_froms));
-						snprintf(intercube2_alias, OPH_COMMON_BUFFER_LEN, "%sfrag%d", i ? "|" : "", i + 1);
+						snprintf(intercube2_alias, OPH_COMMON_BUFFER_LEN, "%sfrag%d", ii ? "|" : "", ii + 1);
 						strncat(intercube2_aliass, intercube2_alias, OPH_COMMON_BUFFER_LEN - strlen(intercube2_aliass));
-						if (i) {
-							snprintf(intercube2_where, OPH_COMMON_BUFFER_LEN, "%sfrag1.%s=frag%d.%s", i > 1 ? " AND " : "", MYSQL_FRAG_ID, i + 1, MYSQL_FRAG_ID);
+						if (ii) {
+							snprintf(intercube2_where, OPH_COMMON_BUFFER_LEN, "%sfrag1.%s=frag%d.%s", ii > 1 ? " AND " : "", MYSQL_FRAG_ID, ii + 1, MYSQL_FRAG_ID);
 							strncat(intercube2_wheres, intercube2_where, OPH_COMMON_BUFFER_LEN - strlen(intercube2_wheres));
 						}
 					}
