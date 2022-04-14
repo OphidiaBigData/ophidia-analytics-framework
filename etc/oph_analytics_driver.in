@@ -178,6 +178,9 @@ LIB @MYSQL_LDFLAGS@
 [OPH_CONCATESDM]
 @DRIVER_PATH@/liboph_concatesdmoperator.so
 LIB @MYSQL_LDFLAGS@
+[OPH_CONCATESDM2]
+@DRIVER_PATH@/liboph_concatesdm2operator.so
+LIB @MYSQL_LDFLAGS@
 [OPH_CDO]
 @DRIVER_PATH@/liboph_cdooperator.so
 LIB @MYSQL_LDFLAGS@

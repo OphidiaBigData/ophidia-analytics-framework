@@ -16,8 +16,8 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef __OPH_CONCATESDM_OPERATOR_H
-#define __OPH_CONCATESDM_OPERATOR_H
+#ifndef __OPH_CONCATESDM2_OPERATOR_H
+#define __OPH_CONCATESDM2_OPERATOR_H
 
 //Operator specific headers
 #include "oph_common.h"
@@ -32,7 +32,7 @@
 //Only import of measured variables is supported
 
 /**
- * \brief Structure of parameters needed by the operator OPH_CONCATESDM. It creates a new datacube concatenating data taken from nc file to a cube
+ * \brief Structure of parameters needed by the operator OPH_CONCATESDM2. It creates a new datacube concatenating data taken from nc file to a cube
  *
  * \param oDB Contains the parameters and the connection to OphidiaDB
  * \param id_input_datacube ID of the input datacube used
@@ -59,9 +59,10 @@
  * \param time_filter Flag used in case time filters are expressed as dates
  * \param dim_offset Offset to be added to dimension values of imported data
  * \param dim_continue If enabled the last value of implicit dimension of input cube is used to evaluate the new values of the dimension.
+ * \param nthread Number of pthreads related to each MPI task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
-struct _OPH_CONCATESDM_operator_handle {
+struct _OPH_CONCATESDM2_operator_handle {
 	ophidiadb oDB;
 	char *nc_file_path;
 	char *nc_file_path_orig;
@@ -78,7 +79,7 @@ struct _OPH_CONCATESDM_operator_handle {
 	int id_job;
 	char *fragment_ids;
 	int check_exp_dim;
-	ESDM_var measure;
+	NETCDF_var measure;
 	char **objkeys;
 	int objkeys_num;
 	oph_ioserver_handler *server;
@@ -89,11 +90,9 @@ struct _OPH_CONCATESDM_operator_handle {
 	int time_filter;
 	double *dim_offset;
 	char dim_continue;
+	int nthread;
 	short int execute_error;
-	char *operation;
-	char **args;
-	int args_num;
 };
-typedef struct _OPH_CONCATESDM_operator_handle OPH_CONCATESDM_operator_handle;
+typedef struct _OPH_CONCATESDM2_operator_handle OPH_CONCATESDM2_operator_handle;
 
-#endif				//__OPH_CONCATESDM_OPERATOR_H
+#endif				//__OPH_CONCATESDM2_OPERATOR_H

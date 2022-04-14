@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
-<operator name="OPH_CONCATESDM" version="1.0">
+<operator name="OPH_CONCATESDM2" version="1.0">
     <info>
         <abstract>[Type]
 Data Process.
 
 [Behaviour]
-It creates a new datacube concatenating an ESDM dataset to an existing datacube (both measure and dimensions).
-WARNING: It imports only mono-dimensional coordinate variables. The dimensions within the input dataset that will be
+It creates a new datacube concatenating an ESDM dataset to an existing datacube (both measure and dimensions). Optimized version of OPH_CONCATNC.
+WARNING: It imports only mono-dimensional coordinate variables. The dimensions within the NetCDF file that will be
 considered as explicit dimensions must have the same domain of those in the data cube, 
 while those considered as implicit dimensions must not overlap with those in the data cube.
 
@@ -39,59 +39,33 @@ while those considered as implicit dimensions must not overlap with those in the
 - time_filter : enable filters using dates for time dimensions; enabled by default.
 - offset : it is added to the bounds of subset intervals defined with &quot;subset_filter&quot; in case of &quot;coord&quot; filter type is used.
 - description : additional description to be associated with the output cube.
-- operation : reduction operation. Possible values are:
-              &quot;none&quot; no operation is to be applied (default);
-              &quot;stream&quot; no operation is to be applied but stream mode is usd to load data;
-              &quot;max&quot; to evaluate the maximum value of data to be imported;
-              &quot;min&quot; to evaluate the minimum value of data to be imported;
-              &quot;avg&quot; to evaluate the mean value of data to be imported;
-              &quot;sum&quot; to evaluate the sum of data to be imported;
-              &quot;std&quot; to evaluate the standard deviation of data to be imported;
-              &quot;var&quot; to evaluate the variance of data to be imported;
-              &quot;sum_scalar&quot; to sum a value to data to be imported (see the argument &quot;args&quot;);
-              &quot;mul_scalar&quot; to multiply a value to data to be imported (see the argument &quot;args&quot;);
-              &quot;abs&quot; to evaluate the absolute values of data to be imported;
-              &quot;sqrt&quot; to evaluate the square root of data to be imported;
-              &quot;ceil&quot; to evaluate the integers upper than the values of data to be imported;
-              &quot;floor&quot; to evaluate the integers lower than the values of data to be imported;
-              &quot;exp&quot; to evaluate the exponential of the values of data to be imported;
-              &quot;log&quot; to evaluate the natural logarithm of the values of data to be imported;
-              &quot;log10&quot; to evaluate the base-10 logarithm of the values of data to be imported;
-              &quot;sin&quot; to evaluate the sine of the values of data to be imported;
-              &quot;cos&quot; to evaluate the cosine of the values of data to be imported;
-              &quot;tan&quot; to evaluate the tangent of the values of data to be imported;
-              &quot;asin&quot; to evaluate the arc-sine of the values of data to be imported;
-              &quot;acos&quot; to evaluate the arc-cosine of the values of data to be imported;
-              &quot;atan&quot; to evaluate the arc-tangent of the values of data to be imported;
-              &quot;sinh&quot; to evaluate the hyperbolicsine of the values of data to be imported;
-              &quot;cosh&quot; to evaluate the hyperboliccosine of the values of data to be imported;
-              &quot;tanh&quot; to evaluate the hyperbolic tangent of the values of data to be imported.
-- args : list of the comma-separated parameters associated with a specific &quot;operation&quot;.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
               asynchronous mode, sync for synchronous mode with json-compliant output.
 - ncores : number of parallel processes to be used (min. 1).
+- nthreads : number of parallel threads per process to be used (min. 1).
 - sessionid : session identifier used server-side to manage sessions and jobs.
               Usually users don't need to use/modify it, except when it is necessary
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
-                  concatesdm : show operator's output PID as text.
+                  concatesdm2 : show operator's output PID as text.
 - save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples] 
 Concat an ESDM dataset excluding metadata into the datacube &quot;http://www.example.com/1/1&quot; :
-OPH_TERM:: oph_concatesdm src_path=esdm://path/to/dataset;cube=http://www.example.com/1/1;
-SUBMISSION STRING: &quot;operator=oph_concatesdm;src_path=esdm://path/to/dataset;cube=http://www.example.com/1/1;&quot;</abstract>
+OPH_TERM:: oph_concatesdm2 src_path=esdm://path/to/dataset;cube=http://www.example.com/1/1;
+SUBMISSION STRING: &quot;operator=oph_concatesdm2;src_path=esdm://path/to/dataset;cube=http://www.example.com/1/1;&quot;</abstract>
         <author>CMCC</author>
         <category>Data Import/Export</category>
-        <creationdate>24/01/2017</creationdate>
+        <creationdate>14/04/2022</creationdate>
         <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
         <permission>write</permission>
     </info>
     <args>  
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">nthreads</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="" multivalue="yes">src_path</argument>
@@ -108,9 +82,7 @@ SUBMISSION STRING: &quot;operator=oph_concatesdm;src_path=esdm://path/to/dataset
 		<argument type="string" mandatory="yes" multivalue="yes">cube</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">check_exp_dim</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
-		<argument type="string" mandatory="no" default="all" values="all|none|concatesdm">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|concatesdm2">objkey_filter</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
-		<argument type="string" mandatory="no" default="none" values="none|stream|max|min|avg|sum|std|var|sum_scalar|mul_scalar|abs|sqrt|ceil|floor|exp|log|log10|sin|cos|tan|asin|acos|atan|sinh|cosh|tanh">operation</argument>
-		<argument type="string" mandatory="no" default="none">args</argument>
     </args>
 </operator>
