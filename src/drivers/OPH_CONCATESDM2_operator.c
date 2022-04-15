@@ -1044,8 +1044,8 @@ int task_init(oph_operator_struct * handle)
 
 			if (cubedims[l].explicit_dim) {
 				if (tmp_var.varsize != cubedims[l].size) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of dimension '%s' in NC file (%d) does not correspond to the one stored in OphidiaDB (%d)\n", dim[l].dimension_name,
-					      tmp_var.varsize, cubedims[l].size);
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of dimension '%s' in ESDM container (%d) does not correspond to the one stored in OphidiaDB (%d)\n",
+					      dim[l].dimension_name, tmp_var.varsize, cubedims[l].size);
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_DIM_SIZE_MISMATCH, dim[l].dimension_name);
 					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 					oph_dim_unload_dim_dbinstance(db_dimension);
@@ -1056,8 +1056,8 @@ int task_init(oph_operator_struct * handle)
 
 			if (!measure->dim_dataset[i])
 				if ((ret = esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open dataset '%s' of ESDM container\n", measure->dims_name[i]);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to open dataset '%s' of ESDM container\n", measure->dims_name[i]);
 					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 					oph_dim_unload_dim_dbinstance(db_dimension);
 					goto __OPH_EXIT_1;
@@ -1065,16 +1065,17 @@ int task_init(oph_operator_struct * handle)
 
 			if (!measure->dim_dspace[i])
 				if ((ret = esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open the dataspace associated with dataset '%s' of ESDM container\n", measure->dims_name[i]);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to open the dataspace associated with dataset '%s' of ESDM container\n",
+						measure->dims_name[i]);
 					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 					oph_dim_unload_dim_dbinstance(db_dimension);
 					goto __OPH_EXIT_1;
 				}
 
 			if (oph_esdm_compare_types(id_container_in, measure->dim_dspace[i]->type, dim[l].dimension_type)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension type in NC file does not correspond to the one stored in OphidiaDB\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_DIM_TYPE_MISMATCH_ERROR, dim[l].dimension_name);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension type in ESDM container does not correspond to the one stored in OphidiaDB\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, "Dimension type in ESDM container does not correspond to the one stored in OphidiaDB\n");
 				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 				oph_dim_unload_dim_dbinstance(db_dimension);
 				goto __OPH_EXIT_1;
