@@ -1054,32 +1054,39 @@ int task_init(oph_operator_struct * handle)
 			} else
 				measure_stream[number_of_dimensions + l] = tmp_var.varsize;
 
-			if (!measure->dim_dataset[i])
-				if ((ret = esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open dataset '%s' of ESDM container\n", measure->dims_name[i]);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to open dataset '%s' of ESDM container\n", measure->dims_name[i]);
+			do {
+
+				if (!measure->dim_dataset[i])
+					if ((ret = esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i))) {
+						if (!strcmp(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE))
+							break;
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open dataset '%s' of ESDM container\n", measure->dims_name[i]);
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to open dataset '%s' of ESDM container\n", measure->dims_name[i]);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						goto __OPH_EXIT_1;
+					}
+
+				if (!measure->dim_dspace[i])
+					if ((ret = esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i))) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open the dataspace associated with dataset '%s' of ESDM container\n", measure->dims_name[i]);
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to open the dataspace associated with dataset '%s' of ESDM container\n",
+							measure->dims_name[i]);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						goto __OPH_EXIT_1;
+					}
+
+				if (oph_esdm_compare_types(id_container_in, measure->dim_dspace[i]->type, dim[l].dimension_type)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension type in ESDM container does not correspond to the one stored in OphidiaDB\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, "Dimension type in ESDM container does not correspond to the one stored in OphidiaDB\n");
 					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 					oph_dim_unload_dim_dbinstance(db_dimension);
 					goto __OPH_EXIT_1;
 				}
 
-			if (!measure->dim_dspace[i])
-				if ((ret = esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open the dataspace associated with dataset '%s' of ESDM container\n", measure->dims_name[i]);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to open the dataspace associated with dataset '%s' of ESDM container\n",
-						measure->dims_name[i]);
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					goto __OPH_EXIT_1;
-				}
+			} while (0);
 
-			if (oph_esdm_compare_types(id_container_in, measure->dim_dspace[i]->type, dim[l].dimension_type)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension type in ESDM container does not correspond to the one stored in OphidiaDB\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, "Dimension type in ESDM container does not correspond to the one stored in OphidiaDB\n");
-				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db_dimension);
-				goto __OPH_EXIT_1;
-			}
 			//Modified to allow subsetting
 			tmp_var.dims_start_index = &(measure->dims_start_index[i]);
 			tmp_var.dims_end_index = &(measure->dims_end_index[i]);
