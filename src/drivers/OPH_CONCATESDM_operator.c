@@ -903,7 +903,7 @@ int task_init(oph_operator_struct * handle)
 		}
 
 		ndim = number_of_dimensions;
-		measure_stream = (int *) malloc((3 + 3 * ndim) * sizeof(int));
+		measure_stream = (int *) malloc(3 * ndim * sizeof(int));
 		if (!measure_stream) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_MEMORY_ERROR_INPUT, "measure structure");
@@ -919,11 +919,10 @@ int task_init(oph_operator_struct * handle)
 			//Count number of implicit dimensions
 			if (!cubedims[i].explicit_dim)
 				imp_ndim++;
-			measure_stream[3 + i] = cubedims[i].level;
-			measure_stream[3 + i + number_of_dimensions] = cubedims[i].size;
-			measure_stream[3 + i + 2 * number_of_dimensions] = cubedims[i].explicit_dim;
+			measure_stream[i] = cubedims[i].level;
+			measure_stream[i + number_of_dimensions] = cubedims[i].size;
+			measure_stream[i + 2 * number_of_dimensions] = cubedims[i].explicit_dim;
 		}
-		measure_stream[2] = number_of_dimensions - imp_ndim;
 
 		//Load dimension table database infos and connect
 		oph_odb_db_instance db_;
@@ -1625,7 +1624,7 @@ int task_init(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
-	if (handle->proc_rank != 0) {
+	if (handle->proc_rank) {
 		if (!(((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->fragment_ids = (char *) strndup(id_string[0], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CONCATESDM_MEMORY_ERROR_INPUT,
@@ -1638,7 +1637,7 @@ int task_init(oph_operator_struct * handle)
 		((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->id_output_datacube = *((int *) id_string[1]);
 		((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->compressed = *((int *) id_string[2]);
 		ndim = *((int *) id_string[3]);
-		measure_stream = (int *) malloc((3 * ndim) * sizeof(int));
+		measure_stream = (int *) malloc(3 * ndim * sizeof(int));
 	}
 
 	MPI_Bcast(measure_stream, 3 * ndim, MPI_INT, 0, MPI_COMM_WORLD);
