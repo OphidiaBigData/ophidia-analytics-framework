@@ -79,7 +79,7 @@ struct _OPH_CONCATESDM2_operator_handle {
 	int id_job;
 	char *fragment_ids;
 	int check_exp_dim;
-	NETCDF_var measure;
+	ESDM_var measure;
 	char **objkeys;
 	int objkeys_num;
 	oph_ioserver_handler *server;

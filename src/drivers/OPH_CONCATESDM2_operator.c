@@ -1908,7 +1908,7 @@ int task_execute(oph_operator_struct * handle)
 				strcpy(tmp_frag.fragment_name, frag_name_out);
 
 				//Append fragment
-				if (oph_nc_append_fragment_from_nc4
+				if (oph_esdm_append_fragment_from_esdm4
 				    (server, &(frags->value[k]), &tmp_frag, oper_handle->nc_file_path, (tmp_frag.key_end - tmp_frag.key_start + 1), compressed,
 				     (ESDM_var *) & (oper_handle->measure))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");

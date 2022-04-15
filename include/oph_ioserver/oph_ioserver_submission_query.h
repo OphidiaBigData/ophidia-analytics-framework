@@ -100,5 +100,6 @@
 #define OPH_IOSERVER_SQ_KW_FUNCTION_FIELDS "@function_fields"
 #define OPH_IOSERVER_SQ_KW_FUNCTION_TABLE "@function_table"
 #define OPH_IOSERVER_SQ_KW_FILE "@file"
+#define OPH_IOSERVER_SQ_KW_ESDM "@esdm"
 
 #endif				//__OPH_IOSERVER_SUBMISSION_QUERY_H

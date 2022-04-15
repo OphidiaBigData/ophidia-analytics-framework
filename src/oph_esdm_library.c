@@ -4204,3 +4204,308 @@ int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_f
 
 	return OPH_ESDM_SUCCESS;
 }
+
+int oph_esdm_append_fragment_from_esdm4(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, char *nc_file_path, int tuplexfrag_number, int compressed,
+					ESDM_var * measure)
+{
+	if (!old_frag || !new_frag || !nc_file_path || !tuplexfrag_number || !measure || !server) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ESDM_ERROR;
+	}
+
+	if (oph_dc_check_connection_to_db(server, old_frag->db_instance->dbms_instance, old_frag->db_instance, 0)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");
+		return OPH_ESDM_ERROR;
+	}
+	//Flag set to 1 if dimension are in the order specified in the file
+	int i;
+	int *index = (int *) malloc((measure->ndims) * sizeof(int));
+	for (i = 0; i < measure->ndims; i++) {
+		//Compute index of actual order in Ophidia
+		if (!measure->dims_type[i])
+			index[i] = (measure->ndims - measure->nimp) + measure->dims_oph_level[i] - 1;
+		else
+			index[i] = measure->dims_oph_level[i] - 1;
+	}
+
+	//Find most external dimension with size bigger than 1
+	int j;
+	int most_extern_id = 0;
+	for (i = 0; i < measure->nexp; i++) {
+		//Find dimension related to index
+		for (j = 0; j < measure->ndims; j++) {
+			if (i == index[j]) {
+				break;
+			}
+		}
+
+		//External explicit
+		if (measure->dims_type[j]) {
+			if ((measure->dims_end_index[j] - measure->dims_start_index[j]) > 0) {
+				most_extern_id = i;
+				break;
+			}
+		}
+	}
+
+	//Check if only most external dimension (bigger than 1) is splitted
+	long long curr_rows = 1;
+	long long relative_rows = 0;
+	short int whole_explicit = 1;
+	for (i = measure->ndims - 1; i > most_extern_id; i--) {
+		//Find dimension related to index
+		for (j = 0; j < measure->ndims; j++) {
+			if (i == index[j]) {
+				break;
+			}
+		}
+
+		//External explicit
+		if (measure->dims_type[j]) {
+			relative_rows = (int) (tuplexfrag_number / curr_rows);
+			curr_rows *= (measure->dims_end_index[j] - measure->dims_start_index[j] + 1);
+			if (relative_rows < (measure->dims_end_index[j] - measure->dims_start_index[j] + 1)) {
+				whole_explicit = 0;
+				break;
+			}
+		}
+	}
+	//If external explicit is not integer
+	if ((tuplexfrag_number % curr_rows) != 0)
+		whole_explicit = 0;
+
+	if (!whole_explicit) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create fragment: internal explicit dimensions are fragmented\n");
+		free(index);
+		return OPH_ESDM_ERROR;
+	}
+	//Alloc query String
+	char measure_type[OPH_ODB_CUBE_MEASURE_TYPE_SIZE];
+	if (oph_nc_get_c_type(measure->vartype, measure_type)) {
+		free(index);
+		return OPH_ESDM_ERROR;
+	}
+
+	long long dim_t_size = 0, dim_i_size = 0, dim_s_size = 0, dim_e_size = 0;
+	long long where_size = 0, field_size = 0, from_size = 0, from_alias_size = 0;
+	for (j = 0; j < measure->ndims; j++) {
+		dim_t_size += snprintf(NULL, 0, "%hd|", measure->dims_type[j]);
+		dim_i_size += snprintf(NULL, 0, "%d|", (int) index[j]);
+		dim_s_size += snprintf(NULL, 0, "%d|", measure->dims_start_index[j]);
+		dim_e_size += snprintf(NULL, 0, "%d|", measure->dims_end_index[j]);
+	}
+
+	where_size = 1 + snprintf(NULL, 0, OPH_ESDM_CONCAT_WHERE_FILE, "frag1", "frag2");
+	from_size = 1 + snprintf(NULL, 0, "%s.%s|%s", (old_frag->db_instance)->db_name, old_frag->fragment_name, OPH_IOSERVER_SQ_KW_ESDM);
+	from_alias_size = 1 + snprintf(NULL, 0, "%s|%s", "frag1", "frag2");
+	field_size = 1 + snprintf(NULL, 0, (compressed ? OPH_ESDM_CONCAT_FIELD_COMPR : OPH_ESDM_CONCAT_FIELD), measure_type, measure_type, measure_type, "frag1", "frag2");
+
+	long long query_size = 0;
+	char *create_query = OPH_DC_SQ_CREATE_SELECT_FRAG_FILE;
+	query_size =
+	    snprintf(NULL, 0, create_query, new_frag->fragment_name, "frag1", "", "", "", "", nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, old_frag->key_start, "", "",
+		     "", "") + where_size + field_size + from_size + from_alias_size + (dim_t_size + dim_i_size + dim_s_size + dim_e_size - 4) + 1;
+
+	char *query_string = (char *) malloc(query_size * sizeof(char));
+	if (!(query_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(index);
+		return OPH_ESDM_ERROR;
+	}
+
+	char *dims_type_string = (char *) malloc(dim_t_size * sizeof(char));
+	if (!(dims_type_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(index);
+		return OPH_ESDM_ERROR;
+	}
+	char *dims_index_string = (char *) malloc(dim_i_size * sizeof(char));
+	if (!(dims_index_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(dims_type_string);
+		free(index);
+		return OPH_ESDM_ERROR;
+	}
+	char *dims_start_string = (char *) malloc(dim_s_size * sizeof(char));
+	if (!(dims_start_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(dims_type_string);
+		free(dims_index_string);
+		free(index);
+		return OPH_ESDM_ERROR;
+	}
+	char *dims_end_string = (char *) malloc(dim_e_size * sizeof(char));
+	if (!(dims_end_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(dims_type_string);
+		free(dims_index_string);
+		free(dims_start_string);
+		free(index);
+		return OPH_ESDM_ERROR;
+	}
+	char *from_string = (char *) malloc(from_size * sizeof(char));
+	if (!(from_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(dims_type_string);
+		free(dims_index_string);
+		free(dims_start_string);
+		free(dims_end_string);
+		free(index);
+		return OPH_ESDM_ERROR;
+	}
+	char *from_alias_string = (char *) malloc(from_alias_size * sizeof(char));
+	if (!(from_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(dims_type_string);
+		free(dims_index_string);
+		free(dims_start_string);
+		free(dims_end_string);
+		free(from_string);
+		free(index);
+		return OPH_ESDM_ERROR;
+	}
+	char *field_string = (char *) malloc(field_size * sizeof(char));
+	if (!(field_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(dims_type_string);
+		free(dims_index_string);
+		free(dims_start_string);
+		free(dims_end_string);
+		free(from_string);
+		free(from_alias_string);
+		free(index);
+		return OPH_ESDM_ERROR;
+	}
+	char *where_string = (char *) malloc(where_size * sizeof(char));
+	if (!(where_string)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		free(query_string);
+		free(dims_type_string);
+		free(dims_index_string);
+		free(dims_start_string);
+		free(dims_end_string);
+		free(from_string);
+		free(from_alias_string);
+		free(field_string);
+		free(index);
+		return OPH_ESDM_ERROR;
+	}
+	//Set values into strings
+	long long m1 = 0, m2 = 0, m3 = 0, m4 = 0;
+	for (j = 0; j < measure->ndims; j++) {
+		m1 += snprintf(dims_type_string + m1, dim_t_size - m1, "%hd|", measure->dims_type[j]);
+		m2 += snprintf(dims_index_string + m2, dim_i_size - m2, "%d|", (int) index[j]);
+		m3 += snprintf(dims_start_string + m3, dim_s_size - m3, "%d|", measure->dims_start_index[j]);
+		m4 += snprintf(dims_end_string + m4, dim_e_size - m4, "%d|", measure->dims_end_index[j]);
+	}
+	dims_type_string[m1 - 1] = 0;
+	dims_index_string[m2 - 1] = 0;
+	dims_start_string[m3 - 1] = 0;
+	dims_end_string[m4 - 1] = 0;
+
+	free(index);
+
+	int n = 0;
+	n = snprintf(from_string, from_size, "%s.%s|%s", (old_frag->db_instance)->db_name, old_frag->fragment_name, OPH_IOSERVER_SQ_KW_ESDM);
+	if (n >= from_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		free(dims_type_string);
+		free(dims_index_string);
+		free(dims_start_string);
+		free(dims_end_string);
+		free(from_string);
+		free(from_alias_string);
+		free(field_string);
+		free(where_string);
+		return OPH_ESDM_ERROR;
+	}
+	n = snprintf(from_alias_string, from_alias_size, "%s|%s", "frag1", "frag2");
+	if (n >= from_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		free(dims_type_string);
+		free(dims_index_string);
+		free(dims_start_string);
+		free(dims_end_string);
+		free(from_string);
+		free(from_alias_string);
+		free(field_string);
+		free(where_string);
+		return OPH_ESDM_ERROR;
+	}
+	n = snprintf(field_string, field_size, (compressed ? OPH_ESDM_CONCAT_FIELD_COMPR : OPH_ESDM_CONCAT_FIELD), measure_type, measure_type, measure_type, "frag1", "frag2");
+	if (n >= field_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		free(dims_type_string);
+		free(dims_index_string);
+		free(dims_start_string);
+		free(dims_end_string);
+		free(from_string);
+		free(from_alias_string);
+		free(field_string);
+		free(where_string);
+		return OPH_ESDM_ERROR;
+	}
+	n = snprintf(where_string, where_size, OPH_ESDM_CONCAT_WHERE_FILE, "frag1", "frag2");
+	if (n >= field_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		free(dims_type_string);
+		free(dims_index_string);
+		free(dims_start_string);
+		free(dims_end_string);
+		free(from_string);
+		free(from_alias_string);
+		free(field_string);
+		free(where_string);
+		return OPH_ESDM_ERROR;
+	}
+
+	n = snprintf(query_string, query_size, create_query, new_frag->fragment_name, "frag1", field_string, from_string, from_alias_string, where_string, nc_file_path, measure->varname,
+		     OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, old_frag->key_start, dims_type_string, dims_index_string, dims_start_string, dims_end_string);
+	if (n >= query_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		free(dims_type_string);
+		free(dims_index_string);
+		free(dims_start_string);
+		free(dims_end_string);
+		free(from_string);
+		free(from_alias_string);
+		free(field_string);
+		free(where_string);
+		return OPH_ESDM_ERROR;
+	}
+
+	free(dims_type_string);
+	free(dims_index_string);
+	free(dims_start_string);
+	free(dims_end_string);
+	free(from_string);
+	free(from_alias_string);
+	free(field_string);
+	free(where_string);
+
+	oph_ioserver_query *query = NULL;
+	if (oph_ioserver_setup_query(server, query_string, 1, NULL, &query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to setup query.\n");
+		free(query_string);
+		return OPH_DC_SERVER_ERROR;
+	}
+
+	if (oph_ioserver_execute_query(server, query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to execute operation.\n");
+		free(query_string);
+		oph_ioserver_free_query(server, query);
+		return OPH_DC_SERVER_ERROR;
+	}
+
+	oph_ioserver_free_query(server, query);
+	free(query_string);
+
+	return OPH_ESDM_SUCCESS;
+}
