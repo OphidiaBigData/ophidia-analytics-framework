@@ -36,6 +36,7 @@
 #define OPH_IOSERVER_SQ_OPERATION "operation"
 #define OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT "create_frag_select"
 #define OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT_FILE "create_frag_select_file"
+#define OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT_ESDM "create_frag_select_esdm"
 #define OPH_IOSERVER_SQ_OP_CREATE_FRAG "create_frag"
 #define OPH_IOSERVER_SQ_OP_DROP_FRAG "drop_frag"
 #define OPH_IOSERVER_SQ_OP_CREATE_DB "create_database"

@@ -1869,7 +1869,6 @@ int task_execute(oph_operator_struct * handle)
 		//For each DBMS
 		for (i = first_dbms; (i < dbmss->size) && (frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
 
-
 			if (oph_dc_connect_to_dbms(server, &(dbmss->value[i]), 0)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATESDM_DBMS_CONNECTION_ERROR, (dbmss->value[i]).id_dbms);
@@ -1909,7 +1908,7 @@ int task_execute(oph_operator_struct * handle)
 
 				//Append fragment
 				if (oph_esdm_append_fragment_from_esdm4
-				    (server, &(frags->value[k]), &tmp_frag, oper_handle->nc_file_path, (tmp_frag.key_end - tmp_frag.key_start + 1), compressed,
+				    (server, &(frags->value[k]), &tmp_frag, oper_handle->nc_file_path_orig, (tmp_frag.key_end - tmp_frag.key_start + 1), compressed,
 				     (ESDM_var *) & (oper_handle->measure))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATESDM_FRAG_POPULATE_ERROR, tmp_frag.fragment_name, "");

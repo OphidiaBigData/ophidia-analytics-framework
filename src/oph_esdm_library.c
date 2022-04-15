@@ -4280,12 +4280,7 @@ int oph_esdm_append_fragment_from_esdm4(oph_ioserver_handler * server, oph_odb_f
 		return OPH_ESDM_ERROR;
 	}
 	//Alloc query String
-	char measure_type[OPH_ODB_CUBE_MEASURE_TYPE_SIZE];
-	if (oph_nc_get_c_type(measure->vartype, measure_type)) {
-		free(index);
-		return OPH_ESDM_ERROR;
-	}
-
+	char *measure_type = measure->vartype;
 	long long dim_t_size = 0, dim_i_size = 0, dim_s_size = 0, dim_e_size = 0;
 	long long where_size = 0, field_size = 0, from_size = 0, from_alias_size = 0;
 	for (j = 0; j < measure->ndims; j++) {
@@ -4301,7 +4296,7 @@ int oph_esdm_append_fragment_from_esdm4(oph_ioserver_handler * server, oph_odb_f
 	field_size = 1 + snprintf(NULL, 0, (compressed ? OPH_ESDM_CONCAT_FIELD_COMPR : OPH_ESDM_CONCAT_FIELD), measure_type, measure_type, measure_type, "frag1", "frag2");
 
 	long long query_size = 0;
-	char *create_query = OPH_DC_SQ_CREATE_SELECT_FRAG_FILE;
+	char *create_query = OPH_DC_SQ_CREATE_SELECT_FRAG_ESDM;
 	query_size =
 	    snprintf(NULL, 0, create_query, new_frag->fragment_name, "frag1", "", "", "", "", nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, old_frag->key_start, "", "",
 		     "", "") + where_size + field_size + from_size + from_alias_size + (dim_t_size + dim_i_size + dim_s_size + dim_e_size - 4) + 1;
