@@ -32,7 +32,7 @@
 
 #include "oph_log_error_codes.h"
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 #include "clients/taketime.h"
 static int timeval_add(res, x, y)
 struct timeval *res, *x, *y;
@@ -1172,7 +1172,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 	//Fill binary cache
 	res = -1;
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	struct timeval start_read_time, end_read_time, total_read_time;
 	struct timeval start_transpose_time, end_transpose_time, intermediate_transpose_time, total_transpose_time;
 	struct timeval start_write_time, end_write_time, intermediate_write_time, total_write_time;
@@ -1303,17 +1303,17 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 		limits[0] = (l + 1) * regular_rows;
 		counters[0] = l * regular_rows;
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_transpose_time, NULL);
 #endif
 		oph_fits_cache_to_buffer(measure->nimp + 1, counters, limits, products, binary_cache, binary_insert, sizeof_type);
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_transpose_time, NULL);
 		timeval_subtract(&intermediate_transpose_time, &end_transpose_time, &start_transpose_time);
 		timeval_add(&total_transpose_time, &total_transpose_time, &intermediate_transpose_time);
 #endif
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_write_time, NULL);
 #endif
 		if (oph_ioserver_execute_query(server, query)) {
@@ -1332,7 +1332,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 			free(limits);
 			return OPH_FITS_ERROR;
 		}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_write_time, NULL);
 		timeval_subtract(&intermediate_write_time, &end_write_time, &start_write_time);
 		timeval_add(&total_write_time, &total_write_time, &intermediate_write_time);
@@ -1394,17 +1394,17 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 		memset(counters, 0, measure->nimp + 1);
 		limits[0] = regular_times * regular_rows + remainder_rows;
 		counters[0] = regular_times * regular_rows;
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_transpose_time, NULL);
 #endif
 		oph_fits_cache_to_buffer(measure->nimp + 1, counters, limits, products, binary_cache, binary_insert, sizeof_type);
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_transpose_time, NULL);
 		timeval_subtract(&intermediate_transpose_time, &end_transpose_time, &start_transpose_time);
 		timeval_add(&total_transpose_time, &total_transpose_time, &intermediate_transpose_time);
 #endif
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_write_time, NULL);
 #endif
 		if (oph_ioserver_execute_query(server, query)) {
@@ -1423,7 +1423,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 			free(limits);
 			return OPH_FITS_ERROR;
 		}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_write_time, NULL);
 		timeval_subtract(&intermediate_write_time, &end_write_time, &start_write_time);
 		timeval_add(&total_write_time, &total_write_time, &intermediate_write_time);
