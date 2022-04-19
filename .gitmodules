@@ -1,5 +1,3 @@
 [submodule "esdm-pav-analytical-kernels"]
-        path = esdm-pav-analytical-kernels
-        url = https://github.com/OphidiaBigData/esdm-pav-analytical-kernels.git
-        branch = main
-
+	path = esdm-pav-analytical-kernels
+	url = https://github.com/OphidiaBigData/esdm-pav-analytical-kernels.git
