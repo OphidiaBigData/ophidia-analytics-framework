@@ -636,4 +636,8 @@ AC_SUBST(REENTRANT)
 
 AM_CONDITIONAL(VOMS, test $voms_enable = 1)
 
+if test -d "$srcdir/esdm-pav-analytical-kernels"; then
+    AC_CONFIG_SUBDIRS([esdm-pav-analytical-kernels])
+fi
+
 AC_OUTPUT([Makefile etc/oph_configuration src/Makefile src/oph_gsoap/Makefile src/clients/Makefile src/ioservers/Makefile src/drivers/Makefile etc/oph_analytics_driver etc/oph_io_server])
