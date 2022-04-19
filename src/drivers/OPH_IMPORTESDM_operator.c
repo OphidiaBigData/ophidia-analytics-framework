@@ -44,7 +44,7 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
-#include "oph_esdm_kernels.h"
+#include "esdm_kernels.h"
 
 int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
@@ -1642,7 +1642,7 @@ int task_init(oph_operator_struct * handle)
 				//Compute tuple per fragment as the number of values of most inernal explicit dimension (excluding the first one bigger than 1)
 				((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 			}
-		} else if (!oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation)) {
+		} else if (!esdm_is_a_reduce_func(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation)) {
 			//Consider only implicit dimensions
 			((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->array_length *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 		}
@@ -2487,7 +2487,7 @@ int task_init(oph_operator_struct * handle)
 				dim_inst[i].id_grid = id_grid;
 				dim_inst[i].id_dimensioninst = 0;
 				//Modified to allow subsetting
-				if (measure->dims_type[i] || !oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation))
+				if (measure->dims_type[i] || !esdm_is_a_reduce_func(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation))
 					tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
 				else
 					tmp_var.varsize = 1;
@@ -2501,7 +2501,7 @@ int task_init(oph_operator_struct * handle)
 				}
 
 				collapsed = 0;
-				if (measure->dims_type[i] || !oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation)) {
+				if (measure->dims_type[i] || !esdm_is_a_reduce_func(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation)) {
 					if (oph_esdm_get_dim_array
 					    (id_container_out, measure->dim_dataset[i], varid, tot_dims[j].dimension_type, tmp_var.varsize, measure->dims_start_index[i], measure->dims_end_index[i],
 					     &dim_array)) {

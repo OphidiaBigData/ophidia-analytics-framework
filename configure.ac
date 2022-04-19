@@ -636,4 +636,4 @@ AC_SUBST(REENTRANT)
 
 AM_CONDITIONAL(VOMS, test $voms_enable = 1)
 
-AC_OUTPUT([Makefile etc/oph_configuration src/Makefile src/oph_gsoap/Makefile src/clients/Makefile src/ioservers/Makefile src/esdm_kernels/Makefile src/drivers/Makefile etc/oph_analytics_driver etc/oph_io_server])
+AC_OUTPUT([Makefile etc/oph_configuration src/Makefile src/oph_gsoap/Makefile src/clients/Makefile src/ioservers/Makefile src/drivers/Makefile etc/oph_analytics_driver etc/oph_io_server])

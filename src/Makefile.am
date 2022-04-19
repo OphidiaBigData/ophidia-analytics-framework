@@ -18,10 +18,6 @@
 
 SUBDIRS=
 
-if HAVE_ESDM
-SUBDIRS+= esdm_kernels
-endif
-
 if STANDALONE_MODE
 else
 SUBDIRS+= oph_gsoap
@@ -197,8 +193,8 @@ endif
 
 if HAVE_ESDM
 liboph_esdm_la_SOURCES = oph_esdm_library.c
-liboph_esdm_la_CFLAGS= ${MYSQL_CFLAGS} $(ESDM_CFLAGS) -prefer-pic -I../include -I../include/oph_ioserver -I../include/esdm_kernels @INCLTDL@ ${lib_CFLAGS}
+liboph_esdm_la_CFLAGS= ${MYSQL_CFLAGS} $(ESDM_CFLAGS) -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
 liboph_esdm_la_LDFLAGS = -static
-liboph_esdm_la_LIBADD = -lz -lm $(ESDM_LIBS) @LIBLTDL@ -L. -L./esdm_kernels -ldebug -loph_binary_io -loph_ioserver -loph_datacube -loph_esdm_kernels -lophidiadb
+liboph_esdm_la_LIBADD = -lz -lm $(ESDM_LIBS) @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube -lophidiadb -lesdm_kernels
 endif
 
