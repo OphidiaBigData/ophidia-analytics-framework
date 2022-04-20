@@ -81,4 +81,3 @@ struct _OPH_EXPORTESDM_operator_handle {
 typedef struct _OPH_EXPORTESDM_operator_handle OPH_EXPORTESDM_operator_handle;
 
 #endif				//__OPH_EXPORTESDM_OPERATOR_H
-

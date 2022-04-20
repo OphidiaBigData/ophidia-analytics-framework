@@ -43,8 +43,6 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
-#include "oph_esdm_kernels.h"
-
 int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
 	if (!handle) {
