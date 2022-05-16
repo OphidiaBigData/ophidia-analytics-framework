@@ -612,7 +612,7 @@ PKG_CHECK_MODULES(LIBRABBITMQ, librabbitmq >= 0.10.0)
 AC_ARG_WITH(librabbitmq_header_path,
 		[ --with-librabbitmq-header-path=PATH Location of librabbitmq include directory],
 		[
-				librabbitmq_header_path="$withval"
+				librabbitmq_header_path="-I$withval"
 		],
 		[
 				librabbitmq_header_path="$LIBRABBITMQ_CFLAGS"
@@ -620,7 +620,7 @@ AC_ARG_WITH(librabbitmq_header_path,
 AC_ARG_WITH(librabbitmq_lib_path,
 		[ --with-librabbitmq-lib-path=PATH Location of librabbitmq lib],
 		[
-				librabbitmq_lib_path="$withval"
+				librabbitmq_lib_path="-L$withval -lrabbitmq"
 		],
 		[
 				librabbitmq_lib_path="$LIBRABBITMQ_LIBS"
