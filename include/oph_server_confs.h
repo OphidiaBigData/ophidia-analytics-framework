@@ -23,24 +23,21 @@
 
 //IO server defines
 
-// #define OPH_SERVER_PREFIX                               OPH_IO_SERVER_PREFIX
-#define OPH_SERVER_PREFIX                               "/"	// OPH_SCHEDULER_PREFIX
+#define OPH_SERVER_PLUGIN_FILE_PATH                     "/etc/oph_primitives_list"
 
-#define OPH_SERVER_PLUGIN_FILE_PATH                     OPH_SERVER_PREFIX"/etc/oph_primitives_list"
-
-#define OPH_SERVER_DEVICE_FILE_PATH                     OPH_SERVER_PREFIX"/etc/oph_device_list"
+#define OPH_SERVER_DEVICE_FILE_PATH                     "/etc/oph_device_list"
 
 //Instance Macros
 
-#define OPH_SERVER_DATABASE_SCHEMA_PREFIX         OPH_SERVER_PREFIX"/var/database.db"
-#define OPH_SERVER_FRAGMENT_SCHEMA_PREFIX         OPH_SERVER_PREFIX"/var/fragment.db"
-#define OPH_SERVER_TEMP_SCHEMA_PREFIX             OPH_SERVER_PREFIX"/var/tmp.db"
+#define OPH_SERVER_DATABASE_SCHEMA_PREFIX         "/var/database.db"
+#define OPH_SERVER_FRAGMENT_SCHEMA_PREFIX         "/var/fragment.db"
+#define OPH_SERVER_TEMP_SCHEMA_PREFIX             "/var/tmp.db"
 #define OPH_SERVER_DATABASE_SCHEMA                "%s/var/database.db"
 #define OPH_SERVER_FRAGMENT_SCHEMA                "%s/var/fragment.db"
 #define OPH_SERVER_TEMP_SCHEMA                    "%s/var/tmp.db"
 
 #define OPH_LOG_NAME                        "server.log"
-#define OPH_SERVER_LOG_PATH                 OPH_SERVER_PREFIX"/log/"OPH_LOG_NAME
+#define OPH_SERVER_LOG_PATH                 "/log/"OPH_LOG_NAME
 #define OPH_SERVER_LOG_PATH_PREFIX          "%s/log"
 #define OPH_SERVER_LOG_PATH_COMPLETE        "%s/log/"OPH_LOG_NAME
 
