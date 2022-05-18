@@ -126,6 +126,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->policy = 0;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids = NULL;
+	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->id_user = 0;
 
 	char *value;
 

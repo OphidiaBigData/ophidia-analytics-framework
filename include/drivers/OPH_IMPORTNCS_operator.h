@@ -131,6 +131,7 @@ struct _OPH_IMPORTNCS_operator_handle {
 	int nthread;
 	short int execute_error;
 	char policy;
+	int id_user;
 };
 typedef struct _OPH_IMPORTNCS_operator_handle OPH_IMPORTNCS_operator_handle;
 
