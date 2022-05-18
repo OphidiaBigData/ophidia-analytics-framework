@@ -6413,6 +6413,8 @@ int oph_nc_update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time
 
 int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var * measure, int is_index, int ncid, double offset, char out_of_bound)
 {
+	UNUSED(out_of_bound);
+
 	NETCDF_var tmp_var;
 	int ii, retval, dims_id[NC_MAX_VAR_DIMS], error = 0;
 	char *endfilter = strchr(curfilter, OPH_DIM_SUBSET_SEPARATOR2);

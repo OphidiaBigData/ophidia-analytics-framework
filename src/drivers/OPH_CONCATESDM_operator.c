@@ -147,6 +147,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	memset(stream, 0, sizeof(stream));
 	int id_in_datacube = 0, id_in_container = 0;
 
+	value = hashtbl_get(task_tbl, OPH_ARG_USERID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERID);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATESDM_MISSING_INPUT_PARAMETER, container_name, OPH_ARG_USERID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->id_user = (int) strtol(value, NULL, 10);
+
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
@@ -206,11 +214,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			free(uri);
 		uri = NULL;
 
-		if (oph_odb_user_retrieve_user_id(oDB, username, &(((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->id_user))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to extract userid.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_GENERIC_USER_ID_ERROR);
-			break;
-		}
 		//Get id from measure name
 		oph_odb_datacube cube;
 		oph_odb_cube_init_datacube(&cube);
@@ -231,7 +234,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 #ifndef MULTI_NODE_SUPPORT
 	//MPI_Barrier(MPI_COMM_WORLD);
 	MPI_Bcast(stream, stream_size, MPI_CHAR, 0, MPI_COMM_WORLD);
-
+#endif
 	id_in_datacube = *((int *) stream);
 	id_in_container = *((int *) (stream + sizeof(int)));
 	char *var_name = (char *) (stream + 2 * sizeof(int));
@@ -242,7 +245,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, id_in_container, OPH_LOG_OPH_CONCATESDM_NO_INPUT_DATACUBE, datacube_in);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-#endif
 	((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->id_input_datacube = id_in_datacube;
 
 	if (id_in_container == 0) {
@@ -1929,12 +1931,13 @@ int task_destroy(oph_operator_struct * handle)
 	}
 
 	int id_datacube = ((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->id_output_datacube;
-	short int global_error = 0;
+	short int global_error = 0, proc_error = ((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->execute_error;
 
 #ifndef MULTI_NODE_SUPPORT
-	short int proc_error = ((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->execute_error;
 	//Reduce results
 	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
+#else
+	UNUSED(proc_error);
 #endif
 
 	if (handle->proc_rank == 0 && global_error == 0) {

@@ -4131,6 +4131,8 @@ int task_destroy(oph_operator_struct * handle)
 #ifndef MULTI_NODE_SUPPORT
 	//Reduce results
 	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
+#else
+	UNUSED(proc_error);
 #endif
 
 	if (handle->proc_rank == 0 && global_error == 0) {

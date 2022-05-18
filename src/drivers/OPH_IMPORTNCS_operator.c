@@ -402,6 +402,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
+	value = hashtbl_get(task_tbl, OPH_ARG_USERID);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERID);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_ARG_USERID);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_user = (int) strtol(value, NULL, 10);
+
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_USERNAME);
@@ -2132,13 +2140,7 @@ int task_init(oph_operator_struct * handle)
 		int run = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->run;
 
 		//Retrieve user id
-		char *username = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->user;
-		int id_user = 0;
-		if (oph_odb_user_retrieve_user_id(oDB, username, &id_user)) {
-			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to retreive user id\n");
-			logging(LOG_WARNING, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_USER_ID_ERROR);
-			goto __OPH_EXIT_1;
-		}
+		int id_user = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->id_user;
 
 	  /********************************
 	   *INPUT PARAMETERS CHECK - BEGIN*
@@ -4628,6 +4630,8 @@ int task_destroy(oph_operator_struct * handle)
 #ifndef MULTI_NODE_SUPPORT
 	//Reduce results
 	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
+#else
+	UNUSED(proc_error);
 #endif
 
 	if (handle->proc_rank == 0 && global_error == 0) {
