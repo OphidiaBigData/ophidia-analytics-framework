@@ -409,7 +409,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_ARG_USERID);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_user = (int) strtol(value, NULL, 10);
+	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->id_user = (int) strtol(value, NULL, 10);
 
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
