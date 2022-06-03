@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,6 +38,8 @@
 #include "oph_analytics_framework.h"
 
 #define OPH_SCHED_CONF_FILE OPH_WORKER_CONFIGURATION_FILE
+
+#define UNUSED(x) (void)(x)
 
 int total_used_ncores = 0;
 pthread_cond_t cond_var;
@@ -111,8 +113,10 @@ char *max_cancellation_struct_size_str = 0;
 int max_cancellation_struct_size;
 #endif
 
-void kill_threads()
+void kill_threads(int NotUsed)
 {
+	UNUSED(NotUsed);
+
 	int ii;
 	for (ii = 0; ii < thread_number; ii++) {
 		if (pthread_kill(thread_cont_list[ii], SIGUSR1) != 0)
@@ -133,8 +137,10 @@ void kill_threads()
 #endif
 }
 
-void release_thread()
+void release_thread(int NotUsed)
 {
+	UNUSED(NotUsed);
+
 	pthread_exit(NULL);
 }
 
@@ -587,8 +593,10 @@ void *worker_pthread_function(void *param)
 }
 
 #ifdef UPDATE_CANCELLATION_SUPPORT
-void *update_pthread_function()
+void *update_pthread_function(void *NotUsed)
 {
+	UNUSED(NotUsed);
+
 	pthread_sigmask(SIG_UNBLOCK, &signal_set, NULL);
 	struct sigaction thread_new_act, thread_old_act;
 
@@ -802,8 +810,10 @@ int delete_routine()
 #endif
 
 #ifdef UPDATE_CANCELLATION_SUPPORT
-void *delete_pthread_function()
+void *delete_pthread_function(void *NotUsed)
 {
+	UNUSED(NotUsed);
+
 	pthread_sigmask(SIG_UNBLOCK, &signal_set, NULL);
 	struct sigaction thread_new_act, thread_old_act;
 
@@ -850,7 +860,7 @@ void *delete_pthread_function()
 			if (message)
 				free(message);
 
-			kill_threads();
+			kill_threads(0);
 		}
 
 		char *current = 0, *next = 0;

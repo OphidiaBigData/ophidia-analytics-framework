@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2020 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -63,8 +63,10 @@ int worker_id = -1;
 
 int neededSize = 0;
 
-void release_main()
+void release_main(int NotUsed)
 {
+	UNUSED(NotUsed);
+
 	sqlite3_close(db);
 	pmesg(LOG_DEBUG, __FILE__, __LINE__, "Sqlite connection has been closed\n");
 
@@ -425,7 +427,7 @@ int main(int argc, char const *const *argv)
 	global_ip_address = (char *) malloc(16);
 	if (fgets(global_ip_address, 16, fp) == NULL) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get ip address\n");
-		release_main();
+		release_main(0);
 
 		exit(0);
 	}
