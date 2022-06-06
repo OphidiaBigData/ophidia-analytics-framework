@@ -405,19 +405,22 @@ int task_destroy(oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_NULL_OPERATOR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
-#ifndef MULTI_NODE_SUPPORT
 	//For error checking
 	int result = OPH_ANALYTICS_OPERATOR_SUCCESS;
 
+#ifndef MULTI_NODE_SUPPORT
 	//Before deleting wait for all process to reach this point
 	MPI_Barrier(MPI_COMM_WORLD);
+#endif
 
 	if (handle->proc_rank == 0) {
 		int id_datacube = ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_datacube;
 		result = oph_dproc_clean_odb(&((OPH_DELETE_operator_handle *) handle->operator_handle)->oDB, id_datacube, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container);
 	}
+#ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the operation result       
 	MPI_Bcast(&result, 1, MPI_INT, 0, MPI_COMM_WORLD);
+#endif
 
 	//Check if sequential part has been completed
 	if (result != OPH_ANALYTICS_OPERATOR_SUCCESS) {
@@ -425,7 +428,6 @@ int task_destroy(oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_DELETE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_MASTER_TASK_DESTROY_FAILED);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-#endif
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
