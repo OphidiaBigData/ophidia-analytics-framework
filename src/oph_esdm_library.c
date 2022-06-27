@@ -1386,7 +1386,10 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 		}
 	}
 	//Check
-	char check_for_reduce_func = !esdm_is_a_reduce_func(measure->operation);
+	char check_for_reduce_func = 1;
+#ifdef OPH_ESDM_PAV_KERNERS
+	check_for_reduce_func = !esdm_is_a_reduce_func(measure->operation);
+#endif
 	int total = 1;
 	if (check_for_reduce_func) {
 		for (i = 0; i < measure->ndims; i++)
@@ -1565,6 +1568,8 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 
 	size_t sizeof_type = (int) sizeof_var / array_length;
 	esdm_dataspace_t *subspace = NULL;
+
+#ifdef OPH_ESDM_PAV_KERNERS
 	esdm_stream_data_t stream_data;
 	char fill_value[sizeof_type], *pointer = NULL;
 
@@ -1592,6 +1597,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 			free(limits);
 		return OPH_ESDM_ERROR;
 	}
+#endif
 
 	for (l = 0; l < regular_times; l++) {
 
@@ -1633,7 +1639,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 					free(limits);
 				return OPH_ESDM_ERROR;
 			}
-
+#ifdef OPH_ESDM_PAV_KERNERS
 			if (measure->operation) {
 
 				// Initialize stream data
@@ -1670,7 +1676,9 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 					return OPH_ESDM_ERROR;
 				}
 
-			} else if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
+			} else
+#endif
+			if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
 				free(query_string);
 				free(idDim);
@@ -1855,7 +1863,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 					free(limits);
 				return OPH_ESDM_ERROR;
 			}
-
+#ifdef OPH_ESDM_PAV_KERNERS
 			if (measure->operation) {
 
 				// Initialize stream data
@@ -1892,7 +1900,9 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 					return OPH_ESDM_ERROR;
 				}
 
-			} else if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
+			} else
+#endif
+			if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
 				free(query_string);
 				free(idDim);
@@ -2242,7 +2252,10 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 		}
 	}
 	//Check
-	char check_for_reduce_func = !esdm_is_a_reduce_func(measure->operation);
+	char check_for_reduce_func = 1;
+#ifdef OPH_ESDM_PAV_KERNERS
+	check_for_reduce_func = !esdm_is_a_reduce_func(measure->operation);
+#endif
 	int total = 1;
 	for (i = 0; i < measure->ndims; i++)
 		if (measure->dims_type[i] || check_for_reduce_func)
@@ -2332,6 +2345,8 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 
 	size_t sizeof_type = (int) sizeof_var / array_length;
 	esdm_dataspace_t *subspace = NULL;
+
+#ifdef OPH_ESDM_PAV_KERNERS
 	esdm_stream_data_t stream_data;
 	char fill_value[sizeof_type], *pointer = NULL;
 
@@ -2352,6 +2367,8 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 		free(sizemax);
 		return OPH_ESDM_ERROR;
 	}
+#endif
+
 	//Fill array
 	if ((esdm_dataspace_create_full(measure->ndims, count, start, type_nc, &subspace))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write data\n");
@@ -2370,7 +2387,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 		free(sizemax);
 		return OPH_ESDM_ERROR;
 	}
-
+#ifdef OPH_ESDM_PAV_KERNERS
 	if (measure->operation) {
 
 		// Initialize stream data
@@ -2400,7 +2417,9 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 			return OPH_ESDM_ERROR;
 		}
 
-	} else if ((esdm_read(measure->dataset, binary_cache, subspace))) {
+	} else
+#endif
+	if ((esdm_read(measure->dataset, binary_cache, subspace))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write data\n");
 		free(query_string);
 		free(idDim);
@@ -2876,7 +2895,10 @@ int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fr
 			start[i] = measure->dims_start_index[i];
 		}
 	}
-	char check_for_reduce_func = !esdm_is_a_reduce_func(measure->operation);
+	char check_for_reduce_func = 1;
+#ifdef OPH_ESDM_PAV_KERNERS
+	check_for_reduce_func = !esdm_is_a_reduce_func(measure->operation);
+#endif
 	int array_length = 1;
 	if (check_for_reduce_func) {
 		for (i = 0; i < measure->ndims; i++)
@@ -3198,6 +3220,8 @@ int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fr
 
 	size_t sizeof_type = (int) sizeof_var / array_length;
 	esdm_dataspace_t *subspace = NULL;
+
+#ifdef OPH_ESDM_PAV_KERNERS
 	esdm_stream_data_t stream_data;
 	char fill_value[sizeof_type], *pointer = NULL;
 
@@ -3225,6 +3249,7 @@ int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fr
 			free(limits);
 		return OPH_ESDM_ERROR;
 	}
+#endif
 
 	for (l = 0; l < regular_times; l++) {
 
@@ -3295,7 +3320,7 @@ int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fr
 					free(limits);
 				return OPH_ESDM_ERROR;
 			}
-
+#ifdef OPH_ESDM_PAV_KERNERS
 			if (measure->operation) {
 
 				// Initialize stream data
@@ -3332,7 +3357,9 @@ int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fr
 					return OPH_ESDM_ERROR;
 				}
 
-			} else if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
+			} else
+#endif
+			if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
 				free(query_string);
 				free(idDim);
@@ -3481,7 +3508,7 @@ int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fr
 					free(limits);
 				return OPH_ESDM_ERROR;
 			}
-
+#ifdef OPH_ESDM_PAV_KERNERS
 			if (measure->operation) {
 
 				// Initialize stream data
@@ -3518,7 +3545,9 @@ int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fr
 					return OPH_ESDM_ERROR;
 				}
 
-			} else if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
+			} else
+#endif
+			if ((esdm_read(measure->dataset, binary + jj * sizeof_var, subspace))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read data\n");
 				free(query_string);
 				free(idDim);
@@ -3871,7 +3900,10 @@ int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_f
 	}
 
 	//Check
-	char check_for_reduce_func = !esdm_is_a_reduce_func(measure->operation);
+	char check_for_reduce_func = 1;
+#ifdef OPH_ESDM_PAV_KERNERS
+	check_for_reduce_func = !esdm_is_a_reduce_func(measure->operation);
+#endif
 	int total = 1;
 	for (i = 0; i < measure->ndims; i++)
 		if (measure->dims_type[i] || check_for_reduce_func)
@@ -3940,6 +3972,8 @@ int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_f
 
 	size_t sizeof_type = (int) sizeof_var / array_length;
 	esdm_dataspace_t *subspace = NULL;
+
+#ifdef OPH_ESDM_PAV_KERNERS
 	esdm_stream_data_t stream_data;
 	char fill_value[sizeof_type], *pointer = NULL;
 
@@ -3958,6 +3992,8 @@ int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_f
 		free(sizemax);
 		return OPH_ESDM_ERROR;
 	}
+#endif
+
 	//Fill array
 	if ((esdm_dataspace_create_full(measure->ndims, count, start, type_nc, &subspace))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write data\n");
@@ -3974,7 +4010,7 @@ int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_f
 		free(sizemax);
 		return OPH_ESDM_ERROR;
 	}
-
+#ifdef OPH_ESDM_PAV_KERNERS
 	if (measure->operation) {
 
 		// Initialize stream data
@@ -4002,7 +4038,9 @@ int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_f
 			return OPH_ESDM_ERROR;
 		}
 
-	} else if ((esdm_read(measure->dataset, binary_cache, subspace))) {
+	} else
+#endif
+	if ((esdm_read(measure->dataset, binary_cache, subspace))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to write data\n");
 		free(binary_cache);
 		free(binary_insert);

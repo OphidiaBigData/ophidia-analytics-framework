@@ -55,6 +55,13 @@ LIBRARY+= liboph_fits.la
 endif
 if HAVE_ESDM
 LIBRARY+= liboph_esdm.la
+if HAVE_ESDM_PAV_KERNELS
+ESDM_PAV_INCLUDE= -DOPH_ESDM_PAV_KERNERS
+ESDM_PAV_LIBRARY= -L${prefix}/lib -lesdm_kernels
+else
+ESDM_PAV_INCLUDE=
+ESDM_PAV_LIBRARY=
+endif
 endif
 
 lib_LTLIBRARIES = $(LIBRARY)
@@ -193,8 +200,8 @@ endif
 
 if HAVE_ESDM
 liboph_esdm_la_SOURCES = oph_esdm_library.c
-liboph_esdm_la_CFLAGS= ${MYSQL_CFLAGS} $(ESDM_CFLAGS) -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS} -I${prefix}/include
+liboph_esdm_la_CFLAGS= ${MYSQL_CFLAGS} $(ESDM_CFLAGS) -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS} -I${prefix}/include ${ESDM_PAV_INCLUDE}
 liboph_esdm_la_LDFLAGS = -static
-liboph_esdm_la_LIBADD = -lz -lm $(ESDM_LIBS) @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube -lophidiadb -L${prefix}/lib -lesdm_kernels
+liboph_esdm_la_LIBADD = -lz -lm $(ESDM_LIBS) @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube -lophidiadb ${ESDM_PAV_LIBRARY}
 endif
 

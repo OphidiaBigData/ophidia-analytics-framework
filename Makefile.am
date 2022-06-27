@@ -20,7 +20,11 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = esdm-pav-analytical-kernels . libltdl src 
+SUBDIRS=
+if HAVE_ESDM_PAV_KERNELS
+SUBDIRS+= esdm-pav-analytical-kernels
+endif
+SUBDIRS+= . libltdl src
 
 sysconf_DATA = etc/oph_analytics_driver etc/oph_io_server etc/oph_configuration etc/ophidiadb.sql etc/oph_soap_configuration etc/oph_script_configuration
  
