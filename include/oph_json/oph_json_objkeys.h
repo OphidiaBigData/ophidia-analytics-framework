@@ -151,6 +151,7 @@
 #define OPH_JSON_OBJKEY_IMPORTESDM2					"importesdm2"
 #define OPH_JSON_OBJKEY_EXPORTESDM					"exportesdm"
 #define OPH_JSON_OBJKEY_CONCATESDM					"concatesdm"
+#define OPH_JSON_OBJKEY_CONCATESDM2					"concatesdm2"
 #define OPH_JSON_OBJKEY_CDO_OUTPUT					"cdo_output"
 #define OPH_JSON_OBJKEY_CDO_RETURNCODE				"cdo_returncode"
 #define OPH_JSON_OBJKEY_GENERIC_OUTPUT					"generic_output"

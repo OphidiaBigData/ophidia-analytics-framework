@@ -6,6 +6,13 @@
 - Optimization to write output data by OPH_EXPORTNC2
 - Detection of time dimension in case of subsetting for OPH_IMPORTNC and OPH_CONCATNC
 
+### Added:
+
+- OPH_CONCATESDM2 operator [#105](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/105)
+- Improved data I/O functionalities [#104](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/104)
+- OPH_INTERCUBE2 operator [#103](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/103)
+- Add support for compression in export operators [#102](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/102)
+
 ### Changed:
 
 - Parsing of the parameter 'base_time' from NetCDF attirbutes

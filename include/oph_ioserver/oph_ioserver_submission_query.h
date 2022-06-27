@@ -36,6 +36,7 @@
 #define OPH_IOSERVER_SQ_OPERATION "operation"
 #define OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT "create_frag_select"
 #define OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT_FILE "create_frag_select_file"
+#define OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT_ESDM "create_frag_select_esdm"
 #define OPH_IOSERVER_SQ_OP_CREATE_FRAG "create_frag"
 #define OPH_IOSERVER_SQ_OP_DROP_FRAG "drop_frag"
 #define OPH_IOSERVER_SQ_OP_CREATE_DB "create_database"
@@ -100,5 +101,6 @@
 #define OPH_IOSERVER_SQ_KW_FUNCTION_FIELDS "@function_fields"
 #define OPH_IOSERVER_SQ_KW_FUNCTION_TABLE "@function_table"
 #define OPH_IOSERVER_SQ_KW_FILE "@file"
+#define OPH_IOSERVER_SQ_KW_ESDM "@esdm"
 
 #endif				//__OPH_IOSERVER_SUBMISSION_QUERY_H

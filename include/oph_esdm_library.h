@@ -119,4 +119,7 @@ int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fr
 
 int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int compressed, ESDM_var * measure, long long memory_size);
 
+int oph_esdm_append_fragment_from_esdm4(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, char *nc_file_path, int tuplexfrag_number, int compressed,
+					ESDM_var * measure);
+
 #endif				//__OPH_ESDM_UTILITY_H
