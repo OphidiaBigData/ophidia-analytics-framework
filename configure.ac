@@ -320,6 +320,18 @@ AC_ARG_WITH(esdm_path,
            )
 AM_CONDITIONAL([HAVE_ESDM], [test "x$have_esdm" = "xyes"])
 
+#Check if ESDM PAV kernels are installed
+have_esdm_pav_kernels="no"
+AC_ARG_ENABLE(esdm_pav_kernels,
+        [  --enable-esdm-pav-kernels          
+            Turn on ESDM PAV kernels],
+        [have_esdm_pav_kernels="yes" 
+            AC_MSG_NOTICE(ESDM PAV kernels enabled)],
+        [have_esdm_pav_kernels="no"
+            AC_MSG_NOTICE(ESDM PAV kernels disabled)]
+        )
+AM_CONDITIONAL([HAVE_ESDM_PAV_KERNELS], [test "x$have_esdm_pav_kernels" = "xyes"])
+
 #Check if parallel netcdf is installed
 parallel_netcdf="no"
 AC_ARG_ENABLE(parallel_netcdf,
@@ -569,7 +581,7 @@ AC_ARG_WITH(plugin_hostname,
 	    plugin_host_path="$withval"
            ]
            )
-if  test "$plugin_host_path" = "no"; then
+if test "$plugin_host_path" = "no"; then
 	   PLUGIN_DEFAULT_HOSTNAME=$HOSTNAME
 	   else
            PLUGIN_DEFAULT_HOSTNAME=$mds_host_path
@@ -636,4 +648,8 @@ AC_SUBST(REENTRANT)
 
 AM_CONDITIONAL(VOMS, test $voms_enable = 1)
 
-AC_OUTPUT([Makefile etc/oph_configuration src/Makefile src/oph_gsoap/Makefile src/clients/Makefile src/ioservers/Makefile src/esdm_kernels/Makefile src/drivers/Makefile etc/oph_analytics_driver etc/oph_io_server])
+if test "x${have_esdm_pav_kernels}" = "xyes" && test -d "$srcdir/esdm-pav-analytical-kernels"; then
+    AC_CONFIG_SUBDIRS([esdm-pav-analytical-kernels])
+fi
+
+AC_OUTPUT([Makefile etc/oph_configuration src/Makefile src/oph_gsoap/Makefile src/clients/Makefile src/ioservers/Makefile src/drivers/Makefile etc/oph_analytics_driver etc/oph_io_server])

@@ -44,7 +44,7 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
-#include "oph_esdm_kernels.h"
+#include "esdm_kernels.h"
 
 #ifdef OPH_OPENMP
 #include <omp.h>
@@ -1589,6 +1589,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation = NULL;
 		}
 		measure->operation = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation;
+#ifndef OPH_ESDM_PAV_KERNERS
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Parameter '%s' will be negleted as ESDM PAV kernels are disabled\n", OPH_IN_PARAM_REDUCTION_OPERATION);
+		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' will be negleted as ESDM PAV kernels are disabled\n", OPH_IN_PARAM_REDUCTION_OPERATION);
+#endif
 	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_ARGS);
@@ -1665,7 +1669,11 @@ int task_init(oph_operator_struct * handle)
 				//Compute tuple per fragment as the number of values of most inernal explicit dimension (excluding the first one bigger than 1)
 				((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 			}
-		} else if (!oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation)) {
+		} else
+#ifdef OPH_ESDM_PAV_KERNERS
+		if (!esdm_is_a_reduce_func(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation))
+#endif
+		{
 			//Consider only implicit dimensions
 			((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->array_length *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 		}
@@ -2517,10 +2525,14 @@ int task_init(oph_operator_struct * handle)
 				dim_inst[i].id_grid = id_grid;
 				dim_inst[i].id_dimensioninst = 0;
 				//Modified to allow subsetting
-				if (measure->dims_type[i] || !oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation))
+#ifdef OPH_ESDM_PAV_KERNERS
+				if (measure->dims_type[i] || !esdm_is_a_reduce_func(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation))
 					tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
 				else
 					tmp_var.varsize = 1;
+#else
+				tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
+#endif
 				dim_inst[i].size = tmp_var.varsize;
 				dim_inst[i].concept_level = measure->dims_concept_level[i];
 				dim_inst[i].unlimited = measure->dims_unlim[i] ? 1 : 0;
@@ -2531,7 +2543,9 @@ int task_init(oph_operator_struct * handle)
 				}
 
 				collapsed = 0;
-				if (measure->dims_type[i] || !oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation)) {
+#ifdef OPH_ESDM_PAV_KERNERS
+				if (measure->dims_type[i] || !esdm_is_a_reduce_func(((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->operation)) {
+#endif
 					if (oph_esdm_get_dim_array
 					    (id_container_out, measure->dim_dataset[i], varid, tot_dims[j].dimension_type, tmp_var.varsize, measure->dims_start_index[i], measure->dims_end_index[i],
 					     &dim_array)) {
@@ -2545,12 +2559,14 @@ int task_init(oph_operator_struct * handle)
 						free(dimvar_ids);
 						goto __OPH_EXIT_1;
 					}
+#ifdef OPH_ESDM_PAV_KERNERS
 				} else {
 					collapsed = 1;
 					dim_inst[i].size = 0;
 					dim_inst[i].concept_level = OPH_COMMON_ALL_CONCEPT_LEVEL;
 					dim_array = NULL;
 				}
+#endif
 
 				if (!collapsed) {
 					if (!collapsed
