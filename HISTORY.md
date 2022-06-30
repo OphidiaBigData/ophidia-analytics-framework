@@ -3,13 +3,18 @@
 
 ### Fixed:
 
+- Bug in evaluating 'nhost' automatically for import operators
+- Bug in processing input parameters of importnc operators
 - Optimization to write output data by OPH_EXPORTNC2
+- Setting of unlimited dimension parameter for the I/O server
 - Detection of time dimension in case of subsetting for OPH_IMPORTNC and OPH_CONCATNC
 
 ### Added:
 
-- Include the package of ESDM PAV kernels [#106](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/106)
+- Include the package ESDM-PAV kernels [#106](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/106)
 - OPH_CONCATESDM2 operator [#105](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/105)
+- ESDM-based operators: OPH_IMPORTESDM, OPH_IMPORTESDM2, OPH_CONCATESDM, OPH_EXPORTESDM, OPH_EXPORTESDM2 [#104](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/104)
+- OPH_IMPORTNCS operator to load multiple files at once [#104](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/104)
 - OPH_INTERCUBE2 operator [#103](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/103)
 - Add support for compression in export operators [#102](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/102)
 
@@ -18,6 +23,9 @@
 - Improved data I/O functionalities [#104](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/104)
 - Parsing of the parameter 'base_time' from NetCDF attirbutes
 - OPH_METADATA to update metadata "by key" besides "by id"
+- New parameter 'execute' to OPH_RESUME operator
+- New subset parameters to OPH_WAIT operator
+- New 'measure' ans aubset parameters to OPH_FS operator
 
 ## v1.6.1 - 2021-08-03
 
