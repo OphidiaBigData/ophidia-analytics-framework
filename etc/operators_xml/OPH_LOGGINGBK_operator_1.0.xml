@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_LOGGINGBK" version="1.0">
+    <info>
+        <abstract>[Type]
+Metadata Access.
+
+[Behaviour]
+It shows info about jobs and sessions (logging bookkeeping).
+Any filter can use SQL wildcards (%, _, etc.)
+
+[Parameters]
+- session_level: 0 (sessionid (+ session label) (default)) or 1 (sessionid (+ session label) + session creation date)
+- job_level: 0 (nothing (default)) or 1 (job id (+ parent job id) + workflow id + marker id) or 2 (job id (+ parent job id) + workflow id + marker id + job submission date)
+- mask: 3-digit mask, considered if job_level is bigger than 0, according to the following conventions:
+        -- 1st digit: 0 (nothing (default)) or 1 (job status) 
+        -- 2nd digit: 0 (nothing (default)) or 1 (submission string)
+        -- 3rd digit: 0 (nothing (default)) or 1 (job start and end date)
+        mask examples:
+        -- 000 : nothing (default)
+        -- 100 : job status
+        -- 010 . submission string
+        -- 001 : job start and end date
+        -- 110 : job status + submission string
+- session_filter: filter on a particular sessionID
+- session_label_filter: filter on a particular session label
+- session_creation_filter: filter on session's creation date (yyyy-mm-dd hh:mm:ss &lt;= date &lt;= yyyy-mm-dd hh:mm:ss)
+                        possible dates:
+                       -- yyyy
+                       -- yyyy-mm
+                       -- yyyy-mm-dd
+                       -- yyyy-mm-dd hh
+                       -- yyyy-mm-dd hh:mm
+                       -- yyyy-mm-dd hh:mm:ss
+                        default values:
+                        start 1900-01-01 00:00:00
+                        end   2100-01-01 00:00:00
+                        
+                        example:
+                        1900-01-01 00:00:00,2100-01-01 00:00:00
+- workflowid_filter: filter on a particular workflow ID.
+- markerid_filter: filter on a particular marker ID. 
+- parent_job_filter: filter on a particular parent job ID. If the wildcard % is used then only jobs with a parent will be shown.
+- job_creation_filter: filter on job submission date as with session_creation_filter
+- job_status_filter: filter on job status
+- submission_string_filter: filter on submission string
+- job_start_filter: filter on job's start date as with session_creation_filter
+- job_end_filter: filter on job's end date as with session_creation_filter
+- nlines : maximum number of lines to be displayed,
+                 starting from the end of the log.
+                 Default value is &quot;100&quot;.
+        
+[System parameters]    
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  loggingbk : show operator's output table.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
+        
+[Examples]       
+Get sessionid (with session label), session creation date, job id (with parent job id if present), workflowid, markerid, job submission date, job status, job submission string, job start date and job end date. Filters select all sessions created between 1900 and 2100, with jobs submitted between 1900 and 2100, started since 1900 and terminated up to 2100.  :
+OPH_TERM: oph_loggingbk session_level=1;job_level=2;mask=111;session_filter=all;session_creation_filter=1900-01-01 00:00:00,2100-01-01 00:00:00;markerid_filter=all;parent_job_filter=all;job_creation_filter=1900,2100;job_status_filter=all;submission_string_filter=all;job_start_filter=1900-01,;job_end_filter=,2100-01-01;
+SUBMISSION STRING: &quot;operator=oph_loggingbk;session_level=1;job_level=2;mask=111;session_filter=all;session_creation_filter=1900-01-01 00:00:00,2100-01-01 00:00:00;markerid_filter=all;parent_job_filter=all;job_creation_filter=1900,2100;job_status_filter=all;submission_string_filter=all;job_start_filter=1900-01,;job_end_filter=,2100-01-01;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <category>Administration</category>
+        <creationdate>04/04/2022</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <permission>read</permission>
+    </info>
+    <args>
+		<argument type="int" mandatory="no" default="0" minvalue="0" maxvalue="1" values="0|1">session_level</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0" maxvalue="2" values="0|1|2">job_level</argument>
+		<argument type="string" mandatory="no" default="000">mask</argument>
+		<argument type="string" mandatory="no" default="all">session_filter</argument>
+		<argument type="string" mandatory="no" default="all">session_label_filter</argument>
+		<argument type="string" mandatory="no" default="1900-01-01 00:00:00,2100-01-01 00:00:00">session_creation_filter</argument>
+		<argument type="string" mandatory="no" default="all">workflowid_filter</argument>
+		<argument type="string" mandatory="no" default="all">markerid_filter</argument>
+		<argument type="string" mandatory="no" default="all">parent_job_filter</argument>
+		<argument type="string" mandatory="no" default="1900-01-01 00:00:00,2100-01-01 00:00:00">job_creation_filter</argument>
+		<argument type="string" mandatory="no" default="all">job_status_filter</argument>
+		<argument type="string" mandatory="no" default="all">submission_string_filter</argument>
+		<argument type="string" mandatory="no" default="1900-01-01 00:00:00,2100-01-01 00:00:00">job_start_filter</argument>
+		<argument type="string" mandatory="no" default="1900-01-01 00:00:00,2100-01-01 00:00:00">job_end_filter</argument>
+		<argument type="int" mandatory="no" default="100" minvalue="1" maxvalue="10000">nlines</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|loggingbk">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
+    </args>
+</operator>
