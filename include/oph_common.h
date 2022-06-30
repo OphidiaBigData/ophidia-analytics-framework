@@ -34,7 +34,7 @@
 #define MYSQL_DIMENSION				"dimension"
 
 //Framework common defines and macros
-#define OPH_COMMON_BUFFER_LEN			2048
+#define OPH_COMMON_BUFFER_LEN			4096
 
 #define OPH_COMMON_TRUE				1
 #define OPH_COMMON_FALSE			0
