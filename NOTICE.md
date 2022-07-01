@@ -84,6 +84,10 @@ https://heasarc.gsfc.nasa.gov/fitsio/c/f_user/node9.html
 MIT License</br>
 http://curl.haxx.se/docs/copyright.html
 
+- Earth System Data Middleware</br>
+LGPLv3</br>
+https://github.com/ESiWACE/esdm/blob/master/LICENSE
+
 <b>Note</b>:</br>
 This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit.
 
