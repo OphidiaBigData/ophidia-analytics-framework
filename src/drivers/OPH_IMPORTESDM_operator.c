@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2021 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -46,7 +46,7 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
-#include "oph_esdm_kernels.h"
+#include "esdm_kernels.h"
 
 int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
@@ -339,6 +339,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	char *tmp = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path;
 	value = strstr(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path, "//") + 2;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path = strdup(value);
+	if (container_name == tmp)
+		container_name = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->nc_file_path;
 	free(tmp);
 
 	if (oph_pid_get_memory_size(&(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->memory_size))) {
@@ -1116,6 +1118,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 				do {
 
+					j = sub_to_dims[tf];
 					if (!measure->dim_dataset[j])
 						if ((ret = esdm_dataset_open(measure->container, measure->dims_name[j], ESDM_MODE_FLAG_READ, measure->dim_dataset + j))) {
 							pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to read dimension information: dataset '%s' cannot be opened\n", measure->dims_name[i]);
@@ -1581,6 +1584,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation = NULL;
 		}
 		measure->operation = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation;
+#ifndef OPH_ESDM_PAV_KERNERS
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Parameter '%s' will be negleted as ESDM PAV kernels are disabled\n", OPH_IN_PARAM_REDUCTION_OPERATION);
+		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' will be negleted as ESDM PAV kernels are disabled\n", OPH_IN_PARAM_REDUCTION_OPERATION);
+#endif
 	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_ARGS);
@@ -1657,7 +1664,11 @@ int task_init(oph_operator_struct * handle)
 				//Compute tuple per fragment as the number of values of most inernal explicit dimension (excluding the first one bigger than 1)
 				((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 			}
-		} else if (!oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation)) {
+		} else
+#ifdef OPH_ESDM_PAV_KERNERS
+		if (!esdm_is_a_reduce_func(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation))
+#endif
+		{
 			//Consider only implicit dimensions
 			((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->array_length *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 		}
@@ -1692,8 +1703,6 @@ int task_init(oph_operator_struct * handle)
 		int nhost = 0;
 		int frag_param_error = 0;
 		int final_frag_number = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->total_frag_number;
-
-		int max_frag_number = ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->total_frag_number * ((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->tuplexfrag_number;
 
 		int admissible_frag_number = 0;
 		int user_arg_prod = 0;
@@ -1801,51 +1810,10 @@ int task_init(oph_operator_struct * handle)
 							}
 						}
 					}
-				} else {
-					//If user specified fragxdb_number then check if frag number is lower than product of parameters                       
-					user_arg_prod = (1 * (*fragxdb_number));
-					if (final_frag_number < user_arg_prod) {
-						//If import is executed then return error, else simply return a message
-						if (run) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER,
-								container_name, final_frag_number);
-							goto __OPH_EXIT_1;
-						} else {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-							frag_param_error = 1;
-						}
-					} else {
-						if (final_frag_number % user_arg_prod != 0) {
-							if (run) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
-								goto __OPH_EXIT_1;
-							} else {
-								frag_param_error = 1;
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
-							}
-						} else {
-							admissible_frag_number = final_frag_number / user_arg_prod;
-							if (admissible_frag_number <= nhost) {
-								*host_number = admissible_frag_number;
-							} else {
-								//Get highest divisor for host_number
-								int ii = 0;
-								for (ii = nhost; ii > 0; ii--) {
-									if (admissible_frag_number % ii == 0)
-										break;
-								}
-								*host_number = ii;
-								//Since fragxdb is fixed recompute tuplexfrag
-								((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->tuplexfrag_number =
-								    (int) ceilf((float) max_frag_number / ((*host_number) * user_arg_prod));
-								((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*fragxdb_number));
-							}
-						}
-					}
-				}
-			} else {
+				} else
+					*host_number = nhost;
+			}
+			if (*host_number > 0) {
 				if (*fragxdb_number <= 0) {
 					user_arg_prod = ((*host_number) * 1);
 					if (final_frag_number < user_arg_prod) {
@@ -1865,32 +1833,22 @@ int task_init(oph_operator_struct * handle)
 				} else {
 					//User has set all parameters - in this case allow further fragmentation
 					user_arg_prod = ((*host_number) * (*fragxdb_number));
-					if (max_frag_number < user_arg_prod) {
+					if (final_frag_number < user_arg_prod) {
 						//If import is executed then return error, else simply return a message
 						if (run) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, max_frag_number);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER,
-								container_name, max_frag_number);
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name,
+								final_frag_number);
 							goto __OPH_EXIT_1;
 						} else {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, max_frag_number);
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
 							frag_param_error = 1;
 						}
 					} else {
-						if (max_frag_number % user_arg_prod != 0) {
-							if (run) {
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
-								goto __OPH_EXIT_1;
-							} else {
-								frag_param_error = 1;
-								pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTESDM_FRAGMENTATION_ERROR);
-							}
-						} else {
-							((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->tuplexfrag_number = (int) ceilf((float) max_frag_number / user_arg_prod);
-							((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->number_unven_frag = max_frag_number % (user_arg_prod);
-							((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*fragxdb_number));
-						}
+						//Since fragxdb is fixed recompute tuplexfrag
+						((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (int) ceilf((float) final_frag_number / user_arg_prod);
+						((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->number_unven_frag = final_frag_number % (user_arg_prod);
+						((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*fragxdb_number));
 					}
 				}
 			}
@@ -2549,10 +2507,14 @@ int task_init(oph_operator_struct * handle)
 				dim_inst[i].id_grid = id_grid;
 				dim_inst[i].id_dimensioninst = 0;
 				//Modified to allow subsetting
-				if (measure->dims_type[i] || !oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation))
+#ifdef OPH_ESDM_PAV_KERNERS
+				if (measure->dims_type[i] || !esdm_is_a_reduce_func(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation))
 					tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
 				else
 					tmp_var.varsize = 1;
+#else
+				tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
+#endif
 				dim_inst[i].size = tmp_var.varsize;
 				dim_inst[i].concept_level = measure->dims_concept_level[i];
 				dim_inst[i].unlimited = measure->dims_unlim[i] ? 1 : 0;
@@ -2563,7 +2525,9 @@ int task_init(oph_operator_struct * handle)
 				}
 
 				collapsed = 0;
-				if (measure->dims_type[i] || !oph_esdm_is_a_reduce_func(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation)) {
+#ifdef OPH_ESDM_PAV_KERNERS
+				if (measure->dims_type[i] || !esdm_is_a_reduce_func(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->operation)) {
+#endif
 					if (oph_esdm_get_dim_array
 					    (id_container_out, measure->dim_dataset[i], varid, tot_dims[j].dimension_type, tmp_var.varsize, measure->dims_start_index[i], measure->dims_end_index[i],
 					     &dim_array)) {
@@ -2577,12 +2541,14 @@ int task_init(oph_operator_struct * handle)
 						free(dimvar_ids);
 						goto __OPH_EXIT_1;
 					}
+#ifdef OPH_ESDM_PAV_KERNERS
 				} else {
 					collapsed = 1;
 					dim_inst[i].size = 0;
 					dim_inst[i].concept_level = OPH_COMMON_ALL_CONCEPT_LEVEL;
 					dim_array = NULL;
 				}
+#endif
 
 				if (!collapsed) {
 					if (!collapsed

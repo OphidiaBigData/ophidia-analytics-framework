@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2021 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@
 #define OPH_NC_CONCAT_FIELD_COMPR "oph_compress('','', oph_concat2('oph_%s|oph_%s','oph_%s', oph_uncompress('','', %s.measure), %s.measure))"
 #define OPH_NC_CONCAT_WHERE_FILE "%s.id_dim = %s.id_dim"
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 #include "clients/taketime.h"
 static int timeval_add(res, x, y)
 struct timeval *res, *x, *y;
@@ -1755,7 +1755,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 	//Fill binary cache
 	res = -1;
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	struct timeval start_read_time, end_read_time, total_read_time;
 	struct timeval start_transpose_time, end_transpose_time, intermediate_transpose_time, total_transpose_time;
 	struct timeval start_write_time, end_write_time, intermediate_write_time, total_write_time;
@@ -1782,12 +1782,11 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 	} else {
 		res = nc_get_vara_double(ncid, measure->varid, start, count, (double *) (binary_cache));
 	}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	gettimeofday(&end_read_time, NULL);
 	timeval_subtract(&total_read_time, &end_read_time, &start_read_time);
 	printf("Fragment %s:  Total read :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_read_time.tv_sec, (int) total_read_time.tv_usec);
 #endif
-
 	if (res != 0) {
 		OPH_NC_ERR(res);
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
@@ -1880,17 +1879,17 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		limits[0] = (l + 1) * regular_rows;
 		counters[0] = l * regular_rows;
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_transpose_time, NULL);
 #endif
 		oph_nc_cache_to_buffer(measure->nimp + 1, counters, limits, products, binary_cache, binary_insert, sizeof_type);
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_transpose_time, NULL);
 		timeval_subtract(&intermediate_transpose_time, &end_transpose_time, &start_transpose_time);
 		timeval_add(&total_transpose_time, &total_transpose_time, &intermediate_transpose_time);
 #endif
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_write_time, NULL);
 #endif
 		if (oph_ioserver_execute_query(server, query)) {
@@ -1909,7 +1908,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 			free(limits);
 			return OPH_NC_ERROR;
 		}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_write_time, NULL);
 		timeval_subtract(&intermediate_write_time, &end_write_time, &start_write_time);
 		timeval_add(&total_write_time, &total_write_time, &intermediate_write_time);
@@ -1991,17 +1990,17 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 		memset(counters, 0, measure->nimp + 1);
 		limits[0] = regular_times * regular_rows + remainder_rows;
 		counters[0] = regular_times * regular_rows;
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_transpose_time, NULL);
 #endif
 		oph_nc_cache_to_buffer(measure->nimp + 1, counters, limits, products, binary_cache, binary_insert, sizeof_type);
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_transpose_time, NULL);
 		timeval_subtract(&intermediate_transpose_time, &end_transpose_time, &start_transpose_time);
 		timeval_add(&total_transpose_time, &total_transpose_time, &intermediate_transpose_time);
 #endif
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_write_time, NULL);
 #endif
 		if (oph_ioserver_execute_query(server, query)) {
@@ -2020,7 +2019,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 			free(limits);
 			return OPH_NC_ERROR;
 		}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_write_time, NULL);
 		timeval_subtract(&intermediate_write_time, &end_write_time, &start_write_time);
 		timeval_add(&total_write_time, &total_write_time, &intermediate_write_time);
@@ -2028,11 +2027,10 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fra
 
 		oph_ioserver_free_query(server, query);
 	}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	printf("Fragment %s:  Total transpose :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_transpose_time.tv_sec, (int) total_transpose_time.tv_usec);
 	printf("Fragment %s:  Total write :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_write_time.tv_sec, (int) total_write_time.tv_usec);
 #endif
-
 
 	free(query_string);
 	free(idDim);
@@ -2467,7 +2465,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		free(index);
 		return OPH_NC_ERROR;
 	}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	struct timeval start_read_time, end_read_time, total_read_time;
 	struct timeval start_transpose_time, end_transpose_time, intermediate_transpose_time, total_transpose_time;
 	struct timeval start_write_time, end_write_time, intermediate_write_time, total_write_time;
@@ -2514,13 +2512,11 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			res = nc_get_vara_double(ncid, measure->varid, start, count, (double *) (binary_insert));
 		}
 	}
-
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	gettimeofday(&end_read_time, NULL);
 	timeval_subtract(&total_read_time, &end_read_time, &start_read_time);
 	printf("Fragment %s:  Total read :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_read_time.tv_sec, (int) total_read_time.tv_usec);
 #endif
-
 	if (res != 0) {
 		OPH_NC_ERR(res);
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in binary array filling\n");
@@ -2601,16 +2597,18 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 		}
 		free(file_indexes);
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_transpose_time, NULL);
 #endif
 		oph_nc_cache_to_buffer2(measure->ndims, counters, limits, products, binary_cache, binary_insert, sizeof_type);
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_transpose_time, NULL);
 		timeval_subtract(&intermediate_transpose_time, &end_transpose_time, &start_transpose_time);
 		timeval_add(&total_transpose_time, &total_transpose_time, &intermediate_transpose_time);
 		printf("Fragment %s:  Total transpose :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_transpose_time.tv_sec, (int) total_transpose_time.tv_usec);
 #endif
+
 		free(counters);
 		free(products);
 		free(limits);
@@ -2621,7 +2619,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 
 	for (l = 0; l < regular_times; l++) {
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_write_time, NULL);
 #endif
 		if (oph_ioserver_execute_query(server, query)) {
@@ -2638,7 +2636,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			oph_ioserver_free_query(server, query);
 			return OPH_NC_ERROR;
 		}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_write_time, NULL);
 		timeval_subtract(&intermediate_write_time, &end_write_time, &start_write_time);
 		timeval_add(&total_write_time, &total_write_time, &intermediate_write_time);
@@ -2741,7 +2739,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			free(args);
 			return OPH_NC_ERROR;
 		}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_write_time, NULL);
 #endif
 		if (oph_ioserver_execute_query(server, query)) {
@@ -2758,7 +2756,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 			oph_ioserver_free_query(server, query);
 			return OPH_NC_ERROR;
 		}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_write_time, NULL);
 		timeval_subtract(&intermediate_write_time, &end_write_time, &start_write_time);
 		timeval_add(&total_write_time, &total_write_time, &intermediate_write_time);
@@ -2766,7 +2764,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fra
 
 		oph_ioserver_free_query(server, query);
 	}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	printf("Fragment %s:  Total write :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_write_time.tv_sec, (int) total_write_time.tv_usec);
 #endif
 

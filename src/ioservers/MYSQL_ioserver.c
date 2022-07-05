@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2021 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -121,9 +121,9 @@ int oph_limit_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start
 				}
 				query_arg_list[i] = (char *) &tmp_arg;
 			}
-			if (i != 0)
+			if (i && (strlen(query_arg_list[i]) > 0))
 				*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, " %s", query_arg_list[i]);
-			else
+			else if (strlen(query_arg) > 0)
 				*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_LIMIT, query_arg);
 			if (i != (arg_list_num - 1))
 				*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_SEPAR);
@@ -155,7 +155,8 @@ int oph_where2_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *star
 			}
 			query_arg = (char *) &tmp_arg;
 		}
-		*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_WHERE, query_arg);
+		if (strlen(query_arg) > 0)
+			*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_WHERE, query_arg);
 
 		query_arg = NULL;
 
@@ -211,7 +212,8 @@ int oph_where_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start
 			}
 			query_arg = (char *) &tmp_arg;
 		}
-		*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_WHERE, query_arg);
+		if (strlen(query_arg) > 0)
+			*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_WHERE, query_arg);
 	}
 	return MYSQL_IO_SUCCESS;
 }
@@ -287,10 +289,11 @@ int oph_from_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start_
 				query_arg_list1[i] = (char *) &tmp_arg;
 			}
 
-			if (i == 0)
-				*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_FROM, query_arg_list[i]);
-			else {
-				*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, " %s", query_arg_list[i]);
+			if (strlen(query_arg_list[i]) > 0) {
+				if (!i)
+					*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_FROM, query_arg_list[i]);
+				else
+					*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, " %s", query_arg_list[i]);
 			}
 			if (query_arg_list1[i][0] != '\0')
 				*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_AS, query_arg_list1[i]);
@@ -324,10 +327,11 @@ int oph_from_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start_
 				query_arg_list[i] = (char *) &tmp_arg;
 			}
 
-			if (i == 0)
-				*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_FROM, query_arg_list[i]);
-			else {
-				*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, " %s", query_arg_list[i]);
+			if (strlen(query_arg_list[i]) > 0) {
+				if (i == 0)
+					*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_FROM, query_arg_list[i]);
+				else
+					*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, " %s", query_arg_list[i]);
 			}
 			if (i != (arg_list_num - 1))
 				*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_SEPAR);
@@ -474,7 +478,8 @@ int oph_order_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start
 			}
 			query_arg = (char *) &tmp_arg;
 		}
-		*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_ORDER, query_arg);
+		if (strlen(query_arg) > 0)
+			*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_ORDER, query_arg);
 
 		//If order clause exists, then evaluate also direction
 		query_arg = NULL;
@@ -517,7 +522,8 @@ int oph_group_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start
 			}
 			query_arg = (char *) &tmp_arg;
 		}
-		*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_GROUP, query_arg);
+		if (strlen(query_arg) > 0)
+			*start_from += snprintf(*query + *start_from, OPH_IOSERVER_SQ_LEN, MYSQL_IO_QUERY_GROUP, query_arg);
 	}
 
 	return MYSQL_IO_SUCCESS;

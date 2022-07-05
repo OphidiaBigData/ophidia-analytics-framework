@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2021 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -86,6 +86,8 @@ struct _OPH_EXPORTNC_operator_handle {
 	char *sessionid;
 	int force;
 	int misc;
+	char shuffle;
+	char deflate;
 };
 typedef struct _OPH_EXPORTNC_operator_handle OPH_EXPORTNC_operator_handle;
 

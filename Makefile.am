@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2021 CMCC Foundation
+#    Copyright (C) 2012-2022 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,11 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = . libltdl src 
+SUBDIRS=
+if HAVE_ESDM_PAV_KERNELS
+SUBDIRS+= esdm-pav-analytical-kernels
+endif
+SUBDIRS+= . libltdl src
 
 if MYSQL_SUPPORT
 sysconf_DATA = etc/oph_analytics_driver etc/oph_io_server etc/oph_configuration etc/ophidiadb.sql etc/oph_soap_configuration etc/oph_script_configuration
@@ -76,7 +80,9 @@ if GSL_SUPPORT
 OPERATOR_XML+=etc/operators_xml/OPH_EXPLORENC_operator_1.0.xml
 endif
 if HAVE_PARALLEL_NETCDF
+if !MULTI_NODE
 OPERATOR_XML+=etc/operators_xml/OPH_EXPORTNC2_operator_1.0.xml
+endif
 endif
 endif
 if HAVE_ESDM
@@ -84,9 +90,12 @@ OPERATOR_XML+=etc/operators_xml/OPH_IMPORTESDM_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTESDM2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_EXPORTESDM_operator_1.0.xml
 if HAVE_PARALLEL_ESDM
+if !MULTI_NODE
 OPERATOR_XML+=etc/operators_xml/OPH_EXPORTESDM2_operator_1.0.xml
 endif
+endif
 OPERATOR_XML+=etc/operators_xml/OPH_CONCATESDM_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_CONCATESDM2_operator_1.0.xml
 endif
 OPERATOR_XML+=etc/operators_xml/OPH_FOLDER_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_FOR_operator_1.0.xml
@@ -96,6 +105,7 @@ OPERATOR_XML+=etc/operators_xml/OPH_IF_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INPUT_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INSTANCES_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INTERCUBE_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_INTERCUBE2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_LIST_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_LOG_INFO_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_MANAGE_SESSION_operator_1.0.xml

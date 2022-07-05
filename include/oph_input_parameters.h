@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2021 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -178,6 +178,8 @@
 #define OPH_IN_PARAM_ON_REDUCE					"on_reduce"
 #define OPH_IN_PARAM_ACTION					"action"
 #define OPH_IN_PARAM_POLICY					"policy"
+#define OPH_IN_PARAM_SHUFFLE					"shuffle"
+#define OPH_IN_PARAM_DEFLATE					"deflate"
 #define OPH_IN_PARAM_COMMAND				"command"
 
 #define OPH_IN_PARAM_INPUT					"input"

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2021 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -948,7 +948,7 @@ int task_execute(oph_operator_struct * handle)
 #ifdef OPH_NETCDF
 								if (((OPH_FS_operator_handle *) handle->operator_handle)->measure
 								    && strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->measure, OPH_FRAMEWORK_FS_DEFAULT_PATH)) {
-									if (!S_ISREG(file_stat.st_mode))
+									if (S_ISDIR(file_stat.st_mode))
 										continue;
 									if (_oph_check_nc_measure(real_path, ((OPH_FS_operator_handle *) handle->operator_handle)->measure))
 										continue;
@@ -1009,7 +1009,7 @@ int task_execute(oph_operator_struct * handle)
 #ifdef OPH_NETCDF
 								if (((OPH_FS_operator_handle *) handle->operator_handle)->measure
 								    && strcasecmp(((OPH_FS_operator_handle *) handle->operator_handle)->measure, OPH_FRAMEWORK_FS_DEFAULT_PATH)) {
-									if (!S_ISREG(file_stat.st_mode))
+									if (!S_ISREG(file_stat.st_mode) && !S_ISLNK(file_stat.st_mode))
 										continue;
 									if (_oph_check_nc_measure(filename, ((OPH_FS_operator_handle *) handle->operator_handle)->measure))
 										continue;

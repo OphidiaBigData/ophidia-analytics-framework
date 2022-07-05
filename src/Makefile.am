@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2021 CMCC Foundation
+#    Copyright (C) 2012-2022 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -17,10 +17,6 @@
 #
 
 SUBDIRS=
-
-if HAVE_ESDM
-SUBDIRS+= esdm_kernels
-endif
 
 if STANDALONE_MODE
 else
@@ -58,6 +54,13 @@ LIBRARY+= liboph_fits.la
 endif
 if HAVE_ESDM
 LIBRARY+= liboph_esdm.la
+if HAVE_ESDM_PAV_KERNELS
+ESDM_PAV_INCLUDE= -DOPH_ESDM_PAV_KERNERS
+ESDM_PAV_LIBRARY= -L${prefix}/lib -lesdm_kernels
+else
+ESDM_PAV_INCLUDE=
+ESDM_PAV_LIBRARY=
+endif
 endif
 
 if MULTI_NODE
@@ -137,9 +140,9 @@ liboph_analytics_framework_la_CFLAGS += -DMULTI_NODE_SUPPORT
 endif
 
 liboph_json_la_SOURCES = oph_json/oph_json_common.c oph_json/oph_json_graph.c oph_json/oph_json_grid.c  oph_json/oph_json_multigrid.c oph_json/oph_json_text.c oph_json/oph_json_tree.c
-liboph_json_la_CFLAGS= -prefer-pic -I../include -I../include/oph_json @INCLTDL@ $(JANSSON_CFLAGS) ${lib_CFLAGS}
+liboph_json_la_CFLAGS= -prefer-pic -I../include -I../include/oph_json @INCLTDL@ $(JANSSON_INCLUDE) ${lib_CFLAGS}
 liboph_json_la_LDFLAGS = -static -Wl,-rpath -Wl,$(JANSSON_LIBDIR)
-liboph_json_la_LIBADD = -lz -lm @LIBLTDL@ $(JANSSON_LIBS) -L. -ldebug
+liboph_json_la_LIBADD = -lz -lm @LIBLTDL@ $(JANSSON_LIB) -L. -ldebug
 
 liboph_task_parser_la_SOURCES = oph_task_parser_library.c 
 liboph_task_parser_la_CFLAGS= $(LIBXML_INCLUDE) -prefer-pic -I../include @INCLTDL@ ${lib_CFLAGS}
@@ -230,8 +233,8 @@ endif
 
 if HAVE_ESDM
 liboph_esdm_la_SOURCES = oph_esdm_library.c
-liboph_esdm_la_CFLAGS= ${MYSQL_CFLAGS} $(ESDM_CFLAGS) -prefer-pic -I../include -I../include/oph_ioserver -I../include/esdm_kernels @INCLTDL@ ${lib_CFLAGS}
+liboph_esdm_la_CFLAGS= ${MYSQL_CFLAGS} $(ESDM_CFLAGS) -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS} -I${prefix}/include ${ESDM_PAV_INCLUDE}
 liboph_esdm_la_LDFLAGS = -static
-liboph_esdm_la_LIBADD = -lz -lm $(ESDM_LIBS) @LIBLTDL@ -L. -L./esdm_kernels -ldebug -loph_binary_io -loph_ioserver -loph_datacube -loph_esdm_kernels -lophidiadb
+liboph_esdm_la_LIBADD = -lz -lm $(ESDM_LIBS) @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube -lophidiadb ${ESDM_PAV_LIBRARY}
 endif
 

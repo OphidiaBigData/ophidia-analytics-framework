@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2021 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -44,8 +44,6 @@
 #include "oph_datacube_library.h"
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
-
-#include "oph_esdm_kernels.h"
 
 int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
@@ -279,6 +277,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SRC_FILE_PATH);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SRC_FILE_PATH);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATESDM_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_SRC_FILE_PATH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	char *input = hashtbl_get(task_tbl, OPH_IN_PARAM_INPUT);
+	if (input && strlen(input))
+		value = input;
+	else if (!strlen(value)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "The param '%s' is mandatory; at least the param '%s' needs to be set\n", OPH_IN_PARAM_SRC_FILE_PATH, OPH_IN_PARAM_INPUT);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATESDM_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_SRC_FILE_PATH);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
@@ -905,7 +911,7 @@ int task_init(oph_operator_struct * handle)
 		}
 
 		ndim = number_of_dimensions;
-		measure_stream = (int *) malloc((3 * ndim) * sizeof(int));
+		measure_stream = (int *) malloc(3 * ndim * sizeof(int));
 		if (!measure_stream) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_MEMORY_ERROR_INPUT, "measure structure");
@@ -1079,8 +1085,8 @@ int task_init(oph_operator_struct * handle)
 
 			if (cubedims[l].explicit_dim) {
 				if (tmp_var.varsize != cubedims[l].size) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of dimension '%s' in NC file (%d) does not correspond to the one stored in OphidiaDB (%d)\n", dim[l].dimension_name,
-					      tmp_var.varsize, cubedims[l].size);
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of dimension '%s' in ESDM container (%d) does not correspond to the one stored in OphidiaDB (%d)\n",
+					      dim[l].dimension_name, tmp_var.varsize, cubedims[l].size);
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_DIM_SIZE_MISMATCH, dim[l].dimension_name);
 					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 					oph_dim_unload_dim_dbinstance(db_dimension);
@@ -1089,31 +1095,39 @@ int task_init(oph_operator_struct * handle)
 			} else
 				measure_stream[number_of_dimensions + l] = tmp_var.varsize;
 
-			if (!measure->dim_dataset[i])
-				if ((ret = esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
+			do {
+
+				if (!measure->dim_dataset[i])
+					if ((ret = esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i))) {
+						if (!strcmp(dim[l].dimension_type, OPH_DIM_INDEX_DATA_TYPE))
+							break;
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open dataset '%s' of ESDM container\n", measure->dims_name[i]);
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to open dataset '%s' of ESDM container\n", measure->dims_name[i]);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						goto __OPH_EXIT_1;
+					}
+
+				if (!measure->dim_dspace[i])
+					if ((ret = esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i))) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to open the dataspace associated with dataset '%s' of ESDM container\n", measure->dims_name[i]);
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to open the dataspace associated with dataset '%s' of ESDM container\n",
+							measure->dims_name[i]);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						goto __OPH_EXIT_1;
+					}
+
+				if (oph_esdm_compare_types(id_container_in, measure->dim_dspace[i]->type, dim[l].dimension_type)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension type in ESDM container does not correspond to the one stored in OphidiaDB\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, "Dimension type in ESDM container does not correspond to the one stored in OphidiaDB\n");
 					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 					oph_dim_unload_dim_dbinstance(db_dimension);
 					goto __OPH_EXIT_1;
 				}
 
-			if (!measure->dim_dspace[i])
-				if ((ret = esdm_dataset_get_dataspace(measure->dim_dataset[i], measure->dim_dspace + i))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_DIM_READ_ERROR, "type cannot be converted");
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					goto __OPH_EXIT_1;
-				}
+			} while (0);
 
-			if (oph_esdm_compare_types(id_container_in, measure->dim_dspace[i]->type, dim[l].dimension_type)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Dimension type in NC file does not correspond to the one stored in OphidiaDB\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_DIM_TYPE_MISMATCH_ERROR, dim[l].dimension_name);
-				oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-				oph_dim_unload_dim_dbinstance(db_dimension);
-				goto __OPH_EXIT_1;
-			}
 			//Modified to allow subsetting
 			tmp_var.dims_start_index = &(measure->dims_start_index[i]);
 			tmp_var.dims_end_index = &(measure->dims_end_index[i]);
@@ -1628,7 +1642,7 @@ int task_init(oph_operator_struct * handle)
 	}
 #endif
 
-	if (handle->proc_rank != 0) {
+	if (handle->proc_rank) {
 		if (!(((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->fragment_ids = (char *) strndup(id_string[0], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CONCATESDM_MEMORY_ERROR_INPUT,
@@ -1641,7 +1655,7 @@ int task_init(oph_operator_struct * handle)
 		((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->id_output_datacube = *((int *) id_string[1]);
 		((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->compressed = *((int *) id_string[2]);
 		ndim = *((int *) id_string[3]);
-		measure_stream = (int *) malloc((3 * ndim) * sizeof(int));
+		measure_stream = (int *) malloc(3 * ndim * sizeof(int));
 	}
 #ifndef MULTI_NODE_SUPPORT
 	MPI_Bcast(measure_stream, 3 * ndim, MPI_INT, 0, MPI_COMM_WORLD);
@@ -1931,13 +1945,12 @@ int task_destroy(oph_operator_struct * handle)
 	}
 
 	int id_datacube = ((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->id_output_datacube;
-	short int global_error = 0, proc_error = ((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->execute_error;
+	short int global_error = 0;
 
 #ifndef MULTI_NODE_SUPPORT
+	short int proc_error = ((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->execute_error;
 	//Reduce results
 	MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MAX, MPI_COMM_WORLD);
-#else
-	UNUSED(proc_error);
 #endif
 
 	if (handle->proc_rank == 0 && global_error == 0) {
@@ -1992,12 +2005,12 @@ int task_destroy(oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}
 		}
-
+#ifndef MULTI_NODE_SUPPORT
 		if (handle->output_code)
 			proc_error = (short int) handle->output_code;
 		else
 			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
-#ifndef MULTI_NODE_SUPPORT
+
 		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
 #endif
 		handle->output_code = global_error;

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2021 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,9 +21,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#ifndef MULTI_NODE_SUPPORT
 #include <mpi.h>
-#endif
 
 #include <unistd.h>
 #include <sys/stat.h>
@@ -114,6 +112,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->sessionid = NULL;
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->force = 0;
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->misc = 0;
+	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->shuffle = 0;
+	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->deflate = 0;
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->memory_size = 0;
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path = NULL;
 
@@ -236,7 +236,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			free(uri);
 		uri = NULL;
 	}
-#ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(id_datacube_in, 2, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -247,7 +246,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-#endif
+
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_datacube = id_datacube_in[0];
 
 	if (id_datacube_in[1] == 0) {
@@ -472,6 +471,23 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!strcmp(value, OPH_COMMON_YES_VALUE))
 		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->force = 1;
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SHUFFLE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SHUFFLE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SHUFFLE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strcmp(value, OPH_COMMON_YES_VALUE))
+		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->shuffle = 1;
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DEFLATE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DEFLATE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DEFLATE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->deflate = (char) strtol(value, NULL, 10);
+
 	if (oph_pid_get_memory_size(&(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->memory_size))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_OPHIDIADB_CONFIGURATION_FILE);
@@ -638,7 +654,6 @@ int task_init(oph_operator_struct * handle)
 	}
       __OPH_EXIT_1:
 
-#ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the fragment relative index 
 	MPI_Bcast(id_string, 5 * OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE, MPI_CHAR, 0, MPI_COMM_WORLD);
 
@@ -648,7 +663,7 @@ int task_init(oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MASTER_TASK_INIT_FAILED);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-#endif
+
 	if (id_string[0][0] == -1) {
 		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->cached_flag = 1;
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -683,9 +698,8 @@ int task_init(oph_operator_struct * handle)
 		}
 		memset(stream_broad, 0, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->num_of_dims * OPH_DIM_STREAM_ELEMENTS * OPH_DIM_STREAM_LENGTH * sizeof(char));
 	}
-#ifndef MULTI_NODE_SUPPORT
+
 	MPI_Bcast(stream_broad, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->num_of_dims * OPH_DIM_STREAM_ELEMENTS * OPH_DIM_STREAM_LENGTH, MPI_CHAR, 0, MPI_COMM_WORLD);
-#endif
 
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->dims = (NETCDF_dim *) malloc(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->num_of_dims * sizeof(NETCDF_dim));
 	if (!((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->dims) {
@@ -825,19 +839,16 @@ int task_execute(oph_operator_struct * handle)
 	int result = OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	//I need to split the communicator to select task with no frags 
-#ifndef MULTI_NODE_SUPPORT
 	MPI_Comm scomm;
-#endif
+
 	int color = 0;
 	if (handle->proc_rank && (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->fragment_id_start_position < 0))
 		color = MPI_UNDEFINED;
-#ifndef MULTI_NODE_SUPPORT
 	if (MPI_Comm_split(MPI_COMM_WORLD, color, handle->proc_rank, &scomm) != MPI_SUCCESS) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create parallel nc communicator\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, "Unable to create parallel nc communicator\n");
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
-#endif
 	if (!color) {
 		int i, j, k, inc;
 
@@ -1269,6 +1280,52 @@ int task_execute(oph_operator_struct * handle)
 			goto __OPH_EXIT_2;
 		}
 
+		if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->shuffle || ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->deflate) {
+			size_t chunksize[num_of_dims];
+			for (inc = 0; inc < nexp; inc++)
+				chunksize[inc] = 1;
+			for (inc = nexp; inc < num_of_dims; inc++)
+				chunksize[inc] = dims[inc].dimsize;
+			if ((retval = nc_def_var_chunking(ncid, varid, NC_CHUNKED, chunksize))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set chunking configuration for the variable: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_NC_DEFINE_VAR_ERROR,
+					nc_strerror(retval));
+				oph_odb_stge_free_fragment_list(&frags);
+				oph_odb_stge_free_db_list(&dbs);
+				oph_odb_stge_free_dbms_list(&dbmss);
+				nc_close(ncid);
+				for (l = 0; l < num_of_dims; l++) {
+					if (dim_rows[l]) {
+						free(dim_rows[l]);
+						dim_rows[l] = NULL;
+					}
+				}
+				free(dim_rows);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				goto __OPH_EXIT_2;
+			}
+			char shuffle = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->shuffle;
+			char deflate = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->deflate;
+			if ((retval = nc_def_var_deflate(ncid, varid, shuffle ? NC_SHUFFLE : NC_NOSHUFFLE, deflate ? 1 : 0, (int) deflate))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set compression configuration for the variable: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_NC_DEFINE_VAR_ERROR,
+					nc_strerror(retval));
+				oph_odb_stge_free_fragment_list(&frags);
+				oph_odb_stge_free_db_list(&dbs);
+				oph_odb_stge_free_dbms_list(&dbmss);
+				nc_close(ncid);
+				for (l = 0; l < num_of_dims; l++) {
+					if (dim_rows[l]) {
+						free(dim_rows[l]);
+						dim_rows[l] = NULL;
+					}
+				}
+				free(dim_rows);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				goto __OPH_EXIT_2;
+			}
+		}
+
 		if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata > 0) {
 
 			int varidp, msize, mbuffer;
@@ -1276,15 +1333,11 @@ int task_execute(oph_operator_struct * handle)
 			if (handle->proc_rank)	// Slave
 			{
 				while (1) {
-#ifndef MULTI_NODE_SUPPORT
 					MPI_Bcast(&mbuffer, 1, MPI_INT, 0, scomm);	// Buffer size
 					if (!mbuffer)
 						break;
-#endif
 					buffer = (char *) malloc(mbuffer);
-#ifndef MULTI_NODE_SUPPORT
 					MPI_Bcast(buffer, mbuffer, MPI_CHAR, 0, scomm);	// Buffer
-#endif
 					if (!retval)	// Discard new data in case of errors
 					{
 						mvariable = buffer;
@@ -1360,10 +1413,8 @@ int task_execute(oph_operator_struct * handle)
 					memcpy(buffer + mbuffer, mvalue, msize);
 					mbuffer += msize;
 
-#ifndef MULTI_NODE_SUPPORT
 					MPI_Bcast(&mbuffer, 1, MPI_INT, 0, scomm);	// Buffer size
 					MPI_Bcast(buffer, mbuffer, MPI_CHAR, 0, scomm);	// Buffer
-#endif
 
 					free(buffer);
 					buffer = NULL;
@@ -1399,9 +1450,7 @@ int task_execute(oph_operator_struct * handle)
 				mysql_free_result(read_result);
 
 				mbuffer = 0;
-#ifndef MULTI_NODE_SUPPORT
 				MPI_Bcast(&mbuffer, 1, MPI_INT, 0, scomm);	// Null buffer size => end transmission
-#endif
 			}
 			if (retval) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_WRITE_METADATA_ERROR, mvariable ? mvariable : "", mkey ? mkey : "", nc_strerror(retval));
@@ -1822,10 +1871,12 @@ int task_execute(oph_operator_struct * handle)
 							result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 							goto __OPH_EXIT_2;
 						}
-						fetch = 1;
 						if (curr_row->row)
 							current_length++;
+						else if (fetch)
+							break;
 
+						fetch = 1;
 						if (memory_size_mb) {
 							inc = nexp - 1;
 							if (curr_row->row && (current_size + block_size < memory_size_mb)) {
@@ -1838,11 +1889,8 @@ int task_execute(oph_operator_struct * handle)
 								// else avoid to buffer more than one value of outer explicit dimensions
 							} else
 								fetch = 0;
-						} else {
-							if (!curr_row->row)
-								break;
+						} else
 							raw_data = curr_row->row[1];
-						}
 
 						retval = 1;
 						switch (type_nc) {
@@ -2040,13 +2088,11 @@ int task_execute(oph_operator_struct * handle)
 
       __OPH_EXIT_2:
 
-#ifndef MULTI_NODE_SUPPORT
 	if (MPI_Comm_free(&scomm) != MPI_SUCCESS) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to destroy parallel nc communicator\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, "Unable to destroy parallel nc communicator\n");
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-#endif
 
 	return result;
 }
@@ -2062,10 +2108,8 @@ int task_reduce(oph_operator_struct * handle)
 	if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->cached_flag)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
-#ifndef MULTI_NODE_SUPPORT
 	if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata < 0)
 		MPI_Barrier(MPI_COMM_WORLD);
-#endif
 
 	if (!handle->proc_rank && ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path && (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata < 0)) {
 

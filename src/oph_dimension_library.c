@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2021 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -384,6 +384,7 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 	long long _base_time = 0, *base_time_ = base_time ? base_time : &_base_time;
 	if (oph_dim_get_base_time(dim, base_time_))
 		return OPH_DIM_DATA_ERROR;
+
 
 	// Convert to "date"
 	memset(tm_base, 0, sizeof(struct tm));
@@ -1017,10 +1018,14 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 	struct tm tm_value;
 	long long base_time = 0, value_time;
 	double scaling_factor, _value;
-	if (oph_dim_get_base_time(dim, &base_time))
+	if (oph_dim_get_base_time(dim, &base_time)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get the base time\n");
 		return OPH_DIM_DATA_ERROR;
-	if (_oph_dim_get_scaling_factor(dim, &scaling_factor))
+	}
+	if (_oph_dim_get_scaling_factor(dim, &scaling_factor)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get the scaling factor\n");
 		return OPH_DIM_DATA_ERROR;
+	}
 
 	while ((pch = strtok_r(pch ? NULL : temp, OPH_DIM_SUBSET_SEPARATOR, &save_pointer))) {
 		value_time = 0;
@@ -1031,8 +1036,10 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
 			strptime(pch, OPH_DIM_DATA_FORMAT1, &tm_value);
 		else
 			strptime(pch, OPH_DIM_DATA_FORMAT2, &tm_value);
-		if (tm_value.tm_year < 0)
+		if (tm_value.tm_year < 0) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set the year\n");
 			return OPH_DIM_TIME_PARSING_ERROR;
+		}
 
 		tm_value.tm_year += 1900;
 		tm_value.tm_mon++;

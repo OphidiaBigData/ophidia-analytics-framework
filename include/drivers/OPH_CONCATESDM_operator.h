@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2021 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
 //Only import of measured variables is supported
 
 /**
- * \brief Structure of parameters needed by the operator OPH_CONCATNC. It creates a new datacube concatenating data taken from nc file to a cube
+ * \brief Structure of parameters needed by the operator OPH_CONCATESDM. It creates a new datacube concatenating data taken from nc file to a cube
  *
  * \param oDB Contains the parameters and the connection to OphidiaDB
  * \param id_input_datacube ID of the input datacube used

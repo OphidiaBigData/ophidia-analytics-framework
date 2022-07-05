@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2021 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -273,6 +273,8 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_
  */
 int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_ioserver_handler * second_server, unsigned long long tot_rows, oph_odb_fragment * old_frag1, oph_odb_fragment * old_frag2,
 				     const char *frag_name, int compressed, const char *operation, const char *measure_type);
+int oph_dc_copy_and_process_fragment2(int cubes_num, oph_ioserver_handler ** servers, unsigned long long tot_rows, oph_odb_fragment ** old_frags, const char *frag_name, int compressed,
+				      const char *operation, const char *measure_type, const char *missingvalue);
 
 /** 
  * \brief Function to populate a phisical table with random values
