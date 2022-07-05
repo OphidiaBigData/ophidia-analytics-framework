@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2021 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@
 #define MYSQL_DIMENSION				"dimension"
 
 //Framework common defines and macros
-#define OPH_COMMON_BUFFER_LEN			2048
+#define OPH_COMMON_BUFFER_LEN			4096
 
 #define OPH_COMMON_TRUE				1
 #define OPH_COMMON_FALSE			0

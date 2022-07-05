@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2021 CMCC Foundation
+#    Copyright (C) 2012-2022 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,11 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = . libltdl src 
+SUBDIRS=
+if HAVE_ESDM_PAV_KERNELS
+SUBDIRS+= esdm-pav-analytical-kernels
+endif
+SUBDIRS+= . libltdl src
 
 if MYSQL_SUPPORT
 sysconf_DATA = etc/oph_analytics_driver etc/oph_io_server etc/oph_configuration etc/ophidiadb.sql etc/oph_soap_configuration etc/oph_script_configuration
@@ -82,6 +86,7 @@ if HAVE_PARALLEL_ESDM
 OPERATOR_XML+=etc/operators_xml/OPH_EXPORTESDM2_operator_1.0.xml
 endif
 OPERATOR_XML+=etc/operators_xml/OPH_CONCATESDM_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_CONCATESDM2_operator_1.0.xml
 endif
 OPERATOR_XML+=etc/operators_xml/OPH_FOLDER_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_FOR_operator_1.0.xml

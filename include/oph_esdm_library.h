@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2021 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -118,5 +118,8 @@ int oph_esdm_populate_fragment5(oph_ioserver_handler * server, oph_odb_fragment 
 int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int compressed, ESDM_var * measure);
 
 int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int compressed, ESDM_var * measure, long long memory_size);
+
+int oph_esdm_append_fragment_from_esdm4(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, char *nc_file_path, int tuplexfrag_number, int compressed,
+					ESDM_var * measure);
 
 #endif				//__OPH_ESDM_UTILITY_H
