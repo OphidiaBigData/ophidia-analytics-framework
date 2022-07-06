@@ -1,6 +1,10 @@
 
 ## Next release
 
+### Fixed:
+
+- Bug in reducing the number of write calls in OPH_EXPORTNC2 
+
 ### Added:
 
 - Add XML description of 'oph_filter' primitive [#108](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/108)
