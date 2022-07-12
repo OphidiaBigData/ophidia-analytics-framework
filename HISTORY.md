@@ -3,6 +3,7 @@
 
 ### Fixed:
 
+- Bugs in ESDM operators
 - Bug in reducing the number of write calls in OPH_EXPORTNC2 
 
 ### Added:

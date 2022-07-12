@@ -92,6 +92,9 @@ struct _OPH_CONCATESDM2_operator_handle {
 	char dim_continue;
 	int nthread;
 	short int execute_error;
+	char *operation;
+	char **args;
+	int args_num;
 };
 typedef struct _OPH_CONCATESDM2_operator_handle OPH_CONCATESDM2_operator_handle;
 
