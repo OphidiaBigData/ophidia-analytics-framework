@@ -1112,7 +1112,7 @@ int task_init(oph_operator_struct * handle)
 				dim_inst[l].size = 1;
 				dim_inst[l].concept_level = OPH_COMMON_BASE_CONCEPT_LEVEL;
 			}
-			while (!collapsed) {
+			while (!collapsed && dim_inst[l].fk_id_dimension_label) {
 
 				if (!measure->dim_dataset[i])
 					if ((ret = esdm_dataset_open(measure->container, measure->dims_name[i], ESDM_MODE_FLAG_READ, measure->dim_dataset + i))) {
@@ -1157,26 +1157,28 @@ int task_init(oph_operator_struct * handle)
 				if (collapsed) {
 					dim_row_index = malloc(sizeof(long long));
 					*(long long *) dim_row_index = 1;
-				} else if (dim_inst[l].fk_id_dimension_label) {
-					if (oph_dim_read_dimension_data(db_dimension, label_dimension_table_name, dim_inst[l].fk_id_dimension_label, MYSQL_DIMENSION, 0, &dim_row)) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve data related to dimension '%s'\n", dim[l].dimension_name);
-						logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CUBESCHEMA_DIM_READ_ERROR);
-						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-						oph_dim_unload_dim_dbinstance(db_dimension);
-						if (dim_row)
-							free(dim_row);
-						goto __OPH_EXIT_1;
-					}
+				} else if (dim_inst[l].fk_id_dimension_index) {
 					if (oph_dim_read_dimension_data(db_dimension, index_dimension_table_name, dim_inst[l].fk_id_dimension_index, MYSQL_DIMENSION, 0, &dim_row_index)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve data related to dimension '%s'\n", dim[l].dimension_name);
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CUBESCHEMA_DIM_READ_ERROR);
 						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
 						oph_dim_unload_dim_dbinstance(db_dimension);
-						if (dim_row)
-							free(dim_row);
 						if (dim_row_index)
 							free(dim_row_index);
 						goto __OPH_EXIT_1;
+					}
+					if (dim_inst[l].fk_id_dimension_label) {
+						if (oph_dim_read_dimension_data(db_dimension, label_dimension_table_name, dim_inst[l].fk_id_dimension_label, MYSQL_DIMENSION, 0, &dim_row)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve data related to dimension '%s'\n", dim[l].dimension_name);
+							logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CUBESCHEMA_DIM_READ_ERROR);
+							oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+							oph_dim_unload_dim_dbinstance(db_dimension);
+							if (dim_row_index)
+								free(dim_row_index);
+							if (dim_row)
+								free(dim_row);
+							goto __OPH_EXIT_1;
+						}
 					}
 				} else {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve data related to dimension '%s'\n", dim[l].dimension_name);
@@ -1201,7 +1203,7 @@ int task_init(oph_operator_struct * handle)
 						goto __OPH_EXIT_1;
 					}
 #ifdef OPH_ESDM_PAV_KERNERS
-				} else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim[l].dimension_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
+				} else if (!strncasecmp(OPH_DIM_INDEX_DATA_TYPE, dim[l].dimension_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
 					dim_array = malloc(sizeof(long long));
 					*(long long *) dim_array = dim_inst[l].size;
 				} else {
@@ -1453,32 +1455,36 @@ int task_init(oph_operator_struct * handle)
 
 		for (l = 0; l < number_of_dimensions; l++) {
 			if (!cubedims[l].explicit_dim) {
-				dim_inst[l].fk_id_dimension_index = 0;
-				dim_inst[l].fk_id_dimension_label = 0;
+
 				dim_inst[l].id_grid = 0;
 				dim_inst[l].id_dimensioninst = 0;
 				dim_inst[l].size += tmp_var.varsize;
-				if (oph_dim_insert_into_dimension_table
-				    (db_dimension, label_dimension_table_name, dim[l].dimension_type, dim_inst[l].size, dim_rows[imp_dim_count], &dimension_array_id)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_DIM_ROW_ERROR, dim[l].dimension_name);
-					oph_odb_cube_free_datacube(&cube);
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					goto __OPH_EXIT_1;
-				}
-				dim_inst[l].fk_id_dimension_label = dimension_array_id;	// Real dimension
 
-				if (oph_dim_insert_into_dimension_table
-				    (db_dimension, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, dim_inst[l].size, dim_rows_index[imp_dim_count], &dimension_array_id)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_DIM_ROW_ERROR, dim[l].dimension_name);
-					oph_odb_cube_free_datacube(&cube);
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					goto __OPH_EXIT_1;
+				if (dim_inst[l].fk_id_dimension_index) {
+					if (oph_dim_insert_into_dimension_table
+					    (db_dimension, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, dim_inst[l].size, dim_rows_index[imp_dim_count], &dimension_array_id)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_DIM_ROW_ERROR, dim[l].dimension_name);
+						oph_odb_cube_free_datacube(&cube);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						goto __OPH_EXIT_1;
+					}
+					dim_inst[l].fk_id_dimension_index = dimension_array_id;	// Indexes
 				}
-				dim_inst[l].fk_id_dimension_index = dimension_array_id;	// Indexes
+
+				if (dim_inst[l].fk_id_dimension_label) {
+					if (oph_dim_insert_into_dimension_table
+					    (db_dimension, label_dimension_table_name, dim[l].dimension_type, dim_inst[l].size, dim_rows[imp_dim_count], &dimension_array_id)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_DIM_ROW_ERROR, dim[l].dimension_name);
+						oph_odb_cube_free_datacube(&cube);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						goto __OPH_EXIT_1;
+					}
+					dim_inst[l].fk_id_dimension_label = dimension_array_id;	// Real dimension
+				}
 
 				if (new_grid || !((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->grid_name)
 					dim_inst[l].id_grid = id_grid;
@@ -1493,7 +1499,9 @@ int task_init(oph_operator_struct * handle)
 				cubedims[l].id_dimensioninst = dimension_array_id;
 				cubedims[l].size = dim_inst[l].size;
 				imp_dim_count++;
+
 			} else if (new_grid || !((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->grid_name) {
+
 				dim_inst[l].id_grid = id_grid;
 				if (oph_odb_dim_insert_into_dimensioninstance_table(oDB, &(dim_inst[l]), &dimension_array_id, 0, NULL, NULL)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension instance row\n");
