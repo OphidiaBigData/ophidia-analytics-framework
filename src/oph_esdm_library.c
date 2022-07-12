@@ -3665,10 +3665,17 @@ int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_f
 			start[i] = measure->dims_start_index[i];
 		}
 	}
+
+	char check_for_reduce_func = 1;
+#ifdef OPH_ESDM_PAV_KERNERS
+	check_for_reduce_func = !esdm_is_a_reduce_func(measure->operation);
+#endif
 	int array_length = 1;
-	for (i = 0; i < measure->ndims; i++)
-		if (!measure->dims_type[i])
-			array_length *= count[i];
+	if (check_for_reduce_func) {
+		for (i = 0; i < measure->ndims; i++)
+			if (!measure->dims_type[i])
+				array_length *= count[i];
+	}
 
 	char type_flag = '\0';
 	long long sizeof_var = 0;
@@ -3900,10 +3907,6 @@ int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_f
 	}
 
 	//Check
-	char check_for_reduce_func = 1;
-#ifdef OPH_ESDM_PAV_KERNERS
-	check_for_reduce_func = !esdm_is_a_reduce_func(measure->operation);
-#endif
 	int total = 1;
 	for (i = 0; i < measure->ndims; i++)
 		if (measure->dims_type[i] || check_for_reduce_func)

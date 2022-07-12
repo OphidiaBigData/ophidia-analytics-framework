@@ -1112,6 +1112,17 @@ int task_init(oph_operator_struct * handle)
 				measure_stream[number_of_dimensions + l] = tmp_var.varsize;
 
 			char collapsed = dim_inst[l].concept_level == OPH_COMMON_ALL_CONCEPT_LEVEL;
+			if (collapsed) {
+				if (dim_inst[l].size) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of a collapsed dimension of input cube is %d, different from zero.\n", dim_inst[l].size);
+					logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_DIM_SIZE_MISMATCH, dim[l].dimension_name);
+					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+					oph_dim_unload_dim_dbinstance(db_dimension);
+					goto __OPH_EXIT_1;
+				}
+				dim_inst[l].size = 1;
+				dim_inst[l].concept_level = OPH_COMMON_BASE_CONCEPT_LEVEL;
+			}
 			while (!collapsed) {
 
 				if (!measure->dim_dataset[i])
@@ -1203,7 +1214,7 @@ int task_init(oph_operator_struct * handle)
 #ifdef OPH_ESDM_PAV_KERNERS
 				} else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim[l].dimension_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
 					dim_array = malloc(sizeof(long long));
-					*(long long *) dim_row_index = 1 + dim_inst[i].size;
+					*(long long *) dim_array = dim_inst[l].size;
 				} else {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong data type of dimension '%s'\n", dim[l].dimension_name);
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CUBESCHEMA_DIM_READ_ERROR);
@@ -1493,8 +1504,7 @@ int task_init(oph_operator_struct * handle)
 				cubedims[l].id_dimensioninst = dimension_array_id;
 				cubedims[l].size = dim_inst[l].size;
 				imp_dim_count++;
-			}
-			if (new_grid || !((OPH_CONCATESDM2_operator_handle *) handle->operator_handle)->grid_name) {
+			} else if (new_grid || !((OPH_CONCATESDM2_operator_handle *) handle->operator_handle)->grid_name) {
 				dim_inst[l].id_grid = id_grid;
 				if (oph_odb_dim_insert_into_dimensioninstance_table(oDB, &(dim_inst[l]), &dimension_array_id, 0, NULL, NULL)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension instance row\n");
@@ -1506,7 +1516,6 @@ int task_init(oph_operator_struct * handle)
 				}
 				cubedims[l].id_dimensioninst = dimension_array_id;
 			}
-
 		}
 
 		oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
