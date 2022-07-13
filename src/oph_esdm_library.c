@@ -3665,10 +3665,17 @@ int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_f
 			start[i] = measure->dims_start_index[i];
 		}
 	}
+
+	char check_for_reduce_func = 1;
+#ifdef OPH_ESDM_PAV_KERNERS
+	check_for_reduce_func = !esdm_is_a_reduce_func(measure->operation);
+#endif
 	int array_length = 1;
-	for (i = 0; i < measure->ndims; i++)
-		if (!measure->dims_type[i])
-			array_length *= count[i];
+	if (check_for_reduce_func) {
+		for (i = 0; i < measure->ndims; i++)
+			if (!measure->dims_type[i])
+				array_length *= count[i];
+	}
 
 	char type_flag = '\0';
 	long long sizeof_var = 0;
@@ -3900,10 +3907,6 @@ int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_f
 	}
 
 	//Check
-	char check_for_reduce_func = 1;
-#ifdef OPH_ESDM_PAV_KERNERS
-	check_for_reduce_func = !esdm_is_a_reduce_func(measure->operation);
-#endif
 	int total = 1;
 	for (i = 0; i < measure->ndims; i++)
 		if (measure->dims_type[i] || check_for_reduce_func)
@@ -4337,7 +4340,8 @@ int oph_esdm_append_fragment_from_esdm4(oph_ioserver_handler * server, oph_odb_f
 	char *create_query = OPH_DC_SQ_CREATE_SELECT_FRAG_ESDM;
 	query_size =
 	    snprintf(NULL, 0, create_query, new_frag->fragment_name, "frag1", "", "", "", "", nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, old_frag->key_start, "", "",
-		     "", "") + where_size + field_size + from_size + from_alias_size + (dim_t_size + dim_i_size + dim_s_size + dim_e_size - 4) + 1;
+		     "", "", measure->dim_unlim, measure->operation ? measure->operation : OPH_COMMON_NONE_FILTER,
+		     measure->args ? measure->args : OPH_COMMON_NONE_FILTER) + where_size + field_size + from_size + from_alias_size + (dim_t_size + dim_i_size + dim_s_size + dim_e_size - 4) + 1;
 
 	char *query_string = (char *) malloc(query_size * sizeof(char));
 	if (!(query_string)) {
@@ -4500,7 +4504,8 @@ int oph_esdm_append_fragment_from_esdm4(oph_ioserver_handler * server, oph_odb_f
 	}
 
 	n = snprintf(query_string, query_size, create_query, new_frag->fragment_name, "frag1", field_string, from_string, from_alias_string, where_string, nc_file_path, measure->varname,
-		     OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, old_frag->key_start, dims_type_string, dims_index_string, dims_start_string, dims_end_string);
+		     OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, old_frag->key_start, dims_type_string, dims_index_string, dims_start_string, dims_end_string, measure->dim_unlim,
+		     measure->operation ? measure->operation : OPH_COMMON_NONE_FILTER, measure->args ? measure->args : OPH_COMMON_NONE_FILTER);
 	if (n >= query_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		free(dims_type_string);

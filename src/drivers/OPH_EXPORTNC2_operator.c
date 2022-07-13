@@ -1884,7 +1884,7 @@ int task_execute(oph_operator_struct * handle)
 								current_size += block_size;
 								if (current_length > 1)
 									oph_get_next_count(count, dim_sizes, nexp);
-								if (nexp && (count[inc] < (size_t) dims[inc].dimsize))
+								if (nexp && (count[inc] < (size_t) dims[inc].dimsize) && (current_length < frags.value[k].key_end - frags.value[k].key_start + 1))
 									continue;
 								// else avoid to buffer more than one value of outer explicit dimensions
 							} else

@@ -1492,8 +1492,7 @@ int task_init(oph_operator_struct * handle)
 				cubedims[l].id_dimensioninst = dimension_array_id;
 				cubedims[l].size = dim_inst[l].size;
 				imp_dim_count++;
-			}
-			if (new_grid || !((OPH_CONCATNC_operator_handle *) handle->operator_handle)->grid_name) {
+			} else if (new_grid || !((OPH_CONCATNC_operator_handle *) handle->operator_handle)->grid_name) {
 				dim_inst[l].id_grid = id_grid;
 				if (oph_odb_dim_insert_into_dimensioninstance_table(oDB, &(dim_inst[l]), &dimension_array_id, 0, NULL, NULL)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension instance row\n");
@@ -1505,7 +1504,6 @@ int task_init(oph_operator_struct * handle)
 				}
 				cubedims[l].id_dimensioninst = dimension_array_id;
 			}
-
 		}
 
 		oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);

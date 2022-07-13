@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_filter" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+It applies a filtering on the time series in the measure array. The filter is applied by first transforming in the frequency-domain with the FFT functions from GSL and then retransforming in the time-domain with the inverse function. 
+The filter can be of 4 different types: lowpass, highpass, bandpass and notch. 
+Measures can be OPH_INTs, OPH_LONGs, OPH_FLOATs, OPH_DOUBLEs, OPH_COMPLEX_INTs, OPH_COMPLEX_LONGs, OPH_COMPLEX_FLOATs or OPH_COMPLEX_DOUBLEs.
+The output type will be OPH_DOUBLE (for real input measures) or OPH_COMPLEX_DOUBLE (for complex input measures).
+Cut frequencies can only be positive numbers within the range 0 to 0.5
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_int&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_double&apos;;
+					&apos;oph_complex_int&apos;;
+					&apos;oph_complex_long&apos;;
+					&apos;oph_complex_float&apos;;
+					&apos;oph_complex_double&apos;.
+- output measure type : Ophidia typing. Supported types are:
+                                        &apos;oph_double&apos;;
+                                        &apos;oph_complex_double&apos;.
+- measure : input measure.
+- filter type: string that represents the type of filter:
+			    -- LPF: lowpass filter
+                            -- HPF: highpass filter 
+			    -- BPF: bandpass filter
+                            -- BSF: notch filter 
+- cut_frequency1 : cutoff frequency to filter data. It is used for all filters.
+- cut_frequency2 : additional cutoff frequency used for bandpass and notch filters where a frequency range is needed.
+                 
+[Return type]
+Binary-array.
+
+[Examples]
+Apply the lowpass filter with cut frequency 0.01.
+oph_filter(&apos;OPH_INT&apos;,&apos;OPH_DOUBLE&apos;,measure, 'LPF', 0.01)</abstract>
+        <author>CMCC Foundation</author>
+        <category>Transformation</category>
+        <creationdate>27/07/2013</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+        <operation type="simple"/>
+    </info>
+    <args>
+		<argument type="oph_type" mandatory="yes" values="'oph_int'|'oph_long'|'oph_float'|'oph_double'|'oph_complex_int'|'oph_complex_long'|'oph_complex_float'|'oph_complex_double'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_complex_double'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="string" mandatory="yes" values="'LPF'|'HPF'|'BPF'|'BSF'">filter_type</argument>
+                <argument type="double" mandatory="yes">cut_frequency1</argument>
+		<argument type="double" mandatory="no">cut_frequency2</argument>
+    </args>
+</primitive>

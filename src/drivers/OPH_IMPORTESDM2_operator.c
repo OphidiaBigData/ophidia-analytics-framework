@@ -46,7 +46,9 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
+#ifdef OPH_ESDM_PAV_KERNERS
 #include "esdm_kernels.h"
+#endif
 
 #ifdef OPH_OPENMP
 #include <omp.h>
@@ -2581,9 +2583,7 @@ int task_init(oph_operator_struct * handle)
 #endif
 
 				if (!collapsed) {
-					if (!collapsed
-					    && oph_dim_insert_into_dimension_table(db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, tmp_var.varsize, dim_array,
-										   &dimension_array_id)) {
+					if (oph_dim_insert_into_dimension_table(db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, tmp_var.varsize, dim_array, &dimension_array_id)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_DIM_ROW_ERROR, tot_dims[j].dimension_name);
 						free(tot_dims);
