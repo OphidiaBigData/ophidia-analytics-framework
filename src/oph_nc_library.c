@@ -6398,6 +6398,7 @@ int oph_nc_update_dim_with_nc_metadata2(ophidiadb * oDB, oph_odb_dimension * tim
 	UNUSED(id_vocabulary);
 	UNUSED(id_container_out);
 	UNUSED(ncid);
+	UNUSED(dim_id);
 
 #endif
 

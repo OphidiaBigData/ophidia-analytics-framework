@@ -62,6 +62,9 @@
 #ifndef OPH_MYSQL_SUPPORT
 int oph_odb_fs_path_parsing(char *inpath, char *cwd, int *folder_id, char **output_path, ophidiadb * oDB)
 {
+	UNUSED(folder_id);
+	UNUSED(oDB);
+
 	if (!inpath || !cwd) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;

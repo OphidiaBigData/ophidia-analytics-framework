@@ -235,6 +235,9 @@ if HAVE_ESDM
 liboph_esdm_la_SOURCES = oph_esdm_library.c
 liboph_esdm_la_CFLAGS= ${MYSQL_CFLAGS} $(ESDM_CFLAGS) -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS} -I${prefix}/include ${ESDM_PAV_INCLUDE}
 liboph_esdm_la_LDFLAGS = -static
-liboph_esdm_la_LIBADD = -lz -lm $(ESDM_LIBS) @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube -lophidiadb ${ESDM_PAV_LIBRARY}
+liboph_esdm_la_LIBADD = -lz -lm $(ESDM_LIBS) @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube ${ESDM_PAV_LIBRARY}
+if MYSQL_SUPPORT
+liboph_esdm_la_LIBADD += -lophidiadb
+endif
 endif
 

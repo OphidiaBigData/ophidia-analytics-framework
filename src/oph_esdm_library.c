@@ -27,6 +27,7 @@
 #include <zlib.h>
 #include <math.h>
 #include <ctype.h>
+#include <sys/time.h>
 
 #include "oph_dimension_library.h"
 #include "oph-lib-binary-io.h"
@@ -198,6 +199,9 @@ int oph_esdm_compare_types(int id_container, esdm_type_t var_type, const char di
 
 int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, ESDM_var * measure)
 {
+
+#ifdef OPH_MYSQL_SUPPORT
+
 	MYSQL_RES *key_list = NULL;
 	MYSQL_ROW row = NULL;
 
@@ -408,6 +412,16 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * 
 	}
 
 	mysql_free_result(key_list);
+
+#else
+
+	UNUSED(oDB);
+	UNUSED(time_dim);
+	UNUSED(id_vocabulary);
+	UNUSED(id_container_out);
+	UNUSED(measure);
+
+#endif
 
 	return OPH_ESDM_SUCCESS;
 }

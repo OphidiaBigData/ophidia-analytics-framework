@@ -35,4 +35,3 @@ src/clients/oph_analytics_framework
 src/clients/oph_ioserver_client
 src/clients/esdm_pav_runtime_dbmanager
 src/clients/esdm_pav_runtime_worker
-
