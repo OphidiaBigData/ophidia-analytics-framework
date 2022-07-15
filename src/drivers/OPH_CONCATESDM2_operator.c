@@ -1073,6 +1073,9 @@ int task_init(oph_operator_struct * handle)
 		memset(dim_rows_index, 0, imp_ndim * sizeof(char *));
 
 		int imp_dim_count = 0;
+#ifdef OPH_ESDM_PAV_KERNERS
+		int check_for_reduce_func = 1;
+#endif
 
 		//Read cube - dimension relation rows
 		for (l = 0; l < number_of_dimensions; l++) {
@@ -1091,10 +1094,11 @@ int task_init(oph_operator_struct * handle)
 			tmp_dims_id[l] = i;	// TODO: to be checked
 
 #ifdef OPH_ESDM_PAV_KERNERS
-			if (cubedims[l].explicit_dim || !esdm_is_a_reduce_func(((OPH_CONCATESDM2_operator_handle *) handle->operator_handle)->operation))
+			check_for_reduce_func = esdm_is_a_reduce_func(((OPH_CONCATESDM2_operator_handle *) handle->operator_handle)->operation);
+			if (cubedims[l].explicit_dim || !check_for_reduce_func)
 				tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
 			else
-				tmp_var.varsize = 1;
+				tmp_var.varsize = check_for_reduce_func;
 #else
 			tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
 #endif
@@ -1201,7 +1205,7 @@ int task_init(oph_operator_struct * handle)
 
 				char *dim_array = NULL;
 #ifdef OPH_ESDM_PAV_KERNERS
-				if (cubedims[l].explicit_dim || !esdm_is_a_reduce_func(((OPH_CONCATESDM2_operator_handle *) handle->operator_handle)->operation)) {
+				if (cubedims[l].explicit_dim || (check_for_reduce_func != 1)) {
 #endif
 					if (oph_esdm_get_dim_array
 					    (id_container_in, measure->dim_dataset[i], l, dim[l].dimension_type, tmp_var.varsize, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index), &dim_array)) {
@@ -1216,7 +1220,7 @@ int task_init(oph_operator_struct * handle)
 #ifdef OPH_ESDM_PAV_KERNERS
 				} else if (!strncasecmp(OPH_DIM_INDEX_DATA_TYPE, dim[l].dimension_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
 					dim_array = malloc(sizeof(long long));
-					*(long long *) dim_array = dim_inst[l].size;
+					*(long long *) dim_array = dim_inst[l].size + check_for_reduce_func - 1;
 				} else {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong data type of dimension '%s'\n", dim[l].dimension_name);
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CUBESCHEMA_DIM_READ_ERROR);
