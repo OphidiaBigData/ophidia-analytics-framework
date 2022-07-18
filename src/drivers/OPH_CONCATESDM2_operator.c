@@ -42,7 +42,7 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
-#ifdef OPH_ESDM_PAV_KERNERS
+#ifdef OPH_ESDM_PAV_KERNELS
 #include "esdm_kernels.h"
 #endif
 
@@ -816,7 +816,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			((OPH_CONCATESDM2_operator_handle *) handle->operator_handle)->operation = NULL;
 		}
 		measure->operation = ((OPH_CONCATESDM2_operator_handle *) handle->operator_handle)->operation;
-#ifndef OPH_ESDM_PAV_KERNERS
+#ifndef OPH_ESDM_PAV_KERNELS
 		pmesg(LOG_WARNING, __FILE__, __LINE__, "Parameter '%s' will be negleted as ESDM PAV kernels are disabled\n", OPH_IN_PARAM_REDUCTION_OPERATION);
 		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' will be negleted as ESDM PAV kernels are disabled\n", OPH_IN_PARAM_REDUCTION_OPERATION);
 #endif
@@ -1073,7 +1073,7 @@ int task_init(oph_operator_struct * handle)
 		memset(dim_rows_index, 0, imp_ndim * sizeof(char *));
 
 		int imp_dim_count = 0;
-#ifdef OPH_ESDM_PAV_KERNERS
+#ifdef OPH_ESDM_PAV_KERNELS
 		int check_for_reduce_func = 1;
 #endif
 
@@ -1093,8 +1093,8 @@ int task_init(oph_operator_struct * handle)
 			}
 			tmp_dims_id[l] = i;	// TODO: to be checked
 
-#ifdef OPH_ESDM_PAV_KERNERS
-			check_for_reduce_func = esdm_is_a_reduce_func(((OPH_CONCATESDM2_operator_handle *) handle->operator_handle)->operation);
+#ifdef OPH_ESDM_PAV_KERNELS
+			check_for_reduce_func = esdm_is_a_reduce_func(measure->operation, measure->args);
 			if (cubedims[l].explicit_dim || !check_for_reduce_func)
 				tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
 			else
@@ -1204,7 +1204,7 @@ int task_init(oph_operator_struct * handle)
 				}
 
 				char *dim_array = NULL;
-#ifdef OPH_ESDM_PAV_KERNERS
+#ifdef OPH_ESDM_PAV_KERNELS
 				if (cubedims[l].explicit_dim || (check_for_reduce_func != 1)) {
 #endif
 					if (oph_esdm_get_dim_array
@@ -1217,7 +1217,7 @@ int task_init(oph_operator_struct * handle)
 						free(dim_row_index);
 						goto __OPH_EXIT_1;
 					}
-#ifdef OPH_ESDM_PAV_KERNERS
+#ifdef OPH_ESDM_PAV_KERNELS
 				} else if (!strncasecmp(OPH_DIM_INDEX_DATA_TYPE, dim[l].dimension_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE)) {
 					dim_array = malloc(sizeof(long long));
 					*(long long *) dim_array = dim_inst[l].size + check_for_reduce_func - 1;

@@ -1387,8 +1387,8 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 	}
 	//Check
 	int check_for_reduce_func = 0;
-#ifdef OPH_ESDM_PAV_KERNERS
-	check_for_reduce_func = esdm_is_a_reduce_func(measure->operation);
+#ifdef OPH_ESDM_PAV_KERNELS
+	check_for_reduce_func = esdm_is_a_reduce_func(measure->operation, measure->args);
 #endif
 	int total = 1;
 	if (!check_for_reduce_func) {
@@ -1570,7 +1570,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 	size_t sizeof_type = (int) sizeof_var / array_length;
 	esdm_dataspace_t *subspace = NULL;
 
-#ifdef OPH_ESDM_PAV_KERNERS
+#ifdef OPH_ESDM_PAV_KERNELS
 	esdm_stream_data_t stream_data;
 	char fill_value[sizeof_type], *pointer = NULL;
 
@@ -1640,7 +1640,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 					free(limits);
 				return OPH_ESDM_ERROR;
 			}
-#ifdef OPH_ESDM_PAV_KERNERS
+#ifdef OPH_ESDM_PAV_KERNELS
 			if (measure->operation) {
 
 				// Initialize stream data
@@ -1864,7 +1864,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment 
 					free(limits);
 				return OPH_ESDM_ERROR;
 			}
-#ifdef OPH_ESDM_PAV_KERNERS
+#ifdef OPH_ESDM_PAV_KERNELS
 			if (measure->operation) {
 
 				// Initialize stream data
@@ -2254,8 +2254,8 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 	}
 	//Check
 	int check_for_reduce_func = 0;
-#ifdef OPH_ESDM_PAV_KERNERS
-	check_for_reduce_func = esdm_is_a_reduce_func(measure->operation);
+#ifdef OPH_ESDM_PAV_KERNELS
+	check_for_reduce_func = esdm_is_a_reduce_func(measure->operation, measure->args);
 #endif
 	int total = 1;
 	for (i = 0; i < measure->ndims; i++)
@@ -2349,7 +2349,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 	size_t sizeof_type = (int) sizeof_var / array_length;
 	esdm_dataspace_t *subspace = NULL;
 
-#ifdef OPH_ESDM_PAV_KERNERS
+#ifdef OPH_ESDM_PAV_KERNELS
 	esdm_stream_data_t stream_data;
 	char fill_value[sizeof_type], *pointer = NULL;
 
@@ -2390,7 +2390,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment 
 		free(sizemax);
 		return OPH_ESDM_ERROR;
 	}
-#ifdef OPH_ESDM_PAV_KERNERS
+#ifdef OPH_ESDM_PAV_KERNELS
 	if (measure->operation) {
 
 		// Initialize stream data
@@ -2899,8 +2899,8 @@ int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fr
 		}
 	}
 	int check_for_reduce_func = 0;
-#ifdef OPH_ESDM_PAV_KERNERS
-	check_for_reduce_func = esdm_is_a_reduce_func(measure->operation);
+#ifdef OPH_ESDM_PAV_KERNELS
+	check_for_reduce_func = esdm_is_a_reduce_func(measure->operation, measure->args);
 #endif
 	int array_length = 1;
 	if (!check_for_reduce_func) {
@@ -3225,7 +3225,7 @@ int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fr
 	size_t sizeof_type = (int) sizeof_var / array_length;
 	esdm_dataspace_t *subspace = NULL;
 
-#ifdef OPH_ESDM_PAV_KERNERS
+#ifdef OPH_ESDM_PAV_KERNELS
 	esdm_stream_data_t stream_data;
 	char fill_value[sizeof_type], *pointer = NULL;
 
@@ -3324,7 +3324,7 @@ int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fr
 					free(limits);
 				return OPH_ESDM_ERROR;
 			}
-#ifdef OPH_ESDM_PAV_KERNERS
+#ifdef OPH_ESDM_PAV_KERNELS
 			if (measure->operation) {
 
 				// Initialize stream data
@@ -3512,7 +3512,7 @@ int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fr
 					free(limits);
 				return OPH_ESDM_ERROR;
 			}
-#ifdef OPH_ESDM_PAV_KERNERS
+#ifdef OPH_ESDM_PAV_KERNELS
 			if (measure->operation) {
 
 				// Initialize stream data
@@ -3671,8 +3671,8 @@ int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_f
 	}
 
 	int check_for_reduce_func = 0;
-#ifdef OPH_ESDM_PAV_KERNERS
-	check_for_reduce_func = esdm_is_a_reduce_func(measure->operation);
+#ifdef OPH_ESDM_PAV_KERNELS
+	check_for_reduce_func = esdm_is_a_reduce_func(measure->operation, measure->args);
 #endif
 	int array_length = 1;
 	if (!check_for_reduce_func) {
@@ -3983,7 +3983,7 @@ int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_f
 	size_t sizeof_type = (int) sizeof_var / array_length;
 	esdm_dataspace_t *subspace = NULL;
 
-#ifdef OPH_ESDM_PAV_KERNERS
+#ifdef OPH_ESDM_PAV_KERNELS
 	esdm_stream_data_t stream_data;
 	char fill_value[sizeof_type], *pointer = NULL;
 
@@ -4020,7 +4020,7 @@ int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_f
 		free(sizemax);
 		return OPH_ESDM_ERROR;
 	}
-#ifdef OPH_ESDM_PAV_KERNERS
+#ifdef OPH_ESDM_PAV_KERNELS
 	if (measure->operation) {
 
 		// Initialize stream data

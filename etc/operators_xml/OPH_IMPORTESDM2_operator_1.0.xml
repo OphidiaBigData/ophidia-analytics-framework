@@ -97,6 +97,7 @@ The following parameters are considered only in case the container has to be cre
               &quot;sum&quot; to evaluate the sum of data to be imported;
               &quot;std&quot; to evaluate the standard deviation of data to be imported;
               &quot;var&quot; to evaluate the variance of data to be imported;
+              &quot;stat&quot; to evaluate some statistics on data to be imported;
               &quot;outlier&quot; to evaluate the number of items over/under a threshold;
               &quot;sum_scalar&quot; to sum a value to data to be imported (see the argument &quot;args&quot;);
               &quot;mul_scalar&quot; to multiply a value to data to be imported (see the argument &quot;args&quot;);
@@ -188,7 +189,7 @@ SUBMISSION STRING: &quot;operator=oph_importesdm;cwd=/session-code1;container=co
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="rr" values="rr|port">policy</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|importesdm2">objkey_filter</argument>
-		<argument type="string" mandatory="no" default="none" values="none|stream|max|min|avg|sum|std|var|outlier|sum_scalar|mul_scalar|abs|sqr|sqrt|ceil|floor|round|int|nint|pow|exp|log|log10|sin|cos|tan|asin|acos|atan|sinh|cosh|tanh|reci|not">operation</argument>
+		<argument type="string" mandatory="no" default="none" values="none|stream|max|min|avg|sum|std|var|stat|outlier|sum_scalar|mul_scalar|abs|sqr|sqrt|ceil|floor|round|int|nint|pow|exp|log|log10|sin|cos|tan|asin|acos|atan|sinh|cosh|tanh|reci|not">operation</argument>
 		<argument type="string" mandatory="no" default="none">args</argument>
     </args>
 </operator>

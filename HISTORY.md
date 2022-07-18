@@ -8,7 +8,7 @@
 
 ### Added:
 
-- Reference to new ESDM-PAV kernel 'outlier'
+- Reference to new ESDM-PAV kernels 'outlier' and 'stat'
 - XML description of 'oph_filter' primitive [#108](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/108)
 
 ## v1.7.0 - 2022-07-01
