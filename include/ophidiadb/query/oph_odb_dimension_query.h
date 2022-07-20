@@ -50,9 +50,9 @@
 
 #define MYSQL_QUERY_DIM_RETRIEVE_DIMENSION_INSTANCE_DATA		"SELECT dimensioninstance.iddimensioninstance, conceptlevel, units, basetime, calendar, leapyear, leapmonth, monthlengths FROM (cubehasdim INNER JOIN dimensioninstance ON cubehasdim.iddimensioninstance = dimensioninstance.iddimensioninstance) INNER JOIN dimension ON dimension.iddimension = dimensioninstance.iddimension WHERE iddatacube = %d AND dimensionname='%s';"
 
-#define MYSQL_QUERY_DIM_RETRIEVE_GRID_ID2				"SELECT idgrid FROM grid WHERE gridname='%s';"
-
 #define MYSQL_QUERY_DIM_RETRIEVE_GRID_ID				"SELECT DISTINCT grid.idgrid FROM grid INNER JOIN dimensioninstance ON dimensioninstance.idgrid = grid.idgrid INNER JOIN dimension ON dimension.iddimension = dimensioninstance.iddimension WHERE gridname='%s' AND idcontainer = %d AND enabled;"
+#define MYSQL_QUERY_DIM_RETRIEVE_GRID_ID2				"SELECT idgrid FROM grid WHERE gridname = '%s';"
+#define MYSQL_QUERY_DIM_RETRIEVE_GRID					"SELECT gridname FROM grid WHERE idgrid = %d;"
 
 #define MYSQL_QUERY_DIM_RETRIEVE_DIMENSIONS_FROM_GRID_IN_CONTAINER	"SELECT dimension.iddimension, dimensionname, dimensiontype, idhierarchy, iddimensioninstance, dimensioninstance.idgrid, size, fkiddimensionindex, conceptlevel, fkiddimensionlabel, basetime, units, calendar, monthlengths, leapyear, leapmonth FROM (dimensioninstance INNER JOIN grid ON grid.idgrid = dimensioninstance.idgrid) INNER JOIN dimension ON dimensioninstance.iddimension = dimension.iddimension WHERE gridname = '%s' AND idcontainer = %d;"
 
