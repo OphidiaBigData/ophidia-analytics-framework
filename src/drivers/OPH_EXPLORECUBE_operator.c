@@ -41,6 +41,17 @@
 #include "oph_datacube_library.h"
 #include "oph_utility_library.h"
 
+void oph_free_vector(char **vect, int nn)
+{
+	if (!vect || !nn)
+		return;
+	int ii;
+	for (ii = 0; ii < nn; ii++)
+		if (vect[ii])
+			free(vect[ii]);
+	free(vect);
+}
+
 int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
 	if (!handle) {
@@ -1798,7 +1809,7 @@ int task_execute(oph_operator_struct * handle)
 								if (oph_json_add_grid
 								    (handle->operator_json, OPH_JSON_OBJKEY_EXPLORECUBE_DATA, cube.measure, NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
 									pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
-									logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
 									for (iii = 0; iii < num_fields; iii++)
 										if (jsonkeys[iii])
 											free(jsonkeys[iii]);
@@ -2060,7 +2071,7 @@ int task_execute(oph_operator_struct * handle)
 								}
 								if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_EXPLORECUBE_DATA, jsonvalues)) {
 									pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
-									logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
 									for (iii = 0; iii < num_fields; iii++)
 										if (jsonvalues[iii])
 											free(jsonvalues[iii]);
@@ -2124,7 +2135,7 @@ int task_execute(oph_operator_struct * handle)
 		if (oph_json_is_objkey_printable(oper_handle->objkeys, oper_handle->objkeys_num, OPH_JSON_OBJKEY_EXPLORECUBE_SUMMARY)) {
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_EXPLORECUBE_SUMMARY, "Summary", message)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
-				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
 				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
 		}
@@ -2136,7 +2147,7 @@ int task_execute(oph_operator_struct * handle)
 		if (oph_json_is_objkey_printable(oper_handle->objkeys, oper_handle->objkeys_num, OPH_JSON_OBJKEY_EXPLORECUBE_SUMMARY)) {
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_EXPLORECUBE_SUMMARY, "Summary", message)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
-				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
 				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
 		}
@@ -2263,7 +2274,7 @@ int task_execute(oph_operator_struct * handle)
 
 					if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_EXPLORECUBE_DIMVALUES, dim[l].dimension_name, NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
-						logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
 						for (iii = 0; iii < num_fields; iii++)
 							if (jsonkeys[iii])
 								free(jsonkeys[iii]);
@@ -2404,7 +2415,7 @@ int task_execute(oph_operator_struct * handle)
 
 						if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_EXPLORECUBE_DIMVALUES, jsonvalues)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
-							logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
 							for (iii = 0; iii < num_fields; iii++)
 								if (jsonvalues[iii])
 									free(jsonvalues[iii]);
@@ -2724,7 +2735,7 @@ int task_execute(oph_operator_struct * handle)
 
 				if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_EXPLORECUBE_DIMINFO, "Dimension Information", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
-					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
 					for (iii = 0; iii < num_fields; iii++)
 						if (jsonkeys[iii])
 							free(jsonkeys[iii]);
@@ -2921,7 +2932,7 @@ int task_execute(oph_operator_struct * handle)
 
 						if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_EXPLORECUBE_DIMINFO, jsonvalues)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
-							logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
 							for (iii = 0; iii < num_fields; iii++)
 								if (jsonvalues[iii])
 									free(jsonvalues[iii]);
@@ -2949,6 +2960,318 @@ int task_execute(oph_operator_struct * handle)
 	}
 
 	free(cubedims);
+
+	if (!result && oper_handle->export_metadata) {
+		is_objkey_printable = oph_json_is_objkey_printable(oper_handle->objkeys, oper_handle->objkeys_num, OPH_JSON_OBJKEY_EXPLORECUBE_METADATA);
+		if (is_objkey_printable) {
+			num_fields = 4;
+			int success = 0;
+
+			while (!success) {
+				// Header
+				jjj = 0;
+				jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
+				if (!jsonkeys) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "keys");
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				jsonkeys[jjj] = strdup("Variable");
+				if (!jsonkeys[jjj]) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "key");
+					for (iii = 0; iii < jjj; iii++)
+						if (jsonkeys[iii])
+							free(jsonkeys[iii]);
+					if (jsonkeys)
+						free(jsonkeys);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				jjj++;
+				jsonkeys[jjj] = strdup("Key");
+				if (!jsonkeys[jjj]) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "key");
+					for (iii = 0; iii < jjj; iii++)
+						if (jsonkeys[iii])
+							free(jsonkeys[iii]);
+					if (jsonkeys)
+						free(jsonkeys);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				jjj++;
+				jsonkeys[jjj] = strdup("Type");
+				if (!jsonkeys[jjj]) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "key");
+					for (iii = 0; iii < jjj; iii++)
+						if (jsonkeys[iii])
+							free(jsonkeys[iii]);
+					if (jsonkeys)
+						free(jsonkeys);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				jjj++;
+				jsonkeys[jjj] = strdup("Value");
+				if (!jsonkeys[jjj]) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "key");
+					for (iii = 0; iii < jjj; iii++)
+						if (jsonkeys[iii])
+							free(jsonkeys[iii]);
+					if (jsonkeys)
+						free(jsonkeys);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				//jjj++;
+
+				jjj = 0;
+				fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
+				if (!fieldtypes) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "fieldtypes");
+					for (iii = 0; iii < num_fields; iii++)
+						if (jsonkeys[iii])
+							free(jsonkeys[iii]);
+					if (jsonkeys)
+						free(jsonkeys);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+				if (!fieldtypes[jjj]) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "fieldtype");
+					for (iii = 0; iii < num_fields; iii++)
+						if (jsonkeys[iii])
+							free(jsonkeys[iii]);
+					if (jsonkeys)
+						free(jsonkeys);
+					for (iii = 0; iii < jjj; iii++)
+						if (fieldtypes[iii])
+							free(fieldtypes[iii]);
+					if (fieldtypes)
+						free(fieldtypes);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				jjj++;
+				fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+				if (!fieldtypes[jjj]) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "fieldtype");
+					for (iii = 0; iii < num_fields; iii++)
+						if (jsonkeys[iii])
+							free(jsonkeys[iii]);
+					if (jsonkeys)
+						free(jsonkeys);
+					for (iii = 0; iii < jjj; iii++)
+						if (fieldtypes[iii])
+							free(fieldtypes[iii]);
+					if (fieldtypes)
+						free(fieldtypes);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				jjj++;
+				fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+				if (!fieldtypes[jjj]) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "fieldtype");
+					for (iii = 0; iii < num_fields; iii++)
+						if (jsonkeys[iii])
+							free(jsonkeys[iii]);
+					if (jsonkeys)
+						free(jsonkeys);
+					for (iii = 0; iii < jjj; iii++)
+						if (fieldtypes[iii])
+							free(fieldtypes[iii]);
+					if (fieldtypes)
+						free(fieldtypes);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				jjj++;
+				fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+				if (!fieldtypes[jjj]) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "fieldtype");
+					for (iii = 0; iii < num_fields; iii++)
+						if (jsonkeys[iii])
+							free(jsonkeys[iii]);
+					if (jsonkeys)
+						free(jsonkeys);
+					for (iii = 0; iii < jjj; iii++)
+						if (fieldtypes[iii])
+							free(fieldtypes[iii]);
+					if (fieldtypes)
+						free(fieldtypes);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+				//jjj++;
+
+				if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_EXPLORECUBE_METADATA, "Metadata List", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
+					for (iii = 0; iii < num_fields; iii++)
+						if (jsonkeys[iii])
+							free(jsonkeys[iii]);
+					if (jsonkeys)
+						free(jsonkeys);
+					for (iii = 0; iii < num_fields; iii++)
+						if (fieldtypes[iii])
+							free(fieldtypes[iii]);
+					if (fieldtypes)
+						free(fieldtypes);
+					result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				for (iii = 0; iii < num_fields; iii++)
+					if (fieldtypes[iii])
+						free(fieldtypes[iii]);
+				if (fieldtypes)
+					free(fieldtypes);
+
+				success = 1;
+			}
+
+			if (success) {
+
+				char **mvariable = NULL, **mkey = NULL, **mtype = NULL, **mvalue = NULL;
+				MYSQL_RES *read_result = NULL;
+				MYSQL_ROW row;
+				if (oph_odb_meta_find_complete_metadata_list(oDB, datacube_id, NULL, 0, NULL, NULL, NULL, NULL, &read_result)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to load metadata.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PUBLISH_READ_METADATA_ERROR);
+					return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+				}
+				int nn = mysql_num_rows(read_result);
+				if (nn) {
+					mvariable = (char **) malloc(nn * sizeof(char *));
+					mkey = (char **) malloc(nn * sizeof(char *));
+					mtype = (char **) malloc(nn * sizeof(char *));
+					mvalue = (char **) malloc(nn * sizeof(char *));
+					l = 0;
+					while ((row = mysql_fetch_row(read_result))) {
+						mvariable[l] = row[1] ? strdup(row[1]) : NULL;
+						mkey[l] = row[2] ? strdup(row[2]) : NULL;
+						mtype[l] = row[3] ? strdup(row[3]) : NULL;
+						mvalue[l] = row[4] ? strdup(row[4]) : NULL;
+						l++;
+					}
+				}
+				mysql_free_result(read_result);
+
+				for (l = 0; l < nn; l++) {
+
+					success = 0;
+					while (!success) {
+
+						jsonvalues = (char **) malloc(sizeof(char *) * num_fields);
+						if (!jsonvalues) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "values");
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
+
+						jjj = 0;
+						jsonvalues[jjj] = strdup(mvariable[l] ? mvariable[l] : "");
+						if (!jsonvalues[jjj]) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "value");
+							for (iii = 0; iii < jjj; iii++)
+								if (jsonvalues[iii])
+									free(jsonvalues[iii]);
+							if (jsonvalues)
+								free(jsonvalues);
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
+						jjj++;
+						jsonvalues[jjj] = strdup(mkey[l] ? mkey[l] : "");
+						if (!jsonvalues[jjj]) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "value");
+							for (iii = 0; iii < jjj; iii++)
+								if (jsonvalues[iii])
+									free(jsonvalues[iii]);
+							if (jsonvalues)
+								free(jsonvalues);
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
+						jjj++;
+						jsonvalues[jjj] = strdup(mtype[l] ? mtype[l] : "");
+						if (!jsonvalues[jjj]) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "value");
+							for (iii = 0; iii < jjj; iii++)
+								if (jsonvalues[iii])
+									free(jsonvalues[iii]);
+							if (jsonvalues)
+								free(jsonvalues);
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
+						jjj++;
+						jsonvalues[jjj] = strdup(mvalue[l] ? mvalue[l] : "");
+						if (!jsonvalues[jjj]) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORECUBE_MEMORY_ERROR_INPUT, "value");
+							for (iii = 0; iii < jjj; iii++)
+								if (jsonvalues[iii])
+									free(jsonvalues[iii]);
+							if (jsonvalues)
+								free(jsonvalues);
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
+						//jjj++;
+
+						if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_EXPLORECUBE_METADATA, jsonvalues)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+							for (iii = 0; iii < num_fields; iii++)
+								if (jsonvalues[iii])
+									free(jsonvalues[iii]);
+							if (jsonvalues)
+								free(jsonvalues);
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
+
+						for (iii = 0; iii < num_fields; iii++)
+							if (jsonvalues[iii])
+								free(jsonvalues[iii]);
+						if (jsonvalues)
+							free(jsonvalues);
+
+						success = 1;
+					}
+					if (!success)
+						break;
+				}
+
+				oph_free_vector(mvariable, nn);
+				oph_free_vector(mkey, nn);
+				oph_free_vector(mtype, nn);
+				oph_free_vector(mvalue, nn);
+			}
+		}
+	}
 
 	return result;
 }
