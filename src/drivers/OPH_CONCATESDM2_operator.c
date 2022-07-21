@@ -1205,7 +1205,7 @@ int task_init(oph_operator_struct * handle)
 
 				char *dim_array = NULL;
 #ifdef OPH_ESDM_PAV_KERNELS
-				if (cubedims[l].explicit_dim || (check_for_reduce_func != 1)) {
+				if (cubedims[l].explicit_dim || !check_for_reduce_func) {
 #endif
 					if (oph_esdm_get_dim_array
 					    (id_container_in, measure->dim_dataset[i], l, dim[l].dimension_type, tmp_var.varsize, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index), &dim_array)) {
