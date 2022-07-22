@@ -26,8 +26,6 @@ else
   echo "*** Bootstrap failed, please install Autoreconf"
   exit 1
 fi
-cd esdm-pav-analytical-kernels
-if [ $? -eq 0 ]; then
-  ./bootstrap
+if [ -f "esdm-pav-analytical-kernels/bootstrap" ]; then
+    cd esdm-pav-analytical-kernels && ./bootstrap
 fi
-
