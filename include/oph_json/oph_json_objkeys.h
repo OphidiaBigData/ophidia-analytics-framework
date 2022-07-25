@@ -78,8 +78,10 @@
 
 // OPH_EXPLORECUBE
 #define OPH_JSON_OBJKEY_EXPLORECUBE_DATA 				"explorecube_data"
-#define OPH_JSON_OBJKEY_EXPLORECUBE_SUMMARY 				"explorecube_summary"
-#define OPH_JSON_OBJKEY_EXPLORECUBE_DIMVALUES				"explorecube_dimvalues"
+#define OPH_JSON_OBJKEY_EXPLORECUBE_SUMMARY 			"explorecube_summary"
+#define OPH_JSON_OBJKEY_EXPLORECUBE_DIMVALUES			"explorecube_dimvalues"
+#define OPH_JSON_OBJKEY_EXPLORECUBE_DIMINFO				"explorecube_diminfo"
+#define OPH_JSON_OBJKEY_EXPLORECUBE_METADATA			"explorecube_metadata"
 
 // OPH_EXPLORENC
 #define OPH_JSON_OBJKEY_EXPLORENC_DATA 					"explorenc_data"
