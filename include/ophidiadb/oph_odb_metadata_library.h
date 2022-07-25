@@ -236,6 +236,7 @@ int oph_odb_meta_check_for_time_dimension(ophidiadb * oDB, int id_datacube, cons
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const char *old_variable, const char *new_variable);
+int oph_odb_meta_update_metadatakeys2(ophidiadb * oDB, int id_datacube, const char *old_variable, const char *new_variable, const char *new_type);
 
 int oph_odb_meta_retrieve_single_metadata_instance(ophidiadb * oDB, int id_metadata_instance, char **type, char **value);
 

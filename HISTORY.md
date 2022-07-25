@@ -3,6 +3,7 @@
 
 ### Fixed:
 
+- Update the datatype of missing value in case of casting using OPH_APPLY
 - Bugs in ESDM operators
 - Bug in reducing the number of write calls in OPH_EXPORTNC2 
 
