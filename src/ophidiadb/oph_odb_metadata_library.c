@@ -1180,7 +1180,11 @@ int oph_odb_meta_update_metadatakeys2(ophidiadb * oDB, int id_datacube, const ch
 	}
 
 	char selectQuery[MYSQL_BUFLEN];
-	int n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_RETRIEVE_KEY_OF_INSTANCE, new_type ? ",label" : "", id_datacube, old_variable ? old_variable : new_variable);
+	int n;
+	if (new_type)
+		n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_RETRIEVE_KEY_OF_INSTANCE2, id_datacube, old_variable ? old_variable : new_variable);
+	else
+		n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_RETRIEVE_KEY_OF_INSTANCE, id_datacube, old_variable ? old_variable : new_variable);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -1199,7 +1203,7 @@ int oph_odb_meta_update_metadatakeys2(ophidiadb * oDB, int id_datacube, const ch
 		mysql_free_result(res);
 		return OPH_ODB_SUCCESS;
 	}
-	if (mysql_field_count(oDB->conn) != (new_type ? 2 : 1)) {
+	if (mysql_field_count(oDB->conn) != (new_type ? 4 : 1)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
@@ -1213,6 +1217,7 @@ int oph_odb_meta_update_metadatakeys2(ophidiadb * oDB, int id_datacube, const ch
 	}
 
 	int i = 0, ret = OPH_ODB_SUCCESS, update_id_type_of = -1;
+	char *old_value = NULL, *old_type = NULL;
 	MYSQL_ROW row;
 	while ((row = mysql_fetch_row(res))) {
 		if (!row[0]) {
@@ -1221,8 +1226,13 @@ int oph_odb_meta_update_metadatakeys2(ophidiadb * oDB, int id_datacube, const ch
 			break;
 		}
 		id_metadata_instance[i] = (int) strtol(row[0], NULL, 10);
-		if (new_type && !strcmp(row[1], OPH_COMMON_FILLVALUE))
+		if (new_type && !strcmp(row[1], OPH_COMMON_FILLVALUE)) {
 			update_id_type_of = i;
+			if (!old_value)
+				old_value = strdup(row[2]);
+			if (!old_type)
+				old_type = strdup(row[3]);
+		}
 		i++;
 	}
 	mysql_free_result(res);
@@ -1264,9 +1274,39 @@ int oph_odb_meta_update_metadatakeys2(ophidiadb * oDB, int id_datacube, const ch
 				ret = OPH_ODB_MYSQL_ERROR;
 				break;
 			}
-			snprintf(idtype, MYSQL_BUFLEN, ",idtype=%d", new_idtype);
-
-			// TODO: the 'value' of the missing value needs to be updated
+			double _old_value;
+			if (!strcasecmp(old_type, OPH_COMMON_DOUBLE_TYPE))
+				_old_value = strtod(old_value, NULL);
+			else if (!strcasecmp(old_type, OPH_COMMON_FLOAT_TYPE))
+				_old_value = strtof(old_value, NULL);
+			else if (!strcasecmp(old_type, OPH_COMMON_LONG_TYPE))
+				_old_value = strtoll(old_value, NULL, 10);
+			else if (!strcasecmp(old_type, OPH_COMMON_INT_TYPE) || !strcasecmp(old_type, OPH_COMMON_SHORT_TYPE) || !strcasecmp(old_type, OPH_COMMON_BYTE_TYPE))
+				_old_value = strtol(old_value, NULL, 10);
+			else {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong data type '%s'\n", old_type);
+				ret = OPH_ODB_MYSQL_ERROR;
+				break;
+			}
+			char new_value[MYSQL_BUFLEN];
+			if (!strcasecmp(new_type, OPH_COMMON_DOUBLE_TYPE))
+				snprintf(new_value, MYSQL_BUFLEN, "%f", (double) _old_value);
+			else if (!strcasecmp(new_type, OPH_COMMON_FLOAT_TYPE))
+				snprintf(new_value, MYSQL_BUFLEN, "%f", (float) _old_value);
+			else if (!strcasecmp(new_type, OPH_COMMON_LONG_TYPE))
+				snprintf(new_value, MYSQL_BUFLEN, "%d", (long long) _old_value);
+			else if (!strcasecmp(new_type, OPH_COMMON_INT_TYPE))
+				snprintf(new_value, MYSQL_BUFLEN, "%d", (int) _old_value);
+			else if (!strcasecmp(new_type, OPH_COMMON_SHORT_TYPE))
+				snprintf(new_value, MYSQL_BUFLEN, "%d", (short) _old_value);
+			else if (!strcasecmp(new_type, OPH_COMMON_BYTE_TYPE))
+				snprintf(new_value, MYSQL_BUFLEN, "%d", (char) _old_value);
+			else {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong data type '%s'\n", new_type);
+				ret = OPH_ODB_MYSQL_ERROR;
+				break;
+			}
+			snprintf(idtype, MYSQL_BUFLEN, ",idtype=%d,value='%s'", new_idtype, new_value);
 		}
 
 		for (i = 0; i < nrows; ++i)
@@ -1289,6 +1329,10 @@ int oph_odb_meta_update_metadatakeys2(ophidiadb * oDB, int id_datacube, const ch
 
 	if (id_metadata_instance)
 		free(id_metadata_instance);
+	if (old_value)
+		free(old_value);
+	if (old_type)
+		free(old_type);
 
 	return ret;
 }
