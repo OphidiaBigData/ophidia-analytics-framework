@@ -8,6 +8,7 @@
 
 ### Added:
 
+- Option "export_metadata" to OPH_EXPLORECUBE [#109](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/109)
 - Reference to new ESDM-PAV kernels 'outlier' and 'stat'
 - XML description of 'oph_filter' primitive [#108](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/108)
 
