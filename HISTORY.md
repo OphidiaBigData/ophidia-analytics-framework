@@ -1,11 +1,12 @@
 
-## Next release
+## v1.7.1 - 2022-07-28
 
 ### Fixed:
 
 - Update the datatype of missing value in case of casting using OPH_APPLY
+- Bug in bootstrap
 - Bugs in ESDM operators
-- Bug in reducing the number of write calls in OPH_EXPORTNC2 
+- Bug in reducing the number of write calls in OPH_EXPORTNC2
 
 ### Added:
 
@@ -106,9 +107,9 @@
 
 ### Fixed:
 
-- Bug [#81](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/81) related to the use of a new container for the output datacube 
-- Bug [#80](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/80) in OPH_INTERCUBE operator 
-- Bug [#79](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/79) in OPH_MERGE operator 
+- Bug [#81](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/81) related to the use of a new container for the output datacube
+- Bug [#80](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/80) in OPH_INTERCUBE operator
+- Bug [#79](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/79) in OPH_MERGE operator
 - Bug [#78](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/78) when thread number is smaller than host number
 
 ### Added:
@@ -129,15 +130,15 @@
 - Data operators to return the proper code when global errors occur [#64](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/64)
 - Enforced UNIQUE constraints in several OphidiaDB tables [#61](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/61)
 - Bug [#60](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/60) related to OphidiaDB tables lock
-- Minor bugs in oph_nc_library 
+- Minor bugs in oph_nc_library
 - Bug in multi-thread operators using mysql IO server type [#56](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/56)
 
 ### Added:
 
 - New operators OPH_CONCATNC and OPH_CONCATNC2  [#75](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/75)
 - New operator OPH_RANDCUBE2 [#70](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/70)
-- XML for new primitives: oph_affine [#68](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/68),   oph_arg_max_array and oph_arg_min_array [#66](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/66) 
-- New options 'arg_max' and 'arg_min' to  OPH_INTERCUBE [#66](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/66) 
+- XML for new primitives: oph_affine [#68](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/68),   oph_arg_max_array and oph_arg_min_array [#66](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/66)
+- New options 'arg_max' and 'arg_min' to  OPH_INTERCUBE [#66](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/66)
 - New argument 'container_pid' to OPH_DELETECONTAINER [#63](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/63)
 
 ### Changed:
@@ -149,8 +150,8 @@
 - XML of predicate primitives to consider 'INDEX' value [#72](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/72)
 - Multi-threaded operators to adjust nthreads when bigger than fragments available [#71](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/71)
 - Extended OPH_RANDCUBE with a new algorithm [#70](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/70)
-- XML of OPH_SET with new arguments to specify subsets [#69](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/69) 
-- Exportnc operators to add cube identifier as suffix of file names [#67](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/67) 
+- XML of OPH_SET with new arguments to specify subsets [#69](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/69)
+- Exportnc operators to add cube identifier as suffix of file names [#67](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/67)
 - Extended OPH_CUBESIZE to estimate the size without performing the computation [#65](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/65)
 - Checks in OPH_DELETE operator to support deletion of datacubes even when I/O nodes are not available
 
@@ -183,7 +184,7 @@
 
 - several operators and roll-back procedure to support multi-threaded execution [#54](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/54)
 - OPH_DELETECONTAINER operator in order to delete also non-empty containers [#20](https://github.com/OphidiaBigData/ophidia-analytics-framework/issues/20)
-- Exportnc operators to support 'local' keyword for 'output_path' argument 
+- Exportnc operators to support 'local' keyword for 'output_path' argument
 - Extend OPH_CUBESCHEMA operator to compute number of cube elements [#52](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/52)
 - Extend OPH_EXPORTNC2 to allow also postponed metadata saving [#51](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/51)
 - Extend operators associated with of oph_normalize
@@ -278,7 +279,7 @@
 - sessionid and markerid to framework notification messages
 - Entry in table 'task' for OPH_IMPORTNC and OPH_RANDCUBE
 - 'hold_values' and 'number' parameters in OPH_MERGECUBES operator
-- Parameter 'forward' to OPH_IF 
+- Parameter 'forward' to OPH_IF
 - XML files for new primitives: oph_concat2, oph_append
 - Multi-user mode and USER_SPACE option in several operators
 - arg_max and arg_min options in reduction operators
@@ -310,8 +311,8 @@
 ### Changed:
 
 - Library name from oph_datacube2_library to oph_datacube_library
-- Default value of 'operation' argument in OPH_INTERCUBE to 'sub' 
-- Default value of 'compressed' argument in OPH_RANDCUBE to 'no' 
+- Default value of 'operation' argument in OPH_INTERCUBE to 'sub'
+- Default value of 'compressed' argument in OPH_RANDCUBE to 'no'
 - Operator name from OPH_IMPORTNC3 to OPH_IMPORTNC
 - Code indentation style
 
@@ -379,14 +380,14 @@
 ### Added:
 
 - Argument to define type of operation in OPH_CANCEL XML file
-- Argument to define subset offset in OPH_IMPORTNCx and OPH_SUBSETx operators 
+- Argument to define subset offset in OPH_IMPORTNCx and OPH_SUBSETx operators
 - XML files for: OPH_INPUT and OPH_WAIT (INDIGO-DataCloud Project)
 - Support for time-based subsetting in OPH_IMPORTNCx operators
 
 ### Changed:
 
 - OPH_STATUS_START_ERROR to OPH_STATUS_RUNNING_ERROR
-- OPH_FOR and OPH_SET input parameter "name" to "key" 
+- OPH_FOR and OPH_SET input parameter "name" to "key"
 - Constraints on bounds when selecting part of a NC variable
 
 ## v0.10.5 - 2016-08-24
@@ -415,7 +416,7 @@
 ## v0.10.1 - 2016-06-27
 
 ### Fixed:
- 
+
 - Version number in files
 
 ## v0.10.0 - 2016-06-23

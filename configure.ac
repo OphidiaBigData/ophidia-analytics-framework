@@ -17,7 +17,7 @@
 #
 
 AC_PREREQ([2.60])
-AC_INIT([ophidia-analytics-framework], [1.7.0], [ophidia-info@cmcc.it])
+AC_INIT([ophidia-analytics-framework], [1.7.1], [ophidia-info@cmcc.it])
 
 AC_CONFIG_AUX_DIR([config])
 
@@ -214,11 +214,11 @@ AC_SUBST(GSL_LIB)
 
 GSL_SUPPORT=
 AC_ARG_ENABLE(gsl_lib,
-	   [  --disable-gsl-lib	
+	   [  --disable-gsl-lib
           Disable GSL. (Enabled by default)],
-	   [ gsl_lib="no" 
+	   [ gsl_lib="no"
           AC_MSG_WARN("GSL support disabled")],
-     [ gsl_lib="yes"  
+     [ gsl_lib="yes"
           AC_MSG_NOTICE("GSL support enabled")]
 	   )
 AM_CONDITIONAL([GSL_SUPPORT], [test "x$gsl_lib" = "xyes"])
@@ -323,9 +323,9 @@ AM_CONDITIONAL([HAVE_ESDM], [test "x$have_esdm" = "xyes"])
 #Check if ESDM PAV kernels are installed
 have_esdm_pav_kernels="no"
 AC_ARG_ENABLE(esdm_pav_kernels,
-        [  --enable-esdm-pav-kernels          
+        [  --enable-esdm-pav-kernels
             Turn on ESDM PAV kernels],
-        [have_esdm_pav_kernels="yes" 
+        [have_esdm_pav_kernels="yes"
             AC_MSG_NOTICE(ESDM PAV kernels enabled)],
         [have_esdm_pav_kernels="no"
             AC_MSG_NOTICE(ESDM PAV kernels disabled)]
@@ -335,11 +335,11 @@ AM_CONDITIONAL([HAVE_ESDM_PAV_KERNELS], [test "x$have_esdm_pav_kernels" = "xyes"
 #Check if parallel netcdf is installed
 parallel_netcdf="no"
 AC_ARG_ENABLE(parallel_netcdf,
-        [  --enable-parallel-netcdf          
+        [  --enable-parallel-netcdf
             Turn on parallel NetCDF flags],
-        [parallel_netcdf="yes" 
+        [parallel_netcdf="yes"
             AC_MSG_NOTICE("Parallel NetCDF support enabled")],
-        [parallel_netcdf="no" 
+        [parallel_netcdf="no"
             AC_MSG_WARN("Parallel NetCDF support disabled")]
         )
 AM_CONDITIONAL([HAVE_PARALLEL_NETCDF], [test "x$parallel_netcdf" = "xyes"])
@@ -347,11 +347,11 @@ AM_CONDITIONAL([HAVE_PARALLEL_NETCDF], [test "x$parallel_netcdf" = "xyes"])
 #Check if parallel esdm is installed
 parallel_esdm="no"
 AC_ARG_ENABLE(parallel_esdm,
-        [  --enable-parallel-esdm          
+        [  --enable-parallel-esdm
             Turn on parallel ESDM flags],
-        [parallel_esdm="yes" 
+        [parallel_esdm="yes"
             AC_MSG_NOTICE("Parallel ESDM support enabled")],
-        [parallel_esdm="no" 
+        [parallel_esdm="no"
             AC_MSG_WARN("Parallel ESDM support disabled")]
         )
 AM_CONDITIONAL([HAVE_PARALLEL_ESDM], [test "x$parallel_esdm" = "xyes"])
@@ -428,9 +428,9 @@ fi
 #Enable stand-alone mode
 standalone_mode="no"
 AC_ARG_ENABLE(standalone_mode,
-        [  --enable-standalone-mode          
+        [  --enable-standalone-mode
             Turn on standalone mode],
-        [standalone_mode="yes" 
+        [standalone_mode="yes"
             AC_MSG_WARN("Standalone mode enabled")],
         [standalone_mode="no" ]
         )
