@@ -86,7 +86,7 @@ int cmpfunc(const void *a, const void *b)
 	return strcmp(aa, bb);
 }
 
-int openDir(const char *path, int recursive, size_t * counter, char **buffer, char *file)
+int openDir(const char *path, int recursive, size_t *counter, char **buffer, char *file)
 {
 	if (!path || !counter || !buffer)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;

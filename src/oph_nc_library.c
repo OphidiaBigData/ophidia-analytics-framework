@@ -3170,7 +3170,7 @@ int oph_nc_get_row_from_nc(int ncid, int array_length, NETCDF_var * measure, uns
 	return OPH_NC_SUCCESS;
 }
 
-int _oph_nc_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, size_t ** id, int i, int n)
+int _oph_nc_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, size_t **id, int i, int n)
 {
 	if (i < n - 1) {
 		unsigned long tmp;
@@ -3184,7 +3184,7 @@ int _oph_nc_get_dimension_id(unsigned long residual, unsigned long total, unsign
 	return 0;
 }
 
-int oph_nc_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n, size_t ** id)
+int oph_nc_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n, size_t **id)
 {
 	if (n > 0) {
 		int i;
@@ -3263,7 +3263,7 @@ int oph_nc_get_nc_type(char *in_c_type, nc_type * type_nc)
 
 }
 
-int _oph_nc_get_next_nc_id(size_t * id, unsigned int *sizemax, int i, int n)
+int _oph_nc_get_next_nc_id(size_t *id, unsigned int *sizemax, int i, int n)
 {
 	if (i < 0)
 		return 1;	// Overflow
@@ -3275,7 +3275,7 @@ int _oph_nc_get_next_nc_id(size_t * id, unsigned int *sizemax, int i, int n)
 	return 0;
 }
 
-int oph_nc_get_next_nc_id(size_t * id, unsigned int *sizemax, int n)
+int oph_nc_get_next_nc_id(size_t *id, unsigned int *sizemax, int n)
 {
 	return _oph_nc_get_next_nc_id(id, sizemax, n - 1, n);
 }
@@ -5574,7 +5574,7 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragm
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_get_dim_array_and_size(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array, size_t * size)
+int oph_nc_get_dim_array_and_size(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array, size_t *size)
 {
 	if (!ncid || !dim_type || !dim_array) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

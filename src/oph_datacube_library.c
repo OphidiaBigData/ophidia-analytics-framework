@@ -857,7 +857,6 @@ int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * s
 							long long *start_id, long long *block_size, char *param, long long param_size)
 {
 	UNUSED(start_id)
-
 	    if (!old_frag || !operation || (!param && param_size) || (param && !param_size) || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DC_NULL_PARAM;
