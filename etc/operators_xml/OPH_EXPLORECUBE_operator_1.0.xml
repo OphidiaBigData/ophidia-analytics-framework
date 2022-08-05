@@ -12,10 +12,10 @@ Dimension values are used as input filters for subsetting.
 [Parameters]
 - cube : name of the input datacube. The name must be in PID format.
 - schedule : scheduling algorithm. The only possible value is 0,
-			for a static linear block distribution of resources.	   
-- subset_dims : dimension names of the datacube used for the subsetting.
-			Multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  
-			Must be the same number of &quot;subset_filter&quot; 
+             for a static linear block distribution of resources;
+- subset_dims : dimension names of the datacube used for the subsetting;
+                multiple-value field: list of dimensions separated by &quot;|&quot; can be provided  .
+                it must be the same number of &quot;subset_filter&quot; 
 - subset_filter : enumeration of comma-separated elementary filters (1 series of filters for each dimension).
                   Multiple-value field: list of filters separated by &quot;|&quot; can be provided; it must be the same number of &quot;subset_dims&quot;
                   In case &quot;subset_type&quot; is &quot;index&quot; a filter can be expressed as
@@ -37,23 +37,25 @@ Dimension values are used as input filters for subsetting.
                   -- yyyy-mm-dd hh:mm:ss
                   In this case, interval bounds must be separated with &quot;_&quot;.
                   Refer to a season using the corresponding code: DJF for winter, MAM for spring, JJA for summer or SON for autumn.
-- subset_type : if set to &quot;index&quot; (default), the subset_filter is considered on dimension index. 
-                With &quot;coord&quot;, filter is considered on dimension values.
+- subset_type : if set to &quot;index&quot; (default), the subset_filter is considered on dimension index;
+                with &quot;coord&quot;, filter is considered on dimension values.
 - time_filter : enable filters using dates for time dimensions; enabled by default.
 - limit_filter : optional filter on the maximum number of rows.
-- show_id : if &quot;no&quot; (default), it won't show fragment row ID.
-			With &quot;yes&quot;, it will also show the fragment row ID.
-- show_index : if &quot;no&quot; (default), it won't show dimension ids.
-			With &quot;yes&quot;, it will also show the dimension id next to the value.
-- show_time : if &quot;no&quot; (default), the values of time dimension are shown as numbers.
-			With &quot;yes&quot;, the values are converted as a string with date and time.
+- show_id : if &quot;no&quot; (default), it won't show fragment row ID;
+            with &quot;yes&quot;, it will also show the fragment row ID.
+- show_index : if &quot;no&quot; (default), it won't show dimension ids;
+               with &quot;yes&quot;, it will also show the dimension id next to the value.
+- show_time : if &quot;no&quot; (default), the values of time dimension are shown as numbers;
+              with &quot;yes&quot;, the values are converted as a string with date and time.
 - level : with 1 (default) only measure values are shown, if it is set to &quot;2&quot; the dimension values are also returned.
 - output_path : absolute path of the JSON Response. By default JSON Response is saved in core environment.
-- output_name : filename of the JSON Response. The default value is the PID of the input datacube.
-                File is saved provided that &quot;output_path&quot; is set.
+- output_name : filename of the JSON Response. The default value is the PID of the input datacube;
+                file is saved provided that &quot;output_path&quot; is set.
 - cdd : absolute path corresponding to the current directory on data repository.
-- base64 : if &quot;no&quot; (default), dimension values are returned as strings (with possible trucantion errors).
-			With &quot;yes&quot;, raw dimension values are returned as base64-coded strings.
+- base64 : if &quot;no&quot; (default), dimension values are returned as strings (with possible trucantion errors);
+           with &quot;yes&quot;, raw dimension values are returned as base64-coded strings.
+- export_metadata : if &quot;no&quot; (default), only the data are returned;
+			        with &quot;yes&quot;, some metadata are also returned.
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -94,11 +96,11 @@ SUBMISSION STRING: &quot;operator=oph_explorecube;cube=http://www.example.com/1/
 		<argument type="string" mandatory="no" default="default">output_name</argument>
 		<argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">base64</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">export_metadata</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
-		<argument type="string" mandatory="no" default="all" values="all|none|explorecube_data|explorecube_summary|explorecube_dimvalues">objkey_filter</argument>
-		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|explorecube_data|explorecube_summary|explorecube_dimvalues|explorecube_diminfo|explorecube_metadata">objkey_filter</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

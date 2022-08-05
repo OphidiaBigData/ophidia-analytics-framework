@@ -45,7 +45,8 @@
 #define MYSQL_QUERY_META_CHECK_VOCABULARY			"SELECT idvocabulary FROM metadatakey INNER JOIN metadatainstance ON metadatakey.idkey = metadatainstance.idkey WHERE idvocabulary IS NOT NULL AND metadatainstance.idmetadatainstance=%d;"
 #define MYSQL_QUERY_META_CHECK_VOCABULARIES			"SELECT idvocabulary FROM metadatakey INNER JOIN metadatainstance ON metadatakey.idkey = metadatainstance.idkey WHERE idvocabulary IS NOT NULL AND metadatainstance.iddatacube=%d %s;"
 #define MYSQL_QUERY_META_RETRIEVE_KEY_OF_INSTANCE		"SELECT idmetadatainstance FROM metadatainstance WHERE iddatacube = %d AND variable = '%s';"
-#define MYSQL_QUERY_META_UPDATE_KEY_OF_INSTANCE			"UPDATE metadatainstance SET variable = '%s' WHERE idmetadatainstance = %d;"
+#define MYSQL_QUERY_META_RETRIEVE_KEY_OF_INSTANCE2		"SELECT idmetadatainstance, label, value, name FROM metadatainstance INNER JOIN metadatatype ON metadatainstance.idtype = metadatatype.idtype WHERE iddatacube = %d AND variable = '%s';"
+#define MYSQL_QUERY_META_UPDATE_KEY_OF_INSTANCE			"UPDATE metadatainstance SET variable = '%s'%s WHERE idmetadatainstance = %d;"
 #define MYSQL_QUERY_META_RETRIEVE_ID_BY_NAME			"SELECT idmetadatainstance FROM metadatainstance WHERE label = '%s' AND variable = '%s' AND iddatacube = %d;"
 
 #ifdef OPH_DB_SUPPORT

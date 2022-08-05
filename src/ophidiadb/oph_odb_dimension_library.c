@@ -229,7 +229,7 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensionin
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_dimension * dim, int id_datacube)
+int oph_odb_dim_retrieve_dimension2(ophidiadb * oDB, int id_dimension, oph_odb_dimension * dim, int id_datacube, char override_hier)
 {
 	if (!oDB || !dim || !id_dimension) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -310,7 +310,7 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 	if (id_datacube) {
 
 		// Override hierarchy name!!! This should be done even in ophidiaDB, creating a new dimension with the same dimensioninstance
-		if (strcmp(hierarchy_name, OPH_COMMON_TIME_HIERARCHY)) {
+		if (override_hier && strcmp(hierarchy_name, OPH_COMMON_TIME_HIERARCHY)) {
 			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Override hierarchy name\n");
 			if (oph_odb_dim_retrieve_hierarchy_id(oDB, OPH_COMMON_TIME_HIERARCHY, &dim->id_hierarchy)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
@@ -372,6 +372,11 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 	}
 
 	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_dimension * dim, int id_datacube)
+{
+	return oph_odb_dim_retrieve_dimension2(oDB, id_dimension, dim, id_datacube, 1);
 }
 
 int oph_odb_dim_retrieve_dimension_name_from_instance_id(ophidiadb * oDB, int id_dimensioninst, char **dimension_name)
@@ -482,6 +487,67 @@ int oph_odb_dim_retrieve_grid_id(ophidiadb * oDB, char *gridname, int id_contain
 		*id_grid = (int) strtol(row[0], NULL, 10);
 
 	mysql_free_result(res);
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_dim_retrieve_grid(ophidiadb * oDB, int id_grid, oph_odb_dimension_grid * dim_grid)
+{
+	if (!oDB || !id_grid || !dim_grid) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	dim_grid->id_grid = 0;
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char query[MYSQL_BUFLEN];
+
+	int n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_DIM_RETRIEVE_GRID, id_grid);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+
+	unsigned int row_number = mysql_num_rows(res);
+	if (!row_number) {
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "No row found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_SUCCESS;
+	}
+	if (row_number > 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "More than one row found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if (mysql_field_count(oDB->conn) != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if ((row = mysql_fetch_row(res)) != NULL) {
+		memset(&(dim_grid->grid_name), 0, OPH_ODB_DIM_GRID_SIZE + 1);
+		if (row[0])
+			strncpy(dim_grid->grid_name, row[0], OPH_ODB_DIM_GRID_SIZE);
+	}
+
+	mysql_free_result(res);
+
+	dim_grid->id_grid = id_grid;
 
 	return OPH_ODB_SUCCESS;
 }

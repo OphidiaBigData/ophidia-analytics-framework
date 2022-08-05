@@ -1172,12 +1172,14 @@ int oph_odb_meta_check_for_time_dimension(ophidiadb * oDB, int id_datacube, cons
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const char *old_variable, const char *new_variable)
+int oph_odb_meta_update_metadatakeys2(ophidiadb * oDB, int id_datacube, const char *old_variable, const char *new_variable, const char *new_type)
 {
-	if (!oDB || !id_datacube || !old_variable || !new_variable) {
+	if (!oDB || !id_datacube || !new_variable) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+	if (!old_variable && !new_type)
+		return OPH_ODB_SUCCESS;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -1186,7 +1188,10 @@ int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const cha
 
 	char selectQuery[MYSQL_BUFLEN];
 	int n;
-	n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_RETRIEVE_KEY_OF_INSTANCE, id_datacube, old_variable);
+	if (new_type)
+		n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_RETRIEVE_KEY_OF_INSTANCE2, id_datacube, old_variable ? old_variable : new_variable);
+	else
+		n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_RETRIEVE_KEY_OF_INSTANCE, id_datacube, old_variable ? old_variable : new_variable);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -1205,7 +1210,7 @@ int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const cha
 		mysql_free_result(res);
 		return OPH_ODB_SUCCESS;
 	}
-	if (mysql_field_count(oDB->conn) != 1) {
+	if (mysql_field_count(oDB->conn) != (new_type ? 4 : 1)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
@@ -1218,38 +1223,128 @@ int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const cha
 		return OPH_ODB_MEMORY_ERROR;
 	}
 
-	int i = 0, ret = OPH_ODB_SUCCESS;
+	int i = 0, ret = OPH_ODB_SUCCESS, update_id_type_of = -1;
+	char *old_value = NULL, *old_type = NULL;
 	MYSQL_ROW row;
 	while ((row = mysql_fetch_row(res))) {
-		if (!row[0] || !row[1]) {
+		if (!row[0]) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Found an empty row\n");
 			ret = OPH_ODB_MYSQL_ERROR;
 			break;
 		}
 		id_metadata_instance[i] = (int) strtol(row[0], NULL, 10);
+		if (new_type && !strcmp(row[1], OPH_COMMON_FILLVALUE)) {
+			update_id_type_of = i;
+			if (!old_value)
+				old_value = strdup(row[2]);
+			if (!old_type)
+				old_type = strdup(row[3]);
+		}
 		i++;
 	}
-
 	mysql_free_result(res);
 
-	if (ret == OPH_ODB_SUCCESS) {
+	while (ret == OPH_ODB_SUCCESS) {
 
-		int j;
-		for (j = 0; j < nrows; ++j) {
+		char idtype[MYSQL_BUFLEN];
+		*idtype = 0;
+		if (update_id_type_of >= 0) {
 
-			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_KEY_OF_INSTANCE, new_variable, id_metadata_instance[j]);
+			n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_RETRIEVE_METADATATYPE_ID, new_type);
 			if (n >= MYSQL_BUFLEN) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 				ret = OPH_ODB_STR_BUFF_OVERFLOW;
-			} else if (mysql_query(oDB->conn, selectQuery)) {
+				break;
+			}
+			if (mysql_query(oDB->conn, selectQuery)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 				ret = OPH_ODB_MYSQL_ERROR;
+				break;
 			}
+			res = mysql_store_result(oDB->conn);
+			if (!mysql_num_rows(res)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "No row found by query: maybe wrong data type '%s'\n", new_type);
+				ret = OPH_ODB_MYSQL_ERROR;
+				break;
+			}
+			if (mysql_field_count(oDB->conn) != 1) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+				ret = OPH_ODB_MYSQL_ERROR;
+				break;
+			}
+			int new_idtype = 0;
+			if ((row = mysql_fetch_row(res)) && row[0])
+				new_idtype = (int) strtol(row[0], NULL, 10);
+			mysql_free_result(res);
+			if (!new_idtype) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong data type '%s'\n", new_type);
+				ret = OPH_ODB_MYSQL_ERROR;
+				break;
+			}
+			double _old_value;
+			if (!strcasecmp(old_type, OPH_COMMON_DOUBLE_TYPE))
+				_old_value = strtod(old_value, NULL);
+			else if (!strcasecmp(old_type, OPH_COMMON_FLOAT_TYPE))
+				_old_value = strtof(old_value, NULL);
+			else if (!strcasecmp(old_type, OPH_COMMON_LONG_TYPE))
+				_old_value = strtoll(old_value, NULL, 10);
+			else if (!strcasecmp(old_type, OPH_COMMON_INT_TYPE) || !strcasecmp(old_type, OPH_COMMON_SHORT_TYPE) || !strcasecmp(old_type, OPH_COMMON_BYTE_TYPE))
+				_old_value = strtol(old_value, NULL, 10);
+			else {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong data type '%s'\n", old_type);
+				ret = OPH_ODB_MYSQL_ERROR;
+				break;
+			}
+			char new_value[MYSQL_BUFLEN];
+			if (!strcasecmp(new_type, OPH_COMMON_DOUBLE_TYPE))
+				snprintf(new_value, MYSQL_BUFLEN, "%f", (double) _old_value);
+			else if (!strcasecmp(new_type, OPH_COMMON_FLOAT_TYPE))
+				snprintf(new_value, MYSQL_BUFLEN, "%f", (float) _old_value);
+			else if (!strcasecmp(new_type, OPH_COMMON_LONG_TYPE))
+				snprintf(new_value, MYSQL_BUFLEN, "%d", (long long) _old_value);
+			else if (!strcasecmp(new_type, OPH_COMMON_INT_TYPE))
+				snprintf(new_value, MYSQL_BUFLEN, "%d", (int) _old_value);
+			else if (!strcasecmp(new_type, OPH_COMMON_SHORT_TYPE))
+				snprintf(new_value, MYSQL_BUFLEN, "%d", (short) _old_value);
+			else if (!strcasecmp(new_type, OPH_COMMON_BYTE_TYPE))
+				snprintf(new_value, MYSQL_BUFLEN, "%d", (char) _old_value);
+			else {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong data type '%s'\n", new_type);
+				ret = OPH_ODB_MYSQL_ERROR;
+				break;
+			}
+			snprintf(idtype, MYSQL_BUFLEN, ",idtype=%d,value='%s'", new_idtype, new_value);
 		}
+
+		for (i = 0; i < nrows; ++i)
+			if (old_variable || (i == update_id_type_of)) {
+				n = snprintf(selectQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_KEY_OF_INSTANCE, new_variable, i == update_id_type_of ? idtype : "", id_metadata_instance[i]);
+				if (n >= MYSQL_BUFLEN) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+					ret = OPH_ODB_STR_BUFF_OVERFLOW;
+					break;
+				}
+				if (mysql_query(oDB->conn, selectQuery)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+					ret = OPH_ODB_MYSQL_ERROR;
+					break;
+				}
+			}
+
+		break;
 	}
 
 	if (id_metadata_instance)
 		free(id_metadata_instance);
+	if (old_value)
+		free(old_value);
+	if (old_type)
+		free(old_type);
 
 	return ret;
+}
+
+int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const char *old_variable, const char *new_variable)
+{
+	return oph_odb_meta_update_metadatakeys2(oDB, id_datacube, old_variable, new_variable, NULL);
 }
