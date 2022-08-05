@@ -708,7 +708,7 @@ int oph_apply_parse_query(oph_operator_struct * handle, char *data_type, const c
 			} else if (p && p->size && p->primitive[0].output_datatype) {
 				if (strcasestr(p->primitive[0].output_datatype, OPH_APPLY_COMPLEX_DATATYPE_PREFIX)) {
 					pmesg(LOG_WARNING, __FILE__, __LINE__, "Complex data types are partially supported: data will be considered as simple\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container,
+					logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container,
 						"Complex data types are partially supported: data will be considered as simple\n");
 					char new_type[strlen(p->primitive[0].output_datatype)];
 					strcpy(new_type, p->primitive[0].output_datatype + strlen(OPH_APPLY_COMPLEX_DATATYPE_PREFIX));
@@ -1140,12 +1140,16 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 
+		char *old_type = strdup(cube.measure_type);
 		if (oph_apply_parse_query(handle, cube.measure_type, MYSQL_FRAG_MEASURE, MYSQL_DIMENSION, &use_dim)) {
 			oph_odb_cube_free_datacube(&cube);
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in parsing '%s'\n", ((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation);
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_INVALID_INPUT_STRING);
+			free(old_type);
 			goto __OPH_EXIT_1;
 		}
+		char update_missing_value = strcmp(cube.measure_type, old_type);
+		free(old_type);
 		// Change the container id
 		cube.id_container = ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_output_container;
 
@@ -1154,6 +1158,9 @@ int task_init(oph_operator_struct * handle)
 		if (strncasecmp(((OPH_APPLY_operator_handle *) handle->operator_handle)->measure, OPH_COMMON_NULL_VALUE, OPH_TP_TASKLEN)) {
 			old_measure = strdup(cube.measure);
 			snprintf(cube.measure, OPH_ODB_CUBE_MEASURE_SIZE, "%s", ((OPH_APPLY_operator_handle *) handle->operator_handle)->measure);
+		} else {
+			free(((OPH_APPLY_operator_handle *) handle->operator_handle)->measure);
+			((OPH_APPLY_operator_handle *) handle->operator_handle)->measure = strdup(cube.measure);
 		}
 		// Save some parameters
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->expl_size = cube.tuplexfragment;
@@ -1450,9 +1457,10 @@ int task_init(oph_operator_struct * handle)
 			goto __OPH_EXIT_1;
 		}
 
-		if (old_measure) {
-			if (oph_odb_meta_update_metadatakeys
-			    (oDB, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_output_datacube, old_measure, ((OPH_APPLY_operator_handle *) handle->operator_handle)->measure)) {
+		if (old_measure || update_missing_value) {
+			if (oph_odb_meta_update_metadatakeys2
+			    (oDB, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_output_datacube, old_measure, ((OPH_APPLY_operator_handle *) handle->operator_handle)->measure,
+			     ((OPH_APPLY_operator_handle *) handle->operator_handle)->measure_type)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to copy metadata.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_METADATA_COPY_ERROR);
 				goto __OPH_EXIT_1;
