@@ -16,9 +16,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <rabbitmq-c/tcp_socket.h>
-#include <rabbitmq-c/amqp.h>
-#include <rabbitmq-c/framing.h>
+#include <amqp.h>
+#include <amqp_tcp_socket.h>
+#include <amqp_framing.h>
 
 #define RABBITMQ_FAILURE -1
 #define RABBITMQ_SUCCESS 1

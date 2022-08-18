@@ -30,7 +30,7 @@
 #define SINGLE_QUOTE '\''
 #define DOUBLE_QUOTE '"'
 
-pthread_mutex_t global_flag;
+extern pthread_mutex_t global_flag;
 
 int set_rabbitmq_connection(amqp_connection_state_t ** conn, amqp_channel_t channel, char *hostname, char *port, char *username, char *password, char *queue_name, amqp_bytes_t * queuename)
 {

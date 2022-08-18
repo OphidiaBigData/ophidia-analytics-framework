@@ -63,6 +63,8 @@ int worker_id = -1;
 
 int neededSize = 0;
 
+pthread_mutex_t global_flag;
+
 void release_main(int NotUsed)
 {
 	UNUSED(NotUsed);
@@ -416,6 +418,11 @@ int main(int argc, char const *const *argv)
 		}
 	}
 
+	if (pthread_mutex_init(&global_flag, NULL) != 0) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error on mutex init\n");
+		exit(0);
+	}
+
 	set_debug_level(msglevel + 10);
 	pmesg(LOG_INFO, __FILE__, __LINE__, "Selected log level %d\n", msglevel);
 
@@ -577,6 +584,9 @@ int main(int argc, char const *const *argv)
 
 		amqp_destroy_envelope(&envelope);
 	}
+
+	if (pthread_mutex_destroy(&global_flag) != 0)
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error on mutex destroy\n");
 
 	exit(0);
 }
