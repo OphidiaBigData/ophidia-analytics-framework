@@ -191,37 +191,37 @@ typedef struct _oph_ioserver_query oph_ioserver_query;
 //****************Plugin Interface******************//
 
 //Initialize storage server plugin
-int (*_SERVER_setup) (oph_ioserver_handler * handle);
+extern int (*_SERVER_setup)(oph_ioserver_handler * handle);
 
 //Connect to storage server
-int (*_SERVER_connect) (oph_ioserver_handler * handle, oph_ioserver_params * conn_params, void **connection);
+extern int (*_SERVER_connect)(oph_ioserver_handler * handle, oph_ioserver_params * conn_params, void **connection);
 
 //Set default database
-int (*_SERVER_use_db) (oph_ioserver_handler * handle, const char *db_name, void *connection);
+extern int (*_SERVER_use_db)(oph_ioserver_handler * handle, const char *db_name, void *connection);
 
 //Close connection to storage server
-int (*_SERVER_close) (oph_ioserver_handler * handle, void **connection);
+extern int (*_SERVER_close)(oph_ioserver_handler * handle, void **connection);
 
 //Finalize storage server plugin
-int (*_SERVER_cleanup) (oph_ioserver_handler * handle);
+extern int (*_SERVER_cleanup)(oph_ioserver_handler * handle);
 
 //Setup the query structure with given operation and array argument
-int (*_SERVER_setup_query) (oph_ioserver_handler * handle, void *connection, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg ** args, oph_ioserver_query ** query);
+extern int (*_SERVER_setup_query)(oph_ioserver_handler * handle, void *connection, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg ** args, oph_ioserver_query ** query);
 
 //Execute operation in storage server
-int (*_SERVER_execute_query) (oph_ioserver_handler * handle, void *connection, oph_ioserver_query * query);
+extern int (*_SERVER_execute_query)(oph_ioserver_handler * handle, void *connection, oph_ioserver_query * query);
 
 //Release resources allocated for query
-int (*_SERVER_free_query) (oph_ioserver_handler * handle, oph_ioserver_query * query);
+extern int (*_SERVER_free_query)(oph_ioserver_handler * handle, oph_ioserver_query * query);
 
 //Get result set from storage server
-int (*_SERVER_get_result) (oph_ioserver_handler * handle, void *connection, oph_ioserver_result ** result);
+extern int (*_SERVER_get_result)(oph_ioserver_handler * handle, void *connection, oph_ioserver_result ** result);
 
 //Fetch next row from the result set
-int (*_SERVER_fetch_row) (oph_ioserver_handler * handle, oph_ioserver_result * result, oph_ioserver_row ** current_row);
+extern int (*_SERVER_fetch_row)(oph_ioserver_handler * handle, oph_ioserver_result * result, oph_ioserver_row ** current_row);
 
 //Free result set in the storage server
-int (*_SERVER_free_result) (oph_ioserver_handler * handle, oph_ioserver_result * result);
+extern int (*_SERVER_free_result)(oph_ioserver_handler * handle, oph_ioserver_result * result);
 
 //*****************Internal Functions (used by data access library)***************//
 
