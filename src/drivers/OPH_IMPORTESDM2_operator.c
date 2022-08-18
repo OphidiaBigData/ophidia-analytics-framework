@@ -2017,6 +2017,7 @@ int task_init(oph_operator_struct * handle)
 			cont.id_folder = folder_id;
 			cont.operation[0] = 0;
 			cont.id_vocabulary = ((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_vocabulary;
+			cont.description[0] = 0;
 
 			if (oph_odb_fs_insert_into_container_table(oDB, &cont, &id_container_out)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update container table\n");
