@@ -632,7 +632,7 @@ AM_CONDITIONAL([DB_SUPPORT], false)
 AC_SUBST(OPH_DB_SUPPORT)
 
 if test "x$multi_node" = "xyes"; then
-PKG_CHECK_MODULES(LIBRABBITMQ, librabbitmq >= 0.10.0)
+PKG_CHECK_MODULES(LIBRABBITMQ, librabbitmq >= 0.11.0)
 AC_ARG_WITH(librabbitmq_header_path,
 		[ --with-librabbitmq-header-path=PATH Location of librabbitmq include directory],
 		[
