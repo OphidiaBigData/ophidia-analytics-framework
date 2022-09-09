@@ -199,7 +199,6 @@ int oph_af_create_job(ophidiadb * oDB, char *task_string, HASHTBL * task_tbl, in
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_ARG_MARKERID);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-
 #ifdef OPH_MYSQL_SUPPORT
 	int res, id_session;
 	if ((res = oph_odb_job_retrieve_session_id(oDB, sessionid, &id_session))) {
