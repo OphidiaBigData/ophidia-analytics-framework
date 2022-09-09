@@ -144,7 +144,6 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensionin
 		if (ll) {
 			if (strcmp(hier->hierarchy_name, OPH_COMMON_TIME_HIERARCHY))	// Override hierarchy name!!! This should be done even in ophDB, cretaing anew dimension with the same dimensioninstance
 			{
-				pmesg(LOG_DEBUG, __FILE__, __LINE__, "Override hierarchy name\n");
 				if (oph_odb_dim_retrieve_hierarchy_id(oDB, OPH_COMMON_TIME_HIERARCHY, &hier->id_hierarchy)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 					return OPH_ODB_MYSQL_ERROR;
@@ -311,7 +310,6 @@ int oph_odb_dim_retrieve_dimension2(ophidiadb * oDB, int id_dimension, oph_odb_d
 
 		// Override hierarchy name!!! This should be done even in ophidiaDB, creating a new dimension with the same dimensioninstance
 		if (override_hier && strcmp(hierarchy_name, OPH_COMMON_TIME_HIERARCHY)) {
-			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Override hierarchy name\n");
 			if (oph_odb_dim_retrieve_hierarchy_id(oDB, OPH_COMMON_TIME_HIERARCHY, &dim->id_hierarchy)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 				return OPH_ODB_MYSQL_ERROR;
@@ -466,7 +464,6 @@ int oph_odb_dim_retrieve_grid_id(ophidiadb * oDB, char *gridname, int id_contain
 
 	unsigned int row_number = mysql_num_rows(res);
 	if (!row_number) {
-		pmesg(LOG_DEBUG, __FILE__, __LINE__, "No row found by query\n");
 		*id_grid = 0;
 		mysql_free_result(res);
 		return OPH_ODB_SUCCESS;
@@ -523,7 +520,6 @@ int oph_odb_dim_retrieve_grid(ophidiadb * oDB, int id_grid, oph_odb_dimension_gr
 
 	unsigned int row_number = mysql_num_rows(res);
 	if (!row_number) {
-		pmesg(LOG_DEBUG, __FILE__, __LINE__, "No row found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_SUCCESS;
 	}
@@ -1505,7 +1501,6 @@ int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb * oDB, i
 	if (ll)			// Metadata support to get correct values of time metadata
 	{
 		// Override hierarchy name!!! This should be done even in ophDB, creating anew dimension with the same dimensioninstance
-		pmesg(LOG_DEBUG, __FILE__, __LINE__, "Override hierarchy name\n");
 		if (oph_odb_dim_retrieve_hierarchy_id(oDB, OPH_COMMON_TIME_HIERARCHY, &hier->id_hierarchy)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 			return OPH_ODB_MYSQL_ERROR;

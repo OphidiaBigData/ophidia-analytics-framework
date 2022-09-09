@@ -200,8 +200,6 @@ int oph_af_create_job(ophidiadb * oDB, char *task_string, HASHTBL * task_tbl, in
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 
-	pmesg(LOG_DEBUG, __FILE__, __LINE__, "'%s' '%s'\n", sessionid, markerid);
-
 #ifdef OPH_MYSQL_SUPPORT
 	int res, id_session;
 	if ((res = oph_odb_job_retrieve_session_id(oDB, sessionid, &id_session))) {
