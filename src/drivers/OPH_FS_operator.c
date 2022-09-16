@@ -954,9 +954,18 @@ int task_execute(oph_operator_struct * handle)
 								sub_to_dims[i] = j;
 							}
 
+							char is_index[1 + number_of_sub_dims];
+							if (number_of_sub_dims) {
+								for (i = 0; i < number_of_sub_types; ++i)
+									is_index[i] = strncmp(sub_types[i], OPH_FS_SUBSET_COORD, OPH_TP_TASKLEN);
+								for (; i < number_of_sub_dims; ++i)
+									is_index[i] = number_of_sub_types == 1 ? is_index[0] : 1;
+							}
+							is_index[number_of_sub_dims] = 0;
+
 							//Check the sub_filters strings
 							for (i = 0; i < number_of_sub_dims; i++) {
-								if (((OPH_FS_operator_handle *) handle->operator_handle)->time_filter && (tf < 0)) {
+								if (((OPH_FS_operator_handle *) handle->operator_handle)->time_filter && !is_index[i] && (tf < 0)) {
 									// Let us assume that OPH_IN_PARAM_CALENDAR is only for time dimensions
 									if ((esdm_dataset_open(container, dims_name[sub_to_dims[i]], ESDM_MODE_FLAG_READ, &dim_dataset))) {
 										pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: type cannot be converted\n");
@@ -1073,15 +1082,6 @@ int task_execute(oph_operator_struct * handle)
 
 								pmesg(LOG_DEBUG, __FILE__, __LINE__, "Time subset converted to '%s'\n", sub_filters[tf]);
 							}
-
-							char is_index[1 + number_of_sub_dims];
-							if (number_of_sub_dims) {
-								for (i = 0; i < number_of_sub_types; ++i)
-									is_index[i] = strncmp(sub_types[i], OPH_FS_SUBSET_COORD, OPH_TP_TASKLEN);
-								for (; i < number_of_sub_dims; ++i)
-									is_index[i] = number_of_sub_types == 1 ? is_index[0] : 1;
-							}
-							is_index[number_of_sub_dims] = 0;
 
 							int64_t const *size = esdm_dataset_get_actual_size(dataset);
 							size_t dims_length[ndims];

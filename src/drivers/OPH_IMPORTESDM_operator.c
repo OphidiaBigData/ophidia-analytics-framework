@@ -1001,9 +1001,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	int natts = 0, tf = -1;	// Id of time filter
 	smd_attr_t *md, *current;
 	for (i = 0; i < number_of_sub_dims; i++) {
-		if (is_index[i])
-			continue;
-		if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->time_filter && (tf < 0)) {
+		if (((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->time_filter && !is_index[i] && (tf < 0)) {
 			// Let us assume that OPH_IN_PARAM_CALENDAR is only for time dimensions
 			if (!measure->dim_dataset[sub_to_dims[i]])
 				if ((esdm_dataset_open(measure->container, measure->dims_name[sub_to_dims[i]], ESDM_MODE_FLAG_READ, measure->dim_dataset + sub_to_dims[i]))) {

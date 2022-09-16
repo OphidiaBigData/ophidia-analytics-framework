@@ -1183,9 +1183,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	//Check the sub_filters strings
 	int tf = -1;		// Id of time filter
 	for (i = 0; i < number_of_sub_dims; i++) {
-		if (is_index[i])
-			continue;
-		if (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->time_filter) {
+		if (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->time_filter && !is_index[i]) {
 			if (sub_to_dims[i] == td) {
 				tf = i;
 				break;
