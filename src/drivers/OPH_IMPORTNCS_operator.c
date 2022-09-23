@@ -299,7 +299,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				pointer++;
 			if (pointer) {
 				char tmp[OPH_COMMON_BUFFER_LEN];
-				if (*pointer != '/') {
+				if (tmp_base_path && (*pointer == '~')) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong input parameter '%s': ~ is not permitted\n", OPH_IN_PARAM_SRC_FILE_PATH);
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SRC_FILE_PATH);
+					free(tmp_base_path);
+					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+				}
+				if ((*pointer != '/') && (*pointer != '~')) {
 					if (!cdd) {
 						cdd = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
 						if (!cdd) {
