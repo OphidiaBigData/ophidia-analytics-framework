@@ -4218,7 +4218,6 @@ int task_init(oph_operator_struct * handle)
 	//Broadcast to all other processes the result
 	MPI_Bcast(id_datacube, 7, MPI_INT, 0, MPI_COMM_WORLD);
 #endif
-
 	//Check if sequential part has been completed
 	if (!id_datacube[0] || !id_datacube[1]) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");

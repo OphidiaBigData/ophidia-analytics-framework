@@ -3736,7 +3736,7 @@ int task_init(oph_operator_struct * handle)
 #ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the result
 	MPI_Bcast(id_datacube, 7, MPI_INT, 0, MPI_COMM_WORLD);
-
+#endif
 	//Check if sequential part has been completed
 	if (!id_datacube[0] || !id_datacube[1]) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
@@ -3744,7 +3744,6 @@ int task_init(oph_operator_struct * handle)
 		((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->execute_error = 1;
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-#endif
 	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_output_datacube = id_datacube[0];
 	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->id_input_container = id_datacube[1];
 	((OPH_IMPORTESDM2_operator_handle *) handle->operator_handle)->host_number = id_datacube[2];

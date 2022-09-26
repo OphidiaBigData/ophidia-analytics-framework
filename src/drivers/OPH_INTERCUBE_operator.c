@@ -344,18 +344,16 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 #ifndef MULTI_NODE_SUPPORT
 	//Broadcast to all other processes the fragment relative index        
 	MPI_Bcast(id_datacube_in, 4, MPI_INT, 0, MPI_COMM_WORLD);
-
+#endif
 	//Check if sequential part has been completed
 	for (i = 0; i < 2; ++i) {
 		if (id_datacube_in[i] == 0) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[2], OPH_LOG_OPH_INTERCUBE_NO_INPUT_DATACUBE, datacube_in[i]);
-
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 		((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->id_input_datacube[i] = id_datacube_in[i];
 	}
-#endif
 
 	if (id_datacube_in[2] == 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
