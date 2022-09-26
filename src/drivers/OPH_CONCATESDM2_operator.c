@@ -1711,7 +1711,7 @@ int task_init(oph_operator_struct * handle)
 #ifndef MULTI_NODE_SUPPORT
 	//MPI_Barrier(MPI_COMM_WORLD);
 	MPI_Bcast(stream, stream_max_size, MPI_CHAR, 0, MPI_COMM_WORLD);
-
+#endif
 	//Check if sequential part has been completed
 	if (*stream == 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Master procedure or broadcasting has failed\n");
@@ -1721,7 +1721,6 @@ int task_init(oph_operator_struct * handle)
 			free(measure_stream);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
-#endif
 
 	if (handle->proc_rank) {
 		if (!(((OPH_CONCATESDM2_operator_handle *) handle->operator_handle)->fragment_ids = (char *) strndup(id_string[0], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE))) {
