@@ -18,7 +18,7 @@ while those considered as implicit dimensions must not overlap with those in the
                   be performed.
 - schedule : scheduling algorithm. The only possible value is 0,
              for a static linear block distribution of resources.
-- src_path : path of the ESDM container.
+- src_path : path of the ESDM container; in case of more input containers, the sources will be loaded by different tasks (massive operation).
 - input : alias for &quot;src_path&quot;; the value of this argument will be overwritten.
 - cdd : absolute path corresponding to the current directory on data repository.
 - grid: optional argument used to identify the grid of dimensions to be used (if the grid already exists) 
@@ -99,7 +99,7 @@ SUBMISSION STRING: &quot;operator=oph_concatesdm2;src_path=esdm://path/to/datase
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="" multivalue="yes">src_path</argument>
-		<argument type="string" mandatory="no" default="">input</argument>
+		<argument type="string" mandatory="no" default="" multivalue="yes">input</argument>
 		<argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="-">grid</argument>
 		<argument type="real" mandatory="no" default="-">dim_offset</argument>
