@@ -3,7 +3,8 @@
 
 ### Fixed:
 
-- Fix bug in setting container description of OPH_IMPORTESDM, OPH_IMPORTESDM2 and OPH_IMPORTFITS
+- Bug in setting output of OPH_FS
+- Bug in setting container description of OPH_IMPORTESDM, OPH_IMPORTESDM2 and OPH_IMPORTFITS
 
 ## v1.7.1 - 2022-07-28
 
