@@ -954,7 +954,7 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 		if (is_index) {
 			//Input filter is index
 			for (ii = 0; ii < (int) strlen(curfilter); ii++) {
-				if (!isdigit(curfilter[ii])) {
+				if (!isdigit(curfilter[ii]) && (curfilter[ii] != '.') && (curfilter[ii] != '-')) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter (only integer values allowed)\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 					return OPH_ESDM_ERROR;
