@@ -1414,12 +1414,8 @@ int task_init(oph_operator_struct * handle)
 				}
 				if (oph_dim_compare_dimension(db_dimension, label_dimension_table_name, dim[l].dimension_type, dim_inst[l].size, dim_array, dim_inst[l].fk_id_dimension_label, &match)
 				    || match) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Input dimension '%s' doesn't match with specified container/grid dimensions\n", dim[l].dimension_name);
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_INPUT_DIMENSION_MISMATCH, dim[l].dimension_name);
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					free(dim_array);
-					goto __OPH_EXIT_1;
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Input dimension '%s' doesn't match with specified container/grid dimensions\n", dim[l].dimension_name);
+					logging(LOG_WARNING, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CONCATESDM_INPUT_DIMENSION_MISMATCH, dim[l].dimension_name);
 				}
 
 				free(dim_array);
