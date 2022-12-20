@@ -968,7 +968,7 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 		if (is_index) {
 			//Input filter is index
 			for (ii = 0; ii < (int) strlen(curfilter); ii++) {
-				if (!isdigit(curfilter[ii])) {
+				if (!isdigit(curfilter[ii]) && (curfilter[ii] != '.') && (curfilter[ii] != '-')) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter (only integer values allowed)\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 					return OPH_ESDM_ERROR;
@@ -1071,7 +1071,7 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 			//Input filter is a value
 			for (ii = 0; ii < (int) strlen(startfilter); ii++) {
 				if (ii == 0) {
-					if (!isdigit(startfilter[ii]) && (startfilter[ii] != '-')) {
+					if (!isdigit(startfilter[ii]) && (startfilter[ii] != '.') && (startfilter[ii] != '-')) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 						return OPH_ESDM_ERROR;
@@ -1086,7 +1086,7 @@ int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int
 			}
 			for (ii = 0; ii < (int) strlen(endfilter); ii++) {
 				if (ii == 0) {
-					if (!isdigit(endfilter[ii]) && (endfilter[ii] != '-')) {
+					if (!isdigit(endfilter[ii]) && (endfilter[ii] != '.') && (endfilter[ii] != '-')) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_INVALID_INPUT_STRING);
 						return OPH_ESDM_ERROR;
