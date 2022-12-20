@@ -428,7 +428,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	size = strlen(path);
-	if (size && (path[size - 1] == '/'))
+	if ((size > 1) && (path[size - 1] == '/'))
 		path[--size] = 0;
 
 	//Create dir if not exist

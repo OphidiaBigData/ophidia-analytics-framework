@@ -559,9 +559,9 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		sprintf(tmp, "%s%s", base_src_path ? base_src_path : "", cdd);
 		if (!strlen(tmp))
 			strcpy(tmp, home);
-		else if ((size = strlen(tmp))) {
-			if (tmp[--size] == '/')
-				tmp[size] = 0;
+		else if ((size = strlen(tmp)) > 1) {
+			if (tmp[size - 1] == '/')
+				tmp[--size] = 0;
 		}
 		if (!((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user)
 			((OPH_CDO_operator_handle *) handle->operator_handle)->output_path_user = strdup(cdd);
