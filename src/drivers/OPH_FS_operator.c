@@ -998,7 +998,7 @@ int task_execute(oph_operator_struct * handle)
 
 						if (jj && tbuffer) {
 
-							unsigned int nn = strlen(abs_path) > 1, ni;
+							unsigned int nn = strlen(abs_path) > 1, ni = nn;
 							char *filename = real_path;
 							while ((filename = strchr(filename, '/'))) {
 								nn++;
@@ -1020,7 +1020,7 @@ int task_execute(oph_operator_struct * handle)
 								}
 #endif
 								if (((OPH_FS_operator_handle *) handle->operator_handle)->realpath) {
-									if (nn)
+									if (ni)
 										for (iii = 0; filename && *filename && (*filename == abs_path[iii]); iii++, filename++);
 								} else
 									for (ni = 0; ni < nn; ++ni)
