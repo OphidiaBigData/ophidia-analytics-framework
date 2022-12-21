@@ -1301,7 +1301,7 @@ int oph_odb_meta_update_metadatakeys2(ophidiadb * oDB, int id_datacube, const ch
 			else if (!strcasecmp(new_type, OPH_COMMON_FLOAT_TYPE))
 				snprintf(new_value, MYSQL_BUFLEN, "%f", (float) _old_value);
 			else if (!strcasecmp(new_type, OPH_COMMON_LONG_TYPE))
-				snprintf(new_value, MYSQL_BUFLEN, "%d", (long long) _old_value);
+				snprintf(new_value, MYSQL_BUFLEN, "%lld", (long long) _old_value);
 			else if (!strcasecmp(new_type, OPH_COMMON_INT_TYPE))
 				snprintf(new_value, MYSQL_BUFLEN, "%d", (int) _old_value);
 			else if (!strcasecmp(new_type, OPH_COMMON_SHORT_TYPE))
