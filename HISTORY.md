@@ -1,5 +1,5 @@
 
-## Next release
+## v1.7.2 - 2022-12-22
 
 ### Fixed:
 
