@@ -32,17 +32,17 @@
 pthread_mutex_t libtool_lock = PTHREAD_MUTEX_INITIALIZER;
 extern int msglevel;
 
-int (*_SERVER_setup)(oph_ioserver_handler * handle);
-int (*_SERVER_connect)(oph_ioserver_handler * handle, oph_ioserver_params * conn_params, void **connection);
-int (*_SERVER_use_db)(oph_ioserver_handler * handle, const char *db_name, void *connection);
-int (*_SERVER_close)(oph_ioserver_handler * handle, void **connection);
-int (*_SERVER_cleanup)(oph_ioserver_handler * handle);
-int (*_SERVER_setup_query)(oph_ioserver_handler * handle, void *connection, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg ** args, oph_ioserver_query ** query);
-int (*_SERVER_execute_query)(oph_ioserver_handler * handle, void *connection, oph_ioserver_query * query);
-int (*_SERVER_free_query)(oph_ioserver_handler * handle, oph_ioserver_query * query);
-int (*_SERVER_get_result)(oph_ioserver_handler * handle, void *connection, oph_ioserver_result ** result);
-int (*_SERVER_fetch_row)(oph_ioserver_handler * handle, oph_ioserver_result * result, oph_ioserver_row ** current_row);
-int (*_SERVER_free_result)(oph_ioserver_handler * handle, oph_ioserver_result * result);
+int (*_SERVER_setup) (oph_ioserver_handler * handle);
+int (*_SERVER_connect) (oph_ioserver_handler * handle, oph_ioserver_params * conn_params, void **connection);
+int (*_SERVER_use_db) (oph_ioserver_handler * handle, const char *db_name, void *connection);
+int (*_SERVER_close) (oph_ioserver_handler * handle, void **connection);
+int (*_SERVER_cleanup) (oph_ioserver_handler * handle);
+int (*_SERVER_setup_query) (oph_ioserver_handler * handle, void *connection, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg ** args, oph_ioserver_query ** query);
+int (*_SERVER_execute_query) (oph_ioserver_handler * handle, void *connection, oph_ioserver_query * query);
+int (*_SERVER_free_query) (oph_ioserver_handler * handle, oph_ioserver_query * query);
+int (*_SERVER_get_result) (oph_ioserver_handler * handle, void *connection, oph_ioserver_result ** result);
+int (*_SERVER_fetch_row) (oph_ioserver_handler * handle, oph_ioserver_result * result, oph_ioserver_row ** current_row);
+int (*_SERVER_free_result) (oph_ioserver_handler * handle, oph_ioserver_result * result);
 
 static int oph_find_server_plugin(const char *server_type, char **dyn_lib);
 
