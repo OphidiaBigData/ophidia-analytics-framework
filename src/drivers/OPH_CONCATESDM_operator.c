@@ -481,6 +481,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	int is_index = strncmp(value, OPH_CONCATESDM_SUBSET_COORD, OPH_TP_TASKLEN);
+	if (is_index)
+		((OPH_CONCATESDM_operator_handle *) handle->operator_handle)->time_filter = 0;
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SUBSET_DIMENSIONS);
 	if (!value) {

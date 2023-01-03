@@ -21,6 +21,10 @@
 
 /* MySQL headers */
 #include <mysql.h>
+#if MYSQL_VERSION_ID >= 80001 && MYSQL_VERSION_ID != 80002
+typedef bool my_bool;
+#endif
+
 #include "oph_ioserver_library.h"
 
 #define MYSQL_IO_ERROR -1
