@@ -3,6 +3,7 @@
 
 ### Fixed:
 
+- Bug in handling unlimited dimensions with OPH_IMPORTNCS
 - Bug in setting output of OPH_FS
 - Bug in setting container description of OPH_IMPORTESDM, OPH_IMPORTESDM2 and OPH_IMPORTFITS
 
