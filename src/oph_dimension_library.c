@@ -38,8 +38,10 @@
 #include <ctype.h>
 #ifdef OPH_MYSQL_SUPPORT
 #include <mysql.h>
+#if MYSQL_VERSION_ID >= 80001 && MYSQL_VERSION_ID != 80002
+typedef bool my_bool;
 #endif
-
+#endif
 #include "debug.h"
 
 #define OPH_DIM_DATA_FORMAT1 "%Y-%m-%dT%H:%M:%S"
