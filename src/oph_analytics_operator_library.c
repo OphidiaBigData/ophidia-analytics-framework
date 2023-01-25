@@ -57,7 +57,7 @@ int oph_operator_struct_initializer(int size, int myrank, oph_operator_struct * 
 
 int oph_set_env(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
-	int (*_oph_set_env) (HASHTBL * task_tbl, oph_operator_struct * handle);
+	int (*_oph_set_env)(HASHTBL * task_tbl, oph_operator_struct * handle);
 
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -105,7 +105,7 @@ int oph_set_env(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 int oph_init_task(oph_operator_struct * handle)
 {
-	int (*_oph_init_task) (oph_operator_struct * handle);
+	int (*_oph_init_task)(oph_operator_struct * handle);
 
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -125,7 +125,7 @@ int oph_init_task(oph_operator_struct * handle)
 
 int oph_distribute_task(oph_operator_struct * handle)
 {
-	int (*_oph_distribute_task) (oph_operator_struct * handle);
+	int (*_oph_distribute_task)(oph_operator_struct * handle);
 
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -145,7 +145,7 @@ int oph_distribute_task(oph_operator_struct * handle)
 
 int oph_execute_task(oph_operator_struct * handle)
 {
-	int (*_oph_execute_task) (oph_operator_struct * handle);
+	int (*_oph_execute_task)(oph_operator_struct * handle);
 
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -167,7 +167,7 @@ int oph_execute_task(oph_operator_struct * handle)
 
 int oph_reduce_task(oph_operator_struct * handle)
 {
-	int (*_oph_reduce_task) (oph_operator_struct * handle);
+	int (*_oph_reduce_task)(oph_operator_struct * handle);
 
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -187,7 +187,7 @@ int oph_reduce_task(oph_operator_struct * handle)
 
 int oph_destroy_task(oph_operator_struct * handle)
 {
-	int (*_oph_destroy_task) (oph_operator_struct * handle);
+	int (*_oph_destroy_task)(oph_operator_struct * handle);
 
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -207,7 +207,7 @@ int oph_destroy_task(oph_operator_struct * handle)
 
 int oph_unset_env(oph_operator_struct * handle)
 {
-	int (*_oph_unset_env) (oph_operator_struct * handle);
+	int (*_oph_unset_env)(oph_operator_struct * handle);
 
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
