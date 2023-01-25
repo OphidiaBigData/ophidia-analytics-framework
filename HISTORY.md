@@ -1,10 +1,15 @@
 
-## Next release
+## v1.7.2 - 2023-01-20
 
 ### Fixed:
 
+- Bug in handling unlimited dimensions with OPH_IMPORTNCS
 - Bug in setting output of OPH_FS
 - Bug in setting container description of OPH_IMPORTESDM, OPH_IMPORTESDM2 and OPH_IMPORTFITS
+
+### Added:
+
+- Support for CentOS 9 [#110](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/110)
 
 ## v1.7.1 - 2022-07-28
 

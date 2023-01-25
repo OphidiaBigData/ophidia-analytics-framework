@@ -939,6 +939,12 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 	}
+	if ((measure->dim_unlim < 0) && (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num > 1)) {
+		measure->dim_unlim = 0;
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "No unlimited dimension found: the dimension '%s' will be considered for aggregation\n", measure->dims_name[0]);
+		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "No unlimited dimension found: the dimension '%s' will be considered for aggregation\n", measure->dims_name[0]);
+	}
+
 
 	int level = 1;
 	int m2u[measure->ndims ? measure->ndims : 1];

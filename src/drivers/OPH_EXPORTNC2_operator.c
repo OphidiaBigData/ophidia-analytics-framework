@@ -51,7 +51,7 @@
 #define OPH_EXPORTNC_LOCAL_OUTPUT_PATH "local"
 #define OPH_EXPORTNC_POSTPONE "postpone"
 
-int _oph_get_next_count(size_t *id, unsigned int *sizemax, int i, int n)
+int _oph_get_next_count(size_t * id, unsigned int *sizemax, int i, int n)
 {
 	if (i < 0)
 		return 1;	// Overflow
@@ -63,7 +63,7 @@ int _oph_get_next_count(size_t *id, unsigned int *sizemax, int i, int n)
 	return 0;
 }
 
-int oph_get_next_count(size_t *id, unsigned int *sizemax, int n)
+int oph_get_next_count(size_t * id, unsigned int *sizemax, int n)
 {
 	return _oph_get_next_count(id, sizemax, n - 1, n);
 }
