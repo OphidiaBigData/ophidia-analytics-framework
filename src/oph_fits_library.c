@@ -1539,7 +1539,7 @@ int oph_fits_get_fits_type(char *in_c_type, int *type_fits)
 
 }
 
-int _oph_fits_get_next_fits_id(size_t *id, unsigned int *sizemax, int i, int n)
+int _oph_fits_get_next_fits_id(size_t * id, unsigned int *sizemax, int i, int n)
 {
 	if (i < 0)
 		return 1;	// Overflow
@@ -1551,7 +1551,7 @@ int _oph_fits_get_next_fits_id(size_t *id, unsigned int *sizemax, int i, int n)
 	return 0;
 }
 
-int oph_fits_get_next_fits_id(size_t *id, unsigned int *sizemax, int n)
+int oph_fits_get_next_fits_id(size_t * id, unsigned int *sizemax, int n)
 {
 	return _oph_fits_get_next_fits_id(id, sizemax, n - 1, n);
 }

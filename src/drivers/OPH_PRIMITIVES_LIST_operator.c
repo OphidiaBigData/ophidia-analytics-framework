@@ -396,8 +396,7 @@ int task_execute(oph_operator_struct * handle)
 	}
 	//For each ROW
 	char tmp_ret[OPH_COMMON_BUFFER_LEN] = { '\0' }, tmp_type[OPH_COMMON_BUFFER_LEN] = {
-		'\0'
-	};
+	'\0'};
 	int n;
 	int count_limit = 0;
 	while (curr_row->row) {

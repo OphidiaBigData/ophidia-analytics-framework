@@ -111,7 +111,7 @@ typedef struct _NETCDF_var NETCDF_var;
  * \param n Number of dimensions
  * \return 0 if successfull
  */
-int _oph_nc_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, size_t **id, int i, int n);
+int _oph_nc_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, size_t ** id, int i, int n);
 
 /**
  * \brief Function used to compute dimension ID from tuple ID
@@ -121,7 +121,7 @@ int _oph_nc_get_dimension_id(unsigned long residual, unsigned long total, unsign
  * \param id Output to be filled with the dimension ids related to tuple ID
  * \return 0 if successfull
  */
-int oph_nc_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n, size_t **id);
+int oph_nc_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n, size_t ** id);
 
 /**
  * \brief Populate a fragment with nc data
@@ -215,7 +215,7 @@ int oph_nc_get_nc_type(char *in_c_type, nc_type * type_nc);
  * \param n Number of dimensions
  * \return 0 if successfull, 1 otherwise
  */
-int _oph_nc_get_next_nc_id(size_t *id, unsigned int *sizemax, int i, int n);
+int _oph_nc_get_next_nc_id(size_t * id, unsigned int *sizemax, int i, int n);
 
 /**
  * \brief Function used to compute the subsequent nc dimension id
@@ -224,7 +224,7 @@ int _oph_nc_get_next_nc_id(size_t *id, unsigned int *sizemax, int i, int n);
  * \param n Number of dimensions
  * \return 0 if successfull, 1 otherwise
  */
-int oph_nc_get_next_nc_id(size_t *id, unsigned int *sizemax, int n);
+int oph_nc_get_next_nc_id(size_t * id, unsigned int *sizemax, int n);
 
 /**
  * \brief Append nc data to a fragment
@@ -289,7 +289,7 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragm
  * \return 0 if successfull
  */
 int oph_nc_get_dim_array(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array);
-int oph_nc_get_dim_array_and_size(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array, size_t *size);
+int oph_nc_get_dim_array_and_size(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array, size_t * size);
 
 /**
  * \brief Retrieve a dimension coordinated variable data from a NetCDF file allowing subsetting
