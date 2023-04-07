@@ -1180,12 +1180,13 @@ int oph_odb_fs_retrieve_container_from_container_name(ophidiadb * oDB, int folde
 
 int oph_odb_fs_retrieve_container_name_from_container(ophidiadb * oDB, int id_container, char **container_name, int *folder_id)
 {
-	if (!oDB || !id_container || !container_name || !folder_id) {
+	if (!oDB || !id_container || !container_name) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
 	*container_name = 0;
-	*folder_id = 0;
+	if (folder_id)
+		*folder_id = 0;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
@@ -1224,7 +1225,7 @@ int oph_odb_fs_retrieve_container_name_from_container(ophidiadb * oDB, int id_co
 	if ((row = mysql_fetch_row(res))) {
 		if (row[0])
 			*container_name = strdup(row[0]);
-		if (row[1])
+		if (row[1] && folder_id)
 			*folder_id = (int) strtol(row[1], NULL, 10);
 	}
 

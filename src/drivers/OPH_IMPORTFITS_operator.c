@@ -876,6 +876,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 
+		// Check for container PID
+		int id_container_out = 0;
+		char *value2 = strrchr(container_name, '/');
+		if (value2)
+			id_container_out = (int) strtol(1 + value2, NULL, 10);
+		if (id_container_out && !oph_odb_fs_retrieve_container_name_from_container(oDB, id_container_out, &container_name, NULL)) {
+			free(((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->container_input);
+			((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->container_input = container_name;
+		}
 	}
 	//Alloc space for subsetting parameters
 	if (!(measure->dims_start_index = (int *) malloc(measure->ndims * sizeof(int)))) {

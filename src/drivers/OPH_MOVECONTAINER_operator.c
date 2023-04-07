@@ -175,6 +175,16 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 
+	int id_container_in = 0;
+	char *value2 = strrchr(((OPH_MOVECONTAINER_operator_handle *) handle->operator_handle)->container_input, '/'), *container_name = NULL;
+	if (value2)
+		id_container_in = (int) strtol(1 + value2, NULL, 10);
+	if (id_container_in && !oph_odb_fs_retrieve_container_name_from_container(oDB, id_container_in, &container_name, NULL)) {
+		free(((OPH_MOVECONTAINER_operator_handle *) handle->operator_handle)->container_input);
+		((OPH_MOVECONTAINER_operator_handle *) handle->operator_handle)->container_input = container_name;
+		((OPH_MOVECONTAINER_operator_handle *) handle->operator_handle)->id_input_container = id_container_in;
+	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 

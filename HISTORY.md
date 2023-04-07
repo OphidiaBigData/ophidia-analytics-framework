@@ -1,4 +1,10 @@
 
+## Next release
+
+### Added:
+
+- Detection of container pid in argument "container_name" of some operators
+
 ## v1.7.2 - 2023-01-20
 
 ### Fixed:

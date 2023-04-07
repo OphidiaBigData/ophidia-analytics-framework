@@ -94,7 +94,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->policy = 0;
 
 	//3 - Fill struct with the correct data
-	char *container_name, *value;
+	char *value;
 
 	// retrieve objkeys
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OBJKEY_FILTER);
@@ -122,14 +122,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	container_name = (!hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT) ? "NO-CONTAINER" : hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT));
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CONTAINER_INPUT);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CONTAINER_INPUT);
-
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_CONTAINER_INPUT);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	char *container_name = value;
 	if (!(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->container_input = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "container output name");
@@ -479,7 +478,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		imp_size_prod *= ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->dimension_size[i];
 	((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->array_length = imp_size_prod;
 
-
 	if (handle->proc_rank == 0) {
 		//Only master process has to initialize and open connection to management OphidiaDB
 		ophidiadb *oDB = &((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->oDB;
@@ -564,13 +562,22 @@ int task_init(oph_operator_struct * handle)
 
 	if (handle->proc_rank == 0) {
 
+		// Check for container PID
+		int id_container_out = 0;
+		char *value2 = strrchr(container_name, '/');
+		if (value2)
+			id_container_out = (int) strtol(1 + value2, NULL, 10);
+		if (id_container_out && !oph_odb_fs_retrieve_container_name_from_container(oDB, id_container_out, &container_name, NULL)) {
+			free(((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->container_input);
+			((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->container_input = container_name;
+		}
+
 		int i, j;
 		char id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
 
 		long long kk;
 		long long *index_array = NULL;
 		int container_exists = 0;
-		int id_container_out = 0;
 		int last_insertd_id = 0;
 		int num_of_input_dim =
 		    ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->number_of_exp_dimensions + ((OPH_RANDCUBE2_operator_handle *) handle->operator_handle)->number_of_imp_dimensions;

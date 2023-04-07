@@ -78,7 +78,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
 
 	//3 - Fill struct with the correct data
-	char *container_name, *value;
+	char *value;
 
 	// retrieve objkeys
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OBJKEY_FILTER);
@@ -116,13 +116,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->nthread = (unsigned int) strtol(value, NULL, 10);
 
-	container_name = (!hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT) ? "NO-CONTAINER" : hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT));
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT);
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CONTAINER_INPUT);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETECONTAINER_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CONTAINER_INPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETECONTAINER_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_CONTAINER_INPUT);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	char *container_name = value;
 	if (!(((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->container_input = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETECONTAINER_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "container output name");
@@ -189,6 +189,16 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_DELETECONTAINER_OPHIDIADB_CONNECTION_ERROR, container_name);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+
+	int id_container_in = 0;
+	char *value2 = strrchr(container_name, '/');
+	if (value2)
+		id_container_in = (int) strtol(1 + value2, NULL, 10);
+	if (id_container_in && !oph_odb_fs_retrieve_container_name_from_container(oDB, id_container_in, &container_name, NULL)) {
+		free(((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->container_input);
+		((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->container_input = container_name;
+		((OPH_DELETECONTAINER_operator_handle *) handle->operator_handle)->id_input_container = id_container_in;
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
