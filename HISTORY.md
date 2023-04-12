@@ -1,9 +1,13 @@
 
-## Next release
+## v1.7.3 - 2023-04-12
 
 ### Added:
 
 - Detection of container pid in argument "container_name" of some operators
+
+### Changed:
+
+- Configuration of the credentials to access IO servers is not mandatory to be set into Ophidia DB
 
 ## v1.7.2 - 2023-01-20
 
