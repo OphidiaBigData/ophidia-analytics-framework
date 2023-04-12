@@ -875,7 +875,6 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_OPHIDIADB_CONNECTION_ERROR, container_name);
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
-
 		// Check for container PID
 		int id_container_out = 0;
 		char *value2 = strrchr(container_name, '/');
