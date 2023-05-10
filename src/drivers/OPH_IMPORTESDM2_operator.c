@@ -3376,16 +3376,8 @@ int task_init(oph_operator_struct * handle)
 				}
 			}
 
-			if (!found_fill_value) {
-
-				char fill_value[measure->dspace->type->size];
-				if (esdm_dataset_get_fill_value(measure->dataset, fill_value)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get the missing value\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTESDM_NC_NATTS_ERROR);
-					hashtbl_destroy(key_tbl);
-					hashtbl_destroy(required_tbl);
-					goto __OPH_EXIT_1;
-				}
+			char fill_value[measure->dspace->type->size];
+			if (!found_fill_value && !esdm_dataset_get_fill_value(measure->dataset, fill_value)) {
 				// Check for attribute type
 				xtype = measure->dspace->type->type;
 				is_string = (xtype == SMD_TYPE_CHAR) || (xtype == SMD_TYPE_STRING) || (xtype == SMD_TYPE_ARRAY);
