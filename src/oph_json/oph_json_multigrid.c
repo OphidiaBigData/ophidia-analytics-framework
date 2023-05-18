@@ -38,7 +38,7 @@ extern int msglevel;
 /***********OPH_JSON_OBJ_MULTIGRID INTERNAL FUNCTIONS***********/
 
 // Free a multigrid object contents
-int oph_json_free_multigrid(oph_json_obj_multigrid * obj)
+int oph_json_free_multigrid(oph_json_obj_multigrid *obj)
 {
 	if (obj) {
 		if (obj->colfieldtypes) {
@@ -171,7 +171,7 @@ int oph_json_free_multigrid(oph_json_obj_multigrid * obj)
 
 /***********OPH_JSON_OBJ_MULTIGRID FUNCTIONS***********/
 
-int oph_json_add_multigrid(oph_json * json, const char *objkey, const char *title, const char *description, char **rowkeys, int rowkeys_num, char **rowfieldtypes, int rowfieldtypes_num,
+int oph_json_add_multigrid(oph_json *json, const char *objkey, const char *title, const char *description, char **rowkeys, int rowkeys_num, char **rowfieldtypes, int rowfieldtypes_num,
 			   char **colkeys, int colkeys_num, char **colfieldtypes, int colfieldtypes_num, char ***colvalues, int colvalues_num, const char *measurename, const char *measuretype)
 {
 	if (!json || !objkey || !title || !rowkeys || rowkeys_num < 1 || !rowfieldtypes || rowfieldtypes_num < 1 || !colkeys || colkeys_num < 1 || !colfieldtypes || colfieldtypes_num < 1 || !colvalues
@@ -844,7 +844,7 @@ int oph_json_add_multigrid(oph_json * json, const char *objkey, const char *titl
 	return OPH_JSON_SUCCESS;
 }
 
-int oph_json_add_multigrid_row(oph_json * json, const char *objkey, char **rowvalues, char **measurevalues)
+int oph_json_add_multigrid_row(oph_json *json, const char *objkey, char **rowvalues, char **measurevalues)
 {
 	if (!json || !objkey || !rowvalues || !measurevalues) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");

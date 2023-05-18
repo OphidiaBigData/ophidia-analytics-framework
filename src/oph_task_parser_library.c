@@ -424,7 +424,7 @@ int oph_tp_validate_xml_document(xmlDocPtr document)
 	return OPH_TP_TASK_PARSER_SUCCESS;
 }
 
-int oph_tp_match_value_in_xml_value_list(const char *value, const xmlChar * values)
+int oph_tp_match_value_in_xml_value_list(const char *value, const xmlChar *values)
 {
 	if (!value || !values)
 		return OPH_TP_TASK_PARSER_ERROR;
@@ -648,7 +648,7 @@ int oph_tp_end_xml_parser()
 	return 0;
 }
 
-int oph_tp_task_params_parser(char *task_string, HASHTBL ** hashtbl)
+int oph_tp_task_params_parser(char *task_string, HASHTBL **hashtbl)
 {
 	if (!task_string || !hashtbl)
 		return OPH_TP_TASK_PARSER_ERROR;

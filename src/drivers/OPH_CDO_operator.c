@@ -64,7 +64,7 @@ typedef struct _oph_cdo_output {
 	struct _oph_cdo_output *next;
 } oph_cdo_output;
 
-void oph_cdo_output_append(oph_cdo_output ** head, oph_cdo_output ** tail, const char *name)
+void oph_cdo_output_append(oph_cdo_output **head, oph_cdo_output **tail, const char *name)
 {
 	if (!head || !tail || !name)
 		return;
@@ -78,7 +78,7 @@ void oph_cdo_output_append(oph_cdo_output ** head, oph_cdo_output ** tail, const
 	*tail = item;
 }
 
-void oph_cdo_output_free(oph_cdo_output * list)
+void oph_cdo_output_free(oph_cdo_output *list)
 {
 	oph_cdo_output *next;
 	while (list) {
@@ -102,7 +102,7 @@ int _is_ended(char pointer)
 	return 0;
 }
 
-int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
+int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -739,7 +739,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_execute(oph_operator_struct * handle)
+int task_execute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handler\n");
@@ -1018,7 +1018,7 @@ int task_execute(oph_operator_struct * handle)
 	return error ? OPH_ANALYTICS_OPERATOR_COMMAND_ERROR : OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_reduce(oph_operator_struct * handle)
+int task_reduce(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handler\n");
@@ -1028,7 +1028,7 @@ int task_reduce(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_unset(oph_operator_struct * handle)
+int env_unset(oph_operator_struct *handle)
 {
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)

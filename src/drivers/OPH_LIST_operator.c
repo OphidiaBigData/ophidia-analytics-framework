@@ -38,7 +38,7 @@
 #include "oph_log_error_codes.h"
 
 
-int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
+int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -299,7 +299,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_init(oph_operator_struct * handle)
+int task_init(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -310,7 +310,7 @@ int task_init(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_distribute(oph_operator_struct * handle)
+int task_distribute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -321,8 +321,8 @@ int task_distribute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, char *container_name, char *tmp_uri, char *path, int recursive_search, short int first_time,
-				     oph_json * oper_json, char **objkeys, int objkeys_num, const char *sessionid)
+int _oph_list_recursive_list_folders(ophidiadb *oDB, int level, int folder_id, char *container_name, char *tmp_uri, char *path, int recursive_search, short int first_time,
+				     oph_json *oper_json, char **objkeys, int objkeys_num, const char *sessionid)
 {
 	if (!oDB || !folder_id || !path || !oper_json) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null parameter\n");
@@ -699,8 +699,8 @@ int _oph_list_recursive_list_folders(ophidiadb * oDB, int level, int folder_id, 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, char *container_name, char *tmp_uri, char *path, int recursive_search, short int first_time, char *measure,
-					      int oper_level, char *src, oph_json * oper_json, char **objkeys, int objkeys_num, const char *sessionid)
+int _oph_list_recursive_filtered_list_folders(ophidiadb *oDB, int folder_id, char *container_name, char *tmp_uri, char *path, int recursive_search, short int first_time, char *measure,
+					      int oper_level, char *src, oph_json *oper_json, char **objkeys, int objkeys_num, const char *sessionid)
 {
 	if (!oDB || !folder_id || !path || !oper_json) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null parameter\n");
@@ -1419,7 +1419,7 @@ int _oph_list_recursive_filtered_list_folders(ophidiadb * oDB, int folder_id, ch
 }
 
 
-int task_execute(oph_operator_struct * handle)
+int task_execute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -4069,7 +4069,7 @@ int task_execute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_reduce(oph_operator_struct * handle)
+int task_reduce(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -4080,7 +4080,7 @@ int task_reduce(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_destroy(oph_operator_struct * handle)
+int task_destroy(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -4091,7 +4091,7 @@ int task_destroy(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_unset(oph_operator_struct * handle)
+int env_unset(oph_operator_struct *handle)
 {
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)

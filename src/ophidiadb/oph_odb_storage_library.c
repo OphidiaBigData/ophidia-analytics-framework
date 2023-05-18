@@ -33,7 +33,7 @@
 
 extern int msglevel;
 
-int oph_odb_stge_init_fragment_list(oph_odb_fragment_list * frag)
+int oph_odb_stge_init_fragment_list(oph_odb_fragment_list *frag)
 {
 	if (!frag) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -45,7 +45,7 @@ int oph_odb_stge_init_fragment_list(oph_odb_fragment_list * frag)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_init_fragment_list2(oph_odb_fragment_list2 * frag)
+int oph_odb_stge_init_fragment_list2(oph_odb_fragment_list2 *frag)
 {
 	if (!frag) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -57,7 +57,7 @@ int oph_odb_stge_init_fragment_list2(oph_odb_fragment_list2 * frag)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_free_fragment_list(oph_odb_fragment_list * frag)
+int oph_odb_stge_free_fragment_list(oph_odb_fragment_list *frag)
 {
 	if (!frag) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -72,7 +72,7 @@ int oph_odb_stge_free_fragment_list(oph_odb_fragment_list * frag)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_free_fragment_list2(oph_odb_fragment_list2 * frag)
+int oph_odb_stge_free_fragment_list2(oph_odb_fragment_list2 *frag)
 {
 	if (!frag) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -87,7 +87,7 @@ int oph_odb_stge_free_fragment_list2(oph_odb_fragment_list2 * frag)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_init_db_list(oph_odb_db_instance_list * db)
+int oph_odb_stge_init_db_list(oph_odb_db_instance_list *db)
 {
 	if (!db) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -99,7 +99,7 @@ int oph_odb_stge_init_db_list(oph_odb_db_instance_list * db)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_free_db_list(oph_odb_db_instance_list * db)
+int oph_odb_stge_free_db_list(oph_odb_db_instance_list *db)
 {
 	if (!db) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -114,7 +114,7 @@ int oph_odb_stge_free_db_list(oph_odb_db_instance_list * db)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_init_dbms_list(oph_odb_dbms_instance_list * dbms)
+int oph_odb_stge_init_dbms_list(oph_odb_dbms_instance_list *dbms)
 {
 	if (!dbms) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -126,7 +126,7 @@ int oph_odb_stge_init_dbms_list(oph_odb_dbms_instance_list * dbms)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_free_dbms_list(oph_odb_dbms_instance_list * dbms)
+int oph_odb_stge_free_dbms_list(oph_odb_dbms_instance_list *dbms)
 {
 	if (!dbms) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -141,7 +141,7 @@ int oph_odb_stge_free_dbms_list(oph_odb_dbms_instance_list * dbms)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_dbmsinstance(ophidiadb * oDB, int id_dbms, oph_odb_dbms_instance * dbms)
+int oph_odb_stge_retrieve_dbmsinstance(ophidiadb *oDB, int id_dbms, oph_odb_dbms_instance *dbms)
 {
 	if (!oDB || !dbms || !id_dbms) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -199,7 +199,7 @@ int oph_odb_stge_retrieve_dbmsinstance(ophidiadb * oDB, int id_dbms, oph_odb_dbm
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_first_dbmsinstance(ophidiadb * oDB, oph_odb_dbms_instance * dbms)
+int oph_odb_stge_retrieve_first_dbmsinstance(ophidiadb *oDB, oph_odb_dbms_instance *dbms)
 {
 	if (!oDB || !dbms) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -251,7 +251,7 @@ int oph_odb_stge_retrieve_first_dbmsinstance(ophidiadb * oDB, oph_odb_dbms_insta
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_fetch_db_connection_string(ophidiadb * oDB, int datacube_id, int start_position, int row_number, oph_odb_db_instance_list * dbs, oph_odb_dbms_instance_list * dbmss)
+int oph_odb_stge_fetch_db_connection_string(ophidiadb *oDB, int datacube_id, int start_position, int row_number, oph_odb_db_instance_list *dbs, oph_odb_dbms_instance_list *dbmss)
 {
 	if (!oDB || !dbs || !dbmss || !datacube_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -361,7 +361,7 @@ int oph_odb_stge_fetch_db_connection_string(ophidiadb * oDB, int datacube_id, in
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_fetch_dbms_connection_string(ophidiadb * oDB, int id_datacube, int start_position, int row_number, oph_odb_dbms_instance_list * dbmss)
+int oph_odb_stge_fetch_dbms_connection_string(ophidiadb *oDB, int id_datacube, int start_position, int row_number, oph_odb_dbms_instance_list *dbmss)
 {
 	if (!oDB || !dbmss || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -435,8 +435,8 @@ int oph_odb_stge_fetch_dbms_connection_string(ophidiadb * oDB, int id_datacube, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_fetch_fragment_connection_string(ophidiadb * oDB, int id_datacube, char *fragrelindexset, oph_odb_fragment_list * frags, oph_odb_db_instance_list * dbs,
-						  oph_odb_dbms_instance_list * dbmss)
+int oph_odb_stge_fetch_fragment_connection_string(ophidiadb *oDB, int id_datacube, char *fragrelindexset, oph_odb_fragment_list *frags, oph_odb_db_instance_list *dbs,
+						  oph_odb_dbms_instance_list *dbmss)
 {
 	if (!oDB || !frags || !dbs || !dbmss || !id_datacube || !fragrelindexset) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -649,8 +649,8 @@ int oph_odb_stge_fetch_fragment_connection_string(ophidiadb * oDB, int id_datacu
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_fetch_fragment_connection_string_for_deletion(ophidiadb * oDB, int id_datacube, char *fragrelindexset, oph_odb_fragment_list * frags, oph_odb_db_instance_list * dbs,
-							       oph_odb_dbms_instance_list * dbmss)
+int oph_odb_stge_fetch_fragment_connection_string_for_deletion(ophidiadb *oDB, int id_datacube, char *fragrelindexset, oph_odb_fragment_list *frags, oph_odb_db_instance_list *dbs,
+							       oph_odb_dbms_instance_list *dbmss)
 {
 	if (!oDB || !frags || !dbs || !dbmss || !id_datacube || !fragrelindexset) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -863,7 +863,7 @@ int oph_odb_stge_fetch_fragment_connection_string_for_deletion(ophidiadb * oDB, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, int id_host_partition, int *host_number)
+int oph_odb_stge_count_number_of_host_dbms(ophidiadb *oDB, char *ioserver_type, int id_host_partition, int *host_number)
 {
 	if (!oDB || !host_number || !id_host_partition || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -910,7 +910,7 @@ int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type,
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_type, int id_user, int *id_host_partition, int host_number)
+int oph_odb_stge_get_default_host_partition_fs(ophidiadb *oDB, char *ioserver_type, int id_user, int *id_host_partition, int host_number)
 {
 	if (!oDB || !host_number || !id_host_partition || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -956,7 +956,7 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_t
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, int id_host_partition, int host_number, int *exist)
+int oph_odb_stge_check_number_of_host_dbms(ophidiadb *oDB, char *ioserver_type, int id_host_partition, int host_number, int *exist)
 {
 	if (!oDB || !host_number || !id_host_partition || !exist || !ioserver_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1001,7 +1001,7 @@ int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type,
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_fragment_list(ophidiadb * oDB, int id_datacube, oph_odb_fragment_list * frags)
+int oph_odb_stge_retrieve_fragment_list(ophidiadb *oDB, int id_datacube, oph_odb_fragment_list *frags)
 {
 	if (!oDB || !frags || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1067,7 +1067,7 @@ int oph_odb_stge_retrieve_fragment_list(ophidiadb * oDB, int id_datacube, oph_od
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_fragment_list2(ophidiadb * oDB, int id_datacube, oph_odb_fragment_list2 * frags)
+int oph_odb_stge_retrieve_fragment_list2(ophidiadb *oDB, int id_datacube, oph_odb_fragment_list2 *frags)
 {
 	if (!oDB || !frags || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1136,7 +1136,7 @@ int oph_odb_stge_retrieve_fragment_list2(ophidiadb * oDB, int id_datacube, oph_o
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_find_datacube_fragmentation_list(ophidiadb * oDB, int level, int id_datacube, char *hostname, char *db_name, int id_dbms, MYSQL_RES ** information_list)
+int oph_odb_stge_find_datacube_fragmentation_list(ophidiadb *oDB, int level, int id_datacube, char *hostname, char *db_name, int id_dbms, MYSQL_RES **information_list)
 {
 	(*information_list) = NULL;
 
@@ -1240,7 +1240,7 @@ int oph_odb_stge_find_datacube_fragmentation_list(ophidiadb * oDB, int level, in
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *hostname, char *partition_name, char *ioserver_type, char *host_status, MYSQL_RES ** information_list, int id_user)
+int oph_odb_stge_find_instances_information(ophidiadb *oDB, int level, char *hostname, char *partition_name, char *ioserver_type, char *host_status, MYSQL_RES **information_list, int id_user)
 {
 	(*information_list) = NULL;
 
@@ -1332,7 +1332,7 @@ int oph_odb_stge_find_instances_information(ophidiadb * oDB, int level, char *ho
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_find_fragment_name_list(ophidiadb * oDB, int id_datacube, int id_dbms, int start_position, int row_number, MYSQL_RES ** fragment_list)
+int oph_odb_stge_find_fragment_name_list(ophidiadb *oDB, int id_datacube, int id_dbms, int start_position, int row_number, MYSQL_RES **fragment_list)
 {
 	(*fragment_list) = NULL;
 
@@ -1368,7 +1368,7 @@ int oph_odb_stge_find_fragment_name_list(ophidiadb * oDB, int id_datacube, int i
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_fragment(ophidiadb * oDB, char *frag_name, oph_odb_fragment * frag)
+int oph_odb_stge_retrieve_fragment(ophidiadb *oDB, char *frag_name, oph_odb_fragment *frag)
 {
 	if (!oDB || !frag || !frag_name) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1425,7 +1425,7 @@ int oph_odb_stge_retrieve_fragment(ophidiadb * oDB, char *frag_name, oph_odb_fra
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_dbinstance(ophidiadb * oDB, int id_dbinstance, oph_odb_db_instance * db)
+int oph_odb_stge_retrieve_dbinstance(ophidiadb *oDB, int id_dbinstance, oph_odb_db_instance *db)
 {
 	if (!oDB || !db || !id_dbinstance) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1493,7 +1493,7 @@ int oph_odb_stge_retrieve_dbinstance(ophidiadb * oDB, int id_dbinstance, oph_odb
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_delete_from_dbinstance_table(ophidiadb * oDB, int id_db)
+int oph_odb_stge_delete_from_dbinstance_table(ophidiadb *oDB, int id_db)
 {
 	if (!oDB || !id_db) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1521,7 +1521,7 @@ int oph_odb_stge_delete_from_dbinstance_table(ophidiadb * oDB, int id_db)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_insert_into_fragment_table(ophidiadb * oDB, oph_odb_fragment * fragment)
+int oph_odb_stge_insert_into_fragment_table(ophidiadb *oDB, oph_odb_fragment *fragment)
 {
 	if (!oDB || !fragment) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1549,7 +1549,7 @@ int oph_odb_stge_insert_into_fragment_table(ophidiadb * oDB, oph_odb_fragment * 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_insert_into_fragment_table2(ophidiadb * oDB, oph_odb_fragment * fragment, int frag_num)
+int oph_odb_stge_insert_into_fragment_table2(ophidiadb *oDB, oph_odb_fragment *fragment, int frag_num)
 {
 	if (!oDB || !fragment || !frag_num) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1591,7 +1591,7 @@ int oph_odb_stge_insert_into_fragment_table2(ophidiadb * oDB, oph_odb_fragment *
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_container_id_from_fragment_name(ophidiadb * oDB, char *frag_name, int *id_container)
+int oph_odb_stge_retrieve_container_id_from_fragment_name(ophidiadb *oDB, char *frag_name, int *id_container)
 {
 	if (!oDB || !frag_name || !id_container) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1637,7 +1637,7 @@ int oph_odb_stge_retrieve_container_id_from_fragment_name(ophidiadb * oDB, char 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_fragment_id(ophidiadb * oDB, char *frag_name, int *id_fragment)
+int oph_odb_stge_retrieve_fragment_id(ophidiadb *oDB, char *frag_name, int *id_fragment)
 {
 	if (!oDB || !frag_name || !id_fragment) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1682,7 +1682,7 @@ int oph_odb_stge_retrieve_fragment_id(ophidiadb * oDB, char *frag_name, int *id_
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_dbinstance_id(ophidiadb * oDB, char *db_name, int *id_db)
+int oph_odb_stge_retrieve_dbinstance_id(ophidiadb *oDB, char *db_name, int *id_db)
 {
 	if (!oDB || !db_name || !id_db) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1728,7 +1728,7 @@ int oph_odb_stge_retrieve_dbinstance_id(ophidiadb * oDB, char *db_name, int *id_
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int id_datacube, int **id_dbs, int *size)
+int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb *oDB, int id_datacube, int **id_dbs, int *size)
 {
 	if (!oDB || !id_datacube || !id_dbs || !size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1780,7 +1780,7 @@ int oph_odb_stge_retrieve_dbinstance_id_list_from_datacube(ophidiadb * oDB, int 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_type, int id_host_partition, char hidden, int host_number, int id_datacube, int **id_dbmss, int **id_hosts, char policy)
+int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb *oDB, char *ioserver_type, int id_host_partition, char hidden, int host_number, int id_datacube, int **id_dbmss, int **id_hosts, char policy)
 {
 	if (!oDB || !host_number || !id_datacube || !id_dbmss || !ioserver_type || !id_host_partition || !id_hosts) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1995,7 +1995,7 @@ int oph_odb_stge_retrieve_dbmsinstance_id_list(ophidiadb * oDB, char *ioserver_t
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_get_number_of_datacube_for_db(ophidiadb * oDB, int id_db, int *datacubexdb_number)
+int oph_odb_stge_get_number_of_datacube_for_db(ophidiadb *oDB, int id_db, int *datacubexdb_number)
 {
 	if (!oDB || !id_db || !datacubexdb_number) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2036,7 +2036,7 @@ int oph_odb_stge_get_number_of_datacube_for_db(ophidiadb * oDB, int id_db, int *
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_get_number_of_datacube_for_dbs(ophidiadb * oDB, int db_num, int *id_dbs, int *datacubexdb_number)
+int oph_odb_stge_get_number_of_datacube_for_dbs(ophidiadb *oDB, int db_num, int *id_dbs, int *datacubexdb_number)
 {
 	if (!oDB || !id_dbs || !datacubexdb_number) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2100,7 +2100,7 @@ int oph_odb_stge_get_number_of_datacube_for_dbs(ophidiadb * oDB, int db_num, int
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_insert_into_dbinstance_partitioned_tables(ophidiadb * oDB, oph_odb_db_instance * db, int id_datacube)
+int oph_odb_stge_insert_into_dbinstance_partitioned_tables(ophidiadb *oDB, oph_odb_db_instance *db, int id_datacube)
 {
 	if (!oDB || !db) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2170,7 +2170,7 @@ int oph_odb_stge_insert_into_dbinstance_partitioned_tables(ophidiadb * oDB, oph_
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_user, char reserved, int hosts, int *id_hostpartition)
+int oph_odb_stge_add_hostpartition(ophidiadb *oDB, const char *name, int id_user, char reserved, int hosts, int *id_hostpartition)
 {
 	if (!oDB || !name || !id_user || !id_hostpartition) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2210,7 +2210,7 @@ int oph_odb_stge_add_hostpartition(ophidiadb * oDB, const char *name, int id_use
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_add_all_hosts_to_partition(ophidiadb * oDB, int id_hostpartition, char reserved)
+int oph_odb_stge_add_all_hosts_to_partition(ophidiadb *oDB, int id_hostpartition, char reserved)
 {
 	if (!oDB || !id_hostpartition) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2268,7 +2268,7 @@ int oph_odb_stge_add_all_hosts_to_partition(ophidiadb * oDB, int id_hostpartitio
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_add_some_hosts_to_partition(ophidiadb * oDB, int id_hostpartition, int host_number, char reserved, int *num_rows)
+int oph_odb_stge_add_some_hosts_to_partition(ophidiadb *oDB, int id_hostpartition, int host_number, char reserved, int *num_rows)
 {
 	if (!oDB || !id_hostpartition || !host_number) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2331,7 +2331,7 @@ int oph_odb_stge_add_some_hosts_to_partition(ophidiadb * oDB, int id_hostpartiti
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_add_host_to_partition(ophidiadb * oDB, int id_hostpartition, int id_host, char reserved)
+int oph_odb_stge_add_host_to_partition(ophidiadb *oDB, int id_hostpartition, int id_host, char reserved)
 {
 	if (!oDB || !id_hostpartition || !id_host) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2395,7 +2395,7 @@ int oph_odb_stge_add_host_to_partition(ophidiadb * oDB, int id_hostpartition, in
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_delete_hostpartition(ophidiadb * oDB, const char *name, int id_user, char reserved, int *num_rows)
+int oph_odb_stge_delete_hostpartition(ophidiadb *oDB, const char *name, int id_user, char reserved, int *num_rows)
 {
 	if (!oDB || !name || !id_user) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2427,7 +2427,7 @@ int oph_odb_stge_delete_hostpartition(ophidiadb * oDB, const char *name, int id_
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_delete_hostpartition_by_id(ophidiadb * oDB, int id_hostpartition)
+int oph_odb_stge_delete_hostpartition_by_id(ophidiadb *oDB, int id_hostpartition)
 {
 	if (!oDB || !id_hostpartition) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2454,7 +2454,7 @@ int oph_odb_stge_delete_hostpartition_by_id(ophidiadb * oDB, int id_hostpartitio
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_stge_get_host_partition_by_name(ophidiadb * oDB, char *host_partition, int id_user, int *id_host_partition, char *hidden)
+int oph_odb_stge_get_host_partition_by_name(ophidiadb *oDB, char *host_partition, int id_user, int *id_host_partition, char *hidden)
 {
 	if (!oDB || !host_partition || !id_user || !id_host_partition || !hidden) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

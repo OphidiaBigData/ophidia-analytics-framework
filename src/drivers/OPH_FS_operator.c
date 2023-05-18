@@ -86,7 +86,7 @@ int cmpfunc(const void *a, const void *b)
 	return strcmp(aa, bb);
 }
 
-int openDir(const char *path, int recursive, size_t * counter, char **buffer, char *file)
+int openDir(const char *path, int recursive, size_t *counter, char **buffer, char *file)
 {
 	if (!path || !counter || !buffer)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -177,7 +177,7 @@ int openDir(const char *path, int recursive, size_t * counter, char **buffer, ch
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int write_json(char (*filenames)[OPH_COMMON_BUFFER_LEN], int jj, oph_json * operator_json, int num_fields)
+int write_json(char (*filenames)[OPH_COMMON_BUFFER_LEN], int jj, oph_json *operator_json, int num_fields)
 {
 	int ii, iii, jjj, result = OPH_ANALYTICS_OPERATOR_SUCCESS;
 	char **jsonvalues = NULL;
@@ -239,7 +239,7 @@ int write_json(char (*filenames)[OPH_COMMON_BUFFER_LEN], int jj, oph_json * oper
 	return result;
 }
 
-int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
+int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -545,7 +545,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_init(oph_operator_struct * handle)
+int task_init(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -556,7 +556,7 @@ int task_init(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_distribute(oph_operator_struct * handle)
+int task_distribute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -567,7 +567,7 @@ int task_distribute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_execute(oph_operator_struct * handle)
+int task_execute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1332,7 +1332,7 @@ int task_execute(oph_operator_struct * handle)
 	return result;
 }
 
-int task_reduce(oph_operator_struct * handle)
+int task_reduce(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1343,7 +1343,7 @@ int task_reduce(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_destroy(oph_operator_struct * handle)
+int task_destroy(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1354,7 +1354,7 @@ int task_destroy(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_unset(oph_operator_struct * handle)
+int env_unset(oph_operator_struct *handle)
 {
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)
