@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_interlace2" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Interlaces multiple input measures into a single output measure. It requires at least two measures, otherwise it returns an error. For each measure an input type should be specified. Given two input arrays A(a1, a2, ..., an) and B(b1, b2, ..., bn), the resulting array will be C(a1, b1, a2, b2, ..., an, bn).
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are enumerations of:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- binary count list : binary array of long long counters representing the sizes of each block to be taken from each input measure to build the result. By default, each size is set to 1 for each measure.
+- measure : input measure. This argument can be specified multiple times.
+
+[Return type]
+Binary-array.
+
+[Examples]
+Interlace three measures using the count list count_list.
+oph_interlace2(&apos;OPH_DOUBLE|OPH_FLOAT|OPH_INT&apos;,&apos;OPH_DOUBLE,OPH_FLOAT,OPH_INT&apos;,count_list,a.measure,b.measure,c.measure)</abstract>
+        <author>CMCC Foundation</author>
+        <category>Core Array</category>
+        <creationdate>23/05/2023</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+        <operation type="reduce"/>
+    </info>
+    <args>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'" multivalue="yes">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes" default="NULL">binary count list</argument>
+		<multi-argument type="binary-array" mandatory="yes" mintimes="1">measure</multi-argument>
+    </args>
+</primitive>

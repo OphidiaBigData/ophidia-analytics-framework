@@ -13,6 +13,8 @@ data cubes can be merged. A new implicit dimension will be created.
 [Parameters]
 - cubes : name of the datacubes to merge. The names must be in PID format.
           Multiple-value field: list of cubes separated by &quot;|&quot; can be provided.
+          The first cube could include an implicit dimension named as the argument &quot;dim&quot; and, in this case,
+          no new dimension is created, but it is simply extended with new values.
 - schedule : scheduling algorithm. The only possible value is 0, for a static linear block distribution of resources.
 - container : name of the container to be used to store the output cube; by default it is the input container.
 - dim : name of the new dimension to be created; by default a unique random name is chosen.

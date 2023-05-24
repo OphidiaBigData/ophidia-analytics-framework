@@ -33,8 +33,8 @@
 #define OPH_MERGECUBES2_QUERY_OPERATION OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_OPERATION, OPH_IOSERVER_SQ_OP_CREATE_FRAG_SELECT) OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FRAG, "%s")
 
 #define OPH_MERGECUBES2_QUERY_SELECT  OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_FIELD, "%s")
-#define OPH_MERGECUBES2_ARG_SELECT			"frag%d.%s|oph_interlace('%s','%s',%s)"
-#define OPH_MERGECUBES2_ARG_SELECT_CMPR			"frag%d.%s|oph_compress('','',oph_interlace('%s','%s',%s))"
+#define OPH_MERGECUBES2_ARG_SELECT			"frag%d.%s|oph_interlace2('%s','%s',?,%s)"
+#define OPH_MERGECUBES2_ARG_SELECT_CMPR			"frag%d.%s|oph_compress('','',oph_interlace2('%s','%s',?,%s))"
 #define OPH_MERGECUBES2_ARG_SELECT_TYPE			"oph_%s"
 #define OPH_MERGECUBES2_ARG_SELECT_PART			"frag%d.%s"
 #define OPH_MERGECUBES2_ARG_SELECT_PART_CMPR		"oph_uncompress('','',frag%d.%s)"
@@ -105,6 +105,7 @@ struct _OPH_MERGECUBES2_operator_handle {
 	char *dim_type;
 	int number;
 	short int execute_error;
+	int ensamble_size;
 };
 typedef struct _OPH_MERGECUBES2_operator_handle OPH_MERGECUBES2_operator_handle;
 
