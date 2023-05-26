@@ -1517,7 +1517,7 @@ int task_execute(oph_operator_struct *handle)
 				}
 				//MERGECUBES2 fragment
 				if (oph_dc_create_fragment_from_query_with_param
-				    (((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->server, &(frags[0].value[k]), NULL, query, 0, 0, 0, list, list_num)) {
+				    (((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->server, &(frags[0].value[k]), NULL, query, 0, 0, 0, (char *) list, list_num)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
 						OPH_LOG_OPH_MERGECUBES_NEW_FRAG_ERROR, frag_name_out);
