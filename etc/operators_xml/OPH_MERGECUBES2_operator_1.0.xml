@@ -9,6 +9,8 @@ Data Process.
 It merges the measures of n input datacubes with the same fragmentation structure and
 creates a new datacube with the union of the n measures. NOTE: only single measure 
 data cubes can be merged. A new implicit dimension will be created.
+A cube is allowed to have an additional implicit dimension and, in this case,
+that dimension will be extended by merging the other cubes.
 
 [Parameters]
 - cubes : name of the datacubes to merge. The names must be in PID format.
@@ -23,7 +25,7 @@ data cubes can be merged. A new implicit dimension will be created.
 - description : additional description to be associated with the output cube.
 - order : criteria on which input cubes are ordered before merging:
           - source : cubes are ordered by source, provided that level is 0
-          By default input cubes are not ordered.
+          By default, the input cubes are sorted in descending order with the number of dimensions.
         
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
