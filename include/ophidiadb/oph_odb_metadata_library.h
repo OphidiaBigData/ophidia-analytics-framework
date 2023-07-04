@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -103,6 +103,17 @@ int oph_odb_meta_retrieve_metadatakey_id(ophidiadb * oDB, char *key_label, char 
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_meta_retrieve_metadatatype_id(ophidiadb * oDB, char *metadatatype_name, int *id_metadatatype);
+
+/**
+ * \brief Function to retrive id of a metadata instance
+ * \param oDB Pointer to OphidiaDB
+ * \param key_label Key to be found
+ * \param key_variable Variable the key refers to (lat,lon,time,t2m...)
+ * \param id_datacube Id of the container of the instance to be found
+ * \param id_metadatainstance Id of the metadata instance to be found, 0 if not found
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_meta_retrieve_metadatainstance_id(ophidiadb * oDB, char *key_label, char *key_variable, int id_datacube, int *id_metadatainstance);
 
 /**
  * \brief Function to insert a metedata instance
@@ -225,5 +236,8 @@ int oph_odb_meta_check_for_time_dimension(ophidiadb * oDB, int id_datacube, cons
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const char *old_variable, const char *new_variable);
+int oph_odb_meta_update_metadatakeys2(ophidiadb * oDB, int id_datacube, const char *old_variable, const char *new_variable, const char *new_type);
+
+int oph_odb_meta_retrieve_single_metadata_instance(ophidiadb * oDB, int id_metadata_instance, char **type, char **value);
 
 #endif				/* __OPH_ODB_META_H__ */

@@ -6,17 +6,31 @@
 Data Access.
 
 [Behaviour]
-It uploads a file onto a B2DROP remote folder. Note that in order to be able to use the operator, a netrc file with the credentials to B2DROP is required. Commonly the hidden .netrc file resides in the user's home directory.
+It uploads/downloads a file onto/from a B2DROP remote folder. Note that in order to be able to use the operator, a netrc file with the credentials to B2DROP is required. Commonly the hidden .netrc file resides in the user's home directory.
 
 [Parameters]
+- action: it allows to specify if the file provided in src_path has to be downloaded
+		   - with get - or uploaded (default) - with put - from/to B2DROP.  
 - auth_path: absolute path to the netrc file containing the B2DROP login information. 
 			 Note that it is not possible to use double dots (..) within the path. 
 			 If no path is provided, the user's home will be used (default).
-- src_path: path to the file to be uploaded to B2DROP. The path can be absolute or relative. 
-			In case of relative path the cdd argument will be pre-pended. 
+- src_path: when the action to be performed is "put" it specifies the path to the file 
+			to be uploaded to B2DROP. The path can be absolute or relative. 
+			In case of relative path the cdd argument will be pre-pended (default). 
+			Otherwise when the action to be performed is "get" it specifies the path 
+			of the file on B2DROP. In case no path is specified, the base path will 
+			be used (default).
 			Note that it is not possible to use double dots (..) within the path.
-- dst_path: path where the file will be uploaded on B2DROP. In case no path is specified, 
-			the base path and the input file name will be used (default).
+- dst_path: when the action to be performed is "put" it provides the path where the file 
+			will be uploaded on B2DROP. In case no path is specified, the base path and 
+			the input file name will be used (default).
+			Otherwise when the action to be performed is "get" it provides the path where
+			the file from B2DROP is going to be downloaded. The path can be absolute 
+			or relative. In case of relative path the cdd argument will be pre-pended.
+			In case no path is specified, the cdd and the input file name will be 
+			used (default). WARNING: If the path specified refers to an existing file, 
+			this will be overwritten.
+			Note that it is not possible to use double dots (..) within the path.
 - cdd : absolute path corresponding to the current directory on data repository.
 
 [System parameters]
@@ -29,6 +43,7 @@ It uploads a file onto a B2DROP remote folder. Note that in order to be able to 
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   b2drop : show operator's output.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]
 Upload the file &quot;test.nc&quot; into B2DROP base folder:
@@ -41,6 +56,7 @@ SUBMISSION STRING: &quot;operator=oph_b2drop;src_path=test.nc;&quot;</abstract>
         <permission>execute</permission>
     </info>
     <args>
+		<argument type="string" mandatory="no" default="put" values="get|put">action</argument>
 		<argument type="string" mandatory="no" default="-">auth_path</argument>
 		<argument type="string" mandatory="yes" multivalue="yes">src_path</argument>
 		<argument type="string" mandatory="no" default="-">dst_path</argument>
@@ -49,5 +65,6 @@ SUBMISSION STRING: &quot;operator=oph_b2drop;src_path=test.nc;&quot;</abstract>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|b2drop">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

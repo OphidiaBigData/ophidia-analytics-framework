@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -29,7 +29,6 @@
 #define OPH_IN_PARAM_COMPRESSION				"compressed"
 #define OPH_IN_PARAM_SLEEP_TIME					"time"
 #define OPH_IN_PARAM_PRINTF_TEXT				"text"
-#define OPH_IN_PARAM_SYSTEM_COMMAND				"command"
 #define OPH_IN_PARAM_APPLY_QUERY				"query"
 #define OPH_IN_PARAM_APPLY_DIM_QUERY				"dim_query"
 #define OPH_IN_PARAM_HOST_NUMBER				"nhost"
@@ -65,7 +64,6 @@
 #define OPH_IN_PARAM_DBMS_ID_FILTER				"dbms_filter"
 #define OPH_IN_PARAM_DB_NAME_FILTER				"db_filter"
 #define OPH_IN_PARAM_IOSERVER_TYPE_FILTER			"ioserver_filter"
-#define OPH_IN_PARAM_FS_TYPE_FILTER				"filesystem_filter"
 #define OPH_IN_PARAM_LIMIT_FILTER				"limit_filter"
 #define OPH_IN_PARAM_ROW_FILTER					"row_filter"
 #define OPH_IN_PARAM_ARRAY_FILTER				"array_filter"
@@ -94,12 +92,10 @@
 #define OPH_IN_PARAM_CDD					"cdd"
 #define OPH_IN_PARAM_HIDDEN					"hidden"
 #define OPH_IN_PARAM_DELETE_TYPE				"delete_type"
-#define OPH_IN_PARAM_DBMS_STATUS				"dbms_status"
 #define OPH_IN_PARAM_HOST_STATUS				"host_status"
 #define OPH_IN_PARAM_RECURSIVE_SEARCH				"recursive"
 #define OPH_IN_PARAM_PARTITION_NAME				"host_partition"
 #define OPH_IN_PARAM_IOSERVER_TYPE				"ioserver"
-#define OPH_IN_PARAM_FS_TYPE					"filesystem"
 #define OPH_IN_PARAM_IMPORTDIM_GRID_NAME			"grid"
 #define OPH_IN_PARAM_CHECK_GRID					"check_grid"
 #define OPH_IN_PARAM_VOCABULARY					"vocabulary"
@@ -172,6 +168,8 @@
 #define OPH_IN_PARAM_BASE64					"base64"
 #define OPH_IN_PARAM_LIST					"list"
 #define OPH_IN_PARAM_MISSINGVALUE				"missingvalue"
+#define OPH_IN_PARAM_DIM_OFFSET					"dim_offset"
+#define OPH_IN_PARAM_DIM_CONTINUE				"dim_continue"
 #define OPH_IN_PARAM_HOLD_VALUES				"hold_values"
 #define OPH_IN_PARAM_NUMBER					"number"
 #define OPH_IN_PARAM_FILE					"file"
@@ -179,11 +177,21 @@
 #define OPH_IN_PARAM_REALPATH					"realpath"
 #define OPH_IN_PARAM_ON_REDUCE					"on_reduce"
 #define OPH_IN_PARAM_ACTION					"action"
+#define OPH_IN_PARAM_POLICY					"policy"
+#define OPH_IN_PARAM_SHUFFLE					"shuffle"
+#define OPH_IN_PARAM_DEFLATE					"deflate"
+#define OPH_IN_PARAM_COMMAND				"command"
+
+#define OPH_IN_PARAM_INPUT					"input"
+#define OPH_IN_PARAM_OUTPUT					"output"
 
 #define OPH_IN_PARAM_SCRIPT					"script"
 #define OPH_IN_PARAM_ARGS					"args"
 #define OPH_IN_PARAM_STDOUT					"stdout"
 #define OPH_IN_PARAM_STDERR					"stderr"
+#define OPH_IN_PARAM_SPACE					"space"
+#define OPH_IN_PARAM_SKIP_OUTPUT			"skip_output"
+#define OPH_IN_PARAM_MULTIPLE_OUTPUT		"multiple_output"
 
 #define OPH_ARG_NTHREAD						"nthreads"
 #define OPH_ARG_USERNAME					"username"
@@ -196,5 +204,6 @@
 #define OPH_ARG_LIGHTTASKINDEX					"lighttaskindex"
 #define OPH_ARG_STATUS						"status"
 #define OPH_ARG_USERROLE					"userrole"
+#define OPH_ARG_SAVE						"save"
 
 #endif				//__OPH_INPUT_PARAMETERS_H

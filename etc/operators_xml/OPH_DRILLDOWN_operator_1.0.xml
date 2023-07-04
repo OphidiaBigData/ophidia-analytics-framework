@@ -26,6 +26,7 @@ It performs a drill-down operation on a datacube, i.e. it transforms dimensions 
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   drilldown : show operator's output PID as text.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]       
 Execute drill-down operation on datacube identified by the PID &quot;http://www.example.com/1/1&quot; on 1 implicit dimension:
@@ -47,5 +48,6 @@ SUBMISSION STRING: &quot;operator=oph_drilldown;cube=http://www.example.com/1/1;
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|drilldown">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

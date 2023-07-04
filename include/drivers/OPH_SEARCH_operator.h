@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@
  * \param objkeys_num Number of objkeys.
  * \param sessionid SessionID
  */
-typedef struct _OPH_SEARCH_operator_handle {
+struct _OPH_SEARCH_operator_handle {
 	ophidiadb oDB;
 	char **container_filter;
 	int container_filter_num;
@@ -54,10 +54,12 @@ typedef struct _OPH_SEARCH_operator_handle {
 	char **objkeys;
 	int objkeys_num;
 	char *sessionid;
-} OPH_SEARCH_operator_handle;
+	int recursive_search;
+};
+typedef struct _OPH_SEARCH_operator_handle OPH_SEARCH_operator_handle;
 
 /* OPERATOR MYSQL QUERIES */
 #define MYSQL_QUERY_OPH_SEARCH_READ_SUBFOLDERS "SELECT idfolder,foldername FROM folder WHERE idparent=%d"
-#define MYSQL_QUERY_OPH_SEARCH_READ_INSTANCES "SELECT container.idcontainer AS Container,datacube.iddatacube AS Datacube,metadatainstance.label AS 'Key',metadatainstance.value AS Value FROM metadatainstance,datacube,container WHERE container.idcontainer=datacube.idcontainer AND datacube.iddatacube=metadatainstance.iddatacube AND container.idfolder=%d AND container.hidden=0 %s ORDER BY Container,Datacube,'Key',Value"
+#define MYSQL_QUERY_OPH_SEARCH_READ_INSTANCES "SELECT container.idcontainer AS Container,datacube.iddatacube AS Datacube,metadatainstance.label AS 'Key',metadatainstance.value AS Value FROM metadatainstance,datacube,container WHERE container.idcontainer=datacube.idcontainer AND datacube.iddatacube=metadatainstance.iddatacube AND container.idfolder=%d %s ORDER BY Container,Datacube,'Key',Value"
 
 #endif				//__OPH_SEARCH_OPERATOR_H

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,6 +42,7 @@
  * \param path : array of absolute or relative paths given as input
  * \param path_num : number of input paths
  * \param file : file filter
+ * \param measure : measure filter
  * \param cwd : current working directory as an absolute path
  * \param user : user that has submitted the task
  * \param recursive : flag used to recursive search
@@ -55,6 +56,7 @@ typedef struct _OPH_FS_operator_handle {
 	char **path;
 	int path_num;
 	char *file;
+	char *measure;
 	char *cwd;
 	char *user;
 	int recursive;
@@ -62,6 +64,17 @@ typedef struct _OPH_FS_operator_handle {
 	int realpath;
 	char **objkeys;
 	int objkeys_num;
+	int time_filter;
+	char **sub_dims;
+	char **sub_filters;
+	char **sub_types;
+	int number_of_sub_dims;
+	int number_of_sub_filters;
+	int number_of_sub_types;
+	double *offset;
+	int s_offset_num;
+	char *vocabulary;
+	ophidiadb oDB;
 } OPH_FS_operator_handle;
 
 

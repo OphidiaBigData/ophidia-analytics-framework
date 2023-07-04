@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -85,6 +85,7 @@
  * \param lib             Dynamic library path
  * \param dlh             Libtool handler to dynamic library
  * \param is_thread       Flag set to non-zero if handler is used within a thread
+ * \param connection      Pointer to (void) structure for server connection
  */
 struct _oph_ioserver {
 	char *server_type;
@@ -92,6 +93,7 @@ struct _oph_ioserver {
 	char *lib;
 	void *dlh;
 	char is_thread;
+	void *connection;
 };
 typedef struct _oph_ioserver oph_ioserver_handler;
 
@@ -189,37 +191,37 @@ typedef struct _oph_ioserver_query oph_ioserver_query;
 //****************Plugin Interface******************//
 
 //Initialize storage server plugin
-int (*_SERVER_setup) (oph_ioserver_handler * handle);
+extern int (*_SERVER_setup)(oph_ioserver_handler * handle);
 
 //Connect to storage server
-int (*_SERVER_connect) (oph_ioserver_handler * handle, oph_ioserver_params * conn_params, void **connection);
+extern int (*_SERVER_connect)(oph_ioserver_handler * handle, oph_ioserver_params * conn_params, void **connection);
 
 //Set default database
-int (*_SERVER_use_db) (oph_ioserver_handler * handle, const char *db_name, void *connection);
+extern int (*_SERVER_use_db)(oph_ioserver_handler * handle, const char *db_name, void *connection);
 
 //Close connection to storage server
-int (*_SERVER_close) (oph_ioserver_handler * handle, void *connection);
+extern int (*_SERVER_close)(oph_ioserver_handler * handle, void **connection);
 
 //Finalize storage server plugin
-int (*_SERVER_cleanup) (oph_ioserver_handler * handle);
+extern int (*_SERVER_cleanup)(oph_ioserver_handler * handle);
 
 //Setup the query structure with given operation and array argument
-int (*_SERVER_setup_query) (oph_ioserver_handler * handle, void *connection, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg ** args, oph_ioserver_query ** query);
+extern int (*_SERVER_setup_query)(oph_ioserver_handler * handle, void *connection, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg ** args, oph_ioserver_query ** query);
 
 //Execute operation in storage server
-int (*_SERVER_execute_query) (oph_ioserver_handler * handle, void *connection, oph_ioserver_query * query);
+extern int (*_SERVER_execute_query)(oph_ioserver_handler * handle, void *connection, oph_ioserver_query * query);
 
 //Release resources allocated for query
-int (*_SERVER_free_query) (oph_ioserver_handler * handle, oph_ioserver_query * query);
+extern int (*_SERVER_free_query)(oph_ioserver_handler * handle, oph_ioserver_query * query);
 
 //Get result set from storage server
-int (*_SERVER_get_result) (oph_ioserver_handler * handle, void *connection, oph_ioserver_result ** result);
+extern int (*_SERVER_get_result)(oph_ioserver_handler * handle, void *connection, oph_ioserver_result ** result);
 
 //Fetch next row from the result set
-int (*_SERVER_fetch_row) (oph_ioserver_handler * handle, oph_ioserver_result * result, oph_ioserver_row ** current_row);
+extern int (*_SERVER_fetch_row)(oph_ioserver_handler * handle, oph_ioserver_result * result, oph_ioserver_row ** current_row);
 
 //Free result set in the storage server
-int (*_SERVER_free_result) (oph_ioserver_handler * handle, oph_ioserver_result * result);
+extern int (*_SERVER_free_result)(oph_ioserver_handler * handle, oph_ioserver_result * result);
 
 //*****************Internal Functions (used by data access library)***************//
 
@@ -236,28 +238,25 @@ int oph_ioserver_setup(const char *server_type, oph_ioserver_handler ** handle, 
  * \brief               Function to connect to data store server.
  * \param handle        Dynamic server plugin handle
  * \param conn_params   Struct with connection params to server
- * \param connection    Adress of pointer to server-specific connection structure
  * \return              0 if successfull, non-0 otherwise
  */
-int oph_ioserver_connect(oph_ioserver_handler * handle, oph_ioserver_params * conn_params, void **connection);
+int oph_ioserver_connect(oph_ioserver_handler * handle, oph_ioserver_params * conn_params);
 
 
 /**
  * \brief               Function to set default database for specified server.
  * \param handle        Dynamic server plugin handle
  * \param db_name       Name of database to be used
- * \param connection    Pointer to server-specific connection structure
  * \return              0 if successfull, non-0 otherwise
  */
-int oph_ioserver_use_db(oph_ioserver_handler * handle, const char *db_name, void *connection);
+int oph_ioserver_use_db(oph_ioserver_handler * handle, const char *db_name);
 
 /**
  * \brief               Function to close connection established towards data store server.
  * \param handle        Dynamic server plugin handle
- * \param connection    Pointer to server-specific connection structure
  * \return              0 if successfull, non-0 otherwise
  */
-int oph_ioserver_close(oph_ioserver_handler * handle, void *connection);
+int oph_ioserver_close(oph_ioserver_handler * handle);
 
 /**
  * \brief               Function to finalize library of data store server and release all dynamic loading resources.
@@ -269,23 +268,21 @@ int oph_ioserver_cleanup(oph_ioserver_handler * handle);
 /**
  * \brief               Function to setup the query structure with given operation and array argument
  * \param handle        Dynamic server plugin handle
- * \param connection    Pointer to server-specific connection structure
  * \param operation     String with operation to be performed
  * \param tot_run       Total number of runs the given operation will be executed
  * \param args          Null-terminated array of arguments to be binded to the query (can be NULL)
  * \param query         Pointer to query to be built
  * \return              0 if successfull, non-0 otherwise
  */
-int oph_ioserver_setup_query(oph_ioserver_handler * handle, void *connection, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg ** args, oph_ioserver_query ** query);
+int oph_ioserver_setup_query(oph_ioserver_handler * handle, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg ** args, oph_ioserver_query ** query);
 
 /**
  * \brief               Function to execute an operation on data stored into server.
  * \param handle        Dynamic server plugin handle
- * \param connection    Pointer to server-specific connection structure
  * \param query         Pointer to query to be executed
  * \return              0 if successfull, non-0 otherwise
  */
-int oph_ioserver_execute_query(oph_ioserver_handler * handle, void *connection, oph_ioserver_query * query);
+int oph_ioserver_execute_query(oph_ioserver_handler * handle, oph_ioserver_query * query);
 
 /**
  * \brief               Function to release resources allocated for query
@@ -298,11 +295,10 @@ int oph_ioserver_free_query(oph_ioserver_handler * handle, oph_ioserver_query * 
 /**
  * \brief		Function to initialize and get the result set
  * \param handle        Dynamic server plugin handle
- * \param connection    Pointer to server-specific connection structure
  * \param		Pointer to the result set to retrieve
  * \return		0 if successfull, non-0 otherwise
  */
-int oph_ioserver_get_result(oph_ioserver_handler * handle, void *connection, oph_ioserver_result ** result);
+int oph_ioserver_get_result(oph_ioserver_handler * handle, oph_ioserver_result ** result);
 
 /**
  * \brief		Function to fetch the next row in the result set

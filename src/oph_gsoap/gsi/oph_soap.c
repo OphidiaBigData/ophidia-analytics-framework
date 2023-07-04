@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ int gsi_authorization_callback(struct soap *soap, char *distinguished_name);
 /* credential renewal callback */
 int gsi_plugin_credential_renew_callback(struct soap *soap, int lifetime);
 
-int oph_soap_read_config_file(oph_soap_data * data)
+int oph_soap_read_config_file(oph_soap_data *data)
 {
 	if (!data)
 		return -1;
@@ -159,7 +159,7 @@ int oph_soap_read_config_file(oph_soap_data * data)
 	return 0;
 }
 
-int oph_soap_cleanup(struct soap *soap, oph_soap_data * data)
+int oph_soap_cleanup(struct soap *soap, oph_soap_data *data)
 {
 	if (soap) {
 		soap_destroy(soap);
@@ -171,7 +171,7 @@ int oph_soap_cleanup(struct soap *soap, oph_soap_data * data)
 	return 0;
 }
 
-int oph_soap_free_data(oph_soap_data * data)
+int oph_soap_free_data(oph_soap_data *data)
 {
 	if (data) {
 		if (data->server) {
@@ -198,7 +198,7 @@ int oph_soap_free_data(oph_soap_data * data)
 	return 0;
 }
 
-int oph_soap_init(struct soap *soap, oph_soap_data * data)
+int oph_soap_init(struct soap *soap, oph_soap_data *data)
 {
 	/* Need SIGPIPE handler on Unix/Linux systems to catch broken pipes: */
 	signal(SIGPIPE, sigpipe_handle);
@@ -242,7 +242,7 @@ int oph_soap_init(struct soap *soap, oph_soap_data * data)
 	return 0;
 }
 
-int oph_notify(struct soap *soap, oph_soap_data * data, char *output_string, char *output_json, xsd__int * response)
+int oph_notify(struct soap *soap, oph_soap_data *data, char *output_string, char *output_json, xsd__int *response)
 {
 	soap->userid = NULL;
 	soap->passwd = NULL;

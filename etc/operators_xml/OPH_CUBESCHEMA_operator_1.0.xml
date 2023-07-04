@@ -44,6 +44,7 @@ It shows metadata information about a datacube and the dimensions related to it.
                   cubeschema_morecubeinfo : show more cube information as grid.
                   cubeschema_diminfo : show the list of cube dimensions as grid.
                   cubeschema_dimvalues : show the values of cube dimensions as grid.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]
 Show metadata information about the datacube identified by the PID &quot;http://www.example.com/1/1&quot; :
@@ -70,5 +71,6 @@ SUBMISSION STRING: &quot;operator=oph_cubeschema;cube=http://www.example.com/1/1
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|cubeschema_cubeinfo|cubeschema_morecubeinfo|cubeschema_diminfo|cubeschema_dimvalues">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

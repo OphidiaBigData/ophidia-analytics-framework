@@ -25,8 +25,10 @@ It creates an empty container.
             -- proleptic_gregorian
             -- julian
             -- 360_day
-            -- no_leap
-            -- all_leap
+            -- 365_day
+            -- 366_day
+            -- no_leap (equivalent to 365_day)
+            -- all_leap  (equivalent to 366_day)
             -- user_defined
 - month_lengths: in case of time dimension and user-defined calendar, it indicates the sizes of each month in days.
             There must be 12 positive integers separated by commas. Default is &apos;31,28,31,30,31,30,31,31,30,31,30,31&apos;.
@@ -48,6 +50,7 @@ It creates an empty container.
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   createcontainer : show operator's output PID as text.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]       
 Create a new container &apos;container1&apos; with dimensions lat, lon and time into folder &apos;/folder&apos;:
@@ -70,7 +73,7 @@ SUBMISSION STRING: &quot;operator=oph_createcontainer;container=container1;cwd=/
 		<argument type="string" mandatory="no" default="oph_base" multivalue="yes">hierarchy</argument>
 		<argument type="string" mandatory="no" default="1900-01-01 00:00:00">base_time</argument>
 		<argument type="string" mandatory="no" default="d" values="s|m|h|3|6|d">units</argument>
-		<argument type="string" mandatory="no" default="standard" values="standard|gregorian|proleptic_gregorian|julian|360_day|no_leap|all_leap|user_defined">calendar</argument>
+		<argument type="string" mandatory="no" default="standard" values="standard|gregorian|proleptic_gregorian|julian|360_day|365_day|366_day|no_leap|all_leap|user_defined">calendar</argument>
 		<argument type="string" mandatory="no" default="31,28,31,30,31,30,31,31,30,31,30,31">month_lengths</argument>
 		<argument type="int" mandatory="no" default="0" minvalue="0">leap_year</argument>
 		<argument type="int" mandatory="no" default="2" minvalue="1" maxvalue="12">leap_month</argument>
@@ -78,5 +81,6 @@ SUBMISSION STRING: &quot;operator=oph_createcontainer;container=container1;cwd=/
 		<argument type="string" mandatory="no" default="no" values="yes|no">compressed</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|createcontainer">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

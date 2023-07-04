@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -50,9 +50,8 @@
 #define OPH_EXPORTNC_DEFAULT_OUTPUT_PATH "default"
 #define OPH_EXPORTNC_LOCAL_OUTPUT_PATH "local"
 #define OPH_EXPORTNC_POSTPONE "postpone"
-#define OPH_EXPORTNC_FILLVALUE "_FillValue"
 
-int _oph_get_next_count(size_t * id, unsigned int *sizemax, int i, int n)
+int _oph_get_next_count(size_t *id, unsigned int *sizemax, int i, int n)
 {
 	if (i < 0)
 		return 1;	// Overflow
@@ -64,12 +63,12 @@ int _oph_get_next_count(size_t * id, unsigned int *sizemax, int i, int n)
 	return 0;
 }
 
-int oph_get_next_count(size_t * id, unsigned int *sizemax, int n)
+int oph_get_next_count(size_t *id, unsigned int *sizemax, int n)
 {
 	return _oph_get_next_count(id, sizemax, n - 1, n);
 }
 
-int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
+int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -113,6 +112,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->sessionid = NULL;
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->force = 0;
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->misc = 0;
+	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->shuffle = 0;
+	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->deflate = 0;
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->memory_size = 0;
 	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->nc_file_path = NULL;
 
@@ -219,8 +220,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_EXPORTNC_DATACUBE_AVAILABILITY_ERROR, datacube_name);
 			id_datacube_in[0] = 0;
 			id_datacube_in[1] = 0;
-		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], 1, &folder_id))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
+		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], &folder_id))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_EXPORTNC_DATACUBE_FOLDER_ERROR, datacube_name);
 			id_datacube_in[0] = 0;
 			id_datacube_in[1] = 0;
@@ -281,7 +282,37 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!strcmp(value, OPH_COMMON_YES_VALUE))
 		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->misc = 1;
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	char *output_path = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
+	char *output_name = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_NAME);
+	char *output = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT);
+	char home[2];
+	home[0] = '/';
+	home[1] = 0;
+	size_t size;
+	if (output && ((size = strlen(output)))) {
+		char *pointer = output + size;
+		while ((pointer >= output) && (*pointer != '/'))
+			pointer--;
+		if (pointer < output) {
+			output_name = output;
+			if ((output[size - 3] == '.') && (output[size - 2] == 'n') && (output[size - 1] == 'c'))
+				output[size - 3] = 0;
+		} else {
+			if (pointer == output)
+				output_path = home;
+			else
+				output_path = output;
+			*pointer = 0;
+			pointer++;
+			if (pointer && *pointer) {
+				output_name = pointer;
+				if ((output[size - 3] == '.') && (output[size - 2] == 'n') && (output[size - 1] == 'c'))
+					output[size - 3] = 0;
+			}
+		}
+	}
+
+	value = output_path;
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
@@ -289,8 +320,29 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	char session_code[OPH_COMMON_BUFFER_LEN];
 	oph_pid_get_session_code(hashtbl_get(task_tbl, OPH_ARG_SESSIONID), session_code);
+
+	char *cdd = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
+	if (!cdd) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (*cdd != '/') {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if ((strlen(cdd) > 1) && strstr(cdd, "..")) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+
 	if (!strcmp(value, OPH_EXPORTNC_LOCAL_OUTPUT_PATH) || (user_space && !strcmp(value, OPH_EXPORTNC_DEFAULT_OUTPUT_PATH)))
 		value = &user_space_default;
+	else if (!user_space && !strcmp(value, OPH_EXPORTNC_DEFAULT_OUTPUT_PATH))
+		value = cdd;
+
 	if (!strcmp(value, OPH_EXPORTNC_DEFAULT_OUTPUT_PATH)) {
 		if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->misc) {
 			value = hashtbl_get(task_tbl, OPH_ARG_WORKFLOWID);
@@ -362,30 +414,12 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			pointer++;
 		if (pointer) {
 			char tmp[OPH_COMMON_BUFFER_LEN];
-			if (*pointer != '/') {
-				value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
-				if (!value) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				if (*value != '/') {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
-					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-				}
-				if (strlen(value) > 1) {
-					if (strstr(value, "..")) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
-						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-					}
-					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value + 1, pointer);
-					((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path_user = strdup(tmp);
-					free(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path);
-					((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
-					pointer = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path;
-				}
+			if ((*pointer != '/') && (strlen(cdd) > 1)) {
+				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", cdd + 1, pointer);
+				((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path_user = strdup(tmp);
+				free(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path);
+				((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
+				pointer = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path;
 			}
 			if (!((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path_user)
 				((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path_user = strdup(pointer);
@@ -397,12 +431,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
 			free(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path);
 			((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
-			free(value);
+			if (value)
+				free(value);
 		}
 		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_path_user_defined = 1;
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_NAME);
+	value = output_name;
 	if (!value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_NAME);
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_NAME);
@@ -416,7 +451,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		}
 	}
 	size_t s;
-	if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name) {
+	output_name = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name;
+	if (output_name && strncmp(output_name, OPH_ESDM_PREFIX, 7)) {
 		for (s = 0; s < strlen(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name); s++) {
 			if ((((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name[s] == '/')
 			    || (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name[s] == ':')) {
@@ -434,6 +470,23 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	if (!strcmp(value, OPH_COMMON_YES_VALUE))
 		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->force = 1;
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SHUFFLE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_SHUFFLE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SHUFFLE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strcmp(value, OPH_COMMON_YES_VALUE))
+		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->shuffle = 1;
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DEFLATE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_DEFLATE);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_DEFLATE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->deflate = (char) strtol(value, NULL, 10);
+
 	if (oph_pid_get_memory_size(&(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->memory_size))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_OPHIDIADB_CONFIGURATION_FILE);
@@ -443,7 +496,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_init(oph_operator_struct * handle)
+int task_init(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -553,39 +606,42 @@ int task_init(oph_operator_struct * handle)
 		//Check if file exists
 		char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' };
 		char *output_name = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name;
-		snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE, path,
-			 output_name ? output_name : ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure);
-		if (stat(file_name, &st)) {
-			if (errno == EACCES) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_PERMISSION_ERROR, file_name);
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_PERMISSION_ERROR,
-					file_name);
-				free(stream_broad);
-				goto __OPH_EXIT_1;
-			} else if (errno != ENOENT) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_FILE_STAT_ERROR, file_name);
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_FILE_STAT_ERROR,
-					file_name);
-				free(stream_broad);
-				goto __OPH_EXIT_1;
+		if (!output_name || strncmp(output_name, OPH_ESDM_PREFIX, 7)) {
+			snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE "_%d" OPH_EXPORTNC2_OUTPUT_FILE_EXT, path,
+				 output_name ? output_name : ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure, "", datacube_id);
+			if (stat(file_name, &st)) {
+				if (errno == EACCES) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_PERMISSION_ERROR, file_name);
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_PERMISSION_ERROR,
+						file_name);
+					free(stream_broad);
+					goto __OPH_EXIT_1;
+				} else if (errno != ENOENT) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_FILE_STAT_ERROR, file_name);
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_FILE_STAT_ERROR,
+						file_name);
+					free(stream_broad);
+					goto __OPH_EXIT_1;
+				}
 			}
-		}
-		//File exists
-		else {
-			//If it is not a regular file
-			if (!S_ISREG(st.st_mode)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_OVERWRITE_FOLDER_ERROR, file_name);
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_OVERWRITE_FOLDER_ERROR,
-					file_name);
-				free(stream_broad);
-				goto __OPH_EXIT_1;
-			}
-			if (!((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->force) {
-				pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_DATACUBE_EXPORTED);
-				logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_DATACUBE_EXPORTED);
-				id_string[0][0] = -1;
-				free(stream_broad);
-				goto __OPH_EXIT_1;
+			//File exists
+			else {
+				//If it is not a regular file
+				if (!S_ISREG(st.st_mode)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_OVERWRITE_FOLDER_ERROR, file_name);
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_EXPORTNC_OVERWRITE_FOLDER_ERROR, file_name);
+					free(stream_broad);
+					goto __OPH_EXIT_1;
+				}
+				if (!((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->force) {
+					pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_DATACUBE_EXPORTED);
+					logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_EXPORTNC_DATACUBE_EXPORTED);
+					id_string[0][0] = -1;
+					free(stream_broad);
+					goto __OPH_EXIT_1;
+				}
 			}
 		}
 
@@ -676,18 +732,21 @@ int task_init(oph_operator_struct * handle)
 	}
 
 	if (!((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name) {
-		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name = strdup(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure);
+		((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name =
+		    (char *) malloc(strlen(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure) + OPH_COMMON_MAX_INT_LENGHT + 2);
 		if (!((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MEMORY_ERROR_INPUT, "output name");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
+		sprintf(((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_name, "%s_%d", ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->measure,
+			((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_datacube);
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_distribute(oph_operator_struct * handle)
+int task_distribute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -763,7 +822,7 @@ int task_distribute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_execute(oph_operator_struct * handle)
+int task_execute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -796,6 +855,9 @@ int task_execute(oph_operator_struct * handle)
 		int compressed = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->compressed;
 		int num_of_dims = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->num_of_dims;
 		NETCDF_dim *dims = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->dims;
+
+		if (!file)
+			file = measure_name;
 
 		// I need an array of dimensions size and I need to know the number of explicit dimensions
 		unsigned int dims_size[num_of_dims];
@@ -1099,7 +1161,10 @@ int task_execute(oph_operator_struct * handle)
 
 		int retval, ncid, cmode = NC_NETCDF4 | NC_MPIIO;
 		//CREATE FILE
-		n = snprintf(file_name, sizeof(file_name), OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE, path, file);
+		if (strncmp(file, OPH_ESDM_PREFIX, 7))
+			n = snprintf(file_name, sizeof(file_name), OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE, path, file, strstr(file, OPH_EXPORTNC2_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC2_OUTPUT_FILE_EXT);
+		else
+			n = snprintf(file_name, sizeof(file_name), "%s", file);
 		if (n >= (int) sizeof(file_name)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of path exceeded limit.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_STRING_BUFFER_OVERFLOW, "path",
@@ -1209,24 +1274,51 @@ int task_execute(oph_operator_struct * handle)
 			result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			goto __OPH_EXIT_2;
 		}
-		//END OF DEFINITIONS
-		if ((retval = nc_enddef(ncid))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to complete output nc definition: %s\n", nc_strerror(retval));
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_NC_END_DEFINITION_ERROR,
-				nc_strerror(retval));
-			oph_odb_stge_free_fragment_list(&frags);
-			oph_odb_stge_free_db_list(&dbs);
-			oph_odb_stge_free_dbms_list(&dbmss);
-			nc_close(ncid);
-			for (l = 0; l < num_of_dims; l++) {
-				if (dim_rows[l]) {
-					free(dim_rows[l]);
-					dim_rows[l] = NULL;
+
+		if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->shuffle || ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->deflate) {
+			size_t chunksize[num_of_dims];
+			for (inc = 0; inc < nexp; inc++)
+				chunksize[inc] = 1;
+			for (inc = nexp; inc < num_of_dims; inc++)
+				chunksize[inc] = dims[inc].dimsize;
+			if ((retval = nc_def_var_chunking(ncid, varid, NC_CHUNKED, chunksize))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set chunking configuration for the variable: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_NC_DEFINE_VAR_ERROR,
+					nc_strerror(retval));
+				oph_odb_stge_free_fragment_list(&frags);
+				oph_odb_stge_free_db_list(&dbs);
+				oph_odb_stge_free_dbms_list(&dbmss);
+				nc_close(ncid);
+				for (l = 0; l < num_of_dims; l++) {
+					if (dim_rows[l]) {
+						free(dim_rows[l]);
+						dim_rows[l] = NULL;
+					}
 				}
+				free(dim_rows);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				goto __OPH_EXIT_2;
 			}
-			free(dim_rows);
-			result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-			goto __OPH_EXIT_2;
+			char shuffle = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->shuffle;
+			char deflate = ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->deflate;
+			if ((retval = nc_def_var_deflate(ncid, varid, shuffle ? NC_SHUFFLE : NC_NOSHUFFLE, deflate ? 1 : 0, (int) deflate))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set compression configuration for the variable: %s\n", nc_strerror(retval));
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_NC_DEFINE_VAR_ERROR,
+					nc_strerror(retval));
+				oph_odb_stge_free_fragment_list(&frags);
+				oph_odb_stge_free_db_list(&dbs);
+				oph_odb_stge_free_dbms_list(&dbmss);
+				nc_close(ncid);
+				for (l = 0; l < num_of_dims; l++) {
+					if (dim_rows[l]) {
+						free(dim_rows[l]);
+						dim_rows[l] = NULL;
+					}
+				}
+				free(dim_rows);
+				result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				goto __OPH_EXIT_2;
+			}
 		}
 
 		if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->export_metadata > 0) {
@@ -1375,6 +1467,25 @@ int task_execute(oph_operator_struct * handle)
 				result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				goto __OPH_EXIT_2;
 			}
+		}
+
+		if ((retval = nc_enddef(ncid))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to complete output nc definition: %s\n", nc_strerror(retval));
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_NC_END_DEFINITION_ERROR,
+				nc_strerror(retval));
+			oph_odb_stge_free_fragment_list(&frags);
+			oph_odb_stge_free_db_list(&dbs);
+			oph_odb_stge_free_dbms_list(&dbmss);
+			nc_close(ncid);
+			for (l = 0; l < num_of_dims; l++) {
+				if (dim_rows[l]) {
+					free(dim_rows[l]);
+					dim_rows[l] = NULL;
+				}
+			}
+			free(dim_rows);
+			result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			goto __OPH_EXIT_2;
 		}
 
 		for (inc = 0; inc < num_of_dims; inc++) {
@@ -1727,7 +1838,7 @@ int task_execute(oph_operator_struct * handle)
 						count[inc] = 1;
 					}
 					//Implicit dimensions: the entire array from the beginning
-					for (inc = nexp; inc < num_of_dims; inc++) {
+					for (; inc < num_of_dims; inc++) {
 						start[inc] = 0;
 						count[inc] = dims[inc].dimsize;
 					}
@@ -1757,10 +1868,12 @@ int task_execute(oph_operator_struct * handle)
 							result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 							goto __OPH_EXIT_2;
 						}
-						fetch = 1;
 						if (curr_row->row)
 							current_length++;
+						else if (fetch)
+							break;
 
+						fetch = 1;
 						if (memory_size_mb) {
 							inc = nexp - 1;
 							if (curr_row->row && (current_size + block_size < memory_size_mb)) {
@@ -1768,16 +1881,13 @@ int task_execute(oph_operator_struct * handle)
 								current_size += block_size;
 								if (current_length > 1)
 									oph_get_next_count(count, dim_sizes, nexp);
-								if (nexp && (count[inc] < (size_t) dims[inc].dimsize))
+								if (nexp && (count[inc] < (size_t) dims[inc].dimsize) && (current_length < frags.value[k].key_end - frags.value[k].key_start + 1))
 									continue;
 								// else avoid to buffer more than one value of outer explicit dimensions
 							} else
 								fetch = 0;
-						} else {
-							if (!curr_row->row)
-								break;
+						} else
 							raw_data = curr_row->row[1];
-						}
 
 						retval = 1;
 						switch (type_nc) {
@@ -1891,8 +2001,32 @@ int task_execute(oph_operator_struct * handle)
 
 			char jsonbuf[OPH_COMMON_BUFFER_LEN];
 
-			if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_link) {
-				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_link, file);
+			if (!strncmp(file, OPH_ESDM_PREFIX, 7)) {
+
+				// ADD OUTPUT PID TO JSON AS TEXT
+				if (oph_json_is_objkey_printable
+				    (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->objkeys_num,
+				     OPH_JSON_OBJKEY_EXPORTNC2)) {
+					if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_EXPORTNC2, "Output File", file)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+						logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+						result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+						goto __OPH_EXIT_2;
+					}
+				}
+				// ADD FILE TO NOTIFICATION STRING
+				char tmp_string[OPH_COMMON_BUFFER_LEN];
+				snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_LINK, file, OPH_IN_PARAM_FILE, file);
+				if (handle->output_string) {
+					strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
+					free(handle->output_string);
+				}
+				handle->output_string = strdup(tmp_string);
+
+			} else if (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_link) {
+
+				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->output_link, file,
+					 strstr(file, OPH_EXPORTNC2_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC2_OUTPUT_FILE_EXT);
 
 				// ADD OUTPUT PID TO JSON AS TEXT
 				if (oph_json_is_objkey_printable
@@ -1905,9 +2039,9 @@ int task_execute(oph_operator_struct * handle)
 						goto __OPH_EXIT_2;
 					}
 				}
-				// ADD OUTPUT PID TO NOTIFICATION STRING
+				// ADD FILE TO NOTIFICATION STRING
 				char tmp_string[OPH_COMMON_BUFFER_LEN];
-				snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_LINK, jsonbuf);
+				snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_LINK, jsonbuf, OPH_IN_PARAM_FILE, jsonbuf);
 				if (handle->output_string) {
 					strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
 					free(handle->output_string);
@@ -1923,7 +2057,8 @@ int task_execute(oph_operator_struct * handle)
 				if (oph_json_is_objkey_printable
 				    (((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->objkeys_num,
 				     OPH_JSON_OBJKEY_EXPORTNC2)) {
-					snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s" OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE, size && *output_path_file != '/' ? "/" : "", output_path_file, file);
+					snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s" OPH_EXPORTNC2_OUTPUT_PATH_SINGLE_FILE, size
+						 && *output_path_file != '/' ? "/" : "", output_path_file, file, strstr(file, OPH_EXPORTNC2_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC2_OUTPUT_FILE_EXT);
 					if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_EXPORTNC, "Output File", jsonbuf)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 						logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
@@ -1931,6 +2066,14 @@ int task_execute(oph_operator_struct * handle)
 						goto __OPH_EXIT_2;
 					}
 				}
+				// ADD FILE TO NOTIFICATION STRING
+				char tmp_string[OPH_COMMON_BUFFER_LEN];
+				snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_FILE, jsonbuf);
+				if (handle->output_string) {
+					strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
+					free(handle->output_string);
+				}
+				handle->output_string = strdup(tmp_string);
 			}
 		}
 
@@ -1951,7 +2094,7 @@ int task_execute(oph_operator_struct * handle)
 	return result;
 }
 
-int task_reduce(oph_operator_struct * handle)
+int task_reduce(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1986,8 +2129,8 @@ int task_reduce(oph_operator_struct * handle)
 		}
 
 		if (oph_odb_meta_find_complete_metadata_list
-		    (&((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->oDB, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0, NULL, NULL, NULL, NULL,
-		     &read_result)) {
+		    (&((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->oDB, ((OPH_EXPORTNC2_operator_handle *) handle->operator_handle)->id_input_datacube, NULL, 0, NULL, NULL,
+		     NULL, NULL, &read_result)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_READ_METADATA_ERROR);
 			retval = NC_EBADTYPE;
@@ -1996,12 +2139,16 @@ int task_reduce(oph_operator_struct * handle)
 		while (!retval && ((row = mysql_fetch_row(read_result)))) {
 			mvariable = row[1];
 			mkey = row[2];
+#ifdef OPH_NC_SKIP_ATTRIBUTES
+			if ((!mvariable && !strcmp(mkey, OPH_NC_PROPERTIES)) || (mvariable && !strcmp(mkey, OPH_NC_BOUNDS)))
+				continue;
+#endif
 			mtype = row[3];
 			mvalue = row[4];
 			retval = NC_EBADTYPE;
-			if (!strcmp(mkey, OPH_EXPORTNC_FILLVALUE)) {	// Skip OPH_EXPORTNC_FILLVALUE in this mode
-				pmesg(LOG_WARNING, __FILE__, __LINE__, "Attribute '%s' cannot be set with this mode... skipping.\n", OPH_EXPORTNC_FILLVALUE);
-				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Attribute '%s' cannot be set with this mode... skipping\n", OPH_EXPORTNC_FILLVALUE);
+			if (!strcmp(mkey, OPH_COMMON_FILLVALUE)) {	// Skip OPH_COMMON_FILLVALUE in this mode
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "Attribute '%s' cannot be set with this mode... skipping.\n", OPH_COMMON_FILLVALUE);
+				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Attribute '%s' cannot be set with this mode... skipping\n", OPH_COMMON_FILLVALUE);
 				retval = NC_NOERR;
 			} else if (mvariable && ((retval = nc_inq_varid(ncid, mvariable, &varidp)))) {
 				if (retval == NC_ENOTVAR)
@@ -2044,7 +2191,7 @@ int task_reduce(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_destroy(oph_operator_struct * handle)
+int task_destroy(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -2055,7 +2202,7 @@ int task_destroy(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_unset(oph_operator_struct * handle)
+int env_unset(oph_operator_struct *handle)
 {
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)

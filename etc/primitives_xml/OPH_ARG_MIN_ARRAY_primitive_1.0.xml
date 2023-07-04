@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_arg_min_array" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Returns 1 if the minimum between the values in the same position in measure array a and array b is in array a; 2 otherwise.
+        
+[Parameters]
+- input measure type : Ophidia typing. Supported types are pairs of:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure a : first input measure.
+- measure b : second input measure.
+- missingvalue : value to be considered as missing value; by default it is NAN (for &apos;oph_double&apos; and &apos;oph_float&apos;).
+
+[Return type]
+Binary-array.
+        
+[Examples]
+oph_arg_min_array(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure_a,measure_b)</abstract>
+        <author>CMCC Foundation</author>
+        <category>Arithmetic</category>
+        <creationdate>06/11/2018</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+        <operation type="simple"/>
+    </info>
+    <args>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'" multivalue="yes">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure a</argument>
+		<argument type="binary-array" mandatory="yes">measure b</argument>
+		<argument type="double" mandatory="no" default="NAN">missingvalue</argument>
+    </args>
+</primitive>

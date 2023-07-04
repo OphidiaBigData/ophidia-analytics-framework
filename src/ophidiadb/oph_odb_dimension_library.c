@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,10 +32,12 @@
 #include "oph_odb_metadata_library.h"
 #include "oph_hierarchy_library.h"
 
+#define OPH_ODB_DIM_BASETIME_FORMAT_CHECK '%'
+
 extern int msglevel;
 
-int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensioninst, oph_odb_dimension * dim, oph_odb_dimension_instance * dim_inst, oph_odb_dimension_grid * dim_grid,
-					     oph_odb_hierarchy * hier, int id_datacube)
+int oph_odb_dim_retrieve_full_dimension_info(ophidiadb *oDB, int id_dimensioninst, oph_odb_dimension *dim, oph_odb_dimension_instance *dim_inst, oph_odb_dimension_grid *dim_grid,
+					     oph_odb_hierarchy *hier, int id_datacube)
 {
 	if (!oDB || !id_dimensioninst || !dim || !dim_inst || !dim_grid || !hier) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -179,12 +181,20 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensionin
 			if (value) {
 				if (!strncasecmp(value, OPH_DIM_TIME_UNITS_SECONDS, ll = strlen(OPH_DIM_TIME_UNITS_SECONDS)) ||
 				    !strncasecmp(value, OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS)) ||
-				    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS))) {
+				    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS)) ||
+				    !strncasecmp(value, OPH_DIM_TIME_UNITS_SECONDS, ll = strlen(OPH_DIM_TIME_UNITS_SECONDS) - 1) ||
+				    !strncasecmp(value, OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS) - 1) ||
+				    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS) - 1)) {
 					strncpy(dim->units, value, ll);
 					dim->units[ll] = 0;
-					strcpy(dim->base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR) + 2);
+					if (!strncmp(value + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR)))
+						strcpy(dim->base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR) + 2);
+					else if (!strncmp(value + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2)))
+						strcpy(dim->base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2) + 2);
+					else
+						pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", value);
 				} else {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", value);
 					return OPH_ODB_MYSQL_ERROR;
 				}
 				free(value);
@@ -219,7 +229,7 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensionin
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_dimension * dim, int id_datacube)
+int oph_odb_dim_retrieve_dimension2(ophidiadb *oDB, int id_dimension, oph_odb_dimension *dim, int id_datacube, char override_hier)
 {
 	if (!oDB || !dim || !id_dimension) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -298,17 +308,17 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 
 	// Metadata support to get correct values of time metadata
 	if (id_datacube) {
-		if (strcmp(hierarchy_name, OPH_COMMON_TIME_HIERARCHY))	// Override hierarchy name!!! This should be done even in ophidiaDB, cretaing a new dimension with the same dimensioninstance
-		{
+
+		// Override hierarchy name!!! This should be done even in ophidiaDB, creating a new dimension with the same dimensioninstance
+		if (override_hier && strcmp(hierarchy_name, OPH_COMMON_TIME_HIERARCHY)) {
 			pmesg(LOG_DEBUG, __FILE__, __LINE__, "Override hierarchy name\n");
 			if (oph_odb_dim_retrieve_hierarchy_id(oDB, OPH_COMMON_TIME_HIERARCHY, &dim->id_hierarchy)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 				return OPH_ODB_MYSQL_ERROR;
 			}
-
 		}
 
-		char *value;
+		char *value = NULL;
 		if (oph_odb_meta_get(oDB, id_datacube, dim->dimension_name, OPH_ODB_TIME_UNITS, NULL, &value)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 			return OPH_ODB_MYSQL_ERROR;
@@ -317,12 +327,20 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 			int ll;
 			if (!strncasecmp(value, OPH_DIM_TIME_UNITS_SECONDS, ll = strlen(OPH_DIM_TIME_UNITS_SECONDS)) ||
 			    !strncasecmp(value, OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS)) ||
-			    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS))) {
+			    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS)) ||
+			    !strncasecmp(value, OPH_DIM_TIME_UNITS_SECONDS, ll = strlen(OPH_DIM_TIME_UNITS_SECONDS) - 1) ||
+			    !strncasecmp(value, OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS) - 1) ||
+			    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS) - 1)) {
 				strncpy(dim->units, value, ll);
 				dim->units[ll] = 0;
-				strcpy(dim->base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR) + 2);
+				if (!strncmp(value + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR)))
+					strcpy(dim->base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR) + 2);
+				else if (!strncmp(value + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2)))
+					strcpy(dim->base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2) + 2);
+				else
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", value);
 			} else {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", value);
 				return OPH_ODB_MYSQL_ERROR;
 			}
 			free(value);
@@ -356,7 +374,12 @@ int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_di
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimension_name_from_instance_id(ophidiadb * oDB, int id_dimensioninst, char **dimension_name)
+int oph_odb_dim_retrieve_dimension(ophidiadb *oDB, int id_dimension, oph_odb_dimension *dim, int id_datacube)
+{
+	return oph_odb_dim_retrieve_dimension2(oDB, id_dimension, dim, id_datacube, 1);
+}
+
+int oph_odb_dim_retrieve_dimension_name_from_instance_id(ophidiadb *oDB, int id_dimensioninst, char **dimension_name)
 {
 	if (!oDB || !id_dimensioninst || !dimension_name) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -412,7 +435,7 @@ int oph_odb_dim_retrieve_dimension_name_from_instance_id(ophidiadb * oDB, int id
 }
 
 //Note it retrieves grid associated to the specified container
-int oph_odb_dim_retrieve_grid_id(ophidiadb * oDB, char *gridname, int id_container, int *id_grid)
+int oph_odb_dim_retrieve_grid_id(ophidiadb *oDB, char *gridname, int id_container, int *id_grid)
 {
 	if (!oDB || !gridname || !id_container) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -468,7 +491,68 @@ int oph_odb_dim_retrieve_grid_id(ophidiadb * oDB, char *gridname, int id_contain
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_hierarchy(ophidiadb * oDB, int id_hierarchy, oph_odb_hierarchy * hier)
+int oph_odb_dim_retrieve_grid(ophidiadb *oDB, int id_grid, oph_odb_dimension_grid *dim_grid)
+{
+	if (!oDB || !id_grid || !dim_grid) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	dim_grid->id_grid = 0;
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char query[MYSQL_BUFLEN];
+
+	int n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_DIM_RETRIEVE_GRID, id_grid);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+
+	unsigned int row_number = mysql_num_rows(res);
+	if (!row_number) {
+		pmesg(LOG_DEBUG, __FILE__, __LINE__, "No row found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_SUCCESS;
+	}
+	if (row_number > 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "More than one row found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if (mysql_field_count(oDB->conn) != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if ((row = mysql_fetch_row(res)) != NULL) {
+		memset(&(dim_grid->grid_name), 0, OPH_ODB_DIM_GRID_SIZE + 1);
+		if (row[0])
+			strncpy(dim_grid->grid_name, row[0], OPH_ODB_DIM_GRID_SIZE);
+	}
+
+	mysql_free_result(res);
+
+	dim_grid->id_grid = id_grid;
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_dim_retrieve_hierarchy(ophidiadb *oDB, int id_hierarchy, oph_odb_hierarchy *hier)
 {
 	if (!oDB || !hier || !id_hierarchy) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -521,7 +605,7 @@ int oph_odb_dim_retrieve_hierarchy(ophidiadb * oDB, int id_hierarchy, oph_odb_hi
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimension_instance_id(ophidiadb * oDB, int id_datacube, char *dimensionname, int *id_dimension)
+int oph_odb_dim_retrieve_dimension_instance_id(ophidiadb *oDB, int id_datacube, char *dimensionname, int *id_dimension)
 {
 	if (!oDB || !dimensionname || !id_dimension) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -571,7 +655,7 @@ int oph_odb_dim_retrieve_dimension_instance_id(ophidiadb * oDB, int id_datacube,
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimension_instance_id2(ophidiadb * oDB, int id_datacube, char *dimensionname, int *id_dimension_instance, int *id_dimension, int *id_hierarchy)
+int oph_odb_dim_retrieve_dimension_instance_id2(ophidiadb *oDB, int id_datacube, char *dimensionname, int *id_dimension_instance, int *id_dimension, int *id_hierarchy)
 {
 	if (!oDB || !dimensionname || !id_dimension_instance) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -630,7 +714,7 @@ int oph_odb_dim_retrieve_dimension_instance_id2(ophidiadb * oDB, int id_datacube
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimension_instance(ophidiadb * oDB, int id_dimensioninst, oph_odb_dimension_instance * dim_inst, int id_datacube)
+int oph_odb_dim_retrieve_dimension_instance(ophidiadb *oDB, int id_dimensioninst, oph_odb_dimension_instance *dim_inst, int id_datacube)
 {
 	if (!oDB || !dim_inst || !id_dimensioninst) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -721,7 +805,7 @@ int oph_odb_dim_retrieve_dimension_instance(ophidiadb * oDB, int id_dimensionins
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimension_list_from_container(ophidiadb * oDB, int id_container, oph_odb_dimension ** dims, int *dim_num)
+int oph_odb_dim_retrieve_dimension_list_from_container(ophidiadb *oDB, int id_container, oph_odb_dimension **dims, int *dim_num)
 {
 	if (!oDB || !id_container || !dims || !dim_num) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -806,7 +890,7 @@ int oph_odb_dim_retrieve_dimension_list_from_container(ophidiadb * oDB, int id_c
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimension_list_from_grid_in_container(ophidiadb * oDB, char *grid_name, int id_container, oph_odb_dimension ** dims, oph_odb_dimension_instance ** dim_insts, int *dim_num)
+int oph_odb_dim_retrieve_dimension_list_from_grid_in_container(ophidiadb *oDB, char *grid_name, int id_container, oph_odb_dimension **dims, oph_odb_dimension_instance **dim_insts, int *dim_num)
 {
 	if (!oDB || !grid_name || !dims || !dim_insts || !dim_num || !id_container) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -904,7 +988,7 @@ int oph_odb_dim_retrieve_dimension_list_from_grid_in_container(ophidiadb * oDB, 
 }
 
 // Warning: support for time metadata is not present in the following function
-int oph_odb_dim_find_dimensions_features(ophidiadb * oDB, int id_datacube, MYSQL_RES ** frag_rows, int *dim_num)
+int oph_odb_dim_find_dimensions_features(ophidiadb *oDB, int id_datacube, MYSQL_RES **frag_rows, int *dim_num)
 {
 	if (!oDB || !id_datacube || !frag_rows || !dim_num) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -942,7 +1026,7 @@ int oph_odb_dim_find_dimensions_features(ophidiadb * oDB, int id_datacube, MYSQL
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_find_hierarchy_list(ophidiadb * oDB, MYSQL_RES ** information_list)
+int oph_odb_dim_find_hierarchy_list(ophidiadb *oDB, MYSQL_RES **information_list)
 {
 	(*information_list) = NULL;
 
@@ -975,7 +1059,7 @@ int oph_odb_dim_find_hierarchy_list(ophidiadb * oDB, MYSQL_RES ** information_li
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_find_container_grid_list(ophidiadb * oDB, int id_container, MYSQL_RES ** information_list)
+int oph_odb_dim_find_container_grid_list(ophidiadb *oDB, int id_container, MYSQL_RES **information_list)
 {
 	(*information_list) = NULL;
 
@@ -1008,7 +1092,7 @@ int oph_odb_dim_find_container_grid_list(ophidiadb * oDB, int id_container, MYSQ
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid * grid, int *last_insertd_id, int *grid_exist)
+int oph_odb_dim_insert_into_grid_table(ophidiadb *oDB, oph_odb_dimension_grid *grid, int *last_insertd_id, int *grid_exist)
 {
 	if (!oDB || !grid || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1110,7 +1194,7 @@ int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid *
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_enable_grid(ophidiadb * oDB, int id_grid)
+int oph_odb_dim_enable_grid(ophidiadb *oDB, int id_grid)
 {
 	if (!oDB || !id_grid) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1137,7 +1221,7 @@ int oph_odb_dim_enable_grid(ophidiadb * oDB, int id_grid)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension * dim, int *last_insertd_id, int id_datacube)
+int oph_odb_dim_insert_into_dimension_table(ophidiadb *oDB, oph_odb_dimension *dim, int *last_insertd_id, int id_datacube)
 {
 	if (!oDB || !dim || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1172,8 +1256,38 @@ int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension *
 	}
 
 	if (!(*last_insertd_id = mysql_insert_id(oDB->conn))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find last inserted dimension id\n");
-		return OPH_ODB_TOO_MANY_ROWS;
+
+		n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_DIM_RETRIEVE_OPHIDIADB_DIMENSION, dim->id_container, dim->dimension_name);
+		if (n >= MYSQL_BUFLEN) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+			return OPH_ODB_STR_BUFF_OVERFLOW;
+		}
+
+		if (mysql_query(oDB->conn, insertQuery)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			return OPH_ODB_MYSQL_ERROR;
+		}
+
+		MYSQL_RES *res = mysql_store_result(oDB->conn);
+
+		if (!mysql_num_rows(res)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "No rows found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		if (mysql_field_count(oDB->conn) != 1) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Too many fields found by query\n");
+			mysql_free_result(res);
+			return OPH_ODB_TOO_MANY_ROWS;
+		}
+
+		MYSQL_ROW row;
+
+		if ((row = mysql_fetch_row(res)))
+			*last_insertd_id = (int) strtol(row[0], NULL, 10);
+
+		mysql_free_result(res);
 	}
 	// Metadata support to put correct values of time metadata
 	if (id_datacube) {
@@ -1184,7 +1298,10 @@ int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension *
 		}
 		if (ll) {
 			char value[OPH_ODB_DIM_TIME_SIZE];
-			snprintf(value, OPH_ODB_DIM_TIME_SIZE, "%s %s %s", dim->units, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, dim->base_time);
+			if (dim->base_time && strchr(dim->base_time, OPH_ODB_DIM_BASETIME_FORMAT_CHECK))
+				snprintf(value, OPH_ODB_DIM_TIME_SIZE, "%s %s %s", dim->units, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2, dim->base_time);
+			else
+				snprintf(value, OPH_ODB_DIM_TIME_SIZE, "%s %s %s", dim->units, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, dim->base_time);
 			if (oph_odb_meta_put(oDB, id_datacube, dim->dimension_name, OPH_ODB_TIME_UNITS, 0, value)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 				return OPH_ODB_MYSQL_ERROR;
@@ -1209,7 +1326,7 @@ int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension *
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb * oDB, oph_odb_dimension_instance * dim_inst, int *last_insertd_id, int id_datacube, const char *dimension_name, const char *frequency)
+int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb *oDB, oph_odb_dimension_instance *dim_inst, int *last_insertd_id, int id_datacube, const char *dimension_name, const char *frequency)
 {
 	if (!oDB || !dim_inst || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1259,7 +1376,7 @@ int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb * oDB, oph_odb_dim
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_delete_dimensioninstance(ophidiadb * oDB, int id_dimensioninst)
+int oph_odb_dim_delete_dimensioninstance(ophidiadb *oDB, int id_dimensioninst)
 {
 	if (!oDB || !id_dimensioninst) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1287,7 +1404,7 @@ int oph_odb_dim_delete_dimensioninstance(ophidiadb * oDB, int id_dimensioninst)
 }
 
 //NOTE: It deletes grids used exclusively by this container
-int oph_odb_dim_delete_from_grid_table(ophidiadb * oDB, int id_container)
+int oph_odb_dim_delete_from_grid_table(ophidiadb *oDB, int id_container)
 {
 	if (!oDB || !id_container) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1314,7 +1431,7 @@ int oph_odb_dim_delete_from_grid_table(ophidiadb * oDB, int id_container)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_hierarchy_id(ophidiadb * oDB, char *hierarchy_name, int *id_hierarchy)
+int oph_odb_dim_retrieve_hierarchy_id(ophidiadb *oDB, char *hierarchy_name, int *id_hierarchy)
 {
 	if (!oDB || !hierarchy_name || !id_hierarchy) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1360,7 +1477,7 @@ int oph_odb_dim_retrieve_hierarchy_id(ophidiadb * oDB, char *hierarchy_name, int
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb * oDB, int datacube_id, const char *dimension_name, oph_odb_hierarchy * hier, char *concept_level, int *dimension_instance_id)
+int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb *oDB, int datacube_id, const char *dimension_name, oph_odb_hierarchy *hier, char *concept_level, int *dimension_instance_id)
 {
 	if (!oDB || !dimension_name || !hier) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1542,7 +1659,7 @@ int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb * oDB, i
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_set_time_dimension(ophidiadb * oDB, int id_datacube, char *dimension_name)
+int oph_odb_dim_set_time_dimension(ophidiadb *oDB, int id_datacube, char *dimension_name)
 {
 	if (!oDB || !dimension_name || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1566,9 +1683,8 @@ int oph_odb_dim_set_time_dimension(ophidiadb * oDB, int id_datacube, char *dimen
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
-	if (!ll) {
+	if (!ll)
 		return OPH_ODB_NO_ROW_FOUND;
-	}
 
 	oph_odb_hierarchy hier;
 	*dim.units = *dim.base_time = *dim.calendar = 0;
@@ -1601,12 +1717,21 @@ int oph_odb_dim_set_time_dimension(ophidiadb * oDB, int id_datacube, char *dimen
 	}
 	if (value) {
 		if (!strncasecmp(value, OPH_DIM_TIME_UNITS_SECONDS, ll = strlen(OPH_DIM_TIME_UNITS_SECONDS)) ||
-		    !strncasecmp(value, OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS)) || !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS))) {
+		    !strncasecmp(value, OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS)) ||
+		    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS)) ||
+		    !strncasecmp(value, OPH_DIM_TIME_UNITS_SECONDS, ll = strlen(OPH_DIM_TIME_UNITS_SECONDS) - 1) ||
+		    !strncasecmp(value, OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS) - 1) ||
+		    !strncasecmp(value, OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS) - 1)) {
 			strncpy(dim.units, value, ll);
 			dim.units[ll] = 0;
-			strcpy(dim.base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR) + 2);
+			if (!strncmp(value + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR)))
+				strcpy(dim.base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR) + 2);
+			else if (!strncmp(value + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2)))
+				strcpy(dim.base_time, value + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2) + 2);
+			else
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", value);
 		} else {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", value);
 			return OPH_ODB_MYSQL_ERROR;
 		}
 		free(value);
@@ -1664,7 +1789,7 @@ int oph_odb_dim_set_time_dimension(ophidiadb * oDB, int id_datacube, char *dimen
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_update_time_dimension(oph_odb_dimension * dim, char **templates, char **values, int nattr)
+int oph_odb_dim_update_time_dimension(oph_odb_dimension *dim, char **templates, char **values, int nattr)
 {
 	if (!dim || !templates || !values) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1677,10 +1802,18 @@ int oph_odb_dim_update_time_dimension(oph_odb_dimension * dim, char **templates,
 		if (!strcmp(templates[i], OPH_ODB_TIME_UNITS)) {
 			if (!strncasecmp(values[i], OPH_DIM_TIME_UNITS_SECONDS, ll = strlen(OPH_DIM_TIME_UNITS_SECONDS)) ||
 			    !strncasecmp(values[i], OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS)) ||
-			    !strncasecmp(values[i], OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS))) {
+			    !strncasecmp(values[i], OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS)) ||
+			    !strncasecmp(values[i], OPH_DIM_TIME_UNITS_SECONDS, ll = strlen(OPH_DIM_TIME_UNITS_SECONDS) - 1) ||
+			    !strncasecmp(values[i], OPH_DIM_TIME_UNITS_HOURS, ll = strlen(OPH_DIM_TIME_UNITS_HOURS) - 1) ||
+			    !strncasecmp(values[i], OPH_DIM_TIME_UNITS_DAYS, ll = strlen(OPH_DIM_TIME_UNITS_DAYS) - 1)) {
 				strncpy(dim->units, values[i], ll);
 				dim->units[ll] = 0;
-				strcpy(dim->base_time, values[i] + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR) + 2);
+				if (!strncmp(values[i] + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR)))
+					strcpy(dim->base_time, values[i] + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR) + 2);
+				else if (!strncmp(values[i] + ll + 1, OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2, strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2)))
+					strcpy(dim->base_time, values[i] + ll + strlen(OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2) + 2);
+				else
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to parse the base time from: %s\n", values[i]);
 			}
 		} else if (!strcmp(templates[i], OPH_ODB_TIME_CALENDAR)) {
 			strcpy(dim->calendar, values[i]);
@@ -1694,7 +1827,7 @@ int oph_odb_dim_update_time_dimension(oph_odb_dimension * dim, char **templates,
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimensions(ophidiadb * oDB, int id_datacube, char ***dimension_names, int *dimension_names_num)
+int oph_odb_dim_retrieve_dimensions(ophidiadb *oDB, int id_datacube, char ***dimension_names, int *dimension_names_num)
 {
 	if (!oDB || !id_datacube || !dimension_names || !dimension_names_num) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
 #define OPH_ODB_CUBE_OPERATOR_SIZE 256
 #define OPH_ODB_CUBE_OPERATION_QUERY_SIZE 2048
 
-#define OPH_ODB_CUBE_SOURCE_URI_SIZE 512
+#define OPH_ODB_CUBE_SOURCE_URI_SIZE 2048
 
 #define OPH_ODB_CUBE_DESCRIPTION_SIZE 2048
 
@@ -57,8 +57,7 @@ typedef struct {
 /**
  * \brief Structure that contain all parameters needed by DataCube
  * \param id_datacube id of the DataCube
- * \param dbmsxdatacube Number of dbms used to contain DataCube
- * \param dbxdbms Number of databases for each dbms
+ * \param hostxdatacube Number of hosts used to contain DataCube
  * \param fragmentxdb Number of fragments for each database (upper bound)
  * \param tuplexfragment Number of tuples for each fragment (upper bound)
  * \param measure Measure name
@@ -74,8 +73,6 @@ typedef struct {
 typedef struct {
 	int id_datacube;
 	int hostxdatacube;
-	int dbmsxhost;
-	int dbxdbms;
 	int fragmentxdb;
 	int tuplexfragment;
 	char measure[OPH_ODB_CUBE_MEASURE_SIZE + 1];
@@ -349,5 +346,11 @@ int oph_odb_cube_retrieve_cubehasdim_list(ophidiadb * oDB, int id_datacube, oph_
 int oph_odb_cube_update_tuplexfragment(ophidiadb * oDB, int id_datacube, int tuplexfragment);
 
 int oph_odb_cube_update_level_in_cubehasdim_table(ophidiadb * oDB, int level, int id_cubehasdim);
+
+int oph_odb_cube_order_by(ophidiadb * oDB, int order, int *id_datacube, int n);
+
+int oph_odb_cube_update_missingvalue(ophidiadb * oDB, int id_datacube, int idmissingvalue);
+
+int oph_odb_cube_retrieve_missingvalue(ophidiadb * oDB, int id_datacube, int *idmissingvalue, char *measure);
 
 #endif				/* __OPH_ODB_CUBE_H__ */

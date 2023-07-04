@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -59,6 +59,7 @@
  * \param time_filter Flag used in case time filters are expressed as dates
  * \param base64 Flag used in representation of output data
  * \param subset_type Flag indicating whether filters are expressed as indexes or values
+ * \param export_metadata Flag to indicate if metadata has to be exported with data
  */
 struct _OPH_EXPLORECUBE_operator_handle {
 	ophidiadb oDB;
@@ -82,6 +83,7 @@ struct _OPH_EXPLORECUBE_operator_handle {
 	int time_filter;
 	int base64;
 	int subset_type;
+	int export_metadata;
 };
 typedef struct _OPH_EXPLORECUBE_operator_handle OPH_EXPLORECUBE_operator_handle;
 

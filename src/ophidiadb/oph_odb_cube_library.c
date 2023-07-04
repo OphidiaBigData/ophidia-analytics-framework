@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@
 
 extern int msglevel;
 
-int oph_odb_cube_init_datacube(oph_odb_datacube * cube)
+int oph_odb_cube_init_datacube(oph_odb_datacube *cube)
 {
 	if (!cube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -45,7 +45,7 @@ int oph_odb_cube_init_datacube(oph_odb_datacube * cube)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_free_datacube(oph_odb_datacube * cube)
+int oph_odb_cube_free_datacube(oph_odb_datacube *cube)
 {
 	if (!cube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -59,7 +59,7 @@ int oph_odb_cube_free_datacube(oph_odb_datacube * cube)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_get_datacube_dbmsinstance_number(ophidiadb * oDB, int id_datacube, int *num_elements)
+int oph_odb_cube_get_datacube_dbmsinstance_number(ophidiadb *oDB, int id_datacube, int *num_elements)
 {
 	if (!oDB || !id_datacube || !num_elements) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -111,7 +111,7 @@ int oph_odb_cube_get_datacube_dbmsinstance_number(ophidiadb * oDB, int id_datacu
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_get_datacube_size(ophidiadb * oDB, int id_datacube, long long int *size)
+int oph_odb_cube_get_datacube_size(ophidiadb *oDB, int id_datacube, long long int *size)
 {
 	if (!oDB || !id_datacube || !size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -163,7 +163,7 @@ int oph_odb_cube_get_datacube_size(ophidiadb * oDB, int id_datacube, long long i
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_get_datacube_num_elements(ophidiadb * oDB, int id_datacube, long long int *num_elements)
+int oph_odb_cube_get_datacube_num_elements(ophidiadb *oDB, int id_datacube, long long int *num_elements)
 {
 	if (!oDB || !id_datacube || !num_elements) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -215,7 +215,7 @@ int oph_odb_cube_get_datacube_num_elements(ophidiadb * oDB, int id_datacube, lon
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_set_datacube_num_elements(ophidiadb * oDB, int id_datacube, long long int num_elements)
+int oph_odb_cube_set_datacube_num_elements(ophidiadb *oDB, int id_datacube, long long int num_elements)
 {
 	if (!oDB || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -242,7 +242,7 @@ int oph_odb_cube_set_datacube_num_elements(ophidiadb * oDB, int id_datacube, lon
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_set_datacube_size(ophidiadb * oDB, int id_datacube, long long int size)
+int oph_odb_cube_set_datacube_size(ophidiadb *oDB, int id_datacube, long long int size)
 {
 	if (!oDB || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -269,7 +269,7 @@ int oph_odb_cube_set_datacube_size(ophidiadb * oDB, int id_datacube, long long i
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_retrieve_source(ophidiadb * oDB, int id_src, oph_odb_source * src)
+int oph_odb_cube_retrieve_source(ophidiadb *oDB, int id_src, oph_odb_source *src)
 {
 	if (!oDB || !src || !id_src) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -320,7 +320,7 @@ int oph_odb_cube_retrieve_source(ophidiadb * oDB, int id_src, oph_odb_source * s
 	return OPH_ODB_SUCCESS;
 }
 
-int _oph_odb_cube_retrieve_datacube(ophidiadb * oDB, int id_datacube, oph_odb_datacube * cube, int partition_mode)
+int _oph_odb_cube_retrieve_datacube(ophidiadb *oDB, int id_datacube, oph_odb_datacube *cube, int partition_mode)
 {
 	if (!oDB || !id_datacube || !cube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -355,7 +355,7 @@ int _oph_odb_cube_retrieve_datacube(ophidiadb * oDB, int id_datacube, oph_odb_da
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 
-	if (mysql_field_count(oDB->conn) != 13) {
+	if (mysql_field_count(oDB->conn) != 11) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
@@ -365,19 +365,17 @@ int _oph_odb_cube_retrieve_datacube(ophidiadb * oDB, int id_datacube, oph_odb_da
 		cube->id_datacube = (row[0] ? (int) strtol(row[0], NULL, 10) : 0);
 		cube->id_container = (row[1] ? (int) strtol(row[1], NULL, 10) : 0);
 		cube->hostxdatacube = (row[2] ? (int) strtol(row[2], NULL, 10) : 0);
-		cube->dbmsxhost = (row[3] ? (int) strtol(row[3], NULL, 10) : 0);
-		cube->dbxdbms = (row[4] ? (int) strtol(row[4], NULL, 10) : 0);
-		cube->fragmentxdb = (row[5] ? (int) strtol(row[5], NULL, 10) : 0);
-		cube->tuplexfragment = (row[6] ? (int) strtol(row[6], NULL, 10) : 0);
+		cube->fragmentxdb = (row[3] ? (int) strtol(row[3], NULL, 10) : 0);
+		cube->tuplexfragment = (row[4] ? (int) strtol(row[4], NULL, 10) : 0);
 		memset(&(cube->measure), 0, OPH_ODB_CUBE_MEASURE_SIZE + 1);
-		strncpy(cube->measure, row[7], OPH_ODB_CUBE_MEASURE_SIZE);
+		strncpy(cube->measure, row[5], OPH_ODB_CUBE_MEASURE_SIZE);
 		memset(&(cube->measure_type), 0, OPH_ODB_CUBE_MEASURE_TYPE_SIZE + 1);
-		strncpy(cube->measure_type, row[8], OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
+		strncpy(cube->measure_type, row[6], OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
 		memset(&(cube->frag_relative_index_set), 0, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE + 1);
-		strncpy(cube->frag_relative_index_set, row[9], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
-		cube->compressed = (row[10] ? (int) strtol(row[10], NULL, 10) : 0);
-		cube->level = (row[11] ? (int) strtol(row[11], NULL, 10) : 0);
-		cube->id_source = (row[12] ? (int) strtol(row[12], NULL, 10) : 0);
+		strncpy(cube->frag_relative_index_set, row[7], OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
+		cube->compressed = (row[8] ? (int) strtol(row[8], NULL, 10) : 0);
+		cube->level = (row[9] ? (int) strtol(row[9], NULL, 10) : 0);
+		cube->id_source = (row[10] ? (int) strtol(row[10], NULL, 10) : 0);
 	}
 	mysql_free_result(res);
 
@@ -419,17 +417,17 @@ int _oph_odb_cube_retrieve_datacube(ophidiadb * oDB, int id_datacube, oph_odb_da
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_retrieve_datacube(ophidiadb * oDB, int id_datacube, oph_odb_datacube * cube)
+int oph_odb_cube_retrieve_datacube(ophidiadb *oDB, int id_datacube, oph_odb_datacube *cube)
 {
 	return _oph_odb_cube_retrieve_datacube(oDB, id_datacube, cube, 1);
 }
 
-int oph_odb_cube_retrieve_datacube_with_ordered_partitions(ophidiadb * oDB, int id_datacube, oph_odb_datacube * cube)
+int oph_odb_cube_retrieve_datacube_with_ordered_partitions(ophidiadb *oDB, int id_datacube, oph_odb_datacube *cube)
 {
 	return _oph_odb_cube_retrieve_datacube(oDB, id_datacube, cube, 0);
 }
 
-int oph_odb_cube_find_datacube_additional_info(ophidiadb * oDB, int id_datacube, char **creationdate, char **description)
+int oph_odb_cube_find_datacube_additional_info(ophidiadb *oDB, int id_datacube, char **creationdate, char **description)
 {
 	if (!oDB || !id_datacube || !creationdate || !description) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -489,7 +487,7 @@ int oph_odb_cube_find_datacube_additional_info(ophidiadb * oDB, int id_datacube,
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_retrieve_cubehasdim_list(ophidiadb * oDB, int id_datacube, oph_odb_cubehasdim ** cubedims, int *dim_num)
+int oph_odb_cube_retrieve_cubehasdim_list(ophidiadb *oDB, int id_datacube, oph_odb_cubehasdim **cubedims, int *dim_num)
 {
 	if (!oDB || !id_datacube || !cubedims || !dim_num) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -552,7 +550,7 @@ int oph_odb_cube_retrieve_cubehasdim_list(ophidiadb * oDB, int id_datacube, oph_
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_find_containers_datacubes(ophidiadb * oDB, int folder_id, int search_on, char *container_name, int id_datacube, MYSQL_RES ** information_list)
+int oph_odb_cube_find_containers_datacubes(ophidiadb *oDB, int folder_id, int search_on, char *container_name, int id_datacube, MYSQL_RES **information_list)
 {
 	(*information_list) = NULL;
 
@@ -666,7 +664,7 @@ int oph_odb_cube_find_containers_datacubes(ophidiadb * oDB, int folder_id, int s
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_find_datacube_hierarchy(ophidiadb * oDB, int direction, int id_datacube, MYSQL_RES ** information_list)
+int oph_odb_cube_find_datacube_hierarchy(ophidiadb *oDB, int direction, int id_datacube, MYSQL_RES **information_list)
 {
 	(*information_list) = NULL;
 
@@ -703,7 +701,7 @@ int oph_odb_cube_find_datacube_hierarchy(ophidiadb * oDB, int direction, int id_
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_find_task_list(ophidiadb * oDB, int folder_id, int datacube_id, char *operator, char *container_name, MYSQL_RES ** information_list)
+int oph_odb_cube_find_task_list(ophidiadb *oDB, int folder_id, int datacube_id, char *operator, char *container_name, MYSQL_RES **information_list)
 {
 	(*information_list) = NULL;
 
@@ -759,7 +757,7 @@ int oph_odb_cube_find_task_list(ophidiadb * oDB, int folder_id, int datacube_id,
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_insert_into_source_table(ophidiadb * oDB, oph_odb_source * src, int *last_insertd_id)
+int oph_odb_cube_insert_into_source_table(ophidiadb *oDB, oph_odb_source *src, int *last_insertd_id)
 {
 	if (!oDB || !src || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -818,7 +816,7 @@ int oph_odb_cube_insert_into_source_table(ophidiadb * oDB, oph_odb_source * src,
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb * oDB, oph_odb_datacube * cube, int *last_insertd_id)
+int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb *oDB, oph_odb_datacube *cube, int *last_insertd_id)
 {
 	if (!oDB || !cube || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -834,17 +832,17 @@ int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb * oDB, oph_od
 	int n;
 	if (cube->id_source) {
 		if (strlen(cube->description))
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_2, cube->id_container, cube->hostxdatacube, cube->dbmsxhost, cube->dbxdbms, cube->fragmentxdb,
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_2, cube->id_container, cube->hostxdatacube, cube->fragmentxdb,
 				     cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level, cube->id_source, cube->description);
 		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE, cube->id_container, cube->hostxdatacube, cube->dbmsxhost, cube->dbxdbms, cube->fragmentxdb,
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE, cube->id_container, cube->hostxdatacube, cube->fragmentxdb,
 				     cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level, cube->id_source);
 	} else {
 		if (strlen(cube->description))
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_3, cube->id_container, cube->hostxdatacube, cube->dbmsxhost, cube->dbxdbms, cube->fragmentxdb,
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_3, cube->id_container, cube->hostxdatacube, cube->fragmentxdb,
 				     cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level, cube->description);
 		else
-			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_1, cube->id_container, cube->hostxdatacube, cube->dbmsxhost, cube->dbxdbms, cube->fragmentxdb,
+			n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_1, cube->id_container, cube->hostxdatacube, cube->fragmentxdb,
 				     cube->tuplexfragment, cube->measure, cube->measure_type, cube->frag_relative_index_set, cube->compressed, cube->level);
 	}
 	if (n >= MYSQL_BUFLEN) {
@@ -872,7 +870,7 @@ int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb * oDB, oph_od
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 				return OPH_ODB_STR_BUFF_OVERFLOW;
 			}
-			if (mysql_query(oDB->conn, insertQuery)) {
+			if (oph_odb_query_ophidiadb(oDB, insertQuery)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 				return OPH_ODB_MYSQL_ERROR;
 			}
@@ -881,7 +879,7 @@ int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb * oDB, oph_od
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_insert_into_task_table(ophidiadb * oDB, oph_odb_task * new_task, int *last_insertd_id)
+int oph_odb_cube_insert_into_task_table(ophidiadb *oDB, oph_odb_task *new_task, int *last_insertd_id)
 {
 	if (!oDB || !new_task || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -963,7 +961,7 @@ int oph_odb_cube_insert_into_task_table(ophidiadb * oDB, oph_odb_task * new_task
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_insert_into_cubehasdim_table(ophidiadb * oDB, oph_odb_cubehasdim * cubedim, int *last_insertd_id)
+int oph_odb_cube_insert_into_cubehasdim_table(ophidiadb *oDB, oph_odb_cubehasdim *cubedim, int *last_insertd_id)
 {
 	if (!oDB || !cubedim || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -998,7 +996,7 @@ int oph_odb_cube_insert_into_cubehasdim_table(ophidiadb * oDB, oph_odb_cubehasdi
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_update_level_in_cubehasdim_table(ophidiadb * oDB, int level, int id_cubehasdim)
+int oph_odb_cube_update_level_in_cubehasdim_table(ophidiadb *oDB, int level, int id_cubehasdim)
 {
 	if (!oDB || !id_cubehasdim) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1025,7 +1023,7 @@ int oph_odb_cube_update_level_in_cubehasdim_table(ophidiadb * oDB, int level, in
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_delete_from_datacube_table(ophidiadb * oDB, int id_datacube)
+int oph_odb_cube_delete_from_datacube_table(ophidiadb *oDB, int id_datacube)
 {
 	if (!oDB || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1044,7 +1042,7 @@ int oph_odb_cube_delete_from_datacube_table(ophidiadb * oDB, int id_datacube)
 		return OPH_ODB_STR_BUFF_OVERFLOW;
 	}
 
-	if (mysql_query(oDB->conn, deleteQuery)) {
+	if (oph_odb_query_ophidiadb(oDB, deleteQuery)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
@@ -1052,7 +1050,7 @@ int oph_odb_cube_delete_from_datacube_table(ophidiadb * oDB, int id_datacube)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_check_if_datacube_not_present_by_pid(ophidiadb * oDB, const char *uri, const int id_container, const int id_datacube, int *exists)
+int oph_odb_cube_check_if_datacube_not_present_by_pid(ophidiadb *oDB, const char *uri, const int id_container, const int id_datacube, int *exists)
 {
 	*exists = 0;
 
@@ -1106,7 +1104,7 @@ int oph_odb_cube_check_if_datacube_not_present_by_pid(ophidiadb * oDB, const cha
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_check_datacube_availability(ophidiadb * oDB, int id_input, int type, int *status)
+int oph_odb_cube_check_datacube_availability(ophidiadb *oDB, int id_input, int type, int *status)
 {
 	if (!oDB || !id_input || !status) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1144,13 +1142,14 @@ int oph_odb_cube_check_datacube_availability(ophidiadb * oDB, int id_input, int 
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 	MYSQL_ROW row = mysql_fetch_row(res);
-	*status = ((int) strtol(row[0], NULL, 10) > 0 ? 0 : 1);
+	if (row)
+		*status = ((int) strtol(row[0], NULL, 10) > 0 ? 0 : 1);
 
 	mysql_free_result(res);
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_retrieve_datacube_id_list_from_dbinstance(ophidiadb * oDB, int id_db, int **id_datacubes, int *size)
+int oph_odb_cube_retrieve_datacube_id_list_from_dbinstance(ophidiadb *oDB, int id_db, int **id_datacubes, int *size)
 {
 	if (!oDB || !id_datacubes || !size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1202,7 +1201,7 @@ int oph_odb_cube_retrieve_datacube_id_list_from_dbinstance(ophidiadb * oDB, int 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_retrieve_datacube_measure(ophidiadb * oDB, int id_datacube, char *measure)
+int oph_odb_cube_retrieve_datacube_measure(ophidiadb *oDB, int id_datacube, char *measure)
 {
 	if (!oDB || !id_datacube || !measure) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1248,15 +1247,74 @@ int oph_odb_cube_retrieve_datacube_measure(ophidiadb * oDB, int id_datacube, cha
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 
-	row = mysql_fetch_row(res);
-	snprintf(measure, OPH_COMMON_BUFFER_LEN, "%s", row[0]);
+	if ((row = mysql_fetch_row(res)))
+		snprintf(measure, OPH_COMMON_BUFFER_LEN, "%s", row[0]);
 
 	mysql_free_result(res);
 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_update_tuplexfragment(ophidiadb * oDB, int id_datacube, int tuplexfragment)
+int oph_odb_cube_retrieve_missingvalue(ophidiadb *oDB, int id_datacube, int *idmissingvalue, char *measure)
+{
+	if (!oDB || !id_datacube || !idmissingvalue) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, 0, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+	*idmissingvalue = 0;
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		//logging(LOG_ERROR, __FILE__, __LINE__,0,"Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char query[MYSQL_BUFLEN];
+	int n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_RETRIEVE_OPHIDIADB_CUBE_MS, id_datacube);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		//logging(LOG_ERROR, __FILE__, __LINE__,0,"Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		//logging(LOG_ERROR, __FILE__, __LINE__,0,"MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+	int num_rows = mysql_num_rows(res);
+	if (num_rows != 1) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "No/more than one row found by query\n");
+		//logging(LOG_ERROR, __FILE__, __LINE__,0,"No/more than one row found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if (mysql_field_count(oDB->conn) != 2) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query\n");
+		//logging(LOG_ERROR, __FILE__, __LINE__,0,"Not enough fields found by query\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	if ((row = mysql_fetch_row(res))) {
+		if (row[0])
+			*idmissingvalue = strtol(row[0], NULL, 10);
+		if (measure)
+			snprintf(measure, OPH_COMMON_BUFFER_LEN, "%s", row[1]);
+	}
+
+	mysql_free_result(res);
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_cube_update_tuplexfragment(ophidiadb *oDB, int id_datacube, int tuplexfragment)
 {
 	if (!oDB || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1279,6 +1337,101 @@ int oph_odb_cube_update_tuplexfragment(ophidiadb * oDB, int id_datacube, int tup
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
 		return OPH_ODB_MYSQL_ERROR;
 	}
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_cube_update_missingvalue(ophidiadb *oDB, int id_datacube, int idmissingvalue)
+{
+	if (!oDB || !id_datacube) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char deleteQuery[MYSQL_BUFLEN];
+	int n = snprintf(deleteQuery, MYSQL_BUFLEN, MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_MS, idmissingvalue, id_datacube);
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, deleteQuery)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	return OPH_ODB_SUCCESS;
+}
+
+int oph_odb_cube_order_by(ophidiadb *oDB, int order, int *id_datacube, int id_datacube_num)
+{
+	if (!oDB || !id_datacube) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_ODB_NULL_PARAM;
+	}
+
+	if (!order || (id_datacube_num < 2))
+		return OPH_ODB_SUCCESS;
+
+	int n = 0, cc, nn = 0;
+	size_t max_size = id_datacube_num * (OPH_COMMON_MAX_INT_LENGHT + 2);
+	char cube_list[max_size];
+	for (cc = 0; cc < id_datacube_num; ++cc)
+		nn += snprintf(cube_list + nn, max_size - nn, "%s%d", cc ? "," : "", id_datacube[2 * cc + 1]);
+
+	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	char query[MYSQL_BUFLEN];
+	switch (order) {
+		case 1:
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_ORDER_CUBE_BY_SOURCE, cube_list);
+			break;
+		default:
+			return OPH_ODB_SUCCESS;
+	}
+	if (n >= MYSQL_BUFLEN) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
+		return OPH_ODB_STR_BUFF_OVERFLOW;
+	}
+
+	if (mysql_query(oDB->conn, query)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL query error: %s\n", mysql_error(oDB->conn));
+		return OPH_ODB_MYSQL_ERROR;
+	}
+
+	MYSQL_RES *res;
+	MYSQL_ROW row;
+	res = mysql_store_result(oDB->conn);
+
+	if (mysql_field_count(oDB->conn) != 2) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query.\n");
+		mysql_free_result(res);
+		return OPH_ODB_TOO_MANY_ROWS;
+	}
+
+	int num_rows = mysql_num_rows(res);
+	if (num_rows != id_datacube_num) {
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Cubes cannot be ordered by source.\n");
+		mysql_free_result(res);
+		return OPH_ODB_SUCCESS;
+	}
+
+	cc = 0;
+	while ((row = mysql_fetch_row(res))) {
+		id_datacube[2 * cc] = (int) strtol(row[0], NULL, 10);
+		id_datacube[2 * cc + 1] = (int) strtol(row[1], NULL, 10);
+		cc++;
+	}
+
+	mysql_free_result(res);
 
 	return OPH_ODB_SUCCESS;
 }

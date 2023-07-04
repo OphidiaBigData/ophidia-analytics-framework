@@ -19,6 +19,9 @@ data cubes can be merged. A new implicit dimension will be created.
 - dim_type: data type associated with the new dimension. Default value is &quot;long&quot;.
 - number : number of replies of the first cube; by default the first cube is considered only once.
 - description : additional description to be associated with the output cube.
+- order : criteria on which input cubes are ordered before merging:
+          - source : cubes are ordered by source, provided that level is 0
+          By default input cubes are not ordered.
         
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -29,6 +32,7 @@ data cubes can be merged. A new implicit dimension will be created.
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   mergecubes : show operator's output PID as text.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
         
 [Examples]       
 Merge the datacubes identified by the PIDs &quot;http://www.example.com/1/1&quot; and &quot;http://www.example.com/1/2&quot; :
@@ -51,6 +55,8 @@ SUBMISSION STRING: &quot;operator=oph_mergecubes2;cubes=http://www.example.com/1
 		<argument type="string" mandatory="no" default="long" values="double|float|int|long|short|byte">dim_type</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">number</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="none" values="none|source">order</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|mergecubes">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

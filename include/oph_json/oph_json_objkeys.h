@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -78,8 +78,10 @@
 
 // OPH_EXPLORECUBE
 #define OPH_JSON_OBJKEY_EXPLORECUBE_DATA 				"explorecube_data"
-#define OPH_JSON_OBJKEY_EXPLORECUBE_SUMMARY 				"explorecube_summary"
-#define OPH_JSON_OBJKEY_EXPLORECUBE_DIMVALUES				"explorecube_dimvalues"
+#define OPH_JSON_OBJKEY_EXPLORECUBE_SUMMARY 			"explorecube_summary"
+#define OPH_JSON_OBJKEY_EXPLORECUBE_DIMVALUES			"explorecube_dimvalues"
+#define OPH_JSON_OBJKEY_EXPLORECUBE_DIMINFO				"explorecube_diminfo"
+#define OPH_JSON_OBJKEY_EXPLORECUBE_METADATA			"explorecube_metadata"
 
 // OPH_EXPLORENC
 #define OPH_JSON_OBJKEY_EXPLORENC_DATA 					"explorenc_data"
@@ -103,6 +105,7 @@
 #define OPH_JSON_OBJKEY_DUPLICATE					"duplicate"
 #define OPH_JSON_OBJKEY_APPLY						"apply"
 #define OPH_JSON_OBJKEY_RANDCUBE					"randcube"
+#define OPH_JSON_OBJKEY_RANDCUBE2					"randcube2"
 #define OPH_JSON_OBJKEY_DELETE						"delete"
 #define OPH_JSON_OBJKEY_UNPUBLISH					"unpublish"
 #define OPH_JSON_OBJKEY_DELETECONTAINER					"deletecontainer"
@@ -114,6 +117,8 @@
 #define OPH_JSON_OBJKEY_FIND_LIST					"find_list"
 #define OPH_JSON_OBJKEY_FIND_SUMMARY					"find_summary"
 #define OPH_JSON_OBJKEY_IMPORTNC					"importnc"
+#define OPH_JSON_OBJKEY_IMPORTNC2					"importnc2"
+#define OPH_JSON_OBJKEY_IMPORTNCS					"importncs"
 #define OPH_JSON_OBJKEY_IMPORTFITS					"importfits"
 #define OPH_JSON_OBJKEY_IMPORTFITS_SUMMARY			"importfits_summary"
 #define OPH_JSON_OBJKEY_EXPORTNC					"exportnc"
@@ -134,6 +139,7 @@
 #define OPH_JSON_OBJKEY_METADATA_LIST					"metadata_list"
 #define OPH_JSON_OBJKEY_METADATA_SUMMARY				"metadata_summary"
 #define OPH_JSON_OBJKEY_CONCATNC					"concatnc"
+#define OPH_JSON_OBJKEY_CONCATNC2					"concatnc2"
 #define OPH_JSON_OBJKEY_INTERCUBE					"intercube"
 #define OPH_JSON_OBJKEY_MERGECUBES					"mergecubes"
 #define OPH_JSON_OBJKEY_B2DROP						"b2drop"
@@ -143,6 +149,14 @@
 #define OPH_JSON_OBJKEY_FS							"fs"
 #define OPH_JSON_OBJKEY_CONTAINERSCHEMA_INFO 		"containerschema_info"
 #define OPH_JSON_OBJKEY_CONTAINERSCHEMA_DIMINFO 	"containerschema_diminfo"
-
+#define OPH_JSON_OBJKEY_IMPORTESDM					"importesdm"
+#define OPH_JSON_OBJKEY_IMPORTESDM2					"importesdm2"
+#define OPH_JSON_OBJKEY_EXPORTESDM					"exportesdm"
+#define OPH_JSON_OBJKEY_CONCATESDM					"concatesdm"
+#define OPH_JSON_OBJKEY_CONCATESDM2					"concatesdm2"
+#define OPH_JSON_OBJKEY_CDO_OUTPUT					"cdo_output"
+#define OPH_JSON_OBJKEY_CDO_RETURNCODE				"cdo_returncode"
+#define OPH_JSON_OBJKEY_GENERIC_OUTPUT					"generic_output"
+#define OPH_JSON_OBJKEY_GENERIC_RETURNCODE				"generic_returncode"
 
 #endif

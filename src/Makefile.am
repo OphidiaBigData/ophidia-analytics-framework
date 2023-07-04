@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2018 CMCC Foundation
+#    Copyright (C) 2012-2022 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -16,11 +16,14 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+SUBDIRS=
+
 if STANDALONE_MODE
-SUBDIRS= . clients ioservers drivers
 else
-SUBDIRS= oph_gsoap . clients ioservers drivers
+SUBDIRS+= oph_gsoap
 endif
+
+SUBDIRS+= . clients ioservers drivers
 
 LIBRARY=
 
@@ -40,15 +43,25 @@ LIBRARY+= liboph_hierarchy.la
 LIBRARY+= liboph_dimension.la
 LIBRARY+= liboph_datacube.la
 LIBRARY+= liboph_driver_proc.la
-if HAVE_NETCDF
-LIBRARY+= liboph_nc.la
-endif
 LIBRARY+= liboph_analytics_operator.la
 LIBRARY+= liboph_ioserver_parser.la
 LIBRARY+= liboph_ioserver.la
 LIBRARY+= liboph_analytics_framework.la
+if HAVE_NETCDF
+LIBRARY+= liboph_nc.la
+endif
 if HAVE_CFITSIO
 LIBRARY+= liboph_fits.la
+endif
+if HAVE_ESDM
+LIBRARY+= liboph_esdm.la
+if HAVE_ESDM_PAV_KERNELS
+ESDM_PAV_INCLUDE= -DOPH_ESDM_PAV_KERNELS -I${prefix}/include
+ESDM_PAV_LIBRARY= -L${prefix}/lib -lesdm_kernels
+else
+ESDM_PAV_INCLUDE=
+ESDM_PAV_LIBRARY=
+endif
 endif
 
 lib_LTLIBRARIES = $(LIBRARY)
@@ -100,18 +113,17 @@ liboph_idstring_la_LIBADD = -lz -lm @LIBLTDL@ -L. -ldebug
 liboph_analytics_framework_la_SOURCES = oph_analytics_framework.c
 if STANDALONE_MODE
 liboph_analytics_framework_la_CFLAGS= ${MYSQL_CFLAGS} -DOPH_STANDALONE_MODE -prefer-pic -I../include -Ioph_gsoap -Ioph_gsoap/$(INTERFACE_TYPE) @INCLTDL@ ${lib_CFLAGS}
-liboph_analytics_framework_la_LDFLAGS = -static $(LIB_OPERATOR)
 liboph_analytics_framework_la_LIBADD = ${MYSQL_LDFLAGS} @LIBLTDL@ -L. -lophidiadb -loph_analytics_operator -loph_json -loph_task_parser
 else
 liboph_analytics_framework_la_CFLAGS= ${MYSQL_CFLAGS} -prefer-pic -I../include -Ioph_gsoap -Ioph_gsoap/$(INTERFACE_TYPE) @INCLTDL@ ${lib_CFLAGS}
-liboph_analytics_framework_la_LDFLAGS = -static $(LIB_OPERATOR)
-liboph_analytics_framework_la_LIBADD = ${MYSQL_LDFLAGS} @LIBLTDL@ -L. -lophidiadb -loph_analytics_operator -loph_json -loph_task_parser -Loph_gsoap -loph_soap
+liboph_analytics_framework_la_LIBADD = ${MYSQL_LDFLAGS} @LIBLTDL@ -Loph_gsoap -loph_soap -L. -lophidiadb -loph_analytics_operator -loph_json -loph_task_parser
 endif
+liboph_analytics_framework_la_LDFLAGS = -static $(LIB_OPERATOR)
 
 liboph_json_la_SOURCES = oph_json/oph_json_common.c oph_json/oph_json_graph.c oph_json/oph_json_grid.c  oph_json/oph_json_multigrid.c oph_json/oph_json_text.c oph_json/oph_json_tree.c
-liboph_json_la_CFLAGS= -prefer-pic -I../include -I../include/oph_json @INCLTDL@ $(JANSSON_CFLAGS) ${lib_CFLAGS}
+liboph_json_la_CFLAGS= -prefer-pic -I../include -I../include/oph_json @INCLTDL@ $(JANSSON_INCLUDE) ${lib_CFLAGS}
 liboph_json_la_LDFLAGS = -static -Wl,-rpath -Wl,$(JANSSON_LIBDIR)
-liboph_json_la_LIBADD = -lz -lm @LIBLTDL@ $(JANSSON_LIBS) -L. -ldebug
+liboph_json_la_LIBADD = -lz -lm @LIBLTDL@ $(JANSSON_LIB) -L. -ldebug
 
 liboph_task_parser_la_SOURCES = oph_task_parser_library.c 
 liboph_task_parser_la_CFLAGS= $(LIBXML_INCLUDE) -prefer-pic -I../include @INCLTDL@ ${lib_CFLAGS}
@@ -185,3 +197,11 @@ liboph_fits_la_CFLAGS= ${MYSQL_CFLAGS} ${LIBCFITSIO_INCLUDE} -prefer-pic -I../in
 liboph_fits_la_LDFLAGS = -static
 liboph_fits_la_LIBADD = -lz -lm ${LIBCFITSIO_LIB} -lpthread @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube
 endif
+
+if HAVE_ESDM
+liboph_esdm_la_SOURCES = oph_esdm_library.c
+liboph_esdm_la_CFLAGS= ${MYSQL_CFLAGS} $(ESDM_CFLAGS) -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS} ${ESDM_PAV_INCLUDE}
+liboph_esdm_la_LDFLAGS = -static
+liboph_esdm_la_LIBADD = -lz -lm $(ESDM_LIBS) @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube -lophidiadb ${ESDM_PAV_LIBRARY}
+endif
+

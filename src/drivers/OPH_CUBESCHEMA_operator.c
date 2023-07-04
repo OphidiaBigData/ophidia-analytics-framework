@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -42,7 +42,7 @@
 
 #include <float.h>
 
-int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
+int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -184,8 +184,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_NO_INPUT_DATACUBE, datacube_name);
 		free(uri);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-	} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_container, 1, &folder_id))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
+	} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_container, &folder_id))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_DATACUBE_FOLDER_ERROR, datacube_name);
 		free(uri);
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -305,7 +305,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_init(oph_operator_struct * handle)
+int task_init(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -316,7 +316,7 @@ int task_init(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_distribute(oph_operator_struct * handle)
+int task_distribute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -327,7 +327,7 @@ int task_distribute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_execute(oph_operator_struct * handle)
+int task_execute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -896,13 +896,13 @@ int task_execute(oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 
-		printf("+--------------+-------------+-------------+-------------+------------+------------+------------+----------------------+----------------------+\n");
-		printf("| %-12s | %-11s | %-11s | %-11s | %-10s | %-10s | %-10s | CUBESIZE[%s%-9s | %-20s |\n", "HOSTxCUBE", "DBMSxHOST", "DBxDBMS", "FRAGxDB", "ROWxFRAG", "ELEMxROW", "COMPRESSED",
+		printf("+-----------------+-----------------+-----------------+-----------------+------------+-----------------------+--------------------------------+\n");
+		printf("| %-15s | %-15s | %-15s | %-15s | %-10s | CUBESIZE[%s%-10s | %-30s |\n", "HOSTxCUBE", "FRAGxDB", "ROWxFRAG", "ELEMxROW", "COMPRESSED",
 		       (unit[0] ? unit : "  "), "]", "NUM.ELEMENTS");
-		printf("+--------------+-------------+-------------+-------------+------------+------------+------------+----------------------+----------------------+\n");
-		printf("| %-12d | %-11d | %-11d | %-11d | %-10d | %-10s | %-10s | %-20s | %-20s |\n", cube.hostxdatacube, cube.dbmsxhost, cube.dbxdbms, cube.fragmentxdb, cube.tuplexfragment,
+		printf("+-----------------+-----------------+-----------------+-----------------+------------+-----------------------+--------------------------------+\n");
+		printf("| %-15d | %-15d | %-15d | %-15s | %-10s | %-21s | %-30s |\n", cube.hostxdatacube, cube.fragmentxdb, cube.tuplexfragment,
 		       array_buf, (cube.compressed == 1 ? OPH_COMMON_YES_VALUE : OPH_COMMON_NO_VALUE), size_buf, elements_buf);
-		printf("+--------------+-------------+-------------+-------------+------------+------------+------------+----------------------+----------------------+\n\n");
+		printf("+-----------------+-----------------+-----------------+-----------------+------------+-----------------------+--------------------------------+\n\n");
 
 // JSON
 		if (oph_json_is_objkey_printable
@@ -1477,7 +1477,7 @@ int task_execute(oph_operator_struct * handle)
 			// Header
 			char **jsonkeys = NULL;
 			char **fieldtypes = NULL;
-			int num_fields = 11, iii, jjj = 0;
+			int num_fields = 9, iii, jjj = 0;
 			jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
 			if (!jsonkeys) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -1507,46 +1507,6 @@ int task_execute(oph_operator_struct * handle)
 			}
 			jjj++;
 			jsonkeys[jjj] = strdup("HOST x CUBE");
-			if (!jsonkeys[jjj]) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
-				for (iii = 0; iii < jjj; iii++)
-					if (jsonkeys[iii])
-						free(jsonkeys[iii]);
-				if (jsonkeys)
-					free(jsonkeys);
-				oph_odb_cube_free_datacube(&cube);
-				if (creationdate)
-					free(creationdate);
-				if (description)
-					free(description);
-				if (pid)
-					free(pid);
-				free(cubedims);
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			jjj++;
-			jsonkeys[jjj] = strdup("DBMS x HOST");
-			if (!jsonkeys[jjj]) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
-				for (iii = 0; iii < jjj; iii++)
-					if (jsonkeys[iii])
-						free(jsonkeys[iii]);
-				if (jsonkeys)
-					free(jsonkeys);
-				oph_odb_cube_free_datacube(&cube);
-				if (creationdate)
-					free(creationdate);
-				if (description)
-					free(description);
-				if (pid)
-					free(pid);
-				free(cubedims);
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			jjj++;
-			jsonkeys[jjj] = strdup("DATABASES x DBMS");
 			if (!jsonkeys[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "key");
@@ -1850,56 +1810,6 @@ int task_execute(oph_operator_struct * handle)
 				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 			}
 			jjj++;
-			fieldtypes[jjj] = strdup(OPH_JSON_INT);
-			if (!fieldtypes[jjj]) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
-				for (iii = 0; iii < num_fields; iii++)
-					if (jsonkeys[iii])
-						free(jsonkeys[iii]);
-				if (jsonkeys)
-					free(jsonkeys);
-				for (iii = 0; iii < jjj; iii++)
-					if (fieldtypes[iii])
-						free(fieldtypes[iii]);
-				if (fieldtypes)
-					free(fieldtypes);
-				oph_odb_cube_free_datacube(&cube);
-				if (creationdate)
-					free(creationdate);
-				if (description)
-					free(description);
-				if (pid)
-					free(pid);
-				free(cubedims);
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			jjj++;
-			fieldtypes[jjj] = strdup(OPH_JSON_INT);
-			if (!fieldtypes[jjj]) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "fieldtype");
-				for (iii = 0; iii < num_fields; iii++)
-					if (jsonkeys[iii])
-						free(jsonkeys[iii]);
-				if (jsonkeys)
-					free(jsonkeys);
-				for (iii = 0; iii < jjj; iii++)
-					if (fieldtypes[iii])
-						free(fieldtypes[iii]);
-				if (fieldtypes)
-					free(fieldtypes);
-				oph_odb_cube_free_datacube(&cube);
-				if (creationdate)
-					free(creationdate);
-				if (description)
-					free(description);
-				if (pid)
-					free(pid);
-				free(cubedims);
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			jjj++;
 			fieldtypes[jjj] = strdup(OPH_JSON_STRING);
 			if (!fieldtypes[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -2072,48 +1982,6 @@ int task_execute(oph_operator_struct * handle)
 			}
 			jjj++;
 			snprintf(jsontmp, OPH_COMMON_BUFFER_LEN, "%d", cube.hostxdatacube);
-			jsonvalues[jjj] = strdup(jsontmp);
-			if (!jsonvalues[jjj]) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
-				for (iii = 0; iii < jjj; iii++)
-					if (jsonvalues[iii])
-						free(jsonvalues[iii]);
-				if (jsonvalues)
-					free(jsonvalues);
-				oph_odb_cube_free_datacube(&cube);
-				if (creationdate)
-					free(creationdate);
-				if (description)
-					free(description);
-				if (pid)
-					free(pid);
-				free(cubedims);
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			jjj++;
-			snprintf(jsontmp, OPH_COMMON_BUFFER_LEN, "%d", cube.dbmsxhost);
-			jsonvalues[jjj] = strdup(jsontmp);
-			if (!jsonvalues[jjj]) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "value");
-				for (iii = 0; iii < jjj; iii++)
-					if (jsonvalues[iii])
-						free(jsonvalues[iii]);
-				if (jsonvalues)
-					free(jsonvalues);
-				oph_odb_cube_free_datacube(&cube);
-				if (creationdate)
-					free(creationdate);
-				if (description)
-					free(description);
-				if (pid)
-					free(pid);
-				free(cubedims);
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			jjj++;
-			snprintf(jsontmp, OPH_COMMON_BUFFER_LEN, "%d", cube.dbxdbms);
 			jsonvalues[jjj] = strdup(jsontmp);
 			if (!jsonvalues[jjj]) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -3448,7 +3316,7 @@ int task_execute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_reduce(oph_operator_struct * handle)
+int task_reduce(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -3459,7 +3327,7 @@ int task_reduce(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_destroy(oph_operator_struct * handle)
+int task_destroy(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -3470,7 +3338,7 @@ int task_destroy(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_unset(oph_operator_struct * handle)
+int env_unset(oph_operator_struct *handle)
 {
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)

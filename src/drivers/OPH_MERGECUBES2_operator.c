@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -50,8 +50,10 @@ int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db,
 	}
 	*query = NULL;
 
-	char tmp_buffer_small[3][datacube_num * OPH_MERGECUBES2_ARG_BUFFER];
-	char tmp_buffer[4][(datacube_num + 1) * OPH_MERGECUBES2_ARG_BUFFER];
+	size_t max_size = (datacube_num + 1) * OPH_MERGECUBES2_ARG_BUFFER;
+
+	char tmp_buffer_small[3][max_size];
+	char tmp_buffer[4][max_size];
 
 	int cc = 0;
 
@@ -59,14 +61,14 @@ int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db,
 	int tmp_len = 0;
 	for (cc = 0; cc < datacube_num; cc++) {
 		if (cc != 0)
-			tmp_len += snprintf(tmp_buffer_small[1] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_INTYPE_SEPARATOR);
-		tmp_len += snprintf(tmp_buffer_small[1] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_TYPE, input_type[cc]);
+			tmp_len += snprintf(tmp_buffer_small[1] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_SELECT_INTYPE_SEPARATOR);
+		tmp_len += snprintf(tmp_buffer_small[1] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_SELECT_TYPE, input_type[cc]);
 	}
 	tmp_len = 0;
 	for (cc = 0; cc < datacube_num; cc++) {
 		if (cc != 0)
-			tmp_len += snprintf(tmp_buffer_small[2] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_OUTTYPE_SEPARATOR);
-		tmp_len += snprintf(tmp_buffer_small[2] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_TYPE, input_type[cc]);
+			tmp_len += snprintf(tmp_buffer_small[2] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_SELECT_OUTTYPE_SEPARATOR);
+		tmp_len += snprintf(tmp_buffer_small[2] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_SELECT_TYPE, input_type[cc]);
 	}
 
 	int buf_len = snprintf(NULL, 0, OPH_MERGECUBES2_QUERY_OPERATION, output_cube);
@@ -74,17 +76,17 @@ int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db,
 	if (compressed) {
 		for (cc = 0; cc < datacube_num; cc++) {
 			if (cc != 0)
-				tmp_len += snprintf(tmp_buffer_small[0] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_SEPARATOR);
-			tmp_len += snprintf(tmp_buffer_small[0] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_PART_CMPR, cc, MYSQL_FRAG_MEASURE);	// input_type[cc]
+				tmp_len += snprintf(tmp_buffer_small[0] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_SELECT_SEPARATOR);
+			tmp_len += snprintf(tmp_buffer_small[0] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_SELECT_PART_CMPR, cc, MYSQL_FRAG_MEASURE);	// input_type[cc]
 		}
-		tmp_len = snprintf(tmp_buffer[0], OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_CMPR, 0, MYSQL_FRAG_ID, tmp_buffer_small[1], tmp_buffer_small[2], tmp_buffer_small[0]);
+		tmp_len = snprintf(tmp_buffer[0], max_size, OPH_MERGECUBES2_ARG_SELECT_CMPR, 0, MYSQL_FRAG_ID, tmp_buffer_small[1], tmp_buffer_small[2], tmp_buffer_small[0]);
 	} else {
 		for (cc = 0; cc < datacube_num; cc++) {
 			if (cc != 0)
-				tmp_len += snprintf(tmp_buffer_small[0] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_SEPARATOR);
-			tmp_len += snprintf(tmp_buffer_small[0] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT_PART, cc, MYSQL_FRAG_MEASURE);	// input_type[cc]
+				tmp_len += snprintf(tmp_buffer_small[0] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_SELECT_SEPARATOR);
+			tmp_len += snprintf(tmp_buffer_small[0] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_SELECT_PART, cc, MYSQL_FRAG_MEASURE);	// input_type[cc]
 		}
-		tmp_len = snprintf(tmp_buffer[0], OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_SELECT, 0, MYSQL_FRAG_ID, tmp_buffer_small[1], tmp_buffer_small[2], tmp_buffer_small[0]);
+		tmp_len = snprintf(tmp_buffer[0], max_size, OPH_MERGECUBES2_ARG_SELECT, 0, MYSQL_FRAG_ID, tmp_buffer_small[1], tmp_buffer_small[2], tmp_buffer_small[0]);
 	}
 
 	buf_len += snprintf(NULL, 0, OPH_MERGECUBES2_QUERY_SELECT, tmp_buffer[0]);
@@ -93,24 +95,24 @@ int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db,
 	tmp_len = 0;
 	for (cc = 0; cc < datacube_num; cc++) {
 		if (cc != 0)
-			tmp_len += snprintf(tmp_buffer[1] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_FROM_SEPARATOR);
-		tmp_len += snprintf(tmp_buffer[1] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_FROM_PART, input_db[cc], input_frag[cc]);
+			tmp_len += snprintf(tmp_buffer[1] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_FROM_SEPARATOR);
+		tmp_len += snprintf(tmp_buffer[1] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_FROM_PART, input_db[cc], input_frag[cc]);
 	}
 	buf_len += snprintf(NULL, 0, OPH_MERGECUBES2_QUERY_FROM, tmp_buffer[1]);
 
 	tmp_len = 0;
 	for (cc = 0; cc < datacube_num; cc++) {
 		if (cc != 0)
-			tmp_len += snprintf(tmp_buffer[2] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_FROM_SEPARATOR);
-		tmp_len += snprintf(tmp_buffer[2] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_FROM_ALIAS_PART, cc);
+			tmp_len += snprintf(tmp_buffer[2] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_FROM_SEPARATOR);
+		tmp_len += snprintf(tmp_buffer[2] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_FROM_ALIAS_PART, cc);
 	}
 	buf_len += snprintf(NULL, 0, OPH_MERGECUBES2_QUERY_FROM_ALIAS, tmp_buffer[2]);
 
 	tmp_len = 0;
 	for (cc = 1; cc < datacube_num; cc++) {
 		if (cc > 1)
-			tmp_len += snprintf(tmp_buffer[3] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_WHERE_SEPARATOR);
-		tmp_len += snprintf(tmp_buffer[3] + tmp_len, OPH_ODB_CUBE_OPERATION_QUERY_SIZE, OPH_MERGECUBES2_ARG_WHERE_PART, 0, MYSQL_FRAG_ID, cc, MYSQL_FRAG_ID);
+			tmp_len += snprintf(tmp_buffer[3] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_WHERE_SEPARATOR);
+		tmp_len += snprintf(tmp_buffer[3] + tmp_len, OPH_MERGECUBES2_ARG_BUFFER, OPH_MERGECUBES2_ARG_WHERE_PART, 0, MYSQL_FRAG_ID, cc, MYSQL_FRAG_ID);
 	}
 	if (tmp_len)
 		buf_len += snprintf(NULL, 0, OPH_MERGECUBES2_QUERY_WHERE, tmp_buffer[3]);
@@ -141,7 +143,7 @@ int build_mergecubes_query(int datacube_num, char *output_cube, char **input_db,
 	return 0;
 }
 
-int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
+int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -216,6 +218,19 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	//3 - Fill struct with the correct data
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_ORDER);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_ORDER);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MERGECUBES_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_ORDER);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	int order = 0;
+	if (strncmp(value, OPH_COMMON_NONE_FILTER, OPH_TP_TASKLEN)) {
+		if (!strncmp(value, "source", OPH_TP_TASKLEN))
+			order = 1;
+	}
+
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DATACUBE_MULTI_INPUT);
 
 	if (!value) {
@@ -330,8 +345,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		uri = NULL;
 
 		if (id_datacube_in[0]) {
-			if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[0], 1, &folder_id))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
+			if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[0], &folder_id))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[0], OPH_LOG_OPH_MERGECUBES_DATACUBE_FOLDER_ERROR, datacube_in[1]);
 				id_datacube_in[0] = 0;
 			} else if ((oph_odb_fs_check_folder_session(folder_id, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->sessionid, oDB, &permission)) || !permission) {
@@ -347,6 +362,12 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 
+		if (oph_odb_cube_order_by(oDB, order, id_datacube_in, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to order cubes.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[0], "Unable to order cubes.\n");
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+
 		id_datacube_in[2 * ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num] = id_datacube_in[0];
 		if (id_datacube_in[0]) {
 			value = hashtbl_get(task_tbl, OPH_IN_PARAM_CONTAINER_INPUT);
@@ -357,8 +378,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			}
 			if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
 				if (oph_odb_fs_retrieve_container_id_from_container_name
-				    (oDB, folder_id, value, 0, &id_datacube_in[2 * ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num])) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified container or it is hidden\n");
+				    (oDB, folder_id, value, &id_datacube_in[2 * ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num])) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified container\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[0], OPH_LOG_GENERIC_DATACUBE_FOLDER_ERROR, value);
 					id_datacube_in[0] = 0;
 				}
@@ -468,7 +489,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_init(oph_operator_struct * handle)
+int task_init(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -526,8 +547,8 @@ int task_init(oph_operator_struct * handle)
 		//Read old cube - dimension relation rows
 		if (oph_odb_cube_retrieve_cubehasdim_list(oDB, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_datacube[0], &cubedims, &number_of_dimensions)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive datacube1 - dimension relations.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_CUBEHASDIM_READ_ERROR,
-				"first");
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
+				OPH_LOG_OPH_MERGECUBES_CUBEHASDIM_READ_ERROR, "first");
 			for (cc = 0; cc < ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num; cc++)
 				oph_odb_cube_free_datacube(&(cube[cc]));
 			free(cube);
@@ -540,13 +561,12 @@ int task_init(oph_operator_struct * handle)
 					oph_odb_cube_free_datacube(&(cube[cc]));
 				free(cube);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_DATACUBE_READ_ERROR,
-					cc);
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
+					OPH_LOG_OPH_MERGECUBES_DATACUBE_READ_ERROR, cc);
 				goto __OPH_EXIT_1;
 			}
 			// Checking fragmentation structure
-			if ((cube[0].hostxdatacube != cube[cc].hostxdatacube) || (cube[0].dbmsxhost != cube[cc].dbmsxhost) || (cube[0].dbxdbms != cube[cc].dbxdbms)
-			    || (cube[0].fragmentxdb != cube[cc].fragmentxdb) || (cube[0].tuplexfragment != cube[cc].tuplexfragment)) {
+			if ((cube[0].hostxdatacube != cube[cc].hostxdatacube) || (cube[0].fragmentxdb != cube[cc].fragmentxdb) || (cube[0].tuplexfragment != cube[cc].tuplexfragment)) {
 				for (cc = 0; cc < ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num; cc++)
 					oph_odb_cube_free_datacube(&(cube[cc]));
 				free(cube);
@@ -593,7 +613,8 @@ int task_init(oph_operator_struct * handle)
 					l++;
 				while (!cubedims2[ll].size && (ll < number_of_dimensions2))
 					ll++;
-				if ((l >= number_of_dimensions) || (ll >= number_of_dimensions2) || (cubedims[l].size != cubedims2[ll].size) || (cubedims[l].explicit_dim != cubedims2[ll].explicit_dim)
+				if ((l >= number_of_dimensions) || (ll >= number_of_dimensions2) || (cubedims[l].size != cubedims2[ll].size)
+				    || (cubedims[l].explicit_dim != cubedims2[ll].explicit_dim)
 				    || (cubedims[l].level != cubedims2[ll].level))
 					break;
 			}
@@ -651,8 +672,8 @@ int task_init(oph_operator_struct * handle)
 				free(cube);
 				free(cubedims);
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_MEMORY_ERROR_INPUT,
-					"measure type");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
+					OPH_LOG_OPH_MERGECUBES_MEMORY_ERROR_INPUT, "measure type");
 				goto __OPH_EXIT_1;
 			}
 			if (cc >= ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->number)
@@ -723,8 +744,8 @@ int task_init(oph_operator_struct * handle)
 		free(cube);
 
 		if (oph_odb_meta_copy_from_cube_to_cube
-		    (oDB, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_datacube[0], ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_output_datacube,
-		     ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_user)) {
+		    (oDB, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_datacube[0],
+		     ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_output_datacube, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_user)) {
 			free(cubedims);
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to copy metadata.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_GENERIC_METADATA_COPY_ERROR);
@@ -1139,8 +1160,8 @@ int task_init(oph_operator_struct * handle)
 		for (cc = 0; cc < input_datacube_num; cc++) {
 			if (!(((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->measure_type[cc] = (char *) strndup(data_type[cc], OPH_ODB_CUBE_MEASURE_TYPE_SIZE))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_MEMORY_ERROR_INPUT,
-					"measure type");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
+					OPH_LOG_OPH_MERGECUBES_MEMORY_ERROR_INPUT, "measure type");
 				((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->execute_error = 1;
 				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 			}
@@ -1151,7 +1172,7 @@ int task_init(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_distribute(oph_operator_struct * handle)
+int task_distribute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1225,7 +1246,7 @@ int task_distribute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_execute(oph_operator_struct * handle)
+int task_execute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1342,8 +1363,8 @@ int task_execute(oph_operator_struct * handle)
 
 		if (oph_dc_connect_to_dbms(((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->server, &(dbmss[0].value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_DBMS_CONNECTION_ERROR,
-				(dbmss[0].value[i]).id_dbms);
+			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
+				OPH_LOG_OPH_MERGECUBES_DBMS_CONNECTION_ERROR, (dbmss[0].value[i]).id_dbms);
 			result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 		//For each DB
@@ -1354,8 +1375,8 @@ int task_execute(oph_operator_struct * handle)
 
 			if (oph_dc_use_db_of_dbms(((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->server, &(dbmss[0].value[i]), &(dbs[0].value[j]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_DB_SELECTION_ERROR,
-					(dbs[0].value[j]).db_name);
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
+					OPH_LOG_OPH_MERGECUBES_DB_SELECTION_ERROR, (dbs[0].value[j]).db_name);
 				result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 				break;
 			}
@@ -1423,18 +1444,20 @@ int task_execute(oph_operator_struct * handle)
 					       ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->measure_type[0],
 					       ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->measure_type[1], frags[0].value[k].fragment_name, MYSQL_FRAG_MEASURE,
 					       frags[1].value[k].fragment_name, MYSQL_FRAG_MEASURE, MYSQL_FRAG_MEASURE, frags[0].value[k].db_instance->db_name, frags[0].value[k].fragment_name,
-					       frags[1].value[k].db_instance->db_name, frags[1].value[k].fragment_name, frags[0].value[k].fragment_name, MYSQL_FRAG_ID, frags[1].value[k].fragment_name,
-					       MYSQL_FRAG_ID);
+					       frags[1].value[k].db_instance->db_name, frags[1].value[k].fragment_name, frags[0].value[k].fragment_name, MYSQL_FRAG_ID,
+					       frags[1].value[k].fragment_name, MYSQL_FRAG_ID);
 				else
 					printf("ORIGINAL QUERY: " OPH_MERGECUBES2_QUERY2_MYSQL "\n", frag_name_out, MYSQL_FRAG_ID,
 					       ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->measure_type[0],
 					       ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->measure_type[1],
 					       ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->measure_type[0],
-					       ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->measure_type[1], MYSQL_FRAG_MEASURE, frags[0].value[k].fragment_name, MYSQL_FRAG_ID,
-					       MYSQL_FRAG_ID, frags[0].value[k].fragment_name, MYSQL_FRAG_MEASURE, frags[1].value[k].fragment_name, MYSQL_FRAG_MEASURE, MYSQL_FRAG_MEASURE,
-					       frags[0].value[k].db_instance->db_name, frags[0].value[k].fragment_name, frags[1].value[k].db_instance->db_name, frags[1].value[k].fragment_name,
-					       frags[0].value[k].fragment_name, MYSQL_FRAG_ID, frags[1].value[k].fragment_name, MYSQL_FRAG_ID);
+					       ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->measure_type[1], MYSQL_FRAG_MEASURE, frags[0].value[k].fragment_name,
+					       MYSQL_FRAG_ID, MYSQL_FRAG_ID, frags[0].value[k].fragment_name, MYSQL_FRAG_MEASURE, frags[1].value[k].fragment_name, MYSQL_FRAG_MEASURE,
+					       MYSQL_FRAG_MEASURE, frags[0].value[k].db_instance->db_name, frags[0].value[k].fragment_name, frags[1].value[k].db_instance->db_name,
+					       frags[1].value[k].fragment_name, frags[0].value[k].fragment_name, MYSQL_FRAG_ID, frags[1].value[k].fragment_name, MYSQL_FRAG_ID);
 #endif
+
+				fprintf(stderr, "Query: %s§\n", query);
 
 				//MERGECUBES2 fragment
 				if (oph_dc_create_fragment_from_query(((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->server, &(frags[0].value[k]), NULL, query, 0, 0, 0)) {
@@ -1494,7 +1517,7 @@ int task_execute(oph_operator_struct * handle)
 	return result;
 }
 
-int task_reduce(oph_operator_struct * handle)
+int task_reduce(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1505,7 +1528,7 @@ int task_reduce(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_destroy(oph_operator_struct * handle)
+int task_destroy(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1572,19 +1595,30 @@ int task_destroy(oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}
 		}
-		//Before deleting wait for all process to reach this point
-		MPI_Barrier(MPI_COMM_WORLD);
+
+		if (handle->output_code)
+			proc_error = (short int) handle->output_code;
+		else
+			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
+		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
+		handle->output_code = global_error;
 
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
 			oph_dproc_clean_odb(&((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->oDB, id_datacube,
 					    ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0]);
 		}
+
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_GENERIC_PROCESS_ERROR);
+
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_unset(oph_operator_struct * handle)
+int env_unset(oph_operator_struct *handle)
 {
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)

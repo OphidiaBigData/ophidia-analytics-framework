@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -24,6 +24,10 @@
 #include "oph_datacube_library.h"
 #include "oph_ioserver_library.h"
 
+#ifndef OPH_ESDM_PREFIX
+#define OPH_ESDM_PREFIX		"esdm://"
+#endif
+
 #define OPH_NC_BYTE_TYPE	OPH_COMMON_BYTE_TYPE
 #define OPH_NC_SHORT_TYPE	OPH_COMMON_SHORT_TYPE
 #define OPH_NC_INT_TYPE		OPH_COMMON_INT_TYPE
@@ -42,8 +46,13 @@
 #define OPH_NC_ERRCODE		2
 #define OPH_NC_ERR(e)		{printf("Error: %s\n", nc_strerror(e));}
 
-#define OPH_NC_ERROR		1
 #define OPH_NC_SUCCESS		0
+#define OPH_NC_ERROR		1
+#define OPH_NC_BOUND_ERROR	2
+
+#define OPH_NC_SKIP_ATTRIBUTES
+#define OPH_NC_BOUNDS		"bounds"
+#define OPH_NC_PROPERTIES	"_NCProperties"
 
 //Structure used by OPH_EXPORTNC operator
 struct _NETCDF_dim {
@@ -82,6 +91,11 @@ struct _NETCDF_var {
 	char *dims_unlim;
 	short int *dims_order;
 	int *oph_dims_id;
+	int dim_unlim;
+	int *order_src_path;
+	int number_src_path;
+	char *dim_unlim_array;
+	char *base_time;
 };
 typedef struct _NETCDF_var NETCDF_var;
 
@@ -97,7 +111,7 @@ typedef struct _NETCDF_var NETCDF_var;
  * \param n Number of dimensions
  * \return 0 if successfull
  */
-int _oph_nc_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, size_t ** id, int i, int n);
+int _oph_nc_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, size_t **id, int i, int n);
 
 /**
  * \brief Function used to compute dimension ID from tuple ID
@@ -107,7 +121,7 @@ int _oph_nc_get_dimension_id(unsigned long residual, unsigned long total, unsign
  * \param id Output to be filled with the dimension ids related to tuple ID
  * \return 0 if successfull
  */
-int oph_nc_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n, size_t ** id);
+int oph_nc_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n, size_t **id);
 
 /**
  * \brief Populate a fragment with nc data
@@ -201,7 +215,7 @@ int oph_nc_get_nc_type(char *in_c_type, nc_type * type_nc);
  * \param n Number of dimensions
  * \return 0 if successfull, 1 otherwise
  */
-int _oph_nc_get_next_nc_id(size_t * id, unsigned int *sizemax, int i, int n);
+int _oph_nc_get_next_nc_id(size_t *id, unsigned int *sizemax, int i, int n);
 
 /**
  * \brief Function used to compute the subsequent nc dimension id
@@ -210,7 +224,7 @@ int _oph_nc_get_next_nc_id(size_t * id, unsigned int *sizemax, int i, int n);
  * \param n Number of dimensions
  * \return 0 if successfull, 1 otherwise
  */
-int oph_nc_get_next_nc_id(size_t * id, unsigned int *sizemax, int n);
+int oph_nc_get_next_nc_id(size_t *id, unsigned int *sizemax, int n);
 
 /**
  * \brief Append nc data to a fragment
@@ -225,6 +239,46 @@ int oph_nc_get_next_nc_id(size_t * id, unsigned int *sizemax, int n);
 int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int ncid, int compressed, NETCDF_var * measure);
 
 /**
+ * \brief Append nc data to a fragment (Optimized version with single read per fragment)
+ * \param server Pointer to I/O server structure
+ * \param old_frag Structure with information about the old fragment
+ * \param new_frag Structure with information about the new fragment
+ * \param ncid Id of nc file
+ * \param compressed If the data to insert is compressed (1) or not (0)
+ * \param measure Structure containing measure data and information to be stored
+ * \param memory_size Value of maximum memory available
+ * \return 0 if successfull
+ */
+int oph_nc_append_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int ncid, int compressed, NETCDF_var * measure, long long memory_size);
+
+/**
+ * \brief Append nc data to a fragment (Optimized version with single read and transposition per fragment)
+ * \param server Pointer to I/O server structure
+ * \param old_frag Structure with information about the old fragment
+ * \param new_frag Structure with information about the new fragment
+ * \param ncid Id of nc file
+ * \param compressed If the data to insert is compressed (1) or not (0)
+ * \param measure Structure containing measure data and information to be stored
+ * \param memory_size Value of maximum memory available
+ * \return 0 if successfull
+ */
+int oph_nc_append_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int ncid, int compressed, NETCDF_var * measure, long long memory_size);
+
+/**
+ * \brief Append nc data to a fragment (Optimized version with single read and transposition per fragment)
+ * \param server Pointer to I/O server structure
+ * \param old_frag Structure with information about the old fragment
+ * \param new_frag Structure with information about the new fragment
+ * \param nc_file_path Path to NetCDF file
+ * \param tuplexfrag_number Number of tuple to insert
+ * \param compressed If the data to insert is compressed (1) or not (0)
+ * \param measure Structure containing measure data and information to be stored
+ * \return 0 if successfull
+ */
+int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, char *nc_file_path, int tuplexfrag_number, int compressed,
+				    NETCDF_var * measure);
+
+/**
  * \brief Retrieve a dimension coordinated variable data from a NetCDF file
  * \param id_container Id of output container (used by logging function)
  * \param ncid Id of nc file
@@ -235,6 +289,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragme
  * \return 0 if successfull
  */
 int oph_nc_get_dim_array(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array);
+int oph_nc_get_dim_array_and_size(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array, size_t *size);
 
 /**
  * \brief Retrieve a dimension coordinated variable data from a NetCDF file allowing subsetting
@@ -264,7 +319,7 @@ int oph_nc_get_dim_array2(int id_container, int ncid, int dim_id, const char dim
  * \param coord_index Index of the first value greater than "value"
  * \return 0 if successfull
  */
-int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_type, int dim_size, char *value, int want_start, double offset, int *order, int *coord_index);
+int oph_nc_index_by_value(int id_container, int ncid, int dim_id, nc_type dim_type, int dim_size, char *value, int want_start, double offset, int *order, int *coord_index, char out_of_bound);
 
 /**
  * \brief Compare nc type with c type
@@ -296,5 +351,9 @@ int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE
  * \return 0 if successfull
  */
 int oph_nc_get_row_from_nc(int ncid, int array_length, NETCDF_var * measure, unsigned long idDim, char **row);
+
+int oph_nc_update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid);
+int oph_nc_update_dim_with_nc_metadata2(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid, int *dim_id);
+int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var * measure, int is_index, int ncid, double offset, char out_of_bound);
 
 #endif				//__OPH_NC_UTILITY_H

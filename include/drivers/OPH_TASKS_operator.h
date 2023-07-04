@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -47,6 +47,7 @@ struct _OPH_TASKS_operator_handle {
 	char **objkeys;
 	int objkeys_num;
 	char *sessionid;
+	int recursive_search;
 };
 typedef struct _OPH_TASKS_operator_handle OPH_TASKS_operator_handle;
 

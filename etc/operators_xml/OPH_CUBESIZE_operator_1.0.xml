@@ -14,6 +14,10 @@ It computes and displays the size of the input datacube.
 		     for a static linear block distribution of resources.
 - byte_unit : measure unit used to show datacube size. The unit can be KB, 
             MB (default), GB, TB or PB
+- algorithm : algorithm used to compute the size. Possible values are:
+		        &quot;eurisitic&quot; (default) to estimate the size with an euristic method; 
+              &quot;count&quot; to get the actual size of each fragment.
+
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -24,6 +28,7 @@ It computes and displays the size of the input datacube.
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   cubesize : show cube size.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]
 Compute the size of the datacube &quot;http://www.example.com/1/1&quot; :
@@ -40,8 +45,10 @@ SUBMISSION STRING: &quot;operator=oph_cubesize;cube=http://www.example.com/1/1;&
 		<argument type="int" mandatory="no" default="0" minvalue="0" maxvalue="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="MB" values="KB|MB|GB|TB|PB">byte_unit</argument>
+		<argument type="string" mandatory="no" default="euristic" values="euristic|count">algorithm</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|cubesize">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

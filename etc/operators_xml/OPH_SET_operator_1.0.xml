@@ -10,8 +10,16 @@ Set parameters in a workflow environment.
       
 [Parameters]
 - key : name of the parameter. It should comply with IEEE Std 1003.1-2001 conventions, unless brackets {} are adopted to refer it.
+        In case &quot;value&quot; has more values, &quot;key&quot; is the array name: use &quot;keys&quot; to list the key to be associated with each value.
+- keys : similar to &quot;key&quot;, but it allows to associate a different key to each value in case of multivalues.
 - value : value of the parameter. By default it will se to 1. It can be accessed with @key or @{key}.
+- subset_filter : set to &quot;yes&quot; in case &quot;value&quot; is an index array and subset strings have to be stored on behalf of the list of numbers.
+                  Use &quot;real&quot; in case &quot;value&quot; contains real numbers.
+- offset : expected difference between two consecutive items of input array in case subset_strings have to be evaluated. By default, it will se to &quot;1&quot;.
 - id : workflow identifier. By default the hosting workflow is selected. The target workflow must have been submitted in the same session.
+
+[System parameters]
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]
 Set the parameter &quot;var&quot; to 10:
@@ -24,8 +32,12 @@ SUBMISSION STRING: &quot;operator=oph_set;key=var;value=10;&quot;</abstract>
         <permission>write</permission>
     </info>
     <args>
-		<argument type="string" mandatory="yes" multivalue="yes">key</argument>
+		<argument type="string" mandatory="no" default="-" multivalue="yes">key</argument>
+		<argument type="string" mandatory="no" default="-" multivalue="yes">keys</argument>
 		<argument type="string" mandatory="no" default="-" multivalue="yes">value</argument>
-		<argument type="int" mandatory="no" default="@OPH_WORKFLOW_ID" minvalue="1">id</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no|real">subset_filter</argument>
+		<argument type="real" mandatory="no" default="1" minvalue="0">offset</argument>
+		<argument type="int" mandatory="no" default="@OPH_WORKFLOW_ID" minvalue="0">id</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

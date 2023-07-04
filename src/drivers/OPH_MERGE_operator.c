@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
-int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
+int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -168,8 +168,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_MERGE_DATACUBE_AVAILABILITY_ERROR, datacube_in);
 			id_datacube_in[0] = 0;
 			id_datacube_in[1] = 0;
-		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], 1, &folder_id))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
+		} else if ((oph_odb_fs_retrive_container_folder_id(oDB, id_datacube_in[1], &folder_id))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_MERGE_DATACUBE_FOLDER_ERROR, datacube_in);
 			id_datacube_in[0] = 0;
 			id_datacube_in[1] = 0;
@@ -199,8 +199,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
 			if (strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
-				if (oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, value, 0, &id_datacube_in[2])) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified container or it is hidden\n");
+				if (oph_odb_fs_retrieve_container_id_from_container_name(oDB, folder_id, value, &id_datacube_in[2])) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified container\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_GENERIC_DATACUBE_FOLDER_ERROR, value);
 					id_datacube_in[0] = 0;
 					id_datacube_in[1] = 0;
@@ -276,7 +276,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_init(oph_operator_struct * handle)
+int task_init(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -342,8 +342,6 @@ int task_init(oph_operator_struct * handle)
 
 			//Save old fragmentation params
 			int temp_fragxdb = cube.fragmentxdb;
-			int temp_dbxdbms = cube.dbxdbms;
-			int temp_dbmsxhost = cube.dbmsxhost;
 			int temp_hostxcube = cube.hostxdatacube;
 			int *tmp_db_id = NULL;
 
@@ -352,8 +350,6 @@ int task_init(oph_operator_struct * handle)
 				int db_id = 0;
 				//All fragmentation params are set to one
 				cube.fragmentxdb = 1;
-				cube.dbxdbms = 1;
-				cube.dbmsxhost = 1;
 				cube.hostxdatacube = 1;
 
 				//New fragment will be stored in the first db available
@@ -375,14 +371,13 @@ int task_init(oph_operator_struct * handle)
 				cube.db_number = 1;
 
 			}
-			//If block merge is performed (This section checks the merging number to avoid non-homogeneous fragmentaion, i.e. dbmsxhost and dbxdbms must be the exact values)
+			//If block merge is performed (This section checks the merging number to avoid non-homogeneous fragmentaion)
 			else {
 				//Compute maximum values for fragmentation params
 				cube.fragmentxdb = ceil((double) temp_fragxdb / ((OPH_MERGE_operator_handle *) handle->operator_handle)->merge_number);
 				//malloc space for new set of db used to partition datacube
-				int db_number = temp_dbxdbms * temp_dbmsxhost * temp_hostxcube;
 				int *new_id_db = NULL;
-				if (!(new_id_db = (int *) malloc(db_number * sizeof(int)))) {
+				if (!(new_id_db = (int *) malloc(temp_hostxcube * sizeof(int)))) {
 					oph_odb_cube_free_datacube(&cube);
 					oph_odb_stge_free_fragment_list(&frags);
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -392,7 +387,7 @@ int task_init(oph_operator_struct * handle)
 				}
 				//malloc space for counters of fragment for each db
 				int *out_fragxdb;
-				if (!(out_fragxdb = (int *) malloc(db_number * sizeof(int)))) {
+				if (!(out_fragxdb = (int *) malloc(temp_hostxcube * sizeof(int)))) {
 					oph_odb_cube_free_datacube(&cube);
 					oph_odb_stge_free_fragment_list(&frags);
 					free(new_id_db);
@@ -401,10 +396,10 @@ int task_init(oph_operator_struct * handle)
 						"output fragxdb counter");
 					goto __OPH_EXIT_1;
 				}
-				memset(out_fragxdb, 0, db_number * sizeof(int));
+				memset(out_fragxdb, 0, temp_hostxcube * sizeof(int));
 				//malloc space for counters of db for each dbms
 				int *out_dbxdbms;
-				if (!(out_dbxdbms = (int *) malloc(temp_dbmsxhost * temp_hostxcube * sizeof(int)))) {
+				if (!(out_dbxdbms = (int *) malloc(temp_hostxcube * sizeof(int)))) {
 					oph_odb_cube_free_datacube(&cube);
 					oph_odb_stge_free_fragment_list(&frags);
 					free(new_id_db);
@@ -414,7 +409,7 @@ int task_init(oph_operator_struct * handle)
 						"output dbxdbms counter");
 					goto __OPH_EXIT_1;
 				}
-				memset(out_dbxdbms, 0, temp_dbmsxhost * temp_hostxcube * sizeof(int));
+				memset(out_dbxdbms, 0, temp_hostxcube * sizeof(int));
 				//malloc space for counters of dbms for each host
 				int *out_dbmsxhost;
 				if (!(out_dbmsxhost = (int *) malloc(temp_hostxcube * sizeof(int)))) {
@@ -436,10 +431,10 @@ int task_init(oph_operator_struct * handle)
 				int frag_counter = 0;
 
 				//count number of merged fragment per db        
-				for (i = 0; i < db_number; i++) {
+				for (i = 0; i < temp_hostxcube; i++) {
 					new_frag_counter = 0;
 					j = abs(i * temp_fragxdb - frag_counter);
-					if (i == db_number - 1)
+					if (i == temp_hostxcube - 1)
 						temp_fragxdb = abs(frags.size - frag_counter);
 					for (; j < temp_fragxdb; j += frag_to_merge) {
 						new_frag_counter++;
@@ -448,15 +443,15 @@ int task_init(oph_operator_struct * handle)
 					frag_counter += new_frag_counter * frag_to_merge;
 				}
 				//count number of dbs for dbms
-				for (i = 0; i < db_number; i++) {
+				for (i = 0; i < temp_hostxcube; i++) {
 					if (out_fragxdb[i]) {
-						out_dbxdbms[(int) i / temp_dbxdbms]++;
+						out_dbxdbms[(int) i]++;
 					}
 				}
 				//count number of dbmss for host
-				for (i = 0; i < temp_dbmsxhost * temp_hostxcube; i++) {
+				for (i = 0; i < temp_hostxcube; i++) {
 					if (out_dbxdbms[i]) {
-						out_dbmsxhost[(int) i / temp_dbmsxhost]++;
+						out_dbmsxhost[(int) i]++;
 					}
 				}
 
@@ -476,18 +471,15 @@ int task_init(oph_operator_struct * handle)
 							wrong_partition_flag = 1;
 							break;
 						}
-						//Check into each dbms of this host
-						for (j = 0; j < temp_dbmsxhost; j++) {
-							//Check only non-empty dbms
-							if (out_dbxdbms[j]) {
-								//If number of db x dbms is 0 set as first value
-								if (!num_dbxdbms)
-									num_dbxdbms = out_dbxdbms[j];
-								//If this dbms doesn't match number of db break
-								if (num_dbxdbms != out_dbxdbms[j]) {
-									wrong_partition_flag = 1;
-									break;
-								}
+						//Check only non-empty dbms
+						if (out_dbxdbms[i]) {
+							//If number of db x dbms is 0 set as first value
+							if (!num_dbxdbms)
+								num_dbxdbms = out_dbxdbms[i];
+							//If this dbms doesn't match number of db break
+							if (num_dbxdbms != out_dbxdbms[i]) {
+								wrong_partition_flag = 1;
+								break;
 							}
 						}
 						num_hostxcube++;
@@ -508,13 +500,11 @@ int task_init(oph_operator_struct * handle)
 					goto __OPH_EXIT_1;
 				}
 				//Use computed values
-				cube.dbxdbms = num_dbxdbms;
-				cube.dbmsxhost = num_dbmsxhost;
 				cube.hostxdatacube = num_hostxcube;
 
 				//Set new partitioned set
 				j = 0;
-				for (i = 0; i < db_number; i++) {
+				for (i = 0; i < temp_hostxcube; i++) {
 					if (out_fragxdb[i]) {
 						new_id_db[j] = (cube.id_db)[i];
 						j++;
@@ -872,7 +862,7 @@ int task_init(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_distribute(oph_operator_struct * handle)
+int task_distribute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1044,7 +1034,7 @@ int task_distribute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_execute(oph_operator_struct * handle)
+int task_execute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1141,7 +1131,10 @@ int task_execute(oph_operator_struct * handle)
 	oph_ioserver_query *exec_query = NULL;
 	oph_ioserver_query_arg **exec_args = NULL;
 
-	if (oph_dc_setup_dbms(&(((OPH_MERGE_operator_handle *) handle->operator_handle)->server), (dbmss_in.value[0]).io_server_type)) {
+	oph_ioserver_handler *output_server = NULL;
+	oph_ioserver_handler *input_server = ((OPH_MERGE_operator_handle *) handle->operator_handle)->server;
+
+	if (oph_dc_setup_dbms(&(input_server), (dbmss_in.value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_IOPLUGIN_SETUP_ERROR,
 			(dbmss_in.value[0]).id_dbms);
@@ -1153,22 +1146,38 @@ int task_execute(oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 	}
 
+	if (oph_dc_setup_dbms(&(output_server), (dbmss_in.value[0]).io_server_type)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_IOPLUGIN_SETUP_ERROR,
+			(dbmss_in.value[0]).id_dbms);
+		oph_dc_cleanup_dbms(input_server);
+		oph_odb_stge_free_fragment_list(&frags_in);
+		oph_odb_stge_free_db_list(&dbs_in);
+		oph_odb_stge_free_dbms_list(&dbmss_in);
+		oph_odb_free_ophidiadb(&oDB_slave);
+		free(tot_rows);
+		return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+
+
 	frag_count = 0;
 	new_input_frag_count = 0;
 	new_frag_flag = 0;
 	char fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE];
 
+
 	//For each input DBMS
 	for (i = 0; i < dbmss_in.size; i++) {
 		//START FROM RIGHT POINT
-		if (oph_dc_connect_to_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbmss_in.value[i]), 0)) {
+		if (oph_dc_connect_to_dbms(input_server, &(dbmss_in.value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_DBMS_CONNECTION_ERROR, "input",
 				(dbmss_in.value[i]).id_dbms);
 			if (new_frag_flag)
-				oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &dbms_out);
-			oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbmss_in.value[i]));
-			oph_dc_cleanup_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server);
+				oph_dc_disconnect_from_dbms(output_server, &dbms_out);
+			oph_dc_disconnect_from_dbms(input_server, &(dbmss_in.value[i]));
+			oph_dc_cleanup_dbms(output_server);
+			oph_dc_cleanup_dbms(input_server);
 			oph_odb_stge_free_fragment_list(&frags_in);
 			oph_odb_stge_free_db_list(&dbs_in);
 			oph_odb_stge_free_dbms_list(&dbmss_in);
@@ -1176,7 +1185,7 @@ int task_execute(oph_operator_struct * handle)
 			free(tot_rows);
 			//Delete intra append data structures
 			if (exec_query)
-				oph_ioserver_free_query(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, exec_query);
+				oph_ioserver_free_query(output_server, exec_query);
 			if (exec_args) {
 				for (i = 0; i < 2; i++) {
 					if (exec_args[i]) {
@@ -1195,14 +1204,15 @@ int task_execute(oph_operator_struct * handle)
 			if (dbs_in.value[j].dbms_instance != &(dbmss_in.value[i]))
 				continue;
 
-			if (oph_dc_use_db_of_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbmss_in.value[i]), &(dbs_in.value[j]))) {
+			if (oph_dc_use_db_of_dbms(input_server, &(dbmss_in.value[i]), &(dbs_in.value[j]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_DB_SELECTION_ERROR, "intput",
 					(dbs_in.value[j]).db_name);
 				if (new_frag_flag)
-					oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &dbms_out);
-				oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbmss_in.value[i]));
-				oph_dc_cleanup_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server);
+					oph_dc_disconnect_from_dbms(output_server, &dbms_out);
+				oph_dc_disconnect_from_dbms(input_server, &(dbmss_in.value[i]));
+				oph_dc_cleanup_dbms(output_server);
+				oph_dc_cleanup_dbms(input_server);
 				oph_odb_stge_free_fragment_list(&frags_in);
 				oph_odb_stge_free_db_list(&dbs_in);
 				oph_odb_stge_free_dbms_list(&dbmss_in);
@@ -1210,7 +1220,7 @@ int task_execute(oph_operator_struct * handle)
 				free(tot_rows);
 				//Delete intra append data structures
 				if (exec_query)
-					oph_ioserver_free_query(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, exec_query);
+					oph_ioserver_free_query(output_server, exec_query);
 				if (exec_args) {
 					for (i = 0; i < 2; i++) {
 						if (exec_args[i]) {
@@ -1245,7 +1255,7 @@ int task_execute(oph_operator_struct * handle)
 					strncpy(dbms_out.pwd, dbmss_in.value[i].pwd, OPH_ODB_STGE_PWD_SIZE);
 					dbms_out.pwd[OPH_ODB_STGE_PWD_SIZE] = 0;
 					dbms_out.port = dbmss_in.value[i].port;
-					dbms_out.fs_type = dbmss_in.value[i].fs_type;
+					//dbms_out.fs_type = dbmss_in.value[i].fs_type;
 
 					//Copy dbs_in.value[j] in db_out
 					strncpy(dbms_out.hostname, dbmss_in.value[i].hostname, OPH_ODB_STGE_HOST_NAME_SIZE);
@@ -1256,13 +1266,14 @@ int task_execute(oph_operator_struct * handle)
 					strncpy(db_out.db_name, dbs_in.value[j].db_name, OPH_ODB_STGE_DB_NAME_SIZE);
 					db_out.db_name[OPH_ODB_STGE_DB_NAME_SIZE] = 0;
 
-					if (oph_dc_connect_to_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbms_out), 0)) {
+					if (oph_dc_connect_to_dbms(output_server, &(dbms_out), 0)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_MERGE_DBMS_CONNECTION_ERROR, "input", dbms_out.id_dbms);
-						oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbms_out));
-						oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbmss_in.value[i]));
-						oph_dc_cleanup_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server);
+						oph_dc_disconnect_from_dbms(output_server, &(dbms_out));
+						oph_dc_disconnect_from_dbms(input_server, &(dbmss_in.value[i]));
+						oph_dc_cleanup_dbms(input_server);
+						oph_dc_cleanup_dbms(output_server);
 						oph_odb_stge_free_fragment_list(&frags_in);
 						oph_odb_stge_free_db_list(&dbs_in);
 						oph_odb_stge_free_dbms_list(&dbmss_in);
@@ -1270,7 +1281,7 @@ int task_execute(oph_operator_struct * handle)
 						free(tot_rows);
 						//Delete intra append data structures
 						if (exec_query)
-							oph_ioserver_free_query(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, exec_query);
+							oph_ioserver_free_query(output_server, exec_query);
 						if (exec_args) {
 							for (i = 0; i < 2; i++) {
 								if (exec_args[i]) {
@@ -1284,13 +1295,14 @@ int task_execute(oph_operator_struct * handle)
 						return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 					}
 
-					if (oph_dc_use_db_of_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbms_out), &(db_out))) {
+					if (oph_dc_use_db_of_dbms(output_server, &(dbms_out), &(db_out))) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_MERGE_DB_SELECTION_ERROR, "intput", db_out.db_name);
-						oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbms_out));
-						oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbmss_in.value[i]));
-						oph_dc_cleanup_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server);
+						oph_dc_disconnect_from_dbms(output_server, &(dbms_out));
+						oph_dc_disconnect_from_dbms(input_server, &(dbmss_in.value[i]));
+						oph_dc_cleanup_dbms(output_server);
+						oph_dc_cleanup_dbms(input_server);
 						oph_odb_stge_free_fragment_list(&frags_in);
 						oph_odb_stge_free_db_list(&dbs_in);
 						oph_odb_stge_free_dbms_list(&dbmss_in);
@@ -1298,7 +1310,7 @@ int task_execute(oph_operator_struct * handle)
 						free(tot_rows);
 						//Delete intra append data structures
 						if (exec_query)
-							oph_ioserver_free_query(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, exec_query);
+							oph_ioserver_free_query(output_server, exec_query);
 						if (exec_args) {
 							for (i = 0; i < 2; i++) {
 								if (exec_args[i]) {
@@ -1321,9 +1333,10 @@ int task_execute(oph_operator_struct * handle)
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag  name exceed limit.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_MERGE_STRING_BUFFER_OVERFLOW, "fragment name", new_frag.fragment_name);
-						oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &dbms_out);
-						oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbmss_in.value[i]));
-						oph_dc_cleanup_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server);
+						oph_dc_disconnect_from_dbms(output_server, &dbms_out);
+						oph_dc_disconnect_from_dbms(input_server, &(dbmss_in.value[i]));
+						oph_dc_cleanup_dbms(output_server);
+						oph_dc_cleanup_dbms(input_server);
 						oph_odb_stge_free_fragment_list(&frags_in);
 						oph_odb_stge_free_db_list(&dbs_in);
 						oph_odb_stge_free_dbms_list(&dbmss_in);
@@ -1331,7 +1344,7 @@ int task_execute(oph_operator_struct * handle)
 						free(tot_rows);
 						//Delete intra append data structures
 						if (exec_query)
-							oph_ioserver_free_query(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, exec_query);
+							oph_ioserver_free_query(output_server, exec_query);
 						if (exec_args) {
 							for (i = 0; i < 2; i++) {
 								if (exec_args[i]) {
@@ -1347,13 +1360,14 @@ int task_execute(oph_operator_struct * handle)
 					strcpy(new_frag.fragment_name, fragment_name);
 
 					//Create Empty fragment
-					if (oph_dc_create_empty_fragment(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &new_frag)) {
+					if (oph_dc_create_empty_fragment(output_server, &new_frag)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while creating fragment.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_NEW_FRAG_ERROR,
 							new_frag.fragment_name);
-						oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &dbms_out);
-						oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbmss_in.value[i]));
-						oph_dc_cleanup_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server);
+						oph_dc_disconnect_from_dbms(output_server, &dbms_out);
+						oph_dc_disconnect_from_dbms(input_server, &(dbmss_in.value[i]));
+						oph_dc_cleanup_dbms(output_server);
+						oph_dc_cleanup_dbms(input_server);
 						oph_odb_stge_free_fragment_list(&frags_in);
 						oph_odb_stge_free_db_list(&dbs_in);
 						oph_odb_stge_free_dbms_list(&dbmss_in);
@@ -1361,7 +1375,7 @@ int task_execute(oph_operator_struct * handle)
 						free(tot_rows);
 						//Delete intra append data structures
 						if (exec_query)
-							oph_ioserver_free_query(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, exec_query);
+							oph_ioserver_free_query(output_server, exec_query);
 						if (exec_args) {
 							for (i = 0; i < 2; i++) {
 								if (exec_args[i]) {
@@ -1391,14 +1405,14 @@ int task_execute(oph_operator_struct * handle)
 				}
 
 				if (oph_dc_append_fragment_to_fragment
-				    (((OPH_MERGE_operator_handle *) handle->operator_handle)->server, tot_rows[frag_count], exec_flag, &new_frag, &frags_in.value[k], &first_id, &last_id, &exec_query,
-				     &exec_args)) {
+				    (input_server, output_server, tot_rows[frag_count], exec_flag, &new_frag, &frags_in.value[k], &first_id, &last_id, &exec_query, &exec_args)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while filling fragment with merged data.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_MERGING_ERROR,
 						new_frag.fragment_name, frags_in.value[k].fragment_name);
-					oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &dbms_out);
-					oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbmss_in.value[i]));
-					oph_dc_cleanup_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server);
+					oph_dc_disconnect_from_dbms(output_server, &dbms_out);
+					oph_dc_disconnect_from_dbms(input_server, &(dbmss_in.value[i]));
+					oph_dc_cleanup_dbms(output_server);
+					oph_dc_cleanup_dbms(input_server);
 					oph_odb_stge_free_fragment_list(&frags_in);
 					oph_odb_stge_free_db_list(&dbs_in);
 					oph_odb_stge_free_dbms_list(&dbmss_in);
@@ -1423,9 +1437,10 @@ int task_execute(oph_operator_struct * handle)
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update fragment table.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_MERGE_FRAGMENT_INSERT_ERROR, new_frag.fragment_name);
-						oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &dbms_out);
-						oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbmss_in.value[i]));
-						oph_dc_cleanup_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server);
+						oph_dc_disconnect_from_dbms(output_server, &dbms_out);
+						oph_dc_disconnect_from_dbms(input_server, &(dbmss_in.value[i]));
+						oph_dc_cleanup_dbms(output_server);
+						oph_dc_cleanup_dbms(input_server);
 						oph_odb_stge_free_fragment_list(&frags_in);
 						oph_odb_stge_free_db_list(&dbs_in);
 						oph_odb_stge_free_dbms_list(&dbmss_in);
@@ -1433,7 +1448,7 @@ int task_execute(oph_operator_struct * handle)
 						free(tot_rows);
 						//Delete intra append data structures
 						if (exec_query)
-							oph_ioserver_free_query(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, exec_query);
+							oph_ioserver_free_query(output_server, exec_query);
 						if (exec_args) {
 							for (i = 0; i < 2; i++) {
 								if (exec_args[i]) {
@@ -1446,7 +1461,7 @@ int task_execute(oph_operator_struct * handle)
 						}
 						return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 					}
-					oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &dbms_out);
+					oph_dc_disconnect_from_dbms(output_server, &dbms_out);
 					frag_count++;
 				}
 				if (frag_count == ((OPH_MERGE_operator_handle *) handle->operator_handle)->output_fragment_number)
@@ -1455,11 +1470,16 @@ int task_execute(oph_operator_struct * handle)
 			if (frag_count == ((OPH_MERGE_operator_handle *) handle->operator_handle)->output_fragment_number)
 				break;
 		}
-		oph_dc_disconnect_from_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server, &(dbmss_in.value[i]));
+		oph_dc_disconnect_from_dbms(input_server, &(dbmss_in.value[i]));
 		if (frag_count == ((OPH_MERGE_operator_handle *) handle->operator_handle)->output_fragment_number)
 			break;
 	}
-	if (oph_dc_cleanup_dbms(((OPH_MERGE_operator_handle *) handle->operator_handle)->server)) {
+	if (oph_dc_cleanup_dbms(input_server)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_IOPLUGIN_CLEANUP_ERROR,
+			(dbmss_in.value[0]).id_dbms);
+	}
+	if (oph_dc_cleanup_dbms(output_server)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_MERGE_IOPLUGIN_CLEANUP_ERROR,
 			(dbmss_in.value[0]).id_dbms);
@@ -1476,7 +1496,7 @@ int task_execute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_reduce(oph_operator_struct * handle)
+int task_reduce(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1487,7 +1507,7 @@ int task_reduce(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_destroy(oph_operator_struct * handle)
+int task_destroy(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1554,18 +1574,29 @@ int task_destroy(oph_operator_struct * handle)
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}
 		}
-		//Before deleting wait for all process to reach this point
-		MPI_Barrier(MPI_COMM_WORLD);
+
+		if (handle->output_code)
+			proc_error = (short int) handle->output_code;
+		else
+			proc_error = OPH_ODB_JOB_STATUS_DESTROY_ERROR;
+		MPI_Allreduce(&proc_error, &global_error, 1, MPI_SHORT, MPI_MIN, MPI_COMM_WORLD);
+		handle->output_code = global_error;
 
 		//Delete from OphidiaDB
 		if (handle->proc_rank == 0) {
 			oph_dproc_clean_odb(&((OPH_MERGE_operator_handle *) handle->operator_handle)->oDB, id_datacube, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container);
 		}
+
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_PROCESS_ERROR);
+		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_GENERIC_PROCESS_ERROR);
+
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_unset(oph_operator_struct * handle)
+int env_unset(oph_operator_struct *handle)
 {
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)

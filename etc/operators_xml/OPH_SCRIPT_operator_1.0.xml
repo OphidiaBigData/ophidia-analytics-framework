@@ -24,6 +24,8 @@ The script can eventually process some environmental variables passed by the ope
 - stdout : file where stdout will be redirected (appended) or &quot;stdout&quot; for no redirection
 - stderr : file where stderr will be redirected (appended) or &quot;stderr&quot; for no redirection
 - list : get the available scripts
+- space : set to &quot;yes&quot; in case white spaces belong to arguments;
+          set to &quot;no&quot; in case white spaces are separators like &quot;|&quot; (default).
 
 [System parameters]
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -37,6 +39,7 @@ The script can eventually process some environmental variables passed by the ope
                   script : show the output of the command or the list of registered scripts;
                   script_url : show the URL where the command could save some data;
                   script_returncode : show the return code of the command.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]
 Execute the script &quot;./test.sh var1 var2&quot; without redirecting stdout and stderr:
@@ -50,13 +53,15 @@ SUBMISSION STRING: &quot;operator=oph_script;script=./test.sh;args=var1|var2;&qu
     </info>
     <args>
 		<argument type="string" mandatory="no" default=":">script</argument>
-		<argument type="string" mandatory="no" default=" " multivalue="yes">args</argument>
+		<argument type="string" mandatory="no" default="" multivalue="yes">args</argument>
 		<argument type="string" mandatory="no" default="stdout">stdout</argument>
 		<argument type="string" mandatory="no" default="stderr">stderr</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">list</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">space</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|script|script_url|script_returncode">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

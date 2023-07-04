@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2018 CMCC Foundation
+#    Copyright (C) 2012-2022 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@
 #
 
 AC_PREREQ([2.60])
-AC_INIT([ophidia-analytics-framework], [1.4.0], [ophidia-info@cmcc.it])
+AC_INIT([ophidia-analytics-framework], [1.7.3], [ophidia-info@cmcc.it])
 
 AC_CONFIG_AUX_DIR([config])
 
@@ -153,7 +153,7 @@ if (test "x$debug" = "x1") || (test "x$debug" = "x2"); then
  	AC_SUBST(OPT)
 else
 	debug="0"
-	OPT+=" -O2"
+	OPT+=" -O3"
 	AC_SUBST(OPT)
 fi
 AM_CONDITIONAL(DEBUG_1, test "x$debug" = "x1")
@@ -194,7 +194,7 @@ PKG_CHECK_MODULES(GSL,[gsl >= 1.8])
 AC_ARG_WITH(gsl_header_path,
        [  --with-gsl-header-path=PATH        Location of GSL includes directory],
        [
-        gsl_header_path="$withval"
+        gsl_header_path="-I$withval"
        ],
      [
     gsl_header_path="$GSL_CFLAGS"
@@ -202,23 +202,23 @@ AC_ARG_WITH(gsl_header_path,
 AC_ARG_WITH(gsl_lib_path,
        [  --with-gsl-lib-path=PATH       Location of GSL lib],
        [
-        gsl_lib_path="$withval"
+        gsl_lib_path="-L$withval"
        ],
      [
    gsl_lib_path="$GSL_LIBS"
      ])
-GSL_CFLAGS="$gsl_header_path"
-AC_SUBST(GSL_CFLAGS)
-GSL_LIBS="$gsl_lib_path"
-AC_SUBST(GSL_LIBS)
+GSL_INCLUDE="$gsl_header_path"
+AC_SUBST(GSL_INCLUDE)
+GSL_LIB="$gsl_lib_path"
+AC_SUBST(GSL_LIB)
 
 GSL_SUPPORT=
 AC_ARG_ENABLE(gsl_lib,
-	   [  --disable-gsl-lib	
+	   [  --disable-gsl-lib
           Disable GSL. (Enabled by default)],
-	   [ gsl_lib="no" 
+	   [ gsl_lib="no"
           AC_MSG_WARN("GSL support disabled")],
-     [ gsl_lib="yes"  
+     [ gsl_lib="yes"
           AC_MSG_NOTICE("GSL support enabled")]
 	   )
 AM_CONDITIONAL([GSL_SUPPORT], [test "x$gsl_lib" = "xyes"])
@@ -229,7 +229,7 @@ PKG_CHECK_MODULES(XML, libxml-2.0 >= 2.4)
 AC_ARG_WITH(libxml_header_path,
 	   [  --with-libxml-header-path=PATH 		Location of libxml2 includes directory],
 	   [
-		libxml_header_path="$withval"
+		libxml_header_path="-I$withval"
 	   ],
      [
     libxml_header_path="$XML_CFLAGS"
@@ -237,7 +237,7 @@ AC_ARG_WITH(libxml_header_path,
 AC_ARG_WITH(libxml_lib_path,
 	   [  --with-libxml-lib-path=PATH 		Location of libxml2.a],
 	   [
-		libxml_lib_path="$withval"
+		libxml_lib_path="-L$withval"
 	   ],
      [
     libxml_lib_path="$XML_LIBS"
@@ -253,7 +253,7 @@ PKG_CHECK_MODULES(OPENSSL, openssl >= 1.0.0)
 AC_ARG_WITH(libopenssl_header_path,
 	   [  --with-libopenssl-header-path=PATH 		Location of openssl includes directory],
 	   [
-		libopenssl_header_path="$withval"
+		libopenssl_header_path="-I$withval"
 	   ],
      [
     libopenssl_header_path="$OPENSSL_CFLAGS"
@@ -261,7 +261,7 @@ AC_ARG_WITH(libopenssl_header_path,
 AC_ARG_WITH(libopenssl_lib_path,
 	   [  --with-libopenssl-lib-path=PATH 		Location of openssl],
 	   [
-		libopenssl_lib_path="$withval"
+		libopenssl_lib_path="-L$withval"
 	   ],
      [
     libopenssl_lib_path="$OPENSSL_LIBS"
@@ -293,7 +293,7 @@ if test "x${have_netcdf}" = "xyes"; then
 	if test "x${NETCDF_LIBS}" != "x"; then
 		AC_SUBST(NETCDF_CFLAGS)
 		AC_SUBST(NETCDF_LIBS)
-		AC_MSG_NOTICE([Enabled NetCDF support.])
+		AC_MSG_NOTICE([NetCDF support enabled])
 	else
 		AC_MSG_WARN([NetCDF not found! NetCDF support automatically disabled!])
 		have_netcdf=no
@@ -301,17 +301,60 @@ if test "x${have_netcdf}" = "xyes"; then
 fi
 AM_CONDITIONAL([HAVE_NETCDF], [test "x$have_netcdf" = "xyes"])
 
+have_esdm=no
+ESDM_CFLAGS=
+ESDM_LIBS=
+AC_ARG_WITH(esdm_path,
+           [  --with-esdm-path=PATH  Set the esdm root dir],
+           [
+				have_esdm=yes
+				ESDM_CFLAGS="-I$withval/include"
+				ESDM_LIBS="-L$withval/lib -lesdm -lesdmmpi -Wl,-rpath -Wl,$withval/lib"
+				AC_SUBST(ESDM_CFLAGS)
+				AC_SUBST(ESDM_LIBS)
+				AC_MSG_NOTICE([ESDM support enabled])
+           ],
+           [
+				have_esdm=no
+           ]
+           )
+AM_CONDITIONAL([HAVE_ESDM], [test "x$have_esdm" = "xyes"])
+
+#Check if ESDM PAV kernels are installed
+have_esdm_pav_kernels="no"
+AC_ARG_ENABLE(esdm_pav_kernels,
+        [  --enable-esdm-pav-kernels
+            Turn on ESDM PAV kernels],
+        [have_esdm_pav_kernels="yes"
+            AC_MSG_NOTICE(ESDM PAV kernels enabled)],
+        [have_esdm_pav_kernels="no"
+            AC_MSG_NOTICE(ESDM PAV kernels disabled)]
+        )
+AM_CONDITIONAL([HAVE_ESDM_PAV_KERNELS], [test "x$have_esdm_pav_kernels" = "xyes"])
+
 #Check if parallel netcdf is installed
 parallel_netcdf="no"
 AC_ARG_ENABLE(parallel_netcdf,
-        [  --enable-parallel-netcdf          
+        [  --enable-parallel-netcdf
             Turn on parallel NetCDF flags],
-        [parallel_netcdf="yes" 
+        [parallel_netcdf="yes"
             AC_MSG_NOTICE("Parallel NetCDF support enabled")],
-        [parallel_netcdf="no" 
+        [parallel_netcdf="no"
             AC_MSG_WARN("Parallel NetCDF support disabled")]
         )
 AM_CONDITIONAL([HAVE_PARALLEL_NETCDF], [test "x$parallel_netcdf" = "xyes"])
+
+#Check if parallel esdm is installed
+parallel_esdm="no"
+AC_ARG_ENABLE(parallel_esdm,
+        [  --enable-parallel-esdm
+            Turn on parallel ESDM flags],
+        [parallel_esdm="yes"
+            AC_MSG_NOTICE("Parallel ESDM support enabled")],
+        [parallel_esdm="no"
+            AC_MSG_WARN("Parallel ESDM support disabled")]
+        )
+AM_CONDITIONAL([HAVE_PARALLEL_ESDM], [test "x$parallel_esdm" = "xyes"])
 
 #Check if cfitsio is installed
 cfitsio="no"
@@ -331,7 +374,7 @@ if test "x${cfitsio}" = "xyes"; then
         AC_ARG_WITH(libcfitsio_header_path,
                 [  --with-libcfitsio-header-path=PATH            Location of libcfitsio includes directory],
                 [
-                        libcfitsio_header_path="$withval"
+                        libcfitsio_header_path="-I$withval"
                 ],
                 [
                         libcfitsio_header_path="$CFITSIO_CFLAGS"
@@ -339,7 +382,7 @@ if test "x${cfitsio}" = "xyes"; then
         AC_ARG_WITH(libcfitsio_lib_path,
                 [  --with-libcfitsio-lib-path=PATH               Location of libcfitsio],
                 [
-                        libcfitsio_lib_path="$withval"
+                        libcfitsio_lib_path="-L$withval"
                 ],
                 [
                         libcfitsio_lib_path="$CFITSIO_LIBS"
@@ -364,15 +407,15 @@ AM_CONDITIONAL([HAVE_CURL], [test "x$curl" = "xyes"])
 
 if test "x${curl}" = "xyes"; then
 
-	PKG_CHECK_MODULES(CURL, libcurl >= 7.23)
+	PKG_CHECK_MODULES(CURL, libcurl >= 7.19)
 	AC_ARG_WITH(libcurl_header_path,
 		   [  --with-libcurl-header-path=PATH 		Location of libcurl includes directory],
-		   [ libcurl_header_path="$withval" ],
+		   [ libcurl_header_path="-I$withval" ],
 		   [ libcurl_header_path="$CURL_CFLAGS"]
 		  )
 	AC_ARG_WITH(libcurl_lib_path,
 		   [  --with-libcurl-lib-path=PATH 		Location of libcurl.a],
-		   [ libcurl_lib_path="$withval" ],
+		   [ libcurl_lib_path="-L$withval" ],
 		   [ libcurl_lib_path="$CURL_LIBS"]
 		  )
 
@@ -385,9 +428,9 @@ fi
 #Enable stand-alone mode
 standalone_mode="no"
 AC_ARG_ENABLE(standalone_mode,
-        [  --enable-standalone-mode          
+        [  --enable-standalone-mode
             Turn on standalone mode],
-        [standalone_mode="yes" 
+        [standalone_mode="yes"
             AC_MSG_WARN("Standalone mode enabled")],
         [standalone_mode="no" ]
         )
@@ -398,7 +441,7 @@ PKG_CHECK_MODULES(JANSSON, jansson >= 2.3)
 AC_ARG_WITH(jansson_header_path,
        [  --with-jansson-header-path=PATH        Location of Jansson includes directory],
        [
-        jansson_header_path="$withval"
+        jansson_header_path="-I$withval"
        ],
      [
     jansson_header_path="$JANSSON_CFLAGS"
@@ -406,15 +449,15 @@ AC_ARG_WITH(jansson_header_path,
 AC_ARG_WITH(jansson_lib_path,
        [  --with-jansson-lib-path=PATH       Location of jansson lib],
        [
-        jansson_lib_path="$withval"
+        jansson_lib_path="-L$withval"
        ],
      [
     jansson_lib_path="$JANSSON_LIBS"
      ])
-JANSON_CFLAGS="$jansson_header_path"
-AC_SUBST(JANSON_CFLAGS)
-JANSON_LIBS="$jansson_lib_path"
-AC_SUBST(JANSON_LIBS)
+JANSSON_INCLUDE="$jansson_header_path"
+AC_SUBST(JANSSON_INCLUDE)
+JANSSON_LIB="$jansson_lib_path"
+AC_SUBST(JANSSON_LIB)
 JANSSON_LIBDIR=`pkg-config --variable=libdir jansson`
 AC_SUBST(JANSSON_LIBDIR)
 
@@ -538,7 +581,7 @@ AC_ARG_WITH(plugin_hostname,
 	    plugin_host_path="$withval"
            ]
            )
-if  test "$plugin_host_path" = "no"; then
+if test "$plugin_host_path" = "no"; then
 	   PLUGIN_DEFAULT_HOSTNAME=$HOSTNAME
 	   else
            PLUGIN_DEFAULT_HOSTNAME=$mds_host_path
@@ -604,5 +647,9 @@ AC_SUBST(OPT)
 AC_SUBST(REENTRANT)
 
 AM_CONDITIONAL(VOMS, test $voms_enable = 1)
+
+if test "x${have_esdm_pav_kernels}" = "xyes" && test -d "$srcdir/esdm-pav-analytical-kernels"; then
+    AC_CONFIG_SUBDIRS([esdm-pav-analytical-kernels])
+fi
 
 AC_OUTPUT([Makefile etc/oph_configuration src/Makefile src/oph_gsoap/Makefile src/clients/Makefile src/ioservers/Makefile src/drivers/Makefile etc/oph_analytics_driver etc/oph_io_server])

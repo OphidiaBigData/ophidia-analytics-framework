@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_CDO" version="1.0">
+    <info>
+        <abstract>[Type]
+General.
+
+[Behaviour]
+It executes a bash script.
+The script can eventually process some environmental variables passed by the operator:
+- OPH_CDO_DATA_PATH : points to base folder of data repository on server (if available)
+- OPH_CDO_SESSION_PATH : points to &lt;oph_web_server_location&gt;/sessions/&lt;session_code&gt;/export/misc
+- OPH_CDO_SESSION_URL : points to &lt;oph_web_server&gt;/sessions/&lt;session_code&gt;/export/misc
+- OPH_CDO_SESSION_CODE : is the &lt;session_code&gt;
+- OPH_CDO_WORKFLOW_ID : is the workflow identifier
+- OPH_CDO_MARKER_ID : is the marker identifier associated with the job
+- OPH_CDO_SERVER_HOST : is the IP address or DNS name of the host where Ophidia Server is running
+- OPH_CDO_SERVER_PORT : is the port number associated with Ophidia Server
+- OPH_CDO_USER : is the submitter identifier
+
+[Parameters]
+- command : command to be executed; it must be set.
+- args : list of pipe-separated arguments to be passed to the command.
+- space : set to &quot;yes&quot; in case white spaces belong to arguments;
+          set to &quot;no&quot; in case white spaces are separators like &quot;|&quot; (default).
+- input : list of input files; it is an additional argument appended to &quot;args&quot;.
+- output : list of output files; it is an additional argument appended to &quot;input&quot;.
+- cdd : absolute path corresponding to the current directory on data repository.
+- force : flag used to force file creation. An existant file is overwritten with &quot;yes&quot; whereas
+          the file is created only if it does not exist with &quot;no&quot; (default).
+- skip_output : set this flag to &quot;yes&quot; in case no output file has to be created (disabled by default).
+- multiple_output : set this flag to &quot;yes&quot; in case more than one output file has to be created (disabled by default);
+                    if enabled, output file names are discovered by listing output folder.
+- stdout : file where stdout will be redirected (appended) or &quot;stdout&quot; for no redirection.
+- stderr : file where stderr will be redirected (appended) or &quot;stderr&quot; for no redirection.
+
+[System parameters]
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- nthreads : number of parallel threads per process to be used (min. 1).
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  cdo_output : show the output of the command;
+                  cdo_returncode : show the return code of the command.
+
+[Examples]
+Execute the command &quot;cdo -selname,tas infile outfile&quot; without redirecting stdout and stderr:
+OPH_TERM: oph_cdo command=-selname,tas;args=infile|outfile;
+SUBMISSION STRING: &quot;operator=oph_cdo;command=-selname,tas;args=infile|outfile;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <category>Data Analysis</category>
+        <creationdate>23/06/2020</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <permission>execute</permission>
+    </info>
+    <args>
+		<argument type="string" mandatory="yes">command</argument>
+		<argument type="string" mandatory="no" default="" multivalue="yes">args</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">space</argument>
+		<argument type="string" mandatory="no" default="none" multivalue="yes">input</argument>
+		<argument type="string" mandatory="no" default="none" multivalue="yes">output</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">skip_output</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">multiple_output</argument>
+		<argument type="string" mandatory="no" default="/">cdd</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
+		<argument type="string" mandatory="no" default="stdout">stdout</argument>
+		<argument type="string" mandatory="no" default="stderr">stderr</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1">nthreads</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|cdo_output|cdo_returncode">objkey_filter</argument>
+    </args>
+</operator>

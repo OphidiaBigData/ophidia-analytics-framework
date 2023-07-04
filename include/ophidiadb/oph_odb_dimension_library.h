@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -61,6 +61,8 @@
 #define OPH_DIM_TIME_CALENDAR_360DAY "360day"
 #define OPH_DIM_TIME_CALENDAR_365_DAY "365_day"
 #define OPH_DIM_TIME_CALENDAR_365DAY "365day"
+#define OPH_DIM_TIME_CALENDAR_366_DAY "366_day"
+#define OPH_DIM_TIME_CALENDAR_366DAY "366day"
 #define OPH_DIM_TIME_CALENDAR_NO_LEAP "no_leap"
 #define OPH_DIM_TIME_CALENDAR_NOLEAP "noleap"
 #define OPH_DIM_TIME_CALENDAR_ALL_LEAP "all_leap"
@@ -68,6 +70,7 @@
 #define OPH_DIM_TIME_CALENDAR_USER_DEFINED "user_defined"
 
 #define OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR "since"
+#define OPH_DIM_TIME_UNITS_BASETIME_SEPARATOR2 "as"
 
 #define OPH_DIM_TIME_CL_IS_TIME(cl) ((cl!=OPH_COMMON_BASE_CONCEPT_LEVEL) && (cl!=OPH_COMMON_CONCEPT_LEVEL_UNKNOWN))
 
@@ -173,6 +176,7 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensionin
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_dimension * dim, int id_datacube);
+int oph_odb_dim_retrieve_dimension2(ophidiadb * oDB, int id_dimension, oph_odb_dimension * dim, int id_datacube, char override_hier);
 
 /**
  * \brief Function to retrieve dimensions from OphidiaDB given the id_dimension
@@ -202,6 +206,15 @@ int oph_odb_dim_retrieve_dimension_instance(ophidiadb * oDB, int id_dimensionins
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_dim_retrieve_grid_id(ophidiadb * oDB, char *gridname, int id_container, int *id_grid);
+
+/**
+ * \brief Function to retrieve grid id from OphidiaDB given its name and the container id
+ * \param oDB Pointer to the OphidiaDB
+ * \param id_grid Id of the grid to be read
+ * \param dim_grid Pointer to a grid struct used as output
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_dim_retrieve_grid(ophidiadb * oDB, int id_grid, oph_odb_dimension_grid * dim_grid);
 
 /**
  * \brief Function to retrieve hierarchy from OphidiaDB given the id_hierarchy

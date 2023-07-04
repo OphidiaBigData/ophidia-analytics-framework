@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
 
 #include "oph_log_error_codes.h"
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 #include "clients/taketime.h"
 static int timeval_add(res, x, y)
 struct timeval *res, *x, *y;
@@ -87,7 +87,7 @@ int oph_fits_cache_to_buffer(short int tot_dim_number, unsigned int *counters, u
 	return _oph_fits_cache_to_buffer(tot_dim_number, 0, counters, limits, products, &index, binary_cache, binary_insert, sizeof_var);
 }
 
-int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler * server, oph_odb_fragment * frag, fitsfile * fptr, int tuplexfrag_number, int array_length, int compressed, FITS_var * measure)
+int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_fragment *frag, fitsfile *fptr, int tuplexfrag_number, int array_length, int compressed, FITS_var *measure)
 {
 	if (!frag || !fptr || !tuplexfrag_number || !array_length || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -284,7 +284,7 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler * server, oph_odb
 		idDim[ii] = frag->key_start + ii;
 	}
 
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, regular_times, args, &query)) {
+	if (oph_ioserver_setup_query(server, query_string, regular_times, args, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 		free(binary);
 		for (ii = 0; ii < c_arg - 1; ii++)
@@ -576,7 +576,7 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler * server, oph_odb
 		}
 
 
-		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(idDim);
@@ -640,7 +640,7 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler * server, oph_odb
 			}
 		}
 
-		if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+		if (oph_ioserver_setup_query(server, query_string, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 			free(query_string);
 			free(idDim);
@@ -736,7 +736,7 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler * server, oph_odb
 		}
 
 
-		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(idDim);
@@ -788,7 +788,7 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler * server, oph_odb
 	return OPH_FITS_SUCCESS;
 }
 
-int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb_fragment * frag, fitsfile * fptr, int tuplexfrag_number, int array_length, int compressed, FITS_var * measure,
+int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_fragment *frag, fitsfile *fptr, int tuplexfrag_number, int array_length, int compressed, FITS_var *measure,
 					  long long memory_size)
 {
 	if (!frag || !fptr || !tuplexfrag_number || !array_length || !measure || !server) {
@@ -1055,7 +1055,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 		idDim[ii] = frag->key_start + ii;
 	}
 
-	if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, regular_times, args, &query)) {
+	if (oph_ioserver_setup_query(server, query_string, regular_times, args, &query)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 		free(binary_cache);
 		free(binary_insert);
@@ -1172,7 +1172,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 	//Fill binary cache
 	res = -1;
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	struct timeval start_read_time, end_read_time, total_read_time;
 	struct timeval start_transpose_time, end_transpose_time, intermediate_transpose_time, total_transpose_time;
 	struct timeval start_write_time, end_write_time, intermediate_write_time, total_write_time;
@@ -1200,7 +1200,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 	} else {
 		res = fits_read_subset(fptr, TDOUBLE, start, count, inc, NULL, (double *) (binary_cache), NULL, &status);
 	}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	gettimeofday(&end_read_time, NULL);
 	timeval_subtract(&total_read_time, &end_read_time, &start_read_time);
 	printf("Fragment %s:  Total read :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_read_time.tv_sec, (int) total_read_time.tv_usec);
@@ -1303,20 +1303,20 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 		limits[0] = (l + 1) * regular_rows;
 		counters[0] = l * regular_rows;
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_transpose_time, NULL);
 #endif
 		oph_fits_cache_to_buffer(measure->nimp + 1, counters, limits, products, binary_cache, binary_insert, sizeof_type);
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_transpose_time, NULL);
 		timeval_subtract(&intermediate_transpose_time, &end_transpose_time, &start_transpose_time);
 		timeval_add(&total_transpose_time, &total_transpose_time, &intermediate_transpose_time);
 #endif
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_write_time, NULL);
 #endif
-		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(idDim);
@@ -1332,7 +1332,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 			free(limits);
 			return OPH_FITS_ERROR;
 		}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_write_time, NULL);
 		timeval_subtract(&intermediate_write_time, &end_write_time, &start_write_time);
 		timeval_add(&total_write_time, &total_write_time, &intermediate_write_time);
@@ -1375,7 +1375,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 			}
 		}
 
-		if (oph_ioserver_setup_query(server, frag->db_instance->dbms_instance->conn, query_string, 1, args, &query)) {
+		if (oph_ioserver_setup_query(server, query_string, 1, args, &query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot setup query\n");
 			free(query_string);
 			free(idDim);
@@ -1394,20 +1394,20 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 		memset(counters, 0, measure->nimp + 1);
 		limits[0] = regular_times * regular_rows + remainder_rows;
 		counters[0] = regular_times * regular_rows;
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_transpose_time, NULL);
 #endif
 		oph_fits_cache_to_buffer(measure->nimp + 1, counters, limits, products, binary_cache, binary_insert, sizeof_type);
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_transpose_time, NULL);
 		timeval_subtract(&intermediate_transpose_time, &end_transpose_time, &start_transpose_time);
 		timeval_add(&total_transpose_time, &total_transpose_time, &intermediate_transpose_time);
 #endif
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&start_write_time, NULL);
 #endif
-		if (oph_ioserver_execute_query(server, frag->db_instance->dbms_instance->conn, query)) {
+		if (oph_ioserver_execute_query(server, query)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot execute query\n");
 			free(query_string);
 			free(idDim);
@@ -1423,7 +1423,7 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 			free(limits);
 			return OPH_FITS_ERROR;
 		}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 		gettimeofday(&end_write_time, NULL);
 		timeval_subtract(&intermediate_write_time, &end_write_time, &start_write_time);
 		timeval_add(&total_write_time, &total_write_time, &intermediate_write_time);
@@ -1431,11 +1431,10 @@ int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb
 
 		oph_ioserver_free_query(server, query);
 	}
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
+#if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 	printf("Fragment %s:  Total transpose :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_transpose_time.tv_sec, (int) total_transpose_time.tv_usec);
 	printf("Fragment %s:  Total write :\t Time %d,%06d sec\n", frag->fragment_name, (int) total_write_time.tv_sec, (int) total_write_time.tv_usec);
 #endif
-
 
 	free(query_string);
 	free(idDim);
@@ -1540,7 +1539,7 @@ int oph_fits_get_fits_type(char *in_c_type, int *type_fits)
 
 }
 
-int _oph_fits_get_next_fits_id(size_t * id, unsigned int *sizemax, int i, int n)
+int _oph_fits_get_next_fits_id(size_t *id, unsigned int *sizemax, int i, int n)
 {
 	if (i < 0)
 		return 1;	// Overflow
@@ -1552,7 +1551,7 @@ int _oph_fits_get_next_fits_id(size_t * id, unsigned int *sizemax, int i, int n)
 	return 0;
 }
 
-int oph_fits_get_next_fits_id(size_t * id, unsigned int *sizemax, int n)
+int oph_fits_get_next_fits_id(size_t *id, unsigned int *sizemax, int n)
 {
 	return _oph_fits_get_next_fits_id(id, sizemax, n - 1, n);
 }
@@ -1627,7 +1626,7 @@ int oph_fits_compare_fits_c_types(int id_container, int var_type, const char dim
 	return OPH_FITS_SUCCESS;
 }
 
-int oph_fits_get_fits_var(int id_container, char *varname, long *dims_length, FITS_var * var, short flag)
+int oph_fits_get_fits_var(int id_container, char *varname, long *dims_length, FITS_var *var, short flag)
 {
 	if (!varname || !var) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

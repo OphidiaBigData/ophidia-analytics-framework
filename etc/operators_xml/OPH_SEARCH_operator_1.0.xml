@@ -24,7 +24,11 @@ It provides enhanced searching on metadata.
 - path : absolute/relative path used as the starting point of the recursive search.
          If not specified or in case of &quot;-&quot; (default) the recursive search will start at the cwd.
 - cwd : absolute path corresponding to the current working directory, necessary to correctly parse paths.
- 
+- recursive : specifies if the search is done recursively or not. 
+              The argument is considered only for the first three levels and may have the following values:
+              -- no : research only in current path (default)
+              -- yes : research recursively starting from current path.
+
 [System parameters]
 - exec_mode : operator execution mode. Possible values are async (default) for
               asynchronous mode, sync for synchronous mode with json-compliant output.
@@ -35,6 +39,7 @@ It provides enhanced searching on metadata.
                to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
                   search : show metadata list.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
  
  [Examples]       
  Get metadata with keys starting with &quot;key&quot; and values starting with &quot;http&quot; through a recursive search starting from &quot;/absolute/path&quot; :
@@ -52,9 +57,11 @@ It provides enhanced searching on metadata.
 		<argument type="string" mandatory="no" default="all" multivalue="yes">metadata_value_filter</argument>
 		<argument type="string" mandatory="no" default="-">path</argument>
 		<argument type="string" mandatory="yes">cwd</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">recursive</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|search">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

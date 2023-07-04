@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,11 @@
 
 #include "oph_common.h"
 
+#define OPH_B2DROP_ACTION_PUT	"put"
+#define OPH_B2DROP_ACTION_GET	"get"
+#define OPH_B2DROP_ACTION_PUT_N	0
+#define OPH_B2DROP_ACTION_GET_N	1
+
 /**
  * \brief Structure of parameters needed by the operator OPH_B2DROP. It uploads a file on B2DROP service.
  * \param src_file_path Path of the file to upload
@@ -33,6 +38,7 @@ struct _OPH_B2DROP_operator_handle {
 	char *src_file_path;
 	char *dst_file_path;
 	char *auth_file_path;
+	char action;
 	char **objkeys;
 	int objkeys_num;
 };

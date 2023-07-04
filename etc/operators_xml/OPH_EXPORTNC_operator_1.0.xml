@@ -19,11 +19,14 @@ It exports data of a datacube into multiple NetCDF files.
                 In case it is set to &quot;local&quot;, the file will be saved in current directory on data repository (see &quot;cdd&quot;).
 - output_name : filename of the NetCDF output files. In case of multiple fragments, filenames will be &quot;output_name0.nc&quot;, &quot;output_name1.nc&quot;, etc.
                 The default value is the measure name of input datacube.
+- output : alias for the pair &quot;output_path&quot; and &quot;output_name&quot;; the values of these arguments will be overwritten.
 - cdd : absolute path corresponding to the current directory on data repository.
 - force : flag used to force file creation. An existant file is overwritten with &quot;yes&quot; whereas
           the file is created only if it does not exist with &quot;no&quot; (default).
 - export_metadata: imports also metadata with &quot;yes&quot; (default)
                    or only data with &quot;no&quot;.
+- shuffle: flag to activate shuffle filter to better compress output files; disabled by default.
+- deflate: deflate level (from 1 to 9) for zlib compression; set to 0 in case of no compression (default).
 
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -34,6 +37,7 @@ It exports data of a datacube into multiple NetCDF files.
               to create a new session or switch to another one.
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
 		exportnc : no output.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
         
 [Examples] 
 Export data of the datacube identified by the PID &quot;http://www.example.com/1/1&quot; :
@@ -50,13 +54,17 @@ SUBMISSION STRING: &quot;operator=oph_exportnc;cube=http://www.example.com/1/1;&
 		<argument type="string" mandatory="no" default="no" values="yes|no">misc</argument>
 		<argument type="string" mandatory="no" default="default">output_path</argument>
 		<argument type="string" mandatory="no" default="default">output_name</argument>
+		<argument type="string" mandatory="no" default="">output</argument>
 		<argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">export_metadata</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">shuffle</argument>
+		<argument type="string" mandatory="no" default="0" values="0|1|2|3|4|5|6|7|8|9">deflate</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|exportnc">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

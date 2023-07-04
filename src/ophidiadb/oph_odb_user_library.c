@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@
 
 extern int msglevel;
 
-int oph_odb_user_retrieve_user_id(ophidiadb * oDB, char *username, int *id_user)
+int oph_odb_user_retrieve_user_id(ophidiadb *oDB, char *username, int *id_user)
 {
 	if (!oDB || !username || !id_user) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

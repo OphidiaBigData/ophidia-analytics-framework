@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -149,7 +149,7 @@ int oph_fits_get_fits_type(char *in_c_type, int *type_fits);
  * \param n Number of dimensions
  * \return 0 if successfull, 1 otherwise
  */
-int _oph_fits_get_next_fits_id(size_t * id, unsigned int *sizemax, int i, int n);
+int _oph_fits_get_next_fits_id(size_t *id, unsigned int *sizemax, int i, int n);
 
 /**
  * \brief Function used to compute the subsequent fits dimension id
@@ -158,7 +158,7 @@ int _oph_fits_get_next_fits_id(size_t * id, unsigned int *sizemax, int i, int n)
  * \param n Number of dimensions
  * \return 0 if successfull, 1 otherwise
  */
-int oph_fits_get_next_fits_id(size_t * id, unsigned int *sizemax, int n);
+int oph_fits_get_next_fits_id(size_t *id, unsigned int *sizemax, int n);
 
 /**
  * \brief Retrieve a dimension coordinated variable data from a FITS file allowing subsetting

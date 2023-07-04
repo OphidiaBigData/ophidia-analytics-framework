@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,8 +21,40 @@
 
 #include <string.h>
 #include <inttypes.h>
+#include <math.h>
 
 #include "debug.h"
+
+int oph_utl_get_array_size(char *oph_type, long long array_length, long long *size)
+{
+	if (!oph_type || !array_length || !size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null parameter\n");
+		return OPH_UTL_ERROR;
+	}
+
+	if (strncasecmp(oph_type, OPH_COMMON_BYTE_TYPE, strlen(OPH_COMMON_BYTE_TYPE)) == 0) {
+		*size = (long long) array_length *sizeof(char);
+	} else if (strncasecmp(oph_type, OPH_COMMON_SHORT_TYPE, strlen(OPH_COMMON_SHORT_TYPE)) == 0) {
+		*size = (long long) array_length *sizeof(short int);
+	} else if (strncasecmp(oph_type, OPH_COMMON_INT_TYPE, strlen(OPH_COMMON_INT_TYPE)) == 0) {
+		*size = (long long) array_length *sizeof(int);
+	} else if (strncasecmp(oph_type, OPH_COMMON_LONG_TYPE, strlen(OPH_COMMON_LONG_TYPE)) == 0) {
+		*size = (long long) array_length *sizeof(long);
+	} else if (strncasecmp(oph_type, OPH_COMMON_FLOAT_TYPE, strlen(OPH_COMMON_FLOAT_TYPE)) == 0) {
+		*size = (long long) array_length *sizeof(float);
+	} else if (strncasecmp(oph_type, OPH_COMMON_DOUBLE_TYPE, strlen(OPH_COMMON_DOUBLE_TYPE)) == 0) {
+		*size = (long long) array_length *sizeof(double);
+	} else if (strncasecmp(oph_type, OPH_COMMON_STRING_TYPE, strlen(OPH_COMMON_STRING_TYPE)) == 0) {
+		*size = (long long) array_length *sizeof(char);
+	} else if (strncasecmp(oph_type, OPH_COMMON_BIT_TYPE, strlen(OPH_COMMON_BIT_TYPE)) == 0) {
+		*size = (long long) ceil((float) array_length / 8.0);
+	} else {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized type\n");
+		return OPH_UTL_ERROR;
+	}
+
+	return OPH_UTL_SUCCESS;
+}
 
 int oph_utl_short_folder(int max_size, int start_size, char *path)
 {
@@ -98,7 +130,7 @@ int oph_utl_compute_size(long long byte_size, int byte_unit, double *computed_si
 
 int oph_utl_unit_to_str(int unit_value, char (*unit_str)[OPH_UTL_UNIT_SIZE])
 {
-	if (!unit_value || !unit_str) {
+	if(!unit_value || !unit_str) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null parameter\n");
 		return OPH_UTL_ERROR;
 	}
@@ -249,7 +281,7 @@ static const unsigned char oph_utl_d[] = {
 	66, 66, 66, 66, 66, 66
 };
 
-int _oph_utl_base64decode(const char *in, size_t inLen, char *out, size_t * outLen)
+int _oph_utl_base64decode(const char *in, size_t inLen, char *out, size_t *outLen)
 {
 	const char *end = in + inLen;
 	char iter = 0;

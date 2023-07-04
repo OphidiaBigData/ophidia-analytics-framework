@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -31,6 +31,18 @@
 
 pthread_mutex_t libtool_lock = PTHREAD_MUTEX_INITIALIZER;
 extern int msglevel;
+
+int (*_SERVER_setup)(oph_ioserver_handler * handle);
+int (*_SERVER_connect)(oph_ioserver_handler * handle, oph_ioserver_params * conn_params, void **connection);
+int (*_SERVER_use_db)(oph_ioserver_handler * handle, const char *db_name, void *connection);
+int (*_SERVER_close)(oph_ioserver_handler * handle, void **connection);
+int (*_SERVER_cleanup)(oph_ioserver_handler * handle);
+int (*_SERVER_setup_query)(oph_ioserver_handler * handle, void *connection, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg ** args, oph_ioserver_query ** query);
+int (*_SERVER_execute_query)(oph_ioserver_handler * handle, void *connection, oph_ioserver_query * query);
+int (*_SERVER_free_query)(oph_ioserver_handler * handle, oph_ioserver_query * query);
+int (*_SERVER_get_result)(oph_ioserver_handler * handle, void *connection, oph_ioserver_result ** result);
+int (*_SERVER_fetch_row)(oph_ioserver_handler * handle, oph_ioserver_result * result, oph_ioserver_row ** current_row);
+int (*_SERVER_free_result)(oph_ioserver_handler * handle, oph_ioserver_result * result);
 
 static int oph_find_server_plugin(const char *server_type, char **dyn_lib);
 
@@ -75,7 +87,7 @@ static int oph_parse_server_name(const char *server_name, char **server_type, ch
 	return OPH_IOSERVER_SUCCESS;
 }
 
-int oph_ioserver_setup(const char *server_type, oph_ioserver_handler ** handle, char is_thread)
+int oph_ioserver_setup(const char *server_type, oph_ioserver_handler **handle, char is_thread)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_NULL_HANDLE);
@@ -90,6 +102,7 @@ int oph_ioserver_setup(const char *server_type, oph_ioserver_handler ** handle, 
 	internal_handle->lib = NULL;
 	internal_handle->dlh = NULL;
 	internal_handle->is_thread = 0;
+	internal_handle->connection = NULL;
 
 	if (is_thread != 0)
 		internal_handle->is_thread = 1;
@@ -145,7 +158,7 @@ int oph_ioserver_setup(const char *server_type, oph_ioserver_handler ** handle, 
 	return _SERVER_setup(*handle);
 }
 
-int oph_ioserver_connect(oph_ioserver_handler * handle, oph_ioserver_params * conn_params, void **connection)
+int oph_ioserver_connect(oph_ioserver_handler *handle, oph_ioserver_params *conn_params)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_NULL_HANDLE);
@@ -171,10 +184,10 @@ int oph_ioserver_connect(oph_ioserver_handler * handle, oph_ioserver_params * co
 	}
 	pthread_mutex_unlock(&libtool_lock);
 
-	return _SERVER_connect(handle, conn_params, connection);
+	return _SERVER_connect(handle, conn_params, &(handle->connection));
 }
 
-int oph_ioserver_use_db(oph_ioserver_handler * handle, const char *db_name, void *connection)
+int oph_ioserver_use_db(oph_ioserver_handler *handle, const char *db_name)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_NULL_HANDLE);
@@ -200,10 +213,10 @@ int oph_ioserver_use_db(oph_ioserver_handler * handle, const char *db_name, void
 	}
 	pthread_mutex_unlock(&libtool_lock);
 
-	return _SERVER_use_db(handle, db_name, connection);
+	return _SERVER_use_db(handle, db_name, handle->connection);
 }
 
-int oph_ioserver_setup_query(oph_ioserver_handler * handle, void *connection, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg ** args, oph_ioserver_query ** query)
+int oph_ioserver_setup_query(oph_ioserver_handler *handle, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg **args, oph_ioserver_query **query)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_NULL_HANDLE);
@@ -229,10 +242,10 @@ int oph_ioserver_setup_query(oph_ioserver_handler * handle, void *connection, co
 	}
 	pthread_mutex_unlock(&libtool_lock);
 
-	return _SERVER_setup_query(handle, connection, operation, tot_run, args, query);
+	return _SERVER_setup_query(handle, handle->connection, operation, tot_run, args, query);
 }
 
-int oph_ioserver_execute_query(oph_ioserver_handler * handle, void *connection, oph_ioserver_query * query)
+int oph_ioserver_execute_query(oph_ioserver_handler *handle, oph_ioserver_query *query)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_NULL_HANDLE);
@@ -258,10 +271,10 @@ int oph_ioserver_execute_query(oph_ioserver_handler * handle, void *connection, 
 	}
 	pthread_mutex_unlock(&libtool_lock);
 
-	return _SERVER_execute_query(handle, connection, query);
+	return _SERVER_execute_query(handle, handle->connection, query);
 }
 
-int oph_ioserver_free_query(oph_ioserver_handler * handle, oph_ioserver_query * query)
+int oph_ioserver_free_query(oph_ioserver_handler *handle, oph_ioserver_query *query)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_NULL_HANDLE);
@@ -290,7 +303,7 @@ int oph_ioserver_free_query(oph_ioserver_handler * handle, oph_ioserver_query * 
 	return _SERVER_free_query(handle, query);
 }
 
-int oph_ioserver_close(oph_ioserver_handler * handle, void *connection)
+int oph_ioserver_close(oph_ioserver_handler *handle)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_NULL_HANDLE);
@@ -308,7 +321,7 @@ int oph_ioserver_close(oph_ioserver_handler * handle, void *connection)
 	snprintf(func_name, OPH_IOSERVER_BUFLEN, OPH_IOSERVER_CLOSE_FUNC, handle->server_type);
 
 	pthread_mutex_lock(&libtool_lock);
-	if (!(_SERVER_close = (int (*)(oph_ioserver_handler *, void *)) lt_dlsym(handle->dlh, func_name))) {
+	if (!(_SERVER_close = (int (*)(oph_ioserver_handler *, void **)) lt_dlsym(handle->dlh, func_name))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
 		logging_server(LOG_ERROR, __FILE__, __LINE__, handle->server_type, OPH_IOSERVER_LOG_LOAD_FUNC_ERROR, lt_dlerror());
 		pthread_mutex_unlock(&libtool_lock);
@@ -316,10 +329,10 @@ int oph_ioserver_close(oph_ioserver_handler * handle, void *connection)
 	}
 	pthread_mutex_unlock(&libtool_lock);
 
-	return _SERVER_close(handle, connection);
+	return _SERVER_close(handle, &(handle->connection));
 }
 
-int oph_ioserver_cleanup(oph_ioserver_handler * handle)
+int oph_ioserver_cleanup(oph_ioserver_handler *handle)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_NULL_HANDLE);
@@ -391,7 +404,7 @@ int oph_ioserver_cleanup(oph_ioserver_handler * handle)
 	return res;
 }
 
-int oph_ioserver_get_result(oph_ioserver_handler * handle, void *connection, oph_ioserver_result ** result)
+int oph_ioserver_get_result(oph_ioserver_handler *handle, oph_ioserver_result **result)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_NULL_HANDLE);
@@ -417,10 +430,10 @@ int oph_ioserver_get_result(oph_ioserver_handler * handle, void *connection, oph
 	}
 	pthread_mutex_unlock(&libtool_lock);
 
-	return _SERVER_get_result(handle, connection, result);
+	return _SERVER_get_result(handle, handle->connection, result);
 }
 
-int oph_ioserver_fetch_row(oph_ioserver_handler * handle, oph_ioserver_result * result, oph_ioserver_row ** current_row)
+int oph_ioserver_fetch_row(oph_ioserver_handler *handle, oph_ioserver_result *result, oph_ioserver_row **current_row)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_NULL_HANDLE);
@@ -449,7 +462,7 @@ int oph_ioserver_fetch_row(oph_ioserver_handler * handle, oph_ioserver_result * 
 	return _SERVER_fetch_row(handle, result, current_row);
 }
 
-int oph_ioserver_free_result(oph_ioserver_handler * handle, oph_ioserver_result * result)
+int oph_ioserver_free_result(oph_ioserver_handler *handle, oph_ioserver_result *result)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_NULL_HANDLE);

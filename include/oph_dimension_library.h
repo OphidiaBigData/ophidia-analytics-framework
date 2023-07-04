@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -61,6 +61,9 @@
 #define OPH_DIM_SUBSET_SEPARATOR1	","
 #define OPH_DIM_SUBSET_SEPARATOR	OPH_DIM_SUBSET_SEPARATOR1"_"
 #define OPH_DIM_SUBSET_SEPARATOR2	':'
+
+#define OPH_DIM_DATA_FORMAT_CHECK	'%'
+#define OPH_DIM_DATA_DEFAULT		"1900-01-01 00:00:00"
 
 /**
  * \brief Function to read dimension info from configuration file
@@ -316,9 +319,20 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim
  * \param dim Dimension metadata
  * \param tm_time Time struct to save output; it must be already allocated
  * \param base_time Base time (in sec) evaluated internally (it could be NULL)
+ * \param raw_value Time value in seconds (it could be NULL)
  * \return 0 if successfull, -1 otherwise
  */
-int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, struct tm *tm_time, long long *base_time);
+int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, struct tm *tm_time, long long *base_time, long long *raw_value);
+
+/**
+ * \brief Function to extract the datetime string associated to a time dimension value
+ * \param dim_row Dimension array
+ * \param kk Index of dimension value to be classified
+ * \param dim Dimension metadata
+ * \param raw_value Time value in seconds
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_dim_set_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, long long raw_value);
 
 /**
  * \brief Function to extract the datetime string associated to a time dimension value
@@ -329,5 +343,19 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
  * \return 0 if successfull, -1 otherwise
  */
 int oph_dim_get_time_string_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, char *output_string);
+
+/**
+ * \brief Function that updates a dimension table adding new dimensions (if it not exists)
+ * \param db Pointer to db_instance used for dimension table
+ * \param from_dimension_table_name Name of input dimension table
+ * \param to_dimension_table_name Name of output dimension table
+ * \param dimension_id Id of dimension to be copied; it will contain the id of dimension in new table at the end of the function
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_dim_copy_into_dimension_table(oph_odb_db_instance * db, char *from_dimension_table_name, char *to_dimension_table_name, int *dimension_id);
+
+int oph_dim_convert_data(oph_odb_dimension * dim, int size, char *dim_array);
+
+int oph_dim_get_base_time(oph_odb_dimension * dim, long long *base_time);
 
 #endif

@@ -1,6 +1,6 @@
 #
 #    Ophidia Analytics Framework
-#    Copyright (C) 2012-2018 CMCC Foundation
+#    Copyright (C) 2012-2022 CMCC Foundation
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,11 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = . libltdl src 
+SUBDIRS=
+if HAVE_ESDM_PAV_KERNELS
+SUBDIRS+= esdm-pav-analytical-kernels
+endif
+SUBDIRS+= . libltdl src
 
 sysconf_DATA = etc/oph_analytics_driver etc/oph_io_server etc/oph_configuration etc/ophidiadb.sql etc/oph_soap_configuration etc/oph_script_configuration
  
@@ -35,6 +39,8 @@ OPERATOR_XML+=etc/operators_xml/OPH_AGGREGATE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_APPLY_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_B2DROP_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CANCEL_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_CDO_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_GENERIC_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CLUSTER_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CONTAINERSCHEMA_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_CREATECONTAINER_operator_1.0.xml
@@ -55,12 +61,25 @@ if HAVE_NETCDF
 OPERATOR_XML+=etc/operators_xml/OPH_EXPORTNC_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNC2_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_IMPORTNCS_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_CONCATNC_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_CONCATNC2_operator_1.0.xml
 if GSL_SUPPORT
 OPERATOR_XML+=etc/operators_xml/OPH_EXPLORENC_operator_1.0.xml
 endif
 if HAVE_PARALLEL_NETCDF
 OPERATOR_XML+=etc/operators_xml/OPH_EXPORTNC2_operator_1.0.xml
 endif
+endif
+if HAVE_ESDM
+OPERATOR_XML+=etc/operators_xml/OPH_IMPORTESDM_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_IMPORTESDM2_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_EXPORTESDM_operator_1.0.xml
+if HAVE_PARALLEL_ESDM
+OPERATOR_XML+=etc/operators_xml/OPH_EXPORTESDM2_operator_1.0.xml
+endif
+OPERATOR_XML+=etc/operators_xml/OPH_CONCATESDM_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_CONCATESDM2_operator_1.0.xml
 endif
 OPERATOR_XML+=etc/operators_xml/OPH_FOLDER_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_FS_operator_1.0.xml
@@ -71,6 +90,7 @@ OPERATOR_XML+=etc/operators_xml/OPH_IF_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INPUT_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INSTANCES_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_INTERCUBE_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_INTERCUBE2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_LIST_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_LOGGINGBK_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_LOG_INFO_operator_1.0.xml
@@ -87,9 +107,9 @@ OPERATOR_XML+=etc/operators_xml/OPH_PERMUTE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_PRIMITIVES_LIST_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_PUBLISH_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_RANDCUBE_operator_1.0.xml
+OPERATOR_XML+=etc/operators_xml/OPH_RANDCUBE2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_REDUCE2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_REDUCE_operator_1.0.xml
-OPERATOR_XML+=etc/operators_xml/OPH_RESTORECONTAINER_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_RESUME_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_ROLLUP_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_SCRIPT_operator_1.0.xml
@@ -98,7 +118,6 @@ OPERATOR_XML+=etc/operators_xml/OPH_SERVICE_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_SET_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_SHOWGRID_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_SPLIT_operator_1.0.xml
-OPERATOR_XML+=etc/operators_xml/OPH_SUBSET2_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_SUBSET_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_TASKS_operator_1.0.xml
 OPERATOR_XML+=etc/operators_xml/OPH_UNPUBLISH_operator_1.0.xml

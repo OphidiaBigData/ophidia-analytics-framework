@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,6 +21,8 @@
 
 #define MYSQL_QUERY_META_RETRIEVE_METADATAKEY_LIST 		"SELECT idkey, label, variable, required, template FROM metadatakey WHERE idvocabulary=%d ORDER BY idkey ASC;"
 #define MYSQL_QUERY_META_RETRIEVE_METADATAINSTANCE		"SELECT idmetadatainstance FROM metadatainstance WHERE idmetadatainstance = %d AND iddatacube = %d;"
+#define MYSQL_QUERY_META_RETRIEVE_METADATAINSTANCE_ID1	"SELECT idmetadatainstance FROM metadatainstance WHERE label LIKE '%s' AND variable LIKE '%s' AND iddatacube = %d;"
+#define MYSQL_QUERY_META_RETRIEVE_METADATAINSTANCE_ID2	"SELECT idmetadatainstance FROM metadatainstance WHERE label LIKE '%s' AND variable IS NULL AND iddatacube = %d;"
 #define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE1 	"INSERT INTO `metadatainstance` (`iddatacube`, `idtype`, `value`, `label`, `variable`) VALUES (%d, %d, '%s', '%s', '%s');"
 #define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2 	"INSERT INTO `metadatainstance` (`iddatacube`, `idtype`, `value`, `label`) VALUES (%d, %d, '%s', '%s');"
 #define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE3 	"INSERT INTO `metadatainstance` (`iddatacube`, `idkey`, `idtype`, `value`, `label`, `variable`) VALUES (%d, %d, %d, '%s', '%s', '%s');"
@@ -28,6 +30,7 @@
 #define MYSQL_QUERY_META_UPDATE_OPHIDIADB_MANAGE 		"INSERT INTO `manage` (`iduser`, `idmetadatainstance` ) VALUES (%d, %d);"
 #define MYSQL_QUERY_META_READ_KEY_ID 				"SELECT metadatakey.idkey FROM container,vocabulary,metadatakey WHERE container.idcontainer=%d AND container.idvocabulary=vocabulary.idvocabulary AND vocabulary.idvocabulary=metadatakey.idvocabulary AND metadatakey.label='%s' AND metadatakey.variable='%s'"
 #define MYSQL_QUERY_META_READ_KEY_ID2 				"SELECT metadatakey.idkey FROM container,vocabulary,metadatakey WHERE container.idcontainer=%d AND container.idvocabulary=vocabulary.idvocabulary AND vocabulary.idvocabulary=metadatakey.idvocabulary AND metadatakey.label='%s' AND metadatakey.variable IS NULL"
+#define MYSQL_QUERY_META_READ_INSTANCE				"SELECT metadatainstance.idmetadatainstance AS Id, metadatainstance.variable AS Variable, metadatainstance.label AS 'Key', metadatatype.name AS Type, metadatainstance.value AS Value FROM metadatainstance INNER JOIN metadatatype ON metadatainstance.idtype = metadatatype.idtype WHERE metadatainstance.idmetadatainstance = %d;"
 #define MYSQL_QUERY_META_READ_INSTANCES				"SELECT metadatainstance.idmetadatainstance AS Id, metadatainstance.variable AS Variable, metadatainstance.label AS 'Key', metadatatype.name AS Type, metadatainstance.value AS Value, MAX(manage.managedate) AS Last_Modified, user.username AS User, vocabulary.name AS Vocabulary FROM (((( metadatainstance LEFT JOIN metadatakey ON metadatainstance.idkey=metadatakey.idkey ) LEFT JOIN vocabulary ON metadatakey.idvocabulary=vocabulary.idvocabulary ) INNER JOIN metadatatype ON metadatainstance.idtype=metadatatype.idtype ) INNER JOIN manage ON metadatainstance.idmetadatainstance=manage.idmetadatainstance ) INNER JOIN user ON manage.iduser=user.iduser WHERE metadatainstance.iddatacube=%d AND metadatainstance.idmetadatainstance LIKE '%s' AND (%s metadatainstance.variable LIKE '%s') AND metadatatype.name LIKE '%s' AND CONVERT(metadatainstance.value USING latin1) LIKE '%%%s%%' %s GROUP BY manage.idmetadatainstance"
 #define MYSQL_QUERY_META_UPDATE_INSTANCE 			"UPDATE metadatainstance SET value='%s' WHERE idmetadatainstance=%d AND iddatacube=%d;"
 #define MYSQL_QUERY_META_DELETE_INSTANCE 			"DELETE FROM metadatainstance WHERE idmetadatainstance=%d AND iddatacube=%d;"
@@ -45,6 +48,8 @@
 #define MYSQL_QUERY_META_CHECK_VOCABULARY			"SELECT idvocabulary FROM metadatakey INNER JOIN metadatainstance ON metadatakey.idkey = metadatainstance.idkey WHERE idvocabulary IS NOT NULL AND metadatainstance.idmetadatainstance=%d;"
 #define MYSQL_QUERY_META_CHECK_VOCABULARIES			"SELECT idvocabulary FROM metadatakey INNER JOIN metadatainstance ON metadatakey.idkey = metadatainstance.idkey WHERE idvocabulary IS NOT NULL AND metadatainstance.iddatacube=%d %s;"
 #define MYSQL_QUERY_META_RETRIEVE_KEY_OF_INSTANCE		"SELECT idmetadatainstance FROM metadatainstance WHERE iddatacube = %d AND variable = '%s';"
-#define MYSQL_QUERY_META_UPDATE_KEY_OF_INSTANCE			"UPDATE metadatainstance SET variable = '%s' WHERE idmetadatainstance = %d;"
+#define MYSQL_QUERY_META_RETRIEVE_KEY_OF_INSTANCE2		"SELECT idmetadatainstance, label, value, name FROM metadatainstance INNER JOIN metadatatype ON metadatainstance.idtype = metadatatype.idtype WHERE iddatacube = %d AND variable = '%s';"
+#define MYSQL_QUERY_META_UPDATE_KEY_OF_INSTANCE			"UPDATE metadatainstance SET variable = '%s'%s WHERE idmetadatainstance = %d;"
+#define MYSQL_QUERY_META_RETRIEVE_ID_BY_NAME			"SELECT idmetadatainstance FROM metadatainstance WHERE label = '%s' AND variable = '%s' AND iddatacube = %d;"
 
 #endif				/* __OPH_ODB_META_QUERY_H__ */

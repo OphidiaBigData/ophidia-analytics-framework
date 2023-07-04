@@ -28,6 +28,7 @@ It shows the list of the hierarchies or the description of a specified hierarchy
                   hierarchy_tip : show operator's output help message;
                   hierarchy_attrs : show hierarchy attribute table;
                   hierarchy_function : show hierarchy name and version.
+- save : set to &quot;yes&quot; (default) in case output has to be saved remotely.
 
 [Examples]
 Get the description of &quot;oph_time&quot; hierarchy :
@@ -46,5 +47,6 @@ SUBMISSION STRING: &quot;operator=oph_hierarchy;hierarchy=oph_time;&quot;</abstr
 		<argument type="string" mandatory="no" default="null">sessionid</argument>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|hierarchy_list|hierarchy_tip|hierarchy_attrs|hierarchy_function">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
 </operator>

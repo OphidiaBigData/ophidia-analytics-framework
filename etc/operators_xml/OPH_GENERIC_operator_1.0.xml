@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE operator SYSTEM "ophidiaoperator.dtd">
+<operator name="OPH_GENERIC" version="1.0">
+    <info>
+        <abstract>[Type]
+General.
+
+[Behaviour]
+It executes a bash script.
+The script can eventually process some environmental variables passed by the operator:
+- OPH_GENERIC_DATA_PATH : points to base folder of data repository on server (if available)
+- OPH_GENERIC_SESSION_PATH : points to &lt;oph_web_server_location&gt;/sessions/&lt;session_code&gt;/export/misc
+- OPH_GENERIC_SESSION_URL : points to &lt;oph_web_server&gt;/sessions/&lt;session_code&gt;/export/misc
+- OPH_GENERIC_SESSION_CODE : is the &lt;session_code&gt;
+- OPH_GENERIC_WORKFLOW_ID : is the workflow identifier
+- OPH_GENERIC_MARKER_ID : is the marker identifier associated with the job
+- OPH_GENERIC_SERVER_HOST : is the IP address or DNS name of the host where Ophidia Server is running
+- OPH_GENERIC_SERVER_PORT : is the port number associated with Ophidia Server
+- OPH_GENERIC_USER : is the submitter identifier
+
+[Parameters]
+- command : command to be executed; it must be set.
+- args : list of pipe-separated arguments to be passed to the command.
+- space : set to &quot;yes&quot; in case white spaces belong to arguments;
+          set to &quot;no&quot; in case white spaces are separators like &quot;|&quot; (default).
+- output_path : absolute path of the output file. By default the file will be saved in current directory on data repository (see &quot;cdd&quot;).
+- output_name : filename of the output file. A random value is set by default.
+- input : additional argument appended to &quot;args&quot;.
+- output : alias for the pair &quot;output_path&quot; and &quot;output_name&quot;; the values of these arguments will be overwritten.
+- cdd : absolute path corresponding to the current directory on data repository.
+- force : flag used to force file creation. An existant file is overwritten with &quot;yes&quot; whereas
+          the file is created only if it does not exist with &quot;no&quot; (default).
+- stdout : file where stdout will be redirected (appended) or &quot;stdout&quot; for no redirection.
+- stderr : file where stderr will be redirected (appended) or &quot;stderr&quot; for no redirection.
+
+[System parameters]
+- exec_mode : operator execution mode. Possible values are async (default) for
+              asynchronous mode, sync for synchronous mode with json-compliant output.
+- ncores : number of parallel processes to be used (min. 1).
+           This operator is not parallel, so the only possible value is 1.
+- sessionid : session identifier used server-side to manage sessions and jobs.
+              Usually users don't need to use/modify it, except when it is necessary
+              to create a new session or switch to another one.
+- objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
+                  generic_output : show the output of the command;
+                  generic_returncode : show the return code of the command.
+
+[Examples]
+Execute the command &quot;cp infile outfile&quot; without redirecting stdout and stderr:
+OPH_TERM: oph_generic command=-selname,tas;args=infile|outfile;
+SUBMISSION STRING: &quot;operator=oph_generic;command=cp;args=infile|outfile;&quot;</abstract>
+        <author>CMCC Foundation</author>
+        <category>Data Analysis</category>
+        <creationdate>28/09/2020</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <permission>execute</permission>
+    </info>
+    <args>
+		<argument type="string" mandatory="yes">command</argument>
+		<argument type="string" mandatory="no" default="" multivalue="yes">args</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">space</argument>
+		<argument type="string" mandatory="no" default="default">output_path</argument>
+		<argument type="string" mandatory="no" default="default">output_name</argument>
+		<argument type="string" mandatory="no" default="">input</argument>
+		<argument type="string" mandatory="no" default="">output</argument>
+		<argument type="string" mandatory="no" default="/">cdd</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
+		<argument type="string" mandatory="no" default="stdout">stdout</argument>
+		<argument type="string" mandatory="no" default="stderr">stderr</argument>
+		<argument type="string" mandatory="no" default="async" values="async|sync">exec_mode</argument>
+		<argument type="string" mandatory="no" default="null">sessionid</argument>
+		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="1">ncores</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|generic_output|generic_returncode">objkey_filter</argument>
+    </args>
+</operator>

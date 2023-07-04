@@ -42,4 +42,3 @@ oph_concat2(&apos;OPH_DOUBLE|OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,oph_get_sub
 		<multi-argument type="binary-array" mandatory="yes">measure</multi-argument>
     </args>
 </primitive>
-

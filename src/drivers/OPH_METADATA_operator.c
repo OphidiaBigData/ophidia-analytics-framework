@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@
 #include "oph_log_error_codes.h"
 #include "oph_pid_library.h"
 
-int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_result)
+int oph_metadata_crud(OPH_METADATA_operator_handle *handle, MYSQL_RES **read_result)
 {
 	*read_result = NULL;
 	ophidiadb *oDB = &((OPH_METADATA_operator_handle *) handle)->oDB;
@@ -146,16 +146,10 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 				}
 
 				int iduser = 0, exists = 0;
-				if (!handle->metadata_id || !handle->metadata_value) {
+				if (!handle->metadata_value) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
 					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				//Check metadata instance id
-				if (oph_odb_meta_check_metadatainstance_existance(oDB, handle->metadata_id, handle->id_datacube_input, &exists) || !exists) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_RETRIEVE_METADATAINSTANCE_FORCE_ERROR, handle->metadata_id);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_METADATAINSTANCE_FORCE_ERROR, handle->metadata_id);
-					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 				}
 				//Retrieve user id
 				if (oph_odb_user_retrieve_user_id(oDB, handle->user, &iduser)) {
@@ -163,16 +157,79 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_USER_ID_ERROR, handle->user);
 					return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
 				}
-				//update medatainstance table
-				if (oph_odb_meta_update_metadatainstance_table(oDB, handle->metadata_id, handle->id_datacube_input, handle->metadata_value, handle->force)) {
+
+				if (handle->metadata_id) {	// Update by id (more specific)
+
+					//Check metadata instance id
+					if (oph_odb_meta_check_metadatainstance_existance(oDB, handle->metadata_id, handle->id_datacube_input, &exists) || !exists) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_RETRIEVE_METADATAINSTANCE_FORCE_ERROR, handle->metadata_id);
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_METADATAINSTANCE_FORCE_ERROR, handle->metadata_id);
+						return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+					}
+					//update medatainstance table
+					if (oph_odb_meta_update_metadatainstance_table(oDB, handle->metadata_id, handle->id_datacube_input, handle->metadata_value, handle->force)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
+						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+					}
+					//insert into manage table
+					if (oph_odb_meta_insert_into_manage_table(oDB, handle->metadata_id, iduser)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
+						return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+					}
+
+				} else if (handle->metadata_keys_num) {	// Update by label (less specific)
+
+					char **metadata_values = NULL;
+					int i, idinstance, metadata_values_num = 0;
+					if (handle->metadata_keys_num > 1) {
+						if (oph_tp_parse_multiple_value_param(handle->metadata_value, &metadata_values, &metadata_values_num)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_RETRIEVE_VALUE_ERROR, handle->metadata_value);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_VALUE_ERROR, handle->metadata_value);
+							oph_tp_free_multiple_value_param_list(metadata_values, metadata_values_num);
+							return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+						}
+						if (handle->metadata_keys_num != metadata_values_num) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_RETRIEVE_VALUE_ERROR, handle->metadata_value);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_VALUE_ERROR, handle->metadata_value);
+							oph_tp_free_multiple_value_param_list(metadata_values, metadata_values_num);
+							return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+						}
+					}
+					for (i = 0; i < handle->metadata_keys_num; ++i) {
+						//retrieve key id
+						if (oph_odb_meta_retrieve_metadatainstance_id(oDB, handle->metadata_keys[i], handle->variable, handle->id_datacube_input, &idinstance) || !idinstance) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_RETRIEVE_KEY_ID_ERROR, handle->metadata_keys[i]);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_RETRIEVE_KEY_ID_ERROR, handle->metadata_keys[i]);
+							if (handle->metadata_keys_num > 1)
+								oph_tp_free_multiple_value_param_list(metadata_values, metadata_values_num);
+							return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
+						}
+						//update into medatainstance table
+						if (oph_odb_meta_update_metadatainstance_table
+						    (oDB, idinstance, handle->id_datacube_input, handle->metadata_keys_num > 1 ? metadata_values[i] : handle->metadata_value, handle->force)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
+							if (handle->metadata_keys_num > 1)
+								oph_tp_free_multiple_value_param_list(metadata_values, metadata_values_num);
+							return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+						}
+						//insert into manage table
+						if (oph_odb_meta_insert_into_manage_table(oDB, idinstance, iduser)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
+							if (handle->metadata_keys_num > 1)
+								oph_tp_free_multiple_value_param_list(metadata_values, metadata_values_num);
+							return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+						}
+					}
+					if (handle->metadata_keys_num > 1)
+						oph_tp_free_multiple_value_param_list(metadata_values, metadata_values_num);
+
+				} else {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_UPDATE_INSTANCE_ERROR);
-					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-				}
-				//insert into manage table
-				if (oph_odb_meta_insert_into_manage_table(oDB, handle->metadata_id, iduser)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_INSERT_MANAGE_ERROR);
 					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 				}
 
@@ -206,7 +263,7 @@ int oph_metadata_crud(OPH_METADATA_operator_handle * handle, MYSQL_RES ** read_r
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
+int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -368,8 +425,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		if (uri)
 			free(uri);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	} else if ((oph_odb_fs_retrive_container_folder_id(oDB, ((OPH_METADATA_operator_handle *) handle->operator_handle)->id_container_input, 1, &folder_id))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube or container is hidden\n");
+	} else if ((oph_odb_fs_retrive_container_folder_id(oDB, ((OPH_METADATA_operator_handle *) handle->operator_handle)->id_container_input, &folder_id))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve folder of specified datacube\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_METADATA_operator_handle *) handle->operator_handle)->id_container_input, OPH_LOG_OPH_METADATA_DATACUBE_FOLDER_ERROR, value);
 		if (uri)
 			free(uri);
@@ -537,7 +594,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_init(oph_operator_struct * handle)
+int task_init(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -548,7 +605,7 @@ int task_init(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_distribute(oph_operator_struct * handle)
+int task_distribute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -559,7 +616,7 @@ int task_distribute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_execute(oph_operator_struct * handle)
+int task_execute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -807,7 +864,7 @@ int task_execute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_reduce(oph_operator_struct * handle)
+int task_reduce(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -818,7 +875,7 @@ int task_reduce(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_destroy(oph_operator_struct * handle)
+int task_destroy(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -829,7 +886,7 @@ int task_destroy(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_unset(oph_operator_struct * handle)
+int env_unset(oph_operator_struct *handle)
 {
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)

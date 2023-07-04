@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,11 @@
 #include "oph_ophidiadb_main.h"
 #include "oph_common.h"
 #include "oph_ioserver_library.h"
+
+#define OPH_CUBESIZE_COUNT_ALGORITHM          "count"
+#define OPH_CUBESIZE_EURISTIC_ALGORITHM        "euristic"
+#define OPH_CUBESIZE_COUNT_ALGORITHM_VALUE    1
+#define OPH_CUBESIZE_EURISTIC_ALGORITHM_VALUE  2
 
 /**
  * \brief Structure of parameters needed by the operator OPH_CUBESIZE. It computes the number of elements stored in the input datacube

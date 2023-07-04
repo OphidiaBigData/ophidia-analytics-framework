@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,9 +33,11 @@
 
 #define MYSQL_QUERY_DIM_RETRIEVE_GRID_DIMENSION_INSTANCES		"SELECT dimensioninstance.iddimensioninstance, dimensioninstance.iddimension, dimensioninstance.idgrid, size, fkiddimensionindex, conceptlevel, fkiddimensionlabel from `dimensioninstance` INNER JOIN grid ON grid.idgrid = dimensioninstance.idgrid INNER JOIN dimension ON dimension.iddimension = dimensioninstance.iddimension where gridname = '%s' AND idcontainer = %d;"
 
-#define MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_DIMENSION			"INSERT INTO `dimension` (`idcontainer`, `dimensionname`, `dimensiontype`, `idhierarchy`) VALUES (%d, '%s', '%s', %d);"
+#define MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_DIMENSION			"INSERT IGNORE INTO `dimension` (`idcontainer`, `dimensionname`, `dimensiontype`, `idhierarchy`) VALUES (%d, '%s', '%s', %d);"
 
-#define MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_DIMENSION_WITH_TIME_METADATA	"INSERT INTO `dimension` (`idcontainer`, `dimensionname`, `dimensiontype`, `idhierarchy`, `basetime`, `units`, `calendar`, `monthlengths`, `leapyear`, `leapmonth`) VALUES (%d, '%s', '%s', %d, '%s', '%s', '%s', '%s', %d, %d);"
+#define MYSQL_QUERY_DIM_RETRIEVE_OPHIDIADB_DIMENSION			"SELECT iddimension FROM dimension WHERE idcontainer = %d AND dimensionname = '%s';"
+
+#define MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_DIMENSION_WITH_TIME_METADATA	"INSERT IGNORE INTO `dimension` (`idcontainer`, `dimensionname`, `dimensiontype`, `idhierarchy`, `basetime`, `units`, `calendar`, `monthlengths`, `leapyear`, `leapmonth`) VALUES (%d, '%s', '%s', %d, '%s', '%s', '%s', '%s', %d, %d);"
 #define MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_DIMENSION_WITH_TIME_METADATA2	"UPDATE `dimension` SET idhierarchy = %d, basetime = '%s', units = '%s', calendar = '%s', leapyear = %d, leapmonth = %d WHERE iddimension = %d;"
 #define MYSQL_QUERY_DIM_UPDATE_OPHIDIADB_DIMENSION_WITH_TIME_METADATA3	"UPDATE `dimensioninstance` SET conceptlevel = '%c' WHERE iddimensioninstance = %d"
 
@@ -48,9 +50,9 @@
 
 #define MYSQL_QUERY_DIM_RETRIEVE_DIMENSION_INSTANCE_DATA		"SELECT dimensioninstance.iddimensioninstance, conceptlevel, units, basetime, calendar, leapyear, leapmonth, monthlengths FROM (cubehasdim INNER JOIN dimensioninstance ON cubehasdim.iddimensioninstance = dimensioninstance.iddimensioninstance) INNER JOIN dimension ON dimension.iddimension = dimensioninstance.iddimension WHERE iddatacube = %d AND dimensionname='%s';"
 
-#define MYSQL_QUERY_DIM_RETRIEVE_GRID_ID2				"SELECT idgrid FROM grid WHERE gridname='%s';"
-
 #define MYSQL_QUERY_DIM_RETRIEVE_GRID_ID				"SELECT DISTINCT grid.idgrid FROM grid INNER JOIN dimensioninstance ON dimensioninstance.idgrid = grid.idgrid INNER JOIN dimension ON dimension.iddimension = dimensioninstance.iddimension WHERE gridname='%s' AND idcontainer = %d AND enabled;"
+#define MYSQL_QUERY_DIM_RETRIEVE_GRID_ID2				"SELECT idgrid FROM grid WHERE gridname = '%s';"
+#define MYSQL_QUERY_DIM_RETRIEVE_GRID					"SELECT gridname FROM grid WHERE idgrid = %d;"
 
 #define MYSQL_QUERY_DIM_RETRIEVE_DIMENSIONS_FROM_GRID_IN_CONTAINER	"SELECT dimension.iddimension, dimensionname, dimensiontype, idhierarchy, iddimensioninstance, dimensioninstance.idgrid, size, fkiddimensionindex, conceptlevel, fkiddimensionlabel, basetime, units, calendar, monthlengths, leapyear, leapmonth FROM (dimensioninstance INNER JOIN grid ON grid.idgrid = dimensioninstance.idgrid) INNER JOIN dimension ON dimensioninstance.iddimension = dimension.iddimension WHERE gridname = '%s' AND idcontainer = %d;"
 

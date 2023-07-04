@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -400,7 +400,7 @@ int oph_gsl_stats_produce(void *in_data, const size_t data_len, nc_type data_typ
 	return 0;
 }
 
-int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
+int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -499,6 +499,14 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MISSING_INPUT_PARAMETER, "", OPH_IN_PARAM_SRC_FILE_PATH);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	char *input = hashtbl_get(task_tbl, OPH_IN_PARAM_INPUT);
+	if (input && strlen(input))
+		value = input;
+	else if (!strlen(value)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "The param '%s' is mandatory; at least the param '%s' needs to be set\n", OPH_IN_PARAM_SRC_FILE_PATH, OPH_IN_PARAM_INPUT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_SRC_FILE_PATH);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
 	if (!(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path = (char *) strndup(value, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT_NO_CONTAINER, value, "nc file path");
@@ -511,28 +519,46 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (!strstr(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path, "http://")
-	    && !strstr(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path, "https://")) {
+	    && !strstr(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path, "https://")
+	    && !strstr(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path, OPH_ESDM_PREFIX)) {
 		char *pointer = ((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path;
 		while (pointer && (*pointer == ' '))
 			pointer++;
 		if (pointer) {
-			char tmp[OPH_COMMON_BUFFER_LEN];
-			if (*pointer != '/') {
+			char tmp[OPH_COMMON_BUFFER_LEN], *bvalue = NULL;
+			if (oph_pid_get_base_src_path(&bvalue)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
+				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			}
+			if (bvalue && (*pointer == '~')) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong input parameter '%s': ~ is not permitted\n", OPH_IN_PARAM_SRC_FILE_PATH);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_SRC_FILE_PATH);
+				free(bvalue);
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+			if ((*pointer != '/') && (*pointer != '~')) {
 				value = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
 				if (!value) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
+					if (bvalue)
+						free(bvalue);
 					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 				}
 				if (*value != '/') {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", value);
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", value);
+					if (bvalue)
+						free(bvalue);
 					return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 				}
 				if (strlen(value) > 1) {
 					if (strstr(value, "..")) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+						if (bvalue)
+							free(bvalue);
 						return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 					}
 					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", value + 1, pointer);
@@ -541,15 +567,11 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					pointer = ((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path;
 				}
 			}
-			if (oph_pid_get_base_src_path(&value)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base src_path\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base src_path\n");
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-			}
-			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
+			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", bvalue ? bvalue : "", *pointer != '/' ? "/" : "", pointer);
 			free(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path);
 			((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path = strdup(tmp);
-			free(value);
+			if (bvalue)
+				free(bvalue);
 		}
 	}
 
@@ -1034,7 +1056,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 						int order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 						//Extract index of the point given the dimension value
 						if (oph_nc_index_by_value
-						    (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], curfilter, want_start, 0, &order, &coord_index)) {
+						    (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], curfilter, want_start, 0, &order, &coord_index, 0)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_INVALID_INPUT_STRING, nc_strerror(retval));
 							oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -1172,7 +1194,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 						int order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 						//Extract index of the point given the dimension value
 						if (oph_nc_index_by_value
-						    (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], startfilter, want_start, 0, &order, &coord_index)) {
+						    (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], startfilter, want_start, 0, &order, &coord_index, 0)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_INVALID_INPUT_STRING, nc_strerror(retval));
 							oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -1196,7 +1218,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 						order = 1;	//It will be changed by the following function (1 ascending, 0 descending)
 						//Extract index of the point given the dimension value
 						if (oph_nc_index_by_value
-						    (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], endfilter, want_start, 0, &order, &coord_index)) {
+						    (OPH_GENERIC_CONTAINER_ID, ncid, tmp_var.varid, tmp_var.vartype, measure->dims_length[i], endfilter, want_start, 0, &order, &coord_index, 0)) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension informations\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_INVALID_INPUT_STRING);
 							oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
@@ -1388,7 +1410,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_init(oph_operator_struct * handle)
+int task_init(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1399,7 +1421,7 @@ int task_init(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_distribute(oph_operator_struct * handle)
+int task_distribute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1410,7 +1432,7 @@ int task_distribute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_execute(oph_operator_struct * handle)
+int task_execute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -6059,7 +6081,8 @@ int task_execute(oph_operator_struct * handle)
 	} else {
 
 		int success = 1, j, natts, ndims, nvars;
-		char key[OPH_COMMON_BUFFER_LEN], key_type[OPH_COMMON_TYPE_SIZE], value[OPH_COMMON_BUFFER_LEN], variable[OPH_COMMON_BUFFER_LEN], **dims = NULL, **vars = NULL;
+		size_t att_len = 0;
+		char key[OPH_COMMON_BUFFER_LEN], key_type[OPH_COMMON_TYPE_SIZE], value[OPH_COMMON_BUFFER_LEN], variable[OPH_COMMON_BUFFER_LEN], **dims = NULL, **vars = NULL, *big_value = NULL;
 		nc_type xtype;
 
 		is_objkey_printable = !result && success
@@ -6883,11 +6906,55 @@ int task_execute(oph_operator_struct * handle)
 						if (!strlen(key_type))
 							break;
 						memset(value, 0, OPH_COMMON_BUFFER_LEN);
-						if (nc_get_att(ncid, varid, (const char *) key, (void *) &value)) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get attribute value from file\n");
-							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-							break;
+
+						if (xtype == NC_CHAR || xtype == NC_STRING) {
+							//Check attribute length
+							if (nc_inq_attlen(ncid, varid, (const char *) key, &att_len)) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute lenght from file\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get attribute length from file\n");
+								result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+								break;
+							}
+
+							if (att_len >= OPH_COMMON_BUFFER_LEN) {
+
+								if (!(big_value = (char *) malloc((att_len + 1) * sizeof(char)))) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT,
+										"Tmp big attribute buffer");
+									if (big_value)
+										free(big_value);
+									result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									break;
+								}
+
+								if (nc_get_att(ncid, varid, (const char *) key, (void *) big_value)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get attribute value from file\n");
+									free(big_value);
+									result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									break;
+								}
+
+							} else {
+
+								if (nc_get_att(ncid, varid, (const char *) key, (void *) &value)) {
+									pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+									logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get attribute value from file\n");
+									result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+									break;
+								}
+								value[att_len] = 0;
+							}
+
+						} else {
+
+							if (nc_get_att(ncid, varid, (const char *) key, (void *) &value)) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to get attribute value from file\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to get attribute value from file\n");
+								result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+								break;
+							}
 						}
 						switch (xtype) {
 							case NC_BYTE:
@@ -6970,7 +7037,7 @@ int task_execute(oph_operator_struct * handle)
 							break;
 						}
 						jjj++;
-						jsonvalues[jjj] = strdup(tmp_value);
+						jsonvalues[jjj] = strdup(big_value ? big_value : tmp_value);
 						if (!jsonvalues[jjj]) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_INPUT, "value");
@@ -7000,6 +7067,10 @@ int task_execute(oph_operator_struct * handle)
 								free(jsonvalues[iii]);
 						if (jsonvalues)
 							free(jsonvalues);
+
+						if (big_value)
+							free(big_value);
+						big_value = NULL;
 
 						success = 1;
 					}
@@ -7040,7 +7111,7 @@ int task_execute(oph_operator_struct * handle)
 	return result;
 }
 
-int task_reduce(oph_operator_struct * handle)
+int task_reduce(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -7051,7 +7122,7 @@ int task_reduce(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_destroy(oph_operator_struct * handle)
+int task_destroy(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -7062,7 +7133,7 @@ int task_destroy(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_unset(oph_operator_struct * handle)
+int env_unset(oph_operator_struct *handle)
 {
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)
@@ -7150,6 +7221,10 @@ int env_unset(oph_operator_struct * handle)
 	}
 	free((OPH_EXPLORENC_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
+
+#ifdef OPH_ESDM
+	handle->dlh = NULL;
+#endif
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }

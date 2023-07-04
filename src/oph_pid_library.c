@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,13 +36,18 @@
 #include "debug.h"
 
 extern int msglevel;
+char read_file = 0;
+
 char *oph_web_server_name = NULL;
 char *oph_web_server_location = NULL;
 long long oph_memory_size = -1;
+long long oph_buffer_size = -1;
 char *oph_base_src_path = NULL;
 char *oph_base_user_path = NULL;
 char oph_user_space = -1;
 char *oph_b2drop_webdav_url = NULL;
+char oph_enable_unregistered_script = 0;
+char *oph_cdo_path = NULL;
 
 int oph_pid_create_pid(const char *url, int id_container, int id_datacube, char **pid)
 {
@@ -69,6 +74,10 @@ int oph_pid_create_pid(const char *url, int id_container, int id_datacube, char 
 
 int _oph_pid_load_data()
 {
+	if (read_file)
+		return OPH_PID_SUCCESS;
+	read_file = 1;
+
 	char config[OPH_FRAMEWORK_CONF_PATH_SIZE];
 	snprintf(config, sizeof(config), OPH_FRAMEWORK_OPHIDIADB_CONF_FILE_PATH, OPH_ANALYTICS_LOCATION);
 
@@ -107,6 +116,8 @@ int _oph_pid_load_data()
 					oph_web_server_location[size] = '\0';
 			} else if (!strncmp(buffer, OPH_PID_MEMORY, strlen(OPH_PID_MEMORY)) && !strncmp(buffer, OPH_PID_MEMORY, strlen(buffer))) {
 				oph_memory_size = (long long) strtoll(position, NULL, 10);
+			} else if (!strncmp(buffer, OPH_PID_BUFFER, strlen(OPH_PID_BUFFER)) && !strncmp(buffer, OPH_PID_BUFFER, strlen(buffer))) {
+				oph_buffer_size = (long long) strtoll(position, NULL, 10);
 			} else if (!strncmp(buffer, OPH_PID_BASE_SRC_PATH, strlen(OPH_PID_BASE_SRC_PATH)) && !strncmp(buffer, OPH_PID_BASE_SRC_PATH, strlen(buffer))) {
 				if (!(oph_base_src_path = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -117,6 +128,16 @@ int _oph_pid_load_data()
 				oph_base_src_path[strlen(position)] = '\0';
 				while (((size = strlen(oph_base_src_path) - 1) >= 0) && oph_base_src_path[size] == '/')
 					oph_base_src_path[size] = '\0';
+			} else if (!strncmp(buffer, OPH_PID_CDO_PATH, strlen(OPH_PID_CDO_PATH)) && !strncmp(buffer, OPH_PID_CDO_PATH, strlen(buffer))) {
+				if (!(oph_cdo_path = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					fclose(file);
+					return OPH_PID_MEMORY_ERROR;
+				}
+				strncpy(oph_cdo_path, position, strlen(position) + 1);
+				oph_cdo_path[strlen(position)] = '\0';
+				while (((size = strlen(oph_cdo_path) - 1) >= 0) && oph_cdo_path[size] == '/')
+					oph_cdo_path[size] = '\0';
 			} else if (!strncmp(buffer, OPH_PID_BASE_USER_PATH, strlen(OPH_PID_BASE_USER_PATH)) && !strncmp(buffer, OPH_PID_BASE_USER_PATH, strlen(buffer))) {
 				if (!(oph_base_user_path = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -130,6 +151,10 @@ int _oph_pid_load_data()
 			} else if (!strncmp(buffer, OPH_PID_USER_SPACE, strlen(OPH_PID_USER_SPACE)) && !strncmp(buffer, OPH_PID_USER_SPACE, strlen(buffer))) {
 				if (!strcasecmp(position, "yes"))
 					oph_user_space = 1;
+			} else if (!strncmp(buffer, OPH_PID_ENABLE_UNREGISTERED_SCRIPT, strlen(OPH_PID_ENABLE_UNREGISTERED_SCRIPT))
+				   && !strncmp(buffer, OPH_PID_ENABLE_UNREGISTERED_SCRIPT, strlen(buffer))) {
+				if (!strcasecmp(position, "yes"))
+					oph_enable_unregistered_script = 1;
 			} else if (!oph_b2drop_webdav_url && !strncmp(buffer, OPH_PID_B2DROP_WEBDAV, strlen(OPH_PID_B2DROP_WEBDAV))) {
 				if (!(oph_b2drop_webdav_url = (char *) malloc((strlen(position) + 1) * sizeof(char)))) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -150,6 +175,9 @@ int _oph_pid_load_data()
 
 	if (oph_user_space < 0)
 		oph_user_space = 0;
+
+	if (oph_buffer_size < 0)
+		oph_buffer_size = 0;
 
 	return OPH_PID_SUCCESS;
 }
@@ -196,6 +224,24 @@ int oph_pid_get_memory_size(long long *memory_size)
 	return OPH_PID_SUCCESS;
 }
 
+int oph_pid_get_buffer_size(long long *buffer_size)
+{
+	if (!buffer_size) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_PID_NULL_PARAM;
+	}
+	*buffer_size = 0;
+
+	if (oph_buffer_size < 0) {
+		int res;
+		if ((res = _oph_pid_load_data()))
+			return res;
+	}
+	*buffer_size = oph_buffer_size ? oph_buffer_size : QUERY_BUFLEN;
+
+	return OPH_PID_SUCCESS;
+}
+
 int oph_pid_get_base_src_path(char **base_src_path)
 {
 	if (!base_src_path) {
@@ -209,10 +255,34 @@ int oph_pid_get_base_src_path(char **base_src_path)
 		if ((res = _oph_pid_load_data()))
 			return res;
 	}
-	if (!oph_base_src_path)
+	if (!oph_base_src_path || !strcmp(oph_base_src_path, "/"))
 		return OPH_PID_SUCCESS;
 
 	if (!(*base_src_path = strdup(oph_base_src_path))) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_PID_MEMORY_ERROR;
+	}
+
+	return OPH_PID_SUCCESS;
+}
+
+int oph_pid_get_cdo_path(char **cdo_path)
+{
+	if (!cdo_path) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_PID_NULL_PARAM;
+	}
+	*cdo_path = NULL;
+
+	if (!oph_cdo_path) {
+		int res;
+		if ((res = _oph_pid_load_data()))
+			return res;
+	}
+	if (!oph_cdo_path)
+		return OPH_PID_SUCCESS;
+
+	if (!(*cdo_path = strdup(oph_cdo_path))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		return OPH_PID_MEMORY_ERROR;
 	}
@@ -266,6 +336,25 @@ int oph_pid_get_user_space(char *user_space)
 	}
 
 	*user_space = oph_user_space;
+
+	return OPH_PID_SUCCESS;
+}
+
+int oph_pid_is_script_enabled(char *enabled)
+{
+	if (!enabled) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
+		return OPH_PID_NULL_PARAM;
+	}
+	*enabled = -1;
+
+	if (oph_enable_unregistered_script < 0) {
+		int res;
+		if ((res = _oph_pid_load_data()))
+			return res;
+	}
+
+	*enabled = oph_enable_unregistered_script;
 
 	return OPH_PID_SUCCESS;
 }
@@ -413,6 +502,16 @@ int oph_pid_free()
 	if (oph_base_user_path)
 		free(oph_base_user_path);
 	oph_base_user_path = NULL;
+
+	if (oph_b2drop_webdav_url)
+		free(oph_b2drop_webdav_url);
+	oph_b2drop_webdav_url = NULL;
+
+	if (oph_cdo_path)
+		free(oph_cdo_path);
+	oph_cdo_path = NULL;
+
+	read_file = 0;
 
 	return OPH_PID_SUCCESS;
 }

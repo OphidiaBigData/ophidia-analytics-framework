@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@
 
 #include "oph_json_library.h"
 
-int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
+int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -142,9 +142,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PRIMITIVES_LIST_MISSING_INPUT_PARAMETER, "NO-CONTAINER", OPH_IN_PARAM_DBMS_ID_FILTER);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (strcmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE) == 0) {
-		((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->id_dbms = 0;
-	} else {
+	if (strcmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE) && strcmp(value, "0")) {
 		((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->id_dbms = (int) strtol(value, NULL, 10);
 		if (((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->id_dbms < 1) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "id of dbms must be positive\n");
@@ -184,7 +182,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_init(oph_operator_struct * handle)
+int task_init(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -195,7 +193,7 @@ int task_init(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_distribute(oph_operator_struct * handle)
+int task_distribute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -206,7 +204,7 @@ int task_distribute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_execute(oph_operator_struct * handle)
+int task_execute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -216,8 +214,6 @@ int task_execute(oph_operator_struct * handle)
 	//Only master process has to continue
 	if (handle->proc_rank != 0)
 		return OPH_ANALYTICS_OPERATOR_SUCCESS;
-
-	logging(LOG_INFO, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PRIMITIVES_LIST_INFO_START);
 
 	int level = ((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->level;
 	char *func_ret = ((OPH_PRIMITIVES_LIST_operator_handle *) handle->operator_handle)->func_ret;
@@ -401,7 +397,8 @@ int task_execute(oph_operator_struct * handle)
 	}
 	//For each ROW
 	char tmp_ret[OPH_COMMON_BUFFER_LEN] = { '\0' }, tmp_type[OPH_COMMON_BUFFER_LEN] = {
-	'\0'};
+		'\0'
+	};
 	int n;
 	int count_limit = 0;
 	while (curr_row->row) {
@@ -652,11 +649,10 @@ int task_execute(oph_operator_struct * handle)
 		}
 	}
 
-	logging(LOG_INFO, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_PRIMITIVES_LIST_INFO_END);
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_reduce(oph_operator_struct * handle)
+int task_reduce(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -667,7 +663,7 @@ int task_reduce(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_destroy(oph_operator_struct * handle)
+int task_destroy(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -678,7 +674,7 @@ int task_destroy(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_unset(oph_operator_struct * handle)
+int env_unset(oph_operator_struct *handle)
 {
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)

@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -43,6 +43,15 @@
 #define OPH_UTL_GB_SIZE     1073741824.0
 #define OPH_UTL_TB_SIZE     1099511627776.0
 #define OPH_UTL_PB_SIZE     1125899906842624.0
+
+/** 
+ * \brief Function get size of array from its length and type
+ * \param oph_type String with the type used in the array
+ * \param array_length Length of the array
+ * \param size Size of array to be computed
+ * \return 0 if successfull, N otherwise
+ */
+int oph_utl_get_array_size(char *oph_type, long long array_length, long long *size);
 
 /** 
  * \brief Function to shorten path string

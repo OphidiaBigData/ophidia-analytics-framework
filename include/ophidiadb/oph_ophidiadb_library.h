@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2018 CMCC Foundation
+    Copyright (C) 2012-2022 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,6 +45,11 @@
 #define OPH_CONF_OPHDB_LOGIN	"OPHDB_LOGIN"
 #define OPH_CONF_OPHDB_PWD	"OPHDB_PWD"
 
+#define OPH_ODB_LOCK_ERROR 1213
+#define OPH_ODB_LOCK_WAIT_ERROR 1205
+#define OPH_ODB_MAX_ATTEMPTS 5
+#define OPH_ODB_WAITING_TIME 2
+
 /**
  * \brief Structure that contain OphidiaDB parameters
  * \param name name of OphidiaDB
@@ -77,7 +82,7 @@ int oph_odb_read_ophidiadb_config_file(ophidiadb * oDB);
 int oph_odb_init_ophidiadb(ophidiadb * oDB);
 
 /**
- * \brief Function to initilize OphidiaDB structure in multi-thread environment.
+ * \brief Function to initilize OphidiaDB structure in multi-thread environment (mysql_library_init must be called before).
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_init_ophidiadb_thread(ophidiadb * oDB);
@@ -89,7 +94,7 @@ int oph_odb_init_ophidiadb_thread(ophidiadb * oDB);
 int oph_odb_free_ophidiadb(ophidiadb * oDB);
 
 /**
- * \brief Function to delete OphidiaDB and to free memory allocated in multi-thread environment.
+ * \brief Function to delete OphidiaDB and free memory in multi-thread environment (mysql_library_end must be called after).
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_free_ophidiadb_thread(ophidiadb * oDB);
@@ -114,5 +119,13 @@ int oph_odb_check_connection_to_ophidiadb(ophidiadb * oDB);
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_disconnect_from_ophidiadb(ophidiadb * oDB);
+
+/**
+ * \brief Function to query the OphidiaDB (retries the execution in case of lock-related issues)
+ * \param structure containig OphidiaDB parameters
+ * \param string with query to be performed
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_query_ophidiadb(ophidiadb * oDB, char *query);
 
 #endif				/* __OPH_OPHIDIA_DB__ */
