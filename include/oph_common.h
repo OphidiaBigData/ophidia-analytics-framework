@@ -151,4 +151,6 @@
 
 #define OPH_COMMON_FILLVALUE		"_FillValue"
 
+#define OPH_COMMON_DIESIS			'#'
+
 #endif				//__OPH_COMMON_H
