@@ -72,6 +72,7 @@ SUBMISSION STRING: &quot;operator=oph_wait;timeout=200;&quot;</abstract>
 		<argument type="string" mandatory="no" default="-" multivalue="yes">key</argument>
 		<argument type="string" mandatory="no" default="-" multivalue="yes">value</argument>
 		<argument type="string" mandatory="no" default="-">filename</argument>
+		<argument type="string" mandatory="no" default="-">fileref</argument>
 		<argument type="string" mandatory="no" default="-">measure</argument>
 		<argument type="string" mandatory="no" default="-">output</argument>
 		<argument type="string" mandatory="no" default="-">message</argument>
