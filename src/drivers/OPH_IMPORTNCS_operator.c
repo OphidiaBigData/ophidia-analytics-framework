@@ -264,6 +264,42 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_SRC_FILE_PATH);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	char *src_list = hashtbl_get(task_tbl, OPH_IN_PARAM_SRC_FILE_LIST), *src_paths = NULL;
+	if (src_list && strlen(src_list)) {
+		FILE *src_list_file = fopen(src_list, "r");	// TODO: reference is not based on base_src_path
+		if (!src_list_file) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to access '%s'\n", src_list);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID,  "Unable to access '%s'\n", src_list);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		size_t size = 0;
+		char buffer[OPH_TP_TASKLEN], *tmp = NULL;
+		while (fgets(buffer, OPH_TP_TASKLEN, src_list_file)) {
+			if ((size = strlen(buffer)) && (buffer[size - 1] == '\n'))
+				buffer[size - 1] = 0;
+			if (src_paths) {
+				tmp = (char *) malloc(2 + strlen(src_paths) + size);
+				if (!tmp) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, src_list, "src_list");
+					free(src_paths);
+					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+				}
+				sprintf(tmp, "%s|%s", src_paths, buffer);
+				src_paths = tmp;
+			} else {
+				src_paths = strdup(buffer);
+				if (!src_paths) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, src_list, "src_list");
+					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+				}
+			}
+		}
+		fclose(src_list_file);
+		if (src_paths && strlen(src_paths))
+			value = src_paths;
+	}
 	char *input = hashtbl_get(task_tbl, OPH_IN_PARAM_INPUT);
 	if (input && strlen(input))
 		value = input;
@@ -283,6 +319,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "nc file path");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
+	if (src_paths)
+		free(src_paths);
 
 	char *tmp_base_path = NULL;
 	if (oph_pid_get_base_src_path(&tmp_base_path)) {
