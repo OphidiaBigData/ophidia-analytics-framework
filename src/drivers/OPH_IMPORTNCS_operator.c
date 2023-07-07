@@ -283,6 +283,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, src_list, "src_list");
 					free(src_paths);
+					fclose(src_list_file);
 					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 				}
 				sprintf(tmp, "%s|%s", src_paths, buffer);
@@ -292,6 +293,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				if (!src_paths) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, src_list, "src_list");
+					fclose(src_list_file);
 					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 				}
 			}
