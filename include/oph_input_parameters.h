@@ -42,6 +42,7 @@
 #define OPH_IN_PARAM_CHECK_TYPE					"check_type"
 #define OPH_IN_PARAM_AUTH_FILE_PATH				"auth_path"
 #define OPH_IN_PARAM_SRC_FILE_PATH				"src_path"
+#define OPH_IN_PARAM_SRC_FILE_LIST				"src_list"
 #define OPH_IN_PARAM_DST_FILE_PATH				"dst_path"
 #define OPH_IN_PARAM_DIMENSION_NUMBER				"ndim"
 #define OPH_IN_PARAM_DIMENSION_NAME				"dim"
