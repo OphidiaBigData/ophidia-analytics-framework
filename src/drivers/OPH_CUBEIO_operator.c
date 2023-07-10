@@ -37,7 +37,7 @@
 #include "oph_input_parameters.h"
 #include "oph_log_error_codes.h"
 
-int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
+int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -199,7 +199,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_init(oph_operator_struct *handle)
+int task_init(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -210,7 +210,7 @@ int task_init(oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_distribute(oph_operator_struct *handle)
+int task_distribute(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -221,7 +221,7 @@ int task_distribute(oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int _oph_cubeio_print_children(char *uri, ophidiadb *oDB, unsigned int level, int id_datacube_root, int **child_type, int id_container_in, oph_json *oper_json, char **objkeys, int objkeys_num)
+int _oph_cubeio_print_children(char *uri, ophidiadb * oDB, unsigned int level, int id_datacube_root, int **child_type, int id_container_in, oph_json * oper_json, char **objkeys, int objkeys_num)
 {
 	if (id_datacube_root < 1 || id_container_in < 1 || (*child_type) == NULL || !oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -417,10 +417,10 @@ int _oph_cubeio_print_children(char *uri, ophidiadb *oDB, unsigned int level, in
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int _oph_cubeio_print_parents(char *uri, ophidiadb *oDB, unsigned int level, int id_datacube_leaf, int **parent_type, int id_container_in, char (*operation)[OPH_ODB_CUBE_OPERATOR_SIZE],
-			      oph_json *oper_json, char **objkeys, int objkeys_num, char childcube[OPH_COMMON_BUFFER_LEN], char(*parentcube)[OPH_COMMON_BUFFER_LEN])
+int _oph_cubeio_print_parents(char *uri, ophidiadb * oDB, unsigned int level, int id_datacube_leaf, int **parent_type, int id_container_in, char (*operation)[OPH_ODB_CUBE_OPERATOR_SIZE],
+			      oph_json * oper_json, char **objkeys, int objkeys_num, char childcube[OPH_COMMON_BUFFER_LEN], char (*parentcube)[OPH_COMMON_BUFFER_LEN])
 {
-	if(id_datacube_leaf < 1 || id_container_in < 1 ||(*parent_type) == 0 || !oDB || !operation || !childcube || !parentcube) {
+	if (id_datacube_leaf < 1 || id_container_in < 1 || (*parent_type) == 0 || !oDB || !operation || !childcube || !parentcube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, id_container_in, OPH_LOG_OPH_CUBEIO_NULL_FUNCTION_PARAMS_PARENT, id_datacube_leaf);
 		return OPH_ANALYTICS_OPERATOR_BAD_PARAMETER;
@@ -624,7 +624,7 @@ int _oph_cubeio_print_parents(char *uri, ophidiadb *oDB, unsigned int level, int
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_execute(oph_operator_struct *handle)
+int task_execute(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -830,7 +830,7 @@ int task_execute(oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_reduce(oph_operator_struct *handle)
+int task_reduce(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -841,7 +841,7 @@ int task_reduce(oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_destroy(oph_operator_struct *handle)
+int task_destroy(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -852,7 +852,7 @@ int task_destroy(oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_unset(oph_operator_struct *handle)
+int env_unset(oph_operator_struct * handle)
 {
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)
