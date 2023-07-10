@@ -1375,7 +1375,7 @@ int oph_odb_cube_order_by(ophidiadb *oDB, int order, int *id_datacube, int id_da
 		return OPH_ODB_NULL_PARAM;
 	}
 
-	if (!order || (id_datacube_num < 2))
+	if (id_datacube_num < 2)
 		return OPH_ODB_SUCCESS;
 
 	int n = 0, cc, nn = 0;
@@ -1395,7 +1395,7 @@ int oph_odb_cube_order_by(ophidiadb *oDB, int order, int *id_datacube, int id_da
 			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_ORDER_CUBE_BY_SOURCE, cube_list);
 			break;
 		default:
-			return OPH_ODB_SUCCESS;
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_ORDER_CUBE_BY_NDIM, cube_list);
 	}
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
@@ -1411,15 +1411,15 @@ int oph_odb_cube_order_by(ophidiadb *oDB, int order, int *id_datacube, int id_da
 	MYSQL_ROW row;
 	res = mysql_store_result(oDB->conn);
 
-	if (mysql_field_count(oDB->conn) != 2) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Not enough fields found by query.\n");
+	if (mysql_field_count(oDB->conn) != 3) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong number of fields found by query.\n");
 		mysql_free_result(res);
 		return OPH_ODB_TOO_MANY_ROWS;
 	}
 
 	int num_rows = mysql_num_rows(res);
 	if (num_rows != id_datacube_num) {
-		pmesg(LOG_WARNING, __FILE__, __LINE__, "Cubes cannot be ordered by source.\n");
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Cubes cannot be ordered.\n");
 		mysql_free_result(res);
 		return OPH_ODB_SUCCESS;
 	}

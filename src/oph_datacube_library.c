@@ -613,13 +613,13 @@ int oph_dc_create_fragment_from_query2(oph_ioserver_handler *server, oph_odb_fra
 int oph_dc_create_fragment_from_query_with_param(oph_ioserver_handler *server, oph_odb_fragment *old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
 						 long long *start_id, char *param, long long param_size)
 {
-	return oph_dc_create_fragment_from_query_with_params2(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, NULL, param, param_size, 1);
+	return oph_dc_create_fragment_from_query_with_params2(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, NULL, param, param_size, param ? 1 : 0);
 }
 
 int oph_dc_create_fragment_from_query_with_param2(oph_ioserver_handler *server, oph_odb_fragment *old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
 						  long long *start_id, long long *block_size, char *param, long long param_size)
 {
-	return oph_dc_create_fragment_from_query_with_params2(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, block_size, param, param_size, 1);
+	return oph_dc_create_fragment_from_query_with_params2(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, block_size, param, param_size, param ? 1 : 0);
 }
 
 int oph_dc_create_fragment_from_query_with_params(oph_ioserver_handler *server, oph_odb_fragment *old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
@@ -636,10 +636,6 @@ int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler *server,
 	    if (!old_frag || !operation || (!param && param_size) || (param && !param_size) || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DC_NULL_PARAM;
-	}
-	if (num < 1) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "At least an occurrance of parameter has to be found\n");
-		return OPH_DC_DATA_ERROR;
 	}
 	if (oph_dc_check_connection_to_db(server, old_frag->db_instance->dbms_instance, old_frag->db_instance, 0)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to DB.\n");

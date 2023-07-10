@@ -186,6 +186,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_type = NULL;
 	((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->number = 0;
 	((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->execute_error = 0;
+	((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->ensamble_size = -1;
 
 	char **datacube_in;
 	char *value;
@@ -499,17 +500,19 @@ int task_init(oph_operator_struct *handle)
 
 	int pointer, input_datacube_num =
 	    ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num + ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->number, stream_max_size =
-	    4 + OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE + 2 * sizeof(int) + input_datacube_num * OPH_ODB_CUBE_MEASURE_TYPE_SIZE;
+	    4 + OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE + 3 * sizeof(int) + input_datacube_num * OPH_ODB_CUBE_MEASURE_TYPE_SIZE;
 	char stream[stream_max_size];
 	memset(stream, 0, sizeof(stream));
 	*stream = 0;
-	char *id_string[3], *data_type[input_datacube_num];
+	char *id_string[4], *data_type[input_datacube_num];
 	pointer = 0;
 	id_string[0] = stream + pointer;
 	pointer += 1 + OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE;
 	id_string[1] = stream + pointer;
 	pointer += 1 + sizeof(int);
 	id_string[2] = stream + pointer;
+	pointer += 1 + sizeof(int);
+	id_string[3] = stream + pointer;
 	pointer += 1 + sizeof(int);
 
 	int cc = 0, ccc;
@@ -519,6 +522,21 @@ int task_init(oph_operator_struct *handle)
 	}
 
 	if (handle->proc_rank == 0) {
+
+		// Set dim_name if any
+		char *dim_name = ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_name;
+		if (!dim_name) {
+			char dimension_name[OPH_ODB_DIM_DIMENSION_SIZE + 1];
+			snprintf(dimension_name, OPH_ODB_DIM_DIMENSION_SIZE, "d%d", ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_datacube[0]);
+			((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_name = dim_name = strdup(dimension_name);
+			if (!dim_name) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set dimension name due to a memory error.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
+					"Unable to set dimension name due to a memory error.\n");
+				goto __OPH_EXIT_1;
+			}
+		}
+
 		ophidiadb *oDB = &((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->oDB;
 		oph_odb_datacube *cube = (oph_odb_datacube *) malloc(((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num * sizeof(oph_odb_datacube));
 		if (cube == NULL) {
@@ -535,7 +553,7 @@ int task_init(oph_operator_struct *handle)
 		int last_insertd_id = 0;
 		int l, ll;
 
-		//retrieve input datacube
+		// Retrieve input datacube
 		if (oph_odb_cube_retrieve_datacube(oDB, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_datacube[0], &cube[0])) {
 			for (cc = 0; cc < ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num; cc++)
 				oph_odb_cube_free_datacube(&(cube[cc]));
@@ -544,7 +562,7 @@ int task_init(oph_operator_struct *handle)
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_DATACUBE_READ_ERROR, 0);
 			goto __OPH_EXIT_1;
 		}
-		//Read old cube - dimension relation rows
+		// Read old cube - dimension relation rows
 		if (oph_odb_cube_retrieve_cubehasdim_list(oDB, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_datacube[0], &cubedims, &number_of_dimensions)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive datacube1 - dimension relations.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
@@ -555,6 +573,26 @@ int task_init(oph_operator_struct *handle)
 			free(cubedims);
 			goto __OPH_EXIT_1;
 		}
+		// Read old cube dimensions
+		oph_odb_dimension dim[1 + number_of_dimensions];
+		oph_odb_dimension_instance dim_inst[1 + number_of_dimensions];
+		for (l = 0; l < number_of_dimensions; ++l) {
+			if (oph_odb_dim_retrieve_dimension_instance
+			    (oDB, cubedims[l].id_dimensioninst, dim_inst + l, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_datacube[0])) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading dimension information.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_DIM_READ_ERROR);
+				free(cubedims);
+				goto __OPH_EXIT_1;
+			}
+			if (oph_odb_dim_retrieve_dimension(oDB, dim_inst[l].id_dimension, dim + l, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_datacube[0])) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading dimension information.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_DIM_READ_ERROR);
+				free(cubedims);
+				goto __OPH_EXIT_1;
+			}
+		}
+
+		int found_dim_name = -1;
 		for (cc = 1; cc < ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num; cc++) {
 			if (oph_odb_cube_retrieve_datacube(oDB, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_datacube[cc], &cube[cc])) {
 				for (cc = 0; cc < ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->input_datacube_num; cc++)
@@ -563,6 +601,7 @@ int task_init(oph_operator_struct *handle)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
 					OPH_LOG_OPH_MERGECUBES_DATACUBE_READ_ERROR, cc);
+				free(cubedims);
 				goto __OPH_EXIT_1;
 			}
 			// Checking fragmentation structure
@@ -573,6 +612,7 @@ int task_init(oph_operator_struct *handle)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Datacube fragmentation structures are not comparable\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
 					OPH_LOG_OPH_MERGECUBES_DATACUBE_COMPARISON_ERROR, "fragmentation structures");
+				free(cubedims);
 				goto __OPH_EXIT_1;
 			}
 			// Checking fragment indexes
@@ -583,6 +623,7 @@ int task_init(oph_operator_struct *handle)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Datacube relative index sets are not comparable\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
 					OPH_LOG_OPH_MERGECUBES_DATACUBE_COMPARISON_ERROR, "relative index sets");
+				free(cubedims);
 				goto __OPH_EXIT_1;
 			}
 
@@ -593,6 +634,7 @@ int task_init(oph_operator_struct *handle)
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Datacube are compressed differently\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
 					OPH_LOG_OPH_MERGECUBES_DATACUBE_COMPARISON_ERROR, "compression methods");
+				free(cubedims);
 				goto __OPH_EXIT_1;
 			}
 
@@ -618,9 +660,32 @@ int task_init(oph_operator_struct *handle)
 				    || (cubedims[l].level != cubedims2[ll].level))
 					break;
 			}
-			for (; l < number_of_dimensions; l++)
-				if (cubedims[l].size)
-					break;
+			found_dim_name = -1;
+			for (; l < number_of_dimensions; l++) {
+				if (cubedims[l].size) {
+					if (found_dim_name < 0) {
+						found_dim_name = l;
+						if (strcmp(dim_name, dim[l].dimension_name)) {
+							pmesg(LOG_WARNING, __FILE__, __LINE__, "A new dimension name '%s' is already set. Input argument '%s' will be negletted\n",
+							      dim[l].dimension_name, dim_name);
+							logging(LOG_WARNING, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
+								"A new dimension name '%s' is already set. Input argument '%s' will be negletted\n", dim[l].dimension_name, dim_name);
+							free(((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_name);
+							((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_name = dim_name = strdup(dim[l].dimension_name);
+						}
+						if (l < number_of_dimensions - 1) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "The ensamble dimension is not the last dimension: currently unsupported!\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
+								"The ensamble dimension is not the last dimension: currently unsupported!\n");
+							free(cube);
+							free(cubedims);
+							free(cubedims2);
+							goto __OPH_EXIT_1;
+						}
+					} else
+						break;
+				}
+			}
 			for (; ll < number_of_dimensions2; ll++)
 				if (cubedims2[ll].size)
 					break;
@@ -770,32 +835,20 @@ int task_init(oph_operator_struct *handle)
 			if (!cubedims[l].explicit_dim && cubedims[l].size)
 				max_level = cubedims[l].level;
 		}
-		cubedims_new[l].id_datacube = cubedims[0].id_datacube;
-		cubedims_new[l].id_dimensioninst = 0;
-		cubedims_new[l].explicit_dim = 0;
-		cubedims_new[l].level = max_level + 1;
-		cubedims_new[l].size = input_datacube_num;
+		if (found_dim_name < 0) {
+			cubedims_new[l].id_datacube = cubedims[0].id_datacube;
+			cubedims_new[l].id_dimensioninst = 0;
+			cubedims_new[l].explicit_dim = 0;
+			cubedims_new[l].level = max_level + 1;
+			cubedims_new[l].size = input_datacube_num;
+		} else {
+			l = found_dim_name;
+			((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->ensamble_size = cubedims_new[l].size;
+			cubedims_new[l].size += input_datacube_num - 1;
+		}
 
 		free(cubedims);
 		cubedims = cubedims_new;
-
-		oph_odb_dimension dim[1 + number_of_dimensions];
-		oph_odb_dimension_instance dim_inst[1 + number_of_dimensions];
-		for (l = 0; l < number_of_dimensions; ++l) {
-			if (oph_odb_dim_retrieve_dimension_instance
-			    (oDB, cubedims[l].id_dimensioninst, &(dim_inst[l]), ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_datacube[0])) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading dimension information.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_DIM_READ_ERROR);
-				free(cubedims);
-				goto __OPH_EXIT_1;
-			}
-			if (oph_odb_dim_retrieve_dimension(oDB, dim_inst[l].id_dimension, &(dim[l]), ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_datacube[0])) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading dimension information.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_MERGECUBES_DIM_READ_ERROR);
-				free(cubedims);
-				goto __OPH_EXIT_1;
-			}
-		}
 
 		oph_odb_db_instance db_;
 		oph_odb_db_instance *db = &db_;
@@ -832,12 +885,7 @@ int task_init(oph_operator_struct *handle)
 			goto __OPH_EXIT_1;
 		}
 		dim[l].id_container = ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_output_container;
-		if (((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_name)
-			snprintf(dim[l].dimension_name, OPH_ODB_DIM_DIMENSION_SIZE, "%s", ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_name);
-		else {
-			snprintf(dim[l].dimension_name, OPH_ODB_DIM_DIMENSION_SIZE, "d%d", ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_output_datacube);
-			((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_name = strdup(dim[l].dimension_name);
-		}
+		snprintf(dim[l].dimension_name, OPH_ODB_DIM_DIMENSION_SIZE, "%s", dim_name);
 		int size = 0;
 		if (oph_dim_check_data_type(((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_type, &size)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid dimension type %s\n", ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_type);
@@ -872,6 +920,9 @@ int task_init(oph_operator_struct *handle)
 		snprintf(dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0]);
 		char o_dimension_table_name[OPH_COMMON_BUFFER_LEN];
 		snprintf(o_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_NAME_MACRO, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_output_container);
+
+		if (found_dim_name >= 0)
+			number_of_dimensions--;
 
 		for (l = 0; l <= number_of_dimensions; l++) {
 			dim_inst[l].size = cubedims[l].size;
@@ -966,8 +1017,8 @@ int task_init(oph_operator_struct *handle)
 						free(dim_array);
 				}
 			} else {
-				if (!strcmp(dim[l].dimension_name, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_name)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid dimension name '%s'.\n", ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->dim_name);
+				if (!strcmp(dim[l].dimension_name, dim_name)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid dimension name '%s'.\n", dim_name);
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
 						OPH_LOG_OPH_MERGECUBES_DIM_READ_ERROR);
 					if (dim_row)
@@ -1127,6 +1178,7 @@ int task_init(oph_operator_struct *handle)
 		strncpy(id_string[0], ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->fragment_ids, OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE);
 		memcpy(id_string[1], &((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_output_datacube, sizeof(int));
 		memcpy(id_string[2], &((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->compressed, sizeof(int));
+		memcpy(id_string[3], &((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->ensamble_size, sizeof(int));
 
 		for (cc = 0; cc < input_datacube_num; cc++) {
 			strncpy(data_type[cc], ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->measure_type[cc], OPH_ODB_CUBE_MEASURE_TYPE_SIZE);
@@ -1168,6 +1220,7 @@ int task_init(oph_operator_struct *handle)
 		}
 		((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_output_datacube = *((int *) id_string[1]);
 		((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->compressed = *((int *) id_string[2]);
+		((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->ensamble_size = *((int *) id_string[3]);
 	}
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -1456,11 +1509,15 @@ int task_execute(oph_operator_struct *handle)
 					       MYSQL_FRAG_MEASURE, frags[0].value[k].db_instance->db_name, frags[0].value[k].fragment_name, frags[1].value[k].db_instance->db_name,
 					       frags[1].value[k].fragment_name, frags[0].value[k].fragment_name, MYSQL_FRAG_ID, frags[1].value[k].fragment_name, MYSQL_FRAG_ID);
 #endif
-
-				fprintf(stderr, "Query: %s§\n", query);
-
+				long long *list = NULL, list_, list_num = 0;
+				if (((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->ensamble_size >= 0) {
+					list_ = ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->ensamble_size;
+					list = &list_;
+					list_num = sizeof(long long);
+				}
 				//MERGECUBES2 fragment
-				if (oph_dc_create_fragment_from_query(((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->server, &(frags[0].value[k]), NULL, query, 0, 0, 0)) {
+				if (oph_dc_create_fragment_from_query_with_param
+				    (((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->server, &(frags[0].value[k]), NULL, query, 0, 0, 0, (char *) list, list_num)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
 						OPH_LOG_OPH_MERGECUBES_NEW_FRAG_ERROR, frag_name_out);
