@@ -1,4 +1,18 @@
 
+## Next release
+
+### Fixed:
+
+- Bug in handling of fill values for ESDM datasets 
+
+### Added:
+
+- Option src_list to OPH_IMPORTNCS [#112](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/112)
+
+### Changed:
+
+- Behavior of OPH_MERGECUBE2 in case an input cube already has the ensamble dimension [#111](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/111)
+
 ## v1.7.3 - 2023-04-12
 
 ### Added:

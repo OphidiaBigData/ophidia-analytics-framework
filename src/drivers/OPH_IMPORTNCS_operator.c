@@ -273,7 +273,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		FILE *src_list_file = fopen(src_list, "r");	// TODO: reference is not based on base_src_path
 		if (!src_list_file) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to access '%s'\n", src_list);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID,  "Unable to access '%s'\n", src_list);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to access '%s'\n", src_list);
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
 		size_t size = 0;
