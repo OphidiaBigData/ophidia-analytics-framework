@@ -24,6 +24,7 @@
 #include "oph_datacube_library.h"
 #include "oph_ioserver_library.h"
 
+#define OPH_FILE_PREFIX		"file://"
 #ifndef OPH_ESDM_PREFIX
 #define OPH_ESDM_PREFIX		"esdm://"
 #endif
