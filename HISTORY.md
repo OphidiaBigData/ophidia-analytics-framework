@@ -1,5 +1,5 @@
 
-## Next release
+## v1.11.0
 
 ### Fixed:
 
