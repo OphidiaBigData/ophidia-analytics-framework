@@ -1,9 +1,9 @@
 
-## v1.11.0 - 2023-07-28
+## v1.8.0 - 2023-07-31
 
 ### Fixed:
 
-- Bug in handling of fill values for ESDM datasets 
+- Bug in handling of fill values for ESDM datasets
 
 ### Added:
 
