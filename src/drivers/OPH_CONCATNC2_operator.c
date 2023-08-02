@@ -307,6 +307,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	if (!strstr(((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->nc_file_path, "http://")
 	    && !strstr(((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->nc_file_path, "https://")
 	    && !strstr(((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->nc_file_path, OPH_FILE_PREFIX)
+	    && !strstr(((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->nc_file_path, OPH_S3_PREFIX)
 	    && !strstr(((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->nc_file_path, OPH_ESDM_PREFIX)) {
 		char *pointer = ((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->nc_file_path;
 		while (pointer && (*pointer == ' '))

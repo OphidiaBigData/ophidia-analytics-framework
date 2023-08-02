@@ -347,6 +347,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		if (!strstr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j], "http://")
 		    && !strstr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j], "https://")
 		    && !strstr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j], OPH_FILE_PREFIX)
+		    && !strstr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j], OPH_S3_PREFIX)
 		    && !strstr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j], OPH_ESDM_PREFIX)) {
 			char *pointer = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j];
 			while (pointer && (*pointer == ' '))
@@ -499,6 +500,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		if (!strstr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j], "http://")
 		    && !strstr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j], "https://")
 		    && !strstr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j], OPH_FILE_PREFIX)
+		    && !strstr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j], OPH_S3_PREFIX)
 		    && !strstr(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j], OPH_ESDM_PREFIX)) {
 			//Open netcdf file
 			struct stat st;
