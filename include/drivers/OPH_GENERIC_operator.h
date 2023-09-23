@@ -59,6 +59,7 @@ struct _OPH_GENERIC_operator_handle {
 	char *output_path;
 	char *output_path_user;
 	char *output_name;
+	char no_output;
 	int force;
 	char **inputs;
 	int inputs_num;

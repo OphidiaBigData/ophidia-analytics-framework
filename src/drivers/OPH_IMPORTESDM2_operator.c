@@ -314,12 +314,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 			*pointer = 0;
 			pointer = strrchr(_nc_file_path, '/');
 		}
-		if (!pointer) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Needed input parameter %s\n", OPH_IN_PARAM_CONTAINER_INPUT);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Needed input parameter %s\n", OPH_IN_PARAM_CONTAINER_INPUT);
-			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-		}
-		_container_name = strdup(pointer + 1);
+		_container_name = strdup(pointer ? pointer + 1 : _nc_file_path);
 		container_name = _container_name;
 	} else
 		container_name = value;

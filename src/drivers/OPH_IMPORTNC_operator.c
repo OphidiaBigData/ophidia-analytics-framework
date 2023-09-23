@@ -279,34 +279,32 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_CONTAINER_INPUT);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	char *_container_name = NULL;
 	if (!strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
 		((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->create_container = 1;
-		char *pointer = strrchr(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, '/');
+		char _nc_file_path[1 + strlen(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path)];
+		strcpy(_nc_file_path, ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path);
+		if ((value = strchr(_nc_file_path, OPH_COMMON_DIESIS)))
+			*value = 0;
+		char *pointer = strrchr(_nc_file_path, '/');
 		while (pointer && (strlen(pointer) <= 1)) {
 			*pointer = 0;
-			pointer = strrchr(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path, '/');
+			pointer = strrchr(_nc_file_path, '/');
 		}
-		container_name = pointer ? pointer + 1 : ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->nc_file_path;
+		_container_name = strdup(pointer ? pointer + 1 : _nc_file_path);
+		container_name = _container_name;
 	} else
 		container_name = value;
-	char _container_name[1 + strlen(container_name)];
-	strcpy(_container_name, container_name);
-	if ((value = strchr(_container_name, OPH_COMMON_DIESIS)))
-		*value = 0;
-	size_t input_length = strlen(_container_name);
-	while ((input_length > 0) && (_container_name[input_length - 1] == '/'))
-		_container_name[--input_length] = 0;
-	if (!input_length) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Needed input parameter %s\n", OPH_IN_PARAM_CONTAINER_INPUT);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Needed input parameter %s\n", OPH_IN_PARAM_CONTAINER_INPUT);
-		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-	}
-	container_name = _container_name;
 	if (!(((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->container_input = (char *) strndup(container_name, OPH_TP_TASKLEN))) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name, "container output name");
+		if (_container_name)
+			free(_container_name);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
+	if (_container_name)
+		free(_container_name);
+	container_name = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->container_input;
 
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
