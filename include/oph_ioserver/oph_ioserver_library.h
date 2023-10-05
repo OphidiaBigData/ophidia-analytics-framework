@@ -44,7 +44,8 @@
 #define OPH_IOSERVER_SEPARATOR '_'
 
 #define OPH_IOSERVER_MYSQL_TYPE		"mysql_table"
-#define OPH_IOSERVER_OPHIDIAIO_TYPE	"ophidiaio_memory"
+#define OPH_IOSERVER_OPHIDIAIO_TYPE1	"ophidiaio_memory"
+#define OPH_IOSERVER_OPHIDIAIO_TYPE2	"ophidiaio_pmemory"
 
 //*************Error codes***************//
 

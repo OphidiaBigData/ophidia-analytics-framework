@@ -7,6 +7,7 @@
 
 ### Added:
 
+- Support for Ophidia I/O servers with persistent memory
 - Option src_list to OPH_IMPORTNCS [#112](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/112)
 
 ### Changed:

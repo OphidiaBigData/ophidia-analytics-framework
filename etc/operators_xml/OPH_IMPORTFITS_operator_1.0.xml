@@ -15,7 +15,7 @@ Support is provided only for images fits files.
         used to select the folder where the container is located.
 - host_partition : name of I/O host partition used to store data. By default the first available host partition will be used.
 - ioserver : type of I/O server used to store data.
-			Possible values are: &quot;ophidiaio_memory&quot; or &quot;mysql_table&quot; (default)
+			Possible values are: &quot;ophidiaio_memory&quot;, &quot;ophidiaio_pmemory&quot; or &quot;mysql_table&quot; (default).
 - import_metadata: imports also metadata with &quot;yes&quot; (default)
 			       or only data with &quot;no&quot;.
 - schedule : scheduling algorithm. The only possible value is 0,
@@ -85,7 +85,7 @@ SUBMISSION STRING: &quot;operator=oph_importfits;cwd=/session-code1;container=co
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="no" default="auto">host_partition</argument>
-		<argument type="string" mandatory="no" default="mysql_table" values="mysql_table">ioserver</argument>
+		<argument type="string" mandatory="no" default="mysql_table" values="mysql_table|ophidiaio_memory|ophidiaio_pmemory">ioserver</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">import_metadata</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="0">nhost</argument>

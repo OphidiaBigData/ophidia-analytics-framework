@@ -14,7 +14,7 @@ It creates a new datacube with random data and dimensions. Works only with Ophid
         used to select the folder where the container is located.
 - host_partition : name of I/O host partition used to store data. By default the first available host partition will be used.
 - ioserver : type of I/O server used to store data.
-             Only possible values is: &quot;ophidiaio_memory&quot; (default)
+             Only possible values are: &quot;ophidiaio_memory&quot; (default) or &quot;ophidiaio_pmemory&quot;.
 - schedule : scheduling algorithm. The only possible value is 0,
 		   for a static linear block distribution of resources.
 - nhost : number of output hosts. With default value (&apos;0&apos;) all host available in the host partition are used.
@@ -76,7 +76,7 @@ SUBMISSION STRING: &quot;operator=oph_randcube2;container=container1;nhost=1;nfr
 		<argument type="string" mandatory="yes">container</argument>
 		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="no" default="auto">host_partition</argument>
-		<argument type="string" mandatory="no" default="ophidiaio_memory" values="ophidiaio_memory">ioserver</argument>
+		<argument type="string" mandatory="no" default="ophidiaio_memory" values="ophidiaio_memory|ophidiaio_pmemory">ioserver</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="0">nhost</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">run</argument>

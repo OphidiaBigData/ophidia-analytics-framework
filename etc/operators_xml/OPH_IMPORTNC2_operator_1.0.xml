@@ -15,7 +15,7 @@ WARNING: It imports only mono-dimensional coordinate variables.
         used to select the folder where the container is located.
 - host_partition : name of I/O host partition used to store data. By default the first available host partition will be used.
 - ioserver : type of I/O server used to store data.
-             Only possible values is: &quot;ophidiaio_memory&quot;.
+             Only possible values are: &quot;ophidiaio_memory&quot; (default) and &quot;ophidiaio_pmemory&quot;.
 - import_metadata: imports also metadata with &quot;yes&quot; (default) or only data with &quot;no&quot;.
 - check_compliance: checks if all the metadata registered for reference vocabulary are available; no check is done by default.
 - schedule : scheduling algorithm. The only possible value is 0, for a static linear block distribution of resources.
@@ -119,7 +119,7 @@ SUBMISSION STRING: &quot;operator=oph_importnc2;cwd=/session-code1;container=con
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="yes">cwd</argument>
 		<argument type="string" mandatory="no" default="auto">host_partition</argument>
-		<argument type="string" mandatory="no" default="ophidiaio_memory" values="ophidiaio_memory">ioserver</argument>
+		<argument type="string" mandatory="no" default="ophidiaio_memory" values="ophidiaio_memory|ophidiaio_pmemory">ioserver</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">import_metadata</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">check_compliance</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>

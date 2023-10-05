@@ -1894,7 +1894,7 @@ int task_execute(oph_operator_struct *handle)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 	//Only Ophidia IO server can be used
-	if (strcasecmp((dbmss.value[0]).io_server_type, OPH_IOSERVER_OPHIDIAIO_TYPE) != 0) {
+	if (strcasecmp((dbmss.value[0]).io_server_type, OPH_IOSERVER_OPHIDIAIO_TYPE1) && strcasecmp((dbmss.value[0]).io_server_type, OPH_IOSERVER_OPHIDIAIO_TYPE2)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_CONCATNC_IOSERVER_ERROR, (dbmss.value[0]).io_server_type);
 		logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_CONCATNC2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_CONCATNC_IOSERVER_ERROR,
 			(dbmss.value[0]).io_server_type);
