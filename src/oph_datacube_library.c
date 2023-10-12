@@ -535,7 +535,6 @@ int oph_dc_create_fragment_from_query3(oph_ioserver_handler *server, oph_odb_fra
 			}
 		}
 
-		int query_buflen0 = query_buflen;
 		if (transfer > 0)
 			query_buflen += snprintf(NULL, 0, OPH_DC_SQ_TRANSFER, transfer);
 
@@ -598,7 +597,7 @@ int oph_dc_create_fragment_from_query3(oph_ioserver_handler *server, oph_odb_fra
 		}
 
 		if (transfer > 0)
-			n += snprintf(create_query + query_buflen0, query_buflen, OPH_DC_SQ_TRANSFER, transfer);
+			n += snprintf(create_query + n, query_buflen, OPH_DC_SQ_TRANSFER, transfer);
 
 		if (n >= query_buflen) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
