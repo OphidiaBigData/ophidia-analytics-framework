@@ -277,7 +277,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	}
 	if (!strncmp(value, OPH_COMMON_IOSERVER_MEM, OPH_TP_TASKLEN))
 		((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->transfer = 1;
-	if (!strncmp(value, OPH_COMMON_IOSERVER_PMEM, OPH_TP_TASKLEN))
+	else if (!strncmp(value, OPH_COMMON_IOSERVER_PMEM, OPH_TP_TASKLEN))
 		((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->transfer = 2;
 	else if (strncmp(value, OPH_COMMON_NO_VALUE, OPH_TP_TASKLEN)) {
 		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DUPLICATE_MEMORY_ERROR_INPUT, OPH_IN_PARAM_TRANSFER);
