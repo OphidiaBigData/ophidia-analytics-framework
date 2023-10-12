@@ -450,12 +450,18 @@ int oph_dc_delete_fragment(oph_ioserver_handler *server, oph_odb_fragment *frag)
 
 int oph_dc_create_fragment_from_query(oph_ioserver_handler *server, oph_odb_fragment *old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id)
 {
-	return oph_dc_create_fragment_from_query2(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, NULL);
+	return oph_dc_create_fragment_from_query3(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, NULL, 0);
+}
+
+int oph_dc_create_fragment_from_query2(oph_ioserver_handler *server, oph_odb_fragment *old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id,
+				       long long *block_size)
+{
+	return oph_dc_create_fragment_from_query3(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, block_size, 0);
 }
 
 //Removed multiple statement execution
-int oph_dc_create_fragment_from_query2(oph_ioserver_handler *server, oph_odb_fragment *old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id,
-				       long long *block_size)
+int oph_dc_create_fragment_from_query3(oph_ioserver_handler *server, oph_odb_fragment *old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id,
+				       long long *block_size, char transfer)
 {
 	UNUSED(start_id);
 
@@ -529,6 +535,10 @@ int oph_dc_create_fragment_from_query2(oph_ioserver_handler *server, oph_odb_fra
 			}
 		}
 
+		int query_buflen0 = query_buflen;
+		if (transfer > 0)
+			query_buflen += snprintf(NULL, 0, OPH_DC_SQ_TRANSFER, transfer);
+
 		if (query_buflen >= max_size) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
 			return OPH_DC_SERVER_ERROR;
@@ -586,6 +596,9 @@ int oph_dc_create_fragment_from_query2(oph_ioserver_handler *server, oph_odb_fra
 			}
 
 		}
+
+		if (transfer > 0)
+			n += snprintf(create_query + query_buflen0, query_buflen, OPH_DC_SQ_TRANSFER, transfer);
 
 		if (n >= query_buflen) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");

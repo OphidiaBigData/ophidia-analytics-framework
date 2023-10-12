@@ -80,6 +80,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->id_user = 0;
 	((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->description = NULL;
 	((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->execute_error = 0;
+	((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->transfer = 0;
 
 
 	//3 - Fill struct with the correct data
@@ -266,6 +267,22 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_TRANSFER);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_TRANSFER);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_TRANSFER);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strncmp(value, OPH_COMMON_IOSERVER_MEM, OPH_TP_TASKLEN))
+		((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->transfer = 1;
+	if (!strncmp(value, OPH_COMMON_IOSERVER_PMEM, OPH_TP_TASKLEN))
+		((OPH_DUPLICATE_operator_handle *) handle->operator_handle)->transfer = 2;
+	else if (strncmp(value, OPH_COMMON_NO_VALUE, OPH_TP_TASKLEN)) {
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_DUPLICATE_MEMORY_ERROR_INPUT, OPH_IN_PARAM_TRANSFER);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
@@ -798,7 +815,7 @@ int task_execute(oph_operator_struct *handle)
 					break;
 				}
 				//Duplicate fragment
-				if (oph_dc_create_fragment_from_query(server, &(frags->value[k]), frag_name_out, MYSQL_FRAG_MEASURE, 0, 0, 0)) {
+				if (oph_dc_create_fragment_from_query3(server, &(frags->value[k]), frag_name_out, MYSQL_FRAG_MEASURE, 0, 0, 0, NULL, oper_handle->transfer)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_DUPLICATE_NEW_FRAG_ERROR, frag_name_out);
 					res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;

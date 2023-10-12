@@ -406,6 +406,8 @@ int oph_dc_create_fragment_from_query(oph_ioserver_handler * server, oph_odb_fra
  */
 int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id,
 				       long long *block_size);
+int oph_dc_create_fragment_from_query3(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id,
+				       long long *block_size, char transfer);
 
 /**
  * \brief Function to generate a new fragment name 

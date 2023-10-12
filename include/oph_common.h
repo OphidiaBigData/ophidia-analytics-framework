@@ -153,4 +153,7 @@
 
 #define OPH_COMMON_DIESIS			'#'
 
+#define OPH_COMMON_IOSERVER_MEM		"ophidiaio_memory"
+#define OPH_COMMON_IOSERVER_PMEM	"ophidiaio_pmemory"
+
 #endif				//__OPH_COMMON_H

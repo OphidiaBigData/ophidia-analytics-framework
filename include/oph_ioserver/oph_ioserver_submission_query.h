@@ -48,6 +48,7 @@
 #define OPH_IOSERVER_SQ_OP_RAND_IMPORT "random_import"
 #define OPH_IOSERVER_SQ_OP_SELECT "select"
 #define OPH_IOSERVER_SQ_OP_FUNCTION "function"
+#define OPH_IOSERVER_SQ_OP_TRANSFER "transfer"
 
 //*****************Query arguments***************//
 

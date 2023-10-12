@@ -45,6 +45,7 @@
  * \param description Free description to be associated with output cube
  * \param nthread Number of posix threads related to each MPI task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
+ * \param transfer Flag set to 1 in case of memory transfer from memory to pmemory
  */
 struct _OPH_DUPLICATE_operator_handle {
 	ophidiadb oDB;
@@ -65,6 +66,7 @@ struct _OPH_DUPLICATE_operator_handle {
 	char *description;
 	unsigned int nthread;
 	short int execute_error;
+	char transfer;
 };
 typedef struct _OPH_DUPLICATE_operator_handle OPH_DUPLICATE_operator_handle;
 

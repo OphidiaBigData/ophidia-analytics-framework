@@ -182,6 +182,7 @@
 #define OPH_IN_PARAM_SHUFFLE					"shuffle"
 #define OPH_IN_PARAM_DEFLATE					"deflate"
 #define OPH_IN_PARAM_COMMAND				"command"
+#define OPH_IN_PARAM_TRANSFER				"transfer"
 
 #define OPH_IN_PARAM_INPUT					"input"
 #define OPH_IN_PARAM_OUTPUT					"output"
