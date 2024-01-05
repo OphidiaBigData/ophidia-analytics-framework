@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2022 CMCC Foundation
+    Copyright (C) 2012-2023 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ extern int msglevel;
 /***********OPH_JSON_OBJ_TREE INTERNAL FUNCTIONS***********/
 
 // Free a tree object contents
-int oph_json_free_tree(oph_json_obj_tree *obj)
+int oph_json_free_tree(oph_json_obj_tree * obj)
 {
 	if (obj) {
 		if (obj->description) {
@@ -115,7 +115,7 @@ int oph_json_free_tree(oph_json_obj_tree *obj)
 
 /***********OPH_JSON_OBJ_TREE FUNCTIONS***********/
 
-int oph_json_add_tree(oph_json *json, const char *objkey, const char *title, const char *description, char **nodekeys, int nodekeys_num)
+int oph_json_add_tree(oph_json * json, const char *objkey, const char *title, const char *description, char **nodekeys, int nodekeys_num)
 {
 	if (!json || !objkey || !title || nodekeys_num < 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
@@ -405,7 +405,7 @@ int oph_json_add_tree(oph_json *json, const char *objkey, const char *title, con
 	return OPH_JSON_SUCCESS;
 }
 
-int oph_json_add_tree_node(oph_json *json, const char *objkey, char **nodevalues)
+int oph_json_add_tree_node(oph_json * json, const char *objkey, char **nodevalues)
 {
 	if (!json || !objkey) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
@@ -533,7 +533,7 @@ int oph_json_add_tree_node(oph_json *json, const char *objkey, char **nodevalues
 	return OPH_JSON_SUCCESS;
 }
 
-int oph_json_set_tree_root(oph_json *json, const char *objkey, int rootnode)
+int oph_json_set_tree_root(oph_json * json, const char *objkey, int rootnode)
 {
 	if (!json || !objkey || rootnode < 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
@@ -591,7 +591,7 @@ int oph_json_set_tree_root(oph_json *json, const char *objkey, int rootnode)
 	return OPH_JSON_SUCCESS;
 }
 
-int oph_json_add_tree_link(oph_json *json, const char *objkey, int sourcenode, int targetnode, const char *description)
+int oph_json_add_tree_link(oph_json * json, const char *objkey, int sourcenode, int targetnode, const char *description)
 {
 	if (!json || !objkey || sourcenode < 0 || targetnode < 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");

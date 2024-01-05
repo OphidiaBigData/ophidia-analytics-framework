@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2022 CMCC Foundation
+    Copyright (C) 2012-2023 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -130,7 +130,7 @@ int oph_utl_compute_size(long long byte_size, int byte_unit, double *computed_si
 
 int oph_utl_unit_to_str(int unit_value, char (*unit_str)[OPH_UTL_UNIT_SIZE])
 {
-	if(!unit_value || !unit_str) {
+	if (!unit_value || !unit_str) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null parameter\n");
 		return OPH_UTL_ERROR;
 	}
@@ -281,7 +281,7 @@ static const unsigned char oph_utl_d[] = {
 	66, 66, 66, 66, 66, 66
 };
 
-int _oph_utl_base64decode(const char *in, size_t inLen, char *out, size_t *outLen)
+int _oph_utl_base64decode(const char *in, size_t inLen, char *out, size_t * outLen)
 {
 	const char *end = in + inLen;
 	char iter = 0;

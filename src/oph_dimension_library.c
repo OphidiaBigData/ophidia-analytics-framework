@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2022 CMCC Foundation
+    Copyright (C) 2012-2023 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -175,7 +175,7 @@ int oph_dim_set_double_value_of(char *dim_row, unsigned int kk, const char *dime
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_date_to_day(int y, int m, int d, long long *g, oph_odb_dimension *dim)
+int oph_date_to_day(int y, int m, int d, long long *g, oph_odb_dimension * dim)
 {
 	if (!g || !dim)
 		return OPH_DIM_NULL_PARAM;
@@ -230,7 +230,7 @@ int oph_date_to_day(int y, int m, int d, long long *g, oph_odb_dimension *dim)
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_day_to_date(long long g, int *yy, int *mm, int *dd, int *wd, int *yd, oph_odb_dimension *dim)
+int oph_day_to_date(long long g, int *yy, int *mm, int *dd, int *wd, int *yd, oph_odb_dimension * dim)
 {
 	if (!yy || !mm || !dd || !dim)
 		return OPH_DIM_NULL_PARAM;
@@ -344,7 +344,7 @@ int oph_day_to_date(long long g, int *yy, int *mm, int *dd, int *wd, int *yd, op
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension *dim, struct tm *tm_base, long long *base_time, long long *raw_value)
+int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, struct tm *tm_base, long long *base_time, long long *raw_value)
 {
 	if (!dim_row || !dim || !tm_base) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -405,7 +405,7 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_set_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension *dim, long long raw_value)
+int oph_dim_set_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, long long raw_value)
 {
 	if (!dim_row || !dim) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -449,7 +449,7 @@ int oph_dim_set_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_get_time_string_of(char *dim_row, unsigned int kk, oph_odb_dimension *dim, char *output_string)
+int oph_dim_get_time_string_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, char *output_string)
 {
 	if (!dim_row || !dim || !output_string) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -469,7 +469,7 @@ int oph_dim_get_time_string_of(char *dim_row, unsigned int kk, oph_odb_dimension
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_set_centroid(char *dim_row, unsigned int kk, oph_odb_dimension *dim, struct tm *tm_centroid, long long base_time)
+int oph_set_centroid(char *dim_row, unsigned int kk, oph_odb_dimension * dim, struct tm *tm_centroid, long long base_time)
 {
 	if (!dim_row || !dim || !tm_centroid) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -517,7 +517,7 @@ int oph_set_centroid(char *dim_row, unsigned int kk, oph_odb_dimension *dim, str
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_get_month_size_of(struct tm *tm_time, oph_odb_dimension *dim)
+int oph_dim_get_month_size_of(struct tm *tm_time, oph_odb_dimension * dim)
 {
 	if (!tm_time || !dim) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -576,7 +576,7 @@ int oph_dim_get_month_size_of(struct tm *tm_time, oph_odb_dimension *dim)
 	return 0;
 }
 
-int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimension *dim, char concept_level_out, struct tm *tm_prev, int midnight, int centroid, int *res)
+int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimension * dim, char concept_level_out, struct tm *tm_prev, int midnight, int centroid, int *res)
 {
 	if (!dim_row || !dim || !tm_prev || !res) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -824,7 +824,7 @@ int oph_dim_update_value(char *dim_row, const char *dimension_type, unsigned int
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_get_base_time(oph_odb_dimension *dim, long long *base_time)
+int oph_dim_get_base_time(oph_odb_dimension * dim, long long *base_time)
 {
 	if (!dim || !base_time) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -851,7 +851,7 @@ int oph_dim_get_base_time(oph_odb_dimension *dim, long long *base_time)
 	return OPH_DIM_SUCCESS;
 }
 
-int _oph_dim_get_scaling_factor(oph_odb_dimension *dim, double *scaling_factor)
+int _oph_dim_get_scaling_factor(oph_odb_dimension * dim, double *scaling_factor)
 {
 	if (!dim || !scaling_factor) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -883,7 +883,7 @@ int _oph_dim_get_scaling_factor(oph_odb_dimension *dim, double *scaling_factor)
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_parse_season_subset(const char *subset_string, oph_odb_dimension *dim, char *output_string, char *data, unsigned long long data_size)
+int oph_dim_parse_season_subset(const char *subset_string, oph_odb_dimension * dim, char *output_string, char *data, unsigned long long data_size)
 {
 	if (!subset_string || !dim || !output_string || !data || !data_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -980,7 +980,7 @@ int oph_dim_parse_season_subset(const char *subset_string, oph_odb_dimension *di
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension *dim, char *output_string)
+int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension * dim, char *output_string)
 {
 	if (!subset_string || !dim || !output_string) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1074,7 +1074,7 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension *dim,
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_load_dim_dbinstance(oph_odb_db_instance *db)
+int oph_dim_load_dim_dbinstance(oph_odb_db_instance * db)
 {
 	if (!db) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1180,7 +1180,7 @@ int oph_dim_load_dim_dbinstance(oph_odb_db_instance *db)
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_create_db(oph_odb_db_instance *db)
+int oph_dim_create_db(oph_odb_db_instance * db)
 {
 	if (!db) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1214,7 +1214,7 @@ int oph_dim_create_db(oph_odb_db_instance *db)
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_delete_db(oph_odb_db_instance *db)
+int oph_dim_delete_db(oph_odb_db_instance * db)
 {
 	if (!db) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1249,7 +1249,7 @@ int oph_dim_delete_db(oph_odb_db_instance *db)
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_connect_to_dbms(oph_odb_dbms_instance *dbms, unsigned long flag)
+int oph_dim_connect_to_dbms(oph_odb_dbms_instance * dbms, unsigned long flag)
 {
 	if (!dbms) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1271,7 +1271,7 @@ int oph_dim_connect_to_dbms(oph_odb_dbms_instance *dbms, unsigned long flag)
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_use_db_of_dbms(oph_odb_dbms_instance *dbms, oph_odb_db_instance *db)
+int oph_dim_use_db_of_dbms(oph_odb_dbms_instance * dbms, oph_odb_db_instance * db)
 {
 	if (!dbms || !db) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameters\n");
@@ -1291,7 +1291,7 @@ int oph_dim_use_db_of_dbms(oph_odb_dbms_instance *dbms, oph_odb_db_instance *db)
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_check_connection_to_db(oph_odb_dbms_instance *dbms, oph_odb_db_instance *db, unsigned long flag)
+int oph_dim_check_connection_to_db(oph_odb_dbms_instance * dbms, oph_odb_db_instance * db, unsigned long flag)
 {
 	if (!dbms) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameters\n");
@@ -1324,7 +1324,7 @@ int oph_dim_check_connection_to_db(oph_odb_dbms_instance *dbms, oph_odb_db_insta
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_disconnect_from_dbms(oph_odb_dbms_instance *dbms)
+int oph_dim_disconnect_from_dbms(oph_odb_dbms_instance * dbms)
 {
 	if (!dbms) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1338,7 +1338,7 @@ int oph_dim_disconnect_from_dbms(oph_odb_dbms_instance *dbms)
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_create_empty_table(oph_odb_db_instance *db, char *dimension_table_name)
+int oph_dim_create_empty_table(oph_odb_db_instance * db, char *dimension_table_name)
 {
 	if (!db || !dimension_table_name) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1373,7 +1373,7 @@ int oph_dim_create_empty_table(oph_odb_db_instance *db, char *dimension_table_na
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_retrieve_dimension(oph_odb_db_instance *db, char *dimension_table_name, int dimension_id, char **dim_row)
+int oph_dim_retrieve_dimension(oph_odb_db_instance * db, char *dimension_table_name, int dimension_id, char **dim_row)
 {
 	if (!db || !dimension_table_name || !dimension_id || !dim_row) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1436,12 +1436,12 @@ int oph_dim_retrieve_dimension(oph_odb_db_instance *db, char *dimension_table_na
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_compare_dimension(oph_odb_db_instance *db, char *dimension_table_name, char *dim_type, long long dim_size, char *dim_row, int dimension_id, int *match)
+int oph_dim_compare_dimension(oph_odb_db_instance * db, char *dimension_table_name, char *dim_type, long long dim_size, char *dim_row, int dimension_id, int *match)
 {
 	return oph_dim_compare_dimension2(db, dimension_table_name, dim_type, dim_size, 0, dim_row, dimension_id, match);
 }
 
-int oph_dim_compare_dimension2(oph_odb_db_instance *db, char *dimension_table_name, char *dim_type, long long dim_size, char *apply_clause, char *dim_row, int dimension_id, int *match)
+int oph_dim_compare_dimension2(oph_odb_db_instance * db, char *dimension_table_name, char *dim_type, long long dim_size, char *apply_clause, char *dim_row, int dimension_id, int *match)
 {
 	if (!db || !dimension_table_name || !dim_type || !match || (!dim_size && dim_row) || (dim_size && !dim_row)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1580,7 +1580,7 @@ int oph_dim_compare_dimension2(oph_odb_db_instance *db, char *dimension_table_na
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_insert_into_dimension_table(oph_odb_db_instance *db, char *dimension_table_name, char *dimension_type, long long dim_size, char *dim_row, int *dimension_id)
+int oph_dim_insert_into_dimension_table(oph_odb_db_instance * db, char *dimension_table_name, char *dimension_type, long long dim_size, char *dim_row, int *dimension_id)
 {
 	if (!db || !dimension_table_name || !dimension_type || !dimension_id || (!dim_size && dim_row) || (dim_size && !dim_row)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1679,7 +1679,7 @@ int oph_dim_insert_into_dimension_table(oph_odb_db_instance *db, char *dimension
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_insert_into_dimension_table_from_query(oph_odb_db_instance *db, char *dimension_table_name, char *dimension_type, long long dim_size, char *query, char *dim_row, int *dimension_id)
+int oph_dim_insert_into_dimension_table_from_query(oph_odb_db_instance * db, char *dimension_table_name, char *dimension_type, long long dim_size, char *query, char *dim_row, int *dimension_id)
 {
 	if (!db || !dimension_table_name || !dimension_type || !dimension_id || (!dim_size && dim_row) || (dim_size && !dim_row)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1802,7 +1802,7 @@ int oph_dim_insert_into_dimension_table_from_query(oph_odb_db_instance *db, char
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_check_if_dimension_table_exists(oph_odb_db_instance *db, char *dimension_table_name, int *exist_flag)
+int oph_dim_check_if_dimension_table_exists(oph_odb_db_instance * db, char *dimension_table_name, int *exist_flag)
 {
 	if (!db || !dimension_table_name || !exist_flag) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1856,7 +1856,7 @@ int oph_dim_check_if_dimension_table_exists(oph_odb_db_instance *db, char *dimen
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_insert_into_dimension_table_rand_data(oph_odb_db_instance *db, char *dimension_table_name, char *dimension_type, long long dim_size, int *dimension_id)
+int oph_dim_insert_into_dimension_table_rand_data(oph_odb_db_instance * db, char *dimension_table_name, char *dimension_type, long long dim_size, int *dimension_id)
 {
 	if (!db || !dimension_table_name || !dimension_type || !dim_size || !dimension_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1990,7 +1990,7 @@ int oph_dim_insert_into_dimension_table_rand_data(oph_odb_db_instance *db, char 
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_read_dimension_data(oph_odb_db_instance *db, char *dimension_table_name, int dimension_id, char *array_clause, int compressed, char **dim_row)
+int oph_dim_read_dimension_data(oph_odb_db_instance * db, char *dimension_table_name, int dimension_id, char *array_clause, int compressed, char **dim_row)
 {
 	if (!db || !dimension_table_name || !array_clause || !dim_row) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2067,7 +2067,7 @@ int oph_dim_read_dimension_data(oph_odb_db_instance *db, char *dimension_table_n
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_read_dimension(oph_odb_db_instance *db, char *dimension_table_name, char *dimension_type, int dimension_id, int compressed, char **dim_row)
+int oph_dim_read_dimension(oph_odb_db_instance * db, char *dimension_table_name, char *dimension_type, int dimension_id, int compressed, char **dim_row)
 {
 	if (!db || !dimension_table_name || !dim_row) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2147,7 +2147,7 @@ int oph_dim_read_dimension(oph_odb_db_instance *db, char *dimension_table_name, 
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_read_dimension_filtered_data(oph_odb_db_instance *db, char *dimension_table_name, int dimension_id, char *array_clause, int compressed, char **dim_row, char *dim_type, long long dim_size)
+int oph_dim_read_dimension_filtered_data(oph_odb_db_instance * db, char *dimension_table_name, int dimension_id, char *array_clause, int compressed, char **dim_row, char *dim_type, long long dim_size)
 {
 	if (!db || !dimension_table_name || !dim_row) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2308,7 +2308,7 @@ int oph_dim_read_dimension_filtered_data(oph_odb_db_instance *db, char *dimensio
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_delete_table(oph_odb_db_instance *db, char *dimension_table_name)
+int oph_dim_delete_table(oph_odb_db_instance * db, char *dimension_table_name)
 {
 	if (!db || !dimension_table_name) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2343,7 +2343,7 @@ int oph_dim_delete_table(oph_odb_db_instance *db, char *dimension_table_name)
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_unload_dim_dbinstance(oph_odb_db_instance *db)
+int oph_dim_unload_dim_dbinstance(oph_odb_db_instance * db)
 {
 	if (!db || !db->dbms_instance) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2353,7 +2353,7 @@ int oph_dim_unload_dim_dbinstance(oph_odb_db_instance *db)
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_copy_into_dimension_table(oph_odb_db_instance *db, char *from_dimension_table_name, char *to_dimension_table_name, int *dimension_id)
+int oph_dim_copy_into_dimension_table(oph_odb_db_instance * db, char *from_dimension_table_name, char *to_dimension_table_name, int *dimension_id)
 {
 	if (!db || !from_dimension_table_name || !to_dimension_table_name || !dimension_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2393,7 +2393,7 @@ int oph_dim_copy_into_dimension_table(oph_odb_db_instance *db, char *from_dimens
 	return OPH_DIM_SUCCESS;
 }
 
-int _oph_dim_convert_data(oph_odb_dimension *dim, char *tmp, char *format, struct tm *tm_base, long long *value)
+int _oph_dim_convert_data(oph_odb_dimension * dim, char *tmp, char *format, struct tm *tm_base, long long *value)
 {
 	if (!dim || !tmp || !format || !tm_base || !value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2414,7 +2414,7 @@ int _oph_dim_convert_data(oph_odb_dimension *dim, char *tmp, char *format, struc
 	return OPH_DIM_SUCCESS;
 }
 
-int oph_dim_convert_data(oph_odb_dimension *dim, int size, char *dim_array)
+int oph_dim_convert_data(oph_odb_dimension * dim, int size, char *dim_array)
 {
 	if (!dim || !size || !dim_array) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

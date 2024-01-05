@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2022 CMCC Foundation
+    Copyright (C) 2012-2023 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -99,7 +99,7 @@ const char *oph_odb_job_convert_status_to_str(oph_odb_job_status status)
 	return OPH_ODB_JOB_STATUS_UNKNOWN_STR;
 }
 
-int oph_odb_job_set_job_status(ophidiadb *oDB, int id_job, oph_odb_job_status status)
+int oph_odb_job_set_job_status(ophidiadb * oDB, int id_job, oph_odb_job_status status)
 {
 	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -146,7 +146,7 @@ int oph_odb_job_set_job_status(ophidiadb *oDB, int id_job, oph_odb_job_status st
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_job_retrieve_session_id(ophidiadb *oDB, char *sessionid, int *id_session)
+int oph_odb_job_retrieve_session_id(ophidiadb * oDB, char *sessionid, int *id_session)
 {
 	if (!oDB || !sessionid || !id_session) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -201,7 +201,7 @@ int oph_odb_job_retrieve_session_id(ophidiadb *oDB, char *sessionid, int *id_ses
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_job_retrieve_job_id(ophidiadb *oDB, char *sessionid, char *markerid, int *id_job)
+int oph_odb_job_retrieve_job_id(ophidiadb * oDB, char *sessionid, char *markerid, int *id_job)
 {
 	if (!oDB || !sessionid || !markerid || !id_job) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -256,7 +256,7 @@ int oph_odb_job_retrieve_job_id(ophidiadb *oDB, char *sessionid, char *markerid,
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_job_update_session_table(ophidiadb *oDB, char *sessionid, char *username, int id_folder, int *id_session)
+int oph_odb_job_update_session_table(ophidiadb * oDB, char *sessionid, char *username, int id_folder, int *id_session)
 {
 	if (!oDB || !sessionid || !username || !id_session) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -295,7 +295,7 @@ int oph_odb_job_update_session_table(ophidiadb *oDB, char *sessionid, char *user
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_job_update_job_table(ophidiadb *oDB, char *markerid, char *task_string, char *status, char *username, int id_session, int *id_job, char *parentid)
+int oph_odb_job_update_job_table(ophidiadb * oDB, char *markerid, char *task_string, char *status, char *username, int id_session, int *id_job, char *parentid)
 {
 	if (!oDB || !markerid || !task_string || !status || !id_job) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

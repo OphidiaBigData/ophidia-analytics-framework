@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2022 CMCC Foundation
+    Copyright (C) 2012-2023 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ int oph_save_json_response(const char *output_json, const char *output_path, con
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int oph_af_write_json(oph_json *oper_json, char **jstring, char *backtrace, const char *session_id, const char *marker_id)
+int oph_af_write_json(oph_json * oper_json, char **jstring, char *backtrace, const char *session_id, const char *marker_id)
 {
 	if (!oper_json)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -159,7 +159,7 @@ int oph_af_write_json(oph_json *oper_json, char **jstring, char *backtrace, cons
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int oph_af_create_job(ophidiadb *oDB, char *task_string, HASHTBL *task_tbl, int *id_job)
+int oph_af_create_job(ophidiadb * oDB, char *task_string, HASHTBL * task_tbl, int *id_job)
 {
 	int id_session;
 
@@ -234,7 +234,7 @@ int oph_af_create_job(ophidiadb *oDB, char *task_string, HASHTBL *task_tbl, int 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int _oph_af_execute_framework(oph_operator_struct *handle, char *task_string, int task_number, int task_rank)
+int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, int task_number, int task_rank)
 {
 	int res = 0, idjob = -1;
 	ophidiadb oDB;

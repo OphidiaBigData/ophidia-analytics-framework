@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2022 CMCC Foundation
+    Copyright (C) 2012-2023 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ extern int msglevel;
 /***********OPH_JSON_OBJ_GRAPH INTERNAL FUNCTIONS***********/
 
 // Free a (di)graph object contents
-int oph_json_free_graph(oph_json_obj_graph *obj)
+int oph_json_free_graph(oph_json_obj_graph * obj)
 {
 	if (obj) {
 		if (obj->description) {
@@ -111,7 +111,7 @@ int oph_json_free_graph(oph_json_obj_graph *obj)
 
 /***********OPH_JSON_OBJ_GRAPH FUNCTIONS***********/
 
-int oph_json_add_graph(oph_json *json, const char *objkey, int is_digraph, const char *title, const char *description, char **nodekeys, int nodekeys_num)
+int oph_json_add_graph(oph_json * json, const char *objkey, int is_digraph, const char *title, const char *description, char **nodekeys, int nodekeys_num)
 {
 	if (!json || !objkey || is_digraph < 0 || is_digraph > 1 || !title || nodekeys_num < 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
@@ -413,7 +413,7 @@ int oph_json_add_graph(oph_json *json, const char *objkey, int is_digraph, const
 	return OPH_JSON_SUCCESS;
 }
 
-int oph_json_add_graph_node(oph_json *json, const char *objkey, char **nodevalues)
+int oph_json_add_graph_node(oph_json * json, const char *objkey, char **nodevalues)
 {
 	if (!json || !objkey) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
@@ -541,7 +541,7 @@ int oph_json_add_graph_node(oph_json *json, const char *objkey, char **nodevalue
 	return OPH_JSON_SUCCESS;
 }
 
-int oph_json_add_graph_link(oph_json *json, const char *objkey, int node1, int node2, const char *description)
+int oph_json_add_graph_link(oph_json * json, const char *objkey, int node1, int node2, const char *description)
 {
 	if (!json || !objkey || node1 < 0 || node2 < 0) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");

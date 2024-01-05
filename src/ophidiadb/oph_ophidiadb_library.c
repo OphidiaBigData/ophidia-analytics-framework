@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2022 CMCC Foundation
+    Copyright (C) 2012-2023 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@
 
 extern int msglevel;
 
-int oph_odb_read_ophidiadb_config_file(ophidiadb *oDB)
+int oph_odb_read_ophidiadb_config_file(ophidiadb * oDB)
 {
 	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -136,7 +136,7 @@ int oph_odb_read_ophidiadb_config_file(ophidiadb *oDB)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_init_ophidiadb(ophidiadb *oDB)
+int oph_odb_init_ophidiadb(ophidiadb * oDB)
 {
 	/*if (mysql_library_init(0, NULL, NULL)) {
 	   pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL initialization error\n");
@@ -146,7 +146,7 @@ int oph_odb_init_ophidiadb(ophidiadb *oDB)
 	return oph_odb_init_ophidiadb_thread(oDB);
 }
 
-int oph_odb_init_ophidiadb_thread(ophidiadb *oDB)
+int oph_odb_init_ophidiadb_thread(ophidiadb * oDB)
 {
 	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -162,14 +162,14 @@ int oph_odb_init_ophidiadb_thread(ophidiadb *oDB)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_free_ophidiadb(ophidiadb *oDB)
+int oph_odb_free_ophidiadb(ophidiadb * oDB)
 {
 	//mysql_library_end();
 
 	return oph_odb_free_ophidiadb_thread(oDB);
 }
 
-int oph_odb_free_ophidiadb_thread(ophidiadb *oDB)
+int oph_odb_free_ophidiadb_thread(ophidiadb * oDB)
 {
 	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -200,7 +200,7 @@ int oph_odb_free_ophidiadb_thread(ophidiadb *oDB)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_connect_to_ophidiadb(ophidiadb *oDB)
+int oph_odb_connect_to_ophidiadb(ophidiadb * oDB)
 {
 	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -223,7 +223,7 @@ int oph_odb_connect_to_ophidiadb(ophidiadb *oDB)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_check_connection_to_ophidiadb(ophidiadb *oDB)
+int oph_odb_check_connection_to_ophidiadb(ophidiadb * oDB)
 {
 	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -248,7 +248,7 @@ int oph_odb_check_connection_to_ophidiadb(ophidiadb *oDB)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_disconnect_from_ophidiadb(ophidiadb *oDB)
+int oph_odb_disconnect_from_ophidiadb(ophidiadb * oDB)
 {
 	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -263,7 +263,7 @@ int oph_odb_disconnect_from_ophidiadb(ophidiadb *oDB)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_query_ophidiadb(ophidiadb *oDB, char *query)
+int oph_odb_query_ophidiadb(ophidiadb * oDB, char *query)
 {
 	if (!oDB || !query) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

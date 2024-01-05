@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2022 CMCC Foundation
+    Copyright (C) 2012-2023 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -98,7 +98,7 @@ int oph_ioserver_validate_query_string(const char *server_name, const char *quer
 	return OPH_IOSERVER_SUCCESS;
 }
 
-int oph_ioserver_load_query_string_params(const char *server_name, const char *query_string, HASHTBL *hashtbl)
+int oph_ioserver_load_query_string_params(const char *server_name, const char *query_string, HASHTBL * hashtbl)
 {
 	if (!query_string || !hashtbl) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_NULL_INPUT_PARAM);

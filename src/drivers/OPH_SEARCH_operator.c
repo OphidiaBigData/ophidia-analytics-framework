@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2022 CMCC Foundation
+    Copyright (C) 2012-2023 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,8 +40,8 @@
 
 #define OPH_SEARCH_AND_SEPARATOR	","
 
-int _oph_search_recursive_search(const char *folder_abs_path, int folderid, const char *filters, ophidiadb *oDB, int *max_lengths, int max_lengths_size, char *query, char *path, int is_start,
-				 oph_json *oper_json, int is_objkey_printable, int recursive_search)
+int _oph_search_recursive_search(const char *folder_abs_path, int folderid, const char *filters, ophidiadb * oDB, int *max_lengths, int max_lengths_size, char *query, char *path, int is_start,
+				 oph_json * oper_json, int is_objkey_printable, int recursive_search)
 {
 	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -340,7 +340,7 @@ int _oph_search_recursive_search(const char *folder_abs_path, int folderid, cons
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char *filters, ophidiadb *oDB, int **max_lengths, int *max_lengths_size, char *query, int is_start, int recursive_search)
+int recursive_get_max_lengths(int folder_abs_path_len, int folderid, const char *filters, ophidiadb * oDB, int **max_lengths, int *max_lengths_size, char *query, int is_start, int recursive_search)
 {
 	if (!oDB) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -495,7 +495,7 @@ int get_filters_string(char **container_filter, int container_filter_num, char *
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
+int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -685,7 +685,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_init(oph_operator_struct *handle)
+int task_init(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -696,7 +696,7 @@ int task_init(oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_distribute(oph_operator_struct *handle)
+int task_distribute(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -707,7 +707,7 @@ int task_distribute(oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_execute(oph_operator_struct *handle)
+int task_execute(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -828,7 +828,7 @@ int task_execute(oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_reduce(oph_operator_struct *handle)
+int task_reduce(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -839,7 +839,7 @@ int task_reduce(oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_destroy(oph_operator_struct *handle)
+int task_destroy(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -850,7 +850,7 @@ int task_destroy(oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_unset(oph_operator_struct *handle)
+int env_unset(oph_operator_struct * handle)
 {
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)

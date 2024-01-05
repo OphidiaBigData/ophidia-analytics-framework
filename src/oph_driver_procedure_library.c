@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2022 CMCC Foundation
+    Copyright (C) 2012-2023 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -374,7 +374,7 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int oph_dproc_clean_odb(ophidiadb *oDB, int id_datacube, int id_container)
+int oph_dproc_clean_odb(ophidiadb * oDB, int id_datacube, int id_container)
 {
 	if (!oDB || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");

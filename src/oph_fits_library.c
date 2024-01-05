@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2022 CMCC Foundation
+    Copyright (C) 2012-2023 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -87,7 +87,7 @@ int oph_fits_cache_to_buffer(short int tot_dim_number, unsigned int *counters, u
 	return _oph_fits_cache_to_buffer(tot_dim_number, 0, counters, limits, products, &index, binary_cache, binary_insert, sizeof_var);
 }
 
-int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_fragment *frag, fitsfile *fptr, int tuplexfrag_number, int array_length, int compressed, FITS_var *measure)
+int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler * server, oph_odb_fragment * frag, fitsfile * fptr, int tuplexfrag_number, int array_length, int compressed, FITS_var * measure)
 {
 	if (!frag || !fptr || !tuplexfrag_number || !array_length || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -788,7 +788,7 @@ int oph_fits_populate_fragment_from_fits2(oph_ioserver_handler *server, oph_odb_
 	return OPH_FITS_SUCCESS;
 }
 
-int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler *server, oph_odb_fragment *frag, fitsfile *fptr, int tuplexfrag_number, int array_length, int compressed, FITS_var *measure,
+int oph_fits_populate_fragment_from_fits3(oph_ioserver_handler * server, oph_odb_fragment * frag, fitsfile * fptr, int tuplexfrag_number, int array_length, int compressed, FITS_var * measure,
 					  long long memory_size)
 {
 	if (!frag || !fptr || !tuplexfrag_number || !array_length || !measure || !server) {
@@ -1539,7 +1539,7 @@ int oph_fits_get_fits_type(char *in_c_type, int *type_fits)
 
 }
 
-int _oph_fits_get_next_fits_id(size_t *id, unsigned int *sizemax, int i, int n)
+int _oph_fits_get_next_fits_id(size_t * id, unsigned int *sizemax, int i, int n)
 {
 	if (i < 0)
 		return 1;	// Overflow
@@ -1551,7 +1551,7 @@ int _oph_fits_get_next_fits_id(size_t *id, unsigned int *sizemax, int i, int n)
 	return 0;
 }
 
-int oph_fits_get_next_fits_id(size_t *id, unsigned int *sizemax, int n)
+int oph_fits_get_next_fits_id(size_t * id, unsigned int *sizemax, int n)
 {
 	return _oph_fits_get_next_fits_id(id, sizemax, n - 1, n);
 }
@@ -1626,7 +1626,7 @@ int oph_fits_compare_fits_c_types(int id_container, int var_type, const char dim
 	return OPH_FITS_SUCCESS;
 }
 
-int oph_fits_get_fits_var(int id_container, char *varname, long *dims_length, FITS_var *var, short flag)
+int oph_fits_get_fits_var(int id_container, char *varname, long *dims_length, FITS_var * var, short flag)
 {
 	if (!varname || !var) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

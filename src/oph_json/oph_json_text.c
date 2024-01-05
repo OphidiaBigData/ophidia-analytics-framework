@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2022 CMCC Foundation
+    Copyright (C) 2012-2023 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ extern int msglevel;
 /***********OPH_JSON_OBJ_TEXT INTERNAL FUNCTIONS***********/
 
 // Free a text object contents
-int oph_json_free_text(oph_json_obj_text *obj)
+int oph_json_free_text(oph_json_obj_text * obj)
 {
 	if (obj) {
 		if (obj->title) {
@@ -55,7 +55,7 @@ int oph_json_free_text(oph_json_obj_text *obj)
 
 /***********OPH_JSON_OBJ_TEXT FUNCTIONS***********/
 
-int oph_json_add_text(oph_json *json, const char *objkey, const char *title, const char *message)
+int oph_json_add_text(oph_json * json, const char *objkey, const char *title, const char *message)
 {
 	if (!json || !objkey || !title) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");

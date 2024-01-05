@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2022 CMCC Foundation
+    Copyright (C) 2012-2023 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@
 
 extern int msglevel;
 
-int renderXML(const char *xmlfilename, short int function_type_code, oph_json *oper_json, char **objkeys, int objkeys_num)
+int renderXML(const char *xmlfilename, short int function_type_code, oph_json * oper_json, char **objkeys, int objkeys_num)
 {
 	/*
 	 * this initialize the library and check potential ABI mismatches

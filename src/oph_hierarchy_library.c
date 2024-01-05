@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2022 CMCC Foundation
+    Copyright (C) 2012-2023 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ int oph_hier_is_numeric(const char *s)
 	return *p == '\0';
 }
 
-int oph_hier_basic_control(oph_hier_document *document)
+int oph_hier_basic_control(oph_hier_document * document)
 {
 	if (!document || !document->document) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Empty document\n");
@@ -49,7 +49,7 @@ int oph_hier_basic_control(oph_hier_document *document)
 	return OPH_HIER_OK;
 }
 
-int _oph_hier_order_list(int *ordered_list, xmlNodePtr *nodeTab, int n)
+int _oph_hier_order_list(int *ordered_list, xmlNodePtr * nodeTab, int n)
 {
 	int i, j;
 	char temp = OPH_HIER_STR_ALL_SHORT_NAME[0];
@@ -80,7 +80,7 @@ int _oph_hier_order_list(int *ordered_list, xmlNodePtr *nodeTab, int n)
 	return OPH_HIER_OK;
 }
 
-int _oph_hier_get_attribute(xmlNodePtr node, oph_hier_attribute *attribute)
+int _oph_hier_get_attribute(xmlNodePtr node, oph_hier_attribute * attribute)
 {
 	int result = OPH_HIER_OK;
 	xmlAttrPtr name_attr;
@@ -191,7 +191,7 @@ void oph_hier_free_strings(char **names, unsigned int number)
 	}
 }
 
-void oph_hier_free_list(oph_hier_list *list)
+void oph_hier_free_list(oph_hier_list * list)
 {
 	if (list) {
 		oph_hier_free_strings(list->names, list->number);
@@ -201,7 +201,7 @@ void oph_hier_free_list(oph_hier_list *list)
 
 // Main
 
-int oph_hier_validate(oph_hier_document *document)
+int oph_hier_validate(oph_hier_document * document)
 {
 	int result;
 	if ((result = oph_hier_basic_control(document)) != OPH_HIER_OK)
@@ -226,7 +226,7 @@ int oph_hier_validate(oph_hier_document *document)
 	return result;
 }
 
-int oph_hier_open(oph_hier_document **document_pointer, const char *filename)
+int oph_hier_open(oph_hier_document ** document_pointer, const char *filename)
 {
 	if (!document_pointer) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null pointer\n");
@@ -253,7 +253,7 @@ int oph_hier_open(oph_hier_document **document_pointer, const char *filename)
 	return OPH_HIER_OK;
 }
 
-int oph_hier_close(oph_hier_document *document)
+int oph_hier_close(oph_hier_document * document)
 {
 	int result;
 	if ((result = oph_hier_basic_control(document)) != OPH_HIER_OK)
@@ -265,7 +265,7 @@ int oph_hier_close(oph_hier_document *document)
 	return OPH_HIER_OK;
 }
 
-int oph_hier_get_hierarchy(oph_hier_hierarchy *hierarchy, oph_hier_document *document)
+int oph_hier_get_hierarchy(oph_hier_hierarchy * hierarchy, oph_hier_document * document)
 {
 	if (!hierarchy) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null pointer\n");
@@ -346,7 +346,7 @@ int oph_hier_get_hierarchy(oph_hier_hierarchy *hierarchy, oph_hier_document *doc
 	return result;
 }
 
-int oph_hier_get_attributes(oph_hier_list **list, const char *hierarchy, oph_hier_document *document)
+int oph_hier_get_attributes(oph_hier_list ** list, const char *hierarchy, oph_hier_document * document)
 {
 	if (!hierarchy || !strlen(hierarchy)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Hierarchy not given\n");
@@ -412,7 +412,7 @@ int oph_hier_get_attributes(oph_hier_list **list, const char *hierarchy, oph_hie
 	return result;
 }
 
-int oph_hier_get_attribute(const char *name, oph_hier_attribute *attribute, const char *hierarchy, oph_hier_document *document)
+int oph_hier_get_attribute(const char *name, oph_hier_attribute * attribute, const char *hierarchy, oph_hier_document * document)
 {
 	if (!name || !strlen(name)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Property '%s' not given\n", OPH_HIER_STR_NAME);
@@ -455,7 +455,7 @@ int oph_hier_get_attribute(const char *name, oph_hier_attribute *attribute, cons
 	return result;
 }
 
-void oph_hier_free_hierarchy(oph_hier_hierarchy *name)
+void oph_hier_free_hierarchy(oph_hier_hierarchy * name)
 {
 	if (name) {
 		if (name->attributes) {
@@ -468,7 +468,7 @@ void oph_hier_free_hierarchy(oph_hier_hierarchy *name)
 	}
 }
 
-void oph_hier_free_attribute(oph_hier_attribute *name)
+void oph_hier_free_attribute(oph_hier_attribute * name)
 {
 	if (name) {
 		oph_hier_free_list(name->aggregate_operation_list);
@@ -562,7 +562,7 @@ int oph_hier_check_concept_level_short(const char *filename, char concept_level_
 	return OPH_HIER_OK;
 }
 
-int oph_hier_retrieve_available_op(const char *filename, char concept_level_in, char concept_level_out, oph_hier_list **available_op, int *aggregate_set)
+int oph_hier_retrieve_available_op(const char *filename, char concept_level_in, char concept_level_out, oph_hier_list ** available_op, int *aggregate_set)
 {
 	if (!filename || !available_op || !aggregate_set) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null pointer\n");

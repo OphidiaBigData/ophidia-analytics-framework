@@ -1,6 +1,6 @@
 /*
     Ophidia Analytics Framework
-    Copyright (C) 2012-2022 CMCC Foundation
+    Copyright (C) 2012-2023 CMCC Foundation
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -90,7 +90,7 @@ const char *oph_dc_stringof(char type_flag)
 	return 0;
 }
 
-int oph_dc_setup_dbms_thread(oph_ioserver_handler **server, char *server_type)
+int oph_dc_setup_dbms_thread(oph_ioserver_handler ** server, char *server_type)
 {
 	if (!server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -104,7 +104,7 @@ int oph_dc_setup_dbms_thread(oph_ioserver_handler **server, char *server_type)
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_setup_dbms(oph_ioserver_handler **server, char *server_type)
+int oph_dc_setup_dbms(oph_ioserver_handler ** server, char *server_type)
 {
 	/*
 	   if (!server) {
@@ -121,7 +121,7 @@ int oph_dc_setup_dbms(oph_ioserver_handler **server, char *server_type)
 	return oph_dc_setup_dbms_thread(server, server_type);
 }
 
-int oph_dc_connect_to_dbms(oph_ioserver_handler *server, oph_odb_dbms_instance *dbms, unsigned long flag)
+int oph_dc_connect_to_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, unsigned long flag)
 {
 	if (!dbms || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -144,7 +144,7 @@ int oph_dc_connect_to_dbms(oph_ioserver_handler *server, oph_odb_dbms_instance *
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_use_db_of_dbms(oph_ioserver_handler *server, oph_odb_dbms_instance *dbms, oph_odb_db_instance *db)
+int oph_dc_use_db_of_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, oph_odb_db_instance * db)
 {
 	if (!dbms || !db || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameters\n");
@@ -169,7 +169,7 @@ int oph_dc_use_db_of_dbms(oph_ioserver_handler *server, oph_odb_dbms_instance *d
 
 }
 
-int oph_dc_check_connection_to_db(oph_ioserver_handler *server, oph_odb_dbms_instance *dbms, oph_odb_db_instance *db, unsigned long flag)
+int oph_dc_check_connection_to_db(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, oph_odb_db_instance * db, unsigned long flag)
 {
 	if (!dbms || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameters\n");
@@ -197,7 +197,7 @@ int oph_dc_check_connection_to_db(oph_ioserver_handler *server, oph_odb_dbms_ins
 }
 
 
-int oph_dc_disconnect_from_dbms(oph_ioserver_handler *server, oph_odb_dbms_instance *dbms)
+int oph_dc_disconnect_from_dbms(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms)
 {
 	if (!dbms || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -208,7 +208,7 @@ int oph_dc_disconnect_from_dbms(oph_ioserver_handler *server, oph_odb_dbms_insta
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_cleanup_dbms(oph_ioserver_handler *server)
+int oph_dc_cleanup_dbms(oph_ioserver_handler * server)
 {
 	if (!server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -219,7 +219,7 @@ int oph_dc_cleanup_dbms(oph_ioserver_handler *server)
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_create_db(oph_ioserver_handler *server, oph_odb_db_instance *db)
+int oph_dc_create_db(oph_ioserver_handler * server, oph_odb_db_instance * db)
 {
 	if (!db || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -265,7 +265,7 @@ int oph_dc_create_db(oph_ioserver_handler *server, oph_odb_db_instance *db)
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_delete_db(oph_ioserver_handler *server, oph_odb_db_instance *db)
+int oph_dc_delete_db(oph_ioserver_handler * server, oph_odb_db_instance * db)
 {
 	if (!db || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -313,7 +313,7 @@ int oph_dc_delete_db(oph_ioserver_handler *server, oph_odb_db_instance *db)
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_create_empty_fragment(oph_ioserver_handler *server, oph_odb_fragment *frag)
+int oph_dc_create_empty_fragment(oph_ioserver_handler * server, oph_odb_fragment * frag)
 {
 	if (!frag || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -359,7 +359,7 @@ int oph_dc_create_empty_fragment(oph_ioserver_handler *server, oph_odb_fragment 
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_create_empty_fragment_from_name(oph_ioserver_handler *server, const char *frag_name, oph_odb_db_instance *db_instance)
+int oph_dc_create_empty_fragment_from_name(oph_ioserver_handler * server, const char *frag_name, oph_odb_db_instance * db_instance)
 {
 	if (!frag_name || !server || !db_instance) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -402,7 +402,7 @@ int oph_dc_create_empty_fragment_from_name(oph_ioserver_handler *server, const c
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_delete_fragment(oph_ioserver_handler *server, oph_odb_fragment *frag)
+int oph_dc_delete_fragment(oph_ioserver_handler * server, oph_odb_fragment * frag)
 {
 	if (!frag || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -448,13 +448,13 @@ int oph_dc_delete_fragment(oph_ioserver_handler *server, oph_odb_fragment *frag)
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_create_fragment_from_query(oph_ioserver_handler *server, oph_odb_fragment *old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id)
+int oph_dc_create_fragment_from_query(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id)
 {
 	return oph_dc_create_fragment_from_query2(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, NULL);
 }
 
 //Removed multiple statement execution
-int oph_dc_create_fragment_from_query2(oph_ioserver_handler *server, oph_odb_fragment *old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id,
+int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id,
 				       long long *block_size)
 {
 	UNUSED(start_id);
@@ -610,26 +610,26 @@ int oph_dc_create_fragment_from_query2(oph_ioserver_handler *server, oph_odb_fra
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_create_fragment_from_query_with_param(oph_ioserver_handler *server, oph_odb_fragment *old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
+int oph_dc_create_fragment_from_query_with_param(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
 						 long long *start_id, char *param, long long param_size)
 {
 	return oph_dc_create_fragment_from_query_with_params2(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, NULL, param, param_size, param ? 1 : 0);
 }
 
-int oph_dc_create_fragment_from_query_with_param2(oph_ioserver_handler *server, oph_odb_fragment *old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
+int oph_dc_create_fragment_from_query_with_param2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
 						  long long *start_id, long long *block_size, char *param, long long param_size)
 {
 	return oph_dc_create_fragment_from_query_with_params2(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, block_size, param, param_size, param ? 1 : 0);
 }
 
-int oph_dc_create_fragment_from_query_with_params(oph_ioserver_handler *server, oph_odb_fragment *old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
+int oph_dc_create_fragment_from_query_with_params(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
 						  long long *start_id, char *param, long long param_size, int num)
 {
 	return oph_dc_create_fragment_from_query_with_params2(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, NULL, param, param_size, num);
 }
 
 //Removed multiple statement execution
-int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler *server, oph_odb_fragment *old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
+int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
 						   long long *start_id, long long *block_size, char *param, long long param_size, int num)
 {
 	UNUSED(start_id)
@@ -842,14 +842,14 @@ int oph_dc_create_fragment_from_query_with_params2(oph_ioserver_handler *server,
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_create_fragment_from_query_with_aggregation(oph_ioserver_handler *server, oph_odb_fragment *old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
+int oph_dc_create_fragment_from_query_with_aggregation(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
 						       long long *start_id, char *param, long long param_size)
 {
 	return oph_dc_create_fragment_from_query_with_aggregation2(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, NULL, param, param_size);
 }
 
 //Removed multiple statement execution
-int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler *server, oph_odb_fragment *old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
+int oph_dc_create_fragment_from_query_with_aggregation2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number,
 							long long *start_id, long long *block_size, char *param, long long param_size)
 {
 	UNUSED(start_id)
@@ -1318,7 +1318,7 @@ int _oph_dc_build_rand_row(char *binary, int array_length, char type_flag, char 
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler *server, oph_odb_fragment *frag, unsigned long long tuple_number, int array_length, char *data_type, int compressed, char *algorithm)
+int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler * server, oph_odb_fragment * frag, unsigned long long tuple_number, int array_length, char *data_type, int compressed, char *algorithm)
 {
 	if (!frag || !data_type || !server || !algorithm) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1659,7 +1659,8 @@ int oph_dc_populate_fragment_with_rand_data(oph_ioserver_handler *server, oph_od
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_populate_fragment_with_rand_data2(oph_ioserver_handler *server, oph_odb_fragment *frag, unsigned long long tuple_number, int array_length, char *data_type, int compressed, char *algorithm)
+int oph_dc_populate_fragment_with_rand_data2(oph_ioserver_handler * server, oph_odb_fragment * frag, unsigned long long tuple_number, int array_length, char *data_type, int compressed,
+					     char *algorithm)
 {
 	if (!frag || !data_type || !server || !algorithm) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1721,8 +1722,8 @@ int oph_dc_populate_fragment_with_rand_data2(oph_ioserver_handler *server, oph_o
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_append_fragment_to_fragment(oph_ioserver_handler *input_server, oph_ioserver_handler *output_server, unsigned long long tot_rows, short int exec_flag, oph_odb_fragment *new_frag,
-				       oph_odb_fragment *old_frag, long long *first_id, long long *last_id, oph_ioserver_query **exec_query, oph_ioserver_query_arg ***exec_args)
+int oph_dc_append_fragment_to_fragment(oph_ioserver_handler * input_server, oph_ioserver_handler * output_server, unsigned long long tot_rows, short int exec_flag, oph_odb_fragment * new_frag,
+				       oph_odb_fragment * old_frag, long long *first_id, long long *last_id, oph_ioserver_query ** exec_query, oph_ioserver_query_arg *** exec_args)
 {
 	if (!new_frag || !old_frag || !first_id || !last_id || !input_server || !output_server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2037,7 +2038,7 @@ int oph_dc_append_fragment_to_fragment(oph_ioserver_handler *input_server, oph_i
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_copy_and_process_fragment2(int cubes_num, oph_ioserver_handler **servers, unsigned long long tot_rows, oph_odb_fragment **old_frags, const char *frag_name, int compressed,
+int oph_dc_copy_and_process_fragment2(int cubes_num, oph_ioserver_handler ** servers, unsigned long long tot_rows, oph_odb_fragment ** old_frags, const char *frag_name, int compressed,
 				      const char *operation, const char *measure_type, const char *missingvalue)
 {
 	if (!cubes_num || !old_frags || !frag_name || !servers || !operation || !measure_type || !missingvalue) {
@@ -2298,7 +2299,7 @@ int oph_dc_copy_and_process_fragment2(int cubes_num, oph_ioserver_handler **serv
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_copy_and_process_fragment(oph_ioserver_handler *first_server, oph_ioserver_handler *second_server, unsigned long long tot_rows, oph_odb_fragment *old_frag1, oph_odb_fragment *old_frag2,
+int oph_dc_copy_and_process_fragment(oph_ioserver_handler * first_server, oph_ioserver_handler * second_server, unsigned long long tot_rows, oph_odb_fragment * old_frag1, oph_odb_fragment * old_frag2,
 				     const char *frag_name, int compressed, const char *operation, const char *measure_type)
 {
 	if (!old_frag1 || !old_frag2 || !frag_name || !first_server || !second_server || !operation || !measure_type) {
@@ -2604,8 +2605,8 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler *first_server, oph_ios
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_read_fragment_data(oph_ioserver_handler *server, oph_odb_fragment *frag, char *data_type, int compressed, char *id_clause, char *array_clause, char *where_clause, int limit,
-			      int raw_format, oph_ioserver_result **frag_rows)
+int oph_dc_read_fragment_data(oph_ioserver_handler * server, oph_odb_fragment * frag, char *data_type, int compressed, char *id_clause, char *array_clause, char *where_clause, int limit,
+			      int raw_format, oph_ioserver_result ** frag_rows)
 {
 	if (!frag || !frag_rows || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2930,7 +2931,7 @@ int oph_dc_read_fragment_data(oph_ioserver_handler *server, oph_odb_fragment *fr
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_get_total_number_of_elements_in_fragment(oph_ioserver_handler *server, oph_odb_fragment *frag, char *data_type, int compressed, long long *count)
+int oph_dc_get_total_number_of_elements_in_fragment(oph_ioserver_handler * server, oph_odb_fragment * frag, char *data_type, int compressed, long long *count)
 {
 	if (!frag || !data_type || !count || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -3044,7 +3045,7 @@ int oph_dc_get_total_number_of_elements_in_fragment(oph_ioserver_handler *server
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_get_total_number_of_rows_in_fragment(oph_ioserver_handler *server, oph_odb_fragment *frag, char *data_type, long long *count)
+int oph_dc_get_total_number_of_rows_in_fragment(oph_ioserver_handler * server, oph_odb_fragment * frag, char *data_type, long long *count)
 {
 	if (!frag || !data_type || !count || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -3119,7 +3120,7 @@ int oph_dc_get_total_number_of_rows_in_fragment(oph_ioserver_handler *server, op
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_get_number_of_elements_in_fragment_row(oph_ioserver_handler *server, oph_odb_fragment *frag, char *data_type, int compressed, long long *length)
+int oph_dc_get_number_of_elements_in_fragment_row(oph_ioserver_handler * server, oph_odb_fragment * frag, char *data_type, int compressed, long long *length)
 {
 	if (!frag || !data_type || !length || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -3234,7 +3235,7 @@ int oph_dc_get_number_of_elements_in_fragment_row(oph_ioserver_handler *server, 
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_get_fragments_size_in_bytes(oph_ioserver_handler *server, oph_odb_dbms_instance *dbms, char *frag_name, long long *size)
+int oph_dc_get_fragments_size_in_bytes(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, char *frag_name, long long *size)
 {
 	if (!dbms || !frag_name || !size || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -3312,7 +3313,7 @@ int oph_dc_get_fragments_size_in_bytes(oph_ioserver_handler *server, oph_odb_dbm
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_get_primitives(oph_ioserver_handler *server, oph_odb_dbms_instance *dbms, char *frag_name, oph_ioserver_result **frag_rows)
+int oph_dc_get_primitives(oph_ioserver_handler * server, oph_odb_dbms_instance * dbms, char *frag_name, oph_ioserver_result ** frag_rows)
 {
 	if (!dbms || !frag_rows || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -3383,7 +3384,7 @@ int oph_dc_get_primitives(oph_ioserver_handler *server, oph_odb_dbms_instance *d
 
 int oph_dc_generate_fragment_name(char *db_name, int id_datacube, int proc_rank, int frag_number, char (*frag_name)[OPH_ODB_STGE_FRAG_NAME_SIZE])
 {
-	if(!frag_name) {
+	if (!frag_name) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DC_NULL_PARAM;
 	}
@@ -3403,7 +3404,7 @@ int oph_dc_generate_fragment_name(char *db_name, int id_datacube, int proc_rank,
 
 int oph_dc_generate_db_name(char *odb_name, int id_datacube, int id_dbms, int proc_rank, int db_number, char (*db_name)[OPH_ODB_STGE_DB_NAME_SIZE])
 {
-	if(!db_name || !odb_name) {
+	if (!db_name || !odb_name) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DC_NULL_PARAM;
 	}
