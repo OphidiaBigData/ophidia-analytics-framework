@@ -33,7 +33,7 @@ extern int msglevel;
 
 static char oph_odb_fs_chars[OPH_ODB_FS_CHARS_NUM] = { '\'', '\"', '?', '|', '\\', '/', ':', ';', ',', '<', '>', '*', '=', '!' };
 
-int oph_odb_fs_path_parsing(char *inpath, char *cwd, int *folder_id, char **output_path, ophidiadb * oDB)
+int oph_odb_fs_path_parsing(char *inpath, char *cwd, int *folder_id, char **output_path, ophidiadb *oDB)
 {
 
 	if (!inpath || !cwd) {
@@ -257,7 +257,7 @@ int oph_odb_fs_path_parsing(char *inpath, char *cwd, int *folder_id, char **outp
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_check_folder_session(int folder_id, char *sessionid, ophidiadb * oDB, int *status)
+int oph_odb_fs_check_folder_session(int folder_id, char *sessionid, ophidiadb *oDB, int *status)
 {
 	if (!oDB || !folder_id || !sessionid || !status) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -337,7 +337,7 @@ int oph_odb_fs_check_folder_session(int folder_id, char *sessionid, ophidiadb * 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_check_container_session(int container_id, char *sessionid, ophidiadb * oDB, int *status)
+int oph_odb_fs_check_container_session(int container_id, char *sessionid, ophidiadb *oDB, int *status)
 {
 	if (!oDB || !container_id || !sessionid || !status) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -387,7 +387,7 @@ int oph_odb_fs_check_container_session(int container_id, char *sessionid, ophidi
 	return oph_odb_fs_check_folder_session(folder_id, sessionid, oDB, status);
 }
 
-int oph_odb_fs_get_session_home_id(char *sessionid, ophidiadb * oDB, int *folder_id)
+int oph_odb_fs_get_session_home_id(char *sessionid, ophidiadb *oDB, int *folder_id)
 {
 	if (!oDB || !folder_id || !sessionid) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -435,7 +435,7 @@ int oph_odb_fs_get_session_home_id(char *sessionid, ophidiadb * oDB, int *folder
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_build_path(int folder_id, ophidiadb * oDB, char (*out_path)[MYSQL_BUFLEN])
+int oph_odb_fs_build_path(int folder_id, ophidiadb *oDB, char (*out_path)[MYSQL_BUFLEN])
 {
 	if (!oDB || !folder_id || !out_path) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -503,7 +503,7 @@ int oph_odb_fs_build_path(int folder_id, ophidiadb * oDB, char (*out_path)[MYSQL
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_retrive_container_folder_id(ophidiadb * oDB, int container_id, int *folder_id)
+int oph_odb_fs_retrive_container_folder_id(ophidiadb *oDB, int container_id, int *folder_id)
 {
 	if (!oDB || !folder_id || !container_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -614,7 +614,7 @@ int oph_odb_fs_str_last_token(const char *input, char **first_part, char **last_
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_is_visible_container(int folder_id, char *name, ophidiadb * oDB, int *answer)
+int oph_odb_fs_is_visible_container(int folder_id, char *name, ophidiadb *oDB, int *answer)
 {
 	if (!oDB || !name || !folder_id || !answer) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -651,7 +651,7 @@ int oph_odb_fs_is_visible_container(int folder_id, char *name, ophidiadb * oDB, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_is_unique(int folder_id, char *name, ophidiadb * oDB, int *answer)
+int oph_odb_fs_is_unique(int folder_id, char *name, ophidiadb *oDB, int *answer)
 {
 	if (!oDB || !name || !folder_id || !answer) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -684,7 +684,7 @@ int oph_odb_fs_is_unique(int folder_id, char *name, ophidiadb * oDB, int *answer
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_is_empty_folder(int folder_id, ophidiadb * oDB, int *answer)
+int oph_odb_fs_is_empty_folder(int folder_id, ophidiadb *oDB, int *answer)
 {
 	if (!oDB || !folder_id || !answer) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -717,7 +717,7 @@ int oph_odb_fs_is_empty_folder(int folder_id, ophidiadb * oDB, int *answer)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_update_container_path_name(ophidiadb * oDB, int in_container_id, int out_folder_id, char *out_container_name)
+int oph_odb_fs_update_container_path_name(ophidiadb *oDB, int in_container_id, int out_folder_id, char *out_container_name)
 {
 	if (!oDB || !in_container_id || !out_folder_id || !out_container_name) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -742,7 +742,7 @@ int oph_odb_fs_update_container_path_name(ophidiadb * oDB, int in_container_id, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_find_fs_objects(ophidiadb * oDB, int level, int id_folder, char *container_name, MYSQL_RES ** information_list)
+int oph_odb_fs_find_fs_objects(ophidiadb *oDB, int level, int id_folder, char *container_name, MYSQL_RES **information_list)
 {
 	if (!oDB || !id_folder || !information_list) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -800,7 +800,7 @@ int oph_odb_fs_find_fs_objects(ophidiadb * oDB, int level, int id_folder, char *
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_find_fs_filtered_objects(ophidiadb * oDB, int id_folder, char *container_name, char *measure, int oper_level, char *src, MYSQL_RES ** information_list)
+int oph_odb_fs_find_fs_filtered_objects(ophidiadb *oDB, int id_folder, char *container_name, char *measure, int oper_level, char *src, MYSQL_RES **information_list)
 {
 	if (!oDB || !id_folder || !information_list) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -844,7 +844,7 @@ int oph_odb_fs_find_fs_filtered_objects(ophidiadb * oDB, int id_folder, char *co
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_insert_into_folder_table(ophidiadb * oDB, int parent_folder_id, char *child_folder, int *last_insertd_id)
+int oph_odb_fs_insert_into_folder_table(ophidiadb *oDB, int parent_folder_id, char *child_folder, int *last_insertd_id)
 {
 	if (!oDB || !child_folder) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -878,7 +878,7 @@ int oph_odb_fs_insert_into_folder_table(ophidiadb * oDB, int parent_folder_id, c
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_delete_from_folder_table(ophidiadb * oDB, int folderid)
+int oph_odb_fs_delete_from_folder_table(ophidiadb *oDB, int folderid)
 {
 	if (!oDB || !folderid) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -905,7 +905,7 @@ int oph_odb_fs_delete_from_folder_table(ophidiadb * oDB, int folderid)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_update_folder_table(ophidiadb * oDB, int old_folder_id, int new_parent_folder_id, char *new_child_folder)
+int oph_odb_fs_update_folder_table(ophidiadb *oDB, int old_folder_id, int new_parent_folder_id, char *new_child_folder)
 {
 	if (!oDB || !old_folder_id || !new_parent_folder_id || !new_child_folder) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -933,7 +933,7 @@ int oph_odb_fs_update_folder_table(ophidiadb * oDB, int old_folder_id, int new_p
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_delete_from_container_table(ophidiadb * oDB, int id_container)
+int oph_odb_fs_delete_from_container_table(ophidiadb *oDB, int id_container)
 {
 	if (!oDB || !id_container) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -961,7 +961,7 @@ int oph_odb_fs_delete_from_container_table(ophidiadb * oDB, int id_container)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_check_if_container_empty(ophidiadb * oDB, int id_container)
+int oph_odb_fs_check_if_container_empty(ophidiadb *oDB, int id_container)
 {
 	if (!oDB || !id_container) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1011,7 +1011,7 @@ int oph_odb_fs_check_if_container_empty(ophidiadb * oDB, int id_container)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_insert_into_container_table(ophidiadb * oDB, oph_odb_container * cont, int *last_insertd_id)
+int oph_odb_fs_insert_into_container_table(ophidiadb *oDB, oph_odb_container *cont, int *last_insertd_id)
 {
 	if (!oDB || !cont || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1072,7 +1072,7 @@ int oph_odb_fs_insert_into_container_table(ophidiadb * oDB, oph_odb_container * 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_retrieve_container_id_from_container_name(ophidiadb * oDB, int folder_id, char *container_name, int *id_container)
+int oph_odb_fs_retrieve_container_id_from_container_name(ophidiadb *oDB, int folder_id, char *container_name, int *id_container)
 {
 	if (!oDB || !container_name || !id_container || !folder_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1121,7 +1121,7 @@ int oph_odb_fs_retrieve_container_id_from_container_name(ophidiadb * oDB, int fo
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_retrieve_container_from_container_name(ophidiadb * oDB, int folder_id, char *container_name, int *id_container, char **description, char **vocabulary)
+int oph_odb_fs_retrieve_container_from_container_name(ophidiadb *oDB, int folder_id, char *container_name, int *id_container, char **description, char **vocabulary)
 {
 	if (!oDB || !container_name || !folder_id || !id_container) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1178,7 +1178,7 @@ int oph_odb_fs_retrieve_container_from_container_name(ophidiadb * oDB, int folde
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_retrieve_container_name_from_container(ophidiadb * oDB, int id_container, char **container_name, int *folder_id)
+int oph_odb_fs_retrieve_container_name_from_container(ophidiadb *oDB, int id_container, char **container_name, int *folder_id)
 {
 	if (!oDB || !id_container || !container_name) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1234,7 +1234,7 @@ int oph_odb_fs_retrieve_container_name_from_container(ophidiadb * oDB, int id_co
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_check_if_container_not_present(ophidiadb * oDB, char *container_name, int folder_id, int *result)
+int oph_odb_fs_check_if_container_not_present(ophidiadb *oDB, char *container_name, int folder_id, int *result)
 {
 	*result = 0;
 	if (!oDB || !container_name || !folder_id || !result) {
@@ -1292,7 +1292,7 @@ int oph_odb_fs_is_allowed_name(char *name)
 	return 1;
 }
 
-int oph_odb_fs_has_ascendant_equal_to_folder(ophidiadb * oDB, int folderid, int new_parent_folderid, int *answer)
+int oph_odb_fs_has_ascendant_equal_to_folder(ophidiadb *oDB, int folderid, int new_parent_folderid, int *answer)
 {
 	if (!oDB || !folderid || !new_parent_folderid || !answer) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1357,7 +1357,7 @@ int oph_odb_fs_has_ascendant_equal_to_folder(ophidiadb * oDB, int folderid, int 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_fs_add_suffix_to_container_name(ophidiadb * oDB, int containerid)
+int oph_odb_fs_add_suffix_to_container_name(ophidiadb *oDB, int containerid)
 {
 	if (!oDB || !containerid) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

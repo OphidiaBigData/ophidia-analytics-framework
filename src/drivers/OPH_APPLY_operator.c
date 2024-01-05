@@ -99,7 +99,7 @@ typedef struct {
 	int size;
 } oph_apply_primitives;
 
-int oph_apply_primitives_init(oph_apply_primitives ** p, char **name, int size)
+int oph_apply_primitives_init(oph_apply_primitives **p, char **name, int size)
 {
 	if (!p || !name || (size < 1))
 		return 1;
@@ -134,7 +134,7 @@ int oph_apply_primitives_init(oph_apply_primitives ** p, char **name, int size)
 	return 0;
 }
 
-int oph_apply_primitive_free(oph_apply_primitive * p)
+int oph_apply_primitive_free(oph_apply_primitive *p)
 {
 	if (!p)
 		return 1;
@@ -154,7 +154,7 @@ int oph_apply_primitive_free(oph_apply_primitive * p)
 	return 0;
 }
 
-int oph_apply_primitives_free(oph_apply_primitives ** p)
+int oph_apply_primitives_free(oph_apply_primitives **p)
 {
 	if (!p)
 		return 1;
@@ -170,7 +170,7 @@ int oph_apply_primitives_free(oph_apply_primitives ** p)
 	return 0;
 }
 
-int oph_apply_primitives_load(oph_apply_primitives * p, int id, const char *query, int next, const char *target, const char *subtarget)
+int oph_apply_primitives_load(oph_apply_primitives *p, int id, const char *query, int next, const char *target, const char *subtarget)
 {
 	if (!p || !query)
 		return 1;
@@ -285,7 +285,7 @@ int oph_apply_primitives_load(oph_apply_primitives * p, int id, const char *quer
 	return 0;
 }
 
-int _oph_apply_check_datatype(oph_apply_primitives * p, int id, char *measure_type)
+int _oph_apply_check_datatype(oph_apply_primitives *p, int id, char *measure_type)
 {
 	int i, found = 0, res;
 	if (!p->primitive[id].return_binary)	// Non-binary arrays are not supported
@@ -320,7 +320,7 @@ int _oph_apply_check_datatype(oph_apply_primitives * p, int id, char *measure_ty
 	return 0;
 }
 
-int oph_apply_check_datatype(oph_apply_primitives * p, char *measure_type)
+int oph_apply_check_datatype(oph_apply_primitives *p, char *measure_type)
 {
 	if (!p || !measure_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null pointer\n");
@@ -336,7 +336,7 @@ int oph_apply_check_datatype(oph_apply_primitives * p, char *measure_type)
 	return 0;
 }
 
-oph_apply_operation_type _oph_apply_evaluate_query_type(oph_apply_primitives * p, int id)
+oph_apply_operation_type _oph_apply_evaluate_query_type(oph_apply_primitives *p, int id)
 {
 	int i, rf = 0, af = 0, tf = 0;
 	oph_apply_operation_type type;
@@ -394,7 +394,7 @@ x	x	x	x	TOTAL	TOTAL
 		return p->primitive[id].type;
 }
 
-int oph_apply_evaluate_query_type(oph_apply_primitives * p, oph_apply_operation_type * type)
+int oph_apply_evaluate_query_type(oph_apply_primitives *p, oph_apply_operation_type *type)
 {
 	if (!p || !type)
 		return 1;
@@ -402,7 +402,7 @@ int oph_apply_evaluate_query_type(oph_apply_primitives * p, oph_apply_operation_
 	return 0;
 }
 
-int open_xml_doc(const char *filename, xmlDocPtr * document)
+int open_xml_doc(const char *filename, xmlDocPtr *document)
 {
 	if (!document) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null pointer\n");
@@ -453,7 +453,7 @@ int close_xml_doc(xmlDocPtr document)
 	return 0;
 }
 
-int oph_apply_parse_query(oph_operator_struct * handle, char *data_type, const char *target, const char *subtarget, int *use_subtarget)
+int oph_apply_parse_query(oph_operator_struct *handle, char *data_type, const char *target, const char *subtarget, int *use_subtarget)
 {
 	if (use_subtarget)
 		*use_subtarget = 0;
@@ -745,7 +745,7 @@ int oph_apply_parse_query(oph_operator_struct * handle, char *data_type, const c
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
+int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1093,7 +1093,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_init(oph_operator_struct * handle)
+int task_init(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1555,7 +1555,7 @@ int task_init(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_distribute(oph_operator_struct * handle)
+int task_distribute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1629,7 +1629,7 @@ int task_distribute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_execute(oph_operator_struct * handle)
+int task_execute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -1934,7 +1934,7 @@ int task_execute(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_reduce(oph_operator_struct * handle)
+int task_reduce(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -2262,7 +2262,7 @@ int task_reduce(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_destroy(oph_operator_struct * handle)
+int task_destroy(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -2351,7 +2351,7 @@ int task_destroy(oph_operator_struct * handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_unset(oph_operator_struct * handle)
+int env_unset(oph_operator_struct *handle)
 {
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)

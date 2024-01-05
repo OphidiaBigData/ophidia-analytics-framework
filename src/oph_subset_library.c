@@ -25,7 +25,7 @@
 
 extern int msglevel;
 
-void _oph_subset_double_free(oph_subset_double * subset)
+void _oph_subset_double_free(oph_subset_double *subset)
 {
 	if (subset->type) {
 		free(subset->type);
@@ -42,7 +42,7 @@ void _oph_subset_double_free(oph_subset_double * subset)
 }
 
 
-int oph_subset_vector_free(oph_subset ** subset_struct, int num)
+int oph_subset_vector_free(oph_subset **subset_struct, int num)
 {
 	int i;
 	if (subset_struct)
@@ -54,7 +54,7 @@ int oph_subset_vector_free(oph_subset ** subset_struct, int num)
 	return OPH_SUBSET_LIB_OK;
 }
 
-int oph_subset_double_init(oph_subset_double ** subset)
+int oph_subset_double_init(oph_subset_double **subset)
 {
 	if (!subset) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null pointer\n");
@@ -68,7 +68,7 @@ int oph_subset_double_init(oph_subset_double ** subset)
 	return OPH_SUBSET_LIB_OK;
 }
 
-int oph_subset_double_parse(const char *cond, unsigned long long len, oph_subset_double * subset, double min, double max, double offset)
+int oph_subset_double_parse(const char *cond, unsigned long long len, oph_subset_double *subset, double min, double max, double offset)
 {
 	char *result, *result2, temp0[1 + len], temp1[1 + len], temp2[1 + len], *next, *temp, *savepointer = NULL;
 	unsigned int number;
@@ -207,7 +207,7 @@ int oph_subset_double_parse(const char *cond, unsigned long long len, oph_subset
 	return retval;
 }
 
-void _oph_subset_free(oph_subset * subset)
+void _oph_subset_free(oph_subset *subset)
 {
 	if (subset->type) {
 		free(subset->type);
@@ -231,7 +231,7 @@ void _oph_subset_free(oph_subset * subset)
 	}
 }
 
-int oph_subset_init(oph_subset ** subset)
+int oph_subset_init(oph_subset **subset)
 {
 	if (!subset) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null pointer\n");
@@ -245,7 +245,7 @@ int oph_subset_init(oph_subset ** subset)
 	return OPH_SUBSET_LIB_OK;
 }
 
-int oph_subset_parse(const char *cond, unsigned long long len, oph_subset * subset, unsigned long long max)
+int oph_subset_parse(const char *cond, unsigned long long len, oph_subset *subset, unsigned long long max)
 {
 	char *result, *result2, temp0[1 + len], temp1[1 + len], temp2[1 + len], *next, *temp, *savepointer = NULL;
 	unsigned int number;
@@ -369,7 +369,7 @@ int oph_subset_parse(const char *cond, unsigned long long len, oph_subset * subs
 	return retval;
 }
 
-int oph_subset_size(oph_subset * subset, unsigned long long initial_size, unsigned long long *final_size, unsigned long long *sizes, int size_number)
+int oph_subset_size(oph_subset *subset, unsigned long long initial_size, unsigned long long *final_size, unsigned long long *sizes, int size_number)
 {
 	if (!subset) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null pointer\n");
@@ -392,7 +392,7 @@ int oph_subset_size(oph_subset * subset, unsigned long long initial_size, unsign
 	return OPH_SUBSET_LIB_OK;
 }
 
-int oph_subset_size2(oph_subset * subset, unsigned long long initial_size, unsigned long long *final_size, unsigned long long block_size, unsigned long long max)
+int oph_subset_size2(oph_subset *subset, unsigned long long initial_size, unsigned long long *final_size, unsigned long long block_size, unsigned long long max)
 {
 	if (!subset) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null pointer\n");
@@ -409,7 +409,7 @@ int oph_subset_size2(oph_subset * subset, unsigned long long initial_size, unsig
 	return OPH_SUBSET_LIB_OK;
 }
 
-int oph_subset_index_is_in_subset(unsigned long long index, oph_subset * subset)
+int oph_subset_index_is_in_subset(unsigned long long index, oph_subset *subset)
 {
 	unsigned int i;
 	for (i = 0; i < subset->number; ++i)
@@ -418,12 +418,12 @@ int oph_subset_index_is_in_subset(unsigned long long index, oph_subset * subset)
 	return (i < subset->number);
 }
 
-int oph_subset_id_is_in_subset(unsigned long long id, oph_subset * subset, unsigned long long *sizes, int size_number)
+int oph_subset_id_is_in_subset(unsigned long long id, oph_subset *subset, unsigned long long *sizes, int size_number)
 {
 	return oph_subset_index_is_in_subset(oph_subset_id_to_index(id, sizes, size_number), subset);
 }
 
-int oph_subset_id_is_in_subset2(unsigned long long id, oph_subset * subset, unsigned long long block_size, unsigned long long max)
+int oph_subset_id_is_in_subset2(unsigned long long id, oph_subset *subset, unsigned long long block_size, unsigned long long max)
 {
 	return oph_subset_index_is_in_subset(oph_subset_id_to_index2(id, block_size, max), subset);
 }
@@ -450,7 +450,7 @@ unsigned long long oph_subset_id_to_index2(unsigned long long id, unsigned long 
 	return 1 + (((id - 1) / block_size) % max);
 }
 
-int oph_subset_free(oph_subset * subset)
+int oph_subset_free(oph_subset *subset)
 {
 	if (subset) {
 		_oph_subset_free(subset);
@@ -459,7 +459,7 @@ int oph_subset_free(oph_subset * subset)
 	return OPH_SUBSET_LIB_OK;
 }
 
-int oph_subset_double_free(oph_subset_double * subset)
+int oph_subset_double_free(oph_subset_double *subset)
 {
 	if (subset) {
 		_oph_subset_double_free(subset);
@@ -468,7 +468,7 @@ int oph_subset_double_free(oph_subset_double * subset)
 	return OPH_SUBSET_LIB_OK;
 }
 
-int oph_subset_value_to_index(const char *in_cond, char *data, unsigned long long data_size, char *data_type, double offset, char *out_cond, oph_subset ** out_subset)
+int oph_subset_value_to_index(const char *in_cond, char *data, unsigned long long data_size, char *data_type, double offset, char *out_cond, oph_subset **out_subset)
 {
 	if (!in_cond || !data || !data_size || !data_type || !out_cond) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null pointer\n");

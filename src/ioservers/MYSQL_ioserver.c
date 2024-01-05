@@ -30,7 +30,7 @@
 #include "oph_ioserver_parser_library.h"
 #include "hashtbl.h"
 
-int oph_map_keyword(oph_ioserver_handler * handle, char *keyword, char (*argument)[OPH_IOSERVER_SQ_LEN])
+int oph_map_keyword(oph_ioserver_handler *handle, char *keyword, char (*argument)[OPH_IOSERVER_SQ_LEN])
 {
 	if (!keyword || !argument) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -80,7 +80,7 @@ int oph_map_keyword(oph_ioserver_handler * handle, char *keyword, char (*argumen
 	return MYSQL_IO_SUCCESS;
 }
 
-int oph_limit_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
+int oph_limit_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
 {
 	if (!hashtbl || !start_from || !query) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -135,7 +135,7 @@ int oph_limit_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start
 	return MYSQL_IO_SUCCESS;
 }
 
-int oph_where2_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
+int oph_where2_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
 {
 	if (!hashtbl || !start_from || !query) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -192,7 +192,7 @@ int oph_where2_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *star
 	return MYSQL_IO_SUCCESS;
 }
 
-int oph_where_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
+int oph_where_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
 {
 	if (!hashtbl || !start_from || !query) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -218,7 +218,7 @@ int oph_where_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start
 	return MYSQL_IO_SUCCESS;
 }
 
-int oph_from_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
+int oph_from_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
 {
 	if (!hashtbl || !start_from || !query) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -342,7 +342,7 @@ int oph_from_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start_
 	return MYSQL_IO_SUCCESS;
 }
 
-int oph_select_fields_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
+int oph_select_fields_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
 {
 	if (!hashtbl || !start_from || !query) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -458,7 +458,7 @@ int oph_select_fields_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, in
 	return MYSQL_IO_SUCCESS;
 }
 
-int oph_order_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
+int oph_order_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
 {
 	if (!hashtbl || !start_from || !query) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -502,7 +502,7 @@ int oph_order_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start
 	return MYSQL_IO_SUCCESS;
 }
 
-int oph_group_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
+int oph_group_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
 {
 	if (!hashtbl || !start_from || !query) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -529,7 +529,7 @@ int oph_group_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start
 	return MYSQL_IO_SUCCESS;
 }
 
-int oph_insert_values_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
+int oph_insert_values_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
 {
 	if (!hashtbl || !start_from || !query) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -635,7 +635,7 @@ int oph_insert_values_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, in
 	return MYSQL_IO_SUCCESS;
 }
 
-int oph_multi_insert_values_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
+int oph_multi_insert_values_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
 {
 	if (!hashtbl || !start_from || !query) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -746,7 +746,7 @@ int oph_multi_insert_values_block(oph_ioserver_handler * handle, HASHTBL * hasht
 	return MYSQL_IO_SUCCESS;
 }
 
-int oph_func_args_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
+int oph_func_args_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
 {
 	if (!hashtbl || !start_from || !query) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -795,7 +795,7 @@ int oph_func_args_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, int *s
 	return MYSQL_IO_SUCCESS;
 }
 
-int oph_first_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, const char *sql_part, const char *argument, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
+int oph_first_block(oph_ioserver_handler *handle, HASHTBL *hashtbl, const char *sql_part, const char *argument, int *start_from, char (*query)[OPH_IOSERVER_SQ_LEN])
 {
 	if (!hashtbl || !start_from || !query) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -825,7 +825,7 @@ int oph_first_block(oph_ioserver_handler * handle, HASHTBL * hashtbl, const char
 	return MYSQL_IO_SUCCESS;
 }
 
-int oph_query_parser(oph_ioserver_handler * handle, const char *query_string, char **query_mysql)
+int oph_query_parser(oph_ioserver_handler *handle, const char *query_string, char **query_mysql)
 {
 	if (!query_string) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -1163,7 +1163,7 @@ int oph_query_parser(oph_ioserver_handler * handle, const char *query_string, ch
 }
 
 //Support functions
-int oph_query_is_statement(oph_ioserver_handler * handle, const char *operation, short int *is_stmt)
+int oph_query_is_statement(oph_ioserver_handler *handle, const char *operation, short int *is_stmt)
 {
 	if (!operation || !is_stmt) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -1184,7 +1184,7 @@ int oph_query_is_statement(oph_ioserver_handler * handle, const char *operation,
 	return MYSQL_IO_SUCCESS;
 }
 
-int oph_to_mysql_type(oph_ioserver_handler * handle, oph_ioserver_arg_types oph_type, enum enum_field_types *mysql_type)
+int oph_to_mysql_type(oph_ioserver_handler *handle, oph_ioserver_arg_types oph_type, enum enum_field_types *mysql_type)
 {
 	if (!mysql_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -1232,7 +1232,7 @@ int oph_to_mysql_type(oph_ioserver_handler * handle, oph_ioserver_arg_types oph_
 }
 
 //Initialize storage server plugin
-int _mysql_setup(oph_ioserver_handler * handle)
+int _mysql_setup(oph_ioserver_handler *handle)
 {
 	if (!handle)
 		pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -1249,7 +1249,7 @@ int _mysql_setup(oph_ioserver_handler * handle)
 }
 
 //Connect or reconnect to storage server
-int _mysql_connect(oph_ioserver_handler * handle, oph_ioserver_params * conn_params, void **connection)
+int _mysql_connect(oph_ioserver_handler *handle, oph_ioserver_params *conn_params, void **connection)
 {
 	if (!connection || !conn_params) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -1297,7 +1297,7 @@ int _mysql_connect(oph_ioserver_handler * handle, oph_ioserver_params * conn_par
 	return MYSQL_IO_SUCCESS;
 }
 
-int _mysql_use_db(oph_ioserver_handler * handle, const char *db_name, void *connection)
+int _mysql_use_db(oph_ioserver_handler *handle, const char *db_name, void *connection)
 {
 	if (!connection || !db_name) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -1314,7 +1314,7 @@ int _mysql_use_db(oph_ioserver_handler * handle, const char *db_name, void *conn
 }
 
 //Execute operation in storage server
-int _mysql_execute_query(oph_ioserver_handler * handle, void *connection, oph_ioserver_query * query)
+int _mysql_execute_query(oph_ioserver_handler *handle, void *connection, oph_ioserver_query *query)
 {
 	if (!connection || !query || !query->statement) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -1357,7 +1357,7 @@ int _mysql_execute_query(oph_ioserver_handler * handle, void *connection, oph_io
 }
 
 //Setup the query structure with given operation and array argument
-int _mysql_setup_query(oph_ioserver_handler * handle, void *connection, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg ** args, oph_ioserver_query ** query)
+int _mysql_setup_query(oph_ioserver_handler *handle, void *connection, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg **args, oph_ioserver_query **query)
 {
 	UNUSED(tot_run);	// TODO Handle tot number of runs
 	if (!connection || !operation || !query) {
@@ -1481,7 +1481,7 @@ int _mysql_setup_query(oph_ioserver_handler * handle, void *connection, const ch
 }
 
 //Release resources allocated for query
-int _mysql_free_query(oph_ioserver_handler * handle, oph_ioserver_query * query)
+int _mysql_free_query(oph_ioserver_handler *handle, oph_ioserver_query *query)
 {
 	if (!query || !query->statement) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -1510,7 +1510,7 @@ int _mysql_free_query(oph_ioserver_handler * handle, oph_ioserver_query * query)
 
 
 //Close connection to storage server
-int _mysql_close(oph_ioserver_handler * handle, void **connection)
+int _mysql_close(oph_ioserver_handler *handle, void **connection)
 {
 	if (!(*connection)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -1527,7 +1527,7 @@ int _mysql_close(oph_ioserver_handler * handle, void **connection)
 }
 
 //Finalize storage server plugin
-int _mysql_cleanup(oph_ioserver_handler * handle)
+int _mysql_cleanup(oph_ioserver_handler *handle)
 {
 	if (!handle)
 		pmesg(LOG_WARNING, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -1539,7 +1539,7 @@ int _mysql_cleanup(oph_ioserver_handler * handle)
 }
 
 //Get the result set
-int _mysql_get_result(oph_ioserver_handler * handle, void *connection, oph_ioserver_result ** result)
+int _mysql_get_result(oph_ioserver_handler *handle, void *connection, oph_ioserver_result **result)
 {
 	if (!connection || !result) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -1593,7 +1593,7 @@ int _mysql_get_result(oph_ioserver_handler * handle, void *connection, oph_ioser
 }
 
 //Get the next row
-int _mysql_fetch_row(oph_ioserver_handler * handle, oph_ioserver_result * result, oph_ioserver_row ** current_row)
+int _mysql_fetch_row(oph_ioserver_handler *handle, oph_ioserver_result *result, oph_ioserver_row **current_row)
 {
 	if (!result || !current_row) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);
@@ -1618,7 +1618,7 @@ int _mysql_fetch_row(oph_ioserver_handler * handle, oph_ioserver_result * result
 }
 
 //Release result set resources
-int _mysql_free_result(oph_ioserver_handler * handle, oph_ioserver_result * result)
+int _mysql_free_result(oph_ioserver_handler *handle, oph_ioserver_result *result)
 {
 	if (!result) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_MYSQL_NULL_INPUT_PARAM);

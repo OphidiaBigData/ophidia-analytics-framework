@@ -31,14 +31,14 @@
 #define UNUSED(x) {(void)(x);}
 
 //Initialize storage server plugin
-int _ophidiaio_setup(oph_ioserver_handler * handle)
+int _ophidiaio_setup(oph_ioserver_handler *handle)
 {
 	UNUSED(handle);
 	return (oph_io_client_setup() == OPH_IO_CLIENT_INTERFACE_OK) ? OPHIDIAIO_IO_SUCCESS : OPHIDIAIO_IO_ERROR;
 }
 
 //Connect or reconnect to storage server
-int _ophidiaio_connect(oph_ioserver_handler * handle, oph_ioserver_params * conn_params, void **connection)
+int _ophidiaio_connect(oph_ioserver_handler *handle, oph_ioserver_params *conn_params, void **connection)
 {
 	if (!connection || !conn_params) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_OPHIDIAIO_NULL_INPUT_PARAM);
@@ -56,7 +56,7 @@ int _ophidiaio_connect(oph_ioserver_handler * handle, oph_ioserver_params * conn
 	return OPHIDIAIO_IO_SUCCESS;
 }
 
-int _ophidiaio_use_db(oph_ioserver_handler * handle, const char *db_name, void *connection)
+int _ophidiaio_use_db(oph_ioserver_handler *handle, const char *db_name, void *connection)
 {
 	if (!connection || !db_name || !handle->server_subtype) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_OPHIDIAIO_NULL_INPUT_PARAM);
@@ -73,7 +73,7 @@ int _ophidiaio_use_db(oph_ioserver_handler * handle, const char *db_name, void *
 }
 
 //Execute operation in storage server
-int _ophidiaio_execute_query(oph_ioserver_handler * handle, void *connection, oph_ioserver_query * query)
+int _ophidiaio_execute_query(oph_ioserver_handler *handle, void *connection, oph_ioserver_query *query)
 {
 	if (!connection || !query || !query->statement) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_OPHIDIAIO_NULL_INPUT_PARAM);
@@ -90,7 +90,7 @@ int _ophidiaio_execute_query(oph_ioserver_handler * handle, void *connection, op
 }
 
 //Setup the query structure with given operation and array argument
-int _ophidiaio_setup_query(oph_ioserver_handler * handle, void *connection, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg ** args, oph_ioserver_query ** query)
+int _ophidiaio_setup_query(oph_ioserver_handler *handle, void *connection, const char *operation, unsigned long long tot_run, oph_ioserver_query_arg **args, oph_ioserver_query **query)
 {
 	if (!connection || !operation || !query || !handle->server_subtype) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_OPHIDIAIO_NULL_INPUT_PARAM);
@@ -131,7 +131,7 @@ int _ophidiaio_setup_query(oph_ioserver_handler * handle, void *connection, cons
 }
 
 //Release resources allocated for query
-int _ophidiaio_free_query(oph_ioserver_handler * handle, oph_ioserver_query * query)
+int _ophidiaio_free_query(oph_ioserver_handler *handle, oph_ioserver_query *query)
 {
 	if (!query || !query->statement) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_OPHIDIAIO_NULL_INPUT_PARAM);
@@ -150,7 +150,7 @@ int _ophidiaio_free_query(oph_ioserver_handler * handle, oph_ioserver_query * qu
 }
 
 //Close connection to storage server
-int _ophidiaio_close(oph_ioserver_handler * handle, void **connection)
+int _ophidiaio_close(oph_ioserver_handler *handle, void **connection)
 {
 	if (!(*connection)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_OPHIDIAIO_NULL_INPUT_PARAM);
@@ -171,14 +171,14 @@ int _ophidiaio_close(oph_ioserver_handler * handle, void **connection)
 }
 
 //Finalize storage server plugin
-int _ophidiaio_cleanup(oph_ioserver_handler * handle)
+int _ophidiaio_cleanup(oph_ioserver_handler *handle)
 {
 	UNUSED(handle);
 	return (oph_io_client_cleanup() == OPH_IO_CLIENT_INTERFACE_OK) ? OPHIDIAIO_IO_SUCCESS : OPHIDIAIO_IO_ERROR;
 }
 
 //Get the result set
-int _ophidiaio_get_result(oph_ioserver_handler * handle, void *connection, oph_ioserver_result ** result)
+int _ophidiaio_get_result(oph_ioserver_handler *handle, void *connection, oph_ioserver_result **result)
 {
 	if (!connection || !result) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_OPHIDIAIO_NULL_INPUT_PARAM);
@@ -211,7 +211,7 @@ int _ophidiaio_get_result(oph_ioserver_handler * handle, void *connection, oph_i
 }
 
 //Get the next row
-int _ophidiaio_fetch_row(oph_ioserver_handler * handle, oph_ioserver_result * result, oph_ioserver_row ** current_row)
+int _ophidiaio_fetch_row(oph_ioserver_handler *handle, oph_ioserver_result *result, oph_ioserver_row **current_row)
 {
 	if (!result || !current_row) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_OPHIDIAIO_NULL_INPUT_PARAM);
@@ -242,7 +242,7 @@ int _ophidiaio_fetch_row(oph_ioserver_handler * handle, oph_ioserver_result * re
 }
 
 //Release result set resources
-int _ophidiaio_free_result(oph_ioserver_handler * handle, oph_ioserver_result * result)
+int _ophidiaio_free_result(oph_ioserver_handler *handle, oph_ioserver_result *result)
 {
 	UNUSED(handle);
 	if (!result) {
