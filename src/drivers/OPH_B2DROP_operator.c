@@ -329,29 +329,30 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
+typedef struct {
+	char *buffer;
+	size_t len;
+} curlbuf;
+
+size_t _write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
+{
+	size_t realsize = size * nmemb;
+	curlbuf *mem = (curlbuf *) userdata;
+	mem->buffer = realloc(mem->buffer, mem->len + realsize + 1);
+	if (!mem->buffer)
+		return 0;
+	memcpy(&(mem->buffer[mem->len]), ptr, realsize);
+	mem->len += realsize;
+	mem->buffer[mem->len] = 0;
+	return realsize;
+}
+
 int task_execute(oph_operator_struct *handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_B2DROP_NULL_OPERATOR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
-	}
-
-	typedef struct {
-		char *buffer;
-		size_t len;
-	} curlbuf;
-
-	size_t _write_callback(char *ptr, size_t size, size_t nmemb, void *userdata) {
-		size_t realsize = size * nmemb;
-		curlbuf *mem = (curlbuf *) userdata;
-		mem->buffer = realloc(mem->buffer, mem->len + realsize + 1);
-		if (!mem->buffer)
-			return 0;
-		memcpy(&(mem->buffer[mem->len]), ptr, realsize);
-		mem->len += realsize;
-		mem->buffer[mem->len] = 0;
-		return realsize;
 	}
 
 	double speed, total_time, size;
