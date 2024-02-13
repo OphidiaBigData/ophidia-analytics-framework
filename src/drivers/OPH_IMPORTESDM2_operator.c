@@ -54,6 +54,153 @@
 #include <pthread.h>
 #endif
 
+struct _thread_struct {
+	OPH_IMPORTESDM2_operator_handle *oper_handle;
+	unsigned int current_thread;
+	unsigned int total_threads;
+	int id_datacube;
+	int proc_rank;
+	oph_odb_fragment *frags;
+	oph_odb_db_instance_list *dbs;
+	oph_odb_dbms_instance_list *dbmss;
+};
+typedef struct _thread_struct thread_struct;
+
+void *exec_thread(void *ts)
+{
+
+	OPH_IMPORTESDM2_operator_handle *oper_handle = ((thread_struct *) ts)->oper_handle;
+	int l = ((thread_struct *) ts)->current_thread;
+	int num_threads = ((thread_struct *) ts)->total_threads;
+	int id_datacube_out = ((thread_struct *) ts)->id_datacube;
+	int proc_rank = ((thread_struct *) ts)->proc_rank;
+	oph_odb_fragment *new_frag = ((thread_struct *) ts)->frags;
+	oph_odb_db_instance_list *dbs = ((thread_struct *) ts)->dbs;
+	oph_odb_dbms_instance_list *dbmss = ((thread_struct *) ts)->dbmss;
+
+	int fragxthread = (int) floor((double) (oper_handle->fragment_number / num_threads));
+	int remainder = (int) oper_handle->fragment_number % num_threads;
+
+	//Compute starting number of fragments inserted by other threads
+	unsigned int current_frag_count = l * fragxthread + (l < remainder ? l : remainder);
+
+	//Update number of fragments to be inserted
+	if (l < remainder)
+		fragxthread += 1;
+
+	//Compute relative DB list starting position and number of rows
+	int start_position = (int) floor((double) (oper_handle->fragment_first_id + current_frag_count) / oper_handle->fragxdb_number);
+	int row_number = (int) ceil((double) (oper_handle->fragment_first_id + current_frag_count + fragxthread) / oper_handle->fragxdb_number) - start_position;
+	int rel_start = start_position - (int) floor((double) oper_handle->fragment_first_id / oper_handle->fragxdb_number);
+	int rel_row_num = row_number + rel_start;
+
+	int i, k;
+	int res = OPH_ANALYTICS_OPERATOR_SUCCESS;
+
+	char fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE];
+
+	int frag_to_insert = 0;
+	int frag_count = 0;
+	int actual_tuplexfrag_number = 0;
+
+	oph_ioserver_handler *server = NULL;
+	if (oph_dc_setup_dbms_thread(&(server), dbmss->value[0].io_server_type)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_IOPLUGIN_SETUP_ERROR, dbmss->value[0].id_dbms);
+		mysql_thread_end();
+		res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+	//For each DBMS
+	for (i = rel_start; i < rel_row_num && res == OPH_ANALYTICS_OPERATOR_SUCCESS; i++) {
+		if (oph_dc_connect_to_dbms(server, &(dbmss->value[i]), 0)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_DBMS_CONNECTION_ERROR, (dbmss->value[i]).id_dbms);
+			oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
+			oph_dc_cleanup_dbms(server);
+			mysql_thread_end();
+			res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			break;
+		}
+
+		if (oph_dc_use_db_of_dbms(server, &(dbmss->value[i]), &(dbs->value[i]))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_DB_SELECTION_ERROR, (dbs->value[i]).db_name);
+			oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
+			oph_dc_cleanup_dbms(server);
+			res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			mysql_thread_end();
+			break;
+		}
+		//Compute number of fragments to insert in DB
+		frag_to_insert = oper_handle->fragxdb_number - (oper_handle->fragment_first_id + current_frag_count + frag_count - start_position * oper_handle->fragxdb_number);
+
+		//For each fragment
+		for (k = 0; k < frag_to_insert && res == OPH_ANALYTICS_OPERATOR_SUCCESS; k++) {
+
+			//Set new fragment
+			new_frag[current_frag_count + frag_count].id_datacube = id_datacube_out;
+			new_frag[current_frag_count + frag_count].id_db = dbs->value[i].id_db;
+			new_frag[current_frag_count + frag_count].frag_relative_index = oper_handle->fragment_first_id + current_frag_count + frag_count + 1;
+
+			//For each fragment define correct number of rows
+			if (oper_handle->number_unven_frag == 0) {
+				actual_tuplexfrag_number = oper_handle->tuplexfrag_number;
+			} else {
+				if (new_frag[current_frag_count + frag_count].frag_relative_index <= oper_handle->number_unven_frag) {
+					actual_tuplexfrag_number = oper_handle->tuplexfrag_number;
+				} else {
+					actual_tuplexfrag_number = ((oper_handle->tuplexfrag_number / oper_handle->int_dim_product) - 1) * oper_handle->int_dim_product;
+				}
+			}
+			int frag_already_inserted = oper_handle->fragment_first_id + current_frag_count + frag_count;
+
+			new_frag[current_frag_count + frag_count].key_start = (oper_handle->number_unven_frag - frag_already_inserted > 0 ? frag_already_inserted : oper_handle->number_unven_frag)
+			    * oper_handle->tuplexfrag_number + (frag_already_inserted - oper_handle->number_unven_frag >
+								0 ? frag_already_inserted - oper_handle->number_unven_frag : 0) * actual_tuplexfrag_number + 1;
+			new_frag[current_frag_count + frag_count].key_end = (new_frag[current_frag_count + frag_count].key_start - 1) + actual_tuplexfrag_number;
+			new_frag[current_frag_count + frag_count].db_instance = &(dbs->value[i]);
+
+			if (oph_dc_generate_fragment_name(NULL, id_datacube_out, proc_rank, (current_frag_count + frag_count + 1), &fragment_name)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag  name exceed limit.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_STRING_BUFFER_OVERFLOW, "fragment name", fragment_name);
+				res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				break;
+			}
+			strcpy(new_frag[current_frag_count + frag_count].fragment_name, fragment_name);
+			//Create  and populate fragment
+			if (oph_esdm_populate_fragment5
+			    (server, &(new_frag[current_frag_count + frag_count]), oper_handle->nc_file_path_orig, oper_handle->tuplexfrag_number, oper_handle->compressed,
+			     (ESDM_var *) & (oper_handle->measure))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_FRAG_POPULATE_ERROR,
+					new_frag[current_frag_count + frag_count].fragment_name, "");
+				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+				break;
+			}
+			frag_count++;
+			if (frag_count == fragxthread)
+				break;
+		}
+		start_position++;
+
+		oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
+
+		if (res != OPH_ANALYTICS_OPERATOR_SUCCESS) {
+			oph_dc_cleanup_dbms(server);
+			mysql_thread_end();
+		}
+	}
+
+	if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
+		oph_dc_cleanup_dbms(server);
+		mysql_thread_end();
+	}
+
+	int *ret_val = (int *) malloc(sizeof(int));
+	*ret_val = res;
+	pthread_exit((void *) ret_val);
+}
+
 int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 {
 	if (!handle) {
@@ -3867,153 +4014,6 @@ int task_execute(oph_operator_struct *handle)
 		mysql_thread_end();
 		free(new_frag);
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-	}
-
-	struct _thread_struct {
-		OPH_IMPORTESDM2_operator_handle *oper_handle;
-		unsigned int current_thread;
-		unsigned int total_threads;
-		int id_datacube;
-		int proc_rank;
-		oph_odb_fragment *frags;
-		oph_odb_db_instance_list *dbs;
-		oph_odb_dbms_instance_list *dbmss;
-	};
-	typedef struct _thread_struct thread_struct;
-
-	void *exec_thread(void *ts) {
-
-		OPH_IMPORTESDM2_operator_handle *oper_handle = ((thread_struct *) ts)->oper_handle;
-		int l = ((thread_struct *) ts)->current_thread;
-		int num_threads = ((thread_struct *) ts)->total_threads;
-		int id_datacube_out = ((thread_struct *) ts)->id_datacube;
-		int proc_rank = ((thread_struct *) ts)->proc_rank;
-		oph_odb_fragment *new_frag = ((thread_struct *) ts)->frags;
-		oph_odb_db_instance_list *dbs = ((thread_struct *) ts)->dbs;
-		oph_odb_dbms_instance_list *dbmss = ((thread_struct *) ts)->dbmss;
-
-		int fragxthread = (int) floor((double) (oper_handle->fragment_number / num_threads));
-		int remainder = (int) oper_handle->fragment_number % num_threads;
-
-		//Compute starting number of fragments inserted by other threads
-		unsigned int current_frag_count = l * fragxthread + (l < remainder ? l : remainder);
-
-		//Update number of fragments to be inserted
-		if (l < remainder)
-			fragxthread += 1;
-
-		//Compute relative DB list starting position and number of rows
-		int start_position = (int) floor((double) (oper_handle->fragment_first_id + current_frag_count) / oper_handle->fragxdb_number);
-		int row_number = (int) ceil((double) (oper_handle->fragment_first_id + current_frag_count + fragxthread) / oper_handle->fragxdb_number) - start_position;
-		int rel_start = start_position - (int) floor((double) oper_handle->fragment_first_id / oper_handle->fragxdb_number);
-		int rel_row_num = row_number + rel_start;
-
-		int i, k;
-		int res = OPH_ANALYTICS_OPERATOR_SUCCESS;
-
-		char fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE];
-
-		int frag_to_insert = 0;
-		int frag_count = 0;
-		int actual_tuplexfrag_number = 0;
-
-		oph_ioserver_handler *server = NULL;
-		if (oph_dc_setup_dbms_thread(&(server), dbmss->value[0].io_server_type)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_IOPLUGIN_SETUP_ERROR, dbmss->value[0].id_dbms);
-			mysql_thread_end();
-			res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-		}
-		//For each DBMS
-		for (i = rel_start; i < rel_row_num && res == OPH_ANALYTICS_OPERATOR_SUCCESS; i++) {
-			if (oph_dc_connect_to_dbms(server, &(dbmss->value[i]), 0)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_DBMS_CONNECTION_ERROR, (dbmss->value[i]).id_dbms);
-				oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
-				oph_dc_cleanup_dbms(server);
-				mysql_thread_end();
-				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-				break;
-			}
-
-			if (oph_dc_use_db_of_dbms(server, &(dbmss->value[i]), &(dbs->value[i]))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_DB_SELECTION_ERROR, (dbs->value[i]).db_name);
-				oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
-				oph_dc_cleanup_dbms(server);
-				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-				mysql_thread_end();
-				break;
-			}
-			//Compute number of fragments to insert in DB
-			frag_to_insert = oper_handle->fragxdb_number - (oper_handle->fragment_first_id + current_frag_count + frag_count - start_position * oper_handle->fragxdb_number);
-
-			//For each fragment
-			for (k = 0; k < frag_to_insert && res == OPH_ANALYTICS_OPERATOR_SUCCESS; k++) {
-
-				//Set new fragment
-				new_frag[current_frag_count + frag_count].id_datacube = id_datacube_out;
-				new_frag[current_frag_count + frag_count].id_db = dbs->value[i].id_db;
-				new_frag[current_frag_count + frag_count].frag_relative_index = oper_handle->fragment_first_id + current_frag_count + frag_count + 1;
-
-				//For each fragment define correct number of rows
-				if (oper_handle->number_unven_frag == 0) {
-					actual_tuplexfrag_number = oper_handle->tuplexfrag_number;
-				} else {
-					if (new_frag[current_frag_count + frag_count].frag_relative_index <= oper_handle->number_unven_frag) {
-						actual_tuplexfrag_number = oper_handle->tuplexfrag_number;
-					} else {
-						actual_tuplexfrag_number = ((oper_handle->tuplexfrag_number / oper_handle->int_dim_product) - 1) * oper_handle->int_dim_product;
-					}
-				}
-				int frag_already_inserted = oper_handle->fragment_first_id + current_frag_count + frag_count;
-
-				new_frag[current_frag_count + frag_count].key_start =
-				    (oper_handle->number_unven_frag - frag_already_inserted > 0 ? frag_already_inserted : oper_handle->number_unven_frag)
-				    * oper_handle->tuplexfrag_number + (frag_already_inserted - oper_handle->number_unven_frag >
-									0 ? frag_already_inserted - oper_handle->number_unven_frag : 0) * actual_tuplexfrag_number + 1;
-				new_frag[current_frag_count + frag_count].key_end = (new_frag[current_frag_count + frag_count].key_start - 1) + actual_tuplexfrag_number;
-				new_frag[current_frag_count + frag_count].db_instance = &(dbs->value[i]);
-
-				if (oph_dc_generate_fragment_name(NULL, id_datacube_out, proc_rank, (current_frag_count + frag_count + 1), &fragment_name)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag  name exceed limit.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_STRING_BUFFER_OVERFLOW, "fragment name", fragment_name);
-					res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-					break;
-				}
-				strcpy(new_frag[current_frag_count + frag_count].fragment_name, fragment_name);
-				//Create  and populate fragment
-				if (oph_esdm_populate_fragment5
-				    (server, &(new_frag[current_frag_count + frag_count]), oper_handle->nc_file_path_orig, oper_handle->tuplexfrag_number, oper_handle->compressed,
-				     (ESDM_var *) & (oper_handle->measure))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_FRAG_POPULATE_ERROR,
-						new_frag[current_frag_count + frag_count].fragment_name, "");
-					res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
-					break;
-				}
-				frag_count++;
-				if (frag_count == fragxthread)
-					break;
-			}
-			start_position++;
-
-			oph_dc_disconnect_from_dbms(server, &(dbmss->value[i]));
-
-			if (res != OPH_ANALYTICS_OPERATOR_SUCCESS) {
-				oph_dc_cleanup_dbms(server);
-				mysql_thread_end();
-			}
-		}
-
-		if (res == OPH_ANALYTICS_OPERATOR_SUCCESS) {
-			oph_dc_cleanup_dbms(server);
-			mysql_thread_end();
-		}
-
-		int *ret_val = (int *) malloc(sizeof(int));
-		*ret_val = res;
-		pthread_exit((void *) ret_val);
 	}
 
 	pthread_t threads[num_threads];
