@@ -60,6 +60,7 @@
  * \param misc Flag used to save file in export/misc folder
  * \param memory_size Maximum amount of memory available
  * \param nc_file_path File name
+ * \param is_zarr Flag set in case of Zarr output
  */
 struct _OPH_EXPORTNC2_operator_handle {
 	ophidiadb oDB;
@@ -92,6 +93,7 @@ struct _OPH_EXPORTNC2_operator_handle {
 	char deflate;
 	long long memory_size;
 	char *nc_file_path;
+	char is_zarr;
 };
 typedef struct _OPH_EXPORTNC2_operator_handle OPH_EXPORTNC2_operator_handle;
 

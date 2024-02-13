@@ -95,6 +95,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->misc = 0;
 	((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->shuffle = 0;
 	((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->deflate = 0;
+	((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->is_zarr = 0;
 
 	char *datacube_name;
 	char *value;
@@ -260,176 +261,219 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	char *output_path = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
 	char *output_name = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_NAME);
 	char *output = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT);
+	char tmp[1 + (output ? strlen(output) : 0)];
 	char home[2];
 	home[0] = '/';
 	home[1] = 0;
-	size_t size;
-	if (output && ((size = strlen(output)))) {
-		char *pointer = output + size;
-		while ((pointer >= output) && (*pointer != '/'))
-			pointer--;
-		if (pointer < output) {
-			output_name = output;
-			if ((output[size - 3] == '.') && (output[size - 2] == 'n') && (output[size - 1] == 'c'))
-				output[size - 3] = 0;
-		} else {
-			if (pointer == output)
+
+	if (output && strstr(output, OPH_FILE_PREFIX)) {
+
+		output_path = output_name = NULL;
+		((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->is_zarr = 1;	// file
+
+		output_path = strstr(output, OPH_FILE_PREFIX);
+		if (output_path) {
+			output_path += strlen(OPH_FILE_PREFIX);
+			strcpy(tmp, output_path);
+			value = strchr(tmp, OPH_COMMON_DIESIS);
+			if (value)
+				*value = 0;
+			char *pointer = strrchr(tmp, '/');
+			while (pointer && (strlen(pointer) <= 1)) {
+				*pointer = 0;
+				pointer = strrchr(tmp, '/');
+			}
+			output_name = strdup(pointer ? pointer + 1 : tmp);
+			if (pointer) {
+				output_path = tmp;
+				*pointer = 0;
+			} else
 				output_path = home;
-			else
-				output_path = output;
-			*pointer = 0;
-			pointer++;
-			if (pointer && *pointer) {
-				output_name = pointer;
+			output = NULL;
+		}
+	}
+
+	if (output && strstr(output, OPH_S3_PREFIX)) {
+
+		// TODO: no safety control for Zarr output
+		output_path = output_name = NULL;
+		((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->is_zarr = 2;	// s3
+		((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name = strdup(output);
+
+	} else {
+
+		size_t size;
+		if (output && ((size = strlen(output)))) {
+			char *pointer = output + size;
+			while ((pointer >= output) && (*pointer != '/'))
+				pointer--;
+			if (pointer < output) {
+				output_name = output;
 				if ((output[size - 3] == '.') && (output[size - 2] == 'n') && (output[size - 1] == 'c'))
 					output[size - 3] = 0;
+			} else {
+				if (pointer == output)
+					output_path = home;
+				else
+					output_path = output;
+				*pointer = 0;
+				pointer++;
+				if (pointer && *pointer) {
+					output_name = pointer;
+					if ((output[size - 3] == '.') && (output[size - 2] == 'n') && (output[size - 1] == 'c'))
+						output[size - 3] = 0;
+				}
 			}
 		}
-	}
 
-	value = output_path;
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	char session_code[OPH_COMMON_BUFFER_LEN];
-	oph_pid_get_session_code(hashtbl_get(task_tbl, OPH_ARG_SESSIONID), session_code);
-
-	char *cdd = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
-	if (!cdd) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (*cdd != '/') {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if ((strlen(cdd) > 1) && strstr(cdd, "..")) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-
-	if (!strcmp(value, OPH_EXPORTNC_LOCAL_OUTPUT_PATH) || (user_space && !strcmp(value, OPH_EXPORTNC_DEFAULT_OUTPUT_PATH)))
-		value = &user_space_default;
-	else if (!user_space && !strcmp(value, OPH_EXPORTNC_DEFAULT_OUTPUT_PATH))
-		value = cdd;
-
-	if (!strcmp(value, OPH_EXPORTNC_DEFAULT_OUTPUT_PATH)) {
-		if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->misc) {
-			value = hashtbl_get(task_tbl, OPH_ARG_WORKFLOWID);
-			if (!value) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_INPUT, OPH_ARG_WORKFLOWID);
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			int n = snprintf(NULL, 0, OPH_FRAMEWORK_MISCELLANEA_FILES_PATH "/%s", oph_pid_path()? oph_pid_path() : OPH_PREFIX_CLUSTER, session_code, value) + 1;
-			if (n >= OPH_TP_TASKLEN) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of path exceeded limit.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_STRING_BUFFER_OVERFLOW,
-					"path", OPH_FRAMEWORK_NC_FILES_PATH);
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			if (!(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = (char *) malloc(n * sizeof(char)))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MEMORY_ERROR_INPUT,
-					"output path");
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			n = snprintf(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path, n, OPH_FRAMEWORK_MISCELLANEA_FILES_PATH "/%s",
-				     oph_pid_path()? oph_pid_path() : OPH_PREFIX_CLUSTER, session_code, value);
-			if (oph_pid_uri()) {
-				char tmp[OPH_COMMON_BUFFER_LEN];
-				snprintf(tmp, OPH_COMMON_BUFFER_LEN, OPH_FRAMEWORK_MISCELLANEA_FILES_PATH "/%s", oph_pid_uri(), session_code, value);
-				((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link = strdup(tmp);
-			}
-		} else {
-			int n = snprintf(NULL, 0, OPH_FRAMEWORK_NC_FILES_PATH, oph_pid_path()? oph_pid_path() : OPH_PREFIX_CLUSTER, session_code,
-					 ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
-					 ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube) + 1;
-			if (n >= OPH_TP_TASKLEN) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of path exceeded limit.\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_STRING_BUFFER_OVERFLOW,
-					"path", OPH_FRAMEWORK_NC_FILES_PATH);
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			if (!(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = (char *) malloc(n * sizeof(char)))) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MEMORY_ERROR_INPUT,
-					"output path");
-				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
-			}
-			n = snprintf(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path, n, OPH_FRAMEWORK_NC_FILES_PATH, oph_pid_path()? oph_pid_path() : OPH_PREFIX_CLUSTER,
-				     session_code, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
-				     ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube);
-			if (oph_pid_uri()) {
-				char tmp[OPH_COMMON_BUFFER_LEN];
-				snprintf(tmp, OPH_COMMON_BUFFER_LEN, OPH_FRAMEWORK_NC_FILES_PATH, oph_pid_uri(), session_code,
-					 ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube);
-				((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link = strdup(tmp);
-			}
+		value = output_path;
+		if (!value) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_PATH);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_PATH);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
-	} else {
-		if (!(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = (char *) strdup(value))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MEMORY_ERROR_INPUT, "output path");
-			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		char session_code[OPH_COMMON_BUFFER_LEN];
+		oph_pid_get_session_code(hashtbl_get(task_tbl, OPH_ARG_SESSIONID), session_code);
+
+		char *cdd = hashtbl_get(task_tbl, OPH_IN_PARAM_CDD);
+		if (!cdd) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter '%s'\n", OPH_IN_PARAM_CDD);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CDD);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
-		if (strstr(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path, "..")) {
+		if (*cdd != '/') {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Parameter '%s' must begin with '/'\n", OPH_IN_PARAM_CDD);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		if ((strlen(cdd) > 1) && strstr(cdd, "..")) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
 			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
-		char *pointer = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path;
-		while (pointer && (*pointer == ' '))
-			pointer++;
-		if (pointer) {
-			char tmp[OPH_COMMON_BUFFER_LEN];
-			if ((*pointer != '/') && (strlen(cdd) > 1)) {
-				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", cdd + 1, pointer);
-				((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user = strdup(tmp);
+
+		if (!strcmp(value, OPH_EXPORTNC_LOCAL_OUTPUT_PATH) || (user_space && !strcmp(value, OPH_EXPORTNC_DEFAULT_OUTPUT_PATH)))
+			value = &user_space_default;
+		else if (!user_space && !strcmp(value, OPH_EXPORTNC_DEFAULT_OUTPUT_PATH))
+			value = cdd;
+
+		if (!strcmp(value, OPH_EXPORTNC_DEFAULT_OUTPUT_PATH)) {
+			if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->misc) {
+				value = hashtbl_get(task_tbl, OPH_ARG_WORKFLOWID);
+				if (!value) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_SCRIPT_MEMORY_ERROR_INPUT, OPH_ARG_WORKFLOWID);
+					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+				}
+				int n = snprintf(NULL, 0, OPH_FRAMEWORK_MISCELLANEA_FILES_PATH "/%s", oph_pid_path()? oph_pid_path() : OPH_PREFIX_CLUSTER, session_code, value) + 1;
+				if (n >= OPH_TP_TASKLEN) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of path exceeded limit.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_EXPORTNC_STRING_BUFFER_OVERFLOW, "path", OPH_FRAMEWORK_NC_FILES_PATH);
+					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+				}
+				if (!(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = (char *) malloc(n * sizeof(char)))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MEMORY_ERROR_INPUT,
+						"output path");
+					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+				}
+				n = snprintf(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path, n, OPH_FRAMEWORK_MISCELLANEA_FILES_PATH "/%s",
+					     oph_pid_path()? oph_pid_path() : OPH_PREFIX_CLUSTER, session_code, value);
+				if (oph_pid_uri()) {
+					char tmp[OPH_COMMON_BUFFER_LEN];
+					snprintf(tmp, OPH_COMMON_BUFFER_LEN, OPH_FRAMEWORK_MISCELLANEA_FILES_PATH "/%s", oph_pid_uri(), session_code, value);
+					((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link = strdup(tmp);
+				}
+			} else {
+				int n = snprintf(NULL, 0, OPH_FRAMEWORK_NC_FILES_PATH, oph_pid_path()? oph_pid_path() : OPH_PREFIX_CLUSTER, session_code,
+						 ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
+						 ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube) + 1;
+				if (n >= OPH_TP_TASKLEN) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of path exceeded limit.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
+						OPH_LOG_OPH_EXPORTNC_STRING_BUFFER_OVERFLOW, "path", OPH_FRAMEWORK_NC_FILES_PATH);
+					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+				}
+				if (!(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = (char *) malloc(n * sizeof(char)))) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MEMORY_ERROR_INPUT,
+						"output path");
+					return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+				}
+				n = snprintf(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path, n, OPH_FRAMEWORK_NC_FILES_PATH,
+					     oph_pid_path()? oph_pid_path() : OPH_PREFIX_CLUSTER, session_code, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
+					     ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube);
+				if (oph_pid_uri()) {
+					char tmp[OPH_COMMON_BUFFER_LEN];
+					snprintf(tmp, OPH_COMMON_BUFFER_LEN, OPH_FRAMEWORK_NC_FILES_PATH, oph_pid_uri(), session_code,
+						 ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
+						 ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube);
+					((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link = strdup(tmp);
+				}
+			}
+		} else {
+			if (!(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = (char *) strdup(value))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MEMORY_ERROR_INPUT,
+					"output path");
+				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+			}
+			if (strstr(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path, "..")) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "The use of '..' is forbidden\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "The use of '..' is forbidden\n");
+				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+			}
+			char *pointer = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path;
+			while (pointer && (*pointer == ' '))
+				pointer++;
+			if (pointer) {
+				char tmp[OPH_COMMON_BUFFER_LEN];
+				if ((*pointer != '/') && (strlen(cdd) > 1)) {
+					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s/%s", cdd + 1, pointer);
+					((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user = strdup(tmp);
+					free(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path);
+					((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
+					pointer = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path;
+				}
+				if (!((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user)
+					((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user = strdup(pointer);
+				if (oph_pid_get_base_src_path(&value)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base user_path\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base user path\n");
+					return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+				}
+				snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
 				free(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path);
 				((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
-				pointer = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path;
+				if (value)
+					free(value);
 			}
-			if (!((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user)
-				((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user = strdup(pointer);
-			if (oph_pid_get_base_src_path(&value)) {
-				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read base user_path\n");
-				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to read base user path\n");
-				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-			}
-			snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", value ? value : "", *pointer != '/' ? "/" : "", pointer);
-			free(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path);
-			((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path = strdup(tmp);
-			if (value)
-				free(value);
+			((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user_defined = 1;
 		}
-		((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user_defined = 1;
-	}
 
-	value = output_name;
-	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_NAME);
-		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_NAME);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
-	}
-	if (strcmp(value, OPH_EXPORTNC_DEFAULT_OUTPUT_PATH) && strcmp(value, OPH_EXPORTNC_LOCAL_OUTPUT_PATH)) {
-		if (!(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name = (char *) strdup(value))) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MEMORY_ERROR_INPUT, "output name");
-			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		value = output_name;
+		if (!value) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_NAME);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_OUTPUT_NAME);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 		}
-	}
-	int s;
-	output_name = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name;
-	if (output_name && strncmp(output_name, OPH_ESDM_PREFIX, 7)) {
-		for (s = 0; s < (int) strlen(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name); s++) {
-			if ((((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] == '/') || (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] == ':')) {
-				((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] = '_';
+		if (strcmp(value, OPH_EXPORTNC_DEFAULT_OUTPUT_PATH) && strcmp(value, OPH_EXPORTNC_LOCAL_OUTPUT_PATH)) {
+			if (!(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name = (char *) strdup(value))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_EXPORTNC_MEMORY_ERROR_INPUT,
+					"output name");
+				return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+			}
+		}
+		int s;
+		output_name = ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name;
+		if (output_name && strncmp(output_name, OPH_ESDM_PREFIX, 7)) {
+			for (s = 0; s < (int) strlen(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name); s++) {
+				if ((((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] == '/')
+				    || (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] == ':')) {
+					((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_name[s] = '_';
+				}
 			}
 		}
 	}
@@ -1122,21 +1166,45 @@ int task_execute(oph_operator_struct *handle)
 				if (frags.value[k].db_instance != &(dbs.value[j]))
 					continue;
 
-				if (strncmp(file, OPH_ESDM_PREFIX, 7)) {
+				if (!strncmp(file, OPH_ESDM_PREFIX, 7)) {
+
+					if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
+						n = snprintf(file_name, sizeof(file_name), "%s", file);
+					else
+						n = snprintf(file_name, sizeof(file_name), "%s_%d", file,
+							     ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->fragment_id_start_position + frag_count);
+
+				} else if (!strncmp(file, OPH_S3_PREFIX, 7)) {
+
+					if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
+						n = snprintf(file_name, sizeof(file_name), "%s", file);
+					else {
+						char _file[1 + strlen(file)];
+						strcpy(_file, file);
+						char *value = strchr(_file, OPH_COMMON_DIESIS);
+						if (value) {
+							*value = 0;
+							value++;
+						}
+						n = snprintf(file_name, sizeof(file_name), "%s_%d%s%s", _file,
+							     ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->fragment_id_start_position + frag_count, value ? "#" : "", value ? value : "");
+					}
+
+				} else if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->is_zarr) {
+
+					if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
+						n = snprintf(file_name, sizeof(file_name), "%s%s/%s#mode=nczarr", OPH_FILE_PREFIX, path, file);
+					else
+						n = snprintf(file_name, sizeof(file_name), "%s%s/%s_%d#mode=nczarr", OPH_FILE_PREFIX, path, file,
+							     ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->fragment_id_start_position + frag_count);
+
+				} else {
 
 					if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
 						n = snprintf(file_name, sizeof(file_name), OPH_EXPORTNC_OUTPUT_PATH_SINGLE_FILE, path, file,
 							     strstr(file, OPH_EXPORTNC_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC_OUTPUT_FILE_EXT);
 					else
 						n = snprintf(file_name, sizeof(file_name), OPH_EXPORTNC_OUTPUT_PATH_MORE_FILES, path, file,
-							     ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->fragment_id_start_position + frag_count);
-
-				} else {
-
-					if (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->total_fragment_number == 1)
-						n = snprintf(file_name, sizeof(file_name), "%s", file);
-					else
-						n = snprintf(file_name, sizeof(file_name), "%s_%d", file,
 							     ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->fragment_id_start_position + frag_count);
 
 				}
@@ -1162,7 +1230,7 @@ int task_execute(oph_operator_struct *handle)
 				}
 
 				if ((retval = nc_create(file_name, cmode, &ncid))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create nc output file: %s\n", nc_strerror(retval));
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create nc output file %s: %s\n", file_name, nc_strerror(retval));
 					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container,
 						OPH_LOG_OPH_EXPORTNC_NC_OUTPUT_FILE_ERROR, nc_strerror(retval));
 					oph_dc_disconnect_from_dbms(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->server, frags.value[k].db_instance->dbms_instance);
@@ -1765,7 +1833,7 @@ int task_execute(oph_operator_struct *handle)
 
 			if (type)
 				snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_EXPORTNC_OUTPUT_PATH_SINGLE_FILE, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_link, file,
-					 strstr(file, OPH_EXPORTNC_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC_OUTPUT_FILE_EXT);
+					 ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->is_zarr || strstr(file, OPH_EXPORTNC_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC_OUTPUT_FILE_EXT);
 			else {
 				if (!((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->output_path_user_defined) {
 					// Save the summary
@@ -1813,10 +1881,12 @@ int task_execute(oph_operator_struct *handle)
 			    (((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_EXPORTNC)) {
 				if (type)
 					snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s" OPH_EXPORTNC_OUTPUT_PATH_SINGLE_FILE, size
-						 && *output_path_file != '/' ? "/" : "", output_path_file, file, strstr(file, OPH_EXPORTNC_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC_OUTPUT_FILE_EXT);
+						 && *output_path_file != '/' ? "/" : "", output_path_file, file, ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->is_zarr
+						 || strstr(file, OPH_EXPORTNC_OUTPUT_FILE_EXT) ? "" : OPH_EXPORTNC_OUTPUT_FILE_EXT);
 				else
-					snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s" OPH_EXPORTNC_OUTPUT_PATH "%s_*" OPH_EXPORTNC_OUTPUT_FILE_EXT, size
-						 && *output_path_file != '/' ? "/" : "", output_path_file, file);
+					snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s" OPH_EXPORTNC_OUTPUT_PATH "%s_*%s", size
+						 && *output_path_file != '/' ? "/" : "", output_path_file, file,
+						 ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->is_zarr ? "" : OPH_EXPORTNC_OUTPUT_FILE_EXT);
 				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_EXPORTNC, type ? "Output File" : "Output Files", jsonbuf)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");

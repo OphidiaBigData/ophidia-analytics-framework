@@ -57,7 +57,8 @@
  * \param server Pointer to I/O server handler
  * \param sessionid SessionID
  * \param force Flag used to force file creation
- * \param force Flag used to save file in export/misc folder
+ * \param misc Flag used to save file in export/misc folder
+ * \param is_zarr Flag set in case of Zarr output
  */
 struct _OPH_EXPORTNC_operator_handle {
 	ophidiadb oDB;
@@ -88,6 +89,7 @@ struct _OPH_EXPORTNC_operator_handle {
 	int misc;
 	char shuffle;
 	char deflate;
+	char is_zarr;
 };
 typedef struct _OPH_EXPORTNC_operator_handle OPH_EXPORTNC_operator_handle;
 
