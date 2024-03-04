@@ -94,6 +94,9 @@ struct _OPH_EXPORTNC2_operator_handle {
 	long long memory_size;
 	char *nc_file_path;
 	char is_zarr;
+#ifdef OPH_ZARR
+	void *dlh;
+#endif
 };
 typedef struct _OPH_EXPORTNC2_operator_handle OPH_EXPORTNC2_operator_handle;
 

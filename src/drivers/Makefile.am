@@ -39,6 +39,10 @@ driver_CFLAGS += -DOPH_ESDM_PAV_KERNELS -I${prefix}/include
 endif
 endif
 
+if HAVE_ZARR
+driver_CFLAGS += -DOPH_ZARR
+endif
+
 #define set of libraries commonly called together
 BASIC_LIB = -L.. -lophidiadb -loph_task_parser -loph_idstring -loph_json -ldebug -lhashtbl -loph_pid
 

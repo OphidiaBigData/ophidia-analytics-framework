@@ -125,6 +125,9 @@ struct _OPH_IMPORTNC_operator_handle {
 	int id_job;
 	short int execute_error;
 	char policy;
+#ifdef OPH_ZARR
+	void *dlh;
+#endif
 };
 typedef struct _OPH_IMPORTNC_operator_handle OPH_IMPORTNC_operator_handle;
 

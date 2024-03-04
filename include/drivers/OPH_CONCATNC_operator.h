@@ -92,6 +92,9 @@ struct _OPH_CONCATNC_operator_handle {
 	double *dim_offset;
 	char dim_continue;
 	short int execute_error;
+#ifdef OPH_ZARR
+	void *dlh;
+#endif
 };
 typedef struct _OPH_CONCATNC_operator_handle OPH_CONCATNC_operator_handle;
 

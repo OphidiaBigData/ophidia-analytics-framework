@@ -77,6 +77,9 @@ struct _OPH_EXPLORENC_operator_handle {
 	int show_fit;
 	char *operation;
 	double offset;
+#ifdef OPH_ZARR
+	void *dlh;
+#endif
 };
 typedef struct _OPH_EXPLORENC_operator_handle OPH_EXPLORENC_operator_handle;
 

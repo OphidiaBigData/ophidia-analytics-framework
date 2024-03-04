@@ -64,6 +64,10 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_CONCATNC_MEMORY_ERROR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
+#ifdef OPH_ZARR
+	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dlh = oph_nc_dlopen();
+#endif
+
 	//1 - Set up struct to empty values
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_CONCATNC_operator_handle *) handle->operator_handle)->grid_name = NULL;
@@ -2161,6 +2165,9 @@ int env_unset(oph_operator_struct *handle)
 		free((char *) ((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset);
 		((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dim_offset = NULL;
 	}
+#ifdef OPH_ZARR
+	oph_nc_dlclose(((OPH_CONCATNC_operator_handle *) handle->operator_handle)->dlh);
+#endif
 
 	free((OPH_CONCATNC_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;

@@ -47,12 +47,15 @@ LIBRARY+= liboph_analytics_operator.la
 LIBRARY+= liboph_ioserver_parser.la
 LIBRARY+= liboph_ioserver.la
 LIBRARY+= liboph_analytics_framework.la
+
 if HAVE_NETCDF
 LIBRARY+= liboph_nc.la
 endif
+
 if HAVE_CFITSIO
 LIBRARY+= liboph_fits.la
 endif
+
 if HAVE_ESDM
 LIBRARY+= liboph_esdm.la
 if HAVE_ESDM_PAV_KERNELS
@@ -62,6 +65,14 @@ else
 ESDM_PAV_INCLUDE=
 ESDM_PAV_LIBRARY=
 endif
+endif
+
+if HAVE_ZARR
+ZARR_CFLAGS=-DOPH_ZARR
+ZARR_LIBS=-ldl
+else
+ZARR_CFLAGS=
+ZARR_LIBS=
 endif
 
 lib_LTLIBRARIES = $(LIBRARY)
@@ -134,7 +145,7 @@ liboph_pid_la_SOURCES = oph_pid_library.c
 if STANDALONE_MODE
 liboph_pid_la_CFLAGS= -prefer-pic -DOPH_STANDALONE_MODE ${MYSQL_CFLAGS}  -I../include @INCLTDL@ ${lib_CFLAGS}
 else
-liboph_pid_la_CFLAGS= -prefer-pic ${MYSQL_CFLAGS}  -I../include @INCLTDL@ ${lib_CFLAGS}
+liboph_pid_la_CFLAGS= -prefer-pic ${MYSQL_CFLAGS} -I../include @INCLTDL@ ${lib_CFLAGS}
 endif
 liboph_pid_la_LDFLAGS = -static
 liboph_pid_la_LIBADD = -lz -lm @LIBLTDL@ -L. -ldebug
@@ -186,9 +197,9 @@ liboph_driver_proc_la_LIBADD = -lz -lm @LIBLTDL@ -L. -lpthread -ldebug -lophidia
 
 if HAVE_NETCDF
 liboph_nc_la_SOURCES = oph_nc_library.c
-liboph_nc_la_CFLAGS= ${MYSQL_CFLAGS} $(NETCDF_CFLAGS) -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
+liboph_nc_la_CFLAGS= ${MYSQL_CFLAGS} $(NETCDF_CFLAGS) ${ZARR_CFLAGS} -prefer-pic -I../include -I../include/oph_ioserver @INCLTDL@ ${lib_CFLAGS}
 liboph_nc_la_LDFLAGS = -static
-liboph_nc_la_LIBADD = -lz -lm $(NETCDF_LIBS) @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube
+liboph_nc_la_LIBADD = -lz -lm $(NETCDF_LIBS) ${ZARR_LIBS} @LIBLTDL@ -L. -ldebug -loph_binary_io -loph_ioserver -loph_datacube
 endif
 
 if HAVE_CFITSIO

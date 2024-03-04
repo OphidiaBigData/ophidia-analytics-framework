@@ -358,4 +358,9 @@ int oph_nc_update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time
 int oph_nc_update_dim_with_nc_metadata2(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid, int *dim_id);
 int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var * measure, int is_index, int ncid, double offset, char out_of_bound);
 
+#ifdef OPH_ZARR
+void *oph_nc_dlopen();
+void oph_nc_dlclose(void *handle);
+#endif
+
 #endif				//__OPH_NC_UTILITY_H

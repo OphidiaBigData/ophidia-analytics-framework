@@ -90,6 +90,9 @@ struct _OPH_EXPORTNC_operator_handle {
 	char shuffle;
 	char deflate;
 	char is_zarr;
+#ifdef OPH_ZARR
+	void *dlh;
+#endif
 };
 typedef struct _OPH_EXPORTNC_operator_handle OPH_EXPORTNC_operator_handle;
 

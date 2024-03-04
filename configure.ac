@@ -449,7 +449,7 @@ AC_ARG_WITH(jansson_header_path,
 AC_ARG_WITH(jansson_lib_path,
        [  --with-jansson-lib-path=PATH       Location of jansson lib],
        [
-        jansson_lib_path="-L$withval"
+        jansson_lib_path="-L$withval -ljansson"
        ],
      [
     jansson_lib_path="$JANSSON_LIBS"
@@ -587,6 +587,15 @@ if test "$plugin_host_path" = "no"; then
            PLUGIN_DEFAULT_HOSTNAME=$mds_host_path
 fi
 AC_SUBST(PLUGIN_DEFAULT_HOSTNAME)
+
+#Enable ZARR
+zarr_enable=0
+AC_ARG_ENABLE(zarr,
+            [  --enable-zarr  Enables ZARR support ],
+                     [zarr_enable=yes],
+                     [zarr_enable=no])
+ZARR=$zarr_enable
+AM_CONDITIONAL([HAVE_ZARR], [test "x$have_netcdf" = "xyes"] && [test "x$zarr_enable" = "xyes"])
 
 OPT="-Wno-error -Wno-format-security"
 case "${host}" in

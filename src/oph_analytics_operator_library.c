@@ -91,7 +91,7 @@ int oph_set_env(HASHTBL *task_tbl, oph_operator_struct *handle)
 	}
 
 	if (!(handle->dlh = (lt_dlhandle) lt_dlopen(handle->lib))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "lt_dlopen error: %s\n", lt_dlerror());
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "lt_dlopen error: %s (library %s)\n", lt_dlerror(), handle->lib);
 		return OPH_ANALYTICS_OPERATOR_DLOPEN_ERR;
 	}
 
@@ -240,10 +240,11 @@ int oph_unset_env(oph_operator_struct *handle)
 	}
 #ifndef OPH_WITH_VALGRIND
 	if (handle->dlh && (lt_dlclose(handle->dlh))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "lt_dlclose error: %s\n", lt_dlerror());
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "lt_dlclose error: %s (library %s)\n", lt_dlerror(), handle->lib);
 		return OPH_ANALYTICS_OPERATOR_DLCLOSE_ERR;
 	}
 #endif
+
 	return res;
 }
 
@@ -255,6 +256,7 @@ int oph_exit_task()
 		return OPH_ANALYTICS_OPERATOR_DLEXIT_ERR;
 	}
 #endif
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -275,7 +277,7 @@ static int oph_find_operator_library(char *operator_type, char **dyn_lib)
 
 	fp = fopen(dyn_lib_str, "r");
 	if (!fp) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Driver file not found %s\n", dyn_lib_str);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Driver file not found '%s'\n", dyn_lib_str);
 		return -1;	// driver not found
 	}
 

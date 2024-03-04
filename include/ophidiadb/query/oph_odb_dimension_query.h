@@ -17,7 +17,7 @@
 */
 
 #ifndef __OPH_ODB_DIM_QUERY_H__
-#define __OPH_ODB_DIM_QUERYH__
+#define __OPH_ODB_DIM_QUERY_H__
 
 #define MYSQL_QUERY_DIM_RETRIEVE_DIMENSIONS_FEATURES			"SELECT dimension.iddimension, dimensionname, dimensiontype, size, explicit, level, fkiddimensionindex, idhierarchy, conceptlevel, fkiddimensionlabel, unlimited FROM dimension INNER JOIN dimensioninstance ON dimension.iddimension = dimensioninstance.iddimension INNER JOIN cubehasdim ON cubehasdim.iddimensioninstance = dimensioninstance.iddimensioninstance where iddatacube = %d and size<>0 order by explicit desc, level asc;"
 

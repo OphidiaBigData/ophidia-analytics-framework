@@ -27,6 +27,9 @@
 #include <zlib.h>
 #include <math.h>
 #include <ctype.h>
+#ifdef OPH_ZARR
+#include <dlfcn.h>
+#endif
 
 #include "oph_dimension_library.h"
 #include "oph-lib-binary-io.h"
@@ -49,6 +52,10 @@
 #define OPH_NC_CONCAT_FIELD_COMPR "oph_compress('','', oph_concat2('oph_%s|oph_%s','oph_%s', oph_uncompress('','', %s.measure), %s.measure))"
 #define OPH_NC_CONCAT_WHERE_FILE "%s.id_dim = %s.id_dim"
 
+#ifdef OPH_ZARR
+#define OPH_NC_LIBRARY "libnetcdf.so"
+#endif
+
 #if defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 #include "clients/taketime.h"
 static int timeval_add(res, x, y)
@@ -65,6 +72,22 @@ struct timeval *res, *x, *y;
 #endif
 
 extern int msglevel;
+
+#ifdef OPH_ZARR
+void *oph_nc_dlopen()
+{
+	void *handle = dlopen(OPH_NC_LIBRARY, RTLD_LAZY | RTLD_GLOBAL);
+	if (!handle)
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "dlopen error: %s (library %s)\n", dlerror(), OPH_NC_LIBRARY);
+	return handle;
+}
+
+void oph_nc_dlclose(void *handle)
+{
+	if (handle && dlclose(handle))
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "dlclose error: %s (library %s)\n", dlerror(), OPH_NC_LIBRARY);
+}
+#endif
 
 int oph_nc_cache_to_buffer2(short int tot_dim_number, unsigned int *counters, unsigned int *limits, unsigned int *products, char *binary_cache, char *binary_insert, size_t sizeof_var)
 {

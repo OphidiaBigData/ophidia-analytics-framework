@@ -94,6 +94,9 @@ struct _OPH_CONCATNC2_operator_handle {
 	char dim_continue;
 	int nthread;
 	short int execute_error;
+#ifdef OPH_ZARR
+	void *dlh;
+#endif
 };
 typedef struct _OPH_CONCATNC2_operator_handle OPH_CONCATNC2_operator_handle;
 

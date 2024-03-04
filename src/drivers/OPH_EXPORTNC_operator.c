@@ -71,6 +71,10 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPORTNC_MEMORY_ERROR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
+#ifdef OPH_ZARR
+	((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->dlh = oph_nc_dlopen();
+#endif
+
 	//1 - Set up struct to empty values
 	((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_datacube = 0;
 	((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->id_input_container = 0;
@@ -1984,6 +1988,10 @@ int env_unset(oph_operator_struct *handle)
 		free((char *) ((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->sessionid);
 		((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->sessionid = NULL;
 	}
+#ifdef OPH_ZARR
+	oph_nc_dlclose(((OPH_EXPORTNC_operator_handle *) handle->operator_handle)->dlh);
+#endif
+
 	free((OPH_EXPORTNC_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
 

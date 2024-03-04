@@ -422,6 +422,10 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_EXPLORENC_MEMORY_ERROR_HANDLE);
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
+#ifdef OPH_ZARR
+	((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->dlh = oph_nc_dlopen();
+#endif
+
 	//1 - Set up struct to empty values
 	((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->nc_file_path = NULL;
 	NETCDF_var *nc_measure = &(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->measure);
@@ -7220,6 +7224,10 @@ int env_unset(oph_operator_struct *handle)
 		oph_tp_free_multiple_value_param_list(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->objkeys_num);
 		((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->objkeys = NULL;
 	}
+#ifdef OPH_ZARR
+	oph_nc_dlclose(((OPH_EXPLORENC_operator_handle *) handle->operator_handle)->dlh);
+#endif
+
 	free((OPH_EXPLORENC_operator_handle *) handle->operator_handle);
 	handle->operator_handle = NULL;
 
