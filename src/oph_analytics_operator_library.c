@@ -91,7 +91,7 @@ int oph_set_env(HASHTBL *task_tbl, oph_operator_struct *handle)
 	}
 
 	if (!(handle->dlh = (lt_dlhandle) lt_dlopen(handle->lib))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "lt_dlopen error: %s (library %s)\n", lt_dlerror(), handle->lib);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "lt_dlopen error: %s (library '%s')\n", lt_dlerror(), handle->lib);
 		return OPH_ANALYTICS_OPERATOR_DLOPEN_ERR;
 	}
 

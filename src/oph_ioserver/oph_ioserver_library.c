@@ -135,8 +135,8 @@ int oph_ioserver_setup(const char *server_type, oph_ioserver_handler **handle, c
 
 	pthread_mutex_lock(&libtool_lock);
 	if (!(internal_handle->dlh = (lt_dlhandle) lt_dlopen(internal_handle->lib))) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_DLOPEN_ERROR, lt_dlerror());
-		logging_server(LOG_ERROR, __FILE__, __LINE__, internal_handle->server_type, OPH_IOSERVER_LOG_DLOPEN_ERROR, lt_dlerror());
+		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_IOSERVER_LOG_DLOPEN_ERROR " (library '%s')", lt_dlerror(), internal_handle->lib);
+		logging_server(LOG_ERROR, __FILE__, __LINE__, internal_handle->server_type, OPH_IOSERVER_LOG_DLOPEN_ERROR " (library '%s')", lt_dlerror(), internal_handle->lib);
 		pthread_mutex_unlock(&libtool_lock);
 		return OPH_IOSERVER_DLOPEN_ERR;
 	}
