@@ -579,12 +579,11 @@ int oph_odb_meta_insert_into_manage_table(ophidiadb *oDB, int id_metadatainstanc
 int oph_odb_meta_find_complete_metadata_list(ophidiadb *oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, char *id_metadatainstance, char *metadata_variable,
 					     char *metadata_type, char *metadata_value, MYSQL_RES **metadata_list)
 {
-	(*metadata_list) = NULL;
-
 	if (!oDB || !id_datacube || !metadata_list) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_ODB_NULL_PARAM;
 	}
+	(*metadata_list) = NULL;
 
 	if (oph_odb_check_connection_to_ophidiadb(oDB)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to reconnect to OphidiaDB.\n");

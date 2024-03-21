@@ -130,6 +130,7 @@ struct _OPH_IMPORTNC2_operator_handle {
 	short int execute_error;
 	char policy;
 	int nthread;
+	char output_metadata;
 #ifdef OPH_ZARR
 	void *dlh;
 #endif

@@ -3,6 +3,7 @@
 
 ### Added:
 
+- Option output_metadata of OPH_IMPORT* operators
 - Support for Zarr format
 
 ## v1.8.0 - 2023-07-31

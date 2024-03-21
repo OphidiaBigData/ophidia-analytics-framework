@@ -117,8 +117,14 @@
 #define OPH_JSON_OBJKEY_FIND_LIST					"find_list"
 #define OPH_JSON_OBJKEY_FIND_SUMMARY					"find_summary"
 #define OPH_JSON_OBJKEY_IMPORTNC					"importnc"
+#define OPH_JSON_OBJKEY_IMPORTNC_LIST				"importnc_list"
+#define OPH_JSON_OBJKEY_IMPORTNC_SUMMARY			"importnc_summary"
 #define OPH_JSON_OBJKEY_IMPORTNC2					"importnc2"
+#define OPH_JSON_OBJKEY_IMPORTNC2_LIST				"importnc2_list"
+#define OPH_JSON_OBJKEY_IMPORTNC2_SUMMARY			"importnc2_summary"
 #define OPH_JSON_OBJKEY_IMPORTNCS					"importncs"
+#define OPH_JSON_OBJKEY_IMPORTNCS_LIST				"importncs_list"
+#define OPH_JSON_OBJKEY_IMPORTNCS_SUMMARY			"importncs_summary"
 #define OPH_JSON_OBJKEY_IMPORTFITS					"importfits"
 #define OPH_JSON_OBJKEY_IMPORTFITS_SUMMARY			"importfits_summary"
 #define OPH_JSON_OBJKEY_EXPORTNC					"exportnc"
@@ -150,7 +156,11 @@
 #define OPH_JSON_OBJKEY_CONTAINERSCHEMA_INFO 		"containerschema_info"
 #define OPH_JSON_OBJKEY_CONTAINERSCHEMA_DIMINFO 	"containerschema_diminfo"
 #define OPH_JSON_OBJKEY_IMPORTESDM					"importesdm"
+#define OPH_JSON_OBJKEY_IMPORTESDM_LIST				"importesdm_list"
+#define OPH_JSON_OBJKEY_IMPORTESDM_SUMMARY			"importesdm_summary"
 #define OPH_JSON_OBJKEY_IMPORTESDM2					"importesdm2"
+#define OPH_JSON_OBJKEY_IMPORTESDM2_LIST			"importesdm2_list"
+#define OPH_JSON_OBJKEY_IMPORTESDM2_SUMMARY			"importesdm2_summary"
 #define OPH_JSON_OBJKEY_EXPORTESDM					"exportesdm"
 #define OPH_JSON_OBJKEY_CONCATESDM					"concatesdm"
 #define OPH_JSON_OBJKEY_CONCATESDM2					"concatesdm2"
@@ -158,5 +168,7 @@
 #define OPH_JSON_OBJKEY_CDO_RETURNCODE				"cdo_returncode"
 #define OPH_JSON_OBJKEY_GENERIC_OUTPUT					"generic_output"
 #define OPH_JSON_OBJKEY_GENERIC_RETURNCODE				"generic_returncode"
+
+
 
 #endif

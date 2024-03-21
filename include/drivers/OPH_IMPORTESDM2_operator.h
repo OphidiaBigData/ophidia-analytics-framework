@@ -128,6 +128,7 @@ struct _OPH_IMPORTESDM2_operator_handle {
 	char **args;
 	int args_num;
 	int nthread;
+	char output_metadata;
 };
 typedef struct _OPH_IMPORTESDM2_operator_handle OPH_IMPORTESDM2_operator_handle;
 

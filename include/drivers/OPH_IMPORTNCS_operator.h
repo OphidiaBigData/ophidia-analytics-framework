@@ -41,6 +41,7 @@
  * \param run Simulate the run of operator to compute distribution parameters
  * \param nc_file_path Path of the nc file to import
  * \param nc_file_path_orig Original value of nc_file_path
+ * \param nc_file_path_orig2 Original value of nc_file_path
  * \param partition_input Name of the host partition used to store data
  * \param grid_name Name of the grid used to specify dimensions
  * \param ioserver_type Type of I/O server used
@@ -90,6 +91,7 @@ struct _OPH_IMPORTNCS_operator_handle {
 	char **nc_file_paths;
 	int nc_file_paths_num;
 	char *nc_file_path_orig;
+	char *nc_file_path_orig2;
 	char *partition_input;
 	char *grid_name;
 	char check_grid;
@@ -131,6 +133,7 @@ struct _OPH_IMPORTNCS_operator_handle {
 	int nthread;
 	short int execute_error;
 	char policy;
+	char output_metadata;
 #ifdef OPH_ZARR
 	void *dlh;
 #endif

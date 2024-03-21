@@ -102,6 +102,7 @@
 #define OPH_IN_PARAM_VOCABULARY					"vocabulary"
 #define OPH_IN_PARAM_IMPORT_METADATA				"import_metadata"
 #define OPH_IN_PARAM_EXPORT_METADATA				"export_metadata"
+#define OPH_IN_PARAM_OUTPUT_METADATA				"output_metadata"
 #define OPH_IN_PARAM_SESSION					"session_level"
 #define OPH_IN_PARAM_MARKER					"job_level"
 #define OPH_IN_PARAM_MASK					"mask"

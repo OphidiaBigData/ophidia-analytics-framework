@@ -82,6 +82,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->id_input_container = 0;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->compressed = 0;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->import_metadata = 0;
+	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->output_metadata = 0;
 	((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->check_compliance = 0;
 	ESDM_var *nc_measure = &(((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->measure);
 	nc_measure->dims_name = NULL;
@@ -259,9 +260,17 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_IMPORT_METADATA);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
-	if (strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN) == 0) {
+	if (strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN) == 0)
 		((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->import_metadata = 1;
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_METADATA);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_OUTPUT_METADATA);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MISSING_INPUT_PARAMETER, container_name, OPH_IN_PARAM_OUTPUT_METADATA);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	if (strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN) == 0)
+		((OPH_IMPORTESDM_operator_handle *) handle->operator_handle)->output_metadata = 1;
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_SRC_FILE_PATH);
 	if (!value) {
@@ -4007,6 +4016,176 @@ int task_destroy(oph_operator_struct *handle)
 		handle->output_string = strdup(tmp_string);
 
 		free(tmp_uri);
+
+		// Output metadata
+		while (oper_handle->output_metadata) {
+
+			MYSQL_RES *read_result = NULL;
+			MYSQL_FIELD *fields;
+			MYSQL_ROW row;
+			int num_fields;
+			int num_rows;
+			int i, j, len;
+
+			if (oph_odb_meta_find_complete_metadata_list(&(oper_handle->oDB), oper_handle->id_output_datacube, NULL, 0, NULL, NULL, NULL, NULL, &read_result)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_METADATA_READ_METADATA_ERROR);
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_READ_METADATA_ERROR);
+				break;
+			}
+
+			num_rows = mysql_num_rows(read_result);
+			char message[OPH_COMMON_BUFFER_LEN];
+			snprintf(message, OPH_COMMON_BUFFER_LEN, "Found %d items", num_rows);
+			if (oph_json_is_objkey_printable(oper_handle->objkeys, oper_handle->objkeys_num, OPH_JSON_OBJKEY_IMPORTNC_SUMMARY)) {
+				if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_IMPORTNC_SUMMARY, "Summary", message)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
+					break;
+				}
+			}
+			//Empty set
+			if (!num_rows) {
+				pmesg(LOG_WARNING, __FILE__, __LINE__, "No rows found by query\n");
+				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_NO_ROWS_FOUND);
+				mysql_free_result(read_result);
+				break;
+			}
+
+			fields = mysql_fetch_fields(read_result);
+			num_fields = mysql_num_fields(read_result);
+
+			int objkey_printable = oph_json_is_objkey_printable(oper_handle->objkeys, oper_handle->objkeys_num, OPH_JSON_OBJKEY_IMPORTNC_LIST), iii, jjj;
+			if (objkey_printable) {
+				char **jsonkeys = NULL;
+				char **fieldtypes = NULL;
+				jsonkeys = (char **) malloc(sizeof(char *) * num_fields);
+				if (!jsonkeys) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_MEMORY_ERROR_INPUT, "keys");
+					mysql_free_result(read_result);
+					break;
+				}
+				for (jjj = 0; jjj < num_fields; ++jjj) {
+					jsonkeys[jjj] = strdup(fields[jjj].name ? fields[jjj].name : "");
+					if (!jsonkeys[jjj]) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_MEMORY_ERROR_INPUT, "key");
+						for (iii = 0; iii < jjj; iii++)
+							if (jsonkeys[iii])
+								free(jsonkeys[iii]);
+						if (jsonkeys)
+							free(jsonkeys);
+						mysql_free_result(read_result);
+						break;
+					}
+				}
+				if (jjj < num_fields)
+					break;
+				fieldtypes = (char **) malloc(sizeof(char *) * num_fields);
+				if (!fieldtypes) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_MEMORY_ERROR_INPUT, "fieldtypes");
+					for (iii = 0; iii < num_fields; iii++)
+						if (jsonkeys[iii])
+							free(jsonkeys[iii]);
+					if (jsonkeys)
+						free(jsonkeys);
+					mysql_free_result(read_result);
+					break;
+				}
+				for (jjj = 0; jjj < num_fields; ++jjj) {
+					fieldtypes[jjj] = strdup(OPH_JSON_STRING);
+					if (!fieldtypes[jjj]) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_MEMORY_ERROR_INPUT, "fieldtype");
+						for (iii = 0; iii < num_fields; iii++)
+							if (jsonkeys[iii])
+								free(jsonkeys[iii]);
+						if (jsonkeys)
+							free(jsonkeys);
+						for (iii = 0; iii < jjj; iii++)
+							if (fieldtypes[iii])
+								free(fieldtypes[iii]);
+						if (fieldtypes)
+							free(fieldtypes);
+						mysql_free_result(read_result);
+						break;
+					}
+				}
+				if (jjj < num_fields)
+					break;
+				if (oph_json_add_grid(handle->operator_json, OPH_JSON_OBJKEY_IMPORTNC_LIST, "Metadata list", NULL, jsonkeys, num_fields, fieldtypes, num_fields)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID error\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID error\n");
+					for (iii = 0; iii < num_fields; iii++)
+						if (jsonkeys[iii])
+							free(jsonkeys[iii]);
+					if (jsonkeys)
+						free(jsonkeys);
+					for (iii = 0; iii < num_fields; iii++)
+						if (fieldtypes[iii])
+							free(fieldtypes[iii]);
+					if (fieldtypes)
+						free(fieldtypes);
+					mysql_free_result(read_result);
+					break;
+				}
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonkeys[iii])
+						free(jsonkeys[iii]);
+				if (jsonkeys)
+					free(jsonkeys);
+				for (iii = 0; iii < num_fields; iii++)
+					if (fieldtypes[iii])
+						free(fieldtypes[iii]);
+				if (fieldtypes)
+					free(fieldtypes);
+			}
+
+			char **jsonvalues = NULL;
+			while (objkey_printable && (row = mysql_fetch_row(read_result))) {
+
+				jsonvalues = (char **) calloc(num_fields, sizeof(char *));
+				if (!jsonvalues) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_MEMORY_ERROR_INPUT, "values");
+					break;
+				}
+				for (jjj = 0; jjj < num_fields; ++jjj) {
+					jsonvalues[jjj] = strdup(row[jjj] ? row[jjj] : "");
+					if (!jsonvalues[jjj]) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_METADATA_MEMORY_ERROR_INPUT, "value");
+						for (iii = 0; iii < jjj; iii++)
+							if (jsonvalues[iii])
+								free(jsonvalues[iii]);
+						if (jsonvalues)
+							free(jsonvalues);
+						break;
+					}
+				}
+				if (jjj < num_fields)
+					break;
+				if (oph_json_add_grid_row(handle->operator_json, OPH_JSON_OBJKEY_IMPORTNC_LIST, jsonvalues)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD GRID ROW error\n");
+					logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD GRID ROW error\n");
+					for (iii = 0; iii < num_fields; iii++)
+						if (jsonvalues[iii])
+							free(jsonvalues[iii]);
+					if (jsonvalues)
+						free(jsonvalues);
+					break;
+				}
+				for (iii = 0; iii < num_fields; iii++)
+					if (jsonvalues[iii])
+						free(jsonvalues[iii]);
+				if (jsonvalues)
+					free(jsonvalues);
+			}
+
+			mysql_free_result(read_result);
+			break;
+		}
 	}
 
 	if (global_error) {

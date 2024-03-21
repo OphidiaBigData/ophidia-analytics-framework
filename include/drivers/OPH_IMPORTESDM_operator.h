@@ -128,6 +128,7 @@ struct _OPH_IMPORTESDM_operator_handle {
 	char *operation;
 	char **args;
 	int args_num;
+	char output_metadata;
 };
 typedef struct _OPH_IMPORTESDM_operator_handle OPH_IMPORTESDM_operator_handle;
 

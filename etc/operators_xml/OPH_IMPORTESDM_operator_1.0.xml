@@ -155,6 +155,7 @@ SUBMISSION STRING: &quot;operator=oph_importesdm;cwd=/session-code1;container=co
 		<argument type="string" mandatory="no" default="auto">host_partition</argument>
 		<argument type="string" mandatory="no" default="mysql_table" values="mysql_table|ophidiaio_memory">ioserver</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">import_metadata</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">output_metadata</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">check_compliance</argument>
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="0">nhost</argument>
@@ -186,7 +187,7 @@ SUBMISSION STRING: &quot;operator=oph_importesdm;cwd=/session-code1;container=co
 		<argument type="int" mandatory="no" default="2" minvalue="1" maxvalue="12">leap_month</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
 		<argument type="string" mandatory="no" default="rr" values="rr|port">policy</argument>
-		<argument type="string" mandatory="no" default="all" values="all|none|importesdm">objkey_filter</argument>
+		<argument type="string" mandatory="no" default="all" values="all|none|importesdm|importesdm_list|importesdm_summary">objkey_filter</argument>
 		<argument type="string" mandatory="no" default="none" values="none|stream|max|min|avg|sum|std|var|stat|outlier|sum_scalar|mul_scalar|abs|sqr|sqrt|ceil|floor|round|int|nint|pow|exp|log|log10|sin|cos|tan|asin|acos|atan|sinh|cosh|tanh|reci|not">operation</argument>
 		<argument type="string" mandatory="no" default="none">args</argument>
     </args>
