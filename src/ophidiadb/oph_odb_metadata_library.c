@@ -34,7 +34,7 @@
 
 extern int msglevel;
 
-int oph_odb_meta_find_metadatakey_list(ophidiadb * oDB, int vocabulary_id, MYSQL_RES ** information_list)
+int oph_odb_meta_find_metadatakey_list(ophidiadb *oDB, int vocabulary_id, MYSQL_RES **information_list)
 {
 	(*information_list) = NULL;
 
@@ -67,7 +67,7 @@ int oph_odb_meta_find_metadatakey_list(ophidiadb * oDB, int vocabulary_id, MYSQL
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_insert_into_metadatainstance_manage_tables(ophidiadb * oDB, const int id_datacube, const int id_metadatakey, const char *new_metadatakey, const char *new_metadatakey_variable,
+int oph_odb_meta_insert_into_metadatainstance_manage_tables(ophidiadb *oDB, const int id_datacube, const int id_metadatakey, const char *new_metadatakey, const char *new_metadatakey_variable,
 							    const int id_metadatatype, const int id_user, const char *value, int *last_insertd_id)
 {
 	if (!oDB || !id_datacube || !id_metadatakey || !id_metadatatype || !id_user || !value || !last_insertd_id) {
@@ -167,7 +167,7 @@ int oph_odb_meta_insert_into_metadatainstance_manage_tables(ophidiadb * oDB, con
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_retrieve_vocabulary_id(ophidiadb * oDB, char *vocabulary_name, int *id_vocabulary)
+int oph_odb_meta_retrieve_vocabulary_id(ophidiadb *oDB, char *vocabulary_name, int *id_vocabulary)
 {
 	if (!oDB || !vocabulary_name || !id_vocabulary) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -216,7 +216,7 @@ int oph_odb_meta_retrieve_vocabulary_id(ophidiadb * oDB, char *vocabulary_name, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_retrieve_vocabulary_id_from_container(ophidiadb * oDB, int id_container, int *id_vocabulary)
+int oph_odb_meta_retrieve_vocabulary_id_from_container(ophidiadb *oDB, int id_container, int *id_vocabulary)
 {
 	if (!oDB || !id_vocabulary || !id_container) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -265,7 +265,7 @@ int oph_odb_meta_retrieve_vocabulary_id_from_container(ophidiadb * oDB, int id_c
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_check_metadatainstance_existance(ophidiadb * oDB, int metadatainstance_id, int id_datacube, int *exists)
+int oph_odb_meta_check_metadatainstance_existance(ophidiadb *oDB, int metadatainstance_id, int id_datacube, int *exists)
 {
 	if (!oDB || !metadatainstance_id || !id_datacube || !exists) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -311,7 +311,7 @@ int oph_odb_meta_check_metadatainstance_existance(ophidiadb * oDB, int metadatai
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_retrieve_metadatakey_id(ophidiadb * oDB, char *key_label, char *key_variable, int id_container, int *id_metadatakey)
+int oph_odb_meta_retrieve_metadatakey_id(ophidiadb *oDB, char *key_label, char *key_variable, int id_container, int *id_metadatakey)
 {
 	if (!oDB || !key_label || !id_container || !id_metadatakey) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -372,7 +372,7 @@ int oph_odb_meta_retrieve_metadatakey_id(ophidiadb * oDB, char *key_label, char 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_retrieve_metadatatype_id(ophidiadb * oDB, char *metadatatype_name, int *id_metadatatype)
+int oph_odb_meta_retrieve_metadatatype_id(ophidiadb *oDB, char *metadatatype_name, int *id_metadatatype)
 {
 	if (!oDB || !metadatatype_name || !id_metadatatype) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -419,7 +419,7 @@ int oph_odb_meta_retrieve_metadatatype_id(ophidiadb * oDB, char *metadatatype_na
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_retrieve_metadatainstance_id(ophidiadb * oDB, char *key_label, char *key_variable, int id_datacube, int *id_metadatainstance)
+int oph_odb_meta_retrieve_metadatainstance_id(ophidiadb *oDB, char *key_label, char *key_variable, int id_datacube, int *id_metadatainstance)
 {
 	if (!oDB || !key_label || !id_datacube || !id_metadatainstance) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -467,7 +467,7 @@ int oph_odb_meta_retrieve_metadatainstance_id(ophidiadb * oDB, char *key_label, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_datacube, int id_metadatakey, int id_metadatatype, char *metadata_key, char *metadata_variable, char *metadata_value,
+int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb *oDB, int id_datacube, int id_metadatakey, int id_metadatatype, char *metadata_key, char *metadata_variable, char *metadata_value,
 						    int *last_insertd_id)
 {
 	if (!oDB || !id_datacube || !id_metadatatype || !metadata_value || !last_insertd_id) {
@@ -549,7 +549,7 @@ int oph_odb_meta_insert_into_metadatainstance_table(ophidiadb * oDB, int id_data
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_insert_into_manage_table(ophidiadb * oDB, int id_metadatainstance, int id_user)
+int oph_odb_meta_insert_into_manage_table(ophidiadb *oDB, int id_metadatainstance, int id_user)
 {
 	if (!oDB || !id_user || !id_metadatainstance) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -576,8 +576,8 @@ int oph_odb_meta_insert_into_manage_table(ophidiadb * oDB, int id_metadatainstan
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, char *id_metadatainstance, char *metadata_variable,
-					     char *metadata_type, char *metadata_value, MYSQL_RES ** metadata_list)
+int oph_odb_meta_find_complete_metadata_list(ophidiadb *oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, char *id_metadatainstance, char *metadata_variable,
+					     char *metadata_type, char *metadata_value, MYSQL_RES **metadata_list)
 {
 	if (!oDB || !id_datacube || !metadata_list) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -635,7 +635,7 @@ int oph_odb_meta_find_complete_metadata_list(ophidiadb * oDB, int id_datacube, c
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatainstance, int id_datacube, char *metadata_value, int force)
+int oph_odb_meta_update_metadatainstance_table(ophidiadb *oDB, int id_metadatainstance, int id_datacube, char *metadata_value, int force)
 {
 	if (!oDB || !id_metadatainstance || !id_datacube || !metadata_value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -706,7 +706,7 @@ int oph_odb_meta_update_metadatainstance_table(ophidiadb * oDB, int id_metadatai
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb * oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, int id_metadatainstance, char *metadata_variable,
+int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb *oDB, int id_datacube, const char **metadata_keys, int metadata_keys_num, int id_metadatainstance, char *metadata_variable,
 						    char *metadata_type, char *metadata_value, int force)
 {
 	if (!oDB || !id_datacube) {
@@ -777,7 +777,7 @@ int oph_odb_meta_delete_from_metadatainstance_table(ophidiadb * oDB, int id_data
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, int id_datacube_output, int id_user)
+int oph_odb_meta_copy_from_cube_to_cube(ophidiadb *oDB, int id_datacube_input, int id_datacube_output, int id_user)
 {
 	if (!oDB || !id_user || !id_datacube_input || !id_datacube_output) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -870,7 +870,7 @@ int oph_odb_meta_copy_from_cube_to_cube(ophidiadb * oDB, int id_datacube_input, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_retrieve_single_metadata_instance(ophidiadb * oDB, int id_metadata_instance, char **type, char **value)
+int oph_odb_meta_retrieve_single_metadata_instance(ophidiadb *oDB, int id_metadata_instance, char **type, char **value)
 {
 	if (!oDB || !id_metadata_instance || !type || !value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -925,7 +925,7 @@ int oph_odb_meta_retrieve_single_metadata_instance(ophidiadb * oDB, int id_metad
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_get(ophidiadb * oDB, int id_datacube, const char *variable, const char *template, int *id_metadata_instance, char **value)
+int oph_odb_meta_get(ophidiadb *oDB, int id_datacube, const char *variable, const char *template, int *id_metadata_instance, char **value)
 {
 	if (!oDB || !id_datacube || !template || (!id_metadata_instance && !value)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -986,7 +986,7 @@ int oph_odb_meta_get(ophidiadb * oDB, int id_datacube, const char *variable, con
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, const char *template, int id_metadata_instance, const char *value)
+int oph_odb_meta_put(ophidiadb *oDB, int id_datacube, const char *variable, const char *template, int id_metadata_instance, const char *value)
 {
 	if (!oDB || !id_datacube || (!template && !id_metadata_instance) || !value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1072,7 +1072,7 @@ int oph_odb_meta_put(ophidiadb * oDB, int id_datacube, const char *variable, con
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_check_for_time_dimension(ophidiadb * oDB, int id_datacube, const char *dimension_name, int *count)
+int oph_odb_meta_check_for_time_dimension(ophidiadb *oDB, int id_datacube, const char *dimension_name, int *count)
 {
 	if (!oDB || !id_datacube || !count) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1164,7 +1164,7 @@ int oph_odb_meta_check_for_time_dimension(ophidiadb * oDB, int id_datacube, cons
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_meta_update_metadatakeys2(ophidiadb * oDB, int id_datacube, const char *old_variable, const char *new_variable, const char *new_type)
+int oph_odb_meta_update_metadatakeys2(ophidiadb *oDB, int id_datacube, const char *old_variable, const char *new_variable, const char *new_type)
 {
 	if (!oDB || !id_datacube || !new_variable) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1336,7 +1336,7 @@ int oph_odb_meta_update_metadatakeys2(ophidiadb * oDB, int id_datacube, const ch
 	return ret;
 }
 
-int oph_odb_meta_update_metadatakeys(ophidiadb * oDB, int id_datacube, const char *old_variable, const char *new_variable)
+int oph_odb_meta_update_metadatakeys(ophidiadb *oDB, int id_datacube, const char *old_variable, const char *new_variable)
 {
 	return oph_odb_meta_update_metadatakeys2(oDB, id_datacube, old_variable, new_variable, NULL);
 }

@@ -379,7 +379,7 @@ int oph_dproc_delete_data(int id_datacube, int id_container, char *fragment_ids,
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int oph_dproc_clean_odb(ophidiadb * oDB, int id_datacube, int id_container)
+int oph_dproc_clean_odb(ophidiadb *oDB, int id_datacube, int id_container)
 {
 	if (!oDB || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
