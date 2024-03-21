@@ -38,7 +38,7 @@ extern int msglevel;
 /***********OPH_JSON_OBJ_GRID INTERNAL FUNCTIONS***********/
 
 // Free a grid object contents
-int oph_json_free_grid(oph_json_obj_grid *obj)
+int oph_json_free_grid(oph_json_obj_grid * obj)
 {
 	if (obj) {
 		if (obj->description) {
@@ -99,7 +99,7 @@ int oph_json_free_grid(oph_json_obj_grid *obj)
 
 /***********OPH_JSON_OBJ_GRID FUNCTIONS***********/
 
-int oph_json_add_grid(oph_json *json, const char *objkey, const char *title, const char *description, char **keys, int keys_num, char **fieldtypes, int fieldtypes_num)
+int oph_json_add_grid(oph_json * json, const char *objkey, const char *title, const char *description, char **keys, int keys_num, char **fieldtypes, int fieldtypes_num)
 {
 	if (!json || !objkey || !title || !keys || keys_num < 1 || !fieldtypes || fieldtypes_num < 1) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
@@ -464,7 +464,7 @@ int oph_json_add_grid(oph_json *json, const char *objkey, const char *title, con
 	return OPH_JSON_SUCCESS;
 }
 
-int oph_json_add_grid_row(oph_json *json, const char *objkey, char **values)
+int oph_json_add_grid_row(oph_json * json, const char *objkey, char **values)
 {
 	if (!json || !objkey || !values) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");

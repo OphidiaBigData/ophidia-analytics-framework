@@ -30,7 +30,7 @@
 
 extern int msglevel;
 
-int oph_odb_user_retrieve_user_id(ophidiadb *oDB, char *username, int *id_user)
+int oph_odb_user_retrieve_user_id(ophidiadb * oDB, char *username, int *id_user)
 {
 	if (!oDB || !username || !id_user) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

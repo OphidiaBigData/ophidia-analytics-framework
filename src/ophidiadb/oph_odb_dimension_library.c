@@ -36,8 +36,8 @@
 
 extern int msglevel;
 
-int oph_odb_dim_retrieve_full_dimension_info(ophidiadb *oDB, int id_dimensioninst, oph_odb_dimension *dim, oph_odb_dimension_instance *dim_inst, oph_odb_dimension_grid *dim_grid,
-					     oph_odb_hierarchy *hier, int id_datacube)
+int oph_odb_dim_retrieve_full_dimension_info(ophidiadb * oDB, int id_dimensioninst, oph_odb_dimension * dim, oph_odb_dimension_instance * dim_inst, oph_odb_dimension_grid * dim_grid,
+					     oph_odb_hierarchy * hier, int id_datacube)
 {
 	if (!oDB || !id_dimensioninst || !dim || !dim_inst || !dim_grid || !hier) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -229,7 +229,7 @@ int oph_odb_dim_retrieve_full_dimension_info(ophidiadb *oDB, int id_dimensionins
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimension2(ophidiadb *oDB, int id_dimension, oph_odb_dimension *dim, int id_datacube, char override_hier)
+int oph_odb_dim_retrieve_dimension2(ophidiadb * oDB, int id_dimension, oph_odb_dimension * dim, int id_datacube, char override_hier)
 {
 	if (!oDB || !dim || !id_dimension) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -374,12 +374,12 @@ int oph_odb_dim_retrieve_dimension2(ophidiadb *oDB, int id_dimension, oph_odb_di
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimension(ophidiadb *oDB, int id_dimension, oph_odb_dimension *dim, int id_datacube)
+int oph_odb_dim_retrieve_dimension(ophidiadb * oDB, int id_dimension, oph_odb_dimension * dim, int id_datacube)
 {
 	return oph_odb_dim_retrieve_dimension2(oDB, id_dimension, dim, id_datacube, 1);
 }
 
-int oph_odb_dim_retrieve_dimension_name_from_instance_id(ophidiadb *oDB, int id_dimensioninst, char **dimension_name)
+int oph_odb_dim_retrieve_dimension_name_from_instance_id(ophidiadb * oDB, int id_dimensioninst, char **dimension_name)
 {
 	if (!oDB || !id_dimensioninst || !dimension_name) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -435,7 +435,7 @@ int oph_odb_dim_retrieve_dimension_name_from_instance_id(ophidiadb *oDB, int id_
 }
 
 //Note it retrieves grid associated to the specified container
-int oph_odb_dim_retrieve_grid_id(ophidiadb *oDB, char *gridname, int id_container, int *id_grid)
+int oph_odb_dim_retrieve_grid_id(ophidiadb * oDB, char *gridname, int id_container, int *id_grid)
 {
 	if (!oDB || !gridname || !id_container) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -491,7 +491,7 @@ int oph_odb_dim_retrieve_grid_id(ophidiadb *oDB, char *gridname, int id_containe
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_grid(ophidiadb *oDB, int id_grid, oph_odb_dimension_grid *dim_grid)
+int oph_odb_dim_retrieve_grid(ophidiadb * oDB, int id_grid, oph_odb_dimension_grid * dim_grid)
 {
 	if (!oDB || !id_grid || !dim_grid) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -552,7 +552,7 @@ int oph_odb_dim_retrieve_grid(ophidiadb *oDB, int id_grid, oph_odb_dimension_gri
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_hierarchy(ophidiadb *oDB, int id_hierarchy, oph_odb_hierarchy *hier)
+int oph_odb_dim_retrieve_hierarchy(ophidiadb * oDB, int id_hierarchy, oph_odb_hierarchy * hier)
 {
 	if (!oDB || !hier || !id_hierarchy) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -605,7 +605,7 @@ int oph_odb_dim_retrieve_hierarchy(ophidiadb *oDB, int id_hierarchy, oph_odb_hie
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimension_instance_id(ophidiadb *oDB, int id_datacube, char *dimensionname, int *id_dimension)
+int oph_odb_dim_retrieve_dimension_instance_id(ophidiadb * oDB, int id_datacube, char *dimensionname, int *id_dimension)
 {
 	if (!oDB || !dimensionname || !id_dimension) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -655,7 +655,7 @@ int oph_odb_dim_retrieve_dimension_instance_id(ophidiadb *oDB, int id_datacube, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimension_instance_id2(ophidiadb *oDB, int id_datacube, char *dimensionname, int *id_dimension_instance, int *id_dimension, int *id_hierarchy)
+int oph_odb_dim_retrieve_dimension_instance_id2(ophidiadb * oDB, int id_datacube, char *dimensionname, int *id_dimension_instance, int *id_dimension, int *id_hierarchy)
 {
 	if (!oDB || !dimensionname || !id_dimension_instance) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -714,7 +714,7 @@ int oph_odb_dim_retrieve_dimension_instance_id2(ophidiadb *oDB, int id_datacube,
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimension_instance(ophidiadb *oDB, int id_dimensioninst, oph_odb_dimension_instance *dim_inst, int id_datacube)
+int oph_odb_dim_retrieve_dimension_instance(ophidiadb * oDB, int id_dimensioninst, oph_odb_dimension_instance * dim_inst, int id_datacube)
 {
 	if (!oDB || !dim_inst || !id_dimensioninst) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -805,7 +805,7 @@ int oph_odb_dim_retrieve_dimension_instance(ophidiadb *oDB, int id_dimensioninst
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimension_list_from_container(ophidiadb *oDB, int id_container, oph_odb_dimension **dims, int *dim_num)
+int oph_odb_dim_retrieve_dimension_list_from_container(ophidiadb * oDB, int id_container, oph_odb_dimension ** dims, int *dim_num)
 {
 	if (!oDB || !id_container || !dims || !dim_num) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -890,7 +890,7 @@ int oph_odb_dim_retrieve_dimension_list_from_container(ophidiadb *oDB, int id_co
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimension_list_from_grid_in_container(ophidiadb *oDB, char *grid_name, int id_container, oph_odb_dimension **dims, oph_odb_dimension_instance **dim_insts, int *dim_num)
+int oph_odb_dim_retrieve_dimension_list_from_grid_in_container(ophidiadb * oDB, char *grid_name, int id_container, oph_odb_dimension ** dims, oph_odb_dimension_instance ** dim_insts, int *dim_num)
 {
 	if (!oDB || !grid_name || !dims || !dim_insts || !dim_num || !id_container) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -988,7 +988,7 @@ int oph_odb_dim_retrieve_dimension_list_from_grid_in_container(ophidiadb *oDB, c
 }
 
 // Warning: support for time metadata is not present in the following function
-int oph_odb_dim_find_dimensions_features(ophidiadb *oDB, int id_datacube, MYSQL_RES **frag_rows, int *dim_num)
+int oph_odb_dim_find_dimensions_features(ophidiadb * oDB, int id_datacube, MYSQL_RES ** frag_rows, int *dim_num)
 {
 	if (!oDB || !id_datacube || !frag_rows || !dim_num) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1026,7 +1026,7 @@ int oph_odb_dim_find_dimensions_features(ophidiadb *oDB, int id_datacube, MYSQL_
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_find_hierarchy_list(ophidiadb *oDB, MYSQL_RES **information_list)
+int oph_odb_dim_find_hierarchy_list(ophidiadb * oDB, MYSQL_RES ** information_list)
 {
 	(*information_list) = NULL;
 
@@ -1059,7 +1059,7 @@ int oph_odb_dim_find_hierarchy_list(ophidiadb *oDB, MYSQL_RES **information_list
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_find_container_grid_list(ophidiadb *oDB, int id_container, MYSQL_RES **information_list)
+int oph_odb_dim_find_container_grid_list(ophidiadb * oDB, int id_container, MYSQL_RES ** information_list)
 {
 	(*information_list) = NULL;
 
@@ -1092,7 +1092,7 @@ int oph_odb_dim_find_container_grid_list(ophidiadb *oDB, int id_container, MYSQL
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_insert_into_grid_table(ophidiadb *oDB, oph_odb_dimension_grid *grid, int *last_insertd_id, int *grid_exist)
+int oph_odb_dim_insert_into_grid_table(ophidiadb * oDB, oph_odb_dimension_grid * grid, int *last_insertd_id, int *grid_exist)
 {
 	if (!oDB || !grid || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1194,7 +1194,7 @@ int oph_odb_dim_insert_into_grid_table(ophidiadb *oDB, oph_odb_dimension_grid *g
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_enable_grid(ophidiadb *oDB, int id_grid)
+int oph_odb_dim_enable_grid(ophidiadb * oDB, int id_grid)
 {
 	if (!oDB || !id_grid) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1221,7 +1221,7 @@ int oph_odb_dim_enable_grid(ophidiadb *oDB, int id_grid)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_insert_into_dimension_table(ophidiadb *oDB, oph_odb_dimension *dim, int *last_insertd_id, int id_datacube)
+int oph_odb_dim_insert_into_dimension_table(ophidiadb * oDB, oph_odb_dimension * dim, int *last_insertd_id, int id_datacube)
 {
 	if (!oDB || !dim || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1326,7 +1326,7 @@ int oph_odb_dim_insert_into_dimension_table(ophidiadb *oDB, oph_odb_dimension *d
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb *oDB, oph_odb_dimension_instance *dim_inst, int *last_insertd_id, int id_datacube, const char *dimension_name, const char *frequency)
+int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb * oDB, oph_odb_dimension_instance * dim_inst, int *last_insertd_id, int id_datacube, const char *dimension_name, const char *frequency)
 {
 	if (!oDB || !dim_inst || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1376,7 +1376,7 @@ int oph_odb_dim_insert_into_dimensioninstance_table(ophidiadb *oDB, oph_odb_dime
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_delete_dimensioninstance(ophidiadb *oDB, int id_dimensioninst)
+int oph_odb_dim_delete_dimensioninstance(ophidiadb * oDB, int id_dimensioninst)
 {
 	if (!oDB || !id_dimensioninst) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1404,7 +1404,7 @@ int oph_odb_dim_delete_dimensioninstance(ophidiadb *oDB, int id_dimensioninst)
 }
 
 //NOTE: It deletes grids used exclusively by this container
-int oph_odb_dim_delete_from_grid_table(ophidiadb *oDB, int id_container)
+int oph_odb_dim_delete_from_grid_table(ophidiadb * oDB, int id_container)
 {
 	if (!oDB || !id_container) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1431,7 +1431,7 @@ int oph_odb_dim_delete_from_grid_table(ophidiadb *oDB, int id_container)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_hierarchy_id(ophidiadb *oDB, char *hierarchy_name, int *id_hierarchy)
+int oph_odb_dim_retrieve_hierarchy_id(ophidiadb * oDB, char *hierarchy_name, int *id_hierarchy)
 {
 	if (!oDB || !hierarchy_name || !id_hierarchy) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1477,7 +1477,7 @@ int oph_odb_dim_retrieve_hierarchy_id(ophidiadb *oDB, char *hierarchy_name, int 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb *oDB, int datacube_id, const char *dimension_name, oph_odb_hierarchy *hier, char *concept_level, int *dimension_instance_id)
+int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb * oDB, int datacube_id, const char *dimension_name, oph_odb_hierarchy * hier, char *concept_level, int *dimension_instance_id)
 {
 	if (!oDB || !dimension_name || !hier) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1659,7 +1659,7 @@ int oph_odb_dim_retrieve_hierarchy_from_dimension_of_datacube(ophidiadb *oDB, in
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_set_time_dimension(ophidiadb *oDB, int id_datacube, char *dimension_name)
+int oph_odb_dim_set_time_dimension(ophidiadb * oDB, int id_datacube, char *dimension_name)
 {
 	if (!oDB || !dimension_name || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1789,7 +1789,7 @@ int oph_odb_dim_set_time_dimension(ophidiadb *oDB, int id_datacube, char *dimens
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_update_time_dimension(oph_odb_dimension *dim, char **templates, char **values, int nattr)
+int oph_odb_dim_update_time_dimension(oph_odb_dimension * dim, char **templates, char **values, int nattr)
 {
 	if (!dim || !templates || !values) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1827,7 +1827,7 @@ int oph_odb_dim_update_time_dimension(oph_odb_dimension *dim, char **templates, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_dim_retrieve_dimensions(ophidiadb *oDB, int id_datacube, char ***dimension_names, int *dimension_names_num)
+int oph_odb_dim_retrieve_dimensions(ophidiadb * oDB, int id_datacube, char ***dimension_names, int *dimension_names_num)
 {
 	if (!oDB || !id_datacube || !dimension_names || !dimension_names_num) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

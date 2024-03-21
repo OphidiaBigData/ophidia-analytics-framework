@@ -162,7 +162,7 @@ int oph_nc_cache_to_buffer(short int tot_dim_number, unsigned int *counters, uns
 	return _oph_nc_cache_to_buffer(tot_dim_number, 0, counters, limits, products, &index, binary_cache, binary_insert, sizeof_var);
 }
 
-int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragment *frag, int ncid, int tuplexfrag_number, int array_length, int compressed, NETCDF_var *measure)
+int oph_nc_populate_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragment * frag, int ncid, int tuplexfrag_number, int array_length, int compressed, NETCDF_var * measure)
 {
 	if (!frag || !ncid || !tuplexfrag_number || !array_length || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -734,7 +734,7 @@ int oph_nc_populate_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragm
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler *server, oph_odb_fragment *frag, int ncid, int tuplexfrag_number, int array_length, int compressed, NETCDF_var *measure)
+int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fragment * frag, int ncid, int tuplexfrag_number, int array_length, int compressed, NETCDF_var * measure)
 {
 	if (!frag || !ncid || !tuplexfrag_number || !array_length || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1418,7 +1418,7 @@ int oph_nc_populate_fragment_from_nc2(oph_ioserver_handler *server, oph_odb_frag
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler *server, oph_odb_fragment *frag, int ncid, int tuplexfrag_number, int array_length, int compressed, NETCDF_var *measure,
+int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fragment * frag, int ncid, int tuplexfrag_number, int array_length, int compressed, NETCDF_var * measure,
 				      long long memory_size)
 {
 	if (!frag || !ncid || !tuplexfrag_number || !array_length || !measure || !server) {
@@ -2070,7 +2070,7 @@ int oph_nc_populate_fragment_from_nc3(oph_ioserver_handler *server, oph_odb_frag
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler *server, oph_odb_fragment *frag, int ncid, int tuplexfrag_number, int array_length, int compressed, NETCDF_var *measure,
+int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragment * frag, int ncid, int tuplexfrag_number, int array_length, int compressed, NETCDF_var * measure,
 				      long long memory_size)
 {
 	if (!frag || !ncid || !tuplexfrag_number || !array_length || !measure || !server) {
@@ -2805,7 +2805,7 @@ int oph_nc_populate_fragment_from_nc4(oph_ioserver_handler *server, oph_odb_frag
 }
 
 
-int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler *server, oph_odb_fragment *frag, char *nc_file_path, int tuplexfrag_number, int compressed, NETCDF_var *measure)
+int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fragment * frag, char *nc_file_path, int tuplexfrag_number, int compressed, NETCDF_var * measure)
 {
 	if (!frag || !nc_file_path || !tuplexfrag_number || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2980,7 +2980,7 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler *server, oph_odb_frag
 }
 
 
-int oph_nc_get_row_from_nc(int ncid, int array_length, NETCDF_var *measure, unsigned long idDim, char **row)
+int oph_nc_get_row_from_nc(int ncid, int array_length, NETCDF_var * measure, unsigned long idDim, char **row)
 {
 	if (!ncid || !array_length || !measure || !row) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -3193,7 +3193,7 @@ int oph_nc_get_row_from_nc(int ncid, int array_length, NETCDF_var *measure, unsi
 	return OPH_NC_SUCCESS;
 }
 
-int _oph_nc_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, size_t **id, int i, int n)
+int _oph_nc_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, size_t ** id, int i, int n)
 {
 	if (i < n - 1) {
 		unsigned long tmp;
@@ -3207,7 +3207,7 @@ int _oph_nc_get_dimension_id(unsigned long residual, unsigned long total, unsign
 	return 0;
 }
 
-int oph_nc_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n, size_t **id)
+int oph_nc_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n, size_t ** id)
 {
 	if (n > 0) {
 		int i;
@@ -3251,7 +3251,7 @@ int oph_nc_get_c_type(nc_type type_nc, char *out_c_type)
 
 }
 
-int oph_nc_get_nc_type(char *in_c_type, nc_type *type_nc)
+int oph_nc_get_nc_type(char *in_c_type, nc_type * type_nc)
 {
 	if (!strcasecmp(in_c_type, OPH_NC_BYTE_TYPE)) {
 		*type_nc = NC_BYTE;
@@ -3286,7 +3286,7 @@ int oph_nc_get_nc_type(char *in_c_type, nc_type *type_nc)
 
 }
 
-int _oph_nc_get_next_nc_id(size_t *id, unsigned int *sizemax, int i, int n)
+int _oph_nc_get_next_nc_id(size_t * id, unsigned int *sizemax, int i, int n)
 {
 	if (i < 0)
 		return 1;	// Overflow
@@ -3298,12 +3298,12 @@ int _oph_nc_get_next_nc_id(size_t *id, unsigned int *sizemax, int i, int n)
 	return 0;
 }
 
-int oph_nc_get_next_nc_id(size_t *id, unsigned int *sizemax, int n)
+int oph_nc_get_next_nc_id(size_t * id, unsigned int *sizemax, int n)
 {
 	return _oph_nc_get_next_nc_id(id, sizemax, n - 1, n);
 }
 
-int oph_nc_append_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragment *old_frag, oph_odb_fragment *new_frag, int ncid, int compressed, NETCDF_var *measure)
+int oph_nc_append_fragment_from_nc(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int ncid, int compressed, NETCDF_var * measure)
 {
 	if (!old_frag || !new_frag || !ncid || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -3973,7 +3973,7 @@ int oph_nc_append_fragment_from_nc(oph_ioserver_handler *server, oph_odb_fragmen
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_append_fragment_from_nc2(oph_ioserver_handler *server, oph_odb_fragment *old_frag, oph_odb_fragment *new_frag, int ncid, int compressed, NETCDF_var *measure, long long memory_size)
+int oph_nc_append_fragment_from_nc2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int ncid, int compressed, NETCDF_var * measure, long long memory_size)
 {
 	if (!old_frag || !new_frag || !ncid || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -4689,7 +4689,7 @@ int oph_nc_get_dim_array2(int id_container, int ncid, int dim_id, const char dim
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_append_fragment_from_nc3(oph_ioserver_handler *server, oph_odb_fragment *old_frag, oph_odb_fragment *new_frag, int ncid, int compressed, NETCDF_var *measure, long long memory_size)
+int oph_nc_append_fragment_from_nc3(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int ncid, int compressed, NETCDF_var * measure, long long memory_size)
 {
 	if (!old_frag || !new_frag || !ncid || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -5292,8 +5292,8 @@ int oph_nc_append_fragment_from_nc3(oph_ioserver_handler *server, oph_odb_fragme
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_append_fragment_from_nc4(oph_ioserver_handler *server, oph_odb_fragment *old_frag, oph_odb_fragment *new_frag, char *nc_file_path, int tuplexfrag_number, int compressed,
-				    NETCDF_var *measure)
+int oph_nc_append_fragment_from_nc4(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, char *nc_file_path, int tuplexfrag_number, int compressed,
+				    NETCDF_var * measure)
 {
 	if (!old_frag || !new_frag || !nc_file_path || !tuplexfrag_number || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -5597,7 +5597,7 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler *server, oph_odb_fragme
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_get_dim_array_and_size(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array, size_t *size)
+int oph_nc_get_dim_array_and_size(int id_container, int ncid, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, char **dim_array, size_t * size)
 {
 	if (!ncid || !dim_type || !dim_array) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -6228,7 +6228,7 @@ int oph_nc_compare_nc_c_types(int id_container, nc_type var_type, const char dim
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE_SIZE], int ncid, int max_ndims, NETCDF_var *var)
+int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE_SIZE], int ncid, int max_ndims, NETCDF_var * var)
 {
 	if (!ncid || !var_name || !max_ndims || !var) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -6301,7 +6301,7 @@ int oph_nc_get_nc_var(int id_container, const char var_name[OPH_ODB_CUBE_MEASURE
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_update_dim_with_nc_metadata2(ophidiadb *oDB, oph_odb_dimension *time_dim, int id_vocabulary, int id_container_out, int ncid, int *dim_id)
+int oph_nc_update_dim_with_nc_metadata2(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid, int *dim_id)
 {
 	MYSQL_RES *key_list = NULL;
 	MYSQL_ROW row = NULL;
@@ -6450,12 +6450,12 @@ int oph_nc_update_dim_with_nc_metadata2(ophidiadb *oDB, oph_odb_dimension *time_
 	return OPH_NC_SUCCESS;
 }
 
-int oph_nc_update_dim_with_nc_metadata(ophidiadb *oDB, oph_odb_dimension *time_dim, int id_vocabulary, int id_container_out, int ncid)
+int oph_nc_update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid)
 {
 	return oph_nc_update_dim_with_nc_metadata2(oDB, time_dim, id_vocabulary, id_container_out, ncid, NULL);
 }
 
-int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var *measure, int is_index, int ncid, double offset, char out_of_bound)
+int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var * measure, int is_index, int ncid, double offset, char out_of_bound)
 {
 	NETCDF_var tmp_var;
 	int ii, retval, dims_id[NC_MAX_VAR_DIMS], error = 0;

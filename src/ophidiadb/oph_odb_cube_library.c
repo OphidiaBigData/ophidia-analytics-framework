@@ -34,7 +34,7 @@
 
 extern int msglevel;
 
-int oph_odb_cube_init_datacube(oph_odb_datacube *cube)
+int oph_odb_cube_init_datacube(oph_odb_datacube * cube)
 {
 	if (!cube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -45,7 +45,7 @@ int oph_odb_cube_init_datacube(oph_odb_datacube *cube)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_free_datacube(oph_odb_datacube *cube)
+int oph_odb_cube_free_datacube(oph_odb_datacube * cube)
 {
 	if (!cube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -59,7 +59,7 @@ int oph_odb_cube_free_datacube(oph_odb_datacube *cube)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_get_datacube_dbmsinstance_number(ophidiadb *oDB, int id_datacube, int *num_elements)
+int oph_odb_cube_get_datacube_dbmsinstance_number(ophidiadb * oDB, int id_datacube, int *num_elements)
 {
 	if (!oDB || !id_datacube || !num_elements) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -111,7 +111,7 @@ int oph_odb_cube_get_datacube_dbmsinstance_number(ophidiadb *oDB, int id_datacub
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_get_datacube_size(ophidiadb *oDB, int id_datacube, long long int *size)
+int oph_odb_cube_get_datacube_size(ophidiadb * oDB, int id_datacube, long long int *size)
 {
 	if (!oDB || !id_datacube || !size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -163,7 +163,7 @@ int oph_odb_cube_get_datacube_size(ophidiadb *oDB, int id_datacube, long long in
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_get_datacube_num_elements(ophidiadb *oDB, int id_datacube, long long int *num_elements)
+int oph_odb_cube_get_datacube_num_elements(ophidiadb * oDB, int id_datacube, long long int *num_elements)
 {
 	if (!oDB || !id_datacube || !num_elements) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -215,7 +215,7 @@ int oph_odb_cube_get_datacube_num_elements(ophidiadb *oDB, int id_datacube, long
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_set_datacube_num_elements(ophidiadb *oDB, int id_datacube, long long int num_elements)
+int oph_odb_cube_set_datacube_num_elements(ophidiadb * oDB, int id_datacube, long long int num_elements)
 {
 	if (!oDB || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -242,7 +242,7 @@ int oph_odb_cube_set_datacube_num_elements(ophidiadb *oDB, int id_datacube, long
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_set_datacube_size(ophidiadb *oDB, int id_datacube, long long int size)
+int oph_odb_cube_set_datacube_size(ophidiadb * oDB, int id_datacube, long long int size)
 {
 	if (!oDB || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -269,7 +269,7 @@ int oph_odb_cube_set_datacube_size(ophidiadb *oDB, int id_datacube, long long in
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_retrieve_source(ophidiadb *oDB, int id_src, oph_odb_source *src)
+int oph_odb_cube_retrieve_source(ophidiadb * oDB, int id_src, oph_odb_source * src)
 {
 	if (!oDB || !src || !id_src) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -320,7 +320,7 @@ int oph_odb_cube_retrieve_source(ophidiadb *oDB, int id_src, oph_odb_source *src
 	return OPH_ODB_SUCCESS;
 }
 
-int _oph_odb_cube_retrieve_datacube(ophidiadb *oDB, int id_datacube, oph_odb_datacube *cube, int partition_mode)
+int _oph_odb_cube_retrieve_datacube(ophidiadb * oDB, int id_datacube, oph_odb_datacube * cube, int partition_mode)
 {
 	if (!oDB || !id_datacube || !cube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -417,17 +417,17 @@ int _oph_odb_cube_retrieve_datacube(ophidiadb *oDB, int id_datacube, oph_odb_dat
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_retrieve_datacube(ophidiadb *oDB, int id_datacube, oph_odb_datacube *cube)
+int oph_odb_cube_retrieve_datacube(ophidiadb * oDB, int id_datacube, oph_odb_datacube * cube)
 {
 	return _oph_odb_cube_retrieve_datacube(oDB, id_datacube, cube, 1);
 }
 
-int oph_odb_cube_retrieve_datacube_with_ordered_partitions(ophidiadb *oDB, int id_datacube, oph_odb_datacube *cube)
+int oph_odb_cube_retrieve_datacube_with_ordered_partitions(ophidiadb * oDB, int id_datacube, oph_odb_datacube * cube)
 {
 	return _oph_odb_cube_retrieve_datacube(oDB, id_datacube, cube, 0);
 }
 
-int oph_odb_cube_find_datacube_additional_info(ophidiadb *oDB, int id_datacube, char **creationdate, char **description)
+int oph_odb_cube_find_datacube_additional_info(ophidiadb * oDB, int id_datacube, char **creationdate, char **description)
 {
 	if (!oDB || !id_datacube || !creationdate || !description) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -487,7 +487,7 @@ int oph_odb_cube_find_datacube_additional_info(ophidiadb *oDB, int id_datacube, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_retrieve_cubehasdim_list(ophidiadb *oDB, int id_datacube, oph_odb_cubehasdim **cubedims, int *dim_num)
+int oph_odb_cube_retrieve_cubehasdim_list(ophidiadb * oDB, int id_datacube, oph_odb_cubehasdim ** cubedims, int *dim_num)
 {
 	if (!oDB || !id_datacube || !cubedims || !dim_num) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -550,7 +550,7 @@ int oph_odb_cube_retrieve_cubehasdim_list(ophidiadb *oDB, int id_datacube, oph_o
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_find_containers_datacubes(ophidiadb *oDB, int folder_id, int search_on, char *container_name, int id_datacube, MYSQL_RES **information_list)
+int oph_odb_cube_find_containers_datacubes(ophidiadb * oDB, int folder_id, int search_on, char *container_name, int id_datacube, MYSQL_RES ** information_list)
 {
 	(*information_list) = NULL;
 
@@ -664,7 +664,7 @@ int oph_odb_cube_find_containers_datacubes(ophidiadb *oDB, int folder_id, int se
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_find_datacube_hierarchy(ophidiadb *oDB, int direction, int id_datacube, MYSQL_RES **information_list)
+int oph_odb_cube_find_datacube_hierarchy(ophidiadb * oDB, int direction, int id_datacube, MYSQL_RES ** information_list)
 {
 	(*information_list) = NULL;
 
@@ -701,7 +701,7 @@ int oph_odb_cube_find_datacube_hierarchy(ophidiadb *oDB, int direction, int id_d
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_find_task_list(ophidiadb *oDB, int folder_id, int datacube_id, char *operator, char *container_name, MYSQL_RES **information_list)
+int oph_odb_cube_find_task_list(ophidiadb * oDB, int folder_id, int datacube_id, char *operator, char *container_name, MYSQL_RES ** information_list)
 {
 	(*information_list) = NULL;
 
@@ -757,7 +757,7 @@ int oph_odb_cube_find_task_list(ophidiadb *oDB, int folder_id, int datacube_id, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_insert_into_source_table(ophidiadb *oDB, oph_odb_source *src, int *last_insertd_id)
+int oph_odb_cube_insert_into_source_table(ophidiadb * oDB, oph_odb_source * src, int *last_insertd_id)
 {
 	if (!oDB || !src || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -816,7 +816,7 @@ int oph_odb_cube_insert_into_source_table(ophidiadb *oDB, oph_odb_source *src, i
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb *oDB, oph_odb_datacube *cube, int *last_insertd_id)
+int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb * oDB, oph_odb_datacube * cube, int *last_insertd_id)
 {
 	if (!oDB || !cube || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -879,7 +879,7 @@ int oph_odb_cube_insert_into_datacube_partitioned_tables(ophidiadb *oDB, oph_odb
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_insert_into_task_table(ophidiadb *oDB, oph_odb_task *new_task, int *last_insertd_id)
+int oph_odb_cube_insert_into_task_table(ophidiadb * oDB, oph_odb_task * new_task, int *last_insertd_id)
 {
 	if (!oDB || !new_task || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -961,7 +961,7 @@ int oph_odb_cube_insert_into_task_table(ophidiadb *oDB, oph_odb_task *new_task, 
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_insert_into_cubehasdim_table(ophidiadb *oDB, oph_odb_cubehasdim *cubedim, int *last_insertd_id)
+int oph_odb_cube_insert_into_cubehasdim_table(ophidiadb * oDB, oph_odb_cubehasdim * cubedim, int *last_insertd_id)
 {
 	if (!oDB || !cubedim || !last_insertd_id) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -996,7 +996,7 @@ int oph_odb_cube_insert_into_cubehasdim_table(ophidiadb *oDB, oph_odb_cubehasdim
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_update_level_in_cubehasdim_table(ophidiadb *oDB, int level, int id_cubehasdim)
+int oph_odb_cube_update_level_in_cubehasdim_table(ophidiadb * oDB, int level, int id_cubehasdim)
 {
 	if (!oDB || !id_cubehasdim) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1023,7 +1023,7 @@ int oph_odb_cube_update_level_in_cubehasdim_table(ophidiadb *oDB, int level, int
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_delete_from_datacube_table(ophidiadb *oDB, int id_datacube)
+int oph_odb_cube_delete_from_datacube_table(ophidiadb * oDB, int id_datacube)
 {
 	if (!oDB || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1050,7 +1050,7 @@ int oph_odb_cube_delete_from_datacube_table(ophidiadb *oDB, int id_datacube)
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_check_if_datacube_not_present_by_pid(ophidiadb *oDB, const char *uri, const int id_container, const int id_datacube, int *exists)
+int oph_odb_cube_check_if_datacube_not_present_by_pid(ophidiadb * oDB, const char *uri, const int id_container, const int id_datacube, int *exists)
 {
 	*exists = 0;
 
@@ -1104,7 +1104,7 @@ int oph_odb_cube_check_if_datacube_not_present_by_pid(ophidiadb *oDB, const char
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_check_datacube_availability(ophidiadb *oDB, int id_input, int type, int *status)
+int oph_odb_cube_check_datacube_availability(ophidiadb * oDB, int id_input, int type, int *status)
 {
 	if (!oDB || !id_input || !status) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1149,7 +1149,7 @@ int oph_odb_cube_check_datacube_availability(ophidiadb *oDB, int id_input, int t
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_retrieve_datacube_id_list_from_dbinstance(ophidiadb *oDB, int id_db, int **id_datacubes, int *size)
+int oph_odb_cube_retrieve_datacube_id_list_from_dbinstance(ophidiadb * oDB, int id_db, int **id_datacubes, int *size)
 {
 	if (!oDB || !id_datacubes || !size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1201,7 +1201,7 @@ int oph_odb_cube_retrieve_datacube_id_list_from_dbinstance(ophidiadb *oDB, int i
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_retrieve_datacube_measure(ophidiadb *oDB, int id_datacube, char *measure)
+int oph_odb_cube_retrieve_datacube_measure(ophidiadb * oDB, int id_datacube, char *measure)
 {
 	if (!oDB || !id_datacube || !measure) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1255,7 +1255,7 @@ int oph_odb_cube_retrieve_datacube_measure(ophidiadb *oDB, int id_datacube, char
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_retrieve_missingvalue(ophidiadb *oDB, int id_datacube, int *idmissingvalue, char *measure)
+int oph_odb_cube_retrieve_missingvalue(ophidiadb * oDB, int id_datacube, int *idmissingvalue, char *measure)
 {
 	if (!oDB || !id_datacube || !idmissingvalue) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1314,7 +1314,7 @@ int oph_odb_cube_retrieve_missingvalue(ophidiadb *oDB, int id_datacube, int *idm
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_update_tuplexfragment(ophidiadb *oDB, int id_datacube, int tuplexfragment)
+int oph_odb_cube_update_tuplexfragment(ophidiadb * oDB, int id_datacube, int tuplexfragment)
 {
 	if (!oDB || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1341,7 +1341,7 @@ int oph_odb_cube_update_tuplexfragment(ophidiadb *oDB, int id_datacube, int tupl
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_update_missingvalue(ophidiadb *oDB, int id_datacube, int idmissingvalue)
+int oph_odb_cube_update_missingvalue(ophidiadb * oDB, int id_datacube, int idmissingvalue)
 {
 	if (!oDB || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1368,7 +1368,7 @@ int oph_odb_cube_update_missingvalue(ophidiadb *oDB, int id_datacube, int idmiss
 	return OPH_ODB_SUCCESS;
 }
 
-int oph_odb_cube_order_by(ophidiadb *oDB, int order, int *id_datacube, int id_datacube_num)
+int oph_odb_cube_order_by(ophidiadb * oDB, int order, int *id_datacube, int id_datacube_num)
 {
 	if (!oDB || !id_datacube) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

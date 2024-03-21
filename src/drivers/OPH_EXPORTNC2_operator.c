@@ -51,7 +51,7 @@
 #define OPH_EXPORTNC_LOCAL_OUTPUT_PATH "local"
 #define OPH_EXPORTNC_POSTPONE "postpone"
 
-int _oph_get_next_count(size_t *id, unsigned int *sizemax, int i, int n)
+int _oph_get_next_count(size_t * id, unsigned int *sizemax, int i, int n)
 {
 	if (i < 0)
 		return 1;	// Overflow
@@ -63,12 +63,12 @@ int _oph_get_next_count(size_t *id, unsigned int *sizemax, int i, int n)
 	return 0;
 }
 
-int oph_get_next_count(size_t *id, unsigned int *sizemax, int n)
+int oph_get_next_count(size_t * id, unsigned int *sizemax, int n)
 {
 	return _oph_get_next_count(id, sizemax, n - 1, n);
 }
 
-int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
+int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 {
 	if (!handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -542,7 +542,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_init(oph_operator_struct *handle)
+int task_init(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -793,7 +793,7 @@ int task_init(oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_distribute(oph_operator_struct *handle)
+int task_distribute(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -869,7 +869,7 @@ int task_distribute(oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_execute(oph_operator_struct *handle)
+int task_execute(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -2144,7 +2144,7 @@ int task_execute(oph_operator_struct *handle)
 	return result;
 }
 
-int task_reduce(oph_operator_struct *handle)
+int task_reduce(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -2241,7 +2241,7 @@ int task_reduce(oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int task_destroy(oph_operator_struct *handle)
+int task_destroy(oph_operator_struct * handle)
 {
 	if (!handle || !handle->operator_handle) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null Handle\n");
@@ -2252,7 +2252,7 @@ int task_destroy(oph_operator_struct *handle)
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
-int env_unset(oph_operator_struct *handle)
+int env_unset(oph_operator_struct * handle)
 {
 	//If NULL return success; it's already free
 	if (!handle || !handle->operator_handle)
