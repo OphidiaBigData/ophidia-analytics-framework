@@ -153,7 +153,7 @@ int oph_odb_meta_insert_into_metadatainstance_manage_tables(ophidiadb *oDB, cons
 	*last_insertd_id = metadatainstance_id;
 
 	//Insert manage relation
-	n = snprintf(insertQuery, MYSQL_BUFLEN, MYSQL_QUERY_META_UPDATE_OPHIDIADB_MANAGE, id_user, metadatainstance_id);
+	n = snprintf(insertQuery, query_buflen, MYSQL_QUERY_META_UPDATE_OPHIDIADB_MANAGE, id_user, metadatainstance_id);
 	if (n >= MYSQL_BUFLEN) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_ODB_STR_BUFF_OVERFLOW;

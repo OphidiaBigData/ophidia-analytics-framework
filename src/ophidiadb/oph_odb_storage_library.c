@@ -1567,7 +1567,7 @@ int oph_odb_stge_insert_into_fragment_table2(ophidiadb *oDB, oph_odb_fragment *f
 	//Setup full query for multi-insert statement
 	for (l = 0; l < frag_num; l++) {
 		if ((fragment[l]).id_datacube != 0) {
-			n += snprintf(buffer + n, MYSQL_BUFLEN, "(%d, %d, %d, '%s', %d, %d),", (fragment[l]).id_db, (fragment[l]).id_datacube, (fragment[l]).frag_relative_index,
+			n += snprintf(buffer + n, MYSQL_BUFLEN - n, "(%d, %d, %d, '%s', %d, %d),", (fragment[l]).id_db, (fragment[l]).id_datacube, (fragment[l]).frag_relative_index,
 				      (fragment[l]).fragment_name, (fragment[l]).key_start, (fragment[l]).key_end);
 			if (n >= MYSQL_BUFLEN) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
