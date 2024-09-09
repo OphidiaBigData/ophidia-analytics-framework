@@ -3051,10 +3051,11 @@ int task_execute(oph_operator_struct * handle)
 					free(fieldtypes);
 			}
 
-			if (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->show_index) {
+			if (((OPH_CUBESCHEMA_operator_handle *) handle->operator_handle)->show_index)
 				buff_size += 3 + OPH_COMMON_MAX_INT_LENGHT;
-			}
-			tmp_row = (char *) malloc(dim_inst.size * buff_size * sizeof(char));
+
+			buff_size *= dim_inst.size;
+			tmp_row = (char *) malloc(buff_size * sizeof(char));
 			if (!tmp_row) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocationg memory\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container, OPH_LOG_OPH_CUBESCHEMA_MEMORY_ERROR_INPUT, "dimension row");
@@ -3206,7 +3207,7 @@ int task_execute(oph_operator_struct * handle)
 					continue;
 				}
 				if (j != (dim_inst.size - 1))
-					len += snprintf(tmp_row + len, 3, ",  ");
+					len += snprintf(tmp_row + len, buff_size - len, ",  ");
 				len--;
 
 				if (is_objkey_printable) {

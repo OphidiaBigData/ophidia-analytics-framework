@@ -1,6 +1,10 @@
 
 ## Next release
 
+### Fixed:
+
+- Bugs causing possible buffer overflows
+
 ### Added:
 
 - Option output_metadata of OPH_IMPORT* operators
