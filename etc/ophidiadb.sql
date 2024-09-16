@@ -1,6 +1,6 @@
 --
 --    Ophidia Analytics Framework
---    Copyright (C) 2012-2023 CMCC Foundation
+--    Copyright (C) 2012-2024 CMCC Foundation
 --
 --    This program is free software: you can redistribute it and/or modify
 --    it under the terms of the GNU General Public License as published by
@@ -959,4 +959,3 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-13-08 22:09:07
