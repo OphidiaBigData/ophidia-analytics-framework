@@ -1,5 +1,5 @@
 
-## Next release
+## v1.9.0 - 2024-10-10
 
 ### Fixed:
 
@@ -8,6 +8,7 @@
 ### Added:
 
 - Option output_metadata of OPH_IMPORT* operators
+- Support for S3 data sources
 - Support for Zarr format
 
 ## v1.8.0 - 2023-07-31
