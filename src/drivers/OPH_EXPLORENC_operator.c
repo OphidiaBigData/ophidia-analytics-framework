@@ -2736,14 +2736,17 @@ int task_execute(oph_operator_struct *handle)
 									dim_i[k] = (int) round(accumulator[k]);	// Reduction
 						}
 						max = array_length_ * (OPH_COMMON_MAX_INT_LENGHT + 2);
-						dump_row = (char *) malloc(max);
-						*dump_row = 0;
-						for (k = 0; k < array_length_; ++k) {
-							snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_i[k], k < array_length_ - 1 ? ", " : "");
-							if (max - strlen(dump_row) > 1)
-								strncat(dump_row, tmp_value, max - strlen(dump_row));
-							else
-								break;
+						if (max > 0) {
+							dump_row = (char *) malloc(max);
+							if (dump_row)
+								*dump_row = 0;
+							for (k = 0; k < array_length_; ++k) {
+								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_i[k], k < array_length_ - 1 ? ", " : "");
+								if (max - strlen(dump_row) > 1)
+									strncat(dump_row, tmp_value, max - strlen(dump_row));
+								else
+									break;
+							}
 						}
 						if ((imp_num_points > 0) && dim_i)
 							free(dim_i);
@@ -2772,14 +2775,17 @@ int task_execute(oph_operator_struct *handle)
 									dim_s[k] = (short) round(accumulator[k]);	// Reduction
 						}
 						max = array_length_ * (OPH_COMMON_MAX_SHORT_LENGHT + 2);
-						dump_row = (char *) malloc(max);
-						*dump_row = 0;
-						for (k = 0; k < array_length_; ++k) {
-							snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_s[k], k < array_length_ - 1 ? ", " : "");
-							if (max - strlen(dump_row) > 1)
-								strncat(dump_row, tmp_value, max - strlen(dump_row));
-							else
-								break;
+						if (max > 0) {
+							dump_row = (char *) malloc(max);
+							if (dump_row)
+								*dump_row = 0;
+							for (k = 0; k < array_length_; ++k) {
+								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_s[k], k < array_length_ - 1 ? ", " : "");
+								if (max - strlen(dump_row) > 1)
+									strncat(dump_row, tmp_value, max - strlen(dump_row));
+								else
+									break;
+							}
 						}
 						if ((imp_num_points > 0) && dim_s)
 							free(dim_s);
@@ -2809,14 +2815,17 @@ int task_execute(oph_operator_struct *handle)
 									dim_b[k] = (char) round(accumulator[k]);	// Reduction
 						}
 						max = array_length_ * (OPH_COMMON_MAX_BYTE_LENGHT + 2);
-						dump_row = (char *) malloc(max);
-						*dump_row = 0;
-						for (k = 0; k < array_length_; ++k) {
-							snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_b[k], k < array_length_ - 1 ? ", " : "");
-							if (max - strlen(dump_row) > 1)
-								strncat(dump_row, tmp_value, max - strlen(dump_row));
-							else
-								break;
+						if (max > 0) {
+							dump_row = (char *) malloc(max);
+							if (dump_row)
+								*dump_row = 0;
+							for (k = 0; k < array_length_; ++k) {
+								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_b[k], k < array_length_ - 1 ? ", " : "");
+								if (max - strlen(dump_row) > 1)
+									strncat(dump_row, tmp_value, max - strlen(dump_row));
+								else
+									break;
+							}
 						}
 						if ((imp_num_points > 0) && dim_b)
 							free(dim_b);
@@ -2845,14 +2854,17 @@ int task_execute(oph_operator_struct *handle)
 									dim_l[k] = (long long) round(accumulator[k]);	// Reduction
 						}
 						max = array_length_ * (OPH_COMMON_MAX_LONG_LENGHT + 2);
-						dump_row = (char *) malloc(max);
-						*dump_row = 0;
-						for (k = 0; k < array_length_; ++k) {
-							snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%lld%s", dim_l[k], k < array_length_ - 1 ? ", " : "");
-							if (max - strlen(dump_row) > 1)
-								strncat(dump_row, tmp_value, max - strlen(dump_row));
-							else
-								break;
+						if (max > 0) {
+							dump_row = (char *) malloc(max);
+							if (dump_row)
+								*dump_row = 0;
+							for (k = 0; k < array_length_; ++k) {
+								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%lld%s", dim_l[k], k < array_length_ - 1 ? ", " : "");
+								if (max - strlen(dump_row) > 1)
+									strncat(dump_row, tmp_value, max - strlen(dump_row));
+								else
+									break;
+							}
 						}
 						if ((imp_num_points > 0) && dim_l)
 							free(dim_l);
@@ -2881,14 +2893,17 @@ int task_execute(oph_operator_struct *handle)
 									dim_f[k] = (float) accumulator[k];	// Reduction
 						}
 						max = array_length_ * (OPH_COMMON_MAX_FLOAT_LENGHT + 2);
-						dump_row = (char *) malloc(max);
-						*dump_row = 0;
-						for (k = 0; k < array_length_; ++k) {
-							snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_f[k], k < array_length_ - 1 ? ", " : "");
-							if (max - strlen(dump_row) > 1)
-								strncat(dump_row, tmp_value, max - strlen(dump_row));
-							else
-								break;
+						if (max > 0) {
+							dump_row = (char *) malloc(max);
+							if (dump_row)
+								*dump_row = 0;
+							for (k = 0; k < array_length_; ++k) {
+								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_f[k], k < array_length_ - 1 ? ", " : "");
+								if (max - strlen(dump_row) > 1)
+									strncat(dump_row, tmp_value, max - strlen(dump_row));
+								else
+									break;
+							}
 						}
 						if ((imp_num_points > 0) && dim_f)
 							free(dim_f);
@@ -2918,14 +2933,17 @@ int task_execute(oph_operator_struct *handle)
 						} else
 							dim_d = wrow;
 						max = array_length_ * (OPH_COMMON_MAX_DOUBLE_LENGHT + 2);
-						dump_row = (char *) malloc(max);
-						*dump_row = 0;
-						for (k = 0; k < array_length_; ++k) {
-							snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_d[k], k < array_length_ - 1 ? ", " : "");
-							if (max - strlen(dump_row) > 1)
-								strncat(dump_row, tmp_value, max - strlen(dump_row));
-							else
-								break;
+						if (max > 0) {
+							dump_row = (char *) malloc(max);
+							if (dump_row)
+								*dump_row = 0;
+							for (k = 0; k < array_length_; ++k) {
+								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_d[k], k < array_length_ - 1 ? ", " : "");
+								if (max - strlen(dump_row) > 1)
+									strncat(dump_row, tmp_value, max - strlen(dump_row));
+								else
+									break;
+							}
 						}
 						if ((imp_num_points > 0) && dim_d)
 							free(dim_d);
@@ -2955,14 +2973,17 @@ int task_execute(oph_operator_struct *handle)
 						} else
 							dim_d = wrow;
 						max = array_length_ * (OPH_COMMON_MAX_DOUBLE_LENGHT + 2);
-						dump_row = (char *) malloc(max);
-						*dump_row = 0;
-						for (k = 0; k < array_length_; ++k) {
-							snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_d[k], k < array_length_ - 1 ? ", " : "");
-							if (max - strlen(dump_row) > 1)
-								strncat(dump_row, tmp_value, max - strlen(dump_row));
-							else
-								break;
+						if (max > 0) {
+							dump_row = (char *) malloc(max);
+							if (dump_row)
+								*dump_row = 0;
+							for (k = 0; k < array_length_; ++k) {
+								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_d[k], k < array_length_ - 1 ? ", " : "");
+								if (max - strlen(dump_row) > 1)
+									strncat(dump_row, tmp_value, max - strlen(dump_row));
+								else
+									break;
+							}
 						}
 						if ((imp_num_points > 0) && dim_d)
 							free(dim_d);
@@ -4034,14 +4055,17 @@ int task_execute(oph_operator_struct *handle)
 								for (k = 0; k < array_length_; ++k)
 									dim_i[k] = (int) round(wrow[k]);
 							max = array_length_ * (OPH_COMMON_MAX_INT_LENGHT + 2);
-							dump_row = (char *) malloc(max);
-							*dump_row = 0;
-							for (k = 0; k < array_length_; ++k) {
-								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_i[k], k < array_length_ - 1 ? ", " : "");
-								if (max - strlen(dump_row) > 1)
-									strncat(dump_row, tmp_value, max - strlen(dump_row));
-								else
-									break;
+							if (max > 0) {
+								dump_row = (char *) malloc(max);
+								if (dump_row)
+									*dump_row = 0;
+								for (k = 0; k < array_length_; ++k) {
+									snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_i[k], k < array_length_ - 1 ? ", " : "");
+									if (max - strlen(dump_row) > 1)
+										strncat(dump_row, tmp_value, max - strlen(dump_row));
+									else
+										break;
+								}
 							}
 							if ((imp_num_points > 0) && dim_i)
 								free(dim_i);
@@ -4061,14 +4085,17 @@ int task_execute(oph_operator_struct *handle)
 								for (k = 0; k < array_length_; ++k)
 									dim_s[k] = (short) round(wrow[k]);
 							max = array_length_ * (OPH_COMMON_MAX_SHORT_LENGHT + 2);
-							dump_row = (char *) malloc(max);
-							*dump_row = 0;
-							for (k = 0; k < array_length_; ++k) {
-								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_s[k], k < array_length_ - 1 ? ", " : "");
-								if (max - strlen(dump_row) > 1)
-									strncat(dump_row, tmp_value, max - strlen(dump_row));
-								else
-									break;
+							if (max > 0) {
+								dump_row = (char *) malloc(max);
+								if (dump_row)
+									*dump_row = 0;
+								for (k = 0; k < array_length_; ++k) {
+									snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_s[k], k < array_length_ - 1 ? ", " : "");
+									if (max - strlen(dump_row) > 1)
+										strncat(dump_row, tmp_value, max - strlen(dump_row));
+									else
+										break;
+								}
 							}
 							if ((imp_num_points > 0) && dim_s)
 								free(dim_s);
@@ -4089,14 +4116,17 @@ int task_execute(oph_operator_struct *handle)
 								for (k = 0; k < array_length_; ++k)
 									dim_b[k] = (char) round(wrow[k]);
 							max = array_length_ * (OPH_COMMON_MAX_BYTE_LENGHT + 2);
-							dump_row = (char *) malloc(max);
-							*dump_row = 0;
-							for (k = 0; k < array_length_; ++k) {
-								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_b[k], k < array_length_ - 1 ? ", " : "");
-								if (max - strlen(dump_row) > 1)
-									strncat(dump_row, tmp_value, max - strlen(dump_row));
-								else
-									break;
+							if (max > 0) {
+								dump_row = (char *) malloc(max);
+								if (dump_row)
+									*dump_row = 0;
+								for (k = 0; k < array_length_; ++k) {
+									snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_b[k], k < array_length_ - 1 ? ", " : "");
+									if (max - strlen(dump_row) > 1)
+										strncat(dump_row, tmp_value, max - strlen(dump_row));
+									else
+										break;
+								}
 							}
 							if ((imp_num_points > 0) && dim_b)
 								free(dim_b);
@@ -4116,14 +4146,17 @@ int task_execute(oph_operator_struct *handle)
 								for (k = 0; k < array_length_; ++k)
 									dim_l[k] = (long long) round(wrow[k]);
 							max = array_length_ * (OPH_COMMON_MAX_LONG_LENGHT + 2);
-							dump_row = (char *) malloc(max);
-							*dump_row = 0;
-							for (k = 0; k < array_length_; ++k) {
-								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%lld%s", dim_l[k], k < array_length_ - 1 ? ", " : "");
-								if (max - strlen(dump_row) > 1)
-									strncat(dump_row, tmp_value, max - strlen(dump_row));
-								else
-									break;
+							if (max > 0) {
+								dump_row = (char *) malloc(max);
+								if (dump_row)
+									*dump_row = 0;
+								for (k = 0; k < array_length_; ++k) {
+									snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%lld%s", dim_l[k], k < array_length_ - 1 ? ", " : "");
+									if (max - strlen(dump_row) > 1)
+										strncat(dump_row, tmp_value, max - strlen(dump_row));
+									else
+										break;
+								}
 							}
 							if ((imp_num_points > 0) && dim_l)
 								free(dim_l);
@@ -4143,14 +4176,17 @@ int task_execute(oph_operator_struct *handle)
 								for (k = 0; k < array_length_; ++k)
 									dim_f[k] = (float) wrow[k];
 							max = array_length_ * (OPH_COMMON_MAX_FLOAT_LENGHT + 2);
-							dump_row = (char *) malloc(max);
-							*dump_row = 0;
-							for (k = 0; k < array_length_; ++k) {
-								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_f[k], k < array_length_ - 1 ? ", " : "");
-								if (max - strlen(dump_row) > 1)
-									strncat(dump_row, tmp_value, max - strlen(dump_row));
-								else
-									break;
+							if (max > 0) {
+								dump_row = (char *) malloc(max);
+								if (dump_row)
+									*dump_row = 0;
+								for (k = 0; k < array_length_; ++k) {
+									snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_f[k], k < array_length_ - 1 ? ", " : "");
+									if (max - strlen(dump_row) > 1)
+										strncat(dump_row, tmp_value, max - strlen(dump_row));
+									else
+										break;
+								}
 							}
 							if ((imp_num_points > 0) && dim_f)
 								free(dim_f);
@@ -4169,14 +4205,17 @@ int task_execute(oph_operator_struct *handle)
 							} else
 								dim_d = wrow;
 							max = array_length_ * (OPH_COMMON_MAX_DOUBLE_LENGHT + 2);
-							dump_row = (char *) malloc(max);
-							*dump_row = 0;
-							for (k = 0; k < array_length_; ++k) {
-								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_d[k], k < array_length_ - 1 ? ", " : "");
-								if (max - strlen(dump_row) > 1)
-									strncat(dump_row, tmp_value, max - strlen(dump_row));
-								else
-									break;
+							if (max > 0) {
+								dump_row = (char *) malloc(max);
+								if (dump_row)
+									*dump_row = 0;
+								for (k = 0; k < array_length_; ++k) {
+									snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_d[k], k < array_length_ - 1 ? ", " : "");
+									if (max - strlen(dump_row) > 1)
+										strncat(dump_row, tmp_value, max - strlen(dump_row));
+									else
+										break;
+								}
 							}
 							if ((imp_num_points > 0) && dim_d)
 								free(dim_d);
@@ -4195,14 +4234,17 @@ int task_execute(oph_operator_struct *handle)
 							} else
 								dim_d = wrow;
 							max = array_length_ * (OPH_COMMON_MAX_DOUBLE_LENGHT + 2);
-							dump_row = (char *) malloc(max);
-							*dump_row = 0;
-							for (k = 0; k < array_length_; ++k) {
-								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_d[k], k < array_length_ - 1 ? ", " : "");
-								if (max - strlen(dump_row) > 1)
-									strncat(dump_row, tmp_value, max - strlen(dump_row));
-								else
-									break;
+							if (max > 0) {
+								dump_row = (char *) malloc(max);
+								if (dump_row)
+									*dump_row = 0;
+								for (k = 0; k < array_length_; ++k) {
+									snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_d[k], k < array_length_ - 1 ? ", " : "");
+									if (max - strlen(dump_row) > 1)
+										strncat(dump_row, tmp_value, max - strlen(dump_row));
+									else
+										break;
+								}
 							}
 							if ((imp_num_points > 0) && dim_d)
 								free(dim_d);
@@ -4860,14 +4902,17 @@ int task_execute(oph_operator_struct *handle)
 									dim_i[k] = (int) round(gsl_spline_eval(spline, new_dim[k], acc));
 							}
 							max = array_length_ * (OPH_COMMON_MAX_INT_LENGHT + 2);
-							dump_row = (char *) malloc(max);
-							*dump_row = 0;
-							for (k = 0; k < array_length_; ++k) {
-								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_i[k], k < array_length_ - 1 ? ", " : "");
-								if (max - strlen(dump_row) > 1)
-									strncat(dump_row, tmp_value, max - strlen(dump_row));
-								else
-									break;
+							if (max > 0) {
+								dump_row = (char *) malloc(max);
+								if (dump_row)
+									*dump_row = 0;
+								for (k = 0; k < array_length_; ++k) {
+									snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_i[k], k < array_length_ - 1 ? ", " : "");
+									if (max - strlen(dump_row) > 1)
+										strncat(dump_row, tmp_value, max - strlen(dump_row));
+									else
+										break;
+								}
 							}
 							if ((imp_num_points > 0) && dim_i)
 								free(dim_i);
@@ -4893,14 +4938,17 @@ int task_execute(oph_operator_struct *handle)
 									dim_s[k] = (short) round(gsl_spline_eval(spline, new_dim[k], acc));
 							}
 							max = array_length_ * (OPH_COMMON_MAX_SHORT_LENGHT + 2);
-							dump_row = (char *) malloc(max);
-							*dump_row = 0;
-							for (k = 0; k < array_length_; ++k) {
-								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_s[k], k < array_length_ - 1 ? ", " : "");
-								if (max - strlen(dump_row) > 1)
-									strncat(dump_row, tmp_value, max - strlen(dump_row));
-								else
-									break;
+							if (max > 0) {
+								dump_row = (char *) malloc(max);
+								if (dump_row)
+									*dump_row = 0;
+								for (k = 0; k < array_length_; ++k) {
+									snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_s[k], k < array_length_ - 1 ? ", " : "");
+									if (max - strlen(dump_row) > 1)
+										strncat(dump_row, tmp_value, max - strlen(dump_row));
+									else
+										break;
+								}
 							}
 							if ((imp_num_points > 0) && dim_s)
 								free(dim_s);
@@ -4927,14 +4975,17 @@ int task_execute(oph_operator_struct *handle)
 									dim_b[k] = (char) round(gsl_spline_eval(spline, new_dim[k], acc));
 							}
 							max = array_length_ * (OPH_COMMON_MAX_BYTE_LENGHT + 2);
-							dump_row = (char *) malloc(max);
-							*dump_row = 0;
-							for (k = 0; k < array_length_; ++k) {
-								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_b[k], k < array_length_ - 1 ? ", " : "");
-								if (max - strlen(dump_row) > 1)
-									strncat(dump_row, tmp_value, max - strlen(dump_row));
-								else
-									break;
+							if (max > 0) {
+								dump_row = (char *) malloc(max);
+								if (dump_row)
+									*dump_row = 0;
+								for (k = 0; k < array_length_; ++k) {
+									snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%d%s", dim_b[k], k < array_length_ - 1 ? ", " : "");
+									if (max - strlen(dump_row) > 1)
+										strncat(dump_row, tmp_value, max - strlen(dump_row));
+									else
+										break;
+								}
 							}
 							if ((imp_num_points > 0) && dim_b)
 								free(dim_b);
@@ -4960,14 +5011,17 @@ int task_execute(oph_operator_struct *handle)
 									dim_l[k] = (long long) round(gsl_spline_eval(spline, new_dim[k], acc));
 							}
 							max = array_length_ * (OPH_COMMON_MAX_LONG_LENGHT + 2);
-							dump_row = (char *) malloc(max);
-							*dump_row = 0;
-							for (k = 0; k < array_length_; ++k) {
-								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%lld%s", dim_l[k], k < array_length_ - 1 ? ", " : "");
-								if (max - strlen(dump_row) > 1)
-									strncat(dump_row, tmp_value, max - strlen(dump_row));
-								else
-									break;
+							if (max > 0) {
+								dump_row = (char *) malloc(max);
+								if (dump_row)
+									*dump_row = 0;
+								for (k = 0; k < array_length_; ++k) {
+									snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%lld%s", dim_l[k], k < array_length_ - 1 ? ", " : "");
+									if (max - strlen(dump_row) > 1)
+										strncat(dump_row, tmp_value, max - strlen(dump_row));
+									else
+										break;
+								}
 							}
 							if ((imp_num_points > 0) && dim_l)
 								free(dim_l);
@@ -4993,14 +5047,17 @@ int task_execute(oph_operator_struct *handle)
 									dim_f[k] = (float) gsl_spline_eval(spline, new_dim[k], acc);
 							}
 							max = array_length_ * (OPH_COMMON_MAX_FLOAT_LENGHT + 2);
-							dump_row = (char *) malloc(max);
-							*dump_row = 0;
-							for (k = 0; k < array_length_; ++k) {
-								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_f[k], k < array_length_ - 1 ? ", " : "");
-								if (max - strlen(dump_row) > 1)
-									strncat(dump_row, tmp_value, max - strlen(dump_row));
-								else
-									break;
+							if (max > 0) {
+								dump_row = (char *) malloc(max);
+								if (dump_row)
+									*dump_row = 0;
+								for (k = 0; k < array_length_; ++k) {
+									snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_f[k], k < array_length_ - 1 ? ", " : "");
+									if (max - strlen(dump_row) > 1)
+										strncat(dump_row, tmp_value, max - strlen(dump_row));
+									else
+										break;
+								}
 							}
 							if ((imp_num_points > 0) && dim_f)
 								free(dim_f);
@@ -5019,14 +5076,17 @@ int task_execute(oph_operator_struct *handle)
 							} else
 								dim_d = wrow;
 							max = array_length_ * (OPH_COMMON_MAX_DOUBLE_LENGHT + 2);
-							dump_row = (char *) malloc(max);
-							*dump_row = 0;
-							for (k = 0; k < array_length_; ++k) {
-								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_d[k], k < array_length_ - 1 ? ", " : "");
-								if (max - strlen(dump_row) > 1)
-									strncat(dump_row, tmp_value, max - strlen(dump_row));
-								else
-									break;
+							if (max > 0) {
+								dump_row = (char *) malloc(max);
+								if (dump_row)
+									*dump_row = 0;
+								for (k = 0; k < array_length_; ++k) {
+									snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_d[k], k < array_length_ - 1 ? ", " : "");
+									if (max - strlen(dump_row) > 1)
+										strncat(dump_row, tmp_value, max - strlen(dump_row));
+									else
+										break;
+								}
 							}
 							if ((imp_num_points > 0) && dim_d)
 								free(dim_d);
@@ -5045,14 +5105,17 @@ int task_execute(oph_operator_struct *handle)
 							} else
 								dim_d = wrow;
 							max = array_length_ * (OPH_COMMON_MAX_DOUBLE_LENGHT + 2);
-							dump_row = (char *) malloc(max);
-							*dump_row = 0;
-							for (k = 0; k < array_length_; ++k) {
-								snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_d[k], k < array_length_ - 1 ? ", " : "");
-								if (max - strlen(dump_row) > 1)
-									strncat(dump_row, tmp_value, max - strlen(dump_row));
-								else
-									break;
+							if (max > 0) {
+								dump_row = (char *) malloc(max);
+								if (dump_row)
+									*dump_row = 0;
+								for (k = 0; k < array_length_; ++k) {
+									snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, dim_d[k], k < array_length_ - 1 ? ", " : "");
+									if (max - strlen(dump_row) > 1)
+										strncat(dump_row, tmp_value, max - strlen(dump_row));
+									else
+										break;
+								}
 							}
 							if ((imp_num_points > 0) && dim_d)
 								free(dim_d);
@@ -5631,14 +5694,18 @@ int task_execute(oph_operator_struct *handle)
 						break;
 					}
 					max = spline_num_points * (OPH_COMMON_MAX_DOUBLE_LENGHT + 2);
-					dump_row = (char *) malloc(max);
-					*dump_row = 0;
-					for (k = 0; k < spline_num_points; ++k) {
-						snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, expand ? wi_row[k] : wrow[k], k < spline_num_points - 1 ? ", " : "");
-						if (max - strlen(dump_row) > 1)
-							strncat(dump_row, tmp_value, max - strlen(dump_row));
-						else
-							break;
+					if (max > 0) {
+						dump_row = (char *) malloc(max);
+						if (dump_row)
+							*dump_row = 0;
+						for (k = 0; k < spline_num_points; ++k) {
+							snprintf(tmp_value, OPH_COMMON_BUFFER_LEN, "%.*f%s", OPH_EXPLORENC_PRECISION, expand ? wi_row[k] : wrow[k],
+								 k < spline_num_points - 1 ? ", " : "");
+							if (max - strlen(dump_row) > 1)
+								strncat(dump_row, tmp_value, max - strlen(dump_row));
+							else
+								break;
+						}
 					}
 					if (result)
 						break;
