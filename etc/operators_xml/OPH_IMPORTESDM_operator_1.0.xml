@@ -17,6 +17,7 @@ WARNING: It imports only mono-dimensional coordinate variables.
 - ioserver : type of I/O server used to store data.
              Possible values are: &quot;ophidiaio_memory&quot; or &quot;mysql_table&quot; (default)
 - import_metadata: imports also metadata with &quot;yes&quot; (default) or only data with &quot;no&quot;.
+- output_metadata: exports cube metadata with &quot;yes&quot; (default) or only data with &quot;no&quot;.
 - check_compliance: checks if all the metadata registered for reference vocabulary are available; no check is done by default.
 - schedule : scheduling algorithm. The only possible value is 0, for a static linear block distribution of resources.
 - nhost : number of output hosts. With default value (&apos;0&apos;) all host available in the host partition are used.
