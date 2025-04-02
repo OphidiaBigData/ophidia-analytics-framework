@@ -60,7 +60,6 @@ typedef struct _thread_struct thread_struct;
 
 void *exec_thread(void *ts)
 {
-
 	OPH_REDUCE2_operator_handle *oper_handle = ((thread_struct *) ts)->oper_handle;
 	int l = ((thread_struct *) ts)->current_thread;
 	int num_threads = ((thread_struct *) ts)->total_threads;
@@ -1003,6 +1002,7 @@ int task_init(oph_operator_struct *handle)
 									goto __OPH_EXIT_1;
 								}
 								memcpy(dim_row2 + new_size * size, dim_row + prev_kk * size, size);
+								value[new_size] = new_size;
 								// Go to next element
 								new_size++;
 							}
@@ -1010,7 +1010,6 @@ int task_init(oph_operator_struct *handle)
 							prev_kk = kk;
 						} else
 							sizes[new_size]++;
-						value[new_size] = new_size;
 					}
 					// Evaluate the centroid of the last group
 					if (oph_dim_update_value(dim_row, dim[l].dimension_type, prev_kk, kk - 1)) {
@@ -1031,6 +1030,7 @@ int task_init(oph_operator_struct *handle)
 						goto __OPH_EXIT_1;
 					}
 					memcpy(dim_row2 + new_size * size, dim_row + prev_kk * size, size);
+					value[new_size] = new_size;
 
 					dim_inst[l].size = cubedims[l].size = ++new_size;
 					if (dim_row)
