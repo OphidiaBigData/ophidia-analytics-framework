@@ -346,7 +346,7 @@ int oph_day_to_date(long long g, int *yy, int *mm, int *dd, int *wd, int *yd, op
 
 int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension *dim, struct tm *tm_base, long long *base_time, long long *raw_value)
 {
-	if (!dim_row || !dim || !tm_base) {
+	if (!dim_row || !dim) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
 		return OPH_DIM_NULL_PARAM;
 	}
@@ -385,21 +385,25 @@ int oph_dim_get_time_value_of(char *dim_row, unsigned int kk, oph_odb_dimension 
 	if (oph_dim_get_base_time(dim, base_time_))
 		return OPH_DIM_DATA_ERROR;
 
-
 	// Convert to "date"
-	memset(tm_base, 0, sizeof(struct tm));
 	long long value = (long long) _value + (*base_time_);
-	if (raw_value)
+	if (raw_value) {
 		*raw_value = value;
-	tm_base->tm_sec = value % OPH_ODB_DIM_SECOND_NUMBER;
-	value /= OPH_ODB_DIM_SECOND_NUMBER;	// minutes
-	tm_base->tm_min = value % OPH_ODB_DIM_MINUTE_NUMBER;
-	value /= OPH_ODB_DIM_MINUTE_NUMBER;	// hours
-	tm_base->tm_hour = value % OPH_ODB_DIM_HOUR_NUMBER;
-	value /= OPH_ODB_DIM_HOUR_NUMBER;	// days
-	if (oph_day_to_date(value, &tm_base->tm_year, &tm_base->tm_mon, &tm_base->tm_mday, &tm_base->tm_wday, &tm_base->tm_yday, dim)) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
-		return OPH_DIM_DATA_ERROR;
+		return OPH_DIM_SUCCESS;
+	}
+
+	if (tm_base) {
+		memset(tm_base, 0, sizeof(struct tm));
+		tm_base->tm_sec = value % OPH_ODB_DIM_SECOND_NUMBER;
+		value /= OPH_ODB_DIM_SECOND_NUMBER;	// minutes
+		tm_base->tm_min = value % OPH_ODB_DIM_MINUTE_NUMBER;
+		value /= OPH_ODB_DIM_MINUTE_NUMBER;	// hours
+		tm_base->tm_hour = value % OPH_ODB_DIM_HOUR_NUMBER;
+		value /= OPH_ODB_DIM_HOUR_NUMBER;	// days
+		if (oph_day_to_date(value, &tm_base->tm_year, &tm_base->tm_mon, &tm_base->tm_mday, &tm_base->tm_wday, &tm_base->tm_yday, dim)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
+			return OPH_DIM_DATA_ERROR;
+		}
 	}
 
 	return OPH_DIM_SUCCESS;

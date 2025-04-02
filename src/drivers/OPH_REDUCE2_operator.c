@@ -46,6 +46,87 @@
 
 #include <pthread.h>
 
+#ifdef OPH_DIM_REDUCTION_NEW
+struct _time_group_struct {
+	OPH_REDUCE2_operator_handle *oper_handle;
+	unsigned int start;
+	unsigned int stop;
+	char *dim_row;
+	long long *labels;
+	oph_odb_dimension *dim;
+	char concept_level_out;
+};
+typedef struct _time_group_struct time_group_struct;
+
+void *time_group_thread(void *ts)
+{
+	OPH_REDUCE2_operator_handle *oper_handle = ((time_group_struct *) ts)->oper_handle;
+	int res = OPH_ANALYTICS_OPERATOR_SUCCESS, kk;
+
+	int start = ((time_group_struct *) ts)->start;
+	int stop = ((time_group_struct *) ts)->stop;
+	char *dim_row = ((time_group_struct *) ts)->dim_row;
+	long long *labels = ((time_group_struct *) ts)->labels;
+	oph_odb_dimension *dim = ((time_group_struct *) ts)->dim;
+
+	struct tm tm_base;
+	for (kk = start; !res && (kk < stop); ++kk) {
+		if (oph_dim_get_time_value_of(dim_row, kk, dim, &tm_base, NULL, NULL)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to evaluate time value\n");
+			res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			break;
+		}
+		switch (((time_group_struct *) ts)->concept_level_out) {	// This implementation is over-simplified
+			case 's':
+				labels[kk] = tm_base.tm_sec;
+				break;
+			case 'm':
+				labels[kk] = tm_base.tm_min;
+				break;
+			case 'v':
+				labels[kk] = tm_base.tm_min / 5 + (tm_base.tm_hour + (tm_base.tm_yday + tm_base.tm_year * 366) * 24) * 12;
+				break;
+			case 'Q':
+				labels[kk] = tm_base.tm_min / 15 + (tm_base.tm_hour + (tm_base.tm_yday + tm_base.tm_year * 366) * 24) * 4;
+				break;
+			case 'h':
+				labels[kk] = tm_base.tm_hour + (tm_base.tm_yday + tm_base.tm_year * 366) * 24;
+				break;
+			case '3':
+				labels[kk] = tm_base.tm_hour / 3 + (tm_base.tm_yday + tm_base.tm_year * 366) * 8;
+				break;
+			case '6':
+				labels[kk] = tm_base.tm_hour / 6 + (tm_base.tm_yday + tm_base.tm_year * 366) * 4;
+				break;
+			case 'd':
+				labels[kk] = tm_base.tm_yday + tm_base.tm_year * 366;
+				break;
+			case 'w':
+				labels[kk] =
+				    (tm_base.tm_yday + (tm_base.tm_wday + OPH_ODB_DIM_WEEK_NUMBER - tm_base.tm_yday % OPH_ODB_DIM_WEEK_NUMBER) % OPH_ODB_DIM_WEEK_NUMBER) / OPH_ODB_DIM_WEEK_NUMBER +
+				    tm_base.tm_year * 53;
+				break;
+			case 'M':
+				labels[kk] = tm_base.tm_mon + tm_base.tm_year * 12;
+				break;
+			case 'q':
+				labels[kk] = tm_base.tm_mon / 3 + tm_base.tm_year * 4;
+				break;
+			case 'y':
+				labels[kk] = tm_base.tm_year;
+				break;
+			default:
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized frequency\n");
+				res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+		}
+	}
+
+	int *ret_val = (int *) malloc(sizeof(int));
+	*ret_val = res;
+	pthread_exit((void *) ret_val);
+}
+#endif
+
 struct _thread_struct {
 	OPH_REDUCE2_operator_handle *oper_handle;
 	unsigned int current_thread;
@@ -880,7 +961,7 @@ int task_init(oph_operator_struct *handle)
 		snprintf(o_label_dimension_table_name, OPH_COMMON_BUFFER_LEN, OPH_DIM_TABLE_LABEL_MACRO, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_output_container);
 		char new_container = ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_output_container != ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container;
 
-		int kk, residual_dim_number = 0, d, new_size = 0, prev_kk;
+		int kk, residual_dim_number = 0, d, new_size = 0;
 		char *dim_row, *sizes_, *cl_value;
 		int compressed = 0;
 		long long prev_value, svalue;
@@ -941,7 +1022,10 @@ int task_init(oph_operator_struct *handle)
 						dim[l].dimension_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE] = 0;
 					}
 
-					int flag, size;
+					int size;
+#ifndef OPH_DIM_REDUCTION_NEW
+					int flag, prev_kk;
+#endif
 					if (oph_dim_check_data_type(dim[l].dimension_type, &size) || !size) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in evaluating data type size.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
@@ -957,8 +1041,8 @@ int task_init(oph_operator_struct *handle)
 							free(stored_dim_insts);
 						goto __OPH_EXIT_1;
 					}
+#ifndef OPH_DIM_REDUCTION_NEW
 					char *dim_row2 = (char *) malloc(cubedims[l].size * size);
-
 					struct tm tm_prev;
 					memset(&tm_prev, 0, sizeof(struct tm));
 					tm_prev.tm_year = -1;
@@ -1031,8 +1115,101 @@ int task_init(oph_operator_struct *handle)
 					}
 					memcpy(dim_row2 + new_size * size, dim_row + prev_kk * size, size);
 					value[new_size] = new_size;
+					new_size++;
+#else
+					long long *labels = (int *) malloc(cubedims[l].size * sizeof(long long));
+					OPH_REDUCE2_operator_handle *oper_handle = (OPH_REDUCE2_operator_handle *) handle->operator_handle;
+					int rc, num_threads = oper_handle->nthread, res[num_threads], sub_size = cubedims[l].size / num_threads, offset = 0;
+					pthread_t threads[num_threads];
+					pthread_attr_t attr;
+					pthread_attr_init(&attr);
+					pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+					time_group_struct ts[num_threads];
+					for (kk = 0; kk < num_threads; kk++) {
+						ts[kk].oper_handle = oper_handle;
+						ts[kk].start = offset;
+						offset += sub_size;
+						ts[kk].stop = offset < cubedims[l].size ? offset : cubedims[l].size;
+						ts[kk].dim_row = dim_row;
+						ts[kk].labels = labels;
+						ts[kk].dim = dim + l;
+						ts[kk].concept_level_out = concept_level_out;
+						rc = pthread_create(&threads[kk], &attr, time_group_thread, (void *) &(ts[kk]));
+						if (rc) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create thread %d: %d.\n", kk, rc);
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Unable to create thread %d: %d.\n", kk, rc);
+						}
+					}
+					pthread_attr_destroy(&attr);
+					void *ret_val = NULL;
+					for (kk = 0; kk < num_threads; kk++) {
+						rc = pthread_join(threads[kk], &ret_val);
+						res[kk] = *((int *) ret_val);
+						free(ret_val);
+						if (rc) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while joining thread %d: %d.\n", kk, rc);
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Error while joining thread %d: %d.\n", kk, rc);
+						}
+					}
 
-					dim_inst[l].size = cubedims[l].size = ++new_size;
+					for (kk = 0; kk < num_threads; kk++) {
+						if (res[kk] != OPH_ANALYTICS_OPERATOR_SUCCESS) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in evaluating reduction groups.\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_REDUCE2_DIM_CHECK_ERROR);
+							if (dim_row)
+								free(dim_row);
+							if (labels)
+								free(labels);
+							oph_dim_disconnect_from_dbms(db->dbms_instance);
+							oph_dim_unload_dim_dbinstance(db);
+							free(cubedims);
+							if (stored_dims)
+								free(stored_dims);
+							if (stored_dim_insts)
+								free(stored_dim_insts);
+							goto __OPH_EXIT_1;
+						}
+					}
+
+					int first = 0, last = 0;
+					for (first = kk = 0; kk < cubedims[l].size; ++kk)
+						if (labels[first] != labels[kk]) {
+							sizes[++new_size] = 1;
+							first = kk;
+						} else
+							sizes[new_size]++;
+					new_size++;
+
+					if (labels)
+						free(labels);
+
+					// Evaluate the centroid of each group
+					char *dim_row2 = (char *) malloc(cubedims[l].size * size);
+					for (first = last = kk = 0; kk < new_size; ++kk) {
+						last += sizes[kk];
+
+						if (oph_dim_update_value(dim_row, dim[l].dimension_type, first, last - 1)) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in evaluating reduction groups.\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_REDUCE2_DIM_CHECK_ERROR);
+							if (dim_row)
+								free(dim_row);
+							if (dim_row2)
+								free(dim_row2);
+							oph_dim_disconnect_from_dbms(db->dbms_instance);
+							oph_dim_unload_dim_dbinstance(db);
+							free(cubedims);
+							if (stored_dims)
+								free(stored_dims);
+							if (stored_dim_insts)
+								free(stored_dim_insts);
+							goto __OPH_EXIT_1;
+						}
+						memcpy(dim_row2 + kk * size, dim_row + first * size, size);
+						value[kk] = kk;
+						first = last;
+					}
+#endif
+					dim_inst[l].size = cubedims[l].size = new_size;
 					if (dim_row)
 						free(dim_row);
 					// End: determination of ...

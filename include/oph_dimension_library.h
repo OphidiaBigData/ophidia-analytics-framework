@@ -65,6 +65,8 @@
 #define OPH_DIM_DATA_FORMAT_CHECK	'%'
 #define OPH_DIM_DATA_DEFAULT		"1900-01-01 00:00:00"
 
+#define OPH_DIM_REDUCTION_NEW
+
 /**
  * \brief Function to read dimension info from configuration file
  * \param db Pointer to allocated db_instance structure
