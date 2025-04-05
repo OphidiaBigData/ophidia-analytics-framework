@@ -65,7 +65,8 @@
 #define OPH_DIM_DATA_FORMAT_CHECK	'%'
 #define OPH_DIM_DATA_DEFAULT		"1900-01-01 00:00:00"
 
-#define OPH_DIM_REDUCTION_NEW
+#define OPH_DIM_NEW_REDUCTION
+#define OPH_DIM_NEW_REDUCTION_SINGLE_THREAD
 
 /**
  * \brief Function to read dimension info from configuration file

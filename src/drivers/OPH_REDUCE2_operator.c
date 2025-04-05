@@ -46,7 +46,7 @@
 
 #include <pthread.h>
 
-#ifdef OPH_DIM_REDUCTION_NEW
+#ifdef OPH_DIM_NEW_REDUCTION
 struct _time_group_struct {
 	OPH_REDUCE2_operator_handle *oper_handle;
 	unsigned int start;
@@ -55,6 +55,7 @@ struct _time_group_struct {
 	long long *labels;
 	oph_odb_dimension *dim;
 	char concept_level_out;
+	int ret_val;
 };
 typedef struct _time_group_struct time_group_struct;
 
@@ -121,9 +122,10 @@ void *time_group_thread(void *ts)
 		}
 	}
 
-	int *ret_val = (int *) malloc(sizeof(int));
-	*ret_val = res;
-	pthread_exit((void *) ret_val);
+	((time_group_struct *) ts)->ret_val = res;
+#ifndef OPH_DIM_NEW_REDUCTION_SINGLE_THREAD
+	pthread_exit((void *) &((time_group_struct *) ts)->ret_val);
+#endif
 }
 #endif
 
@@ -1023,7 +1025,7 @@ int task_init(oph_operator_struct *handle)
 					}
 
 					int size;
-#ifndef OPH_DIM_REDUCTION_NEW
+#ifndef OPH_DIM_NEW_REDUCTION
 					int flag, prev_kk;
 #endif
 					if (oph_dim_check_data_type(dim[l].dimension_type, &size) || !size) {
@@ -1041,7 +1043,7 @@ int task_init(oph_operator_struct *handle)
 							free(stored_dim_insts);
 						goto __OPH_EXIT_1;
 					}
-#ifndef OPH_DIM_REDUCTION_NEW
+#ifndef OPH_DIM_NEW_REDUCTION
 					char *dim_row2 = (char *) malloc(cubedims[l].size * size);
 					struct tm tm_prev;
 					memset(&tm_prev, 0, sizeof(struct tm));
@@ -1119,41 +1121,72 @@ int task_init(oph_operator_struct *handle)
 #else
 					long long *labels = (int *) malloc(cubedims[l].size * sizeof(long long));
 					OPH_REDUCE2_operator_handle *oper_handle = (OPH_REDUCE2_operator_handle *) handle->operator_handle;
-					int rc, num_threads = oper_handle->nthread, res[num_threads], sub_size = cubedims[l].size / num_threads, offset = 0;
-					pthread_t threads[num_threads];
-					pthread_attr_t attr;
-					pthread_attr_init(&attr);
-					pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-					time_group_struct ts[num_threads];
-					for (kk = 0; kk < num_threads; kk++) {
-						ts[kk].oper_handle = oper_handle;
-						ts[kk].start = offset;
-						offset += sub_size;
-						ts[kk].stop = offset < cubedims[l].size ? offset : cubedims[l].size;
-						ts[kk].dim_row = dim_row;
-						ts[kk].labels = labels;
-						ts[kk].dim = dim + l;
-						ts[kk].concept_level_out = concept_level_out;
-						rc = pthread_create(&threads[kk], &attr, time_group_thread, (void *) &(ts[kk]));
-						if (rc) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create thread %d: %d.\n", kk, rc);
-							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Unable to create thread %d: %d.\n", kk, rc);
+#ifndef OPH_DIM_NEW_REDUCTION_SINGLE_THREAD
+					int num_threads = oper_handle->nthread;
+					if (num_threads > 1) {
+						int rc, res[num_threads], sub_size = cubedims[l].size / num_threads, offset = 0;
+						pthread_t threads[num_threads];
+						pthread_attr_t attr;
+						pthread_attr_init(&attr);
+						pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+						time_group_struct ts[num_threads];
+						for (kk = 0; kk < num_threads; kk++) {
+							ts[kk].oper_handle = oper_handle;
+							ts[kk].start = offset;
+							offset += sub_size;
+							ts[kk].stop = offset < cubedims[l].size ? offset : cubedims[l].size;
+							ts[kk].dim_row = dim_row;
+							ts[kk].labels = labels;
+							ts[kk].dim = dim + l;
+							ts[kk].concept_level_out = concept_level_out;
+							rc = pthread_create(&threads[kk], &attr, time_group_thread, (void *) &(ts[kk]));
+							if (rc) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create thread %d: %d.\n", kk, rc);
+								logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Unable to create thread %d: %d.\n", kk, rc);
+							}
 						}
-					}
-					pthread_attr_destroy(&attr);
-					void *ret_val = NULL;
-					for (kk = 0; kk < num_threads; kk++) {
-						rc = pthread_join(threads[kk], &ret_val);
-						res[kk] = *((int *) ret_val);
-						free(ret_val);
-						if (rc) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while joining thread %d: %d.\n", kk, rc);
-							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Error while joining thread %d: %d.\n", kk, rc);
+						pthread_attr_destroy(&attr);
+						void *ret_val = NULL;
+						for (kk = 0; kk < num_threads; kk++) {
+							rc = pthread_join(threads[kk], &ret_val);
+							res[kk] = *((int *) ret_val);
+							free(ret_val);
+							if (rc) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while joining thread %d: %d.\n", kk, rc);
+								logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Error while joining thread %d: %d.\n", kk, rc);
+							}
 						}
-					}
-
-					for (kk = 0; kk < num_threads; kk++) {
-						if (res[kk] != OPH_ANALYTICS_OPERATOR_SUCCESS) {
+						for (kk = 0; kk < num_threads; kk++) {
+							if (res[kk] != OPH_ANALYTICS_OPERATOR_SUCCESS) {
+								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in evaluating reduction groups.\n");
+								logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_REDUCE2_DIM_CHECK_ERROR);
+								if (dim_row)
+									free(dim_row);
+								if (labels)
+									free(labels);
+								oph_dim_disconnect_from_dbms(db->dbms_instance);
+								oph_dim_unload_dim_dbinstance(db);
+								free(cubedims);
+								if (stored_dims)
+									free(stored_dims);
+								if (stored_dim_insts)
+									free(stored_dim_insts);
+								goto __OPH_EXIT_1;
+							}
+						}
+					} else {
+#endif
+						time_group_struct ts;
+						ts.oper_handle = oper_handle;
+						ts.start = 0;
+						ts.stop = cubedims[l].size;
+						ts.dim_row = dim_row;
+						ts.labels = labels;
+						ts.dim = dim + l;
+						ts.concept_level_out = concept_level_out;
+						ts.ret_val = OPH_ANALYTICS_OPERATOR_SUCCESS;
+						time_group_thread(&ts);
+						if (ts.ret_val != OPH_ANALYTICS_OPERATOR_SUCCESS) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in evaluating reduction groups.\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_REDUCE2_DIM_CHECK_ERROR);
 							if (dim_row)
@@ -1169,8 +1202,9 @@ int task_init(oph_operator_struct *handle)
 								free(stored_dim_insts);
 							goto __OPH_EXIT_1;
 						}
+#ifndef OPH_DIM_NEW_REDUCTION_SINGLE_THREAD
 					}
-
+#endif
 					int first = 0, last = 0;
 					for (first = kk = 0; kk < cubedims[l].size; ++kk)
 						if (labels[first] != labels[kk]) {
