@@ -98,6 +98,8 @@ struct _NETCDF_var {
 	int number_src_path;
 	char *dim_unlim_array;
 	char *base_time;
+	char *operation;
+	char *args;
 };
 typedef struct _NETCDF_var NETCDF_var;
 
@@ -357,6 +359,9 @@ int oph_nc_get_row_from_nc(int ncid, int array_length, NETCDF_var * measure, uns
 int oph_nc_update_dim_with_nc_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid);
 int oph_nc_update_dim_with_nc_metadata2(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, int ncid, int *dim_id);
 int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var * measure, int is_index, int ncid, double offset, char out_of_bound);
+
+// For onload operations
+int oph_nc_is_a_reduce_func(const char *operation, const char *args);
 
 #ifdef OPH_ZARR
 void *oph_nc_dlopen();

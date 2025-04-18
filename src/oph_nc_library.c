@@ -2890,7 +2890,8 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler *server, oph_odb_frag
 	char *insert_query = OPH_DC_SQ_CREATE_FRAG_FROM_FILE;
 	int query_size =
 	    snprintf(NULL, 0, insert_query, frag->fragment_name, nc_file_path, measure->varname, compressed ? OPH_IOSERVER_SQ_VAL_YES : OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, frag->key_start, "",
-		     "", "", "", measure->dim_unlim) + (n1 + n2 + n3 + n4 - 4) + 1;
+		     "", "", "", measure->dim_unlim, measure->operation ? measure->operation : OPH_COMMON_NONE_FILTER,
+		     measure->args ? measure->args : OPH_COMMON_NONE_FILTER) + (n1 + n2 + n3 + n4 - 4) + 1;
 
 	char *query_string = (char *) malloc(query_size * sizeof(char));
 	if (!(query_string)) {
@@ -2948,7 +2949,8 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler *server, oph_odb_frag
 	free(index);
 
 	int n = snprintf(query_string, query_size, insert_query, frag->fragment_name, nc_file_path, measure->varname, compressed ? OPH_IOSERVER_SQ_VAL_YES : OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number,
-			 frag->key_start, dims_type_string, dims_index_string, dims_start_string, dims_end_string, measure->dim_unlim);
+			 frag->key_start, dims_type_string, dims_index_string, dims_start_string, dims_end_string, measure->dim_unlim, measure->operation ? measure->operation : OPH_COMMON_NONE_FILTER,
+			 measure->args ? measure->args : OPH_COMMON_NONE_FILTER);
 	if (n >= query_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_NC_ERROR;
@@ -5391,7 +5393,8 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler *server, oph_odb_fragme
 	char *create_query = OPH_DC_SQ_CREATE_SELECT_FRAG_FILE;
 	query_size =
 	    snprintf(NULL, 0, create_query, new_frag->fragment_name, "frag1", "", "", "", "", nc_file_path, measure->varname, OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, old_frag->key_start, "", "",
-		     "", "") + where_size + field_size + from_size + from_alias_size + (dim_t_size + dim_i_size + dim_s_size + dim_e_size - 4) + 1;
+		     "", "", measure->operation ? measure->operation : OPH_COMMON_NONE_FILTER,
+		     measure->args ? measure->args : OPH_COMMON_NONE_FILTER) + where_size + field_size + from_size + from_alias_size + (dim_t_size + dim_i_size + dim_s_size + dim_e_size - 4) + 1;
 
 	char *query_string = (char *) malloc(query_size * sizeof(char));
 	if (!(query_string)) {
@@ -5554,7 +5557,8 @@ int oph_nc_append_fragment_from_nc4(oph_ioserver_handler *server, oph_odb_fragme
 	}
 
 	n = snprintf(query_string, query_size, create_query, new_frag->fragment_name, "frag1", field_string, from_string, from_alias_string, where_string, nc_file_path, measure->varname,
-		     OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, old_frag->key_start, dims_type_string, dims_index_string, dims_start_string, dims_end_string);
+		     OPH_IOSERVER_SQ_VAL_NO, tuplexfrag_number, old_frag->key_start, dims_type_string, dims_index_string, dims_start_string, dims_end_string,
+		     measure->operation ? measure->operation : OPH_COMMON_NONE_FILTER, measure->args ? measure->args : OPH_COMMON_NONE_FILTER);
 	if (n >= query_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		free(dims_type_string);
@@ -6669,4 +6673,50 @@ int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var *measure, int 
 	}
 
 	return OPH_NC_SUCCESS;
+}
+
+#define NC_FUNCTION_MAX "max"
+#define NC_FUNCTION_MIN "min"
+#define NC_FUNCTION_AVG "avg"
+#define NC_FUNCTION_SUM "sum"
+#define NC_FUNCTION_STD "std"
+#define NC_FUNCTION_VAR "var"
+#define NC_FUNCTION_STAT "stat"
+#define NC_FUNCTION_OUTLIER "outlier"
+
+#define NC_FUNCTION_OP_N 3
+#define NC_FUNCTION_OP_SET '1'
+
+int oph_nc_is_a_reduce_func(const char *operation, const char *args)
+{
+	if (!operation)
+		return 0;
+
+	if (!strcmp(operation, NC_FUNCTION_MAX))
+		return 1;
+	if (!strcmp(operation, NC_FUNCTION_MIN))
+		return 1;
+	if (!strcmp(operation, NC_FUNCTION_AVG))
+		return 1;
+	if (!strcmp(operation, NC_FUNCTION_SUM))
+		return 1;
+	if (!strcmp(operation, NC_FUNCTION_STD))
+		return 1;
+	if (!strcmp(operation, NC_FUNCTION_VAR))
+		return 1;
+	if (!strcmp(operation, NC_FUNCTION_OUTLIER))
+		return 1;
+	if (!strcmp(operation, NC_FUNCTION_STAT)) {
+		int i, option = 0;
+		for (i = 0; i < NC_FUNCTION_OP_N; ++i)
+			if (args && args[0]) {
+				if (args[0] == NC_FUNCTION_OP_SET)
+					option++;
+				args++;
+			} else
+				break;
+		return option;
+	}
+
+	return 0;
 }
