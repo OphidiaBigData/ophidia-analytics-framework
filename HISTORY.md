@@ -1,6 +1,10 @@
 
 ## Next release
 
+### Fixed:
+
+- Bug in retrieve the time unit
+
 ### Added:
 
 - Concept level 'octet' to time hierarchy

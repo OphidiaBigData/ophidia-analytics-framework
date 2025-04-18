@@ -2499,7 +2499,7 @@ int task_init(oph_operator_struct *handle)
 					size_t xlen = 0;
 					if (!nc_inq_varid(ncid, measure->dims_name[i], &idp) && !nc_inq_attlen(ncid, idp, OPH_IN_PARAM_UNITS, &xlen)) {
 						char tmp[1 + xlen];
-						if (!nc_get_att_text(ncid, measure->dims_id[i], OPH_IN_PARAM_UNITS, tmp)) {
+						if (!nc_get_att_text(ncid, idp, OPH_IN_PARAM_UNITS, tmp)) {
 							tmp[xlen] = 0;
 							char *pch = strchr(tmp, ' ');
 							if (pch && (pch = strchr(pch + 1, ' ')))
