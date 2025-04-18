@@ -1,6 +1,10 @@
 
 ## Next release
 
+### Added:
+
+- Concept level 'octet' to time hierarchy
+
 ### Changed:
 
 - Procedure to evaluate the values of time dimension in case of reduction

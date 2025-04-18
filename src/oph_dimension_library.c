@@ -691,6 +691,22 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 			if (first_element || (midnight && (semi_prev == semi_base) && !(tm_prev->tm_hour % 6) && !tm_prev->tm_sec && !tm_prev->tm_min)
 			    || ((semi_prev != semi_base) && (!midnight || ((semi_prev + 1) % 4 != semi_base) || tm_base.tm_sec || tm_base.tm_min || (tm_base.tm_hour % 6))))
 				break;
+		case '8':
+			if (centroid) {
+				tm_centroid.tm_hour = 4 + 8 * (tm_centroid.tm_hour / 8);
+				tm_centroid.tm_min = 0;
+				tm_centroid.tm_sec = 0;
+				if (oph_set_centroid(dim_row, kk, dim, &tm_centroid, base_time)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in setting the centroid\n");
+					return OPH_DIM_DATA_ERROR;
+				}
+				centroid = 0;
+			}
+			semi_prev = tm_prev->tm_hour / 8;
+			semi_base = tm_base.tm_hour / 8;
+			if (first_element || (midnight && (semi_prev == semi_base) && !(tm_prev->tm_hour % 8) && !tm_prev->tm_sec && !tm_prev->tm_min)
+			    || ((semi_prev != semi_base) && (!midnight || ((semi_prev + 1) % 3 != semi_base) || tm_base.tm_sec || tm_base.tm_min || (tm_base.tm_hour % 8))))
+				break;
 		case 'd':
 			if (centroid) {
 				tm_centroid.tm_hour = 12;
@@ -732,6 +748,9 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 			if ((midnight && (prev_week == base_week) && !tm_prev->tm_sec && !tm_prev->tm_min && !tm_prev->tm_hour && !tm_prev->tm_wday)
 			    || ((prev_week != base_week) && (!midnight || ((prev_week + 1) % 53 != base_week) || tm_base.tm_sec || tm_base.tm_min || tm_base.tm_hour || tm_base.tm_wday)))
 				break;
+		case 'o':
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unsupported concept level\n");
+			return OPH_DIM_DATA_ERROR;
 		case 'M':
 			if (concept_level_out != 'w') {
 				if (centroid) {
@@ -793,7 +812,7 @@ int oph_dim_is_in_time_group_of(char *dim_row, unsigned int kk, oph_odb_dimensio
 			*res = 1;
 			break;
 		default:
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized frequency\n");
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized concept level\n");
 			return OPH_DIM_DATA_ERROR;
 	}
 

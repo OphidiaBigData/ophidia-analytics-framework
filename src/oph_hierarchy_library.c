@@ -619,7 +619,9 @@ int oph_hier_retrieve_available_op(const char *filename, char concept_level_in, 
 
 	if (j)
 		for (*aggregate_set = 1, --i; i >= j; --i) {
-			if ((hierarchy->attributes[i]->short_name != 'w') || (hierarchy->attributes[j]->short_name == 'w'))
+			if (((hierarchy->attributes[i]->short_name != 'w') && (hierarchy->attributes[i]->short_name != 'o'))
+			    || ((hierarchy->attributes[i]->short_name != 'o') && (hierarchy->attributes[j]->short_name == 'w')) || ((hierarchy->attributes[i]->short_name != 'w')
+																    && (hierarchy->attributes[j]->short_name == 'o')))
 				*aggregate_set *= hierarchy->attributes[i]->aggregate_set;
 		}
 

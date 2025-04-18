@@ -99,6 +99,9 @@ void *time_group_thread(void *ts)
 			case '6':
 				labels[kk] = tm_base.tm_hour / 6 + (tm_base.tm_yday + tm_base.tm_year * 366) * 4;
 				break;
+			case '8':
+				labels[kk] = tm_base.tm_hour / 8 + (tm_base.tm_yday + tm_base.tm_year * 366) * 3;
+				break;
 			case 'd':
 				labels[kk] = tm_base.tm_yday + tm_base.tm_year * 366;
 				break;
@@ -106,6 +109,9 @@ void *time_group_thread(void *ts)
 				labels[kk] =
 				    (tm_base.tm_yday + (tm_base.tm_wday + OPH_ODB_DIM_WEEK_NUMBER - tm_base.tm_yday % OPH_ODB_DIM_WEEK_NUMBER) % OPH_ODB_DIM_WEEK_NUMBER) / OPH_ODB_DIM_WEEK_NUMBER +
 				    tm_base.tm_year * 53;
+				break;
+			case 'o':
+				labels[kk] = tm_base.tm_yday / 8 + tm_base.tm_year * 46;
 				break;
 			case 'M':
 				labels[kk] = tm_base.tm_mon + tm_base.tm_year * 12;
