@@ -2393,10 +2393,11 @@ int task_init(oph_operator_struct *handle)
 				//Compute tuple per fragment as the number of values of most inernal explicit dimension (excluding the first one bigger than 1)
 				((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 			}
-		} else {
+		} else if (!check_for_reduce_func) {
 			//Consider only implicit dimensions
 			((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->array_length *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
-		}
+		} else if (check_for_reduce_func > 1)
+			((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->array_length *= check_for_reduce_func;
 	}
 
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->number_unven_frag = 0;
@@ -3112,7 +3113,7 @@ int task_init(oph_operator_struct *handle)
 			}
 
 			int dimension_array_id = 0;
-			char *dim_array = NULL;
+			char *dim_array = NULL, collapsed = 0;
 			int exists = 0;
 			char filename[2 * OPH_TP_BUFLEN];
 			oph_odb_hierarchy hier;
@@ -3291,7 +3292,10 @@ int task_init(oph_operator_struct *handle)
 				dim_inst[i].id_grid = id_grid;
 				dim_inst[i].id_dimensioninst = 0;
 				//Modified to allow subsetting
-				tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
+				if (measure->dims_type[i] || !check_for_reduce_func)
+					tmp_var.varsize = 1 + measure->dims_end_index[i] - measure->dims_start_index[i];
+				else
+					tmp_var.varsize = check_for_reduce_func;
 				dim_inst[i].size = tmp_var.varsize;
 				dim_inst[i].concept_level = measure->dims_concept_level[i];
 				dim_inst[i].unlimited = measure->dims_unlim[i] ? 1 : 0;
@@ -3304,19 +3308,33 @@ int task_init(oph_operator_struct *handle)
 				tmp_var.dims_start_index = &(measure->dims_start_index[i]);
 				tmp_var.dims_end_index = &(measure->dims_end_index[i]);
 
-				if (measure->order_src_path && (measure->dim_unlim == i))
-					dim_array = measure->dim_unlim_array;
-				else if (oph_nc_get_dim_array2
-					 (id_container_out, ncid, tmp_var.varid, tot_dims[j].dimension_type, tmp_var.varsize, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index), &dim_array)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, nc_strerror(retval));
-					free(tot_dims);
-					free(dims);
-					free(dim_inst);
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					free(dimvar_ids);
-					goto __OPH_EXIT_1;
+				collapsed = 0;
+				if (measure->dims_type[i] || !check_for_reduce_func) {
+					if (measure->order_src_path && (measure->dim_unlim == i))
+						dim_array = measure->dim_unlim_array;
+					else if (oph_nc_get_dim_array2
+						 (id_container_out, ncid, tmp_var.varid, tot_dims[j].dimension_type, tmp_var.varsize, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index),
+						  &dim_array)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, nc_strerror(retval));
+						free(tot_dims);
+						free(dims);
+						free(dim_inst);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						free(dimvar_ids);
+						goto __OPH_EXIT_1;
+					}
+				} else {
+					collapsed = 1;
+					dim_array = NULL;
+					if (check_for_reduce_func == 1) {
+						dim_inst[i].size = 0;
+						dim_inst[i].concept_level = OPH_COMMON_ALL_CONCEPT_LEVEL;
+					} else {
+						dim_inst[i].size = check_for_reduce_func;
+						dim_inst[i].concept_level = OPH_COMMON_BASE_CONCEPT_LEVEL;
+					}
 				}
 
 				if ((i == time_dimension) && strchr(tot_dims[j].base_time, OPH_DIM_DATA_FORMAT_CHECK)) {
@@ -3335,26 +3353,34 @@ int task_init(oph_operator_struct *handle)
 					base_time_conversion = 1;
 				}
 
-				if (oph_dim_insert_into_dimension_table(db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, tmp_var.varsize, dim_array, &dimension_array_id)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_ROW_ERROR, tot_dims[j].dimension_name);
-					free(tot_dims);
-					free(dims);
-					free(dim_inst);
-					free(dim_array);
-					oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db_dimension);
-					free(dimvar_ids);
-					goto __OPH_EXIT_1;
-				}
-				if (!measure->order_src_path || (measure->dim_unlim != i))
-					free(dim_array);
+				if (!collapsed) {
+					if (oph_dim_insert_into_dimension_table(db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, tmp_var.varsize, dim_array, &dimension_array_id)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_ROW_ERROR, tot_dims[j].dimension_name);
+						free(tot_dims);
+						free(dims);
+						free(dim_inst);
+						free(dim_array);
+						oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db_dimension);
+						free(dimvar_ids);
+						goto __OPH_EXIT_1;
+					}
+					if (!measure->order_src_path || (measure->dim_unlim != i))
+						free(dim_array);
+				} else
+					dimension_array_id = 0;
 				dim_inst[i].fk_id_dimension_label = dimension_array_id;	// Real dimension
 
-				index_array = (long long *) malloc(tmp_var.varsize * sizeof(long long));
-				for (kk = 0; kk < tmp_var.varsize; ++kk)
-					index_array[kk] = 1 + kk;	// Non 'C'-like indexing
-				if (oph_dim_insert_into_dimension_table(db_dimension, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, tmp_var.varsize, (char *) index_array, &dimension_array_id)) {
+				if (!collapsed) {
+					index_array = (long long *) malloc(tmp_var.varsize * sizeof(long long));
+					for (kk = 0; kk < tmp_var.varsize; ++kk)
+						index_array[kk] = 1 + kk;	// Non 'C'-like indexing
+				} else
+					index_array = NULL;
+				if (oph_dim_insert_into_dimension_table
+				    (db_dimension, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, collapsed ? 0 : tmp_var.varsize, collapsed ? NULL : (char *) index_array,
+				     &dimension_array_id)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_ROW_ERROR, tot_dims[j].dimension_name);
 					free(tot_dims);
@@ -3366,7 +3392,8 @@ int task_init(oph_operator_struct *handle)
 					free(dimvar_ids);
 					goto __OPH_EXIT_1;
 				}
-				free(index_array);
+				if (index_array)
+					free(index_array);
 				dim_inst[i].fk_id_dimension_index = dimension_array_id;	// Indexes
 
 				if (oph_odb_dim_insert_into_dimensioninstance_table(oDB, &(dim_inst[i]), &dimension_array_id, 0, NULL, NULL)) {

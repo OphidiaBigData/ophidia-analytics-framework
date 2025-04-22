@@ -2723,9 +2723,7 @@ int task_init(oph_operator_struct *handle)
 				}
 
 				if (!collapsed) {
-					if (oph_dim_insert_into_dimension_table
-					    (db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, collapsed ? 0 : tmp_var.varsize, collapsed ? NULL : dim_array,
-					     &dimension_array_id)) {
+					if (oph_dim_insert_into_dimension_table(db_dimension, label_dimension_table_name, tot_dims[j].dimension_type, tmp_var.varsize, dim_array, &dimension_array_id)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_ROW_ERROR, tot_dims[j].dimension_name);
 						free(tot_dims);
@@ -2748,7 +2746,9 @@ int task_init(oph_operator_struct *handle)
 						index_array[kk] = 1 + kk;	// Non 'C'-like indexing
 				} else
 					index_array = NULL;
-				if (oph_dim_insert_into_dimension_table(db_dimension, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, tmp_var.varsize, (char *) index_array, &dimension_array_id)) {
+				if (oph_dim_insert_into_dimension_table
+				    (db_dimension, index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, collapsed ? 0 : tmp_var.varsize, collapsed ? NULL : (char *) index_array,
+				     &dimension_array_id)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new dimension row\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_ROW_ERROR, tot_dims[j].dimension_name);
 					free(tot_dims);
