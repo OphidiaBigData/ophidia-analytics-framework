@@ -1876,7 +1876,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	if (value) {
 		if (!(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->operation = (char *) strndup(value, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTESDM_MEMORY_ERROR_INPUT, OPH_IN_PARAM_REDUCTION_OPERATION);
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT, OPH_IN_PARAM_REDUCTION_OPERATION);
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 		if (!strcmp(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->operation, OPH_COMMON_NONE_FILTER)) {
@@ -4682,6 +4682,14 @@ int env_unset(oph_operator_struct *handle)
 	if (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->description);
 		((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->description = NULL;
+	}
+	if (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->operation) {
+		free((char *) ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->operation);
+		((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->operation = NULL;
+	}
+	if (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->args) {
+		oph_tp_free_multiple_value_param_list(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->args, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->args_num);
+		((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->args = NULL;
 	}
 #ifdef OPH_ZARR
 	oph_nc_dlclose(((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->dlh);

@@ -253,6 +253,8 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	nc_measure->order_src_path = NULL;
 	nc_measure->dim_unlim_array = NULL;
 	nc_measure->base_time = NULL;
+	nc_measure->operation = NULL;
+	nc_measure->args = NULL;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->cwd = NULL;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->user = NULL;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->run = 1;
@@ -275,6 +277,9 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->policy = 0;
+	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->operation = NULL;
+	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args = NULL;
+	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args_num = -1;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids = NULL;
 
 	char *value;
@@ -2300,6 +2305,44 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	else
 		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->id_job = (int) strtol(value, NULL, 10);
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_REDUCTION_OPERATION);
+	if (value) {
+		if (!(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->operation = (char *) strndup(value, OPH_TP_TASKLEN))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT, OPH_IN_PARAM_REDUCTION_OPERATION);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
+		}
+		if (!strcmp(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->operation, OPH_COMMON_NONE_FILTER)) {
+			free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->operation);
+			((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->operation = NULL;
+		}
+		measure->operation = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->operation;
+	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_ARGS);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_ARGS);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_ARGS);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_NONE_FILTER, OPH_TP_TASKLEN)) {
+		if (oph_tp_parse_multiple_value_param
+		    (value, &((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args, &((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args_num)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
+			oph_tp_free_multiple_value_param_list(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args, ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args_num);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+	} else
+		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args_num = 0;
+
+	if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args_num > 1) {
+		pmesg(LOG_WARNING, __FILE__, __LINE__, "Only the first argument of '%s' will be considered\n", value);
+		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Only the first argument of '%s' will be considered\n", value);
+	}
+	if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args_num > 0)
+		measure->args = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args[0];
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -2334,6 +2377,8 @@ int task_init(oph_operator_struct *handle)
 			break;
 		}
 	}
+
+	int check_for_reduce_func = oph_nc_is_a_reduce_func(measure->operation, measure->args);
 
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->total_frag_number = 1;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->tuplexfrag_number = 1;
@@ -5108,6 +5153,14 @@ int env_unset(oph_operator_struct *handle)
 	if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->description);
 		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->description = NULL;
+	}
+	if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->operation) {
+		free((char *) ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->operation);
+		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->operation = NULL;
+	}
+	if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args) {
+		oph_tp_free_multiple_value_param_list(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args, ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args_num);
+		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args = NULL;
 	}
 #ifdef OPH_ZARR
 	oph_nc_dlclose(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->dlh);
