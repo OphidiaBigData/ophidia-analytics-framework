@@ -134,8 +134,7 @@ struct _OPH_IMPORTNCS_operator_handle {
 	short int execute_error;
 	char policy;
 	char *operation;
-	char **args;
-	int args_num;
+	char *args;
 	char output_metadata;
 #ifdef OPH_ZARR
 	void *dlh;

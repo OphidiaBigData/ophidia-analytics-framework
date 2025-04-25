@@ -274,7 +274,6 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->policy = 0;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->operation = NULL;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->args = NULL;
-	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->args_num = -1;
 	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->ncid = 0;
 
 	char *value;
