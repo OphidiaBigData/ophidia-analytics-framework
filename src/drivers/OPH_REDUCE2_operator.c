@@ -1125,7 +1125,7 @@ int task_init(oph_operator_struct *handle)
 					value[new_size] = new_size;
 					new_size++;
 #else
-					long long *labels = (int *) malloc(cubedims[l].size * sizeof(long long));
+					long long *labels = (long long *) malloc(cubedims[l].size * sizeof(long long));
 					OPH_REDUCE2_operator_handle *oper_handle = (OPH_REDUCE2_operator_handle *) handle->operator_handle;
 #ifndef OPH_DIM_NEW_REDUCTION_SINGLE_THREAD
 					int num_threads = oper_handle->nthread;
