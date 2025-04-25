@@ -6675,6 +6675,8 @@ int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var *measure, int 
 	return OPH_NC_SUCCESS;
 }
 
+#define NC_FUNCTION_SEPARATOR "|"
+
 #define NC_FUNCTION_MAX "max"
 #define NC_FUNCTION_MIN "min"
 #define NC_FUNCTION_AVG "avg"
@@ -6692,31 +6694,69 @@ int oph_nc_is_a_reduce_func(const char *operation, const char *args)
 	if (!operation)
 		return 0;
 
-	if (!strcmp(operation, NC_FUNCTION_MAX))
-		return 1;
-	if (!strcmp(operation, NC_FUNCTION_MIN))
-		return 1;
-	if (!strcmp(operation, NC_FUNCTION_AVG))
-		return 1;
-	if (!strcmp(operation, NC_FUNCTION_SUM))
-		return 1;
-	if (!strcmp(operation, NC_FUNCTION_STD))
-		return 1;
-	if (!strcmp(operation, NC_FUNCTION_VAR))
-		return 1;
-	if (!strcmp(operation, NC_FUNCTION_OUTLIER))
-		return 1;
-	if (!strcmp(operation, NC_FUNCTION_STAT)) {
-		int i, option = 0;
-		for (i = 0; i < NC_FUNCTION_OP_N; ++i)
-			if (args && args[0]) {
-				if (args[0] == NC_FUNCTION_OP_SET)
-					option++;
-				args++;
-			} else
-				break;
-		return option;
-	}
+	char *tmp_operation = strdup(operation);
+	char *op_s = NULL, *sub_operation = strtok_r(tmp_operation, NC_FUNCTION_SEPARATOR, &op_s);
+	if (!sub_operation)
+		return 0;
 
-	return 0;
+	char *tmp_args = args ? strdup(args) : NULL, *tmp_args2 = tmp_args;
+	char *arg_s = NULL, *sub_args = NULL;
+
+	int result = 0;
+
+	do {
+		if (sub_args || tmp_args2)
+			sub_args = strtok_r(tmp_args2, NC_FUNCTION_SEPARATOR, &arg_s);
+		if (tmp_args2)
+			tmp_args2 = NULL;
+
+		if (!strcmp(sub_operation, NC_FUNCTION_MAX)) {
+			result = 1;
+			continue;
+		}
+		if (!strcmp(sub_operation, NC_FUNCTION_MIN)) {
+			result = 1;
+			continue;
+		}
+		if (!strcmp(sub_operation, NC_FUNCTION_AVG)) {
+			result = 1;
+			continue;
+		}
+		if (!strcmp(sub_operation, NC_FUNCTION_SUM)) {
+			result = 1;
+			continue;
+		}
+		if (!strcmp(sub_operation, NC_FUNCTION_STD)) {
+			result = 1;
+			continue;
+		}
+		if (!strcmp(sub_operation, NC_FUNCTION_VAR)) {
+			result = 1;
+			continue;
+		}
+		if (!strcmp(sub_operation, NC_FUNCTION_OUTLIER)) {
+			result = 1;
+			continue;
+		}
+		if (!strcmp(sub_operation, NC_FUNCTION_STAT)) {
+			result = 0;
+			int i;
+			for (i = 0; i < NC_FUNCTION_OP_N; ++i)
+				if (sub_args && sub_args[0]) {
+					if (sub_args[0] == NC_FUNCTION_OP_SET)
+						result++;
+					sub_args++;
+				} else
+					break;
+			continue;
+		}
+
+	} while ((sub_operation = strtok_r(NULL, NC_FUNCTION_SEPARATOR, &op_s)));	// '=' is correct
+
+	if (tmp_operation)
+		free(tmp_operation);
+	if (tmp_args)
+		free(tmp_args);
+
+	return result;
 }

@@ -2306,7 +2306,12 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->id_job = (int) strtol(value, NULL, 10);
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_REDUCTION_OPERATION);
-	if (value) {
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_REDUCTION_OPERATION);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_FRAMEWORK_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_REDUCTION_OPERATION);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, OPH_COMMON_NONE_FILTER, OPH_TP_TASKLEN)) {
 		if (!(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->operation = (char *) strndup(value, OPH_TP_TASKLEN))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT, OPH_IN_PARAM_REDUCTION_OPERATION);
@@ -2326,22 +2331,17 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strncmp(value, OPH_COMMON_NONE_FILTER, OPH_TP_TASKLEN)) {
-		if (oph_tp_parse_multiple_value_param
-		    (value, &((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args, &((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args_num)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Operator string not valid\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Operator string not valid\n");
-			oph_tp_free_multiple_value_param_list(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args, ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args_num);
-			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		if (!(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args = (char *) strndup(value, OPH_TP_TASKLEN))) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT, OPH_IN_PARAM_ARGS);
+			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
-	} else
-		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args_num = 0;
-
-	if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args_num > 1) {
-		pmesg(LOG_WARNING, __FILE__, __LINE__, "Only the first argument of '%s' will be considered\n", value);
-		logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Only the first argument of '%s' will be considered\n", value);
+		if (!strcmp(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args, OPH_COMMON_NONE_FILTER)) {
+			free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args);
+			((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args = NULL;
+		}
+		measure->args = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args;
 	}
-	if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args_num > 0)
-		measure->args = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args[0];
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -5186,7 +5186,7 @@ int env_unset(oph_operator_struct *handle)
 		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->operation = NULL;
 	}
 	if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args) {
-		oph_tp_free_multiple_value_param_list(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args, ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args_num);
+		free((char *) ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args);
 		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->args = NULL;
 	}
 #ifdef OPH_ZARR
