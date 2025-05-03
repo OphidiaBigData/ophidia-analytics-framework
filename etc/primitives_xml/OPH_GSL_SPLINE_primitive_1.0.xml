@@ -44,6 +44,6 @@ oph_gsl_spline(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,x1,x2)</abs
 		<argument type="binary-array" mandatory="yes">measure</argument>
 		<argument type="binary-array" mandatory="yes">old_dim</argument>
 		<argument type="binary-array" mandatory="yes">new_dim</argument>
-		<argument type="double" mandatory="no" default="0" minvalue="0" maxvalue="2">order</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0" maxvalue="2">order</argument>
     </args>
 </primitive>
