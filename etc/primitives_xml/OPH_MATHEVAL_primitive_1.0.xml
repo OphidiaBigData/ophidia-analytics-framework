@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE primitive SYSTEM "ophidiaprimitive.dtd">
+<primitive name="oph_matheval" version="1.0">
+    <info>
+        <abstract>[Behaviour]
+Evaluates an expression for each item of input array.
+
+[Parameters]
+- input measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- output measure type : Ophidia typing. Supported types are:
+					&apos;oph_double&apos;;
+					&apos;oph_float&apos;;
+					&apos;oph_long&apos;;
+					&apos;oph_int&apos;;
+					&apos;oph_short&apos;;
+					&apos;oph_byte&apos;.
+- measure : input measure.
+- expression : expression executed. Use &apos;INDEX&apos; to return the index of element in the array.
+                 
+[Return type]
+Binary-array.
+
+[Examples]
+Change temperature units from Celsius to Kelvin.
+oph_matheval(&apos;OPH_DOUBLE&apos;,&apos;OPH_DOUBLE&apos;,measure,&apos;x+273.15&apos;)</abstract>
+        <author>CMCC Foundation</author>
+        <category>Transformation</category>
+        <creationdate>13/05/2025</creationdate>
+        <license url="http://www.gnu.org/licenses/gpl.txt">GPLv3</license>
+        <return type="binary-array" />
+        <operation type="simple"/>
+    </info>
+    <args>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">input measure type</argument>
+		<argument type="oph_type" mandatory="yes" values="'oph_double'|'oph_float'|'oph_int'|'oph_long'|'oph_short'|'oph_byte'">output measure type</argument>
+		<argument type="binary-array" mandatory="yes">measure</argument>
+		<argument type="string" mandatory="yes">expression</argument>
+    </args>
+</primitive>
