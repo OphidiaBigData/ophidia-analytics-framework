@@ -27,7 +27,7 @@
 #define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE2 	"INSERT INTO `metadatainstance` (`iddatacube`, `idtype`, `value`, `label`) VALUES (%d, %d, '%s', '%s');"
 #define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE3 	"INSERT INTO `metadatainstance` (`iddatacube`, `idkey`, `idtype`, `value`, `label`, `variable`) VALUES (%d, %d, %d, '%s', '%s', '%s');"
 #define MYSQL_QUERY_META_UPDATE_OPHIDIADB_METADATAINSTANCE4 	"INSERT INTO `metadatainstance` (`iddatacube`, `idkey`, `idtype`, `value`, `label`) VALUES (%d, %d, %d, '%s', '%s');"
-#define MYSQL_QUERY_META_UPDATE_OPHIDIADB_MANAGE 		"INSERT INTO `manage` (`iduser`, `idmetadatainstance` ) VALUES (%d, %d);"
+#define MYSQL_QUERY_META_UPDATE_OPHIDIADB_MANAGE 		"INSERT IGNORE INTO `manage` (`iduser`, `idmetadatainstance` ) VALUES (%d, %d);"
 #define MYSQL_QUERY_META_READ_KEY_ID 				"SELECT metadatakey.idkey FROM container,vocabulary,metadatakey WHERE container.idcontainer=%d AND container.idvocabulary=vocabulary.idvocabulary AND vocabulary.idvocabulary=metadatakey.idvocabulary AND metadatakey.label='%s' AND metadatakey.variable='%s'"
 #define MYSQL_QUERY_META_READ_KEY_ID2 				"SELECT metadatakey.idkey FROM container,vocabulary,metadatakey WHERE container.idcontainer=%d AND container.idvocabulary=vocabulary.idvocabulary AND vocabulary.idvocabulary=metadatakey.idvocabulary AND metadatakey.label='%s' AND metadatakey.variable IS NULL"
 #define MYSQL_QUERY_META_READ_INSTANCE				"SELECT metadatainstance.idmetadatainstance AS Id, metadatainstance.variable AS Variable, metadatainstance.label AS 'Key', metadatatype.name AS Type, metadatainstance.value AS Value FROM metadatainstance INNER JOIN metadatatype ON metadatainstance.idtype = metadatatype.idtype WHERE metadatainstance.idmetadatainstance = %d;"
