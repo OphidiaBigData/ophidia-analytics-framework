@@ -24,6 +24,7 @@
 #define OPH_IN_PARAM_CONTAINER_PID				"container_pid"
 #define OPH_IN_PARAM_DATACUBE_INPUT				"cube"
 #define OPH_IN_PARAM_DATACUBE_INPUT_2				"cube2"
+#define OPH_IN_PARAM_DATACUBE_INPUT_2_IS_ARRAY		"cube2_is_array"
 #define OPH_IN_PARAM_DATACUBE_MULTI_INPUT			"cubes"
 #define OPH_IN_PARAM_SCHEDULE_ALGORITHM				"schedule"
 #define OPH_IN_PARAM_COMPRESSION				"compressed"

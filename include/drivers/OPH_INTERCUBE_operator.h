@@ -187,6 +187,8 @@
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  * \param cube1 Pointer to the first cube
  * \param cube2 Pointer to the second cube
+ * \param user_missing_value Flag set to 1 in case the user inserts a missing value
+ * \param cube2_is_array Flag set to 1 in case cube2 is an array to be combined with each array of cube1
  */
 struct _OPH_INTERCUBE_operator_handle {
 	ophidiadb oDB;
@@ -214,6 +216,7 @@ struct _OPH_INTERCUBE_operator_handle {
 	char *cube1;
 	char *cube2;
 	char user_missing_value;
+	char cube2_is_array;
 };
 typedef struct _OPH_INTERCUBE_operator_handle OPH_INTERCUBE_operator_handle;
 
