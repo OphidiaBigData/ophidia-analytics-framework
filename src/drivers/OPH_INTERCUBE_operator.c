@@ -1671,14 +1671,24 @@ int task_execute(oph_operator_struct *handle)
 					n = snprintf(operation, OPH_COMMON_BUFFER_LEN, query, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, oper_handle->measure_type, oper_handle->measure_type,
 						     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID,
 						     MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name,
-						     frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1, OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-						     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2_is_array ? OPH_INTERCUBE_FRAG1 : OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
+						     frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1, OPH_INTERCUBE_FRAG2);
 					if (n >= OPH_COMMON_BUFFER_LEN) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
 							OPH_LOG_OPH_INTERCUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
 						result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						break;
+					}
+					if (!((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2_is_array) {
+						n += snprintf(operation + n, OPH_COMMON_BUFFER_LEN - n, " " OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "%s.%s = %s.%s"), OPH_INTERCUBE_FRAG1,
+							      MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
+						if (n >= OPH_COMMON_BUFFER_LEN) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
+								OPH_LOG_OPH_INTERCUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
 					}
 					//INTERCUBE fragment
 					if (oph_dc_create_fragment_from_query(first_server, &(frags.value[k]), NULL, operation, 0, 0, 0)) {
