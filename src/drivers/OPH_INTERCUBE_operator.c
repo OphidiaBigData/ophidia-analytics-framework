@@ -1343,23 +1343,24 @@ int task_execute(oph_operator_struct *handle)
 				if (frags.value[k].db_instance != &(dbs.value[j]))
 					continue;
 
-				if (!multi_host) {
-					k2 = ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2_is_array ? 0 : k;
-					if (frags2.value[k2].db_instance != &(dbs2.value[j2])) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Fragments are not comparable.\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_FRAGMENT_COMPARISON_ERROR);
-						result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-						break;
-					}
-				} else {
-					for (; k2 < dbs2.size; k2++)
-						if (frags2.value[k2].db_instance == &(dbs2.value[j2]))
-							break;	// Search the correct fragment associated to the db
-					if (k2 >= frags2.size) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot compare this datacube because of the different fragmentation structure.\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DIFFERENT_DBMS_ERROR);
-						result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-						break;
+				if (!((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2_is_array) {
+					if (!multi_host) {
+						if (frags2.value[k2].db_instance != &(dbs2.value[j2])) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Fragments are not comparable.\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_FRAGMENT_COMPARISON_ERROR);
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
+					} else {
+						for (; k2 < dbs2.size; k2++)
+							if (frags2.value[k2].db_instance == &(dbs2.value[j2]))
+								break;	// Search the correct fragment associated to the db
+						if (k2 >= frags2.size) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot compare this datacube because of the different fragmentation structure.\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DIFFERENT_DBMS_ERROR);
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
 					}
 				}
 
@@ -1371,6 +1372,7 @@ int task_execute(oph_operator_struct *handle)
 				}
 
 				if (multi_host) {
+
 					//SELECT APPROPRIATE QUERY
 					if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUM)) {
 						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_SUM);
@@ -1440,8 +1442,11 @@ int task_execute(oph_operator_struct *handle)
 						break;
 					}
 
-					k2++;
+					if (!((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2_is_array)
+						k2++;
+
 				} else {
+
 #ifdef OPH_DEBUG_MYSQL
 					//SELECT APPROPRIATE QUERY
 					if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUM)) {
@@ -1631,218 +1636,43 @@ int task_execute(oph_operator_struct *handle)
 						break;
 					}
 #endif
-
 					//SELECT APPROPRIATE QUERY
-					if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUM)) {
-						if (compressed)
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_COMPR_SUM, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-						else
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_SUM, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUB)) {
-						if (compressed)
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_COMPR_SUB, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-						else
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_SUB, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MUL)) {
-						if (compressed)
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_COMPR_MUL, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-						else
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_MUL, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_DIV)) {
-						if (compressed)
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_COMPR_DIV, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-						else
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_DIV, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ABS)) {
-						if (compressed)
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_COMPR_ABS, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-						else
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_ABS, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG)) {
-						if (compressed)
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_COMPR_ARG, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-						else
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_ARG, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MASK)) {
-						if (compressed)
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_COMPR_MASK, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-						else
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_MASK, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MAX)) {
-						if (compressed)
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_COMPR_MAX, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-						else
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_MAX, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MIN)) {
-						if (compressed)
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_COMPR_MIN, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-						else
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_MIN, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MAX)) {
-						if (compressed)
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_COMPR_ARG_MAX, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-						else
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_ARG_MAX, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MIN)) {
-						if (compressed)
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_COMPR_ARG_MIN, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-						else
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_ARG_MIN, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_CORR)) {
-						if (compressed)
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_COMPR_CORR, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-						else
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_QUERY2_CORR, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type,
-								     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE,
-								     OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name,
-								     frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1,
-								     OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
-					} else {
+					char *query = NULL;
+					if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUM))
+						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_SUM : OPH_INTERCUBE_QUERY2_SUM;
+					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUB))
+						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_SUB : OPH_INTERCUBE_QUERY2_SUB;
+					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MUL))
+						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_MUL : OPH_INTERCUBE_QUERY2_MUL;
+					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_DIV))
+						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_DIV : OPH_INTERCUBE_QUERY2_DIV;
+					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ABS))
+						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_ABS : OPH_INTERCUBE_QUERY2_ABS;
+					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG))
+						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_ARG : OPH_INTERCUBE_QUERY2_ARG;
+					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MASK))
+						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_MASK : OPH_INTERCUBE_QUERY2_MASK;
+					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MAX))
+						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_MAX : OPH_INTERCUBE_QUERY2_MAX;
+					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MIN))
+						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_MIN : OPH_INTERCUBE_QUERY2_MIN;
+					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MAX))
+						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_ARG_MAX : OPH_INTERCUBE_QUERY2_ARG_MAX;
+					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MIN))
+						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_ARG_MIN : OPH_INTERCUBE_QUERY2_ARG_MIN;
+					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_CORR))
+						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_CORR : OPH_INTERCUBE_QUERY2_CORR;
+					else {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER, "operation");
 						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER, "operation");
 						result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 						break;
 					}
+					n = snprintf(operation, OPH_COMMON_BUFFER_LEN, query, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, oper_handle->measure_type, oper_handle->measure_type,
+						     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID,
+						     MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name,
+						     frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1, OPH_INTERCUBE_FRAG2, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID,
+						     ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2_is_array ? OPH_INTERCUBE_FRAG1 : OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
 					if (n >= OPH_COMMON_BUFFER_LEN) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
