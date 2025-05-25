@@ -1345,7 +1345,7 @@ int task_execute(oph_operator_struct *handle)
 
 				if (!((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2_is_array) {
 					if (!multi_host) {
-						if (frags2.value[k2].db_instance != &(dbs2.value[j2])) {
+						if (frags2.value[k2 = k].db_instance != &(dbs2.value[j2])) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Fragments are not comparable.\n");
 							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_FRAGMENT_COMPARISON_ERROR);
 							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
@@ -1680,7 +1680,7 @@ int task_execute(oph_operator_struct *handle)
 						break;
 					}
 					if (!((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2_is_array) {
-						n += snprintf(operation + n, OPH_COMMON_BUFFER_LEN - n, " " OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "%s.%s = %s.%s"), OPH_INTERCUBE_FRAG1,
+						n += snprintf(operation + n, OPH_COMMON_BUFFER_LEN - n, OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "%s.%s=%s.%s"), OPH_INTERCUBE_FRAG1,
 							      MYSQL_FRAG_ID, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_ID);
 						if (n >= OPH_COMMON_BUFFER_LEN) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
