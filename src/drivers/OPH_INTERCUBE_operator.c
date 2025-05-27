@@ -88,6 +88,8 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube1 = NULL;
 	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2 = NULL;
 	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2_is_array = 0;
+	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->extend_type = 0;
+	((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->extend_factor = 0;
 
 	char *value;
 	char *datacube_in[2];
@@ -398,6 +400,17 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	if (strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN) == 0)
 		((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2_is_array = 1;
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXTEND_ARRAY);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_EXTEND_ARRAY);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[2], OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_EXTEND_ARRAY);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (strncmp(value, "append", OPH_TP_TASKLEN) == 0)
+		((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->extend_type = 'a';
+	else if (strncmp(value, "interlace", OPH_TP_TASKLEN) == 0)
+		((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->extend_type = 'i';
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -557,9 +570,18 @@ int task_init(oph_operator_struct *handle)
 			}
 			while (!cubedims2[ll].size && (ll < number_of_dimensions2))
 				ll++;
-			if ((l >= number_of_dimensions) || (ll >= number_of_dimensions2) || (cubedims[l].size * off_size != cubedims2[ll].size)
-			    || (cubedims[l].explicit_dim != cubedims2[ll].explicit_dim)
-			    || (cubedims[l].level != cubedims2[ll].level + off_level))
+			if ((l >= number_of_dimensions) || (ll >= number_of_dimensions2))
+				break;
+			if (((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->extend_type) {
+				if (cubedims[l].size * off_size > cubedims2[ll].size) {
+					if ((cubedims[l].size * off_size) % cubedims2[ll].size)
+						break;
+					else
+						((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->extend_factor = (cubedims[l].size * off_size) / cubedims2[ll].size;
+				}
+			} else if (cubedims[l].size * off_size != cubedims2[ll].size)
+				break;
+			if ((cubedims[l].explicit_dim != cubedims2[ll].explicit_dim) || (cubedims[l].level != cubedims2[ll].level + off_level))
 				break;
 		}
 		for (; l < number_of_dimensions; l++)
@@ -1242,13 +1264,14 @@ int task_execute(oph_operator_struct *handle)
 		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 	}
 
-	char operation[OPH_COMMON_BUFFER_LEN];
-	char frag_name_out[OPH_ODB_STGE_FRAG_NAME_SIZE];
+	char operation[OPH_COMMON_BUFFER_LEN], frag_name_out[OPH_ODB_STGE_FRAG_NAME_SIZE], *query = NULL;
 	int n, result = OPH_ANALYTICS_OPERATOR_SUCCESS, frag_count = 0, multi_host = dbmss.value[0].id_dbms != dbmss2.value[0].id_dbms;
 	unsigned long long tot_rows;
 
 	char _ms[OPH_COMMON_MAX_DOUBLE_LENGHT];
-	if (isnan(oper_handle->ms))
+	if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_CORR))
+		*_ms = 0;
+	else if (isnan(oper_handle->ms))
 		snprintf(_ms, OPH_COMMON_MAX_DOUBLE_LENGHT, "NULL");
 	else
 		snprintf(_ms, OPH_COMMON_MAX_DOUBLE_LENGHT, "%f", oper_handle->ms);
@@ -1637,47 +1660,91 @@ int task_execute(oph_operator_struct *handle)
 					}
 #endif
 					//SELECT APPROPRIATE QUERY
-					char *query = NULL;
-					if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUM))
-						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_SUM : OPH_INTERCUBE_QUERY2_SUM;
-					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUB))
-						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_SUB : OPH_INTERCUBE_QUERY2_SUB;
-					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MUL))
-						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_MUL : OPH_INTERCUBE_QUERY2_MUL;
-					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_DIV))
-						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_DIV : OPH_INTERCUBE_QUERY2_DIV;
-					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ABS))
-						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_ABS : OPH_INTERCUBE_QUERY2_ABS;
-					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG))
-						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_ARG : OPH_INTERCUBE_QUERY2_ARG;
-					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MASK))
-						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_MASK : OPH_INTERCUBE_QUERY2_MASK;
-					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MAX))
-						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_MAX : OPH_INTERCUBE_QUERY2_MAX;
-					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MIN))
-						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_MIN : OPH_INTERCUBE_QUERY2_MIN;
-					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MAX))
-						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_ARG_MAX : OPH_INTERCUBE_QUERY2_ARG_MAX;
-					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MIN))
-						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_ARG_MIN : OPH_INTERCUBE_QUERY2_ARG_MIN;
-					else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_CORR))
-						query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_CORR : OPH_INTERCUBE_QUERY2_CORR;
-					else {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER, "operation");
-						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER, "operation");
-						result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-						break;
-					}
-					n = snprintf(operation, OPH_COMMON_BUFFER_LEN, query, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, oper_handle->measure_type, oper_handle->measure_type,
-						     oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, _ms, MYSQL_FRAG_ID,
-						     MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name, frags.value[k].fragment_name, frags2.value[k2].db_instance->db_name,
-						     frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1, OPH_INTERCUBE_FRAG2);
-					if (n >= OPH_COMMON_BUFFER_LEN) {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
-						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
-							OPH_LOG_OPH_INTERCUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
-						result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-						break;
+					if (!oper_handle->extend_factor) {
+						if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUM))
+							query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_SUM : OPH_INTERCUBE_QUERY2_SUM;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUB))
+							query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_SUB : OPH_INTERCUBE_QUERY2_SUB;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MUL))
+							query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_MUL : OPH_INTERCUBE_QUERY2_MUL;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_DIV))
+							query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_DIV : OPH_INTERCUBE_QUERY2_DIV;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ABS))
+							query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_ABS : OPH_INTERCUBE_QUERY2_ABS;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG))
+							query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_ARG : OPH_INTERCUBE_QUERY2_ARG;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MASK))
+							query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_MASK : OPH_INTERCUBE_QUERY2_MASK;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MAX))
+							query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_MAX : OPH_INTERCUBE_QUERY2_MAX;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MIN))
+							query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_MIN : OPH_INTERCUBE_QUERY2_MIN;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MAX))
+							query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_ARG_MAX : OPH_INTERCUBE_QUERY2_ARG_MAX;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MIN))
+							query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_ARG_MIN : OPH_INTERCUBE_QUERY2_ARG_MIN;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_CORR))
+							query = compressed ? OPH_INTERCUBE_QUERY2_COMPR_CORR : OPH_INTERCUBE_QUERY2_CORR;
+						else {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER, "operation");
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER, "operation");
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, query, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, oper_handle->measure_type,
+							     oper_handle->measure_type, oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE,
+							     _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name, frags.value[k].fragment_name,
+							     frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1, OPH_INTERCUBE_FRAG2);
+						if (n >= OPH_COMMON_BUFFER_LEN) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
+								OPH_LOG_OPH_INTERCUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
+					} else {
+						if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUM))
+							query = compressed ? OPH_INTERCUBE_QUERY3_COMPR_SUM : OPH_INTERCUBE_QUERY3_SUM;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUB))
+							query = compressed ? OPH_INTERCUBE_QUERY3_COMPR_SUB : OPH_INTERCUBE_QUERY3_SUB;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MUL))
+							query = compressed ? OPH_INTERCUBE_QUERY3_COMPR_MUL : OPH_INTERCUBE_QUERY3_MUL;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_DIV))
+							query = compressed ? OPH_INTERCUBE_QUERY3_COMPR_DIV : OPH_INTERCUBE_QUERY3_DIV;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ABS))
+							query = compressed ? OPH_INTERCUBE_QUERY3_COMPR_ABS : OPH_INTERCUBE_QUERY3_ABS;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG))
+							query = compressed ? OPH_INTERCUBE_QUERY3_COMPR_ARG : OPH_INTERCUBE_QUERY3_ARG;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MASK))
+							query = compressed ? OPH_INTERCUBE_QUERY3_COMPR_MASK : OPH_INTERCUBE_QUERY3_MASK;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MAX))
+							query = compressed ? OPH_INTERCUBE_QUERY3_COMPR_MAX : OPH_INTERCUBE_QUERY3_MAX;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MIN))
+							query = compressed ? OPH_INTERCUBE_QUERY3_COMPR_MIN : OPH_INTERCUBE_QUERY3_MIN;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MAX))
+							query = compressed ? OPH_INTERCUBE_QUERY3_COMPR_ARG_MAX : OPH_INTERCUBE_QUERY3_ARG_MAX;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MIN))
+							query = compressed ? OPH_INTERCUBE_QUERY3_COMPR_ARG_MIN : OPH_INTERCUBE_QUERY3_ARG_MIN;
+						else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_CORR))
+							query = compressed ? OPH_INTERCUBE_QUERY3_COMPR_CORR : OPH_INTERCUBE_QUERY3_CORR;
+						else {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER, "operation");
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER, "operation");
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, query, frag_name_out, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_ID, oper_handle->measure_type,
+							     oper_handle->measure_type, oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE, oper_handle->measure_type,
+							     oper_handle->measure_type, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, oper_handle->extend_factor, oper_handle->extend_type, _ms,
+							     MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name, frags.value[k].fragment_name,
+							     frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1, OPH_INTERCUBE_FRAG2);
+						if (n >= OPH_COMMON_BUFFER_LEN) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
+								OPH_LOG_OPH_INTERCUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
+							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
 					}
 					if (!((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2_is_array) {
 						n += snprintf(operation + n, OPH_COMMON_BUFFER_LEN - n, OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "%s.%s=%s.%s"), OPH_INTERCUBE_FRAG1,
