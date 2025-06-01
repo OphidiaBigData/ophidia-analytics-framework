@@ -400,10 +400,10 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	if (strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN) == 0)
 		((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->cube2_is_array = 1;
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXTEND_ARRAY);
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXTENSION_TYPE);
 	if (!value) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_EXTEND_ARRAY);
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[2], OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_EXTEND_ARRAY);
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_EXTENSION_TYPE);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[2], OPH_LOG_OPH_IMPORTNC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_EXTENSION_TYPE);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
 	if (strncmp(value, "append", OPH_TP_TASKLEN) == 0)
