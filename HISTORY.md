@@ -3,6 +3,7 @@
 
 ### Fixed:
 
+- Bug in subsetting more sources by means og OPH_IMPORTNCS
 - Bug in retrieve the time unit
 
 ### Added:
