@@ -32,6 +32,9 @@ returns a new datacube as result of the specified operation applied element by e
               -- arg_min: return 1 if the minimum value is associated with the first cube, 2 otherwise.
 - missingvalue : value to be considered as missing value;
                  by default the internal value is considered, if set, otherwise it is NAN (for float and double).
+- cube2_is_array : if set, the cube2 will be considered an array to be combined with each array of cube.
+- extension_type : if set, the arrays of cube2 will be automatically extended to match the length of arrays of cube;
+                   use 'append' to concatenate input array, use 'interlace' to interlace input array.
 - measure : name of the new measure resulting from the specified operation
 - schedule : scheduling algorithm. The only possible value is 0,
 		     for a static linear block distribution of resources.
@@ -72,6 +75,8 @@ SUBMISSION STRING: &quot;operator=oph_intercube;cube=http://www.example.com/1/1;
 		<argument type="int" mandatory="no" default="0" values="0">schedule</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">cube2_is_array</argument>
+		<argument type="string" mandatory="no" default="none" values="none|append|interlace">extension_type</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|intercube">objkey_filter</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>
