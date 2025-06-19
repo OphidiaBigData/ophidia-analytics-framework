@@ -6763,7 +6763,7 @@ int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var *measure, int 
 int oph_nc_check_subset_string_over_more_sources(char *curfilter, int i, NETCDF_var *measure, int is_index, int *ncids, int n, double offset, char out_of_bound)
 {
 	char _curfilter[1 + strlen(curfilter)];
-	int j, ret = 0, dims_start_index = 0, dims_end_index = measure->dims_length[i];
+	int j, ret = 0, dims_start_index = 0, dims_end_index = measure->dims_length[i], last = n - 1;
 	size_t dim_size = 0, total_size = 0;
 	measure->dims_start_index[i] = measure->dims_length[i] - 1;
 	measure->dims_end_index[i] = 0;
@@ -6771,10 +6771,11 @@ int oph_nc_check_subset_string_over_more_sources(char *curfilter, int i, NETCDF_
 		strcpy(_curfilter, curfilter);
 		ret = _oph_nc_check_subset_string(_curfilter, i, measure, is_index, ncids[j], offset, out_of_bound, &dims_start_index, &dims_end_index, &dim_size);
 		if (ret == OPH_NC_BOUND_ERROR) {
-			total_size += dim_size;
-			continue;
-		}
-		if (ret)
+			if ((dims_start_index < 0) || (dims_end_index < 0)) {
+				total_size += dim_size;
+				continue;
+			}
+		} else if (ret)
 			return ret;
 		dims_start_index += total_size;
 		dims_end_index += total_size;
