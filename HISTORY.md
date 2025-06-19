@@ -8,6 +8,7 @@
 
 ### Added:
 
+- Improvement to OPH_INTERCUBE [#113](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/113)
 - Operations 'oph_max_abs', 'oph_min_abs' and 'oph_median' to reduction operators and primitives
 - Concept level 'octet' to time hierarchy
 
