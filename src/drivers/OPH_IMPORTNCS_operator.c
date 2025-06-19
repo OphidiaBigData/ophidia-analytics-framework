@@ -1589,10 +1589,6 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		}
 	}
 
-	for (i = 1; i < ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num; ++i)
-		if ((retval = nc_close(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids[i])))
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", nc_strerror(retval));
-
 	if (measure->order_src_path) {
 
 		// TODO: some of the following Bcast could be skipped: check
@@ -2087,7 +2083,10 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 			//Dimension will not be subsetted
 			measure->dims_start_index[i] = 0;
 			measure->dims_end_index[i] = measure->dims_length[i] - 1;
-		} else if ((ii = oph_nc_check_subset_string(curfilter, i, measure, is_index[j], ncid, j < s_offset_num ? offset[j] : 0.0, 0))) {
+		} else
+		    if ((ii =
+			 oph_nc_check_subset_string_over_more_sources(curfilter, i, measure, is_index[j], ncids, ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num,
+								      j < s_offset_num ? offset[j] : 0.0, 1))) {
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)
@@ -2109,6 +2108,10 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 	if (offset)
 		free(offset);
+
+	for (i = 1; i < ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num; ++i)
+		if ((retval = nc_close(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids[i])))
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", nc_strerror(retval));
 
 	//Check explicit dimension oph levels (all values in interval [1, nexp] should be supplied)
 	int curr_lev;
