@@ -501,13 +501,23 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 
-	value = hashtbl_get(task_tbl, OPH_IN_PARAM_ORDER);
-	if (value)
-		((OPH_REDUCE2_operator_handle *) handle->operator_handle)->order = strtod(value, NULL);
-	if (((OPH_REDUCE2_operator_handle *) handle->operator_handle)->order < 0) {
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong value of parameter '%s'. It should be not negative\n", OPH_IN_PARAM_ORDER);
-		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], "Wrong value of parameter '%s'. It should be not negative\n", OPH_IN_PARAM_ORDER);
-		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	if (!strncmp(((OPH_REDUCE2_operator_handle *) handle->operator_handle)->operation, "median", OPH_TP_TASKLEN))
+		((OPH_REDUCE2_operator_handle *) handle->operator_handle)->order = 0.5;
+	else {			// Consider the input value for the parameter
+		value = hashtbl_get(task_tbl, OPH_IN_PARAM_ORDER);
+		if (value)
+			((OPH_REDUCE2_operator_handle *) handle->operator_handle)->order = strtod(value, NULL);
+		if (((OPH_REDUCE2_operator_handle *) handle->operator_handle)->order < 0.0) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong value of parameter '%s'. It should be not negative\n", OPH_IN_PARAM_ORDER);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], "Wrong value of parameter '%s'. It should be not negative\n", OPH_IN_PARAM_ORDER);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
+		if (!strncmp(((OPH_REDUCE2_operator_handle *) handle->operator_handle)->operation, "quantile", OPH_TP_TASKLEN)
+		    && (((OPH_REDUCE2_operator_handle *) handle->operator_handle)->order > 1.0)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Wrong value of parameter '%s'. It should be not greater than 1\n", OPH_IN_PARAM_ORDER);
+			logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], "Wrong value of parameter '%s'. It should be not greater than 1\n", OPH_IN_PARAM_ORDER);
+			return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+		}
 	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_MISSINGVALUE);

@@ -407,7 +407,7 @@ int task_execute(oph_operator_struct *handle)
 	}
 
 	FILE *file;
-	char name[OPH_COMMON_BUFFER_LEN];
+	char name[OPH_COMMON_BUFFER_LEN], str_container_id[OPH_COMMON_MAX_INT_LENGHT];
 	switch (log_type) {
 		case OPH_LOG_INFO_SERVER_LOG_REQUEST:
 			snprintf(name, OPH_COMMON_BUFFER_LEN, OPH_FRAMEWORK_SERVER_LOG_PATH, OPH_ANALYTICS_LOCATION);
@@ -436,7 +436,8 @@ int task_execute(oph_operator_struct *handle)
 			}
 			break;
 		case OPH_LOG_INFO_IOSERVER_LOG_REQUEST:
-			snprintf(name, OPH_COMMON_BUFFER_LEN, OPH_FRAMEWORK_IOSERVER_LOG_PATH2, OPH_ANALYTICS_LOCATION, server_type);
+			snprintf(str_container_id, OPH_COMMON_MAX_INT_LENGHT, "%d", container_id);
+			snprintf(name, OPH_COMMON_BUFFER_LEN, OPH_FRAMEWORK_IOSERVER_LOG_PATH2, OPH_ANALYTICS_LOCATION, server_type, container_id ? str_container_id : "");
 			file = fopen(name, "r");
 			if (file == NULL) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "File %s could not be opened\n", name);
