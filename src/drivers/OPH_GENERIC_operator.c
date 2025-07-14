@@ -684,9 +684,13 @@ int task_execute(oph_operator_struct *handle)
 		}
 	}
 	// ADD OUTPUT TO NOTIFICATION STRING
-	if (((OPH_GENERIC_operator_handle *) handle->operator_handle)->session_url) {
+	if (((OPH_GENERIC_operator_handle *) handle->operator_handle)->session_url || strlen(jsonbuf)) {
 		char tmp_string[OPH_COMMON_BUFFER_LEN];
-		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_LINK, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->session_url, OPH_IN_PARAM_FILE, jsonbuf);
+		n = *tmp_string = 0;
+		if (((OPH_GENERIC_operator_handle *) handle->operator_handle)->session_url)
+			n += snprintf(tmp_string + n, OPH_COMMON_BUFFER_LEN - n, "%s=%s;", OPH_IN_PARAM_LINK, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->session_url);
+		if (strlen(jsonbuf))
+			n += snprintf(tmp_string + n, OPH_COMMON_BUFFER_LEN - n, "%s=%s;", OPH_IN_PARAM_FILE, jsonbuf);
 		if (handle->output_string) {
 			strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
 			free(handle->output_string);

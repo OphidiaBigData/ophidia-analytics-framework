@@ -976,12 +976,12 @@ int task_execute(oph_operator_struct *handle)
 		oph_cdo_output_free(list);
 	}
 	// ADD OUTPUT TO NOTIFICATION STRING
-	if (((OPH_CDO_operator_handle *) handle->operator_handle)->session_url || (strlen(jsonbuf) > 0)) {
+	if (((OPH_CDO_operator_handle *) handle->operator_handle)->session_url || strlen(jsonbuf)) {
 		char tmp_string[OPH_COMMON_BUFFER_LEN];
-		n = 0;
+		n = *tmp_string = 0;
 		if (((OPH_CDO_operator_handle *) handle->operator_handle)->session_url)
 			n += snprintf(tmp_string + n, OPH_COMMON_BUFFER_LEN - n, "%s=%s;", OPH_IN_PARAM_LINK, ((OPH_CDO_operator_handle *) handle->operator_handle)->session_url);
-		if (strlen(jsonbuf) > 0)
+		if (strlen(jsonbuf))
 			n += snprintf(tmp_string + n, OPH_COMMON_BUFFER_LEN - n, "%s=%s;", OPH_IN_PARAM_FILE, jsonbuf);
 		if (handle->output_string) {
 			strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));

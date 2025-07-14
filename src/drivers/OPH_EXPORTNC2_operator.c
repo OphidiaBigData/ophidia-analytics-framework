@@ -2118,6 +2118,7 @@ int task_execute(oph_operator_struct *handle)
 				}
 				// ADD FILE TO NOTIFICATION STRING
 				char tmp_string[OPH_COMMON_BUFFER_LEN];
+				*tmp_string = 0;
 				snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_FILE, jsonbuf);
 				if (handle->output_string) {
 					strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
