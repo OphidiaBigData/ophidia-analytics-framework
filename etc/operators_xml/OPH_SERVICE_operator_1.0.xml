@@ -14,6 +14,10 @@ Request or set the service status.
           use level &quot;2&quot; to ask for job list.
 - enable : list of the users to be enabled; use &quot;all&quot; to enable all users.
 - disable : list of the users to be disabled; use &quot;all&quot; to disable all users.
+- farm_size : new value for SERVER_FARM_SIZE; use &quot;0&quot; for infinity.
+- queue_size : new value for QUEUE_SIZE; use &quot;0&quot; for infinity.
+- task_limit : new value for TASK_LIMIT; use &quot;0&quot; for infinity.
+- core_limit : new value for CORE_LIMIT; use &quot;0&quot; for infinity.
 
 [System parameters]
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
@@ -35,6 +39,10 @@ SUBMISSION STRING: &quot;operator=oph_service;status=up;&quot;</abstract>
 		<argument type="int" mandatory="no" default="1" minvalue="1" maxvalue="2" values="1|2">level</argument>
 		<argument type="string" mandatory="no" default="none" multivalue="yes">enable</argument>
 		<argument type="string" mandatory="no" default="none" multivalue="yes">disable</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0">farm_size</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0">queue_size</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0">task_limit</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0">core_limit</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|service_status|service_tasks">objkey_filter</argument>
     </args>
 </operator>
