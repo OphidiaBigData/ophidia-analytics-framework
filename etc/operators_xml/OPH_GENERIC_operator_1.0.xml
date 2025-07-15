@@ -25,7 +25,7 @@ The script can eventually process some environmental variables passed by the ope
           set to &quot;no&quot; in case white spaces are separators like &quot;|&quot; (default).
 - output_path : absolute path of the output file. By default the file will be saved in current directory on data repository (see &quot;cdd&quot;).
 - output_name : filename of the output file. A random value is set by default and it will be appended to argument list.
-- input : additional argument appended to &quot;args&quot;.
+- input : additional argument appended to &quot;args&quot;; multiple inputs are allowed.
 - output : alias for the pair &quot;output_path&quot; and &quot;output_name&quot;; the values of these arguments will be overwritten;
            set to the reserved word &quot;null&quot; in case no output file name has to be appended to argument list.
 - cdd : absolute path corresponding to the current directory on data repository.
@@ -62,7 +62,7 @@ SUBMISSION STRING: &quot;operator=oph_generic;command=cp;args=infile|outfile;&qu
 		<argument type="string" mandatory="no" default="no" values="yes|no">space</argument>
 		<argument type="string" mandatory="no" default="default">output_path</argument>
 		<argument type="string" mandatory="no" default="default">output_name</argument>
-		<argument type="string" mandatory="no" default="">input</argument>
+		<argument type="string" mandatory="no" default="" multivalue="yes">input</argument>
 		<argument type="string" mandatory="no" default="">output</argument>
 		<argument type="string" mandatory="no" default="/">cdd</argument>
 		<argument type="string" mandatory="no" default="no" values="yes|no">force</argument>
