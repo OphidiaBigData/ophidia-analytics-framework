@@ -44,8 +44,10 @@ typedef bool my_bool;
 
 #define OPH_DIM_DATA_FORMAT1 "%Y-%m-%dT%H:%M:%S"
 #define OPH_DIM_DATA_FORMAT2 "%Y-%m-%d %H:%M:%S"
+#define OPH_DIM_DATA_FORMAT3 "%Y%m%d%H%M%S"
 #define OPH_DIM_DATA_FORMAT_CHECK1 OPH_DIM_DATA_FORMAT_CHECK
 #define OPH_DIM_DATA_FORMAT_CHECK2 'T'
+#define OPH_DIM_DATA_FORMAT_CHECK3 '-'
 
 extern int msglevel;
 
@@ -860,8 +862,10 @@ int oph_dim_get_base_time(oph_odb_dimension *dim, long long *base_time)
 		memset(&tm_value, 0, sizeof(struct tm));
 		if (strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK2))
 			strptime(dim->base_time, OPH_DIM_DATA_FORMAT1, &tm_value);
-		else
+		else if (strchr(dim->base_time, OPH_DIM_DATA_FORMAT_CHECK3))
 			strptime(dim->base_time, OPH_DIM_DATA_FORMAT2, &tm_value);
+		else
+			strptime(dim->base_time, OPH_DIM_DATA_FORMAT3, &tm_value);
 		tm_value.tm_year += 1900;
 		tm_value.tm_mon++;
 		if (oph_date_to_day(tm_value.tm_year, tm_value.tm_mon, tm_value.tm_mday, base_time, dim)) {
@@ -1057,8 +1061,10 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension *dim,
 		tm_value.tm_year = -1;
 		if (strchr(pch, OPH_DIM_DATA_FORMAT_CHECK2))
 			strptime(pch, OPH_DIM_DATA_FORMAT1, &tm_value);
-		else
+		else if (strchr(pch, OPH_DIM_DATA_FORMAT_CHECK3))
 			strptime(pch, OPH_DIM_DATA_FORMAT2, &tm_value);
+		else
+			strptime(pch, OPH_DIM_DATA_FORMAT3, &tm_value);
 		if (tm_value.tm_year < 0) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set the year\n");
 			return OPH_DIM_TIME_PARSING_ERROR;
