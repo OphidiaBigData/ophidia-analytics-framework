@@ -2081,8 +2081,10 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 			measure->dims_end_index[i] = measure->dims_length[i] - 1;
 		} else
 		    if ((ii =
-			 oph_nc_check_subset_string_over_more_sources(curfilter, i, measure, is_index[j], ncids, ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num,
-								      j < s_offset_num ? offset[j] : 0.0, 1))) {
+			 (measure->dim_unlim ==
+			  i ? oph_nc_check_subset_string_over_more_sources(curfilter, i, measure, is_index[j], ncids, ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num,
+									   j < s_offset_num ? offset[j] : 0.0, 1) : oph_nc_check_subset_string(curfilter, i, measure, is_index[j], ncid,
+																	       j < s_offset_num ? offset[j] : 0.0, 0)))) {
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)
