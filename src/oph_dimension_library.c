@@ -51,7 +51,7 @@ typedef bool my_bool;
 
 extern int msglevel;
 
-char oph_dim_typeof(char *dimension_type)
+char _oph_dim_typeof(char *dimension_type)
 {
 	if (!strcasecmp(dimension_type, OPH_DIM_BYTE_TYPE))
 		return OPH_DIM_BYTE_FLAG;
@@ -68,7 +68,7 @@ char oph_dim_typeof(char *dimension_type)
 	return 0;
 }
 
-size_t oph_dim_sizeof(char type_flag)
+size_t _oph_dim_sizeof(char type_flag)
 {
 	switch (type_flag) {
 		case OPH_DIM_BYTE_FLAG:
@@ -84,6 +84,23 @@ size_t oph_dim_sizeof(char type_flag)
 		case OPH_DIM_DOUBLE_FLAG:
 			return sizeof(double);
 	}
+	return 0;
+}
+
+size_t oph_dim_sizeof(char *dimension_type)
+{
+	if (!strcasecmp(dimension_type, OPH_DIM_BYTE_TYPE))
+		return sizeof(char);
+	else if (!strcasecmp(dimension_type, OPH_DIM_SHORT_TYPE))
+		return sizeof(short);
+	else if (!strcasecmp(dimension_type, OPH_DIM_INT_TYPE))
+		return sizeof(int);
+	else if (!strcasecmp(dimension_type, OPH_DIM_LONG_TYPE))
+		return sizeof(long long);
+	else if (!strcasecmp(dimension_type, OPH_DIM_FLOAT_TYPE))
+		return sizeof(float);
+	else if (!strcasecmp(dimension_type, OPH_DIM_DOUBLE_TYPE))
+		return sizeof(double);
 	return 0;
 }
 
@@ -1484,7 +1501,7 @@ int oph_dim_compare_dimension2(oph_odb_db_instance *db, char *dimension_table_na
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	char type_flag = oph_dim_typeof(dim_type);
+	char type_flag = _oph_dim_typeof(dim_type);
 	if (!type_flag) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 		return OPH_DIM_DATA_ERROR;
@@ -1529,7 +1546,7 @@ int oph_dim_compare_dimension2(oph_odb_db_instance *db, char *dimension_table_na
 	my_bool nn = !dim_row;
 	unsigned long sizeof_var = 0;
 	if (dim_size) {
-		sizeof_var = dim_size * oph_dim_sizeof(type_flag);
+		sizeof_var = dim_size * _oph_dim_sizeof(type_flag);
 		if (!sizeof_var) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 			mysql_stmt_close(stmt);
@@ -1623,7 +1640,7 @@ int oph_dim_insert_into_dimension_table(oph_odb_db_instance *db, char *dimension
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	char type_flag = oph_dim_typeof(dimension_type);
+	char type_flag = _oph_dim_typeof(dimension_type);
 	if (!type_flag) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 		return OPH_DIM_DATA_ERROR;
@@ -1667,7 +1684,7 @@ int oph_dim_insert_into_dimension_table(oph_odb_db_instance *db, char *dimension
 	my_bool nn = !dim_row;
 	unsigned long sizeof_var = 0;
 	if (dim_size) {
-		sizeof_var = dim_size * oph_dim_sizeof(type_flag);
+		sizeof_var = dim_size * _oph_dim_sizeof(type_flag);
 		if (!sizeof_var) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 			mysql_stmt_close(stmt);
@@ -1722,7 +1739,7 @@ int oph_dim_insert_into_dimension_table_from_query(oph_odb_db_instance *db, char
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	char type_flag = oph_dim_typeof(dimension_type);
+	char type_flag = _oph_dim_typeof(dimension_type);
 	if (!type_flag) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 		return OPH_DIM_DATA_ERROR;
@@ -1787,7 +1804,7 @@ int oph_dim_insert_into_dimension_table_from_query(oph_odb_db_instance *db, char
 
 	unsigned long sizeof_var = 0;
 	if (dim_size) {
-		sizeof_var = dim_size * oph_dim_sizeof(type_flag);
+		sizeof_var = dim_size * _oph_dim_sizeof(type_flag);
 		if (!sizeof_var) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 			mysql_stmt_close(stmt);
@@ -1899,7 +1916,7 @@ int oph_dim_insert_into_dimension_table_rand_data(oph_odb_db_instance *db, char 
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	char type_flag = oph_dim_typeof(dimension_type);
+	char type_flag = _oph_dim_typeof(dimension_type);
 	if (!type_flag) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 		return OPH_DIM_DATA_ERROR;
@@ -1940,7 +1957,7 @@ int oph_dim_insert_into_dimension_table_rand_data(oph_odb_db_instance *db, char 
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	unsigned long sizeof_var = dim_size * oph_dim_sizeof(type_flag);
+	unsigned long sizeof_var = dim_size * _oph_dim_sizeof(type_flag);
 	if (!sizeof_var) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 		mysql_stmt_close(stmt);
@@ -2188,7 +2205,7 @@ int oph_dim_read_dimension_filtered_data(oph_odb_db_instance *db, char *dimensio
 		return OPH_DIM_MYSQL_ERROR;
 	}
 
-	char type_flag = oph_dim_typeof(dim_type);
+	char type_flag = _oph_dim_typeof(dim_type);
 	if (!type_flag) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 		return OPH_DIM_DATA_ERROR;
@@ -2271,7 +2288,7 @@ int oph_dim_read_dimension_filtered_data(oph_odb_db_instance *db, char *dimensio
 		free(*dim_row);
 	n = 0;
 
-	sizeof_var = dim_size * oph_dim_sizeof(type_flag);
+	sizeof_var = dim_size * _oph_dim_sizeof(type_flag);
 	if (!sizeof_var) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading data type\n");
 		mysql_stmt_close(stmt);
@@ -2453,8 +2470,8 @@ int oph_dim_convert_data(oph_odb_dimension *dim, int size, char *dim_array)
 		return OPH_DIM_SUCCESS;
 
 	int i;
-	char tmp[OPH_COMMON_MAX_DOUBLE_LENGHT], type_flag = oph_dim_typeof(dim->dimension_type), *pch = NULL, *pch2, *current;
-	size_t item_size = oph_dim_sizeof(type_flag);
+	char tmp[OPH_COMMON_MAX_DOUBLE_LENGHT], type_flag = _oph_dim_typeof(dim->dimension_type), *pch = NULL, *pch2, *current;
+	size_t item_size = _oph_dim_sizeof(type_flag);
 	if (!item_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in evaluation item size of the dimension array\n");
 		return OPH_DIM_DATA_ERROR;

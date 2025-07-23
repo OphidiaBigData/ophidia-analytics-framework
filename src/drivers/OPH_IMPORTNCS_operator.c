@@ -2090,7 +2090,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 			return ii;
 		} else if (measure->dims_start_index[i] < 0 || measure->dims_end_index[i] < 0 || measure->dims_start_index[i] > measure->dims_end_index[i]
 			   || measure->dims_start_index[i] >= (int) measure->dims_length[i] || measure->dims_end_index[i] >= (int) measure->dims_length[i]) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter: %s\n", curfilter);
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
@@ -3006,8 +3006,7 @@ int task_init(oph_operator_struct *handle)
 							dim_array = NULL;
 
 							if (measure->order_src_path && (measure->dim_unlim == i))
-								dim_array = measure->dim_unlim_array;
-
+								dim_array = measure->dim_unlim_array + measure->dims_start_index[i] * oph_dim_sizeof(dims[j].dimension_type);
 							else if (oph_nc_get_dim_array2
 								 (id_container_out, ncid, tmp_var.varid, dims[j].dimension_type, dim_inst[j].size, *(tmp_var.dims_start_index),
 								  *(tmp_var.dims_end_index), &dim_array)) {
@@ -3263,7 +3262,7 @@ int task_init(oph_operator_struct *handle)
 				tmp_var.dims_end_index = &(measure->dims_end_index[i]);
 
 				if (measure->order_src_path && (measure->dim_unlim == i))
-					dim_array = measure->dim_unlim_array;
+					dim_array = measure->dim_unlim_array + measure->dims_start_index[i] * oph_dim_sizeof(tot_dims[j].dimension_type);
 				else if (oph_nc_get_dim_array2
 					 (id_container_out, ncid, tmp_var.varid, tot_dims[j].dimension_type, tmp_var.varsize, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index), &dim_array)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
