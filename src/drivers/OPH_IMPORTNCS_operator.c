@@ -4708,8 +4708,13 @@ int task_destroy(oph_operator_struct *handle)
 			}
 		}
 		// ADD OUTPUT PID TO NOTIFICATION STRING
+		int ff, n = 0;
+		char input_list[OPH_COMMON_BUFFER_LEN];
+		*input_list = 0;
+		for (ff = 0; ff < ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num; ++ff)
+			n += snprintf(input_list + n, OPH_COMMON_BUFFER_LEN - n, "%s%s", ff ? "|" : "", ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[ff]);
 		char tmp_string[OPH_COMMON_BUFFER_LEN];
-		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_DATACUBE_INPUT, jsonbuf);
+		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_DATACUBE_INPUT, jsonbuf, OPH_IN_PARAM_INPUT, input_list);
 		if (handle->output_string) {
 			strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
 			free(handle->output_string);
