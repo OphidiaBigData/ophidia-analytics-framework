@@ -1505,18 +1505,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
 		}
-		if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			data_size = sizeof(char);
-		else if (!strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			data_size = sizeof(short);
-		else if (!strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			data_size = sizeof(int);
-		else if (!strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			data_size = sizeof(float);
-		else if (!strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			data_size = sizeof(double);
-		else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			data_size = sizeof(long long);
+		data_size = oph_dim_sizeof(dim_type);
 		// Order the input files
 		int tmp;
 		for (i = 0; i < measure->number_src_path - 1; ++i)
@@ -1530,7 +1519,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 			strcpy(main_base_time, time_dims[measure->order_src_path[0]].base_time);
 			free(time_dims);
 		}
-		size_t k, offset2, offset3 = 0;
+		size_t k, offset2, offset3 = 0, _size = 0;
 		double diff;
 		measure->dim_unlim_array = (char *) malloc(tot_size);
 		if (!measure->dim_unlim_array) {
@@ -1545,7 +1534,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 			if (i) {
 				diff = base_time[measure->order_src_path[i]] - base_time[measure->order_src_path[0]];
 				if (diff > 0.0) {
-					size_t _size = size[measure->order_src_path[i]] / data_size;
+					_size = size[measure->order_src_path[i]] / data_size;
 					if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
 						for (k = 0, offset2 = offset3; k < _size; ++k, offset2 += data_size)
 							*(char *) (measure->dim_unlim_array + offset2) += (char) diff;
@@ -1620,24 +1609,17 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 
 		if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig) {
 			free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig);
-			size_t orig_length = 0;
-			for (i = 0; i < measure->number_src_path; ++i)
-				orig_length += 1 + strlen(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[i]);
-			((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = (char *) malloc(orig_length + 1);
-			*((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = 0;
-			strcat(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig,
-			       ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[measure->order_src_path[0]]);
-			for (i = 1; i < measure->number_src_path; ++i) {
-				strcat(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig, "|");
-				strcat(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig,
-				       ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[measure->order_src_path[i]]);
-			}
+			char input_list[OPH_COMMON_BUFFER_LEN];
+			*input_list = 0;
+			for (i = j = 0; i < ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num; ++i)
+				j += snprintf(input_list + j, OPH_COMMON_BUFFER_LEN - j, "%s%s", i ? "|" : "",
+					      ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[measure->order_src_path[i]]);
+			((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = strdup(input_list);
 		}
 	} else {
-
 		if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig) {
 			free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig);
-			((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = strdup(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[0]);
+			((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = strdup(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[0]);	// Correct since here we have only one file sure
 		}
 	}
 
@@ -4708,13 +4690,8 @@ int task_destroy(oph_operator_struct *handle)
 			}
 		}
 		// ADD OUTPUT PID TO NOTIFICATION STRING
-		int ff, n = 0;
-		char input_list[OPH_COMMON_BUFFER_LEN];
-		*input_list = 0;
-		for (ff = 0; ff < ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num; ++ff)
-			n += snprintf(input_list + n, OPH_COMMON_BUFFER_LEN - n, "%s%s", ff ? "|" : "", ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[ff]);
 		char tmp_string[OPH_COMMON_BUFFER_LEN];
-		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_DATACUBE_INPUT, jsonbuf, OPH_IN_PARAM_INPUT, input_list);
+		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_DATACUBE_INPUT, jsonbuf, OPH_IN_PARAM_INPUT, oper_handle->nc_file_path_orig);
 		if (handle->output_string) {
 			strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
 			free(handle->output_string);
