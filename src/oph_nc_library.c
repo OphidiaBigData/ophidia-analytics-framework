@@ -6769,7 +6769,7 @@ int oph_nc_check_subset_string_over_more_sources(char *curfilter, int i, NETCDF_
 	measure->dims_end_index[i] = 0;
 	for (j = 0; j < n; ++j) {
 		strcpy(_curfilter, curfilter);
-		ret = _oph_nc_check_subset_string(_curfilter, i, measure, is_index, ncids[j], offset, out_of_bound, &dims_start_index, &dims_end_index, &dim_size);
+		ret = _oph_nc_check_subset_string(_curfilter, i, measure, is_index, ncids[measure->order_src_path[j]], offset, out_of_bound, &dims_start_index, &dims_end_index, &dim_size);
 		if (ret == OPH_NC_BOUND_ERROR) {
 			if ((dims_start_index < 0) || (dims_end_index < 0)) {
 				total_size += dim_size;

@@ -570,7 +570,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	char *buffer = NULL;
 	for (j = 0; j < ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num; ++j) {
 		value = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j];
-		if ((retval = glob(value, GLOB_MARK | GLOB_NOSORT, NULL, &globbuf))) {
+		if ((retval = glob(value, GLOB_MARK | GLOB_TILDE_CHECK | GLOB_BRACE, NULL, &globbuf))) {
 			if (retval != GLOB_NOMATCH) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse '%s'\n", value);
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to parse '%s'\n", value);
