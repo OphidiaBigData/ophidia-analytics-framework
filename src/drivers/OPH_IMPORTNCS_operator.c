@@ -4993,9 +4993,11 @@ int env_unset(oph_operator_struct *handle)
 		free((char *) ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig2);
 		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig2 = NULL;
 	}
-	if ((retval = nc_close(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids[0])))
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", nc_strerror(retval));
-	free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids);
+	if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids) {
+		if ((retval = nc_close(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids[0])))
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", nc_strerror(retval));
+		free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids);
+	}
 
 	NETCDF_var *measure = ((NETCDF_var *) & (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->measure));
 
