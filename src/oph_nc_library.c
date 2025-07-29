@@ -2953,7 +2953,6 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler *server, oph_odb_frag
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_NC_ERROR;
 	}
-	pmesg(LOG_INFO, __FILE__, __LINE__, "Query to I/O server:\n%s\n", query_string);
 
 	free(dims_type_string);
 	free(dims_index_string);

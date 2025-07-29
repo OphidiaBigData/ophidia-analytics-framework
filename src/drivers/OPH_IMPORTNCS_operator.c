@@ -1610,12 +1610,11 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig) {
 			free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig);
 			for (i = j = 0; i < ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num; ++i)
-				j += 1 + strlen(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[i]);
+				j += 1 + strlen(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[i]);	// Order is not important
 			char input_list[1 + j];
 			*input_list = 0;
 			for (i = j = 0; i < ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num; ++i)
-				j += snprintf(input_list + j, OPH_COMMON_BUFFER_LEN - j, "%s%s", i ? "|" : "",
-					      ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[measure->order_src_path[i]]);
+				j += sprintf(input_list + j, "%s%s", i ? "|" : "", ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[measure->order_src_path[i]]);
 			((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = strdup(input_list);
 		}
 	} else {
