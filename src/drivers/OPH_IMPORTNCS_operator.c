@@ -1531,6 +1531,9 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		}
 		for (i = 0; i < measure->number_src_path; ++i) {
 			memcpy(measure->dim_unlim_array + offset3, dim_array[measure->order_src_path[i]], size[measure->order_src_path[i]]);
+
+			pmesg(LOG_INFO, __FILE__, __LINE__, "Dim unlim array part %d is %d\n", i, measure->order_src_path[i]);
+
 			if (i) {
 				diff = base_time[measure->order_src_path[i]] - base_time[measure->order_src_path[0]];
 				if (diff > 0.0) {
