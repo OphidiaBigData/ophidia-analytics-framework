@@ -1609,7 +1609,9 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 
 		if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig) {
 			free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig);
-			char input_list[OPH_COMMON_BUFFER_LEN];
+			for (i = j = 0; i < ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num; ++i)
+				j += 1 + strlen(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[i]);
+			char input_list[1 + j];
 			*input_list = 0;
 			for (i = j = 0; i < ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num; ++i)
 				j += snprintf(input_list + j, OPH_COMMON_BUFFER_LEN - j, "%s%s", i ? "|" : "",
