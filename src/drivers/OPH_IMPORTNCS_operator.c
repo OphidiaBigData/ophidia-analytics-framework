@@ -1624,7 +1624,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		}
 	}
 
-	fprintf(stderr, "File list %s\n",((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig);
+	fprintf(stderr, "File list %s\n",((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig);	// _INFO
 
 	//ADDED TO MANAGE SUBSETTED IMPORT
 
@@ -4693,8 +4693,8 @@ int task_destroy(oph_operator_struct *handle)
 			}
 		}
 		// ADD OUTPUT PID TO NOTIFICATION STRING
-		size_t tmp_string_size = snprintf(NULL, 0, "%s=%s;%s=%s;%s", OPH_IN_PARAM_DATACUBE_INPUT, jsonbuf, OPH_IN_PARAM_INPUT, oper_handle->nc_file_path_orig, handle->output_string ? handle->output_string : "");
-		char tmp_string[1 + tmp_string_size];
+		size_t tmp_string_size = 1 + snprintf(NULL, 0, "%s=%s;%s=%s;%s", OPH_IN_PARAM_DATACUBE_INPUT, jsonbuf, OPH_IN_PARAM_INPUT, oper_handle->nc_file_path_orig, handle->output_string ? handle->output_string : "");
+		char tmp_string[tmp_string_size];
 		snprintf(tmp_string, tmp_string_size, "%s=%s;%s=%s;%s", OPH_IN_PARAM_DATACUBE_INPUT, jsonbuf, OPH_IN_PARAM_INPUT, oper_handle->nc_file_path_orig, handle->output_string ? handle->output_string : "");
 		if (handle->output_string)
 			free(handle->output_string);
