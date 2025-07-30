@@ -2953,7 +2953,7 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler *server, oph_odb_frag
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_NC_ERROR;
 	}
-	fprintf(stderr, "Query to I/O server (%d bytes):\n%s\n", query_size, query_string);	// _INFO
+	//fprintf(stderr, "Query to I/O server (%d bytes):\n%s\n", query_size, query_string);   // _INFO
 
 	free(dims_type_string);
 	free(dims_index_string);
@@ -6785,7 +6785,7 @@ int oph_nc_check_subset_string_over_more_sources(char *curfilter, int i, NETCDF_
 		if (measure->dims_end_index[i] < dims_end_index)
 			measure->dims_end_index[i] = dims_end_index;
 		total_size += dim_size;
-		pmesg(LOG_INFO, __FILE__, __LINE__, "For %d (%d) total size increased to %d [%d, %d]\n", j, measure->order_src_path[j], total_size, measure->dims_start_index[i], measure->dims_end_index[i]);
+		//pmesg(LOG_INFO, __FILE__, __LINE__, "For %d (%d) total size increased to %d [%d, %d]\n", j, measure->order_src_path[j], total_size, measure->dims_start_index[i], measure->dims_end_index[i]);
 	}
 	return OPH_NC_SUCCESS;
 }
