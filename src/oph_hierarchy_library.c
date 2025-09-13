@@ -18,6 +18,7 @@
 
 #include "oph_hierarchy_library.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
