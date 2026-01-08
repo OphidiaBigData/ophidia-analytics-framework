@@ -8,6 +8,8 @@
 
 ### Added:
 
+- Options to handle missing values with OPH_APPLY
+- XML description of 'oph_matheval' primitive
 - Format for time values without separating characters
 - Improvement to OPH_INTERCUBE [#113](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/113)
 - Operations 'oph_max_abs', 'oph_min_abs' and 'oph_median' to reduction operators and primitives
