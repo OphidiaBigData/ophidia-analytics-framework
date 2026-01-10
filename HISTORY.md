@@ -3,12 +3,14 @@
 
 ### Fixed:
 
-- Bug in subsetting more sources by means og OPH_IMPORTNCS
-- Bug in retrieve the time unit
+- Bug in clearing collapsed dimensions in OPH_CUBESCHEMA operator
+- Bug in subsetting more sources by means of OPH_IMPORTNCS operator
+- Bug in retrieving the time unit
 
 ### Added:
 
-- Options to handle missing values with OPH_APPLY
+- Value 'description' to option 'order' of OPH_MERGECUBES* operators
+- Options to handle missing values with OPH_APPLY operator
 - XML description of 'oph_matheval' primitive
 - Format for time values without separating characters
 - Improvement to OPH_INTERCUBE [#113](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/113)

@@ -1394,6 +1394,9 @@ int oph_odb_cube_order_by(ophidiadb *oDB, int order, int *id_datacube, int id_da
 		case 1:
 			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_ORDER_CUBE_BY_SOURCE, cube_list);
 			break;
+		case 2:
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_ORDER_CUBE_BY_DESCRIPTION, cube_list);
+			break;
 		default:
 			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_ORDER_CUBE_BY_NDIM, cube_list);
 	}

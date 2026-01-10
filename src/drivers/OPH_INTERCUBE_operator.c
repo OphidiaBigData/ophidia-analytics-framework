@@ -502,7 +502,6 @@ int task_init(oph_operator_struct *handle)
 		}
 		oph_odb_cube_free_datacube(&cube2);
 
-
 		// Change the container id
 		cube.id_container = ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->id_output_container;
 
@@ -596,7 +595,7 @@ int task_init(oph_operator_struct *handle)
 			if (cubedims2[ll].size)
 				break;
 		if ((l < number_of_dimensions) || (ll < number_of_dimensions2)) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Datacube dimensions are not comparable. %d %d\n", l, ll);
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Datacube dimensions are not comparable.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_INTERCUBE_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_INTERCUBE_DATACUBE_COMPARISON_ERROR,
 				"dimensions");
 			oph_odb_cube_free_datacube(&cube);
