@@ -9,6 +9,7 @@
 
 ### Added:
 
+- Option 'clear' to OPH_AGGREGATE* and OPH_REDUCE* operators
 - Value 'description' to option 'order' of OPH_MERGECUBES* operators
 - Options to handle missing values with OPH_APPLY operator
 - XML description of 'oph_matheval' primitive

@@ -885,6 +885,8 @@ int oph_dim_get_base_time(oph_odb_dimension *dim, long long *base_time)
 			strptime(dim->base_time, OPH_DIM_DATA_FORMAT3, &tm_value);
 		tm_value.tm_year += 1900;
 		tm_value.tm_mon++;
+		if (!tm_value.tm_mday)
+			tm_value.tm_mday++;
 		if (oph_date_to_day(tm_value.tm_year, tm_value.tm_mon, tm_value.tm_mday, base_time, dim)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
 			return OPH_DIM_DATA_ERROR;
@@ -1074,27 +1076,21 @@ int oph_dim_parse_time_subset(const char *subset_string, oph_odb_dimension *dim,
 	while ((pch = strtok_r(pch ? NULL : temp, OPH_DIM_SUBSET_SEPARATOR, &save_pointer))) {
 		value_time = 0;
 		memset(&tm_value, 0, sizeof(struct tm));
-
-		tm_value.tm_year = -1;
 		if (strchr(pch, OPH_DIM_DATA_FORMAT_CHECK2))
 			strptime(pch, OPH_DIM_DATA_FORMAT1, &tm_value);
 		else if (strchr(pch, OPH_DIM_DATA_FORMAT_CHECK3))
 			strptime(pch, OPH_DIM_DATA_FORMAT2, &tm_value);
 		else
 			strptime(pch, OPH_DIM_DATA_FORMAT3, &tm_value);
-		if (tm_value.tm_year < 0) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set the year\n");
-			return OPH_DIM_TIME_PARSING_ERROR;
-		}
-
 		tm_value.tm_year += 1900;
 		tm_value.tm_mon++;
-		if (!n && !tm_value.tm_mday)
+		if (!tm_value.tm_mday)
 			tm_value.tm_mday++;
 		if (oph_date_to_day(tm_value.tm_year, tm_value.tm_mon, tm_value.tm_mday, &value_time, dim)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
 			return OPH_DIM_DATA_ERROR;
 		}
+
 		value_time = tm_value.tm_sec + OPH_ODB_DIM_SECOND_NUMBER * (tm_value.tm_min + OPH_ODB_DIM_MINUTE_NUMBER * (tm_value.tm_hour + OPH_ODB_DIM_HOUR_NUMBER * value_time)) - base_time;
 
 		_value = ((double) value_time) / scaling_factor;
@@ -2453,6 +2449,8 @@ int _oph_dim_convert_data(oph_odb_dimension *dim, char *tmp, char *format, struc
 	}
 	tm_base->tm_year += 1900;
 	tm_base->tm_mon++;
+	if (!tm_base->tm_mday)
+		tm_base->tm_mday++;
 	if (oph_date_to_day(tm_base->tm_year, tm_base->tm_mon, tm_base->tm_mday, value, dim)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unrecognized calendar type '%s'\n", dim->calendar);
 		return OPH_DIM_DATA_ERROR;
