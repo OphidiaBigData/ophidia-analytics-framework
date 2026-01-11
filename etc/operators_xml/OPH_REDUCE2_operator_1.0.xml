@@ -41,6 +41,7 @@ It performs a reduction operation based on hierarchy on a datacube.
 - check_grid : optional flag to be enabled in case the values of grid have to be checked (valid only if the grid already exists).
 - container : name of the container to be used to store the output cube; by default it is the input container.
 - description : additional description to be associated with the output cube.
+- clear : set to &quot;yes&quot; in case collapsed dimension has to be removed, &quot;no&quot; by default.
         
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
@@ -80,6 +81,7 @@ SUBMISSION STRING: &quot;operator=oph_reduce2;operation=max;dim=time;concept_lev
 		<argument type="string" mandatory="no" default="no" values="yes|no">check_grid</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">clear</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|reduce2">objkey_filter</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>

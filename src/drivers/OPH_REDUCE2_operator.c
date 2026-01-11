@@ -328,6 +328,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	((OPH_REDUCE2_operator_handle *) handle->operator_handle)->ms = NAN;
 	((OPH_REDUCE2_operator_handle *) handle->operator_handle)->user_missing_value = 0;
 	((OPH_REDUCE2_operator_handle *) handle->operator_handle)->execute_error = 0;
+	((OPH_REDUCE2_operator_handle *) handle->operator_handle)->clear = 0;
 
 	char *datacube_in;
 	char *value;
@@ -599,6 +600,15 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 			return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 		}
 	}
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_CLEAR);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_CLEAR);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_REDUCE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_CLEAR);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN))
+		((OPH_REDUCE2_operator_handle *) handle->operator_handle)->clear = 1;
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
@@ -999,8 +1009,8 @@ int task_init(oph_operator_struct *handle)
 				prev_value = -1;
 				sizes[new_size = 0] = 0;
 
-				if (dim[l].calendar && strlen(dim[l].calendar) && OPH_DIM_TIME_CL_IS_TIME(concept_level_in))	// Time dimension (the check can be improved by checking hierarchy name)
-				{
+				// Time dimension (the check can be improved by checking hierarchy name)
+				if (dim[l].calendar && strlen(dim[l].calendar) && OPH_DIM_TIME_CL_IS_TIME(concept_level_in)) {
 					// Begin: determination of dim_inst[l].size = cubedims[l].size;
 					if (oph_dim_read_dimension_data(db, index_dimension_table_name, dim_inst[l].fk_id_dimension_index, MYSQL_DIMENSION, compressed, &dim_row) || !dim_row) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in reading a row from dimension table.\n");
@@ -1349,10 +1359,15 @@ int task_init(oph_operator_struct *handle)
 				}
 			} else {
 				dim_inst[l].fk_id_dimension_label = 0;
-				if (dim[l].calendar && strlen(dim[l].calendar))	// Time dimension (the check can be improved by checking hierarchy name)
-				{
-					if (oph_odb_meta_put
-					    (oDB, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_output_datacube, NULL, OPH_ODB_TIME_FREQUENCY, 0, OPH_COMMON_FULL_REDUCED_DIM)) {
+				// Time dimension (the check can be improved by checking hierarchy name)
+				if (dim[l].calendar && strlen(dim[l].calendar)) {
+					if (((OPH_REDUCE2_operator_handle *) handle->operator_handle)->clear) {
+						int id_metadata_instance = 0;
+						if (!oph_odb_meta_get(oDB, datacube_id, NULL, OPH_ODB_TIME_FREQUENCY, &id_metadata_instance, NULL) && id_metadata_instance)
+							oph_odb_meta_delete_from_metadatainstance_table(oDB, datacube_id, NULL, 0, id_metadata_instance, NULL, NULL, NULL, 1);
+					} else
+					    if (oph_odb_meta_put
+						(oDB, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_output_datacube, NULL, OPH_ODB_TIME_FREQUENCY, 0, OPH_COMMON_FULL_REDUCED_DIM)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_METADATA_UPDATE_ERROR);
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_GENERIC_METADATA_UPDATE_ERROR);
@@ -1371,41 +1386,65 @@ int task_init(oph_operator_struct *handle)
 			}
 
 			if (new_grid || !((OPH_REDUCE2_operator_handle *) handle->operator_handle)->grid_name || new_container) {
-				if (oph_dim_insert_into_dimension_table(db, o_index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, dim_inst[l].size, dim_row, &(dim_inst[l].fk_id_dimension_index))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in inserting a new row in dimension table.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_REDUCE2_DIM_ROW_ERROR);
-					if (dim_row)
-						free(dim_row);
-					oph_dim_disconnect_from_dbms(db->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db);
-					free(cubedims);
-					if (stored_dims)
-						free(stored_dims);
-					if (stored_dim_insts)
-						free(stored_dim_insts);
-					goto __OPH_EXIT_1;
-				}
-				// Copy the labels in new container
-				if (dim_inst[l].fk_id_dimension_label && new_container && (l != reduced_dim)
-				    && oph_dim_copy_into_dimension_table(db, label_dimension_table_name, o_label_dimension_table_name, &(dim_inst[l].fk_id_dimension_label))) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in copying a row in dimension table.\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_REDUCE2_DIM_ROW_ERROR);
-					if (dim_row)
-						free(dim_row);
-					oph_dim_disconnect_from_dbms(db->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db);
-					free(cubedims);
-					if (stored_dims)
-						free(stored_dims);
-					if (stored_dim_insts)
-						free(stored_dim_insts);
-					goto __OPH_EXIT_1;
-				}
-				dim_inst[l].id_grid = id_grid;
-				cl_value = NULL;
-				if ((l == reduced_dim) && dim[l].calendar && strlen(dim[l].calendar) && OPH_DIM_TIME_CL_IS_TIME(concept_level_in))	// Time dimension (the check can be improved by checking hierarchy name)
-				{
-					if (oph_hier_get_concept_level_long(filename, dim_inst[l].concept_level, &cl_value) || !cl_value) {
+				if (!((OPH_REDUCE2_operator_handle *) handle->operator_handle)->clear || dim_inst[l].size) {
+					if (oph_dim_insert_into_dimension_table
+					    (db, o_index_dimension_table_name, OPH_DIM_INDEX_DATA_TYPE, dim_inst[l].size, dim_row, &(dim_inst[l].fk_id_dimension_index))) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in inserting a new row in dimension table.\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
+							OPH_LOG_OPH_REDUCE2_DIM_ROW_ERROR);
+						if (dim_row)
+							free(dim_row);
+						oph_dim_disconnect_from_dbms(db->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db);
+						free(cubedims);
+						if (stored_dims)
+							free(stored_dims);
+						if (stored_dim_insts)
+							free(stored_dim_insts);
+						goto __OPH_EXIT_1;
+					}
+					// Copy the labels in new container
+					if (dim_inst[l].fk_id_dimension_label && new_container && (l != reduced_dim)
+					    && oph_dim_copy_into_dimension_table(db, label_dimension_table_name, o_label_dimension_table_name, &(dim_inst[l].fk_id_dimension_label))) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in copying a row in dimension table.\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
+							OPH_LOG_OPH_REDUCE2_DIM_ROW_ERROR);
+						if (dim_row)
+							free(dim_row);
+						oph_dim_disconnect_from_dbms(db->dbms_instance);
+						oph_dim_unload_dim_dbinstance(db);
+						free(cubedims);
+						if (stored_dims)
+							free(stored_dims);
+						if (stored_dim_insts)
+							free(stored_dim_insts);
+						goto __OPH_EXIT_1;
+					}
+					dim_inst[l].id_grid = id_grid;
+					cl_value = NULL;
+					if ((l == reduced_dim) && dim[l].calendar && strlen(dim[l].calendar) && OPH_DIM_TIME_CL_IS_TIME(concept_level_in))	// Time dimension (the check can be improved by checking hierarchy name)
+					{
+						if (oph_hier_get_concept_level_long(filename, dim_inst[l].concept_level, &cl_value) || !cl_value) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in inserting a new dimension instance\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
+								OPH_LOG_OPH_REDUCE2_DIM_INSTANCE_STORE_ERROR);
+							if (dim_row)
+								free(dim_row);
+							oph_dim_disconnect_from_dbms(db->dbms_instance);
+							oph_dim_unload_dim_dbinstance(db);
+							free(cubedims);
+							if (stored_dims)
+								free(stored_dims);
+							if (stored_dim_insts)
+								free(stored_dim_insts);
+							if (cl_value)
+								free(cl_value);
+							goto __OPH_EXIT_1;
+						}
+					}
+					if (oph_odb_dim_insert_into_dimensioninstance_table
+					    (oDB, &(dim_inst[l]), &(cubedims[l].id_dimensioninst), ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_output_datacube, dim[l].dimension_name,
+					     cl_value)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in inserting a new dimension instance\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
 							OPH_LOG_OPH_REDUCE2_DIM_INSTANCE_STORE_ERROR);
@@ -1422,28 +1461,9 @@ int task_init(oph_operator_struct *handle)
 							free(cl_value);
 						goto __OPH_EXIT_1;
 					}
-				}
-				if (oph_odb_dim_insert_into_dimensioninstance_table
-				    (oDB, &(dim_inst[l]), &(cubedims[l].id_dimensioninst), ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_output_datacube, dim[l].dimension_name,
-				     cl_value)) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error in inserting a new dimension instance\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container,
-						OPH_LOG_OPH_REDUCE2_DIM_INSTANCE_STORE_ERROR);
-					if (dim_row)
-						free(dim_row);
-					oph_dim_disconnect_from_dbms(db->dbms_instance);
-					oph_dim_unload_dim_dbinstance(db);
-					free(cubedims);
-					if (stored_dims)
-						free(stored_dims);
-					if (stored_dim_insts)
-						free(stored_dim_insts);
 					if (cl_value)
 						free(cl_value);
-					goto __OPH_EXIT_1;
 				}
-				if (cl_value)
-					free(cl_value);
 			} else	// Check for grid correctness
 			{
 				int match = 1;
@@ -1503,7 +1523,7 @@ int task_init(oph_operator_struct *handle)
 			//Change iddatacube in cubehasdim
 			cubedims[l].id_datacube = ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_output_datacube;
 
-			if (oph_odb_cube_insert_into_cubehasdim_table(oDB, &(cubedims[l]), &last_insertd_id)) {
+			if (oph_odb_cube_insert_into_cubehasdim_table2(oDB, &(cubedims[l]), &last_insertd_id, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->clear)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new datacube - dimension relations.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_REDUCE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_REDUCE2_CUBEHASDIM_INSERT_ERROR);
 				free(cubedims);
