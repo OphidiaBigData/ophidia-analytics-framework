@@ -220,6 +220,7 @@
  * \param sessionid SessionID
  * \param id_user ID of submitter
  * \param description Free description to be associated with output cube
+ * \param nthread Number of posix threads related to each MPI task
  * \param ms Conventional value for missing values
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  * \param cube1 Pointer to the first cube
@@ -250,6 +251,7 @@ struct _OPH_INTERCUBE_operator_handle {
 	char *sessionid;
 	int id_user;
 	char *description;
+	unsigned int nthread;
 	double ms;
 	short int execute_error;
 	char *cube1;
