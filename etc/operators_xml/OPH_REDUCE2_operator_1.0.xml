@@ -41,8 +41,8 @@ It performs a reduction operation based on hierarchy on a datacube.
 - check_grid : optional flag to be enabled in case the values of grid have to be checked (valid only if the grid already exists).
 - container : name of the container to be used to store the output cube; by default it is the input container.
 - description : additional description to be associated with the output cube.
-- clear : set to &quot;yes&quot; in case collapsed dimension has to be removed, &quot;no&quot; by default.
-        
+- clear : set to &quot;yes&quot; in case collapsed dimensions have to be removed, &quot;no&quot; by default.
+
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
               asynchronous mode, sync for synchronous mode with json-compliant output.

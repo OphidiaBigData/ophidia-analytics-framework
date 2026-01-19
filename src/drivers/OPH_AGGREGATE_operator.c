@@ -254,6 +254,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->user_missing_value = 0;
 	((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->clear = 0;
+	((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->force = 0;
 
 	char *datacube_in;
 	char *value;
@@ -510,6 +511,15 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	if (!strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN))
 		((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->clear = 1;
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_FORCE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_FORCE);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_REDUCE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_FORCE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN))
+		((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->force = 1;
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -601,7 +611,7 @@ int task_init(oph_operator_struct *handle)
 		oph_odb_cubehasdim *cubedims = NULL;
 		int number_of_dimensions = 0;
 		int last_insertd_id = 0;
-		int l, reduced_dim = -1, reduction = 0;
+		int l, reduced_dim = -1, reduction = 0, resto = 0;
 		int residual_size = size, real_aggregate_set = 1;
 
 		//Read old cube - dimension relation rows
@@ -639,7 +649,8 @@ int task_init(oph_operator_struct *handle)
 					if (cubedims[l].size > residual_size) {
 						if (residual_size == 1)
 							break;
-						if (cubedims[l].size % residual_size) {
+						resto = cubedims[l].size % residual_size;
+						if (resto && !((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->force) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update dimension information with size '%d'\n",
 							      ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->size);
 							logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container,
@@ -651,6 +662,8 @@ int task_init(oph_operator_struct *handle)
 						reduced_dim = l;
 						reduction = residual_size;
 						cubedims[l].size /= residual_size;
+						if (resto)
+							cubedims[l].size++;
 						real_aggregate_set *= residual_size;
 						dim_inst[l].concept_level = OPH_COMMON_CONCEPT_LEVEL_UNKNOWN;
 						break;
