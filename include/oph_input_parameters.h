@@ -29,7 +29,7 @@
 #define OPH_IN_PARAM_DATACUBE_MULTI_INPUT			"cubes"
 #define OPH_IN_PARAM_SCHEDULE_ALGORITHM				"schedule"
 #define OPH_IN_PARAM_COMPRESSION				"compressed"
-#define OPH_IN_PARAM_SLEEP_TIME					"time"
+#define OPH_IN_PARAM_TIME						"time"
 #define OPH_IN_PARAM_PRINTF_TEXT				"text"
 #define OPH_IN_PARAM_APPLY_QUERY				"query"
 #define OPH_IN_PARAM_APPLY_DIM_QUERY				"dim_query"
