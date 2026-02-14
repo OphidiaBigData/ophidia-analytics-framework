@@ -34,9 +34,7 @@
 #include "debug.h"
 #include <mpi.h>
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 #include "clients/taketime.h"
-#endif
 
 #include "oph_gsoap/oph_soap.h"
 #include "oph_gsoap/oph_server_error.h"
