@@ -54,6 +54,7 @@
 
 #define OPH_GENERIC_DEFAULT_OUTPUT_PATH "default"
 #define OPH_GENERIC_NO_OUTPUT "null"
+#define OPH_GENERIC_NO_OUTPUT2 "none"
 
 #define OPH_GENERIC_BEGIN_PARAMETER "%"
 
@@ -300,7 +301,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	char *output_path = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
 	char *output_name = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_NAME);
 	char *output = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT);
-	if (!strcmp(output, OPH_GENERIC_NO_OUTPUT))
+	if (!strcmp(output, OPH_GENERIC_NO_OUTPUT) || !strcmp(output, OPH_GENERIC_NO_OUTPUT2))
 		((OPH_GENERIC_operator_handle *) handle->operator_handle)->no_output = 1;
 	char process_file = 1;
 
@@ -600,15 +601,15 @@ int task_execute(oph_operator_struct *handle)
 	}
 
 	// Output file
-	char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' };
+	char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' }, *path = ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_path;
 	if (!((OPH_GENERIC_operator_handle *) handle->operator_handle)->no_output) {
 #ifdef OPH_ESDM
 		if (!strncmp(((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name, OPH_ESDM_PREFIX, 7))
 			strcpy(file_name, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name);
 		else
 #endif
-			snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_GENERIC_OUTPUT_PATH_SINGLE_FILE, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_path,
-				 ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name);
+			snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_GENERIC_OUTPUT_PATH_SINGLE_FILE, path
+				 && strlen(path) > 1 ? path : "", ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name);
 		n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "'%s' ", file_name);
 	}
 
