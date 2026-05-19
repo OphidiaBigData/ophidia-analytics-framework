@@ -112,6 +112,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name = NULL;
 	((OPH_GENERIC_operator_handle *) handle->operator_handle)->force = 0;
 	((OPH_GENERIC_operator_handle *) handle->operator_handle)->no_output = 0;
+	((OPH_GENERIC_operator_handle *) handle->operator_handle)->extract = 0;
 
 	//3 - Fill struct with the correct data
 	char tmp[OPH_COMMON_BUFFER_LEN];
@@ -427,6 +428,15 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	if (!strcmp(value, OPH_COMMON_YES_VALUE))
 		((OPH_GENERIC_operator_handle *) handle->operator_handle)->force = 1;
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXTRACT);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_EXTRACT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_GENERIC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_EXTRACT);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strcmp(value, OPH_COMMON_YES_VALUE))
+		((OPH_GENERIC_operator_handle *) handle->operator_handle)->extract = 1;
+
 	char *path = ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_path;
 	if (!path) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
@@ -682,6 +692,20 @@ int task_execute(oph_operator_struct *handle)
 		    (((OPH_GENERIC_operator_handle *) handle->operator_handle)->objkeys, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_GENERIC_OUTPUT)) {
 			snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s" OPH_GENERIC_OUTPUT_PATH_SINGLE_FILE, size
 				 && *output_path_file != '/' ? "/" : "", output_path_file, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name);
+		}
+	}
+	if (((OPH_GENERIC_operator_handle *) handle->operator_handle)->extract) {
+		FILE *fil = fopen(jsonbuf, "rt");
+		if (fil) {
+			n = *jsonbuf = 0;
+			char jsonbuf2[OPH_COMMON_BUFFER_LEN];
+			while (fgets(jsonbuf2, OPH_COMMON_BUFFER_LEN, fil)) {
+				s = strlen(jsonbuf2);
+				if (s && (jsonbuf2[s - 1] == '\n'))
+					jsonbuf2[s - 1] = 0;
+				n += snprintf(jsonbuf + n, OPH_COMMON_BUFFER_LEN - n, "%s%s", *jsonbuf ? "|" : "", jsonbuf2);
+			}
+			fclose(fil);
 		}
 	}
 	// ADD OUTPUT TO NOTIFICATION STRING
