@@ -702,8 +702,9 @@ int task_execute(oph_operator_struct *handle)
 			while (fgets(jsonbuf2, OPH_COMMON_BUFFER_LEN, fil)) {
 				s = strlen(jsonbuf2);
 				if (s && (jsonbuf2[s - 1] == '\n'))
-					jsonbuf2[s - 1] = 0;
-				n += snprintf(jsonbuf + n, OPH_COMMON_BUFFER_LEN - n, "%s%s", *jsonbuf ? "|" : "", jsonbuf2);
+					jsonbuf2[--s] = 0;
+				if (s)
+					n += snprintf(jsonbuf + n, OPH_COMMON_BUFFER_LEN - n, "%s%s", *jsonbuf ? "|" : "", jsonbuf2);
 			}
 			fclose(fil);
 		}
