@@ -18,6 +18,7 @@ Request or set the service status.
 - queue_size : new value for QUEUE_SIZE; use &quot;0&quot; for infinity.
 - task_limit : new value for TASK_LIMIT; use &quot;0&quot; for infinity.
 - core_limit : new value for CORE_LIMIT; use &quot;0&quot; for infinity.
+- log_type : new value for log level.
 
 [System parameters]
 - objkey_filter : filter on the output of the operator written to file (default=all => no filter, none => no output).
@@ -43,6 +44,7 @@ SUBMISSION STRING: &quot;operator=oph_service;status=up;&quot;</abstract>
 		<argument type="int" mandatory="no" default="0" minvalue="0">queue_size</argument>
 		<argument type="int" mandatory="no" default="0" minvalue="0">task_limit</argument>
 		<argument type="int" mandatory="no" default="0" minvalue="0">core_limit</argument>
+		<argument type="int" mandatory="no" default="0" minvalue="0" values="ERROR|INFO|WARNING|DEBUG">log_type</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|service_status|service_tasks|service_parameters">objkey_filter</argument>
     </args>
 </operator>
