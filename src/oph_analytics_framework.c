@@ -34,9 +34,7 @@
 #include "debug.h"
 #include <mpi.h>
 
-#if defined(OPH_TIME_DEBUG_1) || defined(OPH_TIME_DEBUG_2) || defined(BENCHMARK)
 #include "clients/taketime.h"
-#endif
 
 #include "oph_gsoap/oph_soap.h"
 #include "oph_gsoap/oph_server_error.h"
@@ -263,9 +261,13 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	*notify_sessionid = 0;
 #endif
 
+	// EVALUATE PROC TIME
+	struct timeval stime_p;
+	if (task_rank == 0)
+		gettimeofday(&stime_p, NULL);
+
 #ifdef OPH_TIME_DEBUG_1
 	/*Partial Exec time evaluate */ struct timeval stime, etime, ttime;
-
 	if (task_rank == 0)
 		gettimeofday(&stime, NULL);
 #elif OPH_TIME_DEBUG_2
@@ -925,7 +927,6 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 	}
 #ifdef BENCHMARK
 	struct timeval stime_bench, etime_bench, ttime_bench;
-
 	if (task_rank == 0)
 		gettimeofday(&stime_bench, NULL);
 #endif
@@ -940,14 +941,12 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		timeval_subtract(&ttime, &etime, &stime);
 		printf("Proc %d: Load task:\t Time %d,%06d sec\n", task_rank, (int) ttime.tv_sec, (int) ttime.tv_usec);
 	}
-
 	if (task_rank == 0)
 		gettimeofday(&stime, NULL);
 #elif OPH_TIME_DEBUG_2
 	gettimeofday(&etime, NULL);
 	timeval_subtract(&ttime, &etime, &stime);
 	printf("Proc %d: Load task:\t Time %d,%06d sec\n", task_rank, (int) ttime.tv_sec, (int) ttime.tv_usec);
-
 	gettimeofday(&stime, NULL);
 #endif
 
@@ -1008,14 +1007,12 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		timeval_subtract(&ttime, &etime, &stime);
 		printf("Proc %d: Set env:\t Time %d,%06d sec\n", task_rank, (int) ttime.tv_sec, (int) ttime.tv_usec);
 	}
-
 	if (task_rank == 0)
 		gettimeofday(&stime, NULL);
 #elif OPH_TIME_DEBUG_2
 	gettimeofday(&etime, NULL);
 	timeval_subtract(&ttime, &etime, &stime);
 	printf("Proc %d: Set env:\t Time %d,%06d sec\n", task_rank, (int) ttime.tv_sec, (int) ttime.tv_usec);
-
 	gettimeofday(&stime, NULL);
 #endif
 
@@ -1074,14 +1071,12 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		timeval_subtract(&ttime, &etime, &stime);
 		printf("Proc %d: Init task:\t Time %d,%06d sec\n", task_rank, (int) ttime.tv_sec, (int) ttime.tv_usec);
 	}
-
 	if (task_rank == 0)
 		gettimeofday(&stime, NULL);
 #elif OPH_TIME_DEBUG_2
 	gettimeofday(&etime, NULL);
 	timeval_subtract(&ttime, &etime, &stime);
 	printf("Proc %d: Init task:\t Time %d,%06d sec\n", task_rank, (int) ttime.tv_sec, (int) ttime.tv_usec);
-
 	gettimeofday(&stime, NULL);
 #endif
 
@@ -1140,14 +1135,12 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		timeval_subtract(&ttime, &etime, &stime);
 		printf("Proc %d: Distribute task:\t Time %d,%06d sec\n", task_rank, (int) ttime.tv_sec, (int) ttime.tv_usec);
 	}
-
 	if (task_rank == 0)
 		gettimeofday(&stime, NULL);
 #elif OPH_TIME_DEBUG_2
 	gettimeofday(&etime, NULL);
 	timeval_subtract(&ttime, &etime, &stime);
 	printf("Proc %d: Distribute task:\t Time %d,%06d sec\n", task_rank, (int) ttime.tv_sec, (int) ttime.tv_usec);
-
 	gettimeofday(&stime, NULL);
 #endif
 
@@ -1206,14 +1199,12 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		timeval_subtract(&ttime, &etime, &stime);
 		printf("Proc %d: Execute task:\t Time %d,%06d sec\n", task_rank, (int) ttime.tv_sec, (int) ttime.tv_usec);
 	}
-
 	if (task_rank == 0)
 		gettimeofday(&stime, NULL);
 #elif OPH_TIME_DEBUG_2
 	gettimeofday(&etime, NULL);
 	timeval_subtract(&ttime, &etime, &stime);
 	printf("Proc %d: Execute task:\t Time %d,%06d sec\n", task_rank, (int) ttime.tv_sec, (int) ttime.tv_usec);
-
 	gettimeofday(&stime, NULL);
 #endif
 
@@ -1272,14 +1263,12 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		timeval_subtract(&ttime, &etime, &stime);
 		printf("Proc %d: Reduce task:\t Time %d,%06d sec\n", task_rank, (int) ttime.tv_sec, (int) ttime.tv_usec);
 	}
-
 	if (task_rank == 0)
 		gettimeofday(&stime, NULL);
 #elif OPH_TIME_DEBUG_2
 	gettimeofday(&etime, NULL);
 	timeval_subtract(&ttime, &etime, &stime);
 	printf("Proc %d: Reduce task:\t Time %d,%06d sec\n", task_rank, (int) ttime.tv_sec, (int) ttime.tv_usec);
-
 	gettimeofday(&stime, NULL);
 #endif
 
@@ -1337,14 +1326,12 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		timeval_subtract(&ttime, &etime, &stime);
 		printf("Proc %d: Destroy task:\t Time %d,%06d sec\n", task_rank, (int) ttime.tv_sec, (int) ttime.tv_usec);
 	}
-
 	if (task_rank == 0)
 		gettimeofday(&stime, NULL);
 #elif OPH_TIME_DEBUG_2
 	gettimeofday(&etime, NULL);
 	timeval_subtract(&ttime, &etime, &stime);
 	printf("Proc %d: Destroy task:\t Time %d,%06d sec\n", task_rank, (int) ttime.tv_sec, (int) ttime.tv_usec);
-
 	gettimeofday(&stime, NULL);
 #endif
 
@@ -1400,14 +1387,12 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 		timeval_subtract(&ttime, &etime, &stime);
 		printf("Proc %d: Unset env:\t Time %d,%06d sec\n", task_rank, (int) ttime.tv_sec, (int) ttime.tv_usec);
 	}
-
 	if (task_rank == 0)
 		gettimeofday(&stime, NULL);
 #elif OPH_TIME_DEBUG_2
 	gettimeofday(&etime, NULL);
 	timeval_subtract(&ttime, &etime, &stime);
 	printf("Proc %d: Unset env:\t Time %d,%06d sec\n", task_rank, (int) ttime.tv_sec, (int) ttime.tv_usec);
-
 	gettimeofday(&stime, NULL);
 #endif
 
@@ -1450,12 +1435,24 @@ int _oph_af_execute_framework(oph_operator_struct * handle, char *task_string, i
 /* gSOAP notification start */
 	MPI_Barrier(MPI_COMM_WORLD);	//Barrier synchronization before successful notification
 	if (!task_rank && have_soap) {
+
+		// ADD PROC TIME TO NOTIFICATION STRING
+		struct timeval etime_p, ttime_p;
+		gettimeofday(&etime_p, NULL);
+		timeval_subtract(&ttime_p, &etime_p, &stime_p);
+		char tmp_string[OPH_COMMON_BUFFER_LEN];
+		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%d.%06d;", OPH_IN_PARAM_TIME, (int) ttime_p.tv_sec, (int) ttime_p.tv_usec);
+		if (handle->output_string) {
+			strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
+			free(handle->output_string);
+		}
+		handle->output_string = strdup(tmp_string);
+
 		snprintf(notify_message, OPH_COMMON_BUFFER_LEN, "%s=%d;%s=%s;%s=%s;%s=%s;%s=%s;%s=%s;%s=%s;%s=%s;", OPH_ARG_STATUS, OPH_ODB_JOB_STATUS_COMPLETED, OPH_ARG_IDJOB, notify_jobid,
 			 OPH_ARG_PARENTID, notify_parent_jobid, OPH_ARG_TASKINDEX, notify_task_index, OPH_ARG_LIGHTTASKINDEX, notify_light_task_index, OPH_ARG_SESSIONID, notify_sessionid,
 			 OPH_ARG_MARKERID, marker_id, OPH_ARG_SAVE, notify_save);
 		if (handle->output_string) {
 			strncat(notify_message, handle->output_string, OPH_TP_TASKLEN - strlen(notify_message));
-
 			snprintf(notify_jobid, OPH_TP_TASKLEN, "%s=", OPH_IN_PARAM_DATACUBE_INPUT);
 			if (strstr(handle->output_string, notify_jobid))
 				*notify_cube = 0;

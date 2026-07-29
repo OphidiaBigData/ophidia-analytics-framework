@@ -54,6 +54,7 @@
 
 #define OPH_GENERIC_DEFAULT_OUTPUT_PATH "default"
 #define OPH_GENERIC_NO_OUTPUT "null"
+#define OPH_GENERIC_NO_OUTPUT2 "none"
 
 #define OPH_GENERIC_BEGIN_PARAMETER "%"
 
@@ -111,6 +112,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name = NULL;
 	((OPH_GENERIC_operator_handle *) handle->operator_handle)->force = 0;
 	((OPH_GENERIC_operator_handle *) handle->operator_handle)->no_output = 0;
+	((OPH_GENERIC_operator_handle *) handle->operator_handle)->extract = 0;
 
 	//3 - Fill struct with the correct data
 	char tmp[OPH_COMMON_BUFFER_LEN];
@@ -300,7 +302,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	char *output_path = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_PATH);
 	char *output_name = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT_NAME);
 	char *output = hashtbl_get(task_tbl, OPH_IN_PARAM_OUTPUT);
-	if (!strcmp(output, OPH_GENERIC_NO_OUTPUT))
+	if (!strcmp(output, OPH_GENERIC_NO_OUTPUT) || !strcmp(output, OPH_GENERIC_NO_OUTPUT2))
 		((OPH_GENERIC_operator_handle *) handle->operator_handle)->no_output = 1;
 	char process_file = 1;
 
@@ -425,6 +427,15 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	}
 	if (!strcmp(value, OPH_COMMON_YES_VALUE))
 		((OPH_GENERIC_operator_handle *) handle->operator_handle)->force = 1;
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_EXTRACT);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_EXTRACT);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_GENERIC_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_EXTRACT);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strcmp(value, OPH_COMMON_YES_VALUE))
+		((OPH_GENERIC_operator_handle *) handle->operator_handle)->extract = 1;
 
 	char *path = ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_path;
 	if (!path) {
@@ -600,15 +611,15 @@ int task_execute(oph_operator_struct * handle)
 	}
 
 	// Output file
-	char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' };
+	char file_name[OPH_COMMON_BUFFER_LEN] = { '\0' }, *path = ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_path;
 	if (!((OPH_GENERIC_operator_handle *) handle->operator_handle)->no_output) {
 #ifdef OPH_ESDM
 		if (!strncmp(((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name, OPH_ESDM_PREFIX, 7))
 			strcpy(file_name, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name);
 		else
 #endif
-			snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_GENERIC_OUTPUT_PATH_SINGLE_FILE, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_path,
-				 ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name);
+			snprintf(file_name, OPH_COMMON_BUFFER_LEN, OPH_GENERIC_OUTPUT_PATH_SINGLE_FILE, path
+				 && strlen(path) > 1 ? path : "", ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name);
 		n += snprintf(command + n, OPH_COMMON_BUFFER_LEN - n, "'%s' ", file_name);
 	}
 
@@ -683,10 +694,29 @@ int task_execute(oph_operator_struct * handle)
 				 && *output_path_file != '/' ? "/" : "", output_path_file, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->output_name);
 		}
 	}
+	if (((OPH_GENERIC_operator_handle *) handle->operator_handle)->extract) {
+		FILE *fil = fopen(jsonbuf, "rt");
+		if (fil) {
+			n = *jsonbuf = 0;
+			char jsonbuf2[OPH_COMMON_BUFFER_LEN];
+			while (fgets(jsonbuf2, OPH_COMMON_BUFFER_LEN, fil)) {
+				s = strlen(jsonbuf2);
+				if (s && (jsonbuf2[s - 1] == '\n'))
+					jsonbuf2[--s] = 0;
+				if (s)
+					n += snprintf(jsonbuf + n, OPH_COMMON_BUFFER_LEN - n, "%s%s", *jsonbuf ? "|" : "", jsonbuf2);
+			}
+			fclose(fil);
+		}
+	}
 	// ADD OUTPUT TO NOTIFICATION STRING
-	if (((OPH_GENERIC_operator_handle *) handle->operator_handle)->session_url) {
+	if (((OPH_GENERIC_operator_handle *) handle->operator_handle)->session_url || strlen(jsonbuf)) {
 		char tmp_string[OPH_COMMON_BUFFER_LEN];
-		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;%s=%s;", OPH_IN_PARAM_LINK, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->session_url, OPH_IN_PARAM_FILE, jsonbuf);
+		n = *tmp_string = 0;
+		if (((OPH_GENERIC_operator_handle *) handle->operator_handle)->session_url)
+			n += snprintf(tmp_string + n, OPH_COMMON_BUFFER_LEN - n, "%s=%s;", OPH_IN_PARAM_LINK, ((OPH_GENERIC_operator_handle *) handle->operator_handle)->session_url);
+		if (strlen(jsonbuf))
+			n += snprintf(tmp_string + n, OPH_COMMON_BUFFER_LEN - n, "%s=%s;", OPH_IN_PARAM_FILE, jsonbuf);
 		if (handle->output_string) {
 			strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
 			free(handle->output_string);

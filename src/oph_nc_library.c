@@ -2953,6 +2953,7 @@ int oph_nc_populate_fragment_from_nc5(oph_ioserver_handler * server, oph_odb_fra
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		return OPH_NC_ERROR;
 	}
+	//fprintf(stderr, "Query to I/O server (%d bytes):\n%s\n", query_size, query_string);   // _INFO
 
 	free(dims_type_string);
 	free(dims_index_string);
@@ -6762,13 +6763,13 @@ int oph_nc_check_subset_string(char *curfilter, int i, NETCDF_var * measure, int
 int oph_nc_check_subset_string_over_more_sources(char *curfilter, int i, NETCDF_var * measure, int is_index, int *ncids, int n, double offset, char out_of_bound)
 {
 	char _curfilter[1 + strlen(curfilter)];
-	int j, ret = 0, dims_start_index = 0, dims_end_index = measure->dims_length[i], last = n - 1;
+	int j, ret = 0, dims_start_index = 0, dims_end_index = measure->dims_length[i];
 	size_t dim_size = 0, total_size = 0;
 	measure->dims_start_index[i] = measure->dims_length[i] - 1;
 	measure->dims_end_index[i] = 0;
 	for (j = 0; j < n; ++j) {
 		strcpy(_curfilter, curfilter);
-		ret = _oph_nc_check_subset_string(_curfilter, i, measure, is_index, ncids[j], offset, out_of_bound, &dims_start_index, &dims_end_index, &dim_size);
+		ret = _oph_nc_check_subset_string(_curfilter, i, measure, is_index, ncids[measure->order_src_path[j]], offset, out_of_bound, &dims_start_index, &dims_end_index, &dim_size);
 		if (ret == OPH_NC_BOUND_ERROR) {
 			if ((dims_start_index < 0) || (dims_end_index < 0)) {
 				total_size += dim_size;
@@ -6783,6 +6784,7 @@ int oph_nc_check_subset_string_over_more_sources(char *curfilter, int i, NETCDF_
 		if (measure->dims_end_index[i] < dims_end_index)
 			measure->dims_end_index[i] = dims_end_index;
 		total_size += dim_size;
+		//pmesg(LOG_INFO, __FILE__, __LINE__, "For %d (%d) total size increased to %d [%d, %d]\n", j, measure->order_src_path[j], total_size, measure->dims_start_index[i], measure->dims_end_index[i]);
 	}
 	return OPH_NC_SUCCESS;
 }

@@ -3,11 +3,21 @@
 
 ### Fixed:
 
-- Bug in subsetting more sources by means og OPH_IMPORTNCS
-- Bug in retrieve the time unit
+- Bug in clearing collapsed dimensions in OPH_CUBESCHEMA operator
+- Bug in subsetting more sources by means of OPH_IMPORTNCS operator
+- Bug in retrieving the time unit
 
 ### Added:
 
+- Option 'extract' to OPH_GENERIC enabling the possibility of more output files
+- Report of processing time to output string
+- Option 'force' to OPH_AGGREGATE to force dimension collapse
+- Option 'clear' to OPH_AGGREGATE* and OPH_REDUCE* operators
+- Value 'description' to option 'order' of OPH_MERGECUBES* operators
+- Options to handle missing values with OPH_APPLY operator
+- XML description of 'oph_matheval' primitive
+- Format for time values without separating characters
+- Improvement to OPH_INTERCUBE [#113](https://github.com/OphidiaBigData/ophidia-analytics-framework/pull/113)
 - Operations 'oph_max_abs', 'oph_min_abs' and 'oph_median' to reduction operators and primitives
 - Concept level 'octet' to time hierarchy
 

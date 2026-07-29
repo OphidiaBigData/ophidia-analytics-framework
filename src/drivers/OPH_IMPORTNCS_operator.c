@@ -570,7 +570,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	char *buffer = NULL;
 	for (j = 0; j < ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num; ++j) {
 		value = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[j];
-		if ((retval = glob(value, GLOB_MARK | GLOB_NOSORT, NULL, &globbuf))) {
+		if ((retval = glob(value, GLOB_MARK | GLOB_TILDE_CHECK | GLOB_BRACE, NULL, &globbuf))) {
 			if (retval != GLOB_NOMATCH) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse '%s'\n", value);
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to parse '%s'\n", value);
@@ -1505,18 +1505,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 				return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 			}
 		}
-		if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			data_size = sizeof(char);
-		else if (!strncasecmp(OPH_COMMON_SHORT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			data_size = sizeof(short);
-		else if (!strncasecmp(OPH_COMMON_INT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			data_size = sizeof(int);
-		else if (!strncasecmp(OPH_COMMON_FLOAT_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			data_size = sizeof(float);
-		else if (!strncasecmp(OPH_COMMON_DOUBLE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			data_size = sizeof(double);
-		else if (!strncasecmp(OPH_COMMON_LONG_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
-			data_size = sizeof(long long);
+		data_size = oph_dim_sizeof(dim_type);
 		// Order the input files
 		int tmp;
 		for (i = 0; i < measure->number_src_path - 1; ++i)
@@ -1530,7 +1519,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			strcpy(main_base_time, time_dims[measure->order_src_path[0]].base_time);
 			free(time_dims);
 		}
-		size_t k, offset2, offset3 = 0;
+		size_t k, offset2, offset3 = 0, _size = 0;
 		double diff;
 		measure->dim_unlim_array = (char *) malloc(tot_size);
 		if (!measure->dim_unlim_array) {
@@ -1545,7 +1534,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			if (i) {
 				diff = base_time[measure->order_src_path[i]] - base_time[measure->order_src_path[0]];
 				if (diff > 0.0) {
-					size_t _size = size[measure->order_src_path[i]] / data_size;
+					_size = size[measure->order_src_path[i]] / data_size;
 					if (!strncasecmp(OPH_COMMON_BYTE_TYPE, dim_type, OPH_ODB_DIM_DIMENSION_TYPE_SIZE))
 						for (k = 0, offset2 = offset3; k < _size; ++k, offset2 += data_size)
 							*(char *) (measure->dim_unlim_array + offset2) += (char) diff;
@@ -1620,26 +1609,22 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 
 		if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig) {
 			free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig);
-			size_t orig_length = 0;
-			for (i = 0; i < measure->number_src_path; ++i)
-				orig_length += 1 + strlen(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[i]);
-			((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = (char *) malloc(orig_length + 1);
-			*((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = 0;
-			strcat(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig,
-			       ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[measure->order_src_path[0]]);
-			for (i = 1; i < measure->number_src_path; ++i) {
-				strcat(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig, "|");
-				strcat(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig,
-				       ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[measure->order_src_path[i]]);
-			}
+			for (i = j = 0; i < ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num; ++i)
+				j += 1 + strlen(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[i]);	// Order is not important
+			char input_list[1 + j];
+			*input_list = 0;
+			for (i = j = 0; i < ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num; ++i)
+				j += sprintf(input_list + j, "%s%s", i ? "|" : "", ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[measure->order_src_path[i]]);
+			((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = strdup(input_list);
 		}
 	} else {
-
 		if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig) {
 			free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig);
-			((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = strdup(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[0]);
+			((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig = strdup(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths[0]);	// Correct since here we have only one file sure
 		}
 	}
+
+	//fprintf(stderr, "File list %s\n",((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig);     // _INFO
 
 	//ADDED TO MANAGE SUBSETTED IMPORT
 
@@ -2081,8 +2066,10 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			measure->dims_end_index[i] = measure->dims_length[i] - 1;
 		} else
 		    if ((ii =
-			 oph_nc_check_subset_string_over_more_sources(curfilter, i, measure, is_index[j], ncids, ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num,
-								      j < s_offset_num ? offset[j] : 0.0, 1))) {
+			 (measure->dim_unlim ==
+			  i ? oph_nc_check_subset_string_over_more_sources(curfilter, i, measure, is_index[j], ncids, ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_paths_num,
+									   j < s_offset_num ? offset[j] : 0.0, 1) : oph_nc_check_subset_string(curfilter, i, measure, is_index[j], ncid,
+																	       j < s_offset_num ? offset[j] : 0.0, 0)))) {
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
 			if (offset)
@@ -2090,7 +2077,7 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 			return ii;
 		} else if (measure->dims_start_index[i] < 0 || measure->dims_end_index[i] < 0 || measure->dims_start_index[i] > measure->dims_end_index[i]
 			   || measure->dims_start_index[i] >= (int) measure->dims_length[i] || measure->dims_end_index[i] >= (int) measure->dims_length[i]) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter\n");
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Invalid subsetting filter: %s\n", curfilter);
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INVALID_INPUT_STRING);
 			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
 			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
@@ -3006,8 +2993,7 @@ int task_init(oph_operator_struct * handle)
 							dim_array = NULL;
 
 							if (measure->order_src_path && (measure->dim_unlim == i))
-								dim_array = measure->dim_unlim_array;
-
+								dim_array = measure->dim_unlim_array + measure->dims_start_index[i] * oph_dim_sizeof(dims[j].dimension_type);
 							else if (oph_nc_get_dim_array2
 								 (id_container_out, ncid, tmp_var.varid, dims[j].dimension_type, dim_inst[j].size, *(tmp_var.dims_start_index),
 								  *(tmp_var.dims_end_index), &dim_array)) {
@@ -3263,7 +3249,7 @@ int task_init(oph_operator_struct * handle)
 				tmp_var.dims_end_index = &(measure->dims_end_index[i]);
 
 				if (measure->order_src_path && (measure->dim_unlim == i))
-					dim_array = measure->dim_unlim_array;
+					dim_array = measure->dim_unlim_array + measure->dims_start_index[i] * oph_dim_sizeof(tot_dims[j].dimension_type);
 				else if (oph_nc_get_dim_array2
 					 (id_container_out, ncid, tmp_var.varid, tot_dims[j].dimension_type, tmp_var.varsize, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index), &dim_array)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
@@ -4707,12 +4693,13 @@ int task_destroy(oph_operator_struct * handle)
 			}
 		}
 		// ADD OUTPUT PID TO NOTIFICATION STRING
-		char tmp_string[OPH_COMMON_BUFFER_LEN];
-		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_DATACUBE_INPUT, jsonbuf);
-		if (handle->output_string) {
-			strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
+		size_t tmp_string_size = 1 + snprintf(NULL, 0, "%s=%s;%s=%s;%s", OPH_IN_PARAM_DATACUBE_INPUT, jsonbuf, OPH_IN_PARAM_INPUT, oper_handle->nc_file_path_orig,
+						      handle->output_string ? handle->output_string : "");
+		char tmp_string[tmp_string_size];
+		snprintf(tmp_string, tmp_string_size, "%s=%s;%s=%s;%s", OPH_IN_PARAM_DATACUBE_INPUT, jsonbuf, OPH_IN_PARAM_INPUT, oper_handle->nc_file_path_orig,
+			 handle->output_string ? handle->output_string : "");
+		if (handle->output_string)
 			free(handle->output_string);
-		}
 		handle->output_string = strdup(tmp_string);
 
 		free(tmp_uri);
@@ -5010,9 +4997,11 @@ int env_unset(oph_operator_struct * handle)
 		free((char *) ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig2);
 		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->nc_file_path_orig2 = NULL;
 	}
-	if ((retval = nc_close(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids[0])))
-		pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", nc_strerror(retval));
-	free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids);
+	if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids) {
+		if ((retval = nc_close(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids[0])))
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error %s\n", nc_strerror(retval));
+		free(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids);
+	}
 
 	NETCDF_var *measure = ((NETCDF_var *) & (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->measure));
 

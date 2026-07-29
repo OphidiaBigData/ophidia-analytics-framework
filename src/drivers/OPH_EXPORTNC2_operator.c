@@ -1926,7 +1926,8 @@ int task_execute(oph_operator_struct * handle)
 						if (memory_size_mb) {
 							inc = nexp - 1;
 							if (curr_row->row && (current_size + block_size < memory_size_mb)) {
-								memcpy(memory_buffer + current_size, curr_row->row[1], block_size);
+								if (curr_row->field_lengths[1])	// To avoid leaks in case row[1] is NULL
+									memcpy(memory_buffer + current_size, curr_row->row[1], block_size);
 								current_size += block_size;
 								if (current_length > 1)
 									oph_get_next_count(count, dim_sizes, nexp);
@@ -2118,6 +2119,7 @@ int task_execute(oph_operator_struct * handle)
 				}
 				// ADD FILE TO NOTIFICATION STRING
 				char tmp_string[OPH_COMMON_BUFFER_LEN];
+				*tmp_string = 0;
 				snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_FILE, jsonbuf);
 				if (handle->output_string) {
 					strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));

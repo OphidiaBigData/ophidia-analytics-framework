@@ -68,7 +68,7 @@
 
 #define OPH_FRAMEWORK_SERVER_LOG_PATH                           OPH_FRAMEWORK_LOG_PATH_PREFIX"/server.log"
 #define OPH_FRAMEWORK_CONTAINER_LOG_PATH                        OPH_FRAMEWORK_LOG_PATH_PREFIX"/container_%d.log"
-#define OPH_FRAMEWORK_IOSERVER_LOG_PATH2                        OPH_FRAMEWORK_LOG_PATH_PREFIX"/server_%s.log"
+#define OPH_FRAMEWORK_IOSERVER_LOG_PATH2                        OPH_FRAMEWORK_LOG_PATH_PREFIX"/server_%s%s.log"
 
 #define OPH_FRAMEWORK_IOSERVER_LOG_PATH				"log/server_%s.log"
 #define OPH_FRAMEWORK_IOSERVER_LOG_PATH_WITH_PREFIX		"%s/server_%s.log"

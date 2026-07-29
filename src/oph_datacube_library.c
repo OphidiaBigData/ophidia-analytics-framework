@@ -450,12 +450,18 @@ int oph_dc_delete_fragment(oph_ioserver_handler * server, oph_odb_fragment * fra
 
 int oph_dc_create_fragment_from_query(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id)
 {
-	return oph_dc_create_fragment_from_query2(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, NULL);
+	return oph_dc_create_fragment_from_query3(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, NULL, 0);
+}
+
+int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id,
+				       long long *block_size)
+{
+	return oph_dc_create_fragment_from_query3(server, old_frag, new_frag_name, operation, where, aggregate_number, start_id, block_size, 0);
 }
 
 //Removed multiple statement execution
-int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id,
-				       long long *block_size)
+int oph_dc_create_fragment_from_query3(oph_ioserver_handler * server, oph_odb_fragment * old_frag, char *new_frag_name, char *operation, char *where, long long *aggregate_number, long long *start_id,
+				       long long *block_size, long long fixed_id)
 {
 	UNUSED(start_id);
 
@@ -503,7 +509,10 @@ int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fr
 
 	} else {
 
-		if (where) {
+		if (fixed_id) {
+			// Special case related to full aggregation with forcing
+			query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN_F, new_frag_name, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, old_frag->fragment_name);
+		} else if (where) {
 			if (aggregate_number) {
 				if (block_size) {
 					query_buflen = 1 + snprintf(NULL, 0, OPH_DC_SQ_APPLY_PLUGIN_WGB, new_frag_name, MYSQL_FRAG_ID, *aggregate_number, *block_size, operation, MYSQL_FRAG_ID,
@@ -536,7 +545,9 @@ int oph_dc_create_fragment_from_query2(oph_ioserver_handler * server, oph_odb_fr
 
 		char create_query[query_buflen];
 
-		if (where) {
+		if (fixed_id) {
+			n = snprintf(create_query, query_buflen, OPH_DC_SQ_APPLY_PLUGIN_F, new_frag_name, operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, old_frag->fragment_name);
+		} else if (where) {
 			if (aggregate_number) {
 				if (block_size) {
 #ifdef OPH_DEBUG_MYSQL

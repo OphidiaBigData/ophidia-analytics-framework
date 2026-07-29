@@ -361,4 +361,6 @@ int oph_dim_convert_data(oph_odb_dimension * dim, int size, char *dim_array);
 
 int oph_dim_get_base_time(oph_odb_dimension * dim, long long *base_time);
 
+size_t oph_dim_sizeof(char *dimension_type);
+
 #endif

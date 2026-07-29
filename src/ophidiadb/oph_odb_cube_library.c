@@ -996,6 +996,17 @@ int oph_odb_cube_insert_into_cubehasdim_table(ophidiadb * oDB, oph_odb_cubehasdi
 	return OPH_ODB_SUCCESS;
 }
 
+int oph_odb_cube_insert_into_cubehasdim_table2(ophidiadb * oDB, oph_odb_cubehasdim * cubedim, int *last_insertd_id, char clear)
+{
+	if (clear && cubedim && !cubedim->size) {
+		if (last_insertd_id)
+			*last_insertd_id = 0;
+		return OPH_ODB_SUCCESS;
+	}
+
+	return oph_odb_cube_insert_into_cubehasdim_table(oDB, cubedim, last_insertd_id);
+}
+
 int oph_odb_cube_update_level_in_cubehasdim_table(ophidiadb * oDB, int level, int id_cubehasdim)
 {
 	if (!oDB || !id_cubehasdim) {
@@ -1393,6 +1404,9 @@ int oph_odb_cube_order_by(ophidiadb * oDB, int order, int *id_datacube, int id_d
 	switch (order) {
 		case 1:
 			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_ORDER_CUBE_BY_SOURCE, cube_list);
+			break;
+		case 2:
+			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_ORDER_CUBE_BY_DESCRIPTION, cube_list);
 			break;
 		default:
 			n = snprintf(query, MYSQL_BUFLEN, MYSQL_QUERY_ORDER_CUBE_BY_NDIM, cube_list);

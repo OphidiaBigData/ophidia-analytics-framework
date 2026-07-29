@@ -78,6 +78,9 @@
 #define OPH_APPLY_CHAR_QUOT '\"'
 #define OPH_APPLY_CHAR_SPACE ' '
 
+// Reference to the missing value
+#define OPH_APPLY_OPH_MS "OPH_MS"
+
 struct _thread_struct {
 	OPH_APPLY_operator_handle *oper_handle;
 	unsigned int current_thread;
@@ -988,6 +991,8 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->array_values = NULL;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->array_length = 0;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->description = NULL;
+	((OPH_APPLY_operator_handle *) handle->operator_handle)->ms = NAN;
+	((OPH_APPLY_operator_handle *) handle->operator_handle)->user_missing_value = 0;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_APPLY_operator_handle *) handle->operator_handle)->on_reduce = 0;
 
@@ -1098,6 +1103,13 @@ int env_set(HASHTBL * task_tbl, oph_operator_struct * handle)
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->compressed = 1;
 	if (!strcmp(value, OPH_COMMON_AUTO_VALUE))
 		((OPH_APPLY_operator_handle *) handle->operator_handle)->compressed = -1;
+
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_MISSINGVALUE);
+	if (value && strncmp(value, OPH_COMMON_DEFAULT_EMPTY_VALUE, OPH_TP_TASKLEN)) {
+		if (strncmp(value, OPH_COMMON_NAN, OPH_TP_TASKLEN))
+			((OPH_APPLY_operator_handle *) handle->operator_handle)->ms = strtod(value, NULL);
+		((OPH_APPLY_operator_handle *) handle->operator_handle)->user_missing_value = 1;
+	}
 
 	char *uri = NULL;
 	while (!handle->proc_rank) {
@@ -1327,6 +1339,76 @@ int task_init(oph_operator_struct * handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while retrieving input datacube\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_APPLY_DATACUBE_READ_ERROR);
 			goto __OPH_EXIT_1;
+		}
+
+		if (!((OPH_APPLY_operator_handle *) handle->operator_handle)->user_missing_value) {
+			int idmissingvalue = 0;
+			if (oph_odb_cube_retrieve_missingvalue(oDB, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_datacube, &idmissingvalue, NULL)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve missing value\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, "Unable to retrieve missing value\n");
+				goto __OPH_EXIT_1;
+			}
+			if (idmissingvalue) {
+				char *mtype = NULL, *mvalue = NULL;
+				if (oph_odb_meta_retrieve_single_metadata_instance(oDB, idmissingvalue, &mtype, &mvalue) || !mtype || !mvalue) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve missing value\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_APPLY_operator_handle *) handle->operator_handle)->id_input_container, "Unable to retrieve missing value\n");
+					if (mtype)
+						free(mtype);
+					if (mvalue)
+						free(mvalue);
+					goto __OPH_EXIT_1;
+				}
+
+				if (!strcmp(mtype, OPH_COMMON_BYTE_TYPE))
+					((OPH_APPLY_operator_handle *) handle->operator_handle)->ms = (unsigned char) strtol(mvalue, NULL, 10);
+				else if (!strcmp(mtype, OPH_COMMON_SHORT_TYPE))
+					((OPH_APPLY_operator_handle *) handle->operator_handle)->ms = (short) strtol(mvalue, NULL, 10);
+				else if (!strcmp(mtype, OPH_COMMON_INT_TYPE))
+					((OPH_APPLY_operator_handle *) handle->operator_handle)->ms = (int) strtol(mvalue, NULL, 10);
+				else if (!strcmp(mtype, OPH_COMMON_LONG_TYPE))
+					((OPH_APPLY_operator_handle *) handle->operator_handle)->ms = (long long) strtoll(mvalue, NULL, 10);
+				else if (!strcmp(mtype, OPH_COMMON_FLOAT_TYPE))
+					((OPH_APPLY_operator_handle *) handle->operator_handle)->ms = (float) strtof(mvalue, NULL);
+				else if (!strcmp(mtype, OPH_COMMON_DOUBLE_TYPE))
+					((OPH_APPLY_operator_handle *) handle->operator_handle)->ms = (double) strtod(mvalue, NULL);
+				else if (!strcmp(mtype, OPH_COMMON_METADATA_TYPE_TEXT))
+					pmesg(LOG_WARNING, __FILE__, __LINE__, "Missing value is a text: skipping\n");
+
+				free(mtype);
+				free(mvalue);
+			}
+		}
+		// Pre-parsing for reference to missing values
+		int n = 0;
+		size_t query_size;
+		char *new_query, *target, *base_query = ((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation;
+		while (base_query && (target = strstr(base_query, OPH_APPLY_OPH_MS))) {	// '=' is correct
+			query_size = strlen(base_query) + OPH_COMMON_MAX_DOUBLE_LENGHT;
+			new_query = (char *) malloc(query_size * sizeof(char));
+			strncpy(new_query, base_query, n = target - base_query);
+			if (isnan(((OPH_APPLY_operator_handle *) handle->operator_handle)->ms))
+				n += snprintf(new_query + n, OPH_COMMON_MAX_DOUBLE_LENGHT, "NULL");
+			else
+				n += snprintf(new_query + n, OPH_COMMON_MAX_DOUBLE_LENGHT, "%f", ((OPH_APPLY_operator_handle *) handle->operator_handle)->ms);
+			snprintf(new_query + n, query_size, "%s", target + strlen(OPH_APPLY_OPH_MS));
+			free(base_query);
+			base_query = ((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation = new_query;
+			pmesg(LOG_INFO, __FILE__, __LINE__, "Measure query changed as: %s\n", ((OPH_APPLY_operator_handle *) handle->operator_handle)->array_operation);
+		}
+		base_query = ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation;
+		while (base_query && (target = strstr(base_query, OPH_APPLY_OPH_MS))) {	// '=' is correct
+			query_size = strlen(base_query) + OPH_COMMON_MAX_DOUBLE_LENGHT;
+			new_query = (char *) malloc(query_size * sizeof(char));
+			strncpy(new_query, base_query, n = target - base_query);
+			if (isnan(((OPH_APPLY_operator_handle *) handle->operator_handle)->ms))
+				n += snprintf(new_query + n, OPH_COMMON_MAX_DOUBLE_LENGHT, "NULL");
+			else
+				n += snprintf(new_query + n, OPH_COMMON_MAX_DOUBLE_LENGHT, "%f", ((OPH_APPLY_operator_handle *) handle->operator_handle)->ms);
+			snprintf(new_query + n, query_size, "%s", target + strlen(OPH_APPLY_OPH_MS));
+			free(base_query);
+			base_query = ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation = new_query;
+			pmesg(LOG_INFO, __FILE__, __LINE__, "Dimension query changed as: %s\n", ((OPH_APPLY_operator_handle *) handle->operator_handle)->dimension_operation);
 		}
 
 		char *old_type = strdup(cube.measure_type);

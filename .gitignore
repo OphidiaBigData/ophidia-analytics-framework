@@ -28,6 +28,7 @@ stamp-h1
 *.lo
 *.so
 *~
+*.svg
 etc/oph_analytics_driver
 etc/oph_io_server
 etc/oph_configuration

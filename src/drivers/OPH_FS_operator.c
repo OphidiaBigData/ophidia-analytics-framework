@@ -772,7 +772,7 @@ int task_execute(oph_operator_struct * handle)
 						}
 						int s;
 						glob_t globbuf;
-						if ((s = glob(path, GLOB_MARK | GLOB_NOSORT | GLOB_TILDE_CHECK | GLOB_BRACE, NULL, &globbuf))) {
+						if ((s = glob(path, GLOB_MARK | GLOB_TILDE_CHECK | GLOB_BRACE, NULL, &globbuf))) {
 							if (s != GLOB_NOMATCH) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to parse '%s'\n", ((OPH_FS_operator_handle *) handle->operator_handle)->path[0]);
 								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "Unable to parse '%s'\n",

@@ -15,6 +15,7 @@ Start, stop and get information about clusters of I/O servers.
 	&quot;deploy&quot;: try to reserve hosts and starts I/O servers;
 	&quot;undeploy&quot;: stop reservation and I/O servers.
 - nhost : number of hosts to be reserved as well as number of I/O servers to be started over them.
+- ndbms : number of I/O servers to be started over each host; default value is 1.
 - host_partition : name of user-defined partition to be used to group hosts.
                    It needs to be set in case of &quot;deploy&quot; or &quot;undeploy&quot;.
 - host_type : type of partition to be deployed; valid only in case of deployment:
@@ -48,6 +49,7 @@ SUBMISSION STRING: &quot;operator=oph_cluster;action=deploy;nhost=3;host_partiti
 		<argument type="string" mandatory="no" default="all">host_partition</argument>
 		<argument type="string" mandatory="no" default="info" values="info|info_cluster|deploy|undeploy">action</argument>
 		<argument type="int" mandatory="no" minvalue="0" default="0">nhost</argument>
+		<argument type="int" mandatory="no" minvalue="1" default="1">ndbms</argument>
 		<argument type="string" mandatory="no" default="all">user_filter</argument>
 		<argument type="string" mandatory="no" default="io" values="io|compute">host_type</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|cluster_summary|cluster_list|cluster_list_summary|cluster_user|cluster_user_summary">objkey_filter</argument>

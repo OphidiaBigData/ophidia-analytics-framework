@@ -18,6 +18,7 @@
 
 #include "oph_hierarchy_library.h"
 
+#include <stdlib.h>
 #include <string.h>
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
@@ -604,7 +605,7 @@ int oph_hier_retrieve_available_op(const char *filename, char concept_level_in, 
 		return OPH_HIER_DATA_ERR;
 	}
 
-	if (!i || (i <= j)) {
+	if (!i || (i < j)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Data reduction cannot be carried out\n");
 		oph_hier_free_hierarchy(hierarchy);
 		oph_hier_close(document);

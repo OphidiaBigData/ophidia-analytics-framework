@@ -1427,9 +1427,6 @@ int task_execute(oph_operator_struct * handle)
 	if (!handle->proc_rank) {
 
 		char jsonbuf[OPH_COMMON_BUFFER_LEN];
-
-		// TODO: output link
-
 		if (oph_json_is_objkey_printable
 		    (((OPH_EXPORTESDM2_operator_handle *) handle->operator_handle)->objkeys, ((OPH_EXPORTESDM2_operator_handle *) handle->operator_handle)->objkeys_num, OPH_JSON_OBJKEY_EXPORTESDM)) {
 			snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, "%s%s", OPH_ESDM_PREFIX, ((OPH_EXPORTESDM2_operator_handle *) handle->operator_handle)->output_name);
@@ -1441,12 +1438,15 @@ int task_execute(oph_operator_struct * handle)
 		}
 		// ADD FILE TO NOTIFICATION STRING
 		char tmp_string[OPH_COMMON_BUFFER_LEN];
+		*tmp_string = 0;
 		snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s%s;", OPH_IN_PARAM_FILE, OPH_ESDM_PREFIX, ((OPH_EXPORTESDM2_operator_handle *) handle->operator_handle)->output_name);
 		if (handle->output_string) {
 			strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
 			free(handle->output_string);
 		}
 		handle->output_string = strdup(tmp_string);
+
+		// TODO: output link
 	}
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
