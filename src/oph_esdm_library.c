@@ -66,7 +66,7 @@ struct timeval *res, *x, *y;
 }
 #endif
 
-int _oph_esdm_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, int64_t **id, int i, int n)
+int _oph_esdm_get_dimension_id(unsigned long residual, unsigned long total, unsigned int *sizemax, int64_t ** id, int i, int n)
 {
 	if (i < n - 1) {
 		unsigned long tmp;
@@ -79,7 +79,7 @@ int _oph_esdm_get_dimension_id(unsigned long residual, unsigned long total, unsi
 	return OPH_ESDM_SUCCESS;
 }
 
-int oph_esdm_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n, int64_t **id)
+int oph_esdm_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n, int64_t ** id)
 {
 	if (n > 0) {
 		int i;
@@ -91,7 +91,7 @@ int oph_esdm_compute_dimension_id(unsigned long ID, unsigned int *sizemax, int n
 	return OPH_ESDM_SUCCESS;
 }
 
-int _oph_esdm_get_next_id(int64_t *id, int64_t *sizemax, int i, int n)
+int _oph_esdm_get_next_id(int64_t * id, int64_t * sizemax, int i, int n)
 {
 	if (i < 0)
 		return 1;	// Overflow
@@ -103,12 +103,12 @@ int _oph_esdm_get_next_id(int64_t *id, int64_t *sizemax, int i, int n)
 	return OPH_ESDM_SUCCESS;
 }
 
-int oph_esdm_get_next_id(int64_t *id, int64_t *sizemax, int n)
+int oph_esdm_get_next_id(int64_t * id, int64_t * sizemax, int n)
 {
 	return _oph_esdm_get_next_id(id, sizemax, n - 1, n);
 }
 
-int oph_esdm_get_esdm_type(char *in_c_type, esdm_type_t *type_nc)
+int oph_esdm_get_esdm_type(char *in_c_type, esdm_type_t * type_nc)
 {
 	if (!strcasecmp(in_c_type, OPH_COMMON_BYTE_TYPE)) {
 		*type_nc = SMD_DTYPE_INT8;
@@ -196,7 +196,7 @@ int oph_esdm_compare_types(int id_container, esdm_type_t var_type, const char di
 	return OPH_ESDM_SUCCESS;
 }
 
-int oph_esdm_update_dim_with_esdm_metadata(ophidiadb *oDB, oph_odb_dimension *time_dim, int id_vocabulary, int id_container_out, ESDM_var *measure)
+int oph_esdm_update_dim_with_esdm_metadata(ophidiadb * oDB, oph_odb_dimension * time_dim, int id_vocabulary, int id_container_out, ESDM_var * measure)
 {
 	MYSQL_RES *key_list = NULL;
 	MYSQL_ROW row = NULL;
@@ -412,7 +412,7 @@ int oph_esdm_update_dim_with_esdm_metadata(ophidiadb *oDB, oph_odb_dimension *ti
 	return OPH_ESDM_SUCCESS;
 }
 
-int oph_esdm_get_dim_array(int id_container, esdm_dataset_t *dataset, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, int start_index, int end_index, char **dim_array)
+int oph_esdm_get_dim_array(int id_container, esdm_dataset_t * dataset, int dim_id, const char dim_type[OPH_ODB_DIM_DIMENSION_TYPE_SIZE], int dim_size, int start_index, int end_index, char **dim_array)
 {
 	if (!dim_type || !dim_size || !dim_array) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter %d\n", dim_id);
@@ -523,7 +523,7 @@ int oph_esdm_get_dim_array(int id_container, esdm_dataset_t *dataset, int dim_id
 	return OPH_ESDM_SUCCESS;
 }
 
-int oph_esdm_index_by_value(int id_container, ESDM_var *measure, int dim_id, esdm_type_t dim_type, int dim_size, char *value, int want_start, double offset, int *valorder, int *coord_index,
+int oph_esdm_index_by_value(int id_container, ESDM_var * measure, int dim_id, esdm_type_t dim_type, int dim_size, char *value, int want_start, double offset, int *valorder, int *coord_index,
 			    char out_of_bound)
 {
 	if (!dim_size || !value || !coord_index || !valorder) {
@@ -939,7 +939,7 @@ int oph_esdm_index_by_value(int id_container, ESDM_var *measure, int dim_id, esd
 	return OPH_ESDM_SUCCESS;
 }
 
-int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var *measure, int is_index, double offset, char out_of_bound)
+int oph_esdm_check_subset_string(char *curfilter, int i, ESDM_var * measure, int is_index, double offset, char out_of_bound)
 {
 	int ii, error = 0;
 	char *endfilter = strchr(curfilter, OPH_DIM_SUBSET_SEPARATOR2);
@@ -1191,7 +1191,7 @@ int oph_esdm_cache_to_buffer(short int tot_dim_number, unsigned int *counters, u
 	return _oph_esdm_cache_to_buffer(tot_dim_number, 0, counters, limits, products, &index, binary_cache, binary_insert, sizeof_var);
 }
 
-int oph_esdm_populate_fragment2(oph_ioserver_handler *server, oph_odb_fragment *frag, int tuplexfrag_number, int array_length, int compressed, ESDM_var *measure)
+int oph_esdm_populate_fragment2(oph_ioserver_handler * server, oph_odb_fragment * frag, int tuplexfrag_number, int array_length, int compressed, ESDM_var * measure)
 {
 	if (!frag || !tuplexfrag_number || !array_length || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -1987,7 +1987,7 @@ int oph_esdm_populate_fragment2(oph_ioserver_handler *server, oph_odb_fragment *
 	return OPH_ESDM_SUCCESS;
 }
 
-int oph_esdm_populate_fragment3(oph_ioserver_handler *server, oph_odb_fragment *frag, int tuplexfrag_number, int array_length, int compressed, ESDM_var *measure, long long memory_size)
+int oph_esdm_populate_fragment3(oph_ioserver_handler * server, oph_odb_fragment * frag, int tuplexfrag_number, int array_length, int compressed, ESDM_var * measure, long long memory_size)
 {
 	if (!frag || !tuplexfrag_number || !array_length || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2685,7 +2685,7 @@ int oph_esdm_populate_fragment3(oph_ioserver_handler *server, oph_odb_fragment *
 	return OPH_ESDM_SUCCESS;
 }
 
-int oph_esdm_populate_fragment5(oph_ioserver_handler *server, oph_odb_fragment *frag, char *nc_file_path, int tuplexfrag_number, int compressed, ESDM_var *measure)
+int oph_esdm_populate_fragment5(oph_ioserver_handler * server, oph_odb_fragment * frag, char *nc_file_path, int tuplexfrag_number, int compressed, ESDM_var * measure)
 {
 	if (!frag || !nc_file_path || !tuplexfrag_number || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2861,7 +2861,7 @@ int oph_esdm_populate_fragment5(oph_ioserver_handler *server, oph_odb_fragment *
 	return OPH_ESDM_SUCCESS;
 }
 
-int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler *server, oph_odb_fragment *old_frag, oph_odb_fragment *new_frag, int compressed, ESDM_var *measure)
+int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int compressed, ESDM_var * measure)
 {
 	if (!old_frag || !new_frag || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -3636,7 +3636,7 @@ int oph_esdm_append_fragment_from_esdm(oph_ioserver_handler *server, oph_odb_fra
 	return OPH_ESDM_SUCCESS;
 }
 
-int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler *server, oph_odb_fragment *old_frag, oph_odb_fragment *new_frag, int compressed, ESDM_var *measure, long long memory_size)
+int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, int compressed, ESDM_var * measure, long long memory_size)
 {
 	if (!old_frag || !new_frag || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -4253,8 +4253,8 @@ int oph_esdm_append_fragment_from_esdm2(oph_ioserver_handler *server, oph_odb_fr
 	return OPH_ESDM_SUCCESS;
 }
 
-int oph_esdm_append_fragment_from_esdm4(oph_ioserver_handler *server, oph_odb_fragment *old_frag, oph_odb_fragment *new_frag, char *nc_file_path, int tuplexfrag_number, int compressed,
-					ESDM_var *measure)
+int oph_esdm_append_fragment_from_esdm4(oph_ioserver_handler * server, oph_odb_fragment * old_frag, oph_odb_fragment * new_frag, char *nc_file_path, int tuplexfrag_number, int compressed,
+					ESDM_var * measure)
 {
 	if (!old_frag || !new_frag || !nc_file_path || !tuplexfrag_number || !measure || !server) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");

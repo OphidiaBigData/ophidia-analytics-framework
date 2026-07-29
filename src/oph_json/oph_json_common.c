@@ -92,7 +92,7 @@ int oph_json_is_type_correct(const char *type)
 }
 
 // Add an objkey to the responseKeyset if new
-int oph_json_add_responseKey(oph_json *json, const char *responseKey)
+int oph_json_add_responseKey(oph_json * json, const char *responseKey)
 {
 	if (!json || !responseKey) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
@@ -142,7 +142,7 @@ int oph_json_add_responseKey(oph_json *json, const char *responseKey)
 }
 
 // Free consumers
-int oph_json_free_consumers(oph_json *json)
+int oph_json_free_consumers(oph_json * json)
 {
 	if (!json) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
@@ -165,7 +165,7 @@ int oph_json_free_consumers(oph_json *json)
 }
 
 // Free responseKeyset
-int oph_json_free_responseKeyset(oph_json *json)
+int oph_json_free_responseKeyset(oph_json * json)
 {
 	if (!json) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
@@ -188,7 +188,7 @@ int oph_json_free_responseKeyset(oph_json *json)
 }
 
 // Free source
-int oph_json_free_source(oph_json *json)
+int oph_json_free_source(oph_json * json)
 {
 	if (!json) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
@@ -248,7 +248,7 @@ int oph_json_free_source(oph_json *json)
 }
 
 // Free response
-int oph_json_free_response(oph_json *json)
+int oph_json_free_response(oph_json * json)
 {
 	if (!json) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
@@ -303,7 +303,7 @@ int oph_json_free_response(oph_json *json)
 
 /***********OPH_JSON FUNCTIONS***********/
 
-int oph_json_alloc(oph_json **json)
+int oph_json_alloc(oph_json ** json)
 {
 	*json = (oph_json *) malloc(sizeof(oph_json));
 	if (!*json) {
@@ -321,7 +321,7 @@ int oph_json_alloc(oph_json **json)
 	return OPH_JSON_SUCCESS;
 }
 
-int oph_json_free(oph_json *json)
+int oph_json_free(oph_json * json)
 {
 	if (json) {
 		oph_json_free_consumers(json);
@@ -334,7 +334,7 @@ int oph_json_free(oph_json *json)
 	return OPH_JSON_SUCCESS;
 }
 
-int oph_json_add_consumer(oph_json *json, const char *consumer)
+int oph_json_add_consumer(oph_json * json, const char *consumer)
 {
 	if (!json || !consumer) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
@@ -383,7 +383,7 @@ int oph_json_add_consumer(oph_json *json, const char *consumer)
 	return OPH_JSON_SUCCESS;
 }
 
-int oph_json_set_source(oph_json *json, const char *srckey, const char *srcname, const char *srcurl, const char *description, const char *producer)
+int oph_json_set_source(oph_json * json, const char *srckey, const char *srcname, const char *srcurl, const char *description, const char *producer)
 {
 	if (!json || !srckey || !srcname) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
@@ -452,7 +452,7 @@ int oph_json_set_source(oph_json *json, const char *srckey, const char *srcname,
 	return OPH_JSON_SUCCESS;
 }
 
-int oph_json_add_source_detail(oph_json *json, const char *key, const char *value)
+int oph_json_add_source_detail(oph_json * json, const char *key, const char *value)
 {
 	if (!json || !key || !value) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
@@ -537,7 +537,7 @@ int oph_json_add_source_detail(oph_json *json, const char *key, const char *valu
 	return OPH_JSON_SUCCESS;
 }
 
-int oph_json_to_json_string(oph_json *json, char **jstring)
+int oph_json_to_json_string(oph_json * json, char **jstring)
 {
 	if (!json) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_JSON_LOG_BAD_PARAM_ERROR, "(NULL parameters)");
@@ -1853,7 +1853,7 @@ int oph_json_to_json_string(oph_json *json, char **jstring)
 	return OPH_JSON_SUCCESS;
 }
 
-int _oph_json_to_json_file(oph_json *json, char *filename, char **jstring)
+int _oph_json_to_json_file(oph_json * json, char *filename, char **jstring)
 {
 	*jstring = NULL;
 
@@ -1882,7 +1882,7 @@ int _oph_json_to_json_file(oph_json *json, char *filename, char **jstring)
 	return OPH_JSON_SUCCESS;
 }
 
-int oph_json_to_json_file(oph_json *json, char *filename)
+int oph_json_to_json_file(oph_json * json, char *filename)
 {
 	char *jstring = NULL;
 	int res = _oph_json_to_json_file(json, filename, &jstring);
