@@ -596,10 +596,13 @@ int task_execute(oph_operator_struct *handle)
 					if (!((OPH_GENERIC_operator_handle *) handle->operator_handle)->space && (arg[j] == OPH_GENERIC_MARKER3))
 						new_arg[k++] = OPH_GENERIC_MARKER;
 					new_arg[k] = arg[j];
-					if (arg[j] == OPH_GENERIC_MARKER) {
+/*					if (arg[j] == OPH_GENERIC_MARKER) {	// This code has been updated (fixed) to insert the OPH_GENERIC_MARKER2 only
 						new_arg[++k] = OPH_GENERIC_MARKER2;
 						new_arg[++k] = OPH_GENERIC_MARKER;
-						new_arg[++k] = OPH_GENERIC_MARKER;
+						new_arg[++k] = OPH_GENERIC_MARKER;*/
+					if (arg[j] == OPH_GENERIC_MARKER) {
+						new_arg[k++] = OPH_GENERIC_MARKER2;
+						new_arg[k] = OPH_GENERIC_MARKER;
 					} else if (!((OPH_GENERIC_operator_handle *) handle->operator_handle)->space && (arg[j] == OPH_GENERIC_MARKER3))
 						new_arg[++k] = OPH_GENERIC_MARKER;
 				}

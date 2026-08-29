@@ -45,7 +45,7 @@ SUBMISSION STRING: &quot;operator=oph_service;status=up;&quot;</abstract>
 		<argument type="int" mandatory="no" default="0" minvalue="0">queue_size</argument>
 		<argument type="int" mandatory="no" default="0" minvalue="0">task_limit</argument>
 		<argument type="int" mandatory="no" default="0" minvalue="0">core_limit</argument>
-		<argument type="int" mandatory="no" default="BASE" values="BASE|FIFO|LIFO">sched_policy</argument>
+		<argument type="int" mandatory="no" default="BASE" values="BASE|FIFO|LIFO|BIBO">sched_policy</argument>
 		<argument type="int" mandatory="no" default="INFO" values="ERROR|INFO|WARNING|DEBUG">log_type</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|service_status|service_tasks|service_parameters">objkey_filter</argument>
     </args>
