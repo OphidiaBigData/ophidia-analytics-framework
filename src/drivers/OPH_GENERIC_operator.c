@@ -47,6 +47,8 @@
 #include "oph_esdm_library.h"
 #endif
 
+#define OPH_CATALOG "catalog:"
+
 #define MAX_OUT_LEN 500*1024
 #define OPH_GENERIC_MARKER '\''
 #define OPH_GENERIC_MARKER2 '\\'
@@ -174,7 +176,10 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 			value = value2 = strdup(value);
 			for (i = 0; i < ((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs_num; i++) {
 				if (((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i] && strlen(((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i])
-				    && strncmp(((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i], "esdm://", 7)) {
+#ifdef OPH_ESDM
+				    && strncmp(((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i], OPH_ESDM_PREFIX, 7)
+#endif
+				    && strncmp(((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i], OPH_CATALOG, 8)) {
 					snprintf(tmp, OPH_COMMON_BUFFER_LEN, "%s%s%s", base_src_path ? base_src_path : "",
 						 *((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i] != '/' ? "/" : "",
 						 ((OPH_GENERIC_operator_handle *) handle->operator_handle)->inputs[i]);
@@ -596,13 +601,10 @@ int task_execute(oph_operator_struct *handle)
 					if (!((OPH_GENERIC_operator_handle *) handle->operator_handle)->space && (arg[j] == OPH_GENERIC_MARKER3))
 						new_arg[k++] = OPH_GENERIC_MARKER;
 					new_arg[k] = arg[j];
-/*					if (arg[j] == OPH_GENERIC_MARKER) {	// This code has been updated (fixed) to insert the OPH_GENERIC_MARKER2 only
+					if (arg[j] == OPH_GENERIC_MARKER) {
 						new_arg[++k] = OPH_GENERIC_MARKER2;
 						new_arg[++k] = OPH_GENERIC_MARKER;
-						new_arg[++k] = OPH_GENERIC_MARKER;*/
-					if (arg[j] == OPH_GENERIC_MARKER) {
-						new_arg[k++] = OPH_GENERIC_MARKER2;
-						new_arg[k] = OPH_GENERIC_MARKER;
+						new_arg[++k] = OPH_GENERIC_MARKER;
 					} else if (!((OPH_GENERIC_operator_handle *) handle->operator_handle)->space && (arg[j] == OPH_GENERIC_MARKER3))
 						new_arg[++k] = OPH_GENERIC_MARKER;
 				}
