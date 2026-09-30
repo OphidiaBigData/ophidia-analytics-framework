@@ -854,11 +854,13 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 			if (!strcmp(dimname, measure->dims_name[j]))
 				break;
 		if (j == ndims) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s' in in fits file\n", dimname, measure->varname);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname, measure->varname);
-			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s' in fit file: skipping\n", dimname, measure->varname);
+			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "[CONTAINER: %s] Unable to find dimension '%s' related to variable '%s' in fit file: skipping.\n",
+				container_name, dimname, measure->varname);
+			free(sub_dims[i]);
+			sub_dims[i] = NULL;
+			sub_to_dims[i] = number_of_sub_dims;
+			continue;
 		}
 	}
 
@@ -925,7 +927,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		curfilter = NULL;
 		for (j = 0; j < number_of_sub_dims; j++) {
 			dimname = sub_dims[j];
-			if (!strcmp(dimname, measure->dims_name[i])) {
+			if (dimname && !strcmp(dimname, measure->dims_name[i])) {
 				curfilter = sub_filters[j];
 				break;
 			}

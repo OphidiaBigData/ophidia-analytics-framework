@@ -23,6 +23,7 @@
 
 ### Changed:
 
+- Skip unexistent dimension to be subset in case of import
 - Procedure to evaluate the values of time dimension in case of reduction
 
 ## v1.9.0 - 2024-10-10
