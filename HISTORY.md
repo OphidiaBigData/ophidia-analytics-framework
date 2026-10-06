@@ -23,6 +23,7 @@
 
 ### Changed:
 
+- Extend fragmentation procedure to higher level dimensions, in case fragment number is higher than size of dimension with the lowest level
 - Skip unexistent dimension to be subset in case of import
 - Procedure to evaluate the values of time dimension in case of reduction
 

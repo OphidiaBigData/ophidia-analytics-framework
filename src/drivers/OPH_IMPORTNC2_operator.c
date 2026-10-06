@@ -1887,6 +1887,7 @@ int task_init(oph_operator_struct *handle)
 
 	//Find the first explicit dimension checking oph_value
 	short int min_lev = 1;
+	int total_frag_number = 1;
 	//Find most external dimension with size bigger than 1
 	for (i = 0; i < measure->nexp; i++) {
 		for (j = 0; j < measure->ndims; j++) {
@@ -1895,10 +1896,11 @@ int task_init(oph_operator_struct *handle)
 				break;
 			}
 		}
-
 		if ((measure->dims_end_index[j] - measure->dims_start_index[j]) > 0) {
 			min_lev = measure->dims_oph_level[j];
-			break;
+			total_frag_number *= measure->dims_end_index[j] - measure->dims_start_index[j] + 1;
+			if (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragxdb_number <= total_frag_number)
+				break;
 		}
 	}
 
@@ -1908,11 +1910,11 @@ int task_init(oph_operator_struct *handle)
 	for (i = 0; i < measure->ndims; i++) {
 		if (measure->dims_type[i]) {
 			//Consider only explicit dimensions
-			if (measure->dims_oph_level[i] == min_lev) {
+			if (measure->dims_oph_level[i] <= min_lev) {
 				//Compute total fragment as the number of values of the most external explicit dimensions excluding those with size 1
-				((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->total_frag_number = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
-			} else if (measure->dims_oph_level[i] > min_lev) {
-				//Compute tuple per fragment as the number of values of most inernal explicit dimension (excluding the first one bigger than 1)
+				((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->total_frag_number *= measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
+			} else {
+				//Compute tuple per fragment as the number of values of most internal explicit dimension (excluding the first one bigger than 1)
 				((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 			}
 		} else {
