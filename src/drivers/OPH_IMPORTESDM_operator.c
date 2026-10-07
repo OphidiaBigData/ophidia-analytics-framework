@@ -3912,7 +3912,7 @@ int task_execute(oph_operator_struct *handle)
 				}
 				//Populate fragment
 				if (oph_esdm_populate_fragment3
-				    (oper_handle->server, &new_frag, oper_handle->tuplexfrag_number,
+				    (oper_handle->server, &new_frag, oper_handle->fragxdb_number, oper_handle->tuplexfrag_number,
 				     oper_handle->array_length, oper_handle->compressed, (ESDM_var *) & (oper_handle->measure), oper_handle->memory_size)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTESDM_FRAG_POPULATE_ERROR, new_frag.fragment_name, "");

@@ -166,7 +166,7 @@ void *exec_thread(void *ts)
 			strcpy(new_frag[current_frag_count + frag_count].fragment_name, fragment_name);
 			//Create and populate fragment
 			if (oph_nc_populate_fragment_from_nc5
-			    (server, &(new_frag[current_frag_count + frag_count]), oper_handle->nc_file_path_orig, actual_tuplexfrag_number, oper_handle->compressed,
+			    (server, &(new_frag[current_frag_count + frag_count]), oper_handle->nc_file_path_orig, oper_handle->fragxdb_number, actual_tuplexfrag_number, oper_handle->compressed,
 			     (NETCDF_var *) & (oper_handle->measure))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_FRAG_POPULATE_ERROR,

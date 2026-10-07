@@ -150,7 +150,8 @@ void *exec_thread(void *ts)
 
 			//Append fragment
 			if (oph_nc_append_fragment_from_nc4
-			    (server, &(frags->value[k]), &tmp_frag, oper_handle->nc_file_path, (tmp_frag.key_end - tmp_frag.key_start + 1), compressed, (NETCDF_var *) & (oper_handle->measure))) {
+			    (server, &(frags->value[k]), &tmp_frag, oper_handle->nc_file_path, frags->size, (tmp_frag.key_end - tmp_frag.key_start + 1), compressed,
+			     (NETCDF_var *) & (oper_handle->measure))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_CONCATNC_FRAG_POPULATE_ERROR, tmp_frag.fragment_name, "");
 				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
