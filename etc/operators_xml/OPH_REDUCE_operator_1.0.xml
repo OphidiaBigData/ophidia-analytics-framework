@@ -39,7 +39,8 @@ It performs a reduction operation on a datacube with respect to implicit dimensi
 - check_grid : optional flag to be enabled in case the values of grid have to be checked (valid only if the grid already exists).
 - container : name of the container to be used to store the output cube; by default it is the input container.
 - description : additional description to be associated with the output cube.
-        
+- clear : set to &quot;yes&quot; in case collapsed dimension have to be removed, &quot;no&quot; by default.
+
 [System parameters]    
 - exec_mode : operator execution mode. Possible values are async (default) for
               asynchronous mode, sync for synchronous mode with json-compliant output.
@@ -77,6 +78,7 @@ SUBMISSION STRING: &quot;operator=oph_reduce;operation=max;group_size=10;cube=ht
 		<argument type="string" mandatory="no" default="no" values="yes|no">check_grid</argument>
 		<argument type="string" mandatory="no" default="-">container</argument>
 		<argument type="string" mandatory="no" default="-">description</argument>
+		<argument type="string" mandatory="no" default="no" values="yes|no">clear</argument>
 		<argument type="string" mandatory="no" default="all" values="all|none|reduce">objkey_filter</argument>
 		<argument type="string" mandatory="no" default="yes" values="yes|no">save</argument>
     </args>

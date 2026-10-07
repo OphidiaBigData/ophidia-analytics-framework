@@ -102,6 +102,7 @@
 
 #define MYSQL_QUERY_ORDER_CUBE_BY_NDIM					"SELECT idcontainer, datacube.iddatacube, COUNT(*) AS ndim FROM datacube INNER JOIN cubehasdim ON datacube.iddatacube = cubehasdim.iddatacube INNER JOIN dimensioninstance ON cubehasdim.iddimensioninstance = dimensioninstance.iddimensioninstance WHERE size > 0 AND datacube.iddatacube IN (%s) GROUP BY datacube.iddatacube ORDER BY ndim DESC;"
 #define MYSQL_QUERY_ORDER_CUBE_BY_SOURCE				"SELECT idcontainer, datacube.iddatacube, COUNT(*) AS ndim FROM datacube INNER JOIN cubehasdim ON datacube.iddatacube = cubehasdim.iddatacube INNER JOIN dimensioninstance ON cubehasdim.iddimensioninstance = dimensioninstance.iddimensioninstance INNER JOIN source ON datacube.idsource = source.idsource WHERE size > 0 AND datacube.level = 0 AND datacube.iddatacube IN (%s) GROUP BY datacube.iddatacube ORDER BY ndim DESC, uri ASC;"
+#define MYSQL_QUERY_ORDER_CUBE_BY_DESCRIPTION			"SELECT idcontainer, datacube.iddatacube, COUNT(*) AS ndim FROM datacube INNER JOIN cubehasdim ON datacube.iddatacube = cubehasdim.iddatacube INNER JOIN dimensioninstance ON cubehasdim.iddimensioninstance = dimensioninstance.iddimensioninstance WHERE size > 0 AND datacube.iddatacube IN (%s) GROUP BY datacube.iddatacube ORDER BY ndim DESC, CAST(description AS UNSIGNED) ASC;"
 
 #define MYSQL_QUERY_CUBE_UPDATE_OPHIDIADB_CUBE_MS		"UPDATE datacube SET idmissingvalue = %d WHERE iddatacube = %d;"
 #define MYSQL_QUERY_CUBE_RETRIEVE_OPHIDIADB_CUBE_MS		"SELECT idmissingvalue, measure FROM `datacube` WHERE iddatacube = %d;"

@@ -230,6 +230,8 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	if (strncmp(value, OPH_COMMON_NONE_FILTER, OPH_TP_TASKLEN)) {
 		if (!strncmp(value, "source", OPH_TP_TASKLEN))
 			order = 1;
+		else if (!strncmp(value, "description", OPH_TP_TASKLEN))
+			order = 2;
 	}
 
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_DATACUBE_MULTI_INPUT);

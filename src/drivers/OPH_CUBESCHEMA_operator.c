@@ -659,6 +659,18 @@ int task_execute(oph_operator_struct *handle)
 		}
 		for (l = j = 0; l < number_of_dimensions; ++l)
 			if (!cubedims[l].level || !cubedims[l].size) {
+				// Remove possible reference to "frequency"
+				oph_odb_dimension_instance dim_inst;
+				if (!oph_odb_dim_retrieve_dimension_instance(oDB, cubedims[l].id_dimensioninst, &dim_inst, id_datacube)) {
+					oph_odb_dimension dim;
+					if (!oph_odb_dim_retrieve_dimension(oDB, dim_inst.id_dimension, &dim, id_datacube)) {
+						if (dim.calendar && strlen(dim.calendar)) {
+							int id_metadata_instance = 0;
+							if (!oph_odb_meta_get(oDB, id_datacube, NULL, OPH_ODB_TIME_FREQUENCY, &id_metadata_instance, NULL) && id_metadata_instance)
+								oph_odb_meta_delete_from_metadatainstance_table(oDB, id_datacube, NULL, 0, id_metadata_instance, NULL, NULL, NULL, 1);
+						}
+					}
+				}
 				if (oph_odb_dim_delete_dimensioninstance(oDB, cubedims[l].id_dimensioninst)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to clear dimension instance row\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, id_container, "Unable to clear dimension instance row\n");

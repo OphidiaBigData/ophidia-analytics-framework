@@ -311,6 +311,7 @@ int oph_odb_cube_retrieve_datacube_measure(ophidiadb * oDB, int id_datacube, cha
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_cube_insert_into_cubehasdim_table(ophidiadb * oDB, oph_odb_cubehasdim * cubedim, int *last_insertd_id);
+int oph_odb_cube_insert_into_cubehasdim_table2(ophidiadb * oDB, oph_odb_cubehasdim * cubedim, int *last_insertd_id, char clear);
 
 /**
  * \brief Function that updates OphidiaDB adding the new datacube and new partition relations

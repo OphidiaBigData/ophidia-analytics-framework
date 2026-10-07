@@ -56,6 +56,7 @@
  * \param ms Conventional value for missing values
  * \param nthread Number of pthreads related to each MPI task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
+ * \param clear Flag set to 1 in case collapsed dimensions have to be removed
  */
 struct _OPH_REDUCE2_operator_handle {
 	ophidiadb oDB;
@@ -91,6 +92,7 @@ struct _OPH_REDUCE2_operator_handle {
 	unsigned int nthread;
 	short int execute_error;
 	char user_missing_value;
+	char clear;
 };
 typedef struct _OPH_REDUCE2_operator_handle OPH_REDUCE2_operator_handle;
 
