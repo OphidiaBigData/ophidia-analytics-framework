@@ -41,6 +41,29 @@
 #include "oph_datacube_library.h"
 #include "oph_driver_procedure_library.h"
 
+#define BASE_IMPLEMENTATION_INTERCUBE2
+#ifndef BASE_IMPLEMENTATION_INTERCUBE2
+
+#include <pthread.h>
+
+struct _thread_struct {
+	OPH_INTERCUBE2_operator_handle *oper_handle;
+	unsigned int current_thread;
+	unsigned int total_threads;
+	int proc_rank;
+	oph_odb_fragment_list **frags;
+	oph_odb_db_instance_list **dbs;
+	oph_odb_dbms_instance_list **dbmss;
+	char *_ms;
+};
+typedef struct _thread_struct thread_struct;
+
+void *exec_thread(void *ts)
+{
+	// TODO
+}
+#endif
+
 int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 {
 	if (!handle) {
@@ -64,6 +87,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	//1 - Set up struct to empty values
+	((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->nthread = 0;
 	((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->id_input_datacube = NULL;
 	((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->id_input_container = 0;
 	((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->id_output_datacube = 0;
@@ -173,10 +197,19 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INTERCUBE_MEMORY_ERROR_INPUT, "id_input_datacube");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
+
+	value = hashtbl_get(task_tbl, OPH_ARG_NTHREAD);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_NTHREAD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INTERCUBE_MISSING_INPUT_PARAMETER, OPH_ARG_NTHREAD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->nthread = (unsigned int) strtol(value, NULL, 10);
+
 	//For error checking
 	int i, id_datacube_in[cubes_num + 2];
-	for (i = 0; i < cubes_num + 2; i++);
-	id_datacube_in[i] = 0;
+	for (i = 0; i < cubes_num + 2; i++)
+		id_datacube_in[i] = 0;
 
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
@@ -1026,6 +1059,10 @@ int task_execute(oph_operator_struct *handle)
 	else
 		snprintf(_ms, OPH_COMMON_MAX_DOUBLE_LENGHT, "%f", oper_handle->ms);
 
+#ifdef BASE_IMPLEMENTATION_INTERCUBE2
+
+	oper_handle->nthread = 1;
+
 	oph_ioserver_handler *first_server = NULL;
 	if (oph_dc_setup_dbms(&(first_server), (dbmss[0].value[0]).io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
@@ -1325,8 +1362,80 @@ int task_execute(oph_operator_struct *handle)
 
 	if (result == OPH_ANALYTICS_OPERATOR_SUCCESS)
 		oper_handle->execute_error = 0;
-
 	return result;
+
+#else				// TODO
+
+	int l, num_threads = (oper_handle->nthread <= (unsigned int) oper_handle->fragment_number ? oper_handle->nthread : (unsigned int) oper_handle->fragment_number);
+	int res[num_threads];
+
+	pthread_t threads[num_threads];
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+	thread_struct ts[num_threads];
+
+	int rc;
+	for (l = 0; l < num_threads; l++) {
+		ts[l].oper_handle = oper_handle;
+		ts[l].total_threads = num_threads;
+		ts[l].proc_rank = handle->proc_rank;
+		ts[l].current_thread = l;
+		ts[l].frags = &frags;
+		ts[l].dbs = &dbs;
+		ts[l].dbmss = &dbmss;
+		ts[l]._ms = _ms;
+
+		rc = pthread_create(&threads[l], &attr, exec_thread, (void *) &(ts[l]));
+		if (rc) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create thread %d: %d.\n", l, rc);
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Unable to create thread %d: %d.\n", l, rc);
+		}
+	}
+
+	pthread_attr_destroy(&attr);
+	void *ret_val = NULL;
+	for (l = 0; l < num_threads; l++) {
+		rc = pthread_join(threads[l], &ret_val);
+		res[l] = *((int *) ret_val);
+		free(ret_val);
+		if (rc) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while joining thread %d: %d.\n", l, rc);
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Error while joining thread %d: %d.\n", l, rc);
+		}
+	}
+
+	for (l = 0; l < cubes_num; l++) {
+		oph_odb_stge_free_db_list(dbs + l);
+		oph_odb_stge_free_dbms_list(dbmss + l);
+	}
+
+	//Insert all new fragment
+	if (oph_odb_stge_insert_into_fragment_table2(&oDB_slave, frags[0].value, frags[0].size)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update fragment table.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Unable to update fragment table.\n");
+		oph_odb_stge_free_fragment_list(&frags);
+		oph_odb_free_ophidiadb_thread(&oDB_slave);
+		mysql_thread_end();
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+
+	for (l = 0; l < cubes_num; l++)
+		oph_odb_stge_free_fragment_list(frags + l);
+
+	oph_odb_free_ophidiadb(&oDB_slave);
+
+	mysql_thread_end();
+
+	for (l = 0; l < num_threads; l++) {
+		if (res[l] != OPH_ANALYTICS_OPERATOR_SUCCESS)
+			return res[l];
+	}
+
+	oper_handle->execute_error = 0;
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+#endif
 }
 
 int task_reduce(oph_operator_struct *handle)
@@ -1400,10 +1509,17 @@ int task_destroy(oph_operator_struct *handle)
 
 	if (global_error) {
 		//Delete fragments
+		int num_threads =
+		    ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->nthread <=
+		    (unsigned int) ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_INTERCUBE2_operator_handle *) handle->
+														    operator_handle)->nthread : (unsigned int) ((OPH_INTERCUBE2_operator_handle *)
+																				handle->operator_handle)->
+		    fragment_number;
+
 		if (((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
 			if ((oph_dproc_delete_data
 			     (id_datacube, ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->id_input_container, ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->fragment_ids,
-			      0, 0, 1))) {
+			      0, 0, num_threads))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}
