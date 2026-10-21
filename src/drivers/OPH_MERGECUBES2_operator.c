@@ -1907,9 +1907,16 @@ int task_destroy(oph_operator_struct *handle)
 
 	if (global_error) {
 		//Delete fragments
+		int num_threads =
+		    ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->nthread <=
+		    (unsigned int) ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_MERGECUBES2_operator_handle *) handle->
+														     operator_handle)->nthread : (unsigned int) ((OPH_MERGECUBES2_operator_handle *)
+																				 handle->operator_handle)->
+		    fragment_number;
 		if (((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
-			if ((oph_dproc_delete_data(id_datacube, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
-						   ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0, 1))) {
+			if ((oph_dproc_delete_data
+			     (id_datacube, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0],
+			      ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->fragment_ids, 0, 0, num_threads))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_MERGECUBES2_operator_handle *) handle->operator_handle)->id_input_container[0], OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}
