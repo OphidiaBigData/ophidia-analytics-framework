@@ -84,6 +84,7 @@
 #define OPH_IOSERVER_SQ_ARG_DIM_UNLIM   "dim_unlim"
 #define OPH_IOSERVER_SQ_ARG_OPERATION   "sub_operation"
 #define OPH_IOSERVER_SQ_ARG_ARGS		"sub_args"
+#define OPH_IOSERVER_SQ_ARG_NFRAG		"nfrags"
 #define OPH_IOSERVER_SQ_ARG_MEASURE_TYPE	"measure_type"
 #define OPH_IOSERVER_SQ_ARG_ARRAY_LEN 	"array_len"
 #define OPH_IOSERVER_SQ_ARG_ALGORITHM 	"algorithm"

@@ -63,6 +63,7 @@ struct _OPH_GENERIC_operator_handle {
 	int force;
 	char **inputs;
 	int inputs_num;
+	char extract;
 };
 typedef struct _OPH_GENERIC_operator_handle OPH_GENERIC_operator_handle;
 

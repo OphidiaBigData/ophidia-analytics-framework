@@ -125,7 +125,6 @@ void *exec_thread(void *ts)
 			break;
 		}
 
-
 		if (oph_dc_use_db_of_dbms(server, &(dbmss->value[i]), &(dbs->value[i]))) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_REDUCE_DB_SELECTION_ERROR, (dbs->value[i]).db_name);

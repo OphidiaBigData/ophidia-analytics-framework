@@ -854,11 +854,13 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 			if (!strcmp(dimname, measure->dims_name[j]))
 				break;
 		if (j == ndims) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s' in in fits file\n", dimname, measure->varname);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname, measure->varname);
-			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s' in fit file: skipping\n", dimname, measure->varname);
+			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "[CONTAINER: %s] Unable to find dimension '%s' related to variable '%s' in fit file: skipping.\n",
+				container_name, dimname, measure->varname);
+			free(sub_dims[i]);
+			sub_dims[i] = NULL;
+			sub_to_dims[i] = number_of_sub_dims;
+			continue;
 		}
 	}
 
@@ -925,7 +927,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		curfilter = NULL;
 		for (j = 0; j < number_of_sub_dims; j++) {
 			dimname = sub_dims[j];
-			if (!strcmp(dimname, measure->dims_name[i])) {
+			if (dimname && !strcmp(dimname, measure->dims_name[i])) {
 				curfilter = sub_filters[j];
 				break;
 			}
@@ -1198,16 +1200,11 @@ int task_init(oph_operator_struct *handle)
 		if (*host_number <= 0) {
 			//Check how many DBMS and HOST are available into specified partition and of server type
 			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
-				if (run) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
-						host_partition);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
+				if (run)
 					goto __OPH_EXIT_1;
-				} else {
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
-						host_partition);
-					frag_param_error = 1;
-				}
+				frag_param_error = 1;
 			}
 
 			if (*fragxdb_number <= 0) {
@@ -1355,7 +1352,7 @@ int task_init(oph_operator_struct *handle)
 
 		if (frag_param_error) {
 			//Check how many DBMS and HOST are available into specified partition and of server type
-			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
+			if (oph_odb_stge_count_number_of_hosts(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
 				goto __OPH_EXIT_1;

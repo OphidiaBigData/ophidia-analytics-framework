@@ -607,7 +607,7 @@ int task_init(oph_operator_struct *handle)
 		int nhost = 0;
 		if (((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->host_number < 0) {
 			//Check if are available DBMS and HOST number into specified partition and of server type
-			if (oph_odb_stge_count_number_of_host_dbms(oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type, id_host_partition, &nhost) || !nhost) {
+			if (oph_odb_stge_count_number_of_hosts(oDB, ((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->ioserver_type, id_host_partition, &nhost) || !nhost) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or dbms or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_RANDCUBE_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
 					((OPH_RANDCUBE_operator_handle *) handle->operator_handle)->partition_input);

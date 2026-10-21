@@ -59,7 +59,6 @@ typedef struct _thread_struct thread_struct;
 
 void *exec_thread(void *ts)
 {
-
 	OPH_AGGREGATE_operator_handle *oper_handle = ((thread_struct *) ts)->oper_handle;
 	int l = ((thread_struct *) ts)->current_thread;
 	int num_threads = ((thread_struct *) ts)->total_threads;
@@ -140,7 +139,7 @@ void *exec_thread(void *ts)
 
 			tuplexfragment = frags->value[k].key_end - frags->value[k].key_start + 1;	// Under the assumption that IDs are consecutive without any holes
 
-			if (!(oper_handle->size))
+			if (!oper_handle->size)
 				size = tuplexfragment;
 			else
 				size = oper_handle->size;
@@ -173,7 +172,7 @@ void *exec_thread(void *ts)
 			}
 			//AGGREGATE fragment
 			size_ = size;
-			if (oph_dc_create_fragment_from_query(server, &(frags->value[k]), frag_name_out, operation, 0, &size_, 0)) {
+			if (oph_dc_create_fragment_from_query3(server, &(frags->value[k]), frag_name_out, operation, 0, &size_, 0, NULL, !oper_handle->size && oper_handle->force ? 1 + k : 0)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_AGGREGATE_NEW_FRAG_ERROR, frag_name_out);
 				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -184,8 +183,11 @@ void *exec_thread(void *ts)
 			strncpy(frags->value[k].fragment_name, frag_name_out, OPH_ODB_STGE_FRAG_NAME_SIZE);
 			frags->value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
 			if (frags->value[k].key_end) {
-				frags->value[k].key_start = 1 + (frags->value[k].key_start - 1) / size;
-				frags->value[k].key_end = 1 + (frags->value[k].key_end - 1) / size;
+				if (oper_handle->size || !oper_handle->force) {
+					frags->value[k].key_start = 1 + (frags->value[k].key_start - 1) / size;
+					frags->value[k].key_end = 1 + (frags->value[k].key_end - 1) / size;
+				} else
+					frags->value[k].key_start = frags->value[k].key_end = 1 + k;
 			}
 			frag_count++;
 		}
@@ -254,6 +256,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->user_missing_value = 0;
 	((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->clear = 0;
+	((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->force = 0;
 
 	char *datacube_in;
 	char *value;
@@ -320,14 +323,12 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		if (oph_odb_read_ophidiadb_config_file(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read OphidiaDB configuration\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_AGGREGATE_OPHIDIADB_CONFIGURATION_FILE);
-
 			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 		}
 
 		if (oph_odb_connect_to_ophidiadb(oDB)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to OphidiaDB. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_AGGREGATE_OPHIDIADB_CONNECTION_ERROR);
-
 			return OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
 		}
 		//Check if datacube exists (by ID container and datacube)
@@ -510,6 +511,15 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	if (!strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN))
 		((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->clear = 1;
 
+	value = hashtbl_get(task_tbl, OPH_IN_PARAM_FORCE);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_IN_PARAM_FORCE);
+		logging(LOG_ERROR, __FILE__, __LINE__, id_datacube_in[1], OPH_LOG_OPH_REDUCE_MISSING_INPUT_PARAMETER, OPH_IN_PARAM_FORCE);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	if (!strncmp(value, OPH_COMMON_YES_VALUE, OPH_TP_TASKLEN))
+		((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->force = 1;
+
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
 
@@ -601,7 +611,7 @@ int task_init(oph_operator_struct *handle)
 		oph_odb_cubehasdim *cubedims = NULL;
 		int number_of_dimensions = 0;
 		int last_insertd_id = 0;
-		int l, reduced_dim = -1, reduction = 0;
+		int l, reduced_dim = -1, reduction = 0, resto = 0;
 		int residual_size = size, real_aggregate_set = 1;
 
 		//Read old cube - dimension relation rows
@@ -639,7 +649,8 @@ int task_init(oph_operator_struct *handle)
 					if (cubedims[l].size > residual_size) {
 						if (residual_size == 1)
 							break;
-						if (cubedims[l].size % residual_size) {
+						resto = cubedims[l].size % residual_size;
+						if (resto && !((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->force) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update dimension information with size '%d'\n",
 							      ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->size);
 							logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container,
@@ -651,12 +662,15 @@ int task_init(oph_operator_struct *handle)
 						reduced_dim = l;
 						reduction = residual_size;
 						cubedims[l].size /= residual_size;
+						if (resto)
+							cubedims[l].size++;
 						real_aggregate_set *= residual_size;
 						dim_inst[l].concept_level = OPH_COMMON_CONCEPT_LEVEL_UNKNOWN;
 						break;
 					} else	// This dimension will be collapsed, so there is another size to be reduced
 					{
-						if (residual_size % cubedims[l].size) {
+						resto = residual_size % cubedims[l].size;
+						if (resto && !((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->force) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update dimension information with size '%d'\n",
 							      ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->size);
 							logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_AGGREGATE_operator_handle *) handle->operator_handle)->id_input_container,

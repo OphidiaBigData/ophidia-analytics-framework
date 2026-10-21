@@ -41,6 +41,350 @@
 #include "oph_datacube_library.h"
 #include "oph_driver_procedure_library.h"
 
+//#define BASE_IMPLEMENTATION_INTERCUBE2
+#ifndef BASE_IMPLEMENTATION_INTERCUBE2
+
+#include <pthread.h>
+
+struct _thread_struct {
+	OPH_INTERCUBE2_operator_handle *oper_handle;
+	unsigned int current_thread;
+	unsigned int total_threads;
+	int proc_rank;
+	oph_odb_fragment_list *frags;
+	oph_odb_db_instance_list *dbs;
+	oph_odb_dbms_instance_list *dbmss;
+	char *_ms;
+	char multi_host;
+};
+typedef struct _thread_struct thread_struct;
+
+void *exec_thread(void *ts)
+{
+	OPH_INTERCUBE2_operator_handle *oper_handle = ((thread_struct *) ts)->oper_handle;
+	int l = ((thread_struct *) ts)->current_thread;
+	int num_threads = ((thread_struct *) ts)->total_threads;
+	int proc_rank = ((thread_struct *) ts)->proc_rank;
+
+	int id_datacube_out = oper_handle->id_output_datacube;
+	int compressed = oper_handle->compressed;
+
+	oph_odb_fragment_list *frags = ((thread_struct *) ts)->frags;
+	oph_odb_db_instance_list *dbs = ((thread_struct *) ts)->dbs;
+	oph_odb_dbms_instance_list *dbmss = ((thread_struct *) ts)->dbmss;
+
+	char *_ms = ((thread_struct *) ts)->_ms;
+	char multi_host = ((thread_struct *) ts)->multi_host;
+
+	int cubes_num = oper_handle->cubes_num;
+
+	int i, j, k, kk, ii;
+
+	int res = OPH_ANALYTICS_OPERATOR_SUCCESS;
+
+	unsigned long long tot_rows;
+
+	int fragxthread = (int) floor((double) (frags[0].size / num_threads));
+	int remainder = (int) frags[0].size % num_threads;
+	//Compute starting number of fragments inserted by other threads
+	unsigned int current_frag_count = l * fragxthread + (l < remainder ? l : remainder);
+
+	//Update number of fragments to be inserted
+	if (l < remainder)
+		fragxthread += 1;
+
+	char operation[OPH_COMMON_BUFFER_LEN];
+	char frag_name_out[OPH_ODB_STGE_FRAG_NAME_SIZE];
+	int n, frag_count = 0;
+
+	oph_ioserver_handler *first_server = NULL;
+	if (oph_dc_setup_dbms_thread(&(first_server), (dbmss[0].value[0]).io_server_type)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_IOPLUGIN_SETUP_ERROR, (dbmss[0].value[0]).id_dbms);
+		res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+	}
+
+	oph_ioserver_handler *second_server[cubes_num];
+	for (l = 1; l < cubes_num; l++)
+		second_server[l] = NULL;
+	if (multi_host) {
+		second_server[0] = first_server;
+		for (l = 1; (l < cubes_num) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); l++) {
+			if (oph_dc_setup_dbms_thread(second_server + l, (dbmss[l].value[0]).io_server_type)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_IOPLUGIN_SETUP_ERROR, (dbmss[l].value[0]).id_dbms);
+				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+				break;
+			}
+		}
+	}
+	// This implementation assume a perfect correspondence between datacube structures
+
+	int first_dbms, first_db, first_frag = current_frag_count;
+
+	for (first_db = 0; first_db < dbs[0].size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_db++) {
+		//Find db associated to fragment
+		if (frags[0].value[current_frag_count].id_db == dbs[0].value[first_db].id_db)
+			break;
+	}
+	for (first_dbms = 0; first_dbms < dbmss[0].size && res == OPH_ANALYTICS_OPERATOR_SUCCESS; first_dbms++) {
+		//Find dbms associated to db
+		if (dbs[0].value[first_db].id_dbms == dbmss[0].value[first_dbms].id_dbms)
+			break;
+	}
+
+	int i2[cubes_num], j2[cubes_num], k2[cubes_num];
+	oph_odb_fragment *_value[cubes_num];
+
+	//For each DBMS
+	for (l = 1; l < cubes_num; l++)
+		i2[l] = 0;
+	for (i = first_dbms; (i < dbmss[0].size) && (frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); i++) {
+
+		i2[0] = i;
+
+		if (oph_dc_connect_to_dbms(first_server, &(dbmss[0].value[i]), 0)) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DBMS_CONNECTION_ERROR, (dbmss[0].value[i]).id_dbms);
+			res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			break;
+		}
+
+		for (l = 1; l < cubes_num; l++) {
+			// This implementation considers data exchange within the same dbms, databases could be different
+			if (dbmss[0].value[i].id_dbms != dbmss[l].value[i].id_dbms) {
+				// Find the correct dbms
+				k = i * dbs[0].size * frags[0].size;
+				for (; i2[l] < dbmss[l].size; ++i2[l]) {
+					kk = i2[l] * dbs[l].size * frags[l].size;
+					if (frags[0].value[k].frag_relative_index == frags[l].value[kk].frag_relative_index)
+						break;
+				}
+				if (i2[l] >= dbmss[l].size) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot compare this datacube because of the different fragmentation structure.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DIFFERENT_DBMS_ERROR);
+					res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+			} else
+				i2[l] = i;
+
+			if (multi_host && oph_dc_connect_to_dbms(second_server[l], &(dbmss[l].value[i2[l]]), 0)) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DBMS_CONNECTION_ERROR, (dbmss[0].value[i]).id_dbms);
+				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			}
+
+			if (res)
+				break;
+		}
+
+		//For each DB
+		for (l = 0; l < cubes_num; l++)
+			j2[l] = 0;
+		for (j = first_db; (j < dbs[0].size) && (frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); j++) {
+
+			j2[0] = j;
+
+			//Check DB - DBMS Association
+			if (dbs[0].value[j].dbms_instance != &(dbmss[0].value[i]))
+				continue;
+			if (oph_dc_use_db_of_dbms(first_server, &(dbmss[0].value[i]), &(dbs[0].value[j]))) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DB_SELECTION_ERROR, (dbs[0].value[j]).db_name);
+				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+				break;
+			}
+
+			for (l = 1; l < cubes_num; l++) {
+
+				//Check DB - DBMS Association
+				if (!multi_host) {
+					j2[l] = j;
+					if (dbs[l].value[j2[l]].dbms_instance != &(dbmss[l].value[i2[l]])) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Databases are not comparable.\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DIFFERENT_DB_ERROR);
+						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+						break;
+					}
+				} else {
+					for (; j2[l] < dbs[l].size; j2[l]++)
+						if (dbs[l].value[j2[l]].dbms_instance == &(dbmss[l].value[i2[l]]))
+							break;	// Search the correct db associated to the dbms
+					if (j2[l] >= dbs[l].size) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot compare this datacube because of the different fragmentation structure.\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DIFFERENT_DBMS_ERROR);
+						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+						break;
+					}
+					if (oph_dc_use_db_of_dbms(second_server[l], &(dbmss[l].value[i2[l]]), &(dbs[l].value[j2[l]]))) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DB_SELECTION_ERROR, (dbs[l].value[j2[l]]).db_name);
+						res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+						break;
+					}
+				}
+				if (res)
+					break;
+			}
+
+			//For each fragment
+			for (l = 1; l < cubes_num; l++)
+				k2[l] = 0;
+			for (k = first_frag; (k < frags->size) && (frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); k++) {
+
+				k2[0] = k;
+
+				//Check Fragment - DB Association
+				if (frags[0].value[k].db_instance != &(dbs[0].value[j]))
+					continue;
+
+				for (l = 1; l < cubes_num; l++) {
+
+					//Check Fragment - DB Association
+					if (!multi_host) {
+						k2[l] = k;
+						if (frags[l].value[k2[l]].db_instance != &(dbs[l].value[j2[l]])) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Fragments are not comparable.\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_FRAGMENT_COMPARISON_ERROR);
+							res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
+					} else {
+						for (; k2[l] < dbs[l].size; k2[l]++)
+							if (frags[l].value[k2[l]].db_instance == &(dbs[l].value[j2[l]]))
+								break;	// Search the correct fragment associated to the db
+						if (k2[l] >= frags[l].size) {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, "Cannot compare this datacube because of the different fragmentation structure.\n");
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DIFFERENT_DBMS_ERROR);
+							res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
+					}
+					if (res)
+						break;
+				}
+
+				if (oph_dc_generate_fragment_name(dbs[0].value[j].db_name, id_datacube_out, proc_rank, current_frag_count + frag_count + 1, &frag_name_out)) {
+					pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of frag name exceed limit.\n");
+					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_STRING_BUFFER_OVERFLOW, "fragment name", frag_name_out);
+					res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+					break;
+				}
+
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "%d: frag name: %s\n", ((thread_struct *) ts)->current_thread, frag_name_out);
+
+				if (multi_host) {
+
+					tot_rows = frags[0].value[k].key_end - frags[0].value[k].key_start + 1;
+
+					// Create an empty fragment
+					if (oph_dc_create_empty_fragment_from_name(first_server, frag_name_out, frags[0].value[k].db_instance)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_NEW_FRAG_ERROR, frag_name_out);
+						res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+						break;
+					}
+
+					for (l = 0; l < cubes_num; l++)
+						_value[l] = &frags[l].value[k2[l]];
+
+					if (oph_dc_copy_and_process_fragment2
+					    (cubes_num, second_server, tot_rows, _value, frag_name_out, compressed, oper_handle->operation, oper_handle->measure_type, _ms)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_NEW_FRAG_ERROR, frag_name_out);
+						res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+						break;
+					}
+
+					frags[0].value[k].id_datacube = id_datacube_out;
+					strncpy(frags[0].value[k].fragment_name, 1 + strchr(frag_name_out, '.'), OPH_ODB_STGE_FRAG_NAME_SIZE);
+					frags[0].value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
+
+					for (l = 1; l < cubes_num; l++)
+						k2[l]++;
+
+				} else {
+
+					char intercube2_operand[OPH_COMMON_BUFFER_LEN], intercube2_operands[OPH_COMMON_BUFFER_LEN];
+					char intercube2_datatype[OPH_COMMON_BUFFER_LEN], intercube2_datatypes[OPH_COMMON_BUFFER_LEN];
+					char intercube2_from[OPH_COMMON_BUFFER_LEN], intercube2_froms[OPH_COMMON_BUFFER_LEN];
+					char intercube2_alias[OPH_COMMON_BUFFER_LEN], intercube2_aliass[OPH_COMMON_BUFFER_LEN];
+					char intercube2_where[OPH_COMMON_BUFFER_LEN], intercube2_wheres[OPH_COMMON_BUFFER_LEN];
+					*intercube2_operands = *intercube2_datatypes = *intercube2_froms = *intercube2_aliass = *intercube2_wheres = 0;
+					for (ii = 0; ii < cubes_num; ii++) {
+						snprintf(intercube2_operand, OPH_COMMON_BUFFER_LEN, "%s%sfrag%d.%s%s", ii ? "," : "", compressed ? "oph_uncompress('',''," : "", ii + 1,
+							 MYSQL_FRAG_MEASURE, compressed ? ")" : "");
+						strncat(intercube2_operands, intercube2_operand, OPH_COMMON_BUFFER_LEN - strlen(intercube2_operands));
+						snprintf(intercube2_datatype, OPH_COMMON_BUFFER_LEN, "%soph_%s", ii ? "|" : "", oper_handle->measure_type);
+						strncat(intercube2_datatypes, intercube2_datatype, OPH_COMMON_BUFFER_LEN - strlen(intercube2_datatypes));
+						snprintf(intercube2_from, OPH_COMMON_BUFFER_LEN, "%s%s.%s", ii ? "|" : "", frags[ii].value[k2[ii]].db_instance->db_name,
+							 frags[ii].value[k2[ii]].fragment_name);
+						strncat(intercube2_froms, intercube2_from, OPH_COMMON_BUFFER_LEN - strlen(intercube2_froms));
+						snprintf(intercube2_alias, OPH_COMMON_BUFFER_LEN, "%sfrag%d", ii ? "|" : "", ii + 1);
+						strncat(intercube2_aliass, intercube2_alias, OPH_COMMON_BUFFER_LEN - strlen(intercube2_aliass));
+						if (ii) {
+							snprintf(intercube2_where, OPH_COMMON_BUFFER_LEN, "%sfrag1.%s=frag%d.%s", ii > 1 ? " AND " : "", MYSQL_FRAG_ID, ii + 1, MYSQL_FRAG_ID);
+							strncat(intercube2_wheres, intercube2_where, OPH_COMMON_BUFFER_LEN - strlen(intercube2_wheres));
+						}
+					}
+					char intercube2_operation[OPH_COMMON_BUFFER_LEN];
+					snprintf(intercube2_operation, OPH_COMMON_BUFFER_LEN, "frag1.%s|%soph_operation_array('%s','oph_%s',%s,'oph_%s',%s)%s", MYSQL_FRAG_ID,
+						 compressed ? "oph_compress('',''," : "", intercube2_datatypes, oper_handle->measure_type,
+						 intercube2_operands, oper_handle->operation, _ms, compressed ? ")" : "");
+					if (*intercube2_wheres)
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE2_QUERY2, frag_name_out, intercube2_operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
+							     intercube2_froms, intercube2_aliass, intercube2_wheres);
+					else
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE2_QUERY2_WW, frag_name_out, intercube2_operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
+							     intercube2_froms, intercube2_aliass);
+					if (n >= OPH_COMMON_BUFFER_LEN) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name",
+							operation);
+						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+						break;
+					}
+					//INTERCUBE fragment
+					if (oph_dc_create_fragment_from_query(first_server, &(frags[0].value[k]), NULL, operation, 0, 0, 0)) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_NEW_FRAG_ERROR, frag_name_out);
+						res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+						break;
+					}
+					//Change fragment fields
+					frags[0].value[k].id_datacube = id_datacube_out;
+					strncpy(frags[0].value[k].fragment_name, 1 + strchr(frag_name_out, '.'), OPH_ODB_STGE_FRAG_NAME_SIZE);
+					frags[0].value[k].fragment_name[OPH_ODB_STGE_FRAG_NAME_SIZE] = 0;
+				}
+
+				frag_count++;
+			}
+
+			if (multi_host)
+				for (l = 1; l < cubes_num; l++)
+					j2[l]++;
+		}
+
+		oph_dc_disconnect_from_dbms(first_server, &(dbmss[0].value[i]));
+
+		if (multi_host)
+			for (l = 1; l < cubes_num; l++)
+				oph_dc_disconnect_from_dbms(second_server[l], &(dbmss[l].value[i2[l]]));
+	}
+
+	oph_dc_cleanup_dbms(first_server);
+	if (multi_host)
+		for (l = 1; l < cubes_num; l++)
+			oph_dc_cleanup_dbms(second_server[l]);
+	mysql_thread_end();
+
+	int *ret_val = (int *) malloc(sizeof(int));
+	*ret_val = res;
+	pthread_exit((void *) ret_val);
+}
+#endif
+
 int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 {
 	if (!handle) {
@@ -64,6 +408,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
 	//1 - Set up struct to empty values
+	((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->nthread = 0;
 	((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->id_input_datacube = NULL;
 	((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->id_input_container = 0;
 	((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->id_output_datacube = 0;
@@ -173,10 +518,19 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INTERCUBE_MEMORY_ERROR_INPUT, "id_input_datacube");
 		return OPH_ANALYTICS_OPERATOR_MEMORY_ERR;
 	}
+
+	value = hashtbl_get(task_tbl, OPH_ARG_NTHREAD);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_NTHREAD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_INTERCUBE_MISSING_INPUT_PARAMETER, OPH_ARG_NTHREAD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->nthread = (unsigned int) strtol(value, NULL, 10);
+
 	//For error checking
 	int i, id_datacube_in[cubes_num + 2];
-	for (i = 0; i < cubes_num + 2; i++);
-	id_datacube_in[i] = 0;
+	for (i = 0; i < cubes_num + 2; i++)
+		id_datacube_in[i] = 0;
 
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
@@ -955,12 +1309,9 @@ int task_execute(oph_operator_struct *handle)
 
 	oper_handle->execute_error = 1;
 
-	int l, i, j, k, kk, ii;
-
-	int id_datacube_out = oper_handle->id_output_datacube;
 	int *id_datacube_in = oper_handle->id_input_datacube;
-	int compressed = oper_handle->compressed;
-	int cubes_num = ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->cubes_num;
+
+	int l, cubes_num = ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->cubes_num;
 
 	oph_odb_fragment_list frags[cubes_num];
 	oph_odb_db_instance_list dbs[cubes_num];
@@ -1015,16 +1366,24 @@ int task_execute(oph_operator_struct *handle)
 		}
 	}
 
-	char operation[OPH_COMMON_BUFFER_LEN];
-	char frag_name_out[OPH_ODB_STGE_FRAG_NAME_SIZE];
-	int n, result = OPH_ANALYTICS_OPERATOR_SUCCESS, frag_count = 0;
-	unsigned long long tot_rows;
-
 	char _ms[OPH_COMMON_MAX_DOUBLE_LENGHT];
 	if (isnan(oper_handle->ms))
 		snprintf(_ms, OPH_COMMON_MAX_DOUBLE_LENGHT, "NULL");
 	else
 		snprintf(_ms, OPH_COMMON_MAX_DOUBLE_LENGHT, "%f", oper_handle->ms);
+
+#ifdef BASE_IMPLEMENTATION_INTERCUBE2
+
+	int i, j, k, kk, ii;
+
+	int id_datacube_out = oper_handle->id_output_datacube;
+	int compressed = oper_handle->compressed;
+
+	char operation[OPH_COMMON_BUFFER_LEN], frag_name_out[OPH_ODB_STGE_FRAG_NAME_SIZE];
+	int n, result = OPH_ANALYTICS_OPERATOR_SUCCESS, frag_count = 0;
+	unsigned long long tot_rows;
+
+	oper_handle->nthread = 1;
 
 	oph_ioserver_handler *first_server = NULL;
 	if (oph_dc_setup_dbms(&(first_server), (dbmss[0].value[0]).io_server_type)) {
@@ -1034,6 +1393,8 @@ int task_execute(oph_operator_struct *handle)
 	}
 
 	oph_ioserver_handler *second_server[cubes_num];
+	for (l = 1; l < cubes_num; l++)
+		second_server[l] = NULL;
 	if ((result == OPH_ANALYTICS_OPERATOR_SUCCESS) && multi_host) {
 		second_server[0] = first_server;
 		for (l = 1; l < cubes_num; l++) {
@@ -1060,6 +1421,7 @@ int task_execute(oph_operator_struct *handle)
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_DBMS_CONNECTION_ERROR, (dbmss[0].value[i]).id_dbms);
 			result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
+			break;
 		}
 
 		for (l = 1; l < cubes_num; l++) {
@@ -1224,7 +1586,6 @@ int task_execute(oph_operator_struct *handle)
 
 				} else {
 
-					char compressed = ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->compressed;
 					char intercube2_operand[OPH_COMMON_BUFFER_LEN], intercube2_operands[OPH_COMMON_BUFFER_LEN];
 					char intercube2_datatype[OPH_COMMON_BUFFER_LEN], intercube2_datatypes[OPH_COMMON_BUFFER_LEN];
 					char intercube2_from[OPH_COMMON_BUFFER_LEN], intercube2_froms[OPH_COMMON_BUFFER_LEN];
@@ -1235,8 +1596,7 @@ int task_execute(oph_operator_struct *handle)
 						snprintf(intercube2_operand, OPH_COMMON_BUFFER_LEN, "%s%sfrag%d.%s%s", ii ? "," : "", compressed ? "oph_uncompress('',''," : "", ii + 1,
 							 MYSQL_FRAG_MEASURE, compressed ? ")" : "");
 						strncat(intercube2_operands, intercube2_operand, OPH_COMMON_BUFFER_LEN - strlen(intercube2_operands));
-						snprintf(intercube2_datatype, OPH_COMMON_BUFFER_LEN, "%soph_%s", ii ? "|" : "",
-							 ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->measure_type);
+						snprintf(intercube2_datatype, OPH_COMMON_BUFFER_LEN, "%soph_%s", ii ? "|" : "", oper_handle->measure_type);
 						strncat(intercube2_datatypes, intercube2_datatype, OPH_COMMON_BUFFER_LEN - strlen(intercube2_datatypes));
 						snprintf(intercube2_from, OPH_COMMON_BUFFER_LEN, "%s%s.%s", ii ? "|" : "", frags[ii].value[k2[ii]].db_instance->db_name,
 							 frags[ii].value[k2[ii]].fragment_name);
@@ -1250,8 +1610,8 @@ int task_execute(oph_operator_struct *handle)
 					}
 					char intercube2_operation[OPH_COMMON_BUFFER_LEN];
 					snprintf(intercube2_operation, OPH_COMMON_BUFFER_LEN, "frag1.%s|%soph_operation_array('%s','oph_%s',%s,'oph_%s',%s)%s", MYSQL_FRAG_ID,
-						 compressed ? "oph_compress('',''," : "", intercube2_datatypes, ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->measure_type,
-						 intercube2_operands, ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->operation, _ms, compressed ? ")" : "");
+						 compressed ? "oph_compress('',''," : "", intercube2_datatypes, oper_handle->measure_type,
+						 intercube2_operands, oper_handle->operation, _ms, compressed ? ")" : "");
 					if (*intercube2_wheres)
 						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE2_QUERY2, frag_name_out, intercube2_operation, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE,
 							     intercube2_froms, intercube2_aliass, intercube2_wheres);
@@ -1325,8 +1685,83 @@ int task_execute(oph_operator_struct *handle)
 
 	if (result == OPH_ANALYTICS_OPERATOR_SUCCESS)
 		oper_handle->execute_error = 0;
-
 	return result;
+
+#else
+
+	int num_threads = (oper_handle->nthread <= (unsigned int) oper_handle->fragment_number ? oper_handle->nthread : (unsigned int) oper_handle->fragment_number);
+	int res[num_threads];
+
+	pthread_t threads[num_threads];
+	pthread_attr_t attr;
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+
+	thread_struct ts[num_threads];
+
+	int rc;
+	for (l = 0; l < num_threads; l++) {
+		ts[l].oper_handle = oper_handle;
+		ts[l].total_threads = num_threads;
+		ts[l].proc_rank = handle->proc_rank;
+		ts[l].current_thread = l;
+		ts[l].frags = frags;
+		ts[l].dbs = dbs;
+		ts[l].dbmss = dbmss;
+		ts[l]._ms = _ms;
+		ts[l].multi_host = multi_host;
+
+		rc = pthread_create(threads + l, &attr, exec_thread, (void *) (ts + l));
+		if (rc) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to create thread %d: %d.\n", l, rc);
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Unable to create thread %d: %d.\n", l, rc);
+		}
+	}
+
+	pthread_attr_destroy(&attr);
+	void *ret_val = NULL;
+	for (l = 0; l < num_threads; l++) {
+		rc = pthread_join(threads[l], &ret_val);
+		res[l] = *((int *) ret_val);
+		free(ret_val);
+		if (rc) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while joining thread %d: %d.\n", l, rc);
+			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Error while joining thread %d: %d.\n", l, rc);
+		}
+	}
+
+	for (l = 0; l < cubes_num; l++) {
+		oph_odb_stge_free_db_list(dbs + l);
+		oph_odb_stge_free_dbms_list(dbmss + l);
+	}
+
+	//Insert all new fragment
+	if (oph_odb_stge_insert_into_fragment_table2(&oDB_slave, frags[0].value, frags[0].size)) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update fragment table.\n");
+		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, "Unable to update fragment table.\n");
+		for (l = 0; l < cubes_num; l++)
+			oph_odb_stge_free_fragment_list(frags + l);
+		oph_odb_free_ophidiadb_thread(&oDB_slave);
+		mysql_thread_end();
+		return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+	}
+
+	for (l = 0; l < cubes_num; l++)
+		oph_odb_stge_free_fragment_list(frags + l);
+
+	oph_odb_free_ophidiadb(&oDB_slave);
+
+	mysql_thread_end();
+
+	for (l = 0; l < num_threads; l++) {
+		if (res[l] != OPH_ANALYTICS_OPERATOR_SUCCESS)
+			return res[l];
+	}
+
+	oper_handle->execute_error = 0;
+	return OPH_ANALYTICS_OPERATOR_SUCCESS;
+
+#endif
 }
 
 int task_reduce(oph_operator_struct *handle)
@@ -1400,10 +1835,17 @@ int task_destroy(oph_operator_struct *handle)
 
 	if (global_error) {
 		//Delete fragments
+		int num_threads =
+		    ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->nthread <=
+		    (unsigned int) ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->fragment_number ? ((OPH_INTERCUBE2_operator_handle *) handle->
+														    operator_handle)->nthread : (unsigned int) ((OPH_INTERCUBE2_operator_handle *)
+																				handle->operator_handle)->
+		    fragment_number;
+
 		if (((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->fragment_id_start_position >= 0 || handle->proc_rank == 0) {
 			if ((oph_dproc_delete_data
 			     (id_datacube, ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->id_input_container, ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->fragment_ids,
-			      0, 0, 1))) {
+			      0, 0, num_threads))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to delete fragments\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, ((OPH_INTERCUBE2_operator_handle *) handle->operator_handle)->id_input_container, OPH_LOG_OPH_DELETE_DB_READ_ERROR);
 			}

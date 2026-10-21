@@ -52,9 +52,10 @@
 
 #define MYSQL_QUERY_STGE_RETRIEVE_HOSTPARTITION_FS      	"SELECT hostpartition.idhostpartition, COUNT(host.idhost) AS hosts, SUM(host.importcount) AS importcounts FROM hostpartition INNER JOIN hashost ON hostpartition.idhostpartition = hashost.idhostpartition INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE status = 'up' AND ioservertype = '%s' AND (NOT reserved OR iduser = %d) GROUP BY hostpartition.idhostpartition HAVING hosts >= %d ORDER BY importcounts DESC, hosts LIMIT 1;"
 
-#define MYSQL_QUERY_STGE_RETRIEVE_HOST_DBMS_NUMBER		"SELECT count(iddbmsinstance) FROM hashost INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE idhostpartition = %d AND status = 'up' AND ioservertype = '%s' GROUP BY host.idhost;"
+#define MYSQL_QUERY_STGE_RETRIEVE_HOST_DBMS_NUMBER		"SELECT COUNT(iddbmsinstance) FROM hashost INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE idhostpartition = %d AND status = 'up' AND ioservertype = '%s' GROUP BY host.idhost;"
 
-#define MYSQL_QUERY_STGE_RETRIEVE_COUNT_HOST_DBMS		"SELECT count(dbms) FROM (SELECT count(iddbmsinstance) AS dbms FROM hashost INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE idhostpartition = %d AND status = 'up' AND ioservertype = '%s' GROUP BY host.idhost)tmp;"
+#define MYSQL_QUERY_STGE_RETRIEVE_COUNT_HOSTS			"SELECT COUNT(*) FROM (SELECT DISTINCT(hostname) FROM hashost INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE idhostpartition = %d AND status = 'up' AND ioservertype = '%s')tmp;"
+#define MYSQL_QUERY_STGE_RETRIEVE_COUNT_HOST_DBMS		"SELECT COUNT(dbms) FROM (SELECT COUNT(iddbmsinstance) AS dbms FROM hashost INNER JOIN host ON host.idhost = hashost.idhost INNER JOIN dbmsinstance ON dbmsinstance.idhost = host.idhost WHERE idhostpartition = %d AND status = 'up' AND ioservertype = '%s' GROUP BY host.idhost)tmp;"
 
 #define MYSQL_QUERY_STGE_DELETE_OPHIDIADB_DB 			"DELETE FROM `dbinstance` WHERE `iddbinstance` = %d"
 

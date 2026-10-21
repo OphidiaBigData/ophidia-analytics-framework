@@ -166,7 +166,7 @@ void *exec_thread(void *ts)
 			strcpy(new_frag[current_frag_count + frag_count].fragment_name, fragment_name);
 			//Create and populate fragment
 			if (oph_nc_populate_fragment_from_nc5
-			    (server, &(new_frag[current_frag_count + frag_count]), oper_handle->nc_file_path_orig, actual_tuplexfrag_number, oper_handle->compressed,
+			    (server, &(new_frag[current_frag_count + frag_count]), oper_handle->nc_file_path_orig, oper_handle->fragxdb_number, actual_tuplexfrag_number, oper_handle->compressed,
 			     (NETCDF_var *) & (oper_handle->measure))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_FRAG_POPULATE_ERROR,
@@ -1737,13 +1737,13 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 			if (!strcmp(dimname, measure->dims_name[j]))
 				break;
 		if (j == ndims) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s' in in nc file\n", dimname, measure->varname);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname, measure->varname);
-			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-			if (offset)
-				free(offset);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s' in nc file: skipping\n", dimname, measure->varname);
+			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "[CONTAINER: %s] Unable to find dimension '%s' related to variable '%s' in nc file: skipping.\n",
+				container_name, dimname, measure->varname);
+			free(sub_dims[i]);
+			sub_dims[i] = NULL;
+			sub_to_dims[i] = number_of_sub_dims;
+			continue;
 		}
 		sub_to_dims[i] = j;
 	}
@@ -2055,7 +2055,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		curfilter = NULL;
 		for (j = 0; j < number_of_sub_dims; j++) {
 			dimname = sub_dims[j];
-			if (!strcmp(dimname, measure->dims_name[i])) {
+			if (dimname && !strcmp(dimname, measure->dims_name[i])) {
 				curfilter = sub_filters[j];
 				break;
 			}
@@ -2310,6 +2310,7 @@ int task_init(oph_operator_struct *handle)
 
 	//Find the first explicit dimension checking oph_value
 	short int min_lev = 1;
+	int total_frag_number = 1;
 	//Find most external dimension with size bigger than 1
 	for (i = 0; i < measure->nexp; i++) {
 		for (j = 0; j < measure->ndims; j++) {
@@ -2318,10 +2319,11 @@ int task_init(oph_operator_struct *handle)
 				break;
 			}
 		}
-
 		if ((measure->dims_end_index[j] - measure->dims_start_index[j]) > 0) {
 			min_lev = measure->dims_oph_level[j];
-			break;
+			total_frag_number *= measure->dims_end_index[j] - measure->dims_start_index[j] + 1;
+			if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->fragxdb_number <= total_frag_number)
+				break;
 		}
 	}
 
@@ -2331,11 +2333,11 @@ int task_init(oph_operator_struct *handle)
 	for (i = 0; i < measure->ndims; i++) {
 		if (measure->dims_type[i]) {
 			//Consider only explicit dimensions
-			if (measure->dims_oph_level[i] == min_lev) {
+			if (measure->dims_oph_level[i] <= min_lev) {
 				//Compute total fragment as the number of values of the most external explicit dimensions excluding those with size 1
-				((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->total_frag_number = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
-			} else if (measure->dims_oph_level[i] > min_lev) {
-				//Compute tuple per fragment as the number of values of most inernal explicit dimension (excluding the first one bigger than 1)
+				((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->total_frag_number *= measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
+			} else {
+				//Compute tuple per fragment as the number of values of most internal explicit dimension (excluding the first one bigger than 1)
 				((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 			}
 		} else {
@@ -2430,14 +2432,11 @@ int task_init(oph_operator_struct *handle)
 		if (*host_number <= 0) {
 			//Check how many DBMS and HOST are available into specified partition and of server type
 			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
-				if (run) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
+				if (run)
 					goto __OPH_EXIT_1;
-				} else {
-					logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
-					frag_param_error = 1;
-				}
+				frag_param_error = 1;
 			}
 		}
 
@@ -2532,7 +2531,7 @@ int task_init(oph_operator_struct *handle)
 
 		if (frag_param_error) {
 			//Check how many DBMS and HOST are available into specified partition and of server type
-			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
+			if (oph_odb_stge_count_number_of_hosts(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
 				goto __OPH_EXIT_1;

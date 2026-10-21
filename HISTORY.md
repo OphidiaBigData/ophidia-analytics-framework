@@ -9,6 +9,9 @@
 
 ### Added:
 
+- Option 'extract' to OPH_GENERIC enabling the possibility of more output files
+- Report of processing time to output string
+- Option 'force' to OPH_AGGREGATE to force dimension collapse
 - Option 'clear' to OPH_AGGREGATE* and OPH_REDUCE* operators
 - Value 'description' to option 'order' of OPH_MERGECUBES* operators
 - Options to handle missing values with OPH_APPLY operator
@@ -20,6 +23,8 @@
 
 ### Changed:
 
+- Extend fragmentation procedure to higher level dimensions, in case fragment number is higher than size of dimension with the lowest level
+- Skip unexistent dimension to be subset in case of import
 - Procedure to evaluate the values of time dimension in case of reduction
 
 ## v1.9.0 - 2024-10-10

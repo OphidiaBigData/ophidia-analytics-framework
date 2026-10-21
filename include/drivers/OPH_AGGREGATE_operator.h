@@ -54,6 +54,7 @@
  * \param nthread Number of posix threads related to each MPI task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  * \param clear Flag set to 1 in case collapsed dimensions have to be removed
+ * \param force Flag set to 1 in case dimensions have to be collapsed
  */
 struct _OPH_AGGREGATE_operator_handle {
 	ophidiadb oDB;
@@ -83,6 +84,7 @@ struct _OPH_AGGREGATE_operator_handle {
 	short int execute_error;
 	char user_missing_value;
 	char clear;
+	char force;
 };
 typedef struct _OPH_AGGREGATE_operator_handle OPH_AGGREGATE_operator_handle;
 

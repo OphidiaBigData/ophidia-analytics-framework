@@ -295,11 +295,21 @@ int oph_odb_stge_get_default_host_partition_fs(ophidiadb * oDB, char *ioserver_t
 int oph_odb_stge_check_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, int id_host_partition, int host_number, int *exist);
 
 /**
+ * \brief Function to count maximum number of hosts available in OphidiaDB
+ * \param oDB Pointer to the OphidiaDB
+ * \param ioserver_type Server type to be used. 
+ * \param id_host_partition Id of the host partition to be used
+ * \param hosts_number Variable that will contain the number of hosts
+ * \return 0 if successfull, -1 otherwise
+ */
+int oph_odb_stge_count_number_of_hosts(ophidiadb * oDB, char *ioserver_type, int id_host_partition, int *host_number);
+
+/**
  * \brief Function to count maximum number of host and DBMS available in OphidiaDB
  * \param oDB Pointer to the OphidiaDB
  * \param ioserver_type Server type to be used. 
  * \param id_host_partition Id of the host partition to be used
- * \param hots_number Variable that will contain the number of hosts
+ * \param host_number Variable that will contain the number of hosts
  * \return 0 if successfull, -1 otherwise
  */
 int oph_odb_stge_count_number_of_host_dbms(ophidiadb * oDB, char *ioserver_type, int id_host_partition, int *host_number);

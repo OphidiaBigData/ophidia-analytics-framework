@@ -165,7 +165,7 @@ void *exec_thread(void *ts)
 			strcpy(new_frag[current_frag_count + frag_count].fragment_name, fragment_name);
 			//Create  and populate fragment
 			if (oph_nc_populate_fragment_from_nc5
-			    (server, &(new_frag[current_frag_count + frag_count]), oper_handle->nc_file_path, actual_tuplexfrag_number, oper_handle->compressed,
+			    (server, &(new_frag[current_frag_count + frag_count]), oper_handle->nc_file_path, oper_handle->fragxdb_number, actual_tuplexfrag_number, oper_handle->compressed,
 			     (NETCDF_var *) & (oper_handle->measure))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Error while populating fragment.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_IMPORTNC_FRAG_POPULATE_ERROR,
@@ -1262,13 +1262,13 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 			if (!strcmp(dimname, measure->dims_name[j]))
 				break;
 		if (j == ndims) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s' in in nc file\n", dimname, measure->varname);
-			logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_DIMENSION_VARIABLE_ERROR_NO_CONTAINER, container_name, dimname, measure->varname);
-			oph_tp_free_multiple_value_param_list(sub_dims, number_of_sub_dims);
-			oph_tp_free_multiple_value_param_list(sub_filters, number_of_sub_filters);
-			if (offset)
-				free(offset);
-			return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+			pmesg(LOG_WARNING, __FILE__, __LINE__, "Unable to find dimension '%s' related to variable '%s' in nc file: skipping\n", dimname, measure->varname);
+			logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "[CONTAINER: %s] Unable to find dimension '%s' related to variable '%s' in nc file: skipping.\n",
+				container_name, dimname, measure->varname);
+			free(sub_dims[i]);
+			sub_dims[i] = NULL;
+			sub_to_dims[i] = number_of_sub_dims;
+			continue;
 		}
 		sub_to_dims[i] = j;
 	}
@@ -1640,7 +1640,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		curfilter = NULL;
 		for (j = 0; j < number_of_sub_dims; j++) {
 			dimname = sub_dims[j];
-			if (!strcmp(dimname, measure->dims_name[i])) {
+			if (dimname && !strcmp(dimname, measure->dims_name[i])) {
 				curfilter = sub_filters[j];
 				break;
 			}
@@ -1887,6 +1887,7 @@ int task_init(oph_operator_struct *handle)
 
 	//Find the first explicit dimension checking oph_value
 	short int min_lev = 1;
+	int total_frag_number = 1;
 	//Find most external dimension with size bigger than 1
 	for (i = 0; i < measure->nexp; i++) {
 		for (j = 0; j < measure->ndims; j++) {
@@ -1895,10 +1896,11 @@ int task_init(oph_operator_struct *handle)
 				break;
 			}
 		}
-
 		if ((measure->dims_end_index[j] - measure->dims_start_index[j]) > 0) {
 			min_lev = measure->dims_oph_level[j];
-			break;
+			total_frag_number *= measure->dims_end_index[j] - measure->dims_start_index[j] + 1;
+			if (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragxdb_number <= total_frag_number)
+				break;
 		}
 	}
 
@@ -1908,11 +1910,11 @@ int task_init(oph_operator_struct *handle)
 	for (i = 0; i < measure->ndims; i++) {
 		if (measure->dims_type[i]) {
 			//Consider only explicit dimensions
-			if (measure->dims_oph_level[i] == min_lev) {
+			if (measure->dims_oph_level[i] <= min_lev) {
 				//Compute total fragment as the number of values of the most external explicit dimensions excluding those with size 1
-				((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->total_frag_number = measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
-			} else if (measure->dims_oph_level[i] > min_lev) {
-				//Compute tuple per fragment as the number of values of most inernal explicit dimension (excluding the first one bigger than 1)
+				((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->total_frag_number *= measure->dims_end_index[i] - measure->dims_start_index[i] + 1;
+			} else {
+				//Compute tuple per fragment as the number of values of most internal explicit dimension (excluding the first one bigger than 1)
 				((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (measure->dims_end_index[i] - measure->dims_start_index[i]) + 1;
 			}
 		} else {
@@ -2007,16 +2009,11 @@ int task_init(oph_operator_struct *handle)
 		if (*host_number <= 0) {
 			//Check how many DBMS and HOST are available into specified partition and of server type
 			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
-				if (run) {
-					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
-						host_partition);
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
+				if (run)
 					goto __OPH_EXIT_1;
-				} else {
-					logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name,
-						host_partition);
-					frag_param_error = 1;
-				}
+				frag_param_error = 1;
 			}
 		}
 
@@ -2029,8 +2026,8 @@ int task_init(oph_operator_struct *handle)
 						//If import is executed then return error, else simply return a message
 						if (run) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name,
-								final_frag_number);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER,
+								container_name, final_frag_number);
 							goto __OPH_EXIT_1;
 						} else {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
@@ -2062,8 +2059,8 @@ int task_init(oph_operator_struct *handle)
 						//If import is executed then return error, else simply return a message
 						if (run) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name,
-								final_frag_number);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER,
+								container_name, final_frag_number);
 							goto __OPH_EXIT_1;
 						} else {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
@@ -2079,8 +2076,8 @@ int task_init(oph_operator_struct *handle)
 						//If import is executed then return error, else simply return a message
 						if (run) {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
-							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name,
-								final_frag_number);
+							logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER,
+								container_name, final_frag_number);
 							goto __OPH_EXIT_1;
 						} else {
 							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT3_FAILED_NO_CONTAINER, container_name, final_frag_number);
@@ -2109,7 +2106,7 @@ int task_init(oph_operator_struct *handle)
 
 		if (frag_param_error) {
 			//Check how many DBMS and HOST are available into specified partition and of server type
-			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
+			if (oph_odb_stge_count_number_of_hosts(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
 				goto __OPH_EXIT_1;
@@ -2570,8 +2567,8 @@ int task_init(oph_operator_struct *handle)
 							dim_array = NULL;
 
 							if (oph_nc_get_dim_array2
-							    (id_container_out, ncid, tmp_var.varid, dims[j].dimension_type, dim_inst[j].size, *(tmp_var.dims_start_index), *(tmp_var.dims_end_index),
-							     &dim_array)) {
+							    (id_container_out, ncid, tmp_var.varid, dims[j].dimension_type, dim_inst[j].size, *(tmp_var.dims_start_index),
+							     *(tmp_var.dims_end_index), &dim_array)) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to read dimension information: %s\n", nc_strerror(retval));
 								logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DIM_READ_ERROR, nc_strerror(retval));
 								oph_dim_disconnect_from_dbms(db_dimension->dbms_instance);
@@ -2705,8 +2702,8 @@ int task_init(oph_operator_struct *handle)
 					if (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->import_metadata && !strcmp(hier.hierarchy_name, OPH_COMMON_TIME_HIERARCHY))
 						not_exists = 1;
 					else {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c' from '%s': check container specifications\n", measure->dims_concept_level[i],
-						      filename);
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to set concept level to '%c' from '%s': check container specifications\n",
+						      measure->dims_concept_level[i], filename);
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_BAD2_PARAMETER, measure->dims_concept_level[i]);
 						free(tot_dims);
 						free(dims);
@@ -3414,8 +3411,8 @@ int task_init(oph_operator_struct *handle)
 
 							if (!(big_value = (char *) malloc((att_len + 1) * sizeof(char)))) {
 								pmesg(LOG_ERROR, __FILE__, __LINE__, "Error allocating memory\n");
-								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER, container_name,
-									"Tmp big attribute buffer");
+								logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_MEMORY_ERROR_INPUT_NO_CONTAINER,
+									container_name, "Tmp big attribute buffer");
 								hashtbl_destroy(key_tbl);
 								hashtbl_destroy(required_tbl);
 								free(dimvar_ids);
@@ -3512,8 +3509,8 @@ int task_init(oph_operator_struct *handle)
 					}
 					//Insert metadata instance (also manage relation)
 					if (oph_odb_meta_insert_into_metadatainstance_manage_tables
-					    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->dims_name[ii], sid_key_type, id_user, big_value ? big_value : svalue,
-					     &id_metadatainstance)) {
+					    (oDB, id_datacube_out, id_key ? (int) strtol(id_key, NULL, 10) : -1, key, measure->dims_name[ii], sid_key_type, id_user,
+					     big_value ? big_value : svalue, &id_metadatainstance)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to update metadatainstance table\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_INSERT_METADATAINSTANCE_ERROR, key, big_value ? big_value : svalue);
 						hashtbl_destroy(key_tbl);
