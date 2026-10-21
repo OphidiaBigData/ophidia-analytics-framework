@@ -200,7 +200,8 @@ void *exec_thread(void *ts)
 	char frag_name_out[OPH_ODB_STGE_FRAG_NAME_SIZE], *query = NULL;
 	int frag_count = 0;
 
-	if (oph_dc_setup_dbms_thread(&(oper_handle->server), (dbmss[0].value[0]).io_server_type)) {
+	oph_ioserver_handler *server = NULL;
+	if (oph_dc_setup_dbms_thread(&server, dbmss[0].value[0].io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container[0], OPH_LOG_OPH_MERGECUBES_IOPLUGIN_SETUP_ERROR, (dbmss[0].value[0]).id_dbms);
 		res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -234,7 +235,7 @@ void *exec_thread(void *ts)
 				break;
 		}
 
-		if (oph_dc_connect_to_dbms(oper_handle->server, &(dbmss[0].value[i]), 0)) {
+		if (oph_dc_connect_to_dbms(server, &(dbmss[0].value[i]), 0)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to connect to DBMS. Check access parameters.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container[0], OPH_LOG_OPH_MERGECUBES_DBMS_CONNECTION_ERROR, (dbmss[0].value[i]).id_dbms);
 			res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -245,7 +246,7 @@ void *exec_thread(void *ts)
 			if (dbs[0].value[j].dbms_instance != &(dbmss[0].value[i]))
 				continue;
 
-			if (oph_dc_use_db_of_dbms(oper_handle->server, &(dbmss[0].value[i]), &(dbs[0].value[j]))) {
+			if (oph_dc_use_db_of_dbms(server, &(dbmss[0].value[i]), &(dbs[0].value[j]))) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to use the DB. Check access parameters.\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container[0], OPH_LOG_OPH_MERGECUBES_DB_SELECTION_ERROR, (dbs[0].value[j]).db_name);
 				res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -303,7 +304,7 @@ void *exec_thread(void *ts)
 					break;
 				}
 				//MERGECUBES fragment
-				if (oph_dc_create_fragment_from_query(oper_handle->server, &(frags[0].value[k]), NULL, query, 0, 0, 0)) {
+				if (oph_dc_create_fragment_from_query(server, &(frags[0].value[k]), NULL, query, 0, 0, 0)) {
 					pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
 					logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container[0], OPH_LOG_OPH_MERGECUBES_NEW_FRAG_ERROR, frag_name_out);
 					res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -323,10 +324,10 @@ void *exec_thread(void *ts)
 				frag_count++;
 			}
 		}
-		oph_dc_disconnect_from_dbms(oper_handle->server, &(dbmss[0].value[i]));
+		oph_dc_disconnect_from_dbms(server, &(dbmss[0].value[i]));
 	}
 
-	if (oph_dc_cleanup_dbms(oper_handle->server)) {
+	if (oph_dc_cleanup_dbms(server)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to finalize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container[0], OPH_LOG_OPH_MERGECUBES_IOPLUGIN_CLEANUP_ERROR, (dbmss[0].value[0]).id_dbms);
 		res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -443,6 +444,14 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		oph_tp_free_multiple_value_param_list(datacube_in, ((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->input_datacube_num);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+
+	value = hashtbl_get(task_tbl, OPH_ARG_NTHREAD);
+	if (!value) {
+		pmesg(LOG_ERROR, __FILE__, __LINE__, "Missing input parameter %s\n", OPH_ARG_NTHREAD);
+		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_MERGECUBES_MISSING_INPUT_PARAMETER, OPH_ARG_NTHREAD);
+		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
+	}
+	((OPH_MERGECUBES_operator_handle *) handle->operator_handle)->nthread = (unsigned int) strtol(value, NULL, 10);
 
 	value = hashtbl_get(task_tbl, OPH_ARG_USERNAME);
 	if (!value) {
@@ -1574,7 +1583,7 @@ int task_execute(oph_operator_struct *handle)
 	char frag_name_out[OPH_ODB_STGE_FRAG_NAME_SIZE], *query = NULL;
 	int frag_count = 0;
 
-	if (oph_dc_setup_dbms(&(oper_handle->server), (dbmss[0].value[0]).io_server_type)) {
+	if (oph_dc_setup_dbms(&(oper_handle->server), dbmss[0].value[0].io_server_type)) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to initialize IO server.\n");
 		logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container[0], OPH_LOG_OPH_MERGECUBES_IOPLUGIN_SETUP_ERROR, (dbmss[0].value[0]).id_dbms);
 		result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
