@@ -79,6 +79,7 @@
  * \param dim_name Name of new dimension to be created
  * \param dim_type Type of new dimension to be created
  * \param number Number of replies of the first cube to be considered
+ * \param nthread Number of posix threads related to each MPI task
  * \param execute_error Flag set to 1 in case of error has to be handled in destroy
  */
 struct _OPH_MERGECUBES2_operator_handle {
@@ -104,6 +105,7 @@ struct _OPH_MERGECUBES2_operator_handle {
 	char *dim_name;
 	char *dim_type;
 	int number;
+	unsigned int nthread;
 	short int execute_error;
 	int ensamble_size;
 };
