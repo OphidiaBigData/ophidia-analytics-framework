@@ -2394,7 +2394,11 @@ int oph_dc_copy_and_process_fragment3(oph_ioserver_handler *first_server, oph_io
 	}
 	//Read input fragment
 	char read_query2[query_buflen];
-	n = snprintf(read_query2, query_buflen, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag2->fragment_name);
+	if (!extend_factor)
+		n = snprintf(read_query2, query_buflen, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag2->fragment_name);
+	else
+		n = snprintf(read_query2, query_buflen, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FREX : OPH_DC_SQ_READ_RAW_FREX, measure_type, measure_type, extend_factor, extend_type,
+			     old_frag2->fragment_name);
 	if (n >= query_buflen) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Size of query exceed query limit.\n");
 		oph_ioserver_free_result(first_server, old_result1);
