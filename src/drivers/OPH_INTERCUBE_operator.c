@@ -238,38 +238,35 @@ void *exec_thread(void *ts)
 				if (multi_host) {
 
 					//SELECT APPROPRIATE QUERY
-					if (!oper_handle->extend_factor) {
-						if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUM)) {
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_SUM);
-						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUB)) {
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_SUB);
-						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MUL)) {
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MUL);
-						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_DIV)) {
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_DIV);
-						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ABS)) {
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ABS);
-						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG)) {
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ARG);
-						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MASK)) {
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MASK);
-						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MAX)) {
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MAX);
-						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MIN)) {
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MIN);
-						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MAX)) {
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ARG_MAX);
-						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MIN)) {
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ARG_MIN);
-						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_CORR)) {
-							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_CORR);
-						} else {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER, "operation");
-							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER, "operation");
-							res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-							break;
-						}
+					if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUM)) {
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_SUM);
+					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUB)) {
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_SUB);
+					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MUL)) {
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MUL);
+					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_DIV)) {
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_DIV);
+					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ABS)) {
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ABS);
+					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG)) {
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ARG);
+					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MASK)) {
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MASK);
+					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MAX)) {
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MAX);
+					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MIN)) {
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MIN);
+					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MAX)) {
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ARG_MAX);
+					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MIN)) {
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ARG_MIN);
+					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_CORR)) {
+						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_CORR);
 					} else {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER, "operation");
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER, "operation");
+						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+						break;
 					}
 					if (n >= OPH_COMMON_BUFFER_LEN) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
