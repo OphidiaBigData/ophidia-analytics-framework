@@ -2309,8 +2309,8 @@ int oph_dc_copy_and_process_fragment2(int cubes_num, oph_ioserver_handler **serv
 	return OPH_DC_SUCCESS;
 }
 
-int oph_dc_copy_and_process_fragment(oph_ioserver_handler *first_server, oph_ioserver_handler *second_server, unsigned long long tot_rows, oph_odb_fragment *old_frag1, oph_odb_fragment *old_frag2,
-				     const char *frag_name, int compressed, const char *operation, const char *measure_type)
+int oph_dc_copy_and_process_fragment3(oph_ioserver_handler *first_server, oph_ioserver_handler *second_server, unsigned long long tot_rows, oph_odb_fragment *old_frag1, oph_odb_fragment *old_frag2,
+				      const char *frag_name, int compressed, const char *operation, const char *measure_type, int extend_factor, char extend_type)
 {
 	if (!old_frag1 || !old_frag2 || !frag_name || !first_server || !second_server || !operation || !measure_type) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Null input parameter\n");
@@ -2383,7 +2383,11 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler *first_server, oph_ios
 		return OPH_DC_SERVER_ERROR;
 	}
 
-	query_buflen = 1 + snprintf(NULL, 0, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag2->fragment_name);
+	if (!extend_factor)
+		query_buflen = 1 + snprintf(NULL, 0, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FRAG : OPH_DC_SQ_READ_RAW_FRAG, old_frag2->fragment_name);
+	else
+		query_buflen =
+		    1 + snprintf(NULL, 0, compressed ? OPH_DC_SQ_READ_RAW_COMPRESSED_FREX : OPH_DC_SQ_READ_RAW_FREX, measure_type, measure_type, extend_factor, extend_type, old_frag2->fragment_name);
 	if (query_buflen >= max_size) {
 		pmesg(LOG_ERROR, __FILE__, __LINE__, "Buffer size (%ld bytes) is too small.\n", max_size);
 		return OPH_ODB_STR_BUFF_OVERFLOW;
@@ -2613,6 +2617,12 @@ int oph_dc_copy_and_process_fragment(oph_ioserver_handler *first_server, oph_ios
 	oph_ioserver_free_query(first_server, query);
 
 	return OPH_DC_SUCCESS;
+}
+
+int oph_dc_copy_and_process_fragment(oph_ioserver_handler *first_server, oph_ioserver_handler *second_server, unsigned long long tot_rows, oph_odb_fragment *old_frag1, oph_odb_fragment *old_frag2,
+				     const char *frag_name, int compressed, const char *operation, const char *measure_type)
+{
+	return oph_dc_copy_and_process_fragment3(first_server, second_server, tot_rows, old_frag1, old_frag2, frag_name, compressed, operation, measure_type, 0, 0);
 }
 
 int oph_dc_read_fragment_data(oph_ioserver_handler *server, oph_odb_fragment *frag, char *data_type, int compressed, char *id_clause, char *array_clause, char *where_clause, int limit,

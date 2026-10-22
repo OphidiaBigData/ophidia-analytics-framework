@@ -364,6 +364,8 @@ void *exec_thread(void *ts)
 			if (multi_host)
 				for (l = 1; l < cubes_num; l++)
 					j2[l]++;
+
+			first_frag = 0;
 		}
 
 		oph_dc_disconnect_from_dbms(first_server, &(dbmss[0].value[i]));
@@ -371,6 +373,8 @@ void *exec_thread(void *ts)
 		if (multi_host)
 			for (l = 1; l < cubes_num; l++)
 				oph_dc_disconnect_from_dbms(second_server[l], &(dbmss[l].value[i2[l]]));
+
+		first_db = 0;
 	}
 
 	oph_dc_cleanup_dbms(first_server);

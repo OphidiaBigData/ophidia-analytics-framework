@@ -202,7 +202,7 @@ void *exec_thread(void *ts)
 			}
 
 			//For each fragment
-			for (k = first_frag; (k < frags->size) && (frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); k++) {
+			for (k = first_frag, k2 = 0; (k < frags->size) && (frag_count < fragxthread) && (res == OPH_ANALYTICS_OPERATOR_SUCCESS); k++) {
 				//Check Fragment - DB Association
 				if (frags->value[k].db_instance != &(dbs->value[j]))
 					continue;
@@ -238,35 +238,38 @@ void *exec_thread(void *ts)
 				if (multi_host) {
 
 					//SELECT APPROPRIATE QUERY
-					if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUM)) {
-						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_SUM);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUB)) {
-						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_SUB);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MUL)) {
-						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MUL);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_DIV)) {
-						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_DIV);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ABS)) {
-						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ABS);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG)) {
-						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ARG);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MASK)) {
-						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MASK);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MAX)) {
-						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MAX);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MIN)) {
-						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MIN);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MAX)) {
-						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ARG_MAX);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MIN)) {
-						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ARG_MIN);
-					} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_CORR)) {
-						n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_CORR);
+					if (!oper_handle->extend_factor) {
+						if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUM)) {
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_SUM);
+						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUB)) {
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_SUB);
+						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MUL)) {
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MUL);
+						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_DIV)) {
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_DIV);
+						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ABS)) {
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ABS);
+						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG)) {
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ARG);
+						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MASK)) {
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MASK);
+						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MAX)) {
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MAX);
+						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_MIN)) {
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_MIN);
+						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MAX)) {
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ARG_MAX);
+						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_ARG_MIN)) {
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_ARG_MIN);
+						} else if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_CORR)) {
+							n = snprintf(operation, OPH_COMMON_BUFFER_LEN, OPH_INTERCUBE_OP_CORR);
+						} else {
+							pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER, "operation");
+							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER, "operation");
+							res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+							break;
+						}
 					} else {
-						pmesg(LOG_ERROR, __FILE__, __LINE__, OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER, "operation");
-						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_GENERIC_INVALID_INPUT_PARAMETER, "operation");
-						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-						break;
 					}
 					if (n >= OPH_COMMON_BUFFER_LEN) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
@@ -286,8 +289,9 @@ void *exec_thread(void *ts)
 						break;
 					}
 
-					if (oph_dc_copy_and_process_fragment
-					    (first_server, second_server, tot_rows, &(frags->value[k]), &(frags2->value[k2]), frag_name_out, compressed, operation, oper_handle->measure_type)) {
+					if (oph_dc_copy_and_process_fragment3
+					    (first_server, second_server, tot_rows, &(frags->value[k]), &(frags2->value[k2]), frag_name_out, compressed, operation, oper_handle->measure_type,
+					     oper_handle->extend_factor, oper_handle->extend_type)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_NEW_FRAG_ERROR, frag_name_out);
 						res = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -339,13 +343,6 @@ void *exec_thread(void *ts)
 							     oper_handle->measure_type, oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE,
 							     _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags->value[k].db_instance->db_name, frags->value[k].fragment_name,
 							     frags2->value[k2].db_instance->db_name, frags2->value[k2].fragment_name, OPH_INTERCUBE_FRAG1, OPH_INTERCUBE_FRAG2);
-						if (n >= OPH_COMMON_BUFFER_LEN) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
-								OPH_LOG_OPH_INTERCUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
-							res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-							break;
-						}
 					} else {
 						if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUM))
 							query = compressed ? OPH_INTERCUBE_QUERY3_COMPR_SUM : OPH_INTERCUBE_QUERY3_SUM;
@@ -382,13 +379,13 @@ void *exec_thread(void *ts)
 							     oper_handle->measure_type, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, oper_handle->extend_factor, oper_handle->extend_type, _ms,
 							     MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags->value[k].db_instance->db_name, frags->value[k].fragment_name,
 							     frags2->value[k2].db_instance->db_name, frags2->value[k2].fragment_name, OPH_INTERCUBE_FRAG1, OPH_INTERCUBE_FRAG2);
-						if (n >= OPH_COMMON_BUFFER_LEN) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
-								OPH_LOG_OPH_INTERCUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
-							res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-							break;
-						}
+					}
+					if (n >= OPH_COMMON_BUFFER_LEN) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
+							OPH_LOG_OPH_INTERCUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
+						res = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+						break;
 					}
 					if (!oper_handle->cube2_is_array) {
 						n += snprintf(operation + n, OPH_COMMON_BUFFER_LEN - n, OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "%s.%s=%s.%s"), OPH_INTERCUBE_FRAG1,
@@ -419,11 +416,15 @@ void *exec_thread(void *ts)
 
 			if (multi_host)
 				j2++;
+
+			first_frag = 0;
 		}
 
 		oph_dc_disconnect_from_dbms(first_server, &(dbmss->value[i]));
 		if (multi_host)
 			oph_dc_disconnect_from_dbms(second_server, &(dbmss2->value[i2]));
+
+		first_db = 0;
 	}
 
 	oph_dc_cleanup_dbms(first_server);
@@ -1859,8 +1860,9 @@ int task_execute(oph_operator_struct *handle)
 						break;
 					}
 
-					if (oph_dc_copy_and_process_fragment
-					    (first_server, second_server, tot_rows, &(frags.value[k]), &(frags2.value[k2]), frag_name_out, compressed, operation, oper_handle->measure_type)) {
+					if (oph_dc_copy_and_process_fragment3
+					    (first_server, second_server, tot_rows, &(frags.value[k]), &(frags2.value[k2]), frag_name_out, compressed, operation, oper_handle->measure_type,
+					     oper_handle->extend_factor, oper_handle->extend_type)) {
 						pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to insert new fragment.\n");
 						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container, OPH_LOG_OPH_INTERCUBE_NEW_FRAG_ERROR, frag_name_out);
 						result = OPH_ANALYTICS_OPERATOR_MYSQL_ERROR;
@@ -1920,13 +1922,6 @@ int task_execute(oph_operator_struct *handle)
 							     oper_handle->measure_type, oper_handle->measure_type, OPH_INTERCUBE_FRAG1, MYSQL_FRAG_MEASURE, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE,
 							     _ms, MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name, frags.value[k].fragment_name,
 							     frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1, OPH_INTERCUBE_FRAG2);
-						if (n >= OPH_COMMON_BUFFER_LEN) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
-								OPH_LOG_OPH_INTERCUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
-							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-							break;
-						}
 					} else {
 						if (!strcmp(oper_handle->operation, OPH_INTERCUBE_OPERATION_SUM))
 							query = compressed ? OPH_INTERCUBE_QUERY3_COMPR_SUM : OPH_INTERCUBE_QUERY3_SUM;
@@ -1963,13 +1958,13 @@ int task_execute(oph_operator_struct *handle)
 							     oper_handle->measure_type, OPH_INTERCUBE_FRAG2, MYSQL_FRAG_MEASURE, oper_handle->extend_factor, oper_handle->extend_type, _ms,
 							     MYSQL_FRAG_ID, MYSQL_FRAG_MEASURE, frags.value[k].db_instance->db_name, frags.value[k].fragment_name,
 							     frags2.value[k2].db_instance->db_name, frags2.value[k2].fragment_name, OPH_INTERCUBE_FRAG1, OPH_INTERCUBE_FRAG2);
-						if (n >= OPH_COMMON_BUFFER_LEN) {
-							pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
-							logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
-								OPH_LOG_OPH_INTERCUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
-							result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
-							break;
-						}
+					}
+					if (n >= OPH_COMMON_BUFFER_LEN) {
+						pmesg(LOG_ERROR, __FILE__, __LINE__, "MySQL operation name exceed limit.\n");
+						logging(LOG_ERROR, __FILE__, __LINE__, oper_handle->id_input_container,
+							OPH_LOG_OPH_INTERCUBE_STRING_BUFFER_OVERFLOW, "MySQL operation name", operation);
+						result = OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
+						break;
 					}
 					if (!oper_handle->cube2_is_array) {
 						n += snprintf(operation + n, OPH_COMMON_BUFFER_LEN - n, OPH_IOSERVER_SQ_BLOCK(OPH_IOSERVER_SQ_ARG_WHERE, "%s.%s=%s.%s"), OPH_INTERCUBE_FRAG1,
