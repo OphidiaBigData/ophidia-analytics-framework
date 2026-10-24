@@ -859,7 +859,6 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 				container_name, dimname, measure->varname);
 			free(sub_dims[i]);
 			sub_dims[i] = NULL;
-			sub_to_dims[i] = number_of_sub_dims;
 			continue;
 		}
 	}
