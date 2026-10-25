@@ -413,15 +413,11 @@ void *exec_thread(void *ts)
 
 			if (multi_host)
 				j2++;
-
-			first_frag = 0;
 		}
 
 		oph_dc_disconnect_from_dbms(first_server, &(dbmss->value[i]));
 		if (multi_host)
 			oph_dc_disconnect_from_dbms(second_server, &(dbmss2->value[i2]));
-
-		first_db = 0;
 	}
 
 	oph_dc_cleanup_dbms(first_server);
