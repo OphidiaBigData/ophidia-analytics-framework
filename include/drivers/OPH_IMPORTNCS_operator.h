@@ -104,6 +104,7 @@ struct _OPH_IMPORTNCS_operator_handle {
 	int fragment_number;
 	int fragment_first_id;
 	int host_number;
+	int dbms_number;
 	int fragxdb_number;
 	int tuplexfrag_number;
 	int array_length;

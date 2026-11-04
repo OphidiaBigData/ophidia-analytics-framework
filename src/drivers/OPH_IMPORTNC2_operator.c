@@ -639,6 +639,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 		logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_FRAG_PARAMS_ERROR, container_name);
 		return OPH_ANALYTICS_OPERATOR_INVALID_PARAM;
 	}
+	((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->dbms_number = 1;
 
 	NETCDF_var *measure = ((NETCDF_var *) & (((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->measure));
 	value = hashtbl_get(task_tbl, OPH_IN_PARAM_MEASURE_NAME);
@@ -1937,6 +1938,7 @@ int task_init(oph_operator_struct *handle)
 		char id_string[OPH_ODB_CUBE_FRAG_REL_INDEX_SET_SIZE];
 		int last_insertd_id = 0;
 		int *host_number = &((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->host_number;
+		int *dbms_number = &((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->dbms_number;
 		int *fragxdb_number = &((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->fragxdb_number;
 		char *host_partition = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->partition_input;
 		char *ioserver_type = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->ioserver_type;
@@ -1955,7 +1957,7 @@ int task_init(oph_operator_struct *handle)
 	   *INPUT PARAMETERS CHECK - BEGIN*
 	   ********************************/
 		int exist_part = 0;
-		int nhost = 0;
+		int nhost = 0, ndbms = 0;
 		int frag_param_error = 0;
 		int final_frag_number = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->total_frag_number;
 
@@ -2015,6 +2017,13 @@ int task_init(oph_operator_struct *handle)
 					goto __OPH_EXIT_1;
 				frag_param_error = 1;
 			}
+			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &ndbms) || !ndbms) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
+				if (run)
+					goto __OPH_EXIT_1;
+				frag_param_error = 1;
+			}
 		}
 
 		if (*host_number > 0 || *fragxdb_number > 0) {
@@ -2049,8 +2058,10 @@ int task_init(oph_operator_struct *handle)
 							*fragxdb_number = (int) admissible_frag_number / (*host_number);
 						}
 					}
-				} else
+				} else {
 					*host_number = nhost;
+					*dbms_number = ndbms;
+				}
 			}
 			if (*host_number > 0) {
 				if (*fragxdb_number <= 0) {
@@ -2087,7 +2098,7 @@ int task_init(oph_operator_struct *handle)
 						//Since fragxdb is fixed recompute tuplexfrag
 						((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (int) ceilf((float) final_frag_number / user_arg_prod);
 						((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->number_unven_frag = final_frag_number % (user_arg_prod);
-						((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*fragxdb_number));
+						((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*dbms_number) * (*fragxdb_number));
 					}
 				}
 			}
@@ -3788,16 +3799,12 @@ int task_init(oph_operator_struct *handle)
 	  /********************************
 	   * DB INSTANCE CREATION - BEGIN *
 	   ********************************/
-		int dbmss_length, host_num = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->host_number;
-		if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &dbmss_length) || !dbmss_length) {
-			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
-			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DBMS_LIST_ERROR);
-			goto __OPH_EXIT_1;
-		}
+		int host_num = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->host_number;
+		int dbms_num = ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->dbms_number * host_num;
 		int *id_dbmss = NULL, *id_hosts = NULL;
 		//Retreive ID dbms list
 		if (oph_odb_stge_retrieve_dbmsinstance_id_list
-		    (oDB, ioserver_type, id_host_partition, hidden, dbmss_length, id_datacube_out, &id_dbmss, &id_hosts, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->policy)) {
+		    (oDB, ioserver_type, id_host_partition, hidden, dbms_num, id_datacube_out, &id_dbmss, &id_hosts, ((OPH_IMPORTNC2_operator_handle *) handle->operator_handle)->policy)) {
 			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
 			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DBMS_LIST_ERROR);
 			if (id_dbmss)
@@ -3811,7 +3818,7 @@ int task_init(oph_operator_struct *handle)
 		oph_odb_dbms_instance dbms;
 		char db_name[OPH_ODB_STGE_DB_NAME_SIZE];
 
-		for (j = 0; j < dbmss_length; j++) {
+		for (j = 0; j < dbms_num; j++) {
 
 			db.id_dbms = id_dbmss[j];
 			//Retreive DBMS params
