@@ -4252,8 +4252,12 @@ int task_init(oph_operator_struct *handle)
 	  /********************************
 	   * DB INSTANCE CREATION - BEGIN *
 	   ********************************/
-		int dbmss_length, host_num;
-		dbmss_length = host_num = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->host_number;
+		int dbmss_length, host_num = ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->host_number;
+		if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &dbmss_length) || !dbmss_length) {
+			pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retrieve DBMS list.\n");
+			logging(LOG_ERROR, __FILE__, __LINE__, id_container_out, OPH_LOG_OPH_IMPORTNC_DBMS_LIST_ERROR);
+			goto __OPH_EXIT_1;
+		}
 		int *id_dbmss = NULL, *id_hosts = NULL;
 		//Retreive ID dbms list
 		if (oph_odb_stge_retrieve_dbmsinstance_id_list
