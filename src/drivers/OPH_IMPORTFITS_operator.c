@@ -1143,7 +1143,7 @@ int task_init(oph_operator_struct *handle)
 	   *INPUT PARAMETERS CHECK - BEGIN*
 	   ********************************/
 		int exist_part = 0;
-		int nhost = 0;
+		int nhost = 0, dbms = 0;
 		int frag_param_error = 0;
 		int final_frag_number = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->total_frag_number;
 
@@ -1198,6 +1198,7 @@ int task_init(oph_operator_struct *handle)
 
 		if (*host_number <= 0) {
 			//Check how many DBMS and HOST are available into specified partition and of server type
+/*
 			if (oph_odb_stge_count_number_of_hosts(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTFITS_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
@@ -1205,6 +1206,15 @@ int task_init(oph_operator_struct *handle)
 					goto __OPH_EXIT_1;
 				frag_param_error = 1;
 			}
+*/
+			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &ndbms) || !ndbms) {
+				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
+				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
+				if (run)
+					goto __OPH_EXIT_1;
+				frag_param_error = 1;
+			}
+			nhost = ndbms;	// TODO
 
 			if (*fragxdb_number <= 0) {
 				user_arg_prod = (1 * 1);

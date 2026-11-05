@@ -1692,7 +1692,7 @@ int task_init(oph_operator_struct *handle)
 		return OPH_ANALYTICS_OPERATOR_NULL_OPERATOR_HANDLE;
 	}
 	//For error checking
-	int id_datacube[7] = { 0, 0, 0, 0, 0, 0, 0 };
+	int id_datacube[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	int i, j, retval = 0, flush = 1, id_datacube_out = 0, id_container_out = 0;
 
@@ -1822,6 +1822,7 @@ int task_init(oph_operator_struct *handle)
 
 		if (*host_number <= 0) {
 			//Check how many DBMS and HOST are available into specified partition and of server type
+/*
 			if (oph_odb_stge_count_number_of_hosts(oDB, ioserver_type, id_host_partition, &nhost) || !nhost) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
@@ -1829,6 +1830,7 @@ int task_init(oph_operator_struct *handle)
 					goto __OPH_EXIT_1;
 				frag_param_error = 1;
 			}
+*/
 			if (oph_odb_stge_count_number_of_host_dbms(oDB, ioserver_type, id_host_partition, &ndbms) || !ndbms) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "Unable to retreive number of host or server type and partition are not available!\n");
 				logging(LOG_ERROR, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, OPH_LOG_OPH_IMPORTNC_HOST_DBMS_CONSTRAINT2_FAILED_NO_CONTAINER, container_name, host_partition);
@@ -1836,6 +1838,7 @@ int task_init(oph_operator_struct *handle)
 					goto __OPH_EXIT_1;
 				frag_param_error = 1;
 			}
+			nhost = ndbms;	// TODO
 		}
 
 		if (*host_number > 0 || *fragxdb_number > 0) {
@@ -1870,8 +1873,10 @@ int task_init(oph_operator_struct *handle)
 							*fragxdb_number = (int) admissible_frag_number / (*host_number);
 						}
 					}
-				} else
+				} else {
 					*host_number = nhost;
+					*dbms_number = ndbms;
+				}
 			}
 			if (*host_number > 0) {
 				if (*fragxdb_number <= 0) {
@@ -1908,7 +1913,7 @@ int task_init(oph_operator_struct *handle)
 						//Since fragxdb is fixed recompute tuplexfrag
 						((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number *= (int) ceilf((float) final_frag_number / user_arg_prod);
 						((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->number_unven_frag = final_frag_number % (user_arg_prod);
-						((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*dbms_number) * (*fragxdb_number));
+						((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number = ((*host_number) * (*fragxdb_number));
 					}
 				}
 			}
@@ -3711,10 +3716,11 @@ int task_init(oph_operator_struct *handle)
 		id_datacube[0] = id_datacube_out;
 		id_datacube[1] = id_container_out;
 		id_datacube[2] = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->host_number;
-		id_datacube[3] = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number;
-		id_datacube[4] = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number;
-		id_datacube[5] = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number;
-		id_datacube[6] = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->number_unven_frag;
+		id_datacube[3] = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->dbms_number;
+		id_datacube[4] = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number;
+		id_datacube[5] = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number;
+		id_datacube[6] = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number;
+		id_datacube[7] = ((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->number_unven_frag;
 
 		flush = 0;
 	}
@@ -3789,7 +3795,7 @@ int task_init(oph_operator_struct *handle)
 		oph_odb_cube_delete_from_datacube_table(&((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->oDB, id_datacube_out);
 	}
 	//Broadcast to all other processes the result
-	MPI_Bcast(id_datacube, 7, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(id_datacube, 8, MPI_INT, 0, MPI_COMM_WORLD);
 
 	//Check if sequential part has been completed
 	if (!id_datacube[0] || !id_datacube[1]) {
@@ -3801,10 +3807,11 @@ int task_init(oph_operator_struct *handle)
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_output_datacube = id_datacube[0];
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->id_input_container = id_datacube[1];
 	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->host_number = id_datacube[2];
-	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number = id_datacube[3];
-	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number = id_datacube[4];
-	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number = id_datacube[5];
-	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->number_unven_frag = id_datacube[6];
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->dbms_number = id_datacube[3];
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->fragxdb_number = id_datacube[4];
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->tuplexfrag_number = id_datacube[5];
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->total_frag_number = id_datacube[6];
+	((OPH_IMPORTNC_operator_handle *) handle->operator_handle)->number_unven_frag = id_datacube[7];
 
 	return OPH_ANALYTICS_OPERATOR_SUCCESS;
 }
