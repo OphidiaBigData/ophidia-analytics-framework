@@ -1143,7 +1143,7 @@ int task_init(oph_operator_struct *handle)
 	   *INPUT PARAMETERS CHECK - BEGIN*
 	   ********************************/
 		int exist_part = 0;
-		int nhost = 0, dbms = 0;
+		int nhost = 0, ndbms = 0;
 		int frag_param_error = 0;
 		int final_frag_number = ((OPH_IMPORTFITS_operator_handle *) handle->operator_handle)->total_frag_number;
 
