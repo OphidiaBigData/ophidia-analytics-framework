@@ -30,6 +30,9 @@
 #ifdef OPH_ZARR
 #include <dlfcn.h>
 #endif
+#include <dirent.h>
+#include <sys/stat.h>
+#include <openssl/sha.h>
 
 #include "oph_dimension_library.h"
 #include "oph-lib-binary-io.h"
@@ -6790,5 +6793,188 @@ int oph_nc_check_subset_string_over_more_sources(char *curfilter, int i, NETCDF_
 		total_size += dim_size;
 		//pmesg(LOG_INFO, __FILE__, __LINE__, "For %d (%d) total size increased to %d [%d, %d]\n", j, measure->order_src_path[j], total_size, measure->dims_start_index[i], measure->dims_end_index[i]);
 	}
+	return OPH_NC_SUCCESS;
+}
+
+#define SHA256_HEX_LEN 64
+#define BUF_SIZE 4096
+static int digest_file(const char *path, unsigned char *out)
+{
+	FILE *fp;
+	SHA256_CTX ctx;
+	unsigned char buf[BUF_SIZE];
+	size_t n;
+
+	fp = fopen(path, "rb");
+	if (fp == NULL)
+		return -1;
+
+	if (SHA256_Init(&ctx) != 1) {
+		fclose(fp);
+		return -1;
+	}
+
+	while ((n = fread(buf, 1, sizeof(buf), fp)) > 0) {
+		if (SHA256_Update(&ctx, buf, n) != 1) {
+			fclose(fp);
+			return -1;
+		}
+	}
+	if (ferror(fp)) {
+		fclose(fp);
+		return -1;
+	}
+	fclose(fp);
+
+	return SHA256_Final(out, &ctx) == 1 ? 0 : -1;
+}
+
+static char *join_path(const char *a, const char *b)
+{
+	size_t la = strlen(a);
+	size_t lb = strlen(b);
+	size_t sep = (la > 0) ? 1 : 0;
+	char *s = malloc(la + sep + lb + 1);
+
+	if (s == NULL)
+		return NULL;
+	memcpy(s, a, la);
+	if (sep)
+		s[la] = '/';
+	memcpy(s + la + sep, b, lb + 1);
+	return s;
+}
+
+static void add_record(SHA256_CTX *outer, char tag, const char *rel, const unsigned char *digest)
+{
+	SHA256_Update(outer, &tag, 1);
+	SHA256_Update(outer, rel, strlen(rel) + 1);
+	if (digest != NULL)
+		SHA256_Update(outer, digest, SHA256_DIGEST_LENGTH);
+}
+
+static int cmp_str(const void *a, const void *b)
+{
+	return strcmp(*(char *const *) a, *(char *const *) b);
+}
+
+static int hash_dir(SHA256_CTX *outer, const char *path, const char *rel)
+{
+	DIR *dir;
+	struct dirent *de;
+	char **names = NULL;
+	size_t count = 0, cap = 0, i;
+	int ret = -1;
+
+	dir = opendir(path);
+	if (dir == NULL)
+		return -1;
+
+	while ((de = readdir(dir)) != NULL) {
+		if (strcmp(de->d_name, ".") == 0 || strcmp(de->d_name, "..") == 0)
+			continue;
+		if (count == cap) {
+			size_t ncap = cap ? cap * 2 : 16;
+			char **tmp = realloc(names, ncap * sizeof *names);
+			if (tmp == NULL)
+				goto done;
+			names = tmp;
+			cap = ncap;
+		}
+		names[count] = strdup(de->d_name);
+		if (names[count] == NULL)
+			goto done;
+		count++;
+	}
+
+	qsort(names, count, sizeof *names, cmp_str);
+
+	for (i = 0; i < count; i++) {
+		char *child = join_path(path, names[i]);
+		char *child_rel = join_path(rel, names[i]);
+		struct stat st;
+		unsigned char fdig[SHA256_DIGEST_LENGTH];
+		int rc = -1;
+
+		if (child == NULL || child_rel == NULL) {
+			free(child);
+			free(child_rel);
+			goto done;
+		}
+
+		if (lstat(child, &st) == 0) {
+			if (S_ISDIR(st.st_mode)) {
+				add_record(outer, 'D', child_rel, NULL);
+				rc = hash_dir(outer, child, child_rel);
+			} else if (S_ISREG(st.st_mode)) {
+				rc = digest_file(child, fdig);
+				if (rc == 0)
+					add_record(outer, 'F', child_rel, fdig);
+			} else {
+				rc = 0;	/* link simbolici, socket, ecc.: ignorati */
+			}
+		}
+
+		free(child);
+		free(child_rel);
+		if (rc != 0)
+			goto done;
+	}
+	ret = 0;
+
+      done:
+	for (i = 0; i < count; i++)
+		free(names[i]);
+	free(names);
+	closedir(dir);
+	return ret;
+}
+
+static char *to_hex(const unsigned char *digest, size_t len)
+{
+	char *hex = malloc(2 * len + 1);
+	size_t i;
+
+	if (hex == NULL)
+		return NULL;
+	for (i = 0; i < len; i++)
+		snprintf(hex + 2 * i, 3, "%02x", digest[i]);
+	hex[2 * len] = '\0';
+	return hex;
+}
+
+int oph_nc_get_checksum(const char *filename, char **checksum)
+{
+	struct stat st;
+	unsigned char digest[SHA256_DIGEST_LENGTH];
+	SHA256_CTX ctx;
+	char *hex;
+
+	if (filename == NULL || checksum == NULL)
+		return OPH_NC_ERROR;
+	*checksum = NULL;
+
+	if (stat(filename, &st) != 0)
+		return OPH_NC_ERROR;
+
+	if (S_ISREG(st.st_mode)) {
+		if (digest_file(filename, digest) != 0)
+			return OPH_NC_ERROR;
+	} else if (S_ISDIR(st.st_mode)) {
+		if (SHA256_Init(&ctx) != 1)
+			return OPH_NC_ERROR;
+		if (hash_dir(&ctx, filename, "") != 0)
+			return OPH_NC_ERROR;
+		if (SHA256_Final(digest, &ctx) != 1)
+			return OPH_NC_ERROR;
+	} else {
+		return OPH_NC_ERROR;
+	}
+
+	hex = to_hex(digest, SHA256_DIGEST_LENGTH);
+	if (hex == NULL)
+		return OPH_NC_ERROR;
+
+	*checksum = hex;
 	return OPH_NC_SUCCESS;
 }

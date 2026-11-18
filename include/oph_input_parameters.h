@@ -199,6 +199,9 @@
 #define OPH_IN_PARAM_SKIP_OUTPUT			"skip_output"
 #define OPH_IN_PARAM_MULTIPLE_OUTPUT		"multiple_output"
 
+#define OPH_IN_PARAM_TRACKING_ID			"trackingid"
+#define OPH_IN_PARAM_CHECKSUM				"checksum"
+
 #define OPH_ARG_NTHREAD						"nthreads"
 #define OPH_ARG_USERNAME					"username"
 #define OPH_ARG_SESSIONID					"sessionid"

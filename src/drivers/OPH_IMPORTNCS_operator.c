@@ -276,6 +276,7 @@ int env_set(HASHTBL *task_tbl, oph_operator_struct *handle)
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->execute_error = 0;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->policy = 0;
 	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->ncids = NULL;
+	((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->tracking_id = NULL;
 
 	char *value;
 
@@ -3754,6 +3755,9 @@ int task_init(oph_operator_struct *handle)
 					goto __OPH_EXIT_1;
 				}
 
+				if (!strcmp(key, "tracking_id") && !((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->tracking_id)
+					((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->tracking_id = strdup(big_value ? big_value : svalue);
+
 				if (big_value)
 					free(big_value);
 				big_value = NULL;
@@ -4697,13 +4701,13 @@ int task_destroy(oph_operator_struct *handle)
 		char jsonbuf[OPH_COMMON_BUFFER_LEN];
 		memset(jsonbuf, 0, OPH_COMMON_BUFFER_LEN);
 		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, oper_handle->id_input_container, oper_handle->id_output_datacube);
+		free(tmp_uri);
 
 		// ADD OUTPUT PID TO JSON AS TEXT
 		if (oph_json_is_objkey_printable(oper_handle->objkeys, oper_handle->objkeys_num, OPH_JSON_OBJKEY_IMPORTNCS)) {
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_IMPORTNCS, "Output Cube", jsonbuf)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 				logging(LOG_WARNING, __FILE__, __LINE__, oper_handle->id_input_container, "ADD TEXT error\n");
-				free(tmp_uri);
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
 		}
@@ -4717,8 +4721,25 @@ int task_destroy(oph_operator_struct *handle)
 			free(handle->output_string);
 		handle->output_string = strdup(tmp_string);
 
-		free(tmp_uri);
+		tmp_uri = NULL;
+		if (!oph_nc_get_checksum(oper_handle->nc_file_path_orig, &tmp_uri) && tmp_uri) {
+			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_CHECKSUM, tmp_uri);
+			if (handle->output_string) {
+				strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
+				free(handle->output_string);
+			}
+			handle->output_string = strdup(tmp_string);
+			free(tmp_uri);
+		}
 
+		if (oper_handle->tracking_id) {
+			snprintf(tmp_string, OPH_COMMON_BUFFER_LEN, "%s=%s;", OPH_IN_PARAM_TRACKING_ID, oper_handle->tracking_id);
+			if (handle->output_string) {
+				strncat(tmp_string, handle->output_string, OPH_COMMON_BUFFER_LEN - strlen(tmp_string));
+				free(handle->output_string);
+			}
+			handle->output_string = strdup(tmp_string);
+		}
 		// Output metadata
 		while (oper_handle->output_metadata) {
 
@@ -5115,6 +5136,10 @@ int env_unset(oph_operator_struct *handle)
 	if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->description) {
 		free((char *) ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->description);
 		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->description = NULL;
+	}
+	if (((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->tracking_id) {
+		free((char *) ((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->tracking_id);
+		((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->tracking_id = NULL;
 	}
 #ifdef OPH_ZARR
 	oph_nc_dlclose(((OPH_IMPORTNCS_operator_handle *) handle->operator_handle)->dlh);

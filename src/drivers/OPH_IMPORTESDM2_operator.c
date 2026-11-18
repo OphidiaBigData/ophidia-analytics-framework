@@ -4152,13 +4152,14 @@ int task_destroy(oph_operator_struct *handle)
 		char jsonbuf[OPH_COMMON_BUFFER_LEN];
 		memset(jsonbuf, 0, OPH_COMMON_BUFFER_LEN);
 		snprintf(jsonbuf, OPH_COMMON_BUFFER_LEN, OPH_PID_FORMAT, tmp_uri, oper_handle->id_input_container, oper_handle->id_output_datacube);
+		free(tmp_uri);
 
 		// ADD OUTPUT PID TO JSON AS TEXT
 		if (oph_json_is_objkey_printable(oper_handle->objkeys, oper_handle->objkeys_num, OPH_JSON_OBJKEY_IMPORTESDM2)) {
 			if (oph_json_add_text(handle->operator_json, OPH_JSON_OBJKEY_IMPORTESDM2, "Output Cube", jsonbuf)) {
 				pmesg(LOG_ERROR, __FILE__, __LINE__, "ADD TEXT error\n");
 				logging(LOG_WARNING, __FILE__, __LINE__, OPH_GENERIC_CONTAINER_ID, "ADD TEXT error\n");
-				free(tmp_uri);
+
 				return OPH_ANALYTICS_OPERATOR_UTILITY_ERROR;
 			}
 		}
@@ -4170,8 +4171,6 @@ int task_destroy(oph_operator_struct *handle)
 			free(handle->output_string);
 		}
 		handle->output_string = strdup(tmp_string);
-
-		free(tmp_uri);
 
 		// Output metadata
 		while (oper_handle->output_metadata) {

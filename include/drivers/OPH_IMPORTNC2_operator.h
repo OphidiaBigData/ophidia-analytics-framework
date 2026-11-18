@@ -135,6 +135,7 @@ struct _OPH_IMPORTNC2_operator_handle {
 #ifdef OPH_ZARR
 	void *dlh;
 #endif
+	char *tracking_id;
 };
 typedef struct _OPH_IMPORTNC2_operator_handle OPH_IMPORTNC2_operator_handle;
 

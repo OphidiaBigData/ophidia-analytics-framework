@@ -371,4 +371,7 @@ void *oph_nc_dlopen();
 void oph_nc_dlclose(void *handle);
 #endif
 
+int oph_nc_get_checksum(const char *dataset, char **checksum);
+
+
 #endif				//__OPH_NC_UTILITY_H

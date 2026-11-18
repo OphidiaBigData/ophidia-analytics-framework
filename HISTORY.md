@@ -9,6 +9,7 @@
 
 ### Added:
 
+- Report of 'checksum' and 'trackingid' at the end of OPH_IMPORTNC execution
 - Option 'extract' to OPH_GENERIC enabling the possibility of more output files
 - Report of processing time to output string
 - Option 'force' to OPH_AGGREGATE to force dimension collapse
